@@ -19,6 +19,9 @@ import { connection } from './state'
         <router-link to="/map" class="nav-link">
           <i class="pi pi-map"></i> Map
         </router-link>
+        <router-link to="/smoke-test" class="nav-link">
+          <i class="pi pi-bolt"></i> Smoke Test
+        </router-link>
       </template>
       <router-link to="/" class="nav-link">
         <i class="pi pi-link"></i> Connect
