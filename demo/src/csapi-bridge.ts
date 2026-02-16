@@ -29,6 +29,28 @@ import type {
 import type { CollectionResponse } from '@csapi/ogc-api/csapi/formats/response'
 
 // ========================================
+// URL Path Normalization
+// ========================================
+
+/**
+ * Maps internal resource type keys to their OGC API URL path segments.
+ *
+ * Most resource types already match their URL path (e.g., 'systems' → '/systems'),
+ * but 'controlStreams' is camelCase internally while the OGC Connected Systems API
+ * spec uses the all-lowercase path '/controlstreams'.
+ *
+ * OSH enforces this: GET /controlStreams/id → 400 "Invalid resource name".
+ */
+const URL_PATH_OVERRIDES: Record<string, string> = {
+  controlStreams: 'controlstreams',
+}
+
+/** Convert a resource type key to its URL path segment. */
+function toUrlPath(resourceType: string): string {
+  return URL_PATH_OVERRIDES[resourceType] ?? resourceType
+}
+
+// ========================================
 // Builder Instance
 // ========================================
 
@@ -73,13 +95,14 @@ export function initializeBuilder(
 
   if (discovered.size > 0) {
     // Server advertises CSAPI links — use discovered types with standard path
+    // toUrlPath() normalizes keys like 'controlStreams' → 'controlstreams'
     for (const type of discovered.keys()) {
-      resourceUrls.set(type, `/${type}`)
+      resourceUrls.set(type, `/${toUrlPath(type)}`)
     }
   } else {
     // Fallback: assume all 9 standard types at their standard paths
     for (const type of CSAPIResourceTypes) {
-      resourceUrls.set(type, `/${type}`)
+      resourceUrls.set(type, `/${toUrlPath(type)}`)
     }
   }
 
@@ -128,7 +151,7 @@ export function getAvailableResources(): Set<string> {
  */
 export function getListUrl(resourceType: string, options?: QueryOptions): string {
   const b = builder.value
-  if (!b) return `/${resourceType}`
+  if (!b) return `/${toUrlPath(resourceType)}`
 
   try {
     switch (resourceType) {
@@ -141,11 +164,11 @@ export function getListUrl(resourceType: string, options?: QueryOptions): string
       case 'observations': return b.getObservations(options as ObservationQueryOptions)
       case 'controlStreams': return b.getControlStreams(options as ControlStreamQueryOptions)
       case 'commands': return b.getCommands(options as CommandQueryOptions)
-      default: return `/${resourceType}`
+      default: return `/${toUrlPath(resourceType)}`
     }
   } catch {
     // EndpointError if resource type not available — fall back to manual path
-    return `/${resourceType}`
+    return `/${toUrlPath(resourceType)}`
   }
 }
 
@@ -155,7 +178,7 @@ export function getListUrl(resourceType: string, options?: QueryOptions): string
  */
 export function getDetailUrl(resourceType: string, id: string): string {
   const b = builder.value
-  if (!b) return `/${resourceType}/${id}`
+  if (!b) return `/${toUrlPath(resourceType)}/${id}`
 
   try {
     switch (resourceType) {
@@ -168,10 +191,10 @@ export function getDetailUrl(resourceType: string, id: string): string {
       case 'observations': return b.getObservation(id)
       case 'controlStreams': return b.getControlStream(id)
       case 'commands': return b.getCommand(id)
-      default: return `/${resourceType}/${id}`
+      default: return `/${toUrlPath(resourceType)}/${id}`
     }
   } catch {
-    return `/${resourceType}/${id}`
+    return `/${toUrlPath(resourceType)}/${id}`
   }
 }
 
@@ -184,10 +207,10 @@ export function getCreateUrl(resourceType: string, parentId?: string): string {
   const b = builder.value
   if (!b) {
     if (resourceType === 'datastreams' && parentId) return `/systems/${parentId}/datastreams`
-    if (resourceType === 'controlStreams' && parentId) return `/systems/${parentId}/controlStreams`
+    if (resourceType === 'controlStreams' && parentId) return `/systems/${parentId}/controlstreams`
     if (resourceType === 'observations' && parentId) return `/datastreams/${parentId}/observations`
-    if (resourceType === 'commands' && parentId) return `/controlStreams/${parentId}/commands`
-    return `/${resourceType}`
+    if (resourceType === 'commands' && parentId) return `/controlstreams/${parentId}/commands`
+    return `/${toUrlPath(resourceType)}`
   }
 
   try {
@@ -203,15 +226,15 @@ export function getCreateUrl(resourceType: string, parentId?: string): string {
       case 'controlStreams':
         return parentId ? b.getSystemControlStreams(parentId).split('?')[0] : b.createControlStream()
       case 'commands': return b.createCommand(parentId || '')
-      default: return `/${resourceType}`
+      default: return `/${toUrlPath(resourceType)}`
     }
   } catch {
     // Fallback to manual nested URLs for Part 2
     if (resourceType === 'datastreams' && parentId) return `/systems/${parentId}/datastreams`
-    if (resourceType === 'controlStreams' && parentId) return `/systems/${parentId}/controlStreams`
+    if (resourceType === 'controlStreams' && parentId) return `/systems/${parentId}/controlstreams`
     if (resourceType === 'observations' && parentId) return `/datastreams/${parentId}/observations`
-    if (resourceType === 'commands' && parentId) return `/controlStreams/${parentId}/commands`
-    return `/${resourceType}`
+    if (resourceType === 'commands' && parentId) return `/controlstreams/${parentId}/commands`
+    return `/${toUrlPath(resourceType)}`
   }
 }
 
@@ -220,7 +243,7 @@ export function getCreateUrl(resourceType: string, parentId?: string): string {
  */
 export function getUpdateUrl(resourceType: string, id: string): string {
   const b = builder.value
-  if (!b) return `/${resourceType}/${id}`
+  if (!b) return `/${toUrlPath(resourceType)}/${id}`
 
   try {
     switch (resourceType) {
@@ -232,10 +255,10 @@ export function getUpdateUrl(resourceType: string, id: string): string {
       case 'observations': return b.updateObservation(id)
       case 'controlStreams': return b.updateControlStream(id)
       case 'commands': return b.updateCommand(id)
-      default: return `/${resourceType}/${id}`
+      default: return `/${toUrlPath(resourceType)}/${id}`
     }
   } catch {
-    return `/${resourceType}/${id}`
+    return `/${toUrlPath(resourceType)}/${id}`
   }
 }
 
@@ -244,7 +267,7 @@ export function getUpdateUrl(resourceType: string, id: string): string {
  */
 export function getDeleteUrl(resourceType: string, id: string): string {
   const b = builder.value
-  if (!b) return `/${resourceType}/${id}`
+  if (!b) return `/${toUrlPath(resourceType)}/${id}`
 
   try {
     switch (resourceType) {
@@ -256,10 +279,10 @@ export function getDeleteUrl(resourceType: string, id: string): string {
       case 'observations': return b.deleteObservation(id)
       case 'controlStreams': return b.deleteControlStream(id)
       case 'commands': return b.deleteCommand(id)
-      default: return `/${resourceType}/${id}`
+      default: return `/${toUrlPath(resourceType)}/${id}`
     }
   } catch {
-    return `/${resourceType}/${id}`
+    return `/${toUrlPath(resourceType)}/${id}`
   }
 }
 
