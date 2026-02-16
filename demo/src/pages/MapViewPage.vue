@@ -74,7 +74,7 @@ const TYPE_LABELS: Record<string, string> = {
   datastreams: 'DS',
   controlStreams: 'CS',
   observationTracks: '~',
-  observationPoints: '·',
+  observationPoints: 'O',
 }
 
 // Active layer toggles
@@ -1059,7 +1059,7 @@ async function createTestFeature() {
         <a href="#" class="ol-popup-closer" @click.prevent="closePopup"></a>
         <div v-if="selectedFeature" class="popup-content">
           <span class="popup-badge" :style="{ backgroundColor: TYPE_COLORS[selectedFeature.resourceType] }">
-            {{ MAP_TYPES.find(r => r.key === selectedFeature.resourceType)?.label }}
+            {{ TYPE_LABELS[selectedFeature.resourceType] }}
           </span>
           <strong>{{ selectedFeature.resourceName }}</strong>
           <div v-if="selectedFeature.rawData?.phenomenonTime" class="popup-id">{{ selectedFeature.rawData.phenomenonTime }}</div>
