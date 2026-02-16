@@ -47,11 +47,12 @@ const SPATIAL_TYPES = RESOURCE_TYPES.filter(r => r.part === 1 && r.key !== 'prop
 // Part 2 types shown on the map (placed at parent system's location)
 const PART2_MAP_TYPES = RESOURCE_TYPES.filter(r => ['datastreams', 'controlStreams'].includes(r.key))
 
-// Synthetic entry for observation GPS tracks (not a real API resource type)
+// Synthetic entries for observation-derived layers (not real API resource types)
 const OBS_TRACK_ENTRY = { key: 'observationTracks', label: 'Obs. Track', plural: 'Observation Tracks', icon: 'pi pi-directions', part: 2 as const, readOnly: true }
+const OBS_POINTS_ENTRY = { key: 'observationPoints', label: 'Observation', plural: 'Observations', icon: 'pi pi-circle', part: 2 as const, readOnly: true }
 
 // All types visible on the map
-const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_TRACK_ENTRY]
+const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY]
 
 // Color map for resource types
 const TYPE_COLORS: Record<string, string> = {
@@ -62,6 +63,7 @@ const TYPE_COLORS: Record<string, string> = {
   datastreams: '#ef4444',       // red
   controlStreams: '#f97316',    // orange
   observationTracks: '#06b6d4', // cyan
+  observationPoints: '#ec4899', // pink
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -72,6 +74,7 @@ const TYPE_LABELS: Record<string, string> = {
   datastreams: 'DS',
   controlStreams: 'CS',
   observationTracks: '~',
+  observationPoints: '·',
 }
 
 // Active layer toggles
@@ -83,6 +86,7 @@ const activeLayers = ref<Record<string, boolean>>({
   datastreams: true,
   controlStreams: true,
   observationTracks: true,
+  observationPoints: true,
 })
 
 // Cache: systemId → { lat, lon, alt?, datastreamName? }
@@ -104,6 +108,17 @@ function getStyle(resourceType: string, enriched = false): Style {
   if (resourceType === 'observationTracks') {
     return new Style({
       stroke: new Stroke({ color, width: 3, lineDash: [8, 4] }),
+    })
+  }
+
+  // Individual observation points — tiny dots to show density without clutter
+  if (resourceType === 'observationPoints') {
+    return new Style({
+      image: new CircleStyle({
+        radius: 4,
+        fill: new Fill({ color }),
+        stroke: new Stroke({ color: '#fff', width: 1 }),
+      }),
     })
   }
 
@@ -140,6 +155,16 @@ function getSelectedStyle(resourceType: string): Style {
   if (resourceType === 'observationTracks') {
     return new Style({
       stroke: new Stroke({ color: '#fbbf24', width: 5 }),
+    })
+  }
+
+  if (resourceType === 'observationPoints') {
+    return new Style({
+      image: new CircleStyle({
+        radius: 7,
+        fill: new Fill({ color }),
+        stroke: new Stroke({ color: '#fbbf24', width: 3 }),
+      }),
     })
   }
 
@@ -574,14 +599,17 @@ async function loadControlStreams(): Promise<void> {
 }
 
 /**
- * Load observation tracks — GPS trail LineStrings from location datastreams.
- * Fetches recent observations and plots them as a path on the map.
+ * Load observation layers — both individual points and GPS trail tracks.
+ * Fetches recent observations from all location datastreams once and builds
+ * both layers from the same data to avoid duplicate API calls.
  */
-async function loadObservationTracks(): Promise<void> {
-  const source = vectorSources['observationTracks']
-  if (!source) return
+async function loadObservationLayers(): Promise<void> {
+  const pointSource = vectorSources['observationPoints']
+  const trackSource = vectorSources['observationTracks']
 
-  let count = 0
+  let pointCount = 0
+  let trackCount = 0
+
   const promises = locationDatastreamList.map(async (dsInfo) => {
     try {
       const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=50`, {
@@ -590,41 +618,69 @@ async function loadObservationTracks(): Promise<void> {
       if (!obsRes.ok || !obsRes.data) return
 
       const items = obsRes.data.items || []
-      const coords: [number, number][] = []
+      const trackCoords: [number, number][] = []
+
       for (const obs of items) {
         const result = obs.result
-        let lat: number | undefined, lon: number | undefined
+        let lat: number | undefined, lon: number | undefined, alt: number | undefined
         if (typeof result?.lat === 'number' && typeof result?.lon === 'number') {
-          lat = result.lat; lon = result.lon
+          lat = result.lat; lon = result.lon; alt = result.alt
         } else if (result?.location?.lat != null) {
-          lat = result.location.lat; lon = result.location.lon
+          lat = result.location.lat; lon = result.location.lon; alt = result.location.alt
         } else if (result?.Location?.lat != null) {
-          lat = result.Location.lat; lon = result.Location.lon
+          lat = result.Location.lat; lon = result.Location.lon; alt = result.Location.alt
         }
-        if (lat != null && lon != null) {
-          coords.push([lon, lat])
+        if (lat == null || lon == null) continue
+
+        trackCoords.push([lon, lat])
+
+        // Individual observation point
+        if (pointSource) {
+          const feature = new Feature({
+            geometry: new Point(fromLonLat([lon, lat])),
+          })
+          feature.setStyle(getStyle('observationPoints'))
+          feature.set('resourceType', 'observationPoints')
+          feature.set('resourceId', obs.id || `${dsInfo.id}-obs-${pointCount}`)
+          feature.set('resourceName', `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
+          feature.set('enriched', true)
+          feature.set('enrichmentSource', dsInfo.name)
+          feature.set('rawData', {
+            observationId: obs.id,
+            datastreamId: dsInfo.id,
+            datastreamName: dsInfo.name,
+            systemId: dsInfo.systemId,
+            phenomenonTime: obs.phenomenonTime,
+            resultTime: obs.resultTime,
+            lat, lon, alt,
+            result: obs.result,
+          })
+          pointSource.addFeature(feature)
+          pointCount++
         }
       }
 
-      if (coords.length >= 2) {
+      // Track LineString from all parsed coordinates
+      if (trackSource && trackCoords.length >= 2) {
         const lineFeature = new Feature({
-          geometry: new LineString(coords.map(c => fromLonLat(c))),
+          geometry: new LineString(trackCoords.map(c => fromLonLat(c))),
         })
         lineFeature.setStyle(getStyle('observationTracks'))
         lineFeature.set('resourceType', 'observationTracks')
         lineFeature.set('resourceId', dsInfo.id)
         lineFeature.set('resourceName', `Track: ${dsInfo.name}`)
         lineFeature.set('enriched', true)
-        lineFeature.set('enrichmentSource', `${coords.length} observations from ${dsInfo.name}`)
-        lineFeature.set('rawData', { datastreamId: dsInfo.id, datastreamName: dsInfo.name, systemId: dsInfo.systemId, pointCount: coords.length })
-        source.addFeature(lineFeature)
-        count++
+        lineFeature.set('enrichmentSource', `${trackCoords.length} observations from ${dsInfo.name}`)
+        lineFeature.set('rawData', { datastreamId: dsInfo.id, datastreamName: dsInfo.name, systemId: dsInfo.systemId, pointCount: trackCoords.length })
+        trackSource.addFeature(lineFeature)
+        trackCount++
       }
     } catch { /* skip */ }
   })
 
   await Promise.all(promises)
-  featureCounts.value['observationTracks'] = count
+  featureCounts.value['observationPoints'] = pointCount
+  featureCounts.value['observationTracks'] = trackCount
 }
 
 async function loadAllResources() {
@@ -646,11 +702,11 @@ async function loadAllResources() {
   // 3. Enrich Part 1 resource types that have null geometry
   await enrichResourcesWithLocations()
 
-  // 4. Load Part 2 resources at parent system locations + observation tracks
+  // 4. Load Part 2 resources at parent system locations + observation layers
   await Promise.all([
     loadDatastreams(),
     loadControlStreams(),
-    loadObservationTracks(),
+    loadObservationLayers(),
   ])
 
   loading.value = false
@@ -696,7 +752,7 @@ onMounted(() => {
     vectorSources[rt.key] = source
     const layer = new VectorLayer({
       source,
-      zIndex: rt.key === 'observationTracks' ? 5 : 10,
+      zIndex: rt.key === 'observationTracks' ? 5 : rt.key === 'observationPoints' ? 7 : 10,
     })
     vectorLayers[rt.key] = layer
   }
@@ -799,7 +855,13 @@ function closePopup() {
 
 function goToDetail() {
   if (selectedFeature.value) {
-    router.push(`/explore/${selectedFeature.value.resourceType}`)
+    // Synthetic map types → navigate to the closest real resource type
+    const typeMap: Record<string, string> = {
+      observationPoints: 'observations',
+      observationTracks: 'datastreams',
+    }
+    const resourceType = typeMap[selectedFeature.value.resourceType] || selectedFeature.value.resourceType
+    router.push(`/explore/${resourceType}`)
   }
 }
 
@@ -874,7 +936,7 @@ async function createTestFeature() {
 
         <div class="layer-section-label" style="margin-top: 0.5rem;">Part 2 — Dynamic Data</div>
         <button
-          v-for="rt in [...PART2_MAP_TYPES, OBS_TRACK_ENTRY]"
+          v-for="rt in [...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY]"
           :key="rt.key"
           :class="['layer-toggle', { inactive: !activeLayers[rt.key] }]"
           @click="toggleLayer(rt.key)"
@@ -954,6 +1016,22 @@ async function createTestFeature() {
           <span class="field-label">ID:</span>
           <code>{{ selectedFeature.resourceId }}</code>
         </div>
+        <!-- Observation-specific fields -->
+        <div v-if="selectedFeature.rawData?.phenomenonTime" class="detail-field">
+          <span class="field-label">Time:</span>
+          {{ selectedFeature.rawData.phenomenonTime }}
+        </div>
+        <div v-if="selectedFeature.rawData?.lat != null" class="detail-field">
+          <span class="field-label">Location:</span>
+          {{ selectedFeature.rawData.lat.toFixed(6) }}°, {{ selectedFeature.rawData.lon.toFixed(6) }}°
+          <span v-if="selectedFeature.rawData.alt != null" style="color: #64748b;">
+            ({{ selectedFeature.rawData.alt.toFixed(1) }}m)
+          </span>
+        </div>
+        <div v-if="selectedFeature.rawData?.datastreamName" class="detail-field">
+          <span class="field-label">Datastream:</span>
+          {{ selectedFeature.rawData.datastreamName }}
+        </div>
         <div v-if="selectedFeature.rawData?.properties?.description || selectedFeature.rawData?.description" class="detail-field">
           <span class="field-label">Description:</span>
           {{ selectedFeature.rawData?.properties?.description || selectedFeature.rawData?.description }}
@@ -984,7 +1062,8 @@ async function createTestFeature() {
             {{ MAP_TYPES.find(r => r.key === selectedFeature.resourceType)?.label }}
           </span>
           <strong>{{ selectedFeature.resourceName }}</strong>
-          <div class="popup-id">{{ selectedFeature.resourceId }}</div>
+          <div v-if="selectedFeature.rawData?.phenomenonTime" class="popup-id">{{ selectedFeature.rawData.phenomenonTime }}</div>
+          <div v-else class="popup-id">{{ selectedFeature.resourceId }}</div>
         </div>
       </div>
     </div>
