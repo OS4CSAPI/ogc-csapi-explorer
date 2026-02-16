@@ -151,22 +151,30 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
 
 const PART1_TYPES = ['systems', 'procedures', 'deployments', 'samplingFeatures']
 const PART2_TYPES = ['datastreams', 'observations', 'controlStreams', 'commands']
+const PART1_OPS: OpType[] = ['CREATE', 'READ', 'UPDATE', 'VERIFY']  // No DELETE — Part 2 needs parents alive
 const CRUD_OPS: OpType[] = ['CREATE', 'READ', 'UPDATE', 'VERIFY', 'DELETE']
 
 function buildSteps(): Step[] {
   const steps: Step[] = []
   let id = 1
+  // Phase 1: Part 1 CRUD without DELETE (keep parents alive for Part 2)
   for (const key of PART1_TYPES) {
     const info = RESOURCE_TYPES.find((r) => r.key === key)!
-    for (const op of CRUD_OPS) {
+    for (const op of PART1_OPS) {
       steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op, status: 'pending' })
     }
   }
+  // Phase 2: Part 2 full CRUD (parents still exist)
   for (const key of PART2_TYPES) {
     const info = RESOURCE_TYPES.find((r) => r.key === key)!
     for (const op of CRUD_OPS) {
       steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op, status: 'pending' })
     }
+  }
+  // Phase 3: Part 1 DELETE (cleanup after Part 2 is done)
+  for (const key of PART1_TYPES) {
+    const info = RESOURCE_TYPES.find((r) => r.key === key)!
+    steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op: 'DELETE', status: 'pending' })
   }
   return steps
 }
@@ -686,6 +694,14 @@ const groupedSteps = computed(() => {
   return groups
 })
 
+// ─── Auto-scroll ─────────────────────────────────────────
+
+function scrollToActive(el: HTMLElement) {
+  nextTick(() => {
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  })
+}
+
 // ─── Lifecycle ───────────────────────────────────────────
 
 onMounted(() => { nextTick(() => initMap()) })
@@ -757,6 +773,7 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
             <div
               v-for="step in group.steps"
               :key="step.id"
+              :ref="(el) => { if (step === activeStep && el) scrollToActive(el as HTMLElement) }"
               class="plan-step"
               :class="{ active: step === activeStep, clickable: steps.indexOf(step) <= currentStepIndex }"
               @click="selectStep(step)"
