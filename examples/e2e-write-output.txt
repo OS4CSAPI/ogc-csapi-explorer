@@ -1,0 +1,160 @@
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ    CSAPIQueryBuilder ΓÇö End-to-End Write Operations Test    Γòæ
+ΓòáΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòú
+Γòæ Target: OSH SensorHub at http://45.55.99.236:8080/sensorhub/apiΓòæ
+Γòæ Auth:   admin/admin                                       Γòæ
+Γòæ Date:   2026-02-16T16:32:32.750Z                         Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+=== Setting Up CSAPIQueryBuilder ===
+
+Landing page: 200 OK
+scanCsapiLinks found: 6 resource types
+  systems ΓåÆ http://45.55.99.236:8080/sensorhub/api/systems
+  deployments ΓåÆ http://45.55.99.236:8080/sensorhub/api/deployments
+  procedures ΓåÆ http://45.55.99.236:8080/sensorhub/api/procedures
+  samplingFeatures ΓåÆ http://45.55.99.236:8080/sensorhub/api/samplingFeatures
+  datastreams ΓåÆ http://45.55.99.236:8080/sensorhub/api/datastreams
+  observations ΓåÆ http://45.55.99.236:8080/sensorhub/api/observations
+
+Builder created. Available resources: [systems, deployments, procedures, samplingFeatures, datastreams, observations]
+
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+  PHASE 1: READ OPERATIONS (Baseline Verification)
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+
+=== Test: LIST Systems with Query Options ===
+
+Γ£à LIST Systems with limit=2
+   Builder: builder.getSystems({ limit: 2 }) ΓåÆ "/systems?limit=2"
+   HTTP: GET 200 200 ΓÇö Returned 2 items (requested limit=2). numberMatched=N/A
+
+Γ£à LIST Systems with q="drone"
+   Builder: builder.getSystems({ q: 'drone' }) ΓåÆ "/systems?q=drone"
+   HTTP: GET 200 200 ΓÇö Returned 2 items matching "drone"
+
+Γ£à LIST Systems with limit=2, offset=2 (pagination)
+   Builder: builder.getSystems({ limit: 2, offset: 2 }) ΓåÆ "/systems?limit=2&offset=2"
+   HTTP: GET 200 200 ΓÇö Returned 2 items at offset=2. Links: 2
+
+=== Test: parseCollectionResponse across resource types ===
+
+Γ£à parseCollectionResponse ΓÇö systems
+   Builder: parseCollectionResponse(response) for systems ΓåÆ "/systems?limit=2"
+   HTTP: GET 200 200 ΓÇö Parsed 2 items, 1 links, numberMatched=N/A, numberReturned=N/A
+
+Γ£à parseCollectionResponse ΓÇö deployments
+   Builder: parseCollectionResponse(response) for deployments ΓåÆ "/deployments?limit=2"
+   HTTP: GET 200 200 ΓÇö Parsed 0 items, 0 links, numberMatched=N/A, numberReturned=N/A
+
+Γ£à parseCollectionResponse ΓÇö procedures
+   Builder: parseCollectionResponse(response) for procedures ΓåÆ "/procedures?limit=2"
+   HTTP: GET 200 200 ΓÇö Parsed 0 items, 0 links, numberMatched=N/A, numberReturned=N/A
+
+Γ£à parseCollectionResponse ΓÇö datastreams
+   Builder: parseCollectionResponse(response) for datastreams ΓåÆ "/datastreams?limit=2"
+   HTTP: GET 200 200 ΓÇö Parsed 2 items, 1 links, numberMatched=N/A, numberReturned=N/A
+
+Γ£à parseCollectionResponse ΓÇö observations
+   Builder: parseCollectionResponse(response) for observations ΓåÆ "/observations?limit=2"
+   HTTP: GET 200 200 ΓÇö Parsed 2 items, 1 links, numberMatched=N/A, numberReturned=N/A
+
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+  PHASE 2: CREATE OPERATIONS
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+
+=== Test: CREATE System ===
+
+Γ£à CREATE System (POST to collection URL)
+   Builder: builder.createSystem() ΓåÆ "/systems"
+   HTTP: POST 201 201 ΓÇö Created! Location: /systems/043g, ID: 043g
+
+=== Test: CREATE Deployment ===
+
+Γ£à CREATE Deployment (POST to collection URL)
+   Builder: builder.createDeployment() ΓåÆ "/deployments"
+   HTTP: POST 201 201 ΓÇö Created! Location: /deployments/040g, ID: 040g
+
+=== Test: CREATE Procedure ===
+
+Γ£à CREATE Procedure (POST to collection URL)
+   Builder: builder.createProcedure() ΓåÆ "/procedures"
+   HTTP: POST 201 201 ΓÇö Created! Location: /procedures/040g, ID: 040g
+
+=== Test: CREATE Datastream ===
+
+Γ¥î CREATE Datastream (POST to collection URL)
+   Builder: builder.createDataStream() ΓåÆ "/datastreams"
+   HTTP: POST 405 405 ΓÇö Failed: 405 Method Not Allowed
+   Error: {"status":405,"message":"Datastreams can only be created within a System resource"}
+
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+  PHASE 3: READ-BACK CREATED RESOURCES
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+
+=== Test: GET System (by ID) ===
+
+Γ£à GET System (individual resource)  | Library recognized as: System, name="E2E Test System ΓÇö CSAPI Explorer"
+   Builder: builder.getSystem('043g') ΓåÆ "/systems/043g"
+   HTTP: GET 200 200 ΓÇö Retrieved: E2E Test System ΓÇö CSAPI Explorer | Library recognized as: System, name="E2E Test System ΓÇö CSAPI Explorer"
+
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+  PHASE 4: UPDATE OPERATIONS
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+
+=== Test: UPDATE System ===
+
+Γ£à UPDATE System (PUT existing resource)
+   Builder: builder.updateSystem('043g') ΓåÆ "/systems/043g"
+   HTTP: PUT 204 204 ΓÇö Updated successfully (204)
+
+   Verification GET: name = "E2E Test System ΓÇö UPDATED" (expected "E2E Test System ΓÇö UPDATED")
+   Update verified: Γ£à
+
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+  PHASE 5: DELETE OPERATIONS
+ΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöüΓöü
+
+=== Test: DELETE System ===
+
+Γ£à DELETE System (DELETE individual resource)
+   Builder: builder.deleteSystem('043g') ΓåÆ "/systems/043g"
+   HTTP: DELETE 204 204 ΓÇö Deleted successfully (204)
+
+   Verification GET after delete: 404 (expected 404)
+   Delete verified: Γ£à
+
+=== Cleanup: Deleting test resources ===
+
+   Delete procedure 040g: 204
+   Delete deployment 040g: 204
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ                     TEST SUMMARY                          Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+Total: 15 | Passed: 14 | Failed: 1
+
+FAILED TESTS:
+  Γ¥î CREATE Datastream (POST to collection URL)
+     builder.createDataStream() ΓåÆ "/datastreams"
+     HTTP 405: Failed: 405 Method Not Allowed
+     Error: {"status":405,"message":"Datastreams can only be created within a System resource"}
+
+PASSED TESTS:
+  Γ£à LIST Systems with limit=2
+  Γ£à LIST Systems with q="drone"
+  Γ£à LIST Systems with limit=2, offset=2 (pagination)
+  Γ£à parseCollectionResponse ΓÇö systems
+  Γ£à parseCollectionResponse ΓÇö deployments
+  Γ£à parseCollectionResponse ΓÇö procedures
+  Γ£à parseCollectionResponse ΓÇö datastreams
+  Γ£à parseCollectionResponse ΓÇö observations
+  Γ£à CREATE System (POST to collection URL)
+  Γ£à CREATE Deployment (POST to collection URL)
+  Γ£à CREATE Procedure (POST to collection URL)
+  Γ£à GET System (individual resource)  | Library recognized as: System, name="E2E Test System ΓÇö CSAPI Explorer"
+  Γ£à UPDATE System (PUT existing resource)
+  Γ£à DELETE System (DELETE individual resource)
+
+Results written to examples/e2e-write-results.json

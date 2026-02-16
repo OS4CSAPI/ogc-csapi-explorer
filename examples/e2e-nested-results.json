@@ -1,0 +1,94 @@
+{
+  "date": "2026-02-16T16:39:16.434Z",
+  "testSuite": "nested-creates",
+  "total": 8,
+  "passed": 3,
+  "failed": 5,
+  "findings": [
+    "FINDING: createDataStream() generates top-level URL that servers reject. Datastreams must be created as nested resources under a system."
+  ],
+  "results": [
+    {
+      "name": "CREATE parent System",
+      "passed": true,
+      "builderMethod": "builder.createSystem()",
+      "generatedUrl": "/systems",
+      "httpMethod": "POST 201",
+      "httpStatus": 201,
+      "details": "Created system 043g"
+    },
+    {
+      "name": "Top-level createDataStream() — expected 405",
+      "passed": true,
+      "builderMethod": "builder.createDataStream()",
+      "generatedUrl": "/datastreams",
+      "httpMethod": "POST 405",
+      "httpStatus": 405,
+      "details": "Correctly rejected: 405 Method Not Allowed",
+      "finding": "FINDING: createDataStream() generates top-level URL that servers reject. Datastreams must be created as nested resources under a system."
+    },
+    {
+      "name": "CREATE Datastream (nested under system)",
+      "passed": false,
+      "builderMethod": "builder.getSystemDataStreams('043g')",
+      "generatedUrl": "/systems/043g/datastreams",
+      "httpMethod": "POST 400",
+      "httpStatus": 400,
+      "details": "Failed: 400",
+      "serverResponse": {
+        "status": 400,
+        "message": "Unsupported format: application/json"
+      },
+      "error": "{\"status\":400,\"message\":\"Unsupported format: application/json\"}"
+    },
+    {
+      "name": "DELETE System (parent)",
+      "passed": true,
+      "builderMethod": "builder.deleteSystem('043g')",
+      "generatedUrl": "/systems/043g",
+      "httpMethod": "DELETE 204",
+      "httpStatus": 204,
+      "details": "Deleted, verification GET: 404"
+    },
+    {
+      "name": "parseCollectionResponse — system/03bc5ofvvstg/datastreams",
+      "passed": false,
+      "builderMethod": "parseCollectionResponse() on getSystemDataStreams('03bc5ofvvstg')",
+      "generatedUrl": "/systems/03bc5ofvvstg/datastreams",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Parser error: Invalid collection response: missing both \"features\" and \"items\" arrays",
+      "error": "Invalid collection response: missing both \"features\" and \"items\" arrays"
+    },
+    {
+      "name": "parseCollectionResponse — system/02sv18sqotc0/datastreams",
+      "passed": false,
+      "builderMethod": "parseCollectionResponse() on getSystemDataStreams('02sv18sqotc0')",
+      "generatedUrl": "/systems/02sv18sqotc0/datastreams",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Parser error: Invalid collection response: missing both \"features\" and \"items\" arrays",
+      "error": "Invalid collection response: missing both \"features\" and \"items\" arrays"
+    },
+    {
+      "name": "parseCollectionResponse — system/03hsjcf4odig/datastreams",
+      "passed": false,
+      "builderMethod": "parseCollectionResponse() on getSystemDataStreams('03hsjcf4odig')",
+      "generatedUrl": "/systems/03hsjcf4odig/datastreams",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Parser error: Invalid collection response: missing both \"features\" and \"items\" arrays",
+      "error": "Invalid collection response: missing both \"features\" and \"items\" arrays"
+    },
+    {
+      "name": "extractCSAPIFeature — datastream/03tbj7mvqg50",
+      "passed": false,
+      "builderMethod": "extractCSAPIFeature(response) on getDataStream('03tbj7mvqg50')",
+      "generatedUrl": "/datastreams/03tbj7mvqg50",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Parser error: Cannot extract CSAPI feature: unrecognized or missing featureType",
+      "error": "Cannot extract CSAPI feature: unrecognized or missing featureType"
+    }
+  ]
+}

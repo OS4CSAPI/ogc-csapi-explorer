@@ -1,0 +1,187 @@
+{
+  "date": "2026-02-16T16:32:33.482Z",
+  "total": 15,
+  "passed": 14,
+  "failed": 1,
+  "results": [
+    {
+      "name": "LIST Systems with limit=2",
+      "passed": true,
+      "builderMethod": "builder.getSystems({ limit: 2 })",
+      "generatedUrl": "/systems?limit=2",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Returned 2 items (requested limit=2). numberMatched=N/A"
+    },
+    {
+      "name": "LIST Systems with q=\"drone\"",
+      "passed": true,
+      "builderMethod": "builder.getSystems({ q: 'drone' })",
+      "generatedUrl": "/systems?q=drone",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Returned 2 items matching \"drone\""
+    },
+    {
+      "name": "LIST Systems with limit=2, offset=2 (pagination)",
+      "passed": true,
+      "builderMethod": "builder.getSystems({ limit: 2, offset: 2 })",
+      "generatedUrl": "/systems?limit=2&offset=2",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Returned 2 items at offset=2. Links: 2"
+    },
+    {
+      "name": "parseCollectionResponse — systems",
+      "passed": true,
+      "builderMethod": "parseCollectionResponse(response) for systems",
+      "generatedUrl": "/systems?limit=2",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Parsed 2 items, 1 links, numberMatched=N/A, numberReturned=N/A"
+    },
+    {
+      "name": "parseCollectionResponse — deployments",
+      "passed": true,
+      "builderMethod": "parseCollectionResponse(response) for deployments",
+      "generatedUrl": "/deployments?limit=2",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Parsed 0 items, 0 links, numberMatched=N/A, numberReturned=N/A"
+    },
+    {
+      "name": "parseCollectionResponse — procedures",
+      "passed": true,
+      "builderMethod": "parseCollectionResponse(response) for procedures",
+      "generatedUrl": "/procedures?limit=2",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Parsed 0 items, 0 links, numberMatched=N/A, numberReturned=N/A"
+    },
+    {
+      "name": "parseCollectionResponse — datastreams",
+      "passed": true,
+      "builderMethod": "parseCollectionResponse(response) for datastreams",
+      "generatedUrl": "/datastreams?limit=2",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Parsed 2 items, 1 links, numberMatched=N/A, numberReturned=N/A"
+    },
+    {
+      "name": "parseCollectionResponse — observations",
+      "passed": true,
+      "builderMethod": "parseCollectionResponse(response) for observations",
+      "generatedUrl": "/observations?limit=2",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Parsed 2 items, 1 links, numberMatched=N/A, numberReturned=N/A"
+    },
+    {
+      "name": "CREATE System (POST to collection URL)",
+      "passed": true,
+      "builderMethod": "builder.createSystem()",
+      "generatedUrl": "/systems",
+      "httpMethod": "POST 201",
+      "httpStatus": 201,
+      "details": "Created! Location: /systems/043g, ID: 043g",
+      "serverResponse": ""
+    },
+    {
+      "name": "CREATE Deployment (POST to collection URL)",
+      "passed": true,
+      "builderMethod": "builder.createDeployment()",
+      "generatedUrl": "/deployments",
+      "httpMethod": "POST 201",
+      "httpStatus": 201,
+      "details": "Created! Location: /deployments/040g, ID: 040g",
+      "serverResponse": ""
+    },
+    {
+      "name": "CREATE Procedure (POST to collection URL)",
+      "passed": true,
+      "builderMethod": "builder.createProcedure()",
+      "generatedUrl": "/procedures",
+      "httpMethod": "POST 201",
+      "httpStatus": 201,
+      "details": "Created! Location: /procedures/040g, ID: 040g",
+      "serverResponse": ""
+    },
+    {
+      "name": "CREATE Datastream (POST to collection URL)",
+      "passed": false,
+      "builderMethod": "builder.createDataStream()",
+      "generatedUrl": "/datastreams",
+      "httpMethod": "POST 405",
+      "httpStatus": 405,
+      "details": "Failed: 405 Method Not Allowed",
+      "serverResponse": {
+        "status": 405,
+        "message": "Datastreams can only be created within a System resource"
+      },
+      "error": "{\"status\":405,\"message\":\"Datastreams can only be created within a System resource\"}"
+    },
+    {
+      "name": "GET System (individual resource)  | Library recognized as: System, name=\"E2E Test System — CSAPI Explorer\"",
+      "passed": true,
+      "builderMethod": "builder.getSystem('043g')",
+      "generatedUrl": "/systems/043g",
+      "httpMethod": "GET 200",
+      "httpStatus": 200,
+      "details": "Retrieved: E2E Test System — CSAPI Explorer | Library recognized as: System, name=\"E2E Test System — CSAPI Explorer\"",
+      "serverResponse": {
+        "type": "Feature",
+        "id": "043g",
+        "geometry": null,
+        "properties": {
+          "uid": "urn:csapi-explorer:e2e-test:system:1771259553131",
+          "featureType": "http://www.w3.org/ns/sosa/Sensor",
+          "name": "E2E Test System — CSAPI Explorer",
+          "description": "Temporary system created by e2e-write-operations.ts to validate CSAPIQueryBuilder URL generation.",
+          "validTime": [
+            "2026-02-16T16:32:33.131Z",
+            "now"
+          ]
+        },
+        "links": [
+          {
+            "rel": "canonical",
+            "href": "http://45.55.99.236:8080/sensorhub/api/systems/043g",
+            "type": "application/json"
+          },
+          {
+            "rel": "alternate",
+            "title": "This system resource in SensorML format",
+            "href": "http://45.55.99.236:8080/sensorhub/api/systems/043g?f=sml3",
+            "type": "application/sml+json"
+          },
+          {
+            "rel": "alternate",
+            "title": "This system resource in HTML format",
+            "href": "http://45.55.99.236:8080/sensorhub/api/systems/043g?f=html",
+            "type": "text/html"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UPDATE System (PUT existing resource)",
+      "passed": true,
+      "builderMethod": "builder.updateSystem('043g')",
+      "generatedUrl": "/systems/043g",
+      "httpMethod": "PUT 204",
+      "httpStatus": 204,
+      "details": "Updated successfully (204)",
+      "serverResponse": ""
+    },
+    {
+      "name": "DELETE System (DELETE individual resource)",
+      "passed": true,
+      "builderMethod": "builder.deleteSystem('043g')",
+      "generatedUrl": "/systems/043g",
+      "httpMethod": "DELETE 204",
+      "httpStatus": 204,
+      "details": "Deleted successfully (204)",
+      "serverResponse": ""
+    }
+  ]
+}

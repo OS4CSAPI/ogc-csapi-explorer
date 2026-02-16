@@ -1,0 +1,113 @@
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ    CSAPIQueryBuilder ΓÇö Nested Create Operations Test     Γòæ
+ΓòáΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòú
+Γòæ Target: http://45.55.99.236:8080/sensorhub/api             Γòæ
+Γòæ Date:   2026-02-16T16:39:15.901Z                           Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+=== Setting Up CSAPIQueryBuilder ===
+
+Landing page: 200 OK
+scanCsapiLinks found: 6 resource types
+  systems ΓåÆ http://45.55.99.236:8080/sensorhub/api/systems
+  deployments ΓåÆ http://45.55.99.236:8080/sensorhub/api/deployments
+  procedures ΓåÆ http://45.55.99.236:8080/sensorhub/api/procedures
+  samplingFeatures ΓåÆ http://45.55.99.236:8080/sensorhub/api/samplingFeatures
+  datastreams ΓåÆ http://45.55.99.236:8080/sensorhub/api/datastreams
+  observations ΓåÆ http://45.55.99.236:8080/sensorhub/api/observations
+
+Builder created. Available: [systems, deployments, procedures, samplingFeatures, datastreams, observations]
+
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+  PHASE 1: CREATE PARENT SYSTEM
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+
+[32mΓ£ô[0m CREATE System ΓåÆ /systems
+   HTTP: POST 201 ΓÇö ID: 043g
+
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+  PHASE 2: NESTED DATASTREAM CREATION
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+
+--- Test 2a: Top-level createDataStream() (expected 405) ---
+
+[32mΓ£ô[0m Top-level createDataStream() correctly rejected with 405
+   URL: /datastreams
+   Server: {"status":405,"message":"Datastreams can only be created within a System resource"}
+
+--- Test 2b: Nested create via getSystemDataStreams(systemId) ---
+
+[31mΓ£ù[0m Nested datastream creation FAILED: 400
+   URL: /systems/043g/datastreams
+   Response: {"status":400,"message":"Unsupported format: application/json"}
+
+--- Test 2c: Verify nested datastream with GET ---
+
+   Skipped (no datastream ID)
+
+--- Test 2d: List system datastreams to verify relationship ---
+
+
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+  PHASE 3: NESTED OBSERVATION CREATION
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+
+   Skipped ΓÇö no datastream to attach observation to
+
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+  PHASE 4: UPDATE & DELETE NESTED RESOURCES
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+
+
+--- Test 4d: DELETE System (parent) ---
+
+[32mΓ£ô[0m DELETE System 043g
+   Builder: builder.deleteSystem('043g') ΓåÆ "/systems/043g"
+   Verification GET: 404 (expected 404)
+
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+  PHASE 5: PARSER VALIDATION (using existing server data)
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+
+--- Test 5a: parseCollectionResponse on system datastreams ---
+
+[31mΓ£ù[0m parseCollectionResponse FAILED for 03bc5ofvvstg datastreams: Invalid collection response: missing both "features" and "items" arrays
+[31mΓ£ù[0m parseCollectionResponse FAILED for 02sv18sqotc0 datastreams: Invalid collection response: missing both "features" and "items" arrays
+[31mΓ£ù[0m parseCollectionResponse FAILED for 03hsjcf4odig datastreams: Invalid collection response: missing both "features" and "items" arrays
+
+--- Test 5b: extractCSAPIFeature on individual datastream ---
+
+[31mΓ£ù[0m extractCSAPIFeature FAILED: Cannot extract CSAPI feature: unrecognized or missing featureType
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ                     TEST SUMMARY                          Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+Total: 8 | Passed: 3 | Failed: 5
+
+KEY FINDINGS:
+  ΓÜá FINDING: createDataStream() generates top-level URL that servers reject. Datastreams must be created as nested resources under a system.
+
+FAILED TESTS:
+  Γ£ù CREATE Datastream (nested under system)
+     builder.getSystemDataStreams('043g') ΓåÆ "/systems/043g/datastreams"
+     HTTP 400: Failed: 400
+  Γ£ù parseCollectionResponse ΓÇö system/03bc5ofvvstg/datastreams
+     parseCollectionResponse() on getSystemDataStreams('03bc5ofvvstg') ΓåÆ "/systems/03bc5ofvvstg/datastreams"
+     HTTP 200: Parser error: Invalid collection response: missing both "features" and "items" arrays
+  Γ£ù parseCollectionResponse ΓÇö system/02sv18sqotc0/datastreams
+     parseCollectionResponse() on getSystemDataStreams('02sv18sqotc0') ΓåÆ "/systems/02sv18sqotc0/datastreams"
+     HTTP 200: Parser error: Invalid collection response: missing both "features" and "items" arrays
+  Γ£ù parseCollectionResponse ΓÇö system/03hsjcf4odig/datastreams
+     parseCollectionResponse() on getSystemDataStreams('03hsjcf4odig') ΓåÆ "/systems/03hsjcf4odig/datastreams"
+     HTTP 200: Parser error: Invalid collection response: missing both "features" and "items" arrays
+  Γ£ù extractCSAPIFeature ΓÇö datastream/03tbj7mvqg50
+     extractCSAPIFeature(response) on getDataStream('03tbj7mvqg50') ΓåÆ "/datastreams/03tbj7mvqg50"
+     HTTP 200: Parser error: Cannot extract CSAPI feature: unrecognized or missing featureType
+
+PASSED TESTS:
+  Γ£ô CREATE parent System
+  Γ£ô Top-level createDataStream() ΓÇö expected 405
+  Γ£ô DELETE System (parent)
+
+Results written to examples/e2e-nested-results.json
