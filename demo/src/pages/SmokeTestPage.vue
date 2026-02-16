@@ -501,7 +501,16 @@ async function executeCurrentStep() {
         step.before = readResp.data
 
         const url = getUpdateUrl(step.resourceType, id)
-        const payload = makePayload(step.resourceType, 'update')
+        let payload = makePayload(step.resourceType, 'update')
+
+        // For controlStreams: merge updated fields into server's current state.
+        // OSH requires the 'schema' block on PUT but crashes (500) if you send
+        // the CREATE-format field names. Merging into the GET response preserves
+        // the server's own schema representation exactly. (S-12 workaround)
+        if (step.resourceType === 'controlStreams' && readResp.ok && readResp.data) {
+          payload = { ...readResp.data, ...payload }
+        }
+
         const bodyStr = JSON.stringify(payload, null, 2)
 
         step.request = {

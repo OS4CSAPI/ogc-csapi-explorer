@@ -12,6 +12,7 @@
 | **F-17** | Library bug | `buildResourceUrl` fallback produces camelCase `controlStreams` in URL path | High | Yes — [GitHub Issue #20](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/20) |
 | **S-10** | Server observation | OSH controlStream CREATE requires `commandFormat` + `parametersSchema` (non-standard field names) | Medium | No — server quirk |
 | **S-11** | Server observation | OSH enforces strict lowercase `controlstreams` URL path segment | Medium | No — server enforcement of spec |
+| **S-12** | Server observation | OSH controlStream PUT requires `schema` but crashes (500) when CREATE-format field names are used | High | No — server Catch-22 bug |
 
 ---
 
@@ -262,6 +263,87 @@ The `toUrlPath()` mapping in [`demo/src/csapi-bridge.ts`](https://github.com/OS4
 
 ---
 
+### S-12. OSH SensorHub: controlStream PUT Requires `schema` but Crashes When CREATE-Format Field Names Are Used
+
+| | |
+|---|---|
+| **Severity** | High |
+| **Server** | OSH SensorHub |
+| **Endpoint** | `PUT /controlstreams/{id}` |
+| **Discovered In** | CRUD smoke test — controlStream UPDATE step |
+
+#### What happens
+
+OSH's controlStream PUT handler has a Catch-22:
+
+| Payload | Response | Message |
+|---|---|---|
+| **Without** `schema` block | `400 Bad Request` | `"Invalid payload: Missing property: schema"` |
+| **With** `schema` using CREATE field names (`commandFormat` + `parametersSchema`) | `500 Internal Server Error` | `"Internal server error"` |
+| **With** `schema` from GET response (fetch-then-merge) | `204 No Content` | **Success** (workaround) |
+
+The server *requires* the `schema` property on PUT but *crashes* when it receives the schema field names that the POST (create) handler accepts.
+
+#### Evidence
+
+**Without schema (400):**
+
+```
+PUT /controlstreams/042g
+Content-Type: application/json
+
+{ "name": "Smoke Test controlStreams (updated)", "inputName": "smoke-test-input" }
+
+→ 400 { "status": 400, "message": "Invalid payload: Missing property: schema" }
+```
+
+**With CREATE-format schema (500):**
+
+```
+PUT /controlstreams/0420
+Content-Type: application/json
+
+{
+  "name": "Smoke Test controlStreams (updated)",
+  "inputName": "smoke-test-input",
+  "schema": {
+    "commandFormat": "application/swe+json",
+    "parametersSchema": { "type": "DataRecord", "fields": [...] }
+  }
+}
+
+→ 500 { "status": 500, "message": "Internal server error" }
+```
+
+#### Why it's a Catch-22
+
+The field names OSH accepts on **CREATE** (`commandFormat` + `parametersSchema`) differ from what its **PUT handler** can parse. The PUT handler likely expects the GET response format, which may use different field names. This means a client cannot construct a valid PUT payload from scratch — it must fetch the existing resource and merge changes into the server's own representation.
+
+#### Contrast with datastreams
+
+The equivalent datastream PUT (`PUT /datastreams/{id}`) handles schema without issue. This bug is specific to the controlStream update code path in OSH, suggesting the two PUT handlers had different implementation approaches.
+
+#### Workaround applied in demo app
+
+Fetch the current control stream state via GET, then merge updated fields (name, inputName) while preserving the server's original `schema` block unchanged:
+
+```typescript
+// Fetch current state — its schema block uses the server's own format
+const readResp = await apiFetch(readUrl, { method: 'GET' })
+const merged = { ...readResp.data, name: 'updated name', inputName: 'smoke-test-input' }
+// PUT the merged object — schema preserved from server exactly
+await apiFetch(updateUrl, { method: 'PUT', body: JSON.stringify(merged) })
+```
+
+Committed at [`fc58638`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/fc58638) (initial without-schema attempt), then refined with fetch-then-merge approach.
+
+#### Related
+
+- S-10 — CREATE field names (`commandFormat` + `parametersSchema`) differ from schema response field names
+- S-9 — Similar obsFormat/cmdFormat field name confusion for datastreams
+
+---
+
 ## Cross-Reference with Prior Findings
 
 | New Finding | Related Prior Finding | Relationship |
@@ -271,6 +353,8 @@ The `toUrlPath()` mapping in [`demo/src/csapi-bridge.ts`](https://github.com/OS4
 | S-10 (field names) | S-9 (obsFormat) | Both involve create payload field name confusion |
 | S-10 (field names) | [#6 (content types)](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/6) | Content type and format field documentation |
 | S-11 (case sensitivity) | F-17 (URL casing) | Server behavior that triggers the library bug |
+| S-12 (PUT schema Catch-22) | S-10 (CREATE field names) | Server uses different field names for POST vs. PUT |
+| S-12 (PUT schema Catch-22) | S-9 (obsFormat) | Broader pattern of schema field name confusion |
 
 ---
 
@@ -280,3 +364,4 @@ The `toUrlPath()` mapping in [`demo/src/csapi-bridge.ts`](https://github.com/OS4
 |---|---|
 | [`0cdeabe`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/0cdeabe) | ControlStream schema field names (`commandFormat` + `parametersSchema`) |
 | [`6f2d854`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/6f2d854) | URL path normalization (`controlStreams` → `controlstreams`) |
+| [`fc58638`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/fc58638) | ControlStream UPDATE: omit schema (initial attempt) |
