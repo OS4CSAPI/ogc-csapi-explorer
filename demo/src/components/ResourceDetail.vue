@@ -6,6 +6,7 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
+import SweSchemaDisplay from './SweSchemaDisplay.vue'
 
 const props = defineProps<{
   resourceType: string
@@ -33,6 +34,12 @@ const recognizedType = computed(() => {
   if (!detail.value) return null
   return getCSAPIResourceType(detail.value)
 })
+
+/** True when viewing a datastream — triggers schema display */
+const isDatastream = computed(() => props.resourceType === 'datastreams')
+
+/** ID to pass to schema component — uses fetched detail ID or the prop */
+const effectiveId = computed(() => detail.value?.id || props.resourceId || '')
 
 async function fetchDetail(id?: string) {
   const useId = id || manualId.value || props.resourceId
@@ -153,6 +160,9 @@ watch(
           </div>
         </template>
       </div>
+
+      <!-- Observation Schema (datastreams only) -->
+      <SweSchemaDisplay v-if="isDatastream && effectiveId" :datastreamId="effectiveId" />
 
       <!-- Links -->
       <details v-if="detail.links?.length || detail.properties?.links?.length" class="detail-section">

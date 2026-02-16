@@ -254,6 +254,24 @@ export function getDeleteUrl(resourceType: string, id: string): string {
 }
 
 // ========================================
+// Schema URL Helper
+// ========================================
+
+/**
+ * Build the URL for a datastream's observation schema.
+ * Returns null if the builder is not initialized or the resource is unavailable.
+ */
+export function getSchemaUrl(datastreamId: string): string | null {
+  const b = builder.value
+  if (!b) return null
+  try {
+    return b.getDataStreamSchema(datastreamId, { f: 'application/swe+json' })
+  } catch {
+    return null
+  }
+}
+
+// ========================================
 // Content-Type Helper
 // ========================================
 
@@ -269,4 +287,6 @@ export function getContentType(resourceType: string): string {
 // ========================================
 
 export { parseCollectionResponse, extractCSAPIFeature, getCSAPIResourceType }
+export { parseSWEComponent } from '@csapi/ogc-api/csapi/formats/swecommon/parser'
+export type { AnyComponent } from '@csapi/ogc-api/csapi/formats/swecommon/types'
 export type { CollectionResponse }
