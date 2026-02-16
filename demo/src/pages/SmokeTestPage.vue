@@ -59,6 +59,7 @@ const COORDS: Record<string, { create: [number, number]; update: [number, number
   procedures:        { create: [-77.0366, 38.8977], update: [-77.0229, 38.8997] },
   deployments:       { create: [-77.0098, 38.8899], update: [-77.0440, 38.8916] },
   samplingFeatures:  { create: [-77.0479, 38.8813], update: [-77.0365, 38.8822] },
+  observations:      { create: [-77.0560, 38.8710], update: [-77.0420, 38.8780] },
 }
 
 // ─── Test Payloads ───────────────────────────────────────
@@ -106,6 +107,10 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
           label: 'Smoke Test Record',
           fields: [
             { type: 'Quantity', label: 'Temperature', name: 'temp', uom: { code: 'Cel' } },
+            { type: 'DataRecord', label: 'Location', name: 'location', fields: [
+              { type: 'Quantity', label: 'Latitude', name: 'lat', uom: { code: 'deg' } },
+              { type: 'Quantity', label: 'Longitude', name: 'lon', uom: { code: 'deg' } },
+            ]},
           ]
         }
       }
@@ -113,10 +118,14 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
   }
 
   if (type === 'observations') {
+    const obsCoords = COORDS['observations']?.[phase]
     return {
       phenomenonTime: new Date().toISOString(),
       resultTime: new Date().toISOString(),
-      result: { temp: phase === 'create' ? 22.5 : 25.0 },
+      result: {
+        temp: phase === 'create' ? 22.5 : 25.0,
+        location: obsCoords ? { lat: obsCoords[1], lon: obsCoords[0] } : undefined,
+      },
     }
   }
 
@@ -125,8 +134,8 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
       name,
       inputName: 'smoke-test-input',
       schema: {
-        cmdFormat: 'application/swe+json',
-        recordSchema: {
+        commandFormat: 'application/swe+json',
+        parametersSchema: {
           type: 'DataRecord',
           label: 'Smoke Test Command',
           fields: [
@@ -905,7 +914,7 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
         <div class="panel-header">Map View</div>
         <div ref="mapContainer" class="map-container"></div>
         <div class="map-legend">
-          <div v-for="type in ['systems', 'procedures', 'deployments', 'samplingFeatures']" :key="type" class="legend-item">
+          <div v-for="type in ['systems', 'procedures', 'deployments', 'samplingFeatures', 'observations']" :key="type" class="legend-item">
             <span class="legend-dot" :style="{ background: TYPE_COLORS[type] }"></span>
             <span class="legend-label">{{ type }}</span>
           </div>
