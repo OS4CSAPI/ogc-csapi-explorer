@@ -1,0 +1,538 @@
+{
+  "date": "2026-02-16T16:53:51.610Z",
+  "testSuite": "cross-server-interoperability",
+  "servers": [
+    {
+      "name": "OSH SensorHub",
+      "baseUrl": "http://45.55.99.236:8080/sensorhub/api",
+      "hasData": true,
+      "supportsCrud": true
+    },
+    {
+      "name": "52North CSA",
+      "baseUrl": "https://csa.demo.52north.org",
+      "hasData": false,
+      "supportsCrud": false
+    }
+  ],
+  "summary": [
+    {
+      "server": "OSH SensorHub",
+      "total": 35,
+      "passed": 33,
+      "failed": 2
+    },
+    {
+      "server": "52North CSA",
+      "total": 26,
+      "passed": 22,
+      "failed": 4
+    }
+  ],
+  "findings": [
+    "OSH SensorHub: No \"data\" link on landing page",
+    "OSH SensorHub: Uses non-standard \"items\" envelope instead of FeatureCollection",
+    "52North CSA: Server does not advertise CSA conformance classes",
+    "52North CSA: scanCsapiLinks finds 0 resources from landing page. Server uses collection-scoped discovery.",
+    "52North CSA: datastreams endpoint returned 500",
+    "52North CSA: observations endpoint returned 500"
+  ],
+  "results": [
+    {
+      "server": "OSH SensorHub",
+      "category": "Landing Page",
+      "name": "Landing page accessible",
+      "passed": true,
+      "details": "Status: 200",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Landing Page",
+      "name": "Has title",
+      "passed": true,
+      "details": "\"Connected Systems API Service\""
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Landing Page",
+      "name": "Links array",
+      "passed": true,
+      "details": "10 links found"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Landing Page",
+      "name": "Has \"data\" link (collections)",
+      "passed": false,
+      "details": "Missing rel=\"data\" link",
+      "finding": "OSH SensorHub: No \"data\" link on landing page"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Conformance",
+      "name": "Conformance endpoint",
+      "passed": true,
+      "details": "Status: 200",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Conformance",
+      "name": "Conformance classes count",
+      "passed": true,
+      "details": "33 classes"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Conformance",
+      "name": "CSA conformance classes",
+      "passed": true,
+      "details": "22 CSA classes found"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Discovery",
+      "name": "Root-level CSAPI links (scanCsapiLinks)",
+      "passed": true,
+      "details": "Found 6: systems, deployments, procedures, samplingFeatures, datastreams, observations"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Discovery",
+      "name": "Collections endpoint",
+      "passed": true,
+      "details": "4 collections found"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Discovery",
+      "name": "Collection-scoped CSAPI links",
+      "passed": true,
+      "details": "Found 4: systems, datastreams, samplingFeatures, procedures"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Builder Setup",
+      "name": "CSAPIQueryBuilder created",
+      "passed": true,
+      "details": "Available: [systems, deployments, procedures, samplingFeatures, datastreams, observations]"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Read Operations",
+      "name": "LIST systems",
+      "passed": true,
+      "details": "3 items, envelope: items",
+      "url": "/systems?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Read Operations",
+      "name": "LIST deployments",
+      "passed": true,
+      "details": "0 items, envelope: items",
+      "url": "/deployments?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Read Operations",
+      "name": "LIST procedures",
+      "passed": true,
+      "details": "0 items, envelope: items",
+      "url": "/procedures?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Read Operations",
+      "name": "LIST datastreams",
+      "passed": true,
+      "details": "3 items, envelope: items",
+      "url": "/datastreams?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Read Operations",
+      "name": "LIST observations",
+      "passed": true,
+      "details": "3 items, envelope: items",
+      "url": "/observations?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Read Operations",
+      "name": "getSystems({\"limit\":2})",
+      "passed": true,
+      "details": "2 items",
+      "url": "/systems?limit=2",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Read Operations",
+      "name": "getSystems({\"limit\":2,\"offset\":1})",
+      "passed": true,
+      "details": "2 items",
+      "url": "/systems?limit=2&offset=1",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Response Envelope",
+      "name": "Envelope format",
+      "passed": true,
+      "details": "Items envelope ({ items: [...] }) — non-standard but supported",
+      "finding": "OSH SensorHub: Uses non-standard \"items\" envelope instead of FeatureCollection"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Response Envelope",
+      "name": "Response metadata",
+      "passed": true,
+      "details": "links=true, numberMatched=false, numberReturned=false, timeStamp=false"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Parsers",
+      "name": "parseCollectionResponse — systems",
+      "passed": true,
+      "details": "3 items, 1 links, numberMatched=N/A",
+      "url": "/systems?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Parsers",
+      "name": "parseCollectionResponse — deployments",
+      "passed": true,
+      "details": "0 items, 0 links, numberMatched=N/A",
+      "url": "/deployments?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Parsers",
+      "name": "parseCollectionResponse — procedures",
+      "passed": true,
+      "details": "0 items, 0 links, numberMatched=N/A",
+      "url": "/procedures?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Parsers",
+      "name": "parseCollectionResponse — datastreams",
+      "passed": true,
+      "details": "3 items, 1 links, numberMatched=N/A",
+      "url": "/datastreams?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Parsers",
+      "name": "parseCollectionResponse — observations",
+      "passed": true,
+      "details": "3 items, 1 links, numberMatched=N/A",
+      "url": "/observations?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Parsers",
+      "name": "extractCSAPIFeature — system/03bc5ofvvstg",
+      "passed": true,
+      "details": "type=System, name=\"LIVE - Field Drone\"",
+      "url": "/systems/03bc5ofvvstg",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Nested Resources",
+      "name": "getSystemDataStreams('03bc5ofvvstg')",
+      "passed": true,
+      "details": "10 datastreams, envelope: items",
+      "url": "/systems/03bc5ofvvstg/datastreams",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Nested Resources",
+      "name": "parseCollectionResponse — nested datastreams",
+      "passed": true,
+      "details": "10 items parsed from 03bc5ofvvstg/datastreams",
+      "url": "/systems/03bc5ofvvstg/datastreams"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Nested Resources",
+      "name": "getObservationsForDatastream",
+      "passed": false,
+      "details": "Builder error: builder.getObservationsForDatastream is not a function"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "CRUD Operations",
+      "name": "CREATE System",
+      "passed": true,
+      "details": "201 Created, ID: 043g",
+      "url": "/systems",
+      "httpStatus": 201
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "CRUD Operations",
+      "name": "GET System (read-back)",
+      "passed": true,
+      "details": "name=\"Cross-Server Test System — OSH SensorHub\"",
+      "url": "/systems/043g",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "CRUD Operations",
+      "name": "UPDATE System (PUT)",
+      "passed": true,
+      "details": "Status: 204",
+      "url": "/systems/043g",
+      "httpStatus": 204
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "CRUD Operations",
+      "name": "UPDATE verification",
+      "passed": true,
+      "details": "name=\"Cross-Server Test — UPDATED — OSH SensorHub\""
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "CRUD Operations",
+      "name": "DELETE System",
+      "passed": true,
+      "details": "Status: 204",
+      "url": "/systems/043g",
+      "httpStatus": 204
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "CRUD Operations",
+      "name": "DELETE verification",
+      "passed": true,
+      "details": "GET returns 404"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Landing Page",
+      "name": "Landing page accessible",
+      "passed": true,
+      "details": "Status: 200",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Landing Page",
+      "name": "Has title",
+      "passed": true,
+      "details": "\"connected-systems-pygeoapi\""
+    },
+    {
+      "server": "52North CSA",
+      "category": "Landing Page",
+      "name": "Links array",
+      "passed": true,
+      "details": "7 links found"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Landing Page",
+      "name": "Has \"data\" link (collections)",
+      "passed": true,
+      "details": "→ https://csa.demo.52north.org/collections"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Conformance",
+      "name": "Conformance endpoint",
+      "passed": true,
+      "details": "Status: 200",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Conformance",
+      "name": "Conformance classes count",
+      "passed": true,
+      "details": "1 classes"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Conformance",
+      "name": "CSA conformance classes",
+      "passed": false,
+      "details": "No CSA conformance classes declared",
+      "finding": "52North CSA: Server does not advertise CSA conformance classes"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Discovery",
+      "name": "Root-level CSAPI links (scanCsapiLinks)",
+      "passed": false,
+      "details": "No CSAPI links found on landing page",
+      "finding": "52North CSA: scanCsapiLinks finds 0 resources from landing page. Server uses collection-scoped discovery."
+    },
+    {
+      "server": "52North CSA",
+      "category": "Discovery",
+      "name": "Collections endpoint",
+      "passed": true,
+      "details": "5 collections found"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Discovery",
+      "name": "Collection-scoped CSAPI links",
+      "passed": true,
+      "details": "Found 5: systems, datastreams, samplingFeatures, procedures, deployments"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Builder Setup",
+      "name": "Fallback resource URLs",
+      "passed": true,
+      "details": "Using standard paths for 9 resource types"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Builder Setup",
+      "name": "CSAPIQueryBuilder created",
+      "passed": true,
+      "details": "Available: [systems, deployments, samplingFeatures, procedures, properties, datastreams, observations, controlStreams, commands]"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Read Operations",
+      "name": "LIST systems",
+      "passed": true,
+      "details": "0 items, envelope: FeatureCollection/features",
+      "url": "/systems?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Read Operations",
+      "name": "LIST deployments",
+      "passed": true,
+      "details": "0 items, envelope: FeatureCollection/features",
+      "url": "/deployments?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Read Operations",
+      "name": "LIST procedures",
+      "passed": true,
+      "details": "0 items, envelope: FeatureCollection/features",
+      "url": "/procedures?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Read Operations",
+      "name": "LIST datastreams",
+      "passed": false,
+      "details": "HTTP 500: <!doctype html>\n<html lang=en>\n<title>500 Internal Server Error</title>\n<h1>Internal Server Error</h1>\n<p>The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.</p>\n",
+      "url": "/datastreams?limit=3",
+      "httpStatus": 500,
+      "finding": "52North CSA: datastreams endpoint returned 500"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Read Operations",
+      "name": "LIST observations",
+      "passed": false,
+      "details": "HTTP 500: <!doctype html>\n<html lang=en>\n<title>500 Internal Server Error</title>\n<h1>Internal Server Error</h1>\n<p>The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.</p>\n",
+      "url": "/observations?limit=3",
+      "httpStatus": 500,
+      "finding": "52North CSA: observations endpoint returned 500"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Read Operations",
+      "name": "getSystems({\"limit\":2})",
+      "passed": true,
+      "details": "0 items",
+      "url": "/systems?limit=2",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Read Operations",
+      "name": "getSystems({\"limit\":2,\"offset\":1})",
+      "passed": true,
+      "details": "0 items",
+      "url": "/systems?limit=2&offset=1",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Response Envelope",
+      "name": "Envelope format",
+      "passed": true,
+      "details": "Standard FeatureCollection/features (spec-compliant)"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Response Envelope",
+      "name": "Response metadata",
+      "passed": true,
+      "details": "links=true, numberMatched=false, numberReturned=false, timeStamp=false"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Parsers",
+      "name": "parseCollectionResponse — systems",
+      "passed": true,
+      "details": "0 items, 0 links, numberMatched=N/A",
+      "url": "/systems?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Parsers",
+      "name": "parseCollectionResponse — deployments",
+      "passed": true,
+      "details": "0 items, 0 links, numberMatched=N/A",
+      "url": "/deployments?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Parsers",
+      "name": "parseCollectionResponse — procedures",
+      "passed": true,
+      "details": "0 items, 0 links, numberMatched=N/A",
+      "url": "/procedures?limit=3",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Nested Resources",
+      "name": "Nested resource tests",
+      "passed": true,
+      "details": "Skipped — no data"
+    },
+    {
+      "server": "52North CSA",
+      "category": "CRUD Operations",
+      "name": "Read-only enforcement",
+      "passed": true,
+      "details": "POST correctly rejected with 401",
+      "url": "/systems",
+      "httpStatus": 401
+    }
+  ]
+}
