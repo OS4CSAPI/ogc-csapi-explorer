@@ -265,7 +265,7 @@ export function getSchemaUrl(datastreamId: string): string | null {
   const b = builder.value
   if (!b) return null
   try {
-    return b.getDataStreamSchema(datastreamId, { f: 'application/swe+json' })
+    return b.getDataStreamSchema(datastreamId)
   } catch {
     return null
   }
