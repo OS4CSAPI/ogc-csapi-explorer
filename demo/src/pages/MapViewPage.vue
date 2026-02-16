@@ -50,6 +50,7 @@ const TYPE_COLORS: Record<string, string> = {
   deployments: '#8b5cf6',   // purple
   procedures: '#f59e0b',    // amber
   samplingFeatures: '#10b981', // emerald
+  liveLocations: '#ef4444', // red — for observation-based locations
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -57,6 +58,7 @@ const TYPE_LABELS: Record<string, string> = {
   deployments: 'D',
   procedures: 'P',
   samplingFeatures: 'F',
+  liveLocations: 'L',
 }
 
 // Active layer toggles
@@ -65,6 +67,7 @@ const activeLayers = ref<Record<string, boolean>>({
   deployments: true,
   procedures: true,
   samplingFeatures: true,
+  liveLocations: true,
 })
 
 // Vector sources per type so we can toggle layers
@@ -177,7 +180,10 @@ async function loadResourceType(resourceType: string): Promise<number> {
 
   try {
     const url = getListUrl(resourceType, { limit: 200 })
-    const res = await apiFetch(url)
+    // Request geo+json so servers return GeoJSON features with geometry
+    const res = await apiFetch(url, {
+      headers: { 'Accept': 'application/geo+json' },
+    })
     if (!res.ok || !res.data) return 0
 
     // Parse items from either FeatureCollection or items envelope
@@ -204,17 +210,119 @@ async function loadResourceType(resourceType: string): Promise<number> {
   }
 }
 
+/**
+ * Load latest location observations from datastreams.
+ * Finds datastreams whose observedProperties include "Location" or whose
+ * outputName contains "gps"/"location", fetches the most recent observation
+ * from each, and plots the system's last-known position.
+ */
+async function loadLocationObservations(): Promise<number> {
+  const source = vectorSources['liveLocations']
+  if (!source) return 0
+  source.clear()
+
+  try {
+    // Fetch all datastreams
+    const dsRes = await apiFetch('/datastreams?limit=100')
+    if (!dsRes.ok || !dsRes.data) return 0
+
+    const allDs = dsRes.data.items || dsRes.data.features || dsRes.data || []
+    // Filter to location-related datastreams
+    const locationDs = allDs.filter((ds: any) => {
+      const name = (ds.name || ds.outputName || '').toLowerCase()
+      const hasLocationProp = ds.observedProperties?.some((p: any) =>
+        (p.definition || '').includes('Location') || (p.label || '').toLowerCase().includes('location')
+      )
+      return hasLocationProp || name.includes('gps_data') || name.includes('location')
+    })
+
+    // Deduplicate by system — keep only one datastream per system (prefer "Location" in name)
+    const bySystem: Record<string, any> = {}
+    for (const ds of locationDs) {
+      const sysId = ds['system@id'] || ds.system?.id
+      if (!sysId) continue
+      const existing = bySystem[sysId]
+      if (!existing || (ds.name || '').toLowerCase().includes('location')) {
+        bySystem[sysId] = ds
+      }
+    }
+
+    let count = 0
+    // Fetch latest observation from each location datastream
+    const promises = Object.entries(bySystem).map(async ([sysId, ds]) => {
+      try {
+        const obsRes = await apiFetch(`/datastreams/${ds.id}/observations?limit=1`, {
+          headers: { 'Accept': 'application/om+json' },
+        })
+        if (!obsRes.ok || !obsRes.data) return
+
+        const obs = obsRes.data.items?.[0] || obsRes.data[0]
+        if (!obs?.result) return
+
+        // Extract lat/lon from result — handles {lat, lon} or {Location: {lat, lon}}
+        let lat: number | undefined
+        let lon: number | undefined
+        const result = obs.result
+        if (typeof result.lat === 'number' && typeof result.lon === 'number') {
+          lat = result.lat; lon = result.lon
+        } else if (result.Location && typeof result.Location.lat === 'number') {
+          lat = result.Location.lat; lon = result.Location.lon
+        } else if (result.location && typeof result.location.lat === 'number') {
+          lat = result.location.lat; lon = result.location.lon
+        }
+        if (lat == null || lon == null) return
+
+        // Look up the system name from the systems layer
+        const sysSource = vectorSources['systems']
+        const sysFeature = sysSource?.getFeatures().find(f => f.get('resourceId') === sysId)
+        const sysName = sysFeature?.get('resourceName')
+          || ds['system@link']?.uid
+          || `System ${sysId}`
+
+        const olFeature = new Feature({
+          geometry: new Point(fromLonLat([lon, lat])),
+        })
+        olFeature.setStyle(getStyle('liveLocations'))
+        olFeature.set('resourceType', 'liveLocations')
+        olFeature.set('resourceId', sysId)
+        olFeature.set('resourceName', `${sysName} (live)`)
+        olFeature.set('rawData', {
+          systemId: sysId,
+          datastream: ds.name,
+          datastreamId: ds.id,
+          phenomenonTime: obs.phenomenonTime,
+          lat, lon,
+          altitude: result.alt || result.Location?.alt || result.location?.alt,
+        })
+        source.addFeature(olFeature)
+        count++
+      } catch { /* skip individual failures */ }
+    })
+
+    await Promise.all(promises)
+    return count
+  } catch {
+    return 0
+  }
+}
+
 async function loadAllResources() {
   loading.value = true
   error.value = ''
   featureCounts.value = {}
 
+  // Load Part 1 resources (systems, deployments, procedures, samplingFeatures)
   const promises = SPATIAL_TYPES.map(async (rt) => {
     const count = await loadResourceType(rt.key)
     featureCounts.value[rt.key] = count
   })
 
   await Promise.all(promises)
+
+  // Then load live location observations (needs systems loaded first for name lookup)
+  const liveCount = await loadLocationObservations()
+  featureCounts.value['liveLocations'] = liveCount
+
   loading.value = false
 
   // Fit map to features if any exist
@@ -262,6 +370,17 @@ onMounted(() => {
       zIndex: 10,
     })
     vectorLayers[rt.key] = layer
+  }
+
+  // Create live locations layer (observation-derived positions)
+  {
+    const source = new VectorSource()
+    vectorSources['liveLocations'] = source
+    const layer = new VectorLayer({
+      source,
+      zIndex: 15, // above Part 1 features
+    })
+    vectorLayers['liveLocations'] = layer
   }
 
   // Create map
@@ -370,9 +489,11 @@ const testCreated = ref(false)
 async function createTestFeature() {
   creatingTest.value = true
   try {
+    const timestamp = Date.now().toString(36)
     const payload = {
       type: 'Feature',
       properties: {
+        uid: `urn:csapi-explorer:test:map-system-${timestamp}`,
         featureType: 'http://www.w3.org/ns/sosa/Platform',
         name: 'CSAPI Explorer — Map Test System',
         description: 'Test system created by CSAPI Explorer to demonstrate the map view. Safe to delete.',
@@ -424,6 +545,16 @@ async function createTestFeature() {
           <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS[rt.key] }"></span>
           <span class="layer-label">{{ rt.plural }}</span>
           <span class="layer-count">{{ featureCounts[rt.key] ?? '—' }}</span>
+        </button>
+
+        <!-- Live locations from observations -->
+        <button
+          :class="['layer-toggle', { inactive: !activeLayers['liveLocations'] }]"
+          @click="toggleLayer('liveLocations')"
+        >
+          <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS['liveLocations'] }"></span>
+          <span class="layer-label">Live Locations</span>
+          <span class="layer-count">{{ featureCounts['liveLocations'] ?? '—' }}</span>
         </button>
       </div>
 
