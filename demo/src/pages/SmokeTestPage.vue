@@ -20,14 +20,13 @@ import TileLayer from 'ol/layer/Tile'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
 import OSM from 'ol/source/OSM'
-import { fromLonLat, toLonLat } from 'ol/proj'
+import { fromLonLat } from 'ol/proj'
 import OlFeature from 'ol/Feature'
 import OlPoint from 'ol/geom/Point'
-import { Style, Circle as CircleStyle, Fill, Stroke, Text as OlText, Icon } from 'ol/style'
+import { Style, Circle as CircleStyle, Fill, Stroke, Text as OlText } from 'ol/style'
 
 const router = useRouter()
 
-// Redirect if not connected
 watch(
   () => connection.connected,
   (c) => { if (!c) router.push('/') },
@@ -37,7 +36,7 @@ watch(
 // ─── Types ───────────────────────────────────────────────
 
 type OpType = 'CREATE' | 'READ' | 'UPDATE' | 'VERIFY' | 'DELETE'
-type StepStatus = 'pending' | 'running' | 'success' | 'fail' | 'skipped'
+type StepStatus = 'pending' | 'active' | 'running' | 'success' | 'fail' | 'skipped'
 
 interface Step {
   id: number
@@ -45,29 +44,26 @@ interface Step {
   resourceLabel: string
   op: OpType
   status: StepStatus
-  /** populated after execution */
   request?: { method: string; url: string; headers: Record<string, string>; body?: string }
-  response?: { status: number; statusText: string; headers: Record<string, string>; body: string }
+  response?: { status: number; statusText: string; headers: Record<string, string>; body: string; rawError?: string }
   before?: any
   after?: any
   elapsed?: number
   error?: string
-  /** coordinates for the map */
   coords?: [number, number]
 }
 
 // ─── Test Coordinates ────────────────────────────────────
-// Using recognisable DC landmarks so the map movements are visible
 const COORDS: Record<string, { create: [number, number]; update: [number, number] }> = {
-  systems:           { create: [-77.0352, 38.8895], update: [-77.0502, 38.8893] }, // Washington Monument → Lincoln Memorial
-  procedures:        { create: [-77.0366, 38.8977], update: [-77.0229, 38.8997] }, // White House → Capitol
-  deployments:       { create: [-77.0098, 38.8899], update: [-77.0440, 38.8916] }, // Capitol Hill → Smithsonian
-  samplingFeatures:  { create: [-77.0479, 38.8813], update: [-77.0365, 38.8822] }, // Tidal Basin → Jefferson Memorial
+  systems:           { create: [-77.0352, 38.8895], update: [-77.0502, 38.8893] },
+  procedures:        { create: [-77.0366, 38.8977], update: [-77.0229, 38.8997] },
+  deployments:       { create: [-77.0098, 38.8899], update: [-77.0440, 38.8916] },
+  samplingFeatures:  { create: [-77.0479, 38.8813], update: [-77.0365, 38.8822] },
 }
 
 // ─── Test Payloads ───────────────────────────────────────
 
-function makePayload(type: string, phase: 'create' | 'update', parentId?: string): any {
+function makePayload(type: string, phase: 'create' | 'update'): any {
   const coords = COORDS[type]
   const c = coords ? coords[phase] : undefined
   const geom = c ? { type: 'Point', coordinates: c } : null
@@ -97,7 +93,6 @@ function makePayload(type: string, phase: 'create' | 'update', parentId?: string
     }
   }
 
-  // Part 2 — datastreams (need parent system)
   if (type === 'datastreams') {
     return {
       name,
@@ -119,7 +114,7 @@ function makePayload(type: string, phase: 'create' | 'update', parentId?: string
     return {
       phenomenonTime: new Date().toISOString(),
       resultTime: new Date().toISOString(),
-      result: { temp: 22.5 },
+      result: { temp: phase === 'create' ? 22.5 : 25.0 },
     }
   }
 
@@ -143,16 +138,14 @@ function makePayload(type: string, phase: 'create' | 'update', parentId?: string
   if (type === 'commands') {
     return {
       issueTime: new Date().toISOString(),
-      params: { active: true },
+      params: { active: phase === 'create' },
     }
   }
 
   return { name }
 }
 
-// ─── Execution Order ─────────────────────────────────────
-// Part 1 types first (they're standalone), then Part 2 (depend on parents).
-// Delete in reverse order.
+// ─── Step Building ───────────────────────────────────────
 
 const PART1_TYPES = ['systems', 'procedures', 'deployments', 'samplingFeatures']
 const PART2_TYPES = ['datastreams', 'observations', 'controlStreams', 'commands']
@@ -161,14 +154,12 @@ const CRUD_OPS: OpType[] = ['CREATE', 'READ', 'UPDATE', 'VERIFY', 'DELETE']
 function buildSteps(): Step[] {
   const steps: Step[] = []
   let id = 1
-  // Part 1
   for (const key of PART1_TYPES) {
     const info = RESOURCE_TYPES.find((r) => r.key === key)!
     for (const op of CRUD_OPS) {
       steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op, status: 'pending' })
     }
   }
-  // Part 2 — only if server might support them
   for (const key of PART2_TYPES) {
     const info = RESOURCE_TYPES.find((r) => r.key === key)!
     for (const op of CRUD_OPS) {
@@ -181,22 +172,25 @@ function buildSteps(): Step[] {
 // ─── Reactive State ──────────────────────────────────────
 
 const steps = ref<Step[]>(buildSteps())
-const activeStepId = ref<number | null>(null)
+const currentStepIndex = ref(-1)
 const running = ref(false)
-const autoRun = ref(false)
 const testStarted = ref(false)
 
-/** IDs of resources created, so we can reference them and clean up */
 const createdIds = reactive<Record<string, string>>({})
-/** Parent system ID for Part 2 nested resources */
-const parentSystemId = ref<string>('')
 
-const activeStep = computed(() => steps.value.find((s) => s.id === activeStepId.value) ?? null)
+const activeStep = computed(() =>
+  currentStepIndex.value >= 0 && currentStepIndex.value < steps.value.length
+    ? steps.value[currentStepIndex.value]
+    : null
+)
 
-const completedCount = computed(() => steps.value.filter((s) => s.status === 'success' || s.status === 'fail' || s.status === 'skipped').length)
+const completedCount = computed(() => steps.value.filter((s) => ['success', 'fail', 'skipped'].includes(s.status)).length)
 const successCount = computed(() => steps.value.filter((s) => s.status === 'success').length)
 const failCount = computed(() => steps.value.filter((s) => s.status === 'fail').length)
 const skippedCount = computed(() => steps.value.filter((s) => s.status === 'skipped').length)
+const hasMoreSteps = computed(() => currentStepIndex.value < steps.value.length - 1)
+const isStepReady = computed(() => activeStep.value?.status === 'active')
+const isStepDone = computed(() => activeStep.value && ['success', 'fail', 'skipped'].includes(activeStep.value.status))
 
 // ─── Map ─────────────────────────────────────────────────
 
@@ -215,15 +209,26 @@ const TYPE_COLORS: Record<string, string> = {
   commands: '#ec4899',
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  systems: 'S',
+  procedures: 'P',
+  deployments: 'D',
+  samplingFeatures: 'F',
+  datastreams: 'DS',
+  controlStreams: 'CS',
+  observations: 'O',
+  commands: 'Cmd',
+}
+
 function markerStyle(resourceType: string, phase: 'create' | 'update' | 'ghost'): Style {
   const color = TYPE_COLORS[resourceType] || '#6b7280'
-  const label = resourceType.charAt(0).toUpperCase()
+  const label = TYPE_LABELS[resourceType] || '?'
   const isGhost = phase === 'ghost'
   return new Style({
     image: new CircleStyle({
-      radius: isGhost ? 7 : 10,
+      radius: isGhost ? 7 : 12,
       fill: new Fill({ color: isGhost ? 'transparent' : color }),
-      stroke: new Stroke({ color, width: 2, lineDash: isGhost ? [4, 4] : undefined }),
+      stroke: new Stroke({ color, width: isGhost ? 2 : 3, lineDash: isGhost ? [4, 4] : undefined }),
     }),
     text: new OlText({
       text: isGhost ? '' : label,
@@ -250,11 +255,9 @@ function initMap() {
 }
 
 function addMarker(resourceType: string, coords: [number, number], featureId: string, phase: 'create' | 'update') {
-  // Remove old marker for this resource
   const existing = vectorSource.getFeatureById(featureId)
   if (existing) vectorSource.removeFeature(existing)
 
-  // If update, add a ghost at old position
   if (phase === 'update') {
     const oldCoords = COORDS[resourceType]?.create
     if (oldCoords) {
@@ -273,8 +276,7 @@ function addMarker(resourceType: string, coords: [number, number], featureId: st
   feature.setStyle(markerStyle(resourceType, phase))
   vectorSource.addFeature(feature)
 
-  // Pan to
-  map?.getView().animate({ center: fromLonLat(coords), duration: 500 })
+  map?.getView().animate({ center: fromLonLat(coords), duration: 600 })
 }
 
 function removeMarker(featureId: string) {
@@ -288,78 +290,120 @@ function clearMap() {
   vectorSource.clear()
 }
 
+// ─── Preview: prepare what the step WILL do ──────────────
+
+function prepareStepPreview(step: Step) {
+  const contentType = getContentType(step.resourceType)
+
+  switch (step.op) {
+    case 'CREATE': {
+      let parentId: string | undefined
+      if (step.resourceType === 'datastreams' || step.resourceType === 'controlStreams') {
+        parentId = createdIds['systems']
+      }
+      if (step.resourceType === 'observations') parentId = createdIds['datastreams']
+      if (step.resourceType === 'commands') parentId = createdIds['controlStreams']
+
+      const url = getCreateUrl(step.resourceType, parentId)
+      const payload = makePayload(step.resourceType, 'create')
+      step.request = {
+        method: 'POST',
+        url,
+        headers: { 'Content-Type': contentType },
+        body: JSON.stringify(payload, null, 2),
+      }
+      break
+    }
+    case 'READ':
+    case 'VERIFY': {
+      const id = createdIds[step.resourceType]
+      if (id) {
+        step.request = {
+          method: 'GET',
+          url: getDetailUrl(step.resourceType, id),
+          headers: { 'Accept': contentType },
+        }
+      }
+      break
+    }
+    case 'UPDATE': {
+      const id = createdIds[step.resourceType]
+      if (id) {
+        const payload = makePayload(step.resourceType, 'update')
+        step.request = {
+          method: 'PUT',
+          url: getUpdateUrl(step.resourceType, id),
+          headers: { 'Content-Type': contentType, 'Accept': contentType },
+          body: JSON.stringify(payload, null, 2),
+        }
+      }
+      break
+    }
+    case 'DELETE': {
+      const id = createdIds[step.resourceType]
+      if (id) {
+        step.request = {
+          method: 'DELETE',
+          url: getDeleteUrl(step.resourceType, id),
+          headers: {},
+        }
+      }
+      break
+    }
+  }
+}
+
 // ─── Step Execution ──────────────────────────────────────
 
-async function executeStep(step: Step) {
+async function executeCurrentStep() {
+  const step = activeStep.value
+  if (!step || step.status !== 'active') return
+
   step.status = 'running'
-  activeStepId.value = step.id
   const start = performance.now()
 
   const contentType = getContentType(step.resourceType)
-  const isPart1 = PART1_TYPES.includes(step.resourceType)
 
   try {
     switch (step.op) {
       case 'CREATE': {
-        // Determine parent for nested Part 2 types
         let parentId: string | undefined
         if (step.resourceType === 'datastreams' || step.resourceType === 'controlStreams') {
           parentId = createdIds['systems']
-          if (!parentId) {
-            step.status = 'skipped'
-            step.error = 'No parent system — skipping'
-            step.elapsed = performance.now() - start
-            return
-          }
+          if (!parentId) { markSkipped(step, 'No parent system created — skipping', start); return }
         }
         if (step.resourceType === 'observations') {
           parentId = createdIds['datastreams']
-          if (!parentId) {
-            step.status = 'skipped'
-            step.error = 'No parent datastream — skipping'
-            step.elapsed = performance.now() - start
-            return
-          }
+          if (!parentId) { markSkipped(step, 'No parent datastream created — skipping', start); return }
         }
         if (step.resourceType === 'commands') {
           parentId = createdIds['controlStreams']
-          if (!parentId) {
-            step.status = 'skipped'
-            step.error = 'No parent control stream — skipping'
-            step.elapsed = performance.now() - start
-            return
-          }
+          if (!parentId) { markSkipped(step, 'No parent control stream created — skipping', start); return }
         }
 
         const url = getCreateUrl(step.resourceType, parentId)
-        const payload = makePayload(step.resourceType, 'create', parentId)
+        const payload = makePayload(step.resourceType, 'create')
         const bodyStr = JSON.stringify(payload, null, 2)
 
+        // Only send Content-Type, NOT Accept — OSH may reject Accept: application/geo+json
+        // apiFetch defaults Accept to application/json which works fine
         step.request = {
-          method: 'POST',
-          url,
-          headers: { 'Content-Type': contentType, 'Accept': contentType },
+          method: 'POST', url,
+          headers: { 'Content-Type': contentType },
           body: bodyStr,
         }
         step.before = null
 
         const resp = await apiFetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': contentType, 'Accept': contentType },
+          headers: { 'Content-Type': contentType },
           body: bodyStr,
         })
 
-        step.response = {
-          status: resp.status,
-          statusText: resp.statusText,
-          headers: resp.headers,
-          body: resp.data ? JSON.stringify(resp.data, null, 2) : '',
-        }
+        setResponse(step, resp)
 
         if (!resp.ok) {
-          step.status = 'fail'
-          step.error = resp.error || `${resp.status} ${resp.statusText}`
-          step.elapsed = performance.now() - start
+          markFail(step, resp.error || `${resp.status} ${resp.statusText}`, start)
           return
         }
 
@@ -368,10 +412,10 @@ async function executeStep(step: Step) {
         const id = location.split('/').pop() || ''
         if (id) createdIds[step.resourceType] = id
 
-        step.after = resp.data || { id, location }
+        step.after = resp.data || { _smokeTest: true, id, location }
         step.status = 'success'
 
-        // Map: add marker
+        // Map
         const coords = COORDS[step.resourceType]?.create
         if (coords && id) {
           step.coords = coords
@@ -382,64 +426,33 @@ async function executeStep(step: Step) {
 
       case 'READ': {
         const id = createdIds[step.resourceType]
-        if (!id) {
-          step.status = 'skipped'
-          step.error = 'No ID from CREATE — skipping'
-          step.elapsed = performance.now() - start
-          return
-        }
+        if (!id) { markSkipped(step, 'No ID from CREATE — skipping', start); return }
 
         const url = getDetailUrl(step.resourceType, id)
-        step.request = {
-          method: 'GET',
-          url,
-          headers: { 'Accept': contentType },
-        }
+        step.request = { method: 'GET', url, headers: { 'Accept': contentType } }
 
-        const resp = await apiFetch(url, {
-          method: 'GET',
-          headers: { 'Accept': contentType },
-        })
-
-        step.response = {
-          status: resp.status,
-          statusText: resp.statusText,
-          headers: resp.headers,
-          body: resp.data ? JSON.stringify(resp.data, null, 2) : '',
-        }
+        const resp = await apiFetch(url, { method: 'GET', headers: { 'Accept': contentType } })
+        setResponse(step, resp)
 
         if (!resp.ok) {
-          step.status = 'fail'
-          step.error = resp.error || `${resp.status} ${resp.statusText}`
+          markFail(step, resp.error || `${resp.status} ${resp.statusText}`, start)
         } else {
-          step.before = resp.data
+          step.before = null
           step.after = resp.data
           step.status = 'success'
-
-          // Map: pulse marker (re-add to trigger visual)
           const coords = COORDS[step.resourceType]?.create
-          if (coords) {
-            step.coords = coords
-          }
+          if (coords) step.coords = coords
         }
         break
       }
 
       case 'UPDATE': {
         const id = createdIds[step.resourceType]
-        if (!id) {
-          step.status = 'skipped'
-          step.error = 'No ID from CREATE — skipping'
-          step.elapsed = performance.now() - start
-          return
-        }
+        if (!id) { markSkipped(step, 'No ID from CREATE — skipping', start); return }
 
-        // Get current state as "before"
+        // Fetch current state as "before"
         const readUrl = getDetailUrl(step.resourceType, id)
-        const readResp = await apiFetch(readUrl, {
-          method: 'GET',
-          headers: { 'Accept': contentType },
-        })
+        const readResp = await apiFetch(readUrl, { method: 'GET', headers: { 'Accept': contentType } })
         step.before = readResp.data
 
         const url = getUpdateUrl(step.resourceType, id)
@@ -447,8 +460,7 @@ async function executeStep(step: Step) {
         const bodyStr = JSON.stringify(payload, null, 2)
 
         step.request = {
-          method: 'PUT',
-          url,
+          method: 'PUT', url,
           headers: { 'Content-Type': contentType, 'Accept': contentType },
           body: bodyStr,
         }
@@ -458,22 +470,13 @@ async function executeStep(step: Step) {
           headers: { 'Content-Type': contentType, 'Accept': contentType },
           body: bodyStr,
         })
-
-        step.response = {
-          status: resp.status,
-          statusText: resp.statusText,
-          headers: resp.headers,
-          body: resp.data ? JSON.stringify(resp.data, null, 2) : '',
-        }
+        setResponse(step, resp)
 
         if (!resp.ok) {
-          step.status = 'fail'
-          step.error = resp.error || `${resp.status} ${resp.statusText}`
+          markFail(step, resp.error || `${resp.status} ${resp.statusText}`, start)
         } else {
           step.after = resp.data || payload
           step.status = 'success'
-
-          // Map: move marker
           const coords = COORDS[step.resourceType]?.update
           if (coords) {
             step.coords = coords
@@ -485,37 +488,17 @@ async function executeStep(step: Step) {
 
       case 'VERIFY': {
         const id = createdIds[step.resourceType]
-        if (!id) {
-          step.status = 'skipped'
-          step.error = 'No ID from CREATE — skipping'
-          step.elapsed = performance.now() - start
-          return
-        }
+        if (!id) { markSkipped(step, 'No ID from CREATE — skipping', start); return }
 
         const url = getDetailUrl(step.resourceType, id)
-        step.request = {
-          method: 'GET',
-          url,
-          headers: { 'Accept': contentType },
-        }
+        step.request = { method: 'GET', url, headers: { 'Accept': contentType } }
 
-        const resp = await apiFetch(url, {
-          method: 'GET',
-          headers: { 'Accept': contentType },
-        })
-
-        step.response = {
-          status: resp.status,
-          statusText: resp.statusText,
-          headers: resp.headers,
-          body: resp.data ? JSON.stringify(resp.data, null, 2) : '',
-        }
+        const resp = await apiFetch(url, { method: 'GET', headers: { 'Accept': contentType } })
+        setResponse(step, resp)
 
         if (!resp.ok) {
-          step.status = 'fail'
-          step.error = resp.error || `${resp.status} ${resp.statusText}`
+          markFail(step, resp.error || `${resp.status} ${resp.statusText}`, start)
         } else {
-          // "before" = what we sent in UPDATE, "after" = what server has now
           const updateStep = steps.value.find(
             (s) => s.resourceType === step.resourceType && s.op === 'UPDATE'
           )
@@ -528,46 +511,24 @@ async function executeStep(step: Step) {
 
       case 'DELETE': {
         const id = createdIds[step.resourceType]
-        if (!id) {
-          step.status = 'skipped'
-          step.error = 'No ID from CREATE — skipping'
-          step.elapsed = performance.now() - start
-          return
-        }
+        if (!id) { markSkipped(step, 'No ID from CREATE — skipping', start); return }
 
-        // Get current state as "before"
         const readUrl = getDetailUrl(step.resourceType, id)
-        const readResp = await apiFetch(readUrl, {
-          method: 'GET',
-          headers: { 'Accept': contentType },
-        })
+        const readResp = await apiFetch(readUrl, { method: 'GET', headers: { 'Accept': contentType } })
         step.before = readResp.data
 
         const url = getDeleteUrl(step.resourceType, id)
-        step.request = {
-          method: 'DELETE',
-          url,
-          headers: {},
-        }
+        step.request = { method: 'DELETE', url, headers: {} }
 
         const resp = await apiFetch(url, { method: 'DELETE' })
-
-        step.response = {
-          status: resp.status,
-          statusText: resp.statusText,
-          headers: resp.headers,
-          body: '',
-        }
+        setResponse(step, resp)
 
         if (!resp.ok) {
-          step.status = 'fail'
-          step.error = resp.error || `${resp.status} ${resp.statusText}`
+          markFail(step, resp.error || `${resp.status} ${resp.statusText}`, start)
         } else {
           step.after = null
           step.status = 'success'
           delete createdIds[step.resourceType]
-
-          // Map: remove marker
           removeMarker(`smoke-${step.resourceType}`)
         }
         break
@@ -581,43 +542,62 @@ async function executeStep(step: Step) {
   step.elapsed = performance.now() - start
 }
 
-// ─── Controls ────────────────────────────────────────────
-
-async function runNextStep() {
-  const next = steps.value.find((s) => s.status === 'pending')
-  if (!next) return
-  testStarted.value = true
-  running.value = true
-  await executeStep(next)
-  running.value = false
-
-  if (autoRun.value) {
-    const hasMore = steps.value.some((s) => s.status === 'pending')
-    if (hasMore) {
-      await new Promise((r) => setTimeout(r, 300))
-      runNextStep()
-    } else {
-      autoRun.value = false
-    }
+function setResponse(step: Step, resp: any) {
+  step.response = {
+    status: resp.status,
+    statusText: resp.statusText,
+    headers: resp.headers,
+    body: resp.data ? JSON.stringify(resp.data, null, 2) : (resp.error || ''),
+    rawError: resp.error || undefined,
   }
 }
 
-async function runAll() {
-  testStarted.value = true
-  autoRun.value = true
-  running.value = true
-  await runNextStep()
+function markSkipped(step: Step, msg: string, start: number) {
+  step.status = 'skipped'
+  step.error = msg
+  step.elapsed = performance.now() - start
 }
 
-function stopAutoRun() {
-  autoRun.value = false
+function markFail(step: Step, msg: string, start: number) {
+  step.status = 'fail'
+  step.error = msg
+  step.elapsed = performance.now() - start
+}
+
+// ─── Controls ────────────────────────────────────────────
+
+function beginTest() {
+  testStarted.value = true
+  currentStepIndex.value = 0
+  const step = steps.value[0]
+  step.status = 'active'
+  prepareStepPreview(step)
+}
+
+async function executeAndWait() {
+  running.value = true
+  await executeCurrentStep()
+  running.value = false
+}
+
+function advanceToNextStep() {
+  if (!hasMoreSteps.value) return
+  currentStepIndex.value++
+  const step = steps.value[currentStepIndex.value]
+  step.status = 'active'
+  prepareStepPreview(step)
+}
+
+function skipCurrentStep() {
+  const step = activeStep.value
+  if (!step) return
+  step.status = 'skipped'
+  step.error = 'Manually skipped'
+  step.elapsed = 0
 }
 
 async function abortAndCleanup() {
-  autoRun.value = false
   running.value = true
-
-  // Delete in reverse order: commands, controlStreams, observations, datastreams, then Part 1
   const deleteOrder = ['commands', 'controlStreams', 'observations', 'datastreams', 'samplingFeatures', 'deployments', 'procedures', 'systems']
   for (const type of deleteOrder) {
     const id = createdIds[type]
@@ -629,23 +609,24 @@ async function abortAndCleanup() {
       removeMarker(`smoke-${type}`)
     } catch { /* best effort */ }
   }
-
   running.value = false
 }
 
 function resetTest() {
   steps.value = buildSteps()
-  activeStepId.value = null
+  currentStepIndex.value = -1
   testStarted.value = false
-  autoRun.value = false
   running.value = false
   for (const key of Object.keys(createdIds)) delete createdIds[key]
   clearMap()
 }
 
 function selectStep(step: Step) {
-  activeStepId.value = step.id
-  // Pan map if step has coords
+  // Only allow viewing completed/active steps
+  const idx = steps.value.indexOf(step)
+  if (idx <= currentStepIndex.value) {
+    currentStepIndex.value = idx
+  }
   if (step.coords && map) {
     map.getView().animate({ center: fromLonLat(step.coords), duration: 400 })
   }
@@ -654,18 +635,13 @@ function selectStep(step: Step) {
 // ─── Formatting helpers ──────────────────────────────────
 
 function opBadgeClass(op: OpType): string {
-  return {
-    CREATE: 'op-create',
-    READ: 'op-read',
-    UPDATE: 'op-update',
-    VERIFY: 'op-verify',
-    DELETE: 'op-delete',
-  }[op]
+  return { CREATE: 'op-create', READ: 'op-read', UPDATE: 'op-update', VERIFY: 'op-verify', DELETE: 'op-delete' }[op]
 }
 
 function statusIcon(status: StepStatus): string {
   return {
     pending: 'pi pi-circle',
+    active: 'pi pi-arrow-right',
     running: 'pi pi-spin pi-spinner',
     success: 'pi pi-check-circle',
     fail: 'pi pi-times-circle',
@@ -676,6 +652,7 @@ function statusIcon(status: StepStatus): string {
 function statusColor(status: StepStatus): string {
   return {
     pending: '#94a3b8',
+    active: '#3b82f6',
     running: '#3b82f6',
     success: '#16a34a',
     fail: '#dc2626',
@@ -688,7 +665,6 @@ function formatMs(ms?: number): string {
   return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`
 }
 
-// Group steps by resource type for the left panel
 const groupedSteps = computed(() => {
   const groups: { type: string; label: string; steps: Step[] }[] = []
   let current: (typeof groups)[0] | null = null
@@ -704,14 +680,8 @@ const groupedSteps = computed(() => {
 
 // ─── Lifecycle ───────────────────────────────────────────
 
-onMounted(() => {
-  nextTick(() => initMap())
-})
-
-onUnmounted(() => {
-  map?.setTarget(undefined)
-  map = null
-})
+onMounted(() => { nextTick(() => initMap()) })
+onUnmounted(() => { map?.setTarget(undefined); map = null })
 </script>
 
 <template>
@@ -721,29 +691,39 @@ onUnmounted(() => {
       <div class="toolbar-left">
         <h2><i class="pi pi-bolt"></i> CRUD Smoke Test</h2>
         <span v-if="testStarted" class="progress-badge">
-          {{ completedCount }}/{{ steps.length }} —
+          Step {{ currentStepIndex + 1 }}/{{ steps.length }} —
           <span style="color:#16a34a">{{ successCount }} pass</span>
           <span v-if="failCount" style="color:#dc2626"> · {{ failCount }} fail</span>
           <span v-if="skippedCount" style="color:#f59e0b"> · {{ skippedCount }} skip</span>
         </span>
       </div>
       <div class="toolbar-right">
-        <button v-if="!testStarted" class="btn btn-primary" @click="runAll" :disabled="running">
-          <i class="pi pi-play"></i> Run All
+        <!-- Before test starts -->
+        <button v-if="!testStarted" class="btn btn-primary" @click="beginTest">
+          <i class="pi pi-play"></i> Begin Test
         </button>
-        <button v-if="!autoRun && testStarted" class="btn btn-primary" @click="runNextStep"
-          :disabled="running || !steps.some(s => s.status === 'pending')">
-          <i class="pi pi-step-forward"></i> Next Step
+
+        <!-- Step is ready to execute (preview shown) -->
+        <button v-if="isStepReady" class="btn btn-execute" @click="executeAndWait" :disabled="running">
+          <i class="pi pi-bolt"></i> Execute Step
         </button>
-        <button v-if="!autoRun && testStarted" class="btn btn-secondary" @click="runAll"
-          :disabled="running || !steps.some(s => s.status === 'pending')">
-          <i class="pi pi-forward"></i> Run Remaining
+        <button v-if="isStepReady" class="btn btn-secondary" @click="skipCurrentStep">
+          <i class="pi pi-angle-double-right"></i> Skip
         </button>
-        <button v-if="autoRun" class="btn btn-warning" @click="stopAutoRun">
-          <i class="pi pi-pause"></i> Pause
+
+        <!-- Step is done, advance to next -->
+        <button v-if="isStepDone && hasMoreSteps" class="btn btn-primary" @click="advanceToNextStep">
+          <i class="pi pi-arrow-right"></i> Next Step
         </button>
-        <button v-if="testStarted" class="btn btn-danger" @click="abortAndCleanup" :disabled="running && !autoRun">
-          <i class="pi pi-trash"></i> Abort &amp; Cleanup
+
+        <!-- End of test -->
+        <span v-if="isStepDone && !hasMoreSteps" class="done-badge">
+          <i class="pi pi-check-circle"></i> Test Complete
+        </span>
+
+        <!-- Always available during test -->
+        <button v-if="testStarted" class="btn btn-danger" @click="abortAndCleanup" :disabled="running">
+          <i class="pi pi-trash"></i> Cleanup
         </button>
         <button class="btn btn-secondary" @click="resetTest" :disabled="running">
           <i class="pi pi-refresh"></i> Reset
@@ -763,12 +743,12 @@ onUnmounted(() => {
               v-for="step in group.steps"
               :key="step.id"
               class="plan-step"
-              :class="{ active: step.id === activeStepId }"
+              :class="{ active: step === activeStep, clickable: steps.indexOf(step) <= currentStepIndex }"
               @click="selectStep(step)"
             >
               <i :class="statusIcon(step.status)" :style="{ color: statusColor(step.status) }"></i>
               <span class="op-badge" :class="opBadgeClass(step.op)">{{ step.op }}</span>
-              <span v-if="step.elapsed" class="step-time">{{ formatMs(step.elapsed) }}</span>
+              <span v-if="step.elapsed != null" class="step-time">{{ formatMs(step.elapsed) }}</span>
             </div>
           </div>
         </div>
@@ -777,31 +757,59 @@ onUnmounted(() => {
       <!-- CENTER: Request / Response -->
       <div class="panel panel-detail">
         <div class="panel-header">Request / Response</div>
-        <div v-if="!activeStep" class="panel-empty">
-          <p>Select a step or click <b>Run All</b> to begin.</p>
+
+        <!-- Not started -->
+        <div v-if="!testStarted" class="panel-empty">
+          <div class="empty-hero">
+            <i class="pi pi-bolt" style="font-size:2rem;color:#3b82f6"></i>
+            <p>Click <b>Begin Test</b> to start the CRUD smoke test.</p>
+            <p class="empty-sub">Each step requires your approval before executing.<br>
+              You'll see a preview of the request, then click <b>Execute Step</b> to send it.</p>
+          </div>
         </div>
-        <div v-else class="detail-content">
-          <!-- Request -->
-          <div class="detail-section">
+
+        <!-- Active step content -->
+        <div v-else-if="activeStep" class="detail-content">
+          <!-- Step header -->
+          <div class="step-header-card">
+            <span class="op-badge op-badge-lg" :class="opBadgeClass(activeStep.op)">{{ activeStep.op }}</span>
+            <span class="step-resource-label">{{ activeStep.resourceLabel }}</span>
+            <span v-if="activeStep.status === 'running'" class="running-indicator">
+              <i class="pi pi-spin pi-spinner"></i> Executing...
+            </span>
+            <span v-if="activeStep.status === 'active'" class="ready-indicator">
+              Ready — review below, then click Execute Step
+            </span>
+            <span v-if="activeStep.status === 'success'" class="success-indicator">
+              <i class="pi pi-check-circle"></i> Success
+            </span>
+            <span v-if="activeStep.status === 'fail'" class="fail-indicator">
+              <i class="pi pi-times-circle"></i> Failed
+            </span>
+            <span v-if="activeStep.status === 'skipped'" class="skip-indicator">
+              <i class="pi pi-minus-circle"></i> Skipped
+            </span>
+            <span v-if="activeStep.elapsed != null" class="elapsed">{{ formatMs(activeStep.elapsed) }}</span>
+          </div>
+
+          <!-- Request preview / actual -->
+          <div v-if="activeStep.request" class="detail-section">
             <div class="section-label">
-              <span class="op-badge" :class="opBadgeClass(activeStep.op)">{{ activeStep.op }}</span>
-              {{ activeStep.resourceLabel }}
-              <span v-if="activeStep.status === 'running'" class="running-indicator">
-                <i class="pi pi-spin pi-spinner"></i> Executing...
-              </span>
+              {{ activeStep.status === 'active' ? 'Request Preview' : 'Request Sent' }}
             </div>
-            <div v-if="activeStep.request" class="http-block">
-              <div class="http-method">{{ activeStep.request.method }} {{ activeStep.request.url }}</div>
-              <div class="http-headers">
-                <div v-for="(v, k) in activeStep.request.headers" :key="k" class="header-line">
-                  <span class="header-key">{{ k }}:</span> {{ v }}
-                </div>
+            <div class="http-method">{{ activeStep.request.method }} {{ activeStep.request.url }}</div>
+            <div class="http-headers">
+              <div v-for="(v, k) in activeStep.request.headers" :key="k" class="header-line">
+                <span class="header-key">{{ k }}:</span> {{ v }}
               </div>
-              <pre v-if="activeStep.request.body" class="http-body">{{ activeStep.request.body }}</pre>
             </div>
-            <div v-else-if="activeStep.status === 'pending'" class="pending-msg">
-              Awaiting execution...
-            </div>
+            <pre v-if="activeStep.request.body" class="http-body">{{ activeStep.request.body }}</pre>
+          </div>
+
+          <!-- No request (skipped before preview) -->
+          <div v-if="!activeStep.request && activeStep.status === 'skipped'" class="detail-section warn-section">
+            <div class="section-label"><i class="pi pi-info-circle"></i> Skipped</div>
+            <p class="skip-reason">{{ activeStep.error }}</p>
           </div>
 
           <!-- Response -->
@@ -814,7 +822,6 @@ onUnmounted(() => {
               >
                 {{ activeStep.response.status }} {{ activeStep.response.statusText }}
               </span>
-              <span v-if="activeStep.elapsed" class="elapsed">{{ formatMs(activeStep.elapsed) }}</span>
             </div>
             <div class="http-headers">
               <div v-for="(v, k) in activeStep.response.headers" :key="k" class="header-line">
@@ -825,15 +832,15 @@ onUnmounted(() => {
             <div v-else class="empty-body">(empty body)</div>
           </div>
 
-          <!-- Error -->
-          <div v-if="activeStep.error" class="detail-section error-section">
-            <div class="section-label" style="color:#dc2626"><i class="pi pi-exclamation-triangle"></i> Error</div>
+          <!-- Error detail -->
+          <div v-if="activeStep.error && activeStep.status === 'fail'" class="detail-section error-section">
+            <div class="section-label" style="color:#dc2626"><i class="pi pi-exclamation-triangle"></i> Error Detail</div>
             <pre class="error-body">{{ activeStep.error }}</pre>
           </div>
 
           <!-- Before / After diff -->
           <div v-if="activeStep.before !== undefined || activeStep.after !== undefined" class="detail-section">
-            <div class="section-label">State Diff</div>
+            <div class="section-label">State Change</div>
             <div class="diff-panels">
               <div class="diff-pane">
                 <div class="diff-label">Before</div>
@@ -880,6 +887,8 @@ onUnmounted(() => {
   border-bottom: 1px solid #e2e8f0;
   background: #f8fafc;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 .toolbar-left {
   display: flex;
@@ -895,22 +904,33 @@ onUnmounted(() => {
 }
 .toolbar-right {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 .progress-badge {
   font-size: 0.85rem;
   font-weight: 600;
 }
+.done-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.35rem 0.8rem;
+  padding: 0.4rem 0.9rem;
   border: none;
   border-radius: 6px;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s;
 }
 .btn:disabled {
   opacity: 0.5;
@@ -918,10 +938,10 @@ onUnmounted(() => {
 }
 .btn-primary { background: #3b82f6; color: #fff; }
 .btn-primary:hover:not(:disabled) { background: #2563eb; }
+.btn-execute { background: #16a34a; color: #fff; font-size: 0.9rem; padding: 0.45rem 1.1rem; }
+.btn-execute:hover:not(:disabled) { background: #15803d; }
 .btn-secondary { background: #e2e8f0; color: #334155; }
 .btn-secondary:hover:not(:disabled) { background: #cbd5e1; }
-.btn-warning { background: #f59e0b; color: #fff; }
-.btn-warning:hover:not(:disabled) { background: #d97706; }
 .btn-danger { background: #dc2626; color: #fff; }
 .btn-danger:hover:not(:disabled) { background: #b91c1c; }
 
@@ -961,7 +981,7 @@ onUnmounted(() => {
   margin-bottom: 0.25rem;
 }
 .plan-group-label {
-  padding: 0.35rem 0.75rem 0.15rem;
+  padding: 0.4rem 0.75rem 0.2rem;
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -972,16 +992,21 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.3rem 0.75rem;
-  cursor: pointer;
+  padding: 0.35rem 0.75rem;
   font-size: 0.82rem;
   border-left: 3px solid transparent;
   transition: background 0.15s;
+  opacity: 0.5;
 }
-.plan-step:hover { background: #f1f5f9; }
+.plan-step.clickable {
+  cursor: pointer;
+  opacity: 1;
+}
+.plan-step.clickable:hover { background: #f1f5f9; }
 .plan-step.active {
   background: #eff6ff;
   border-left-color: #3b82f6;
+  opacity: 1;
 }
 .step-time {
   margin-left: auto;
@@ -997,6 +1022,10 @@ onUnmounted(() => {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+.op-badge-lg {
+  font-size: 0.82rem;
+  padding: 0.2rem 0.6rem;
 }
 .op-create { background: #dcfce7; color: #15803d; }
 .op-read { background: #dbeafe; color: #1d4ed8; }
@@ -1015,9 +1044,13 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   flex: 1;
-  color: #94a3b8;
-  font-size: 0.9rem;
 }
+.empty-hero {
+  text-align: center;
+  color: #64748b;
+}
+.empty-hero p { margin: 0.5rem 0; font-size: 0.95rem; }
+.empty-sub { font-size: 0.82rem; color: #94a3b8; }
 .detail-content {
   overflow-y: auto;
   flex: 1;
@@ -1025,6 +1058,30 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+.step-header-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+.step-resource-label {
+  font-weight: 700;
+  font-size: 1rem;
+}
+.ready-indicator { color: #3b82f6; font-size: 0.82rem; }
+.running-indicator { color: #3b82f6; font-size: 0.82rem; }
+.success-indicator { color: #16a34a; font-size: 0.85rem; font-weight: 600; }
+.fail-indicator { color: #dc2626; font-size: 0.85rem; font-weight: 600; }
+.skip-indicator { color: #f59e0b; font-size: 0.85rem; font-weight: 600; }
+.elapsed {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-left: auto;
 }
 .detail-section {
   border: 1px solid #e2e8f0;
@@ -1040,14 +1097,9 @@ onUnmounted(() => {
   font-size: 0.85rem;
   margin-bottom: 0.4rem;
 }
-.running-indicator {
-  color: #3b82f6;
-  font-weight: 400;
-  font-size: 0.82rem;
-}
 .http-method {
   font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: #1e293b;
   padding: 0.3rem 0;
@@ -1069,7 +1121,7 @@ onUnmounted(() => {
   padding: 0.5rem;
   font-size: 0.75rem;
   overflow-x: auto;
-  max-height: 250px;
+  max-height: 280px;
   overflow-y: auto;
   margin: 0.3rem 0 0;
   white-space: pre-wrap;
@@ -1081,12 +1133,6 @@ onUnmounted(() => {
   font-size: 0.82rem;
   padding: 0.3rem 0;
 }
-.pending-msg {
-  color: #94a3b8;
-  font-style: italic;
-  font-size: 0.85rem;
-  padding: 0.5rem 0;
-}
 .status-badge {
   padding: 0.1rem 0.5rem;
   border-radius: 4px;
@@ -1095,11 +1141,6 @@ onUnmounted(() => {
 }
 .status-ok { background: #dcfce7; color: #15803d; }
 .status-err { background: #fee2e2; color: #dc2626; }
-.elapsed {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  margin-left: auto;
-}
 .error-section {
   border-color: #fecaca;
   background: #fef2f2;
@@ -1110,6 +1151,15 @@ onUnmounted(() => {
   white-space: pre-wrap;
   word-break: break-word;
   margin: 0;
+}
+.warn-section {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+.skip-reason {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #a16207;
 }
 
 /* ── Diff panels ──────────────────── */
@@ -1179,23 +1229,14 @@ onUnmounted(() => {
     grid-template-columns: 180px 1fr;
     grid-template-rows: 1fr 300px;
   }
-  .panel-plan {
-    grid-row: 1 / 3;
-  }
-  .panel-map {
-    border-right: none;
-    border-top: 1px solid #e2e8f0;
-  }
+  .panel-plan { grid-row: 1 / 3; }
+  .panel-map { border-right: none; border-top: 1px solid #e2e8f0; }
 }
 @media (max-width: 700px) {
   .panels {
     grid-template-columns: 1fr;
     grid-template-rows: 200px 1fr 250px;
   }
-  .panel-plan {
-    grid-row: auto;
-    border-right: none;
-    border-bottom: 1px solid #e2e8f0;
-  }
+  .panel-plan { grid-row: auto; border-right: none; border-bottom: 1px solid #e2e8f0; }
 }
 </style>

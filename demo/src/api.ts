@@ -62,9 +62,10 @@ export async function apiFetch<T = any>(
       }
     }
 
-    // For DELETE or responses with no body
+    // Handle responses with no body (204 No Content, 201 Created with empty body, etc.)
+    const contentLength = response.headers.get('content-length')
     const contentType = response.headers.get('content-type') || ''
-    if (response.status === 204) {
+    if (response.status === 204 || contentLength === '0') {
       return {
         ok: true,
         status: response.status,
@@ -76,11 +77,31 @@ export async function apiFetch<T = any>(
 
     // Some servers (e.g. OSH) return Content-Type: auto instead of
     // application/json. Try JSON.parse on all text responses to handle this.
+    // Also guard against empty bodies on 201 Created responses.
     let data: any
     if (contentType.includes('json')) {
-      data = await response.json()
+      const text = await response.text()
+      if (!text || !text.trim()) {
+        return {
+          ok: true,
+          status: response.status,
+          statusText: response.statusText,
+          data: null as any,
+          headers: responseHeaders,
+        }
+      }
+      data = JSON.parse(text)
     } else {
       const text = await response.text()
+      if (!text || !text.trim()) {
+        return {
+          ok: true,
+          status: response.status,
+          statusText: response.statusText,
+          data: null as any,
+          headers: responseHeaders,
+        }
+      }
       try {
         data = JSON.parse(text)
       } catch {
