@@ -183,6 +183,8 @@ export function getDetailUrl(resourceType: string, id: string): string {
 export function getCreateUrl(resourceType: string, parentId?: string): string {
   const b = builder.value
   if (!b) {
+    if (resourceType === 'datastreams' && parentId) return `/systems/${parentId}/datastreams`
+    if (resourceType === 'controlStreams' && parentId) return `/systems/${parentId}/controlStreams`
     if (resourceType === 'observations' && parentId) return `/datastreams/${parentId}/observations`
     if (resourceType === 'commands' && parentId) return `/controlStreams/${parentId}/commands`
     return `/${resourceType}`
@@ -194,13 +196,21 @@ export function getCreateUrl(resourceType: string, parentId?: string): string {
       case 'deployments': return b.createDeployment()
       case 'procedures': return b.createProcedure()
       case 'samplingFeatures': return b.createSamplingFeature()
-      case 'datastreams': return b.createDataStream()
+      // Part 2: use nested URLs via parent ID — library methods don't accept parentId
+      case 'datastreams':
+        return parentId ? b.getSystemDataStreams(parentId).split('?')[0] : b.createDataStream()
       case 'observations': return b.createObservation(parentId || '')
-      case 'controlStreams': return b.createControlStream()
+      case 'controlStreams':
+        return parentId ? b.getSystemControlStreams(parentId).split('?')[0] : b.createControlStream()
       case 'commands': return b.createCommand(parentId || '')
       default: return `/${resourceType}`
     }
   } catch {
+    // Fallback to manual nested URLs for Part 2
+    if (resourceType === 'datastreams' && parentId) return `/systems/${parentId}/datastreams`
+    if (resourceType === 'controlStreams' && parentId) return `/systems/${parentId}/controlStreams`
+    if (resourceType === 'observations' && parentId) return `/datastreams/${parentId}/observations`
+    if (resourceType === 'commands' && parentId) return `/controlStreams/${parentId}/commands`
     return `/${resourceType}`
   }
 }
