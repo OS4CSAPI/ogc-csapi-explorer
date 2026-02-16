@@ -688,8 +688,6 @@ onMounted(() => {
   overlay = new Overlay({
     element: popupContainer.value,
     autoPan: { animation: { duration: 250 } },
-    positioning: 'bottom-center',
-    offset: [0, -10],
   })
 
   // Create vector sources and layers for each map type
@@ -1315,7 +1313,7 @@ async function createTestFeature() {
   height: 100%;
 }
 
-/* OpenLayers popup */
+/* OpenLayers popup — positioned above the feature with arrow pointing down */
 .ol-popup {
   position: absolute;
   background: white;
@@ -1326,6 +1324,9 @@ async function createTestFeature() {
   min-width: 160px;
   max-width: 280px;
   font-size: 0.85rem;
+  bottom: 12px;
+  transform: translateX(-50%);
+  white-space: normal;
 }
 
 .ol-popup:after, .ol-popup:before {
