@@ -50,7 +50,6 @@ const TYPE_COLORS: Record<string, string> = {
   deployments: '#8b5cf6',   // purple
   procedures: '#f59e0b',    // amber
   samplingFeatures: '#10b981', // emerald
-  liveLocations: '#ef4444', // red — for observation-based locations
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -58,7 +57,6 @@ const TYPE_LABELS: Record<string, string> = {
   deployments: 'D',
   procedures: 'P',
   samplingFeatures: 'F',
-  liveLocations: 'L',
 }
 
 // Active layer toggles
@@ -67,21 +65,29 @@ const activeLayers = ref<Record<string, boolean>>({
   deployments: true,
   procedures: true,
   samplingFeatures: true,
-  liveLocations: true,
 })
+
+// Cache: systemId → { lat, lon, alt?, datastreamName? }
+const systemLocationCache: Record<string, { lat: number; lon: number; alt?: number; datastreamName?: string; phenomenonTime?: string }> = {}
+// Track how many features were enriched from observations
+const enrichedCounts = ref<Record<string, number>>({})
 
 // Vector sources per type so we can toggle layers
 const vectorSources: Record<string, VectorSource> = {}
 const vectorLayers: Record<string, VectorLayer> = {}
 
-function getStyle(resourceType: string): Style {
+function getStyle(resourceType: string, enriched = false): Style {
   const color = TYPE_COLORS[resourceType] || '#6b7280'
   const label = TYPE_LABELS[resourceType] || '?'
   return new Style({
     image: new CircleStyle({
       radius: 10,
       fill: new Fill({ color }),
-      stroke: new Stroke({ color: '#fff', width: 2 }),
+      stroke: new Stroke({
+        color: enriched ? color : '#fff',
+        width: 2,
+        lineDash: enriched ? [4, 4] : undefined,
+      }),
     }),
     text: new OlText({
       text: label,
@@ -211,20 +217,18 @@ async function loadResourceType(resourceType: string): Promise<number> {
 }
 
 /**
- * Load latest location observations from datastreams.
- * Finds datastreams whose observedProperties include "Location" or whose
- * outputName contains "gps"/"location", fetches the most recent observation
- * from each, and plots the system's last-known position.
+ * Build a cache of system locations from their location/GPS datastreams.
+ * For each system that has a location datastream, fetches the latest observation
+ * and caches the lat/lon so we can use it to enrich any resource linked to that system.
  */
-async function loadLocationObservations(): Promise<number> {
-  const source = vectorSources['liveLocations']
-  if (!source) return 0
-  source.clear()
+async function buildSystemLocationCache(): Promise<void> {
+  // Clear old cache
+  for (const key of Object.keys(systemLocationCache)) delete systemLocationCache[key]
 
   try {
     // Fetch all datastreams
-    const dsRes = await apiFetch('/datastreams?limit=100')
-    if (!dsRes.ok || !dsRes.data) return 0
+    const dsRes = await apiFetch('/datastreams?limit=200')
+    if (!dsRes.ok || !dsRes.data) return
 
     const allDs = dsRes.data.items || dsRes.data.features || dsRes.data || []
     // Filter to location-related datastreams
@@ -247,8 +251,7 @@ async function loadLocationObservations(): Promise<number> {
       }
     }
 
-    let count = 0
-    // Fetch latest observation from each location datastream
+    // Fetch latest observation from each location datastream in parallel
     const promises = Object.entries(bySystem).map(async ([sysId, ds]) => {
       try {
         const obsRes = await apiFetch(`/datastreams/${ds.id}/observations?limit=1`, {
@@ -259,69 +262,223 @@ async function loadLocationObservations(): Promise<number> {
         const obs = obsRes.data.items?.[0] || obsRes.data[0]
         if (!obs?.result) return
 
-        // Extract lat/lon from result — handles {lat, lon} or {Location: {lat, lon}}
+        // Extract lat/lon from various result shapes
         let lat: number | undefined
         let lon: number | undefined
+        let alt: number | undefined
         const result = obs.result
         if (typeof result.lat === 'number' && typeof result.lon === 'number') {
-          lat = result.lat; lon = result.lon
+          lat = result.lat; lon = result.lon; alt = result.alt
         } else if (result.Location && typeof result.Location.lat === 'number') {
-          lat = result.Location.lat; lon = result.Location.lon
+          lat = result.Location.lat; lon = result.Location.lon; alt = result.Location.alt
         } else if (result.location && typeof result.location.lat === 'number') {
-          lat = result.location.lat; lon = result.location.lon
+          lat = result.location.lat; lon = result.location.lon; alt = result.location.alt
         }
         if (lat == null || lon == null) return
 
-        // Look up the system name from the systems layer
-        const sysSource = vectorSources['systems']
-        const sysFeature = sysSource?.getFeatures().find(f => f.get('resourceId') === sysId)
-        const sysName = sysFeature?.get('resourceName')
-          || ds['system@link']?.uid
-          || `System ${sysId}`
-
-        const olFeature = new Feature({
-          geometry: new Point(fromLonLat([lon, lat])),
-        })
-        olFeature.setStyle(getStyle('liveLocations'))
-        olFeature.set('resourceType', 'liveLocations')
-        olFeature.set('resourceId', sysId)
-        olFeature.set('resourceName', `${sysName} (live)`)
-        olFeature.set('rawData', {
-          systemId: sysId,
-          datastream: ds.name,
-          datastreamId: ds.id,
+        systemLocationCache[sysId] = {
+          lat, lon, alt,
+          datastreamName: ds.name,
           phenomenonTime: obs.phenomenonTime,
-          lat, lon,
-          altitude: result.alt || result.Location?.alt || result.location?.alt,
-        })
-        source.addFeature(olFeature)
-        count++
-      } catch { /* skip individual failures */ }
+        }
+      } catch { /* skip */ }
     })
 
     await Promise.all(promises)
-    return count
-  } catch {
-    return 0
-  }
+  } catch { /* cache remains empty */ }
+}
+
+/**
+ * Create an OL feature from a cached location, marking it as enriched.
+ */
+function createEnrichedFeature(
+  item: any,
+  resourceType: string,
+  lat: number,
+  lon: number,
+  enrichmentSource: string,
+): Feature {
+  const olFeature = new Feature({
+    geometry: new Point(fromLonLat([lon, lat])),
+  })
+  olFeature.setStyle(getStyle(resourceType, true))
+  olFeature.set('resourceType', resourceType)
+  olFeature.set('resourceId', extractId(item))
+  olFeature.set('resourceName', extractName(item))
+  olFeature.set('enriched', true)
+  olFeature.set('enrichmentSource', enrichmentSource)
+  olFeature.set('rawData', item)
+  return olFeature
+}
+
+/**
+ * Enrich resources that have null geometry using the system location cache.
+ * - Systems: use their own location datastream observations
+ * - Deployments: use the location of their deployed systems
+ * - Sampling features: try to find the system they belong to
+ */
+async function enrichResourcesWithLocations(): Promise<void> {
+  for (const key of Object.keys(enrichedCounts.value)) delete enrichedCounts.value[key]
+
+  // --- Enrich systems ---
+  await enrichSystems()
+  // --- Enrich deployments ---
+  await enrichDeployments()
+  // --- Enrich sampling features ---
+  await enrichSamplingFeatures()
+}
+
+async function enrichSystems(): Promise<void> {
+  const source = vectorSources['systems']
+  if (!source) return
+
+  // We need to know which systems were loaded but have no geometry on the map.
+  // Re-fetch the raw items list to check which have null geometry.
+  try {
+    const url = getListUrl('systems', { limit: 200 })
+    const res = await apiFetch(url, {
+      headers: { 'Accept': 'application/geo+json' },
+    })
+    if (!res.ok || !res.data) return
+
+    let items: any[] = []
+    if (res.data.type === 'FeatureCollection' && Array.isArray(res.data.features)) {
+      items = res.data.features
+    } else if (Array.isArray(res.data.items)) {
+      items = res.data.items
+    }
+
+    let enriched = 0
+    for (const item of items) {
+      // Skip if it already has geometry (already on map)
+      if (extractGeometry(item)) continue
+
+      const sysId = extractId(item)
+      const loc = systemLocationCache[sysId]
+      if (!loc) continue
+
+      const feature = createEnrichedFeature(
+        item, 'systems', loc.lat, loc.lon,
+        `Latest observation from ${loc.datastreamName || 'location datastream'} at ${loc.phenomenonTime || 'unknown time'}`
+      )
+      source.addFeature(feature)
+      enriched++
+    }
+    enrichedCounts.value['systems'] = enriched
+    featureCounts.value['systems'] = (featureCounts.value['systems'] || 0) + enriched
+  } catch { /* skip */ }
+}
+
+async function enrichDeployments(): Promise<void> {
+  const source = vectorSources['deployments']
+  if (!source) return
+
+  try {
+    const url = getListUrl('deployments', { limit: 200 })
+    const res = await apiFetch(url, {
+      headers: { 'Accept': 'application/geo+json' },
+    })
+    if (!res.ok || !res.data) return
+
+    let items: any[] = []
+    if (res.data.type === 'FeatureCollection' && Array.isArray(res.data.features)) {
+      items = res.data.features
+    } else if (Array.isArray(res.data.items)) {
+      items = res.data.items
+    }
+
+    let enriched = 0
+    for (const item of items) {
+      if (extractGeometry(item)) continue
+
+      // Try to find a deployed system with a known location
+      const deployedSystems = item.properties?.['deployedSystems@link'] || item['deployedSystems@link'] || []
+      for (const dsl of deployedSystems) {
+        const sysHref = dsl.system?.href || dsl.href || ''
+        // Extract system ID from href (last path segment)
+        const sysId = sysHref.split('/').pop()
+        if (sysId && systemLocationCache[sysId]) {
+          const loc = systemLocationCache[sysId]
+          const feature = createEnrichedFeature(
+            item, 'deployments', loc.lat, loc.lon,
+            `Derived from deployed system ${sysId} (${loc.datastreamName || 'location obs'})`
+          )
+          source.addFeature(feature)
+          enriched++
+          break // one location per deployment is enough
+        }
+      }
+    }
+    enrichedCounts.value['deployments'] = enriched
+    featureCounts.value['deployments'] = (featureCounts.value['deployments'] || 0) + enriched
+  } catch { /* skip */ }
+}
+
+async function enrichSamplingFeatures(): Promise<void> {
+  const source = vectorSources['samplingFeatures']
+  if (!source) return
+
+  // For each system with a known location, fetch its sampling features
+  // and enrich any that don't already have geometry on the map
+  const alreadyPlottedIds = new Set(
+    source.getFeatures().filter(f => f.getGeometry()).map(f => f.get('resourceId'))
+  )
+
+  let enriched = 0
+  const promises = Object.entries(systemLocationCache).map(async ([sysId, loc]) => {
+    try {
+      const sfRes = await apiFetch(`/systems/${sysId}/samplingFeatures?limit=100`, {
+        headers: { 'Accept': 'application/geo+json' },
+      })
+      if (!sfRes.ok || !sfRes.data) return
+
+      let items: any[] = []
+      if (sfRes.data.type === 'FeatureCollection' && Array.isArray(sfRes.data.features)) {
+        items = sfRes.data.features
+      } else if (Array.isArray(sfRes.data.items)) {
+        items = sfRes.data.items
+      }
+
+      for (const item of items) {
+        const sfId = extractId(item)
+        // Skip if this feature already has geometry on the map
+        if (alreadyPlottedIds.has(sfId)) continue
+        // Skip if feature has its own geometry
+        if (extractGeometry(item)) continue
+
+        const feature = createEnrichedFeature(
+          item, 'samplingFeatures', loc.lat, loc.lon,
+          `Derived from parent system ${sysId} (${loc.datastreamName || 'location obs'})`
+        )
+        source.addFeature(feature)
+        enriched++
+      }
+    } catch { /* skip */ }
+  })
+
+  await Promise.all(promises)
+  enrichedCounts.value['samplingFeatures'] = enriched
+  featureCounts.value['samplingFeatures'] = (featureCounts.value['samplingFeatures'] || 0) + enriched
 }
 
 async function loadAllResources() {
   loading.value = true
   error.value = ''
   featureCounts.value = {}
+  for (const key of Object.keys(enrichedCounts.value)) delete enrichedCounts.value[key]
 
-  // Load Part 1 resources (systems, deployments, procedures, samplingFeatures)
+  // 1. Load Part 1 resources (systems, deployments, procedures, samplingFeatures)
   const promises = SPATIAL_TYPES.map(async (rt) => {
     const count = await loadResourceType(rt.key)
     featureCounts.value[rt.key] = count
   })
-
   await Promise.all(promises)
 
-  // Then load live location observations (needs systems loaded first for name lookup)
-  const liveCount = await loadLocationObservations()
-  featureCounts.value['liveLocations'] = liveCount
+  // 2. Build system location cache from observation data
+  await buildSystemLocationCache()
+
+  // 3. Enrich all resource types that have null geometry
+  await enrichResourcesWithLocations()
 
   loading.value = false
 
@@ -372,17 +529,6 @@ onMounted(() => {
     vectorLayers[rt.key] = layer
   }
 
-  // Create live locations layer (observation-derived positions)
-  {
-    const source = new VectorSource()
-    vectorSources['liveLocations'] = source
-    const layer = new VectorLayer({
-      source,
-      zIndex: 15, // above Part 1 features
-    })
-    vectorLayers['liveLocations'] = layer
-  }
-
   // Create map
   map = new Map({
     target: mapContainer.value,
@@ -406,11 +552,14 @@ onMounted(() => {
 
       const resourceType = feature.get('resourceType')
       const rawData = feature.get('rawData')
+      const isEnriched = feature.get('enriched') || false
+      const enrichmentSource = feature.get('enrichmentSource') || ''
 
       // Reset previous selection style
       if (selectedFeature.value?._olFeature) {
         const prevType = selectedFeature.value.resourceType
-        selectedFeature.value._olFeature.setStyle(getStyle(prevType))
+        const prevEnriched = selectedFeature.value.enriched || false
+        selectedFeature.value._olFeature.setStyle(getStyle(prevType, prevEnriched))
       }
 
       // Highlight new selection
@@ -421,6 +570,8 @@ onMounted(() => {
         resourceId: feature.get('resourceId'),
         resourceName: feature.get('resourceName'),
         rawData,
+        enriched: isEnriched,
+        enrichmentSource,
         _olFeature: feature,
       }
 
@@ -468,7 +619,8 @@ function closePopup() {
   overlay?.setPosition(undefined)
   if (selectedFeature.value?._olFeature) {
     const prevType = selectedFeature.value.resourceType
-    selectedFeature.value._olFeature.setStyle(getStyle(prevType))
+    const prevEnriched = selectedFeature.value.enriched || false
+    selectedFeature.value._olFeature.setStyle(getStyle(prevType, prevEnriched))
   }
   selectedFeature.value = null
 }
@@ -546,16 +698,14 @@ async function createTestFeature() {
           <span class="layer-label">{{ rt.plural }}</span>
           <span class="layer-count">{{ featureCounts[rt.key] ?? '—' }}</span>
         </button>
+      </div>
 
-        <!-- Live locations from observations -->
-        <button
-          :class="['layer-toggle', { inactive: !activeLayers['liveLocations'] }]"
-          @click="toggleLayer('liveLocations')"
-        >
-          <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS['liveLocations'] }"></span>
-          <span class="layer-label">Live Locations</span>
-          <span class="layer-count">{{ featureCounts['liveLocations'] ?? '—' }}</span>
-        </button>
+      <!-- Enrichment info -->
+      <div v-if="Object.values(enrichedCounts).some(c => c > 0)" class="enrichment-info">
+        <span class="enriched-indicator"></span>
+        <span class="enrichment-text">
+          {{ Object.values(enrichedCounts).reduce((s, n) => s + n, 0) }} locations derived from observations
+        </span>
       </div>
 
       <div class="sidebar-status">
@@ -609,6 +759,11 @@ async function createTestFeature() {
         <div class="detail-field">
           <span class="field-label">Type:</span>
           {{ SPATIAL_TYPES.find(r => r.key === selectedFeature.resourceType)?.label }}
+        </div>
+        <div v-if="selectedFeature.enriched" class="enrichment-banner">
+          <i class="pi pi-info-circle"></i>
+          <span>Location derived from observation data</span>
+          <small v-if="selectedFeature.enrichmentSource">{{ selectedFeature.enrichmentSource }}</small>
         </div>
         <div class="detail-field">
           <span class="field-label">ID:</span>
@@ -818,6 +973,49 @@ async function createTestFeature() {
 .error-msg {
   color: #dc2626;
   font-weight: 600;
+}
+
+.enrichment-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0.75rem 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: #f0f9ff;
+  border: 1px dashed #93c5fd;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #1e40af;
+}
+
+.enriched-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px dashed #3b82f6;
+  flex-shrink: 0;
+}
+
+.enrichment-text {
+  flex: 1;
+}
+
+.enrichment-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.5rem;
+  background: #f0f9ff;
+  border: 1px dashed #93c5fd;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #1e40af;
+}
+
+.enrichment-banner small {
+  color: #64748b;
+  font-size: 0.7rem;
 }
 
 .detail-panel {
