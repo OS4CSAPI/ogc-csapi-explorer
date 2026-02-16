@@ -44,12 +44,24 @@ const selectedFeature = ref<any>(null)
 // Part 1 resource types that may have geometry
 const SPATIAL_TYPES = RESOURCE_TYPES.filter(r => r.part === 1 && r.key !== 'properties')
 
+// Part 2 types shown on the map (placed at parent system's location)
+const PART2_MAP_TYPES = RESOURCE_TYPES.filter(r => ['datastreams', 'controlStreams'].includes(r.key))
+
+// Synthetic entry for observation GPS tracks (not a real API resource type)
+const OBS_TRACK_ENTRY = { key: 'observationTracks', label: 'Obs. Track', plural: 'Observation Tracks', icon: 'pi pi-directions', part: 2 as const, readOnly: true }
+
+// All types visible on the map
+const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_TRACK_ENTRY]
+
 // Color map for resource types
 const TYPE_COLORS: Record<string, string> = {
-  systems: '#3b82f6',       // blue
-  deployments: '#8b5cf6',   // purple
-  procedures: '#f59e0b',    // amber
-  samplingFeatures: '#10b981', // emerald
+  systems: '#3b82f6',           // blue
+  deployments: '#8b5cf6',       // purple
+  procedures: '#f59e0b',        // amber
+  samplingFeatures: '#10b981',  // emerald
+  datastreams: '#ef4444',       // red
+  controlStreams: '#f97316',    // orange
+  observationTracks: '#06b6d4', // cyan
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -57,6 +69,9 @@ const TYPE_LABELS: Record<string, string> = {
   deployments: 'D',
   procedures: 'P',
   samplingFeatures: 'F',
+  datastreams: 'DS',
+  controlStreams: 'CS',
+  observationTracks: '~',
 }
 
 // Active layer toggles
@@ -65,10 +80,15 @@ const activeLayers = ref<Record<string, boolean>>({
   deployments: true,
   procedures: true,
   samplingFeatures: true,
+  datastreams: true,
+  controlStreams: true,
+  observationTracks: true,
 })
 
 // Cache: systemId → { lat, lon, alt?, datastreamName? }
 const systemLocationCache: Record<string, { lat: number; lon: number; alt?: number; datastreamName?: string; phenomenonTime?: string }> = {}
+// Track location-related datastreams for observation track rendering
+let locationDatastreamList: Array<{ id: string; name: string; systemId: string }> = []
 // Track how many features were enriched from observations
 const enrichedCounts = ref<Record<string, number>>({})
 
@@ -79,9 +99,22 @@ const vectorLayers: Record<string, VectorLayer> = {}
 function getStyle(resourceType: string, enriched = false): Style {
   const color = TYPE_COLORS[resourceType] || '#6b7280'
   const label = TYPE_LABELS[resourceType] || '?'
+
+  // Observation tracks are LineStrings — dashed line, no point marker
+  if (resourceType === 'observationTracks') {
+    return new Style({
+      stroke: new Stroke({ color, width: 3, lineDash: [8, 4] }),
+    })
+  }
+
+  // Part 2 associated types use smaller markers to reduce clutter at shared locations
+  const isPart2 = resourceType === 'datastreams' || resourceType === 'controlStreams'
+  const radius = isPart2 ? 7 : 10
+  const font = isPart2 ? 'bold 8px sans-serif' : 'bold 11px sans-serif'
+
   return new Style({
     image: new CircleStyle({
-      radius: 10,
+      radius,
       fill: new Fill({ color }),
       stroke: new Stroke({
         color: enriched ? color : '#fff',
@@ -92,27 +125,38 @@ function getStyle(resourceType: string, enriched = false): Style {
     text: new OlText({
       text: label,
       fill: new Fill({ color: '#fff' }),
-      font: 'bold 11px sans-serif',
+      font,
       offsetY: 1,
     }),
     stroke: new Stroke({ color, width: 2 }),
-    fill: new Fill({ color: color + '33' }), // 20% opacity fill for polygons
+    fill: new Fill({ color: color + '33' }),
   })
 }
 
 function getSelectedStyle(resourceType: string): Style {
   const color = TYPE_COLORS[resourceType] || '#6b7280'
   const label = TYPE_LABELS[resourceType] || '?'
+
+  if (resourceType === 'observationTracks') {
+    return new Style({
+      stroke: new Stroke({ color: '#fbbf24', width: 5 }),
+    })
+  }
+
+  const isPart2 = resourceType === 'datastreams' || resourceType === 'controlStreams'
+  const radius = isPart2 ? 10 : 14
+  const font = isPart2 ? 'bold 10px sans-serif' : 'bold 13px sans-serif'
+
   return new Style({
     image: new CircleStyle({
-      radius: 14,
+      radius,
       fill: new Fill({ color }),
       stroke: new Stroke({ color: '#fbbf24', width: 3 }),
     }),
     text: new OlText({
       text: label,
       fill: new Fill({ color: '#fff' }),
-      font: 'bold 13px sans-serif',
+      font,
       offsetY: 1,
     }),
     stroke: new Stroke({ color: '#fbbf24', width: 3 }),
@@ -224,6 +268,7 @@ async function loadResourceType(resourceType: string): Promise<number> {
 async function buildSystemLocationCache(): Promise<void> {
   // Clear old cache
   for (const key of Object.keys(systemLocationCache)) delete systemLocationCache[key]
+  locationDatastreamList = []
 
   try {
     // Fetch all datastreams
@@ -250,6 +295,13 @@ async function buildSystemLocationCache(): Promise<void> {
         bySystem[sysId] = ds
       }
     }
+
+    // Save all location datastream info for observation track rendering
+    locationDatastreamList = Object.entries(bySystem).map(([sysId, ds]) => ({
+      id: ds.id,
+      name: ds.name || ds.outputName || 'Unknown',
+      systemId: sysId,
+    }))
 
     // Fetch latest observation from each location datastream in parallel
     const promises = Object.entries(bySystem).map(async ([sysId, ds]) => {
@@ -461,6 +513,120 @@ async function enrichSamplingFeatures(): Promise<void> {
   featureCounts.value['samplingFeatures'] = (featureCounts.value['samplingFeatures'] || 0) + enriched
 }
 
+/**
+ * Load Part 2 DataStreams and place them at their parent system's cached location.
+ */
+async function loadDatastreams(): Promise<void> {
+  const source = vectorSources['datastreams']
+  if (!source) return
+
+  let count = 0
+  try {
+    const res = await apiFetch('/datastreams?limit=200')
+    if (!res.ok || !res.data) return
+
+    const items = res.data.items || []
+    for (const ds of items) {
+      const sysId = ds['system@id'] || ds.system?.id
+      if (!sysId) continue
+      const loc = systemLocationCache[sysId]
+      if (!loc) continue
+
+      const feature = createEnrichedFeature(
+        ds, 'datastreams', loc.lat, loc.lon,
+        `At parent system ${sysId} (${loc.datastreamName || 'location obs'})`
+      )
+      source.addFeature(feature)
+      count++
+    }
+  } catch { /* skip */ }
+  featureCounts.value['datastreams'] = count
+}
+
+/**
+ * Load Part 2 ControlStreams and place them at their parent system's cached location.
+ */
+async function loadControlStreams(): Promise<void> {
+  const source = vectorSources['controlStreams']
+  if (!source) return
+
+  let count = 0
+  try {
+    const res = await apiFetch('/controlstreams?limit=200')
+    if (!res.ok || !res.data) return
+
+    const items = res.data.items || []
+    for (const cs of items) {
+      const sysId = cs['system@id'] || cs.system?.id
+      if (!sysId) continue
+      const loc = systemLocationCache[sysId]
+      if (!loc) continue
+
+      const feature = createEnrichedFeature(
+        cs, 'controlStreams', loc.lat, loc.lon,
+        `At parent system ${sysId} (${loc.datastreamName || 'location obs'})`
+      )
+      source.addFeature(feature)
+      count++
+    }
+  } catch { /* skip */ }
+  featureCounts.value['controlStreams'] = count
+}
+
+/**
+ * Load observation tracks — GPS trail LineStrings from location datastreams.
+ * Fetches recent observations and plots them as a path on the map.
+ */
+async function loadObservationTracks(): Promise<void> {
+  const source = vectorSources['observationTracks']
+  if (!source) return
+
+  let count = 0
+  const promises = locationDatastreamList.map(async (dsInfo) => {
+    try {
+      const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=50`, {
+        headers: { 'Accept': 'application/om+json' },
+      })
+      if (!obsRes.ok || !obsRes.data) return
+
+      const items = obsRes.data.items || []
+      const coords: [number, number][] = []
+      for (const obs of items) {
+        const result = obs.result
+        let lat: number | undefined, lon: number | undefined
+        if (typeof result?.lat === 'number' && typeof result?.lon === 'number') {
+          lat = result.lat; lon = result.lon
+        } else if (result?.location?.lat != null) {
+          lat = result.location.lat; lon = result.location.lon
+        } else if (result?.Location?.lat != null) {
+          lat = result.Location.lat; lon = result.Location.lon
+        }
+        if (lat != null && lon != null) {
+          coords.push([lon, lat])
+        }
+      }
+
+      if (coords.length >= 2) {
+        const lineFeature = new Feature({
+          geometry: new LineString(coords.map(c => fromLonLat(c))),
+        })
+        lineFeature.setStyle(getStyle('observationTracks'))
+        lineFeature.set('resourceType', 'observationTracks')
+        lineFeature.set('resourceId', dsInfo.id)
+        lineFeature.set('resourceName', `Track: ${dsInfo.name}`)
+        lineFeature.set('enriched', true)
+        lineFeature.set('enrichmentSource', `${coords.length} observations from ${dsInfo.name}`)
+        lineFeature.set('rawData', { datastreamId: dsInfo.id, datastreamName: dsInfo.name, systemId: dsInfo.systemId, pointCount: coords.length })
+        source.addFeature(lineFeature)
+        count++
+      }
+    } catch { /* skip */ }
+  })
+
+  await Promise.all(promises)
+  featureCounts.value['observationTracks'] = count
+}
+
 async function loadAllResources() {
   loading.value = true
   error.value = ''
@@ -477,8 +643,15 @@ async function loadAllResources() {
   // 2. Build system location cache from observation data
   await buildSystemLocationCache()
 
-  // 3. Enrich all resource types that have null geometry
+  // 3. Enrich Part 1 resource types that have null geometry
   await enrichResourcesWithLocations()
+
+  // 4. Load Part 2 resources at parent system locations + observation tracks
+  await Promise.all([
+    loadDatastreams(),
+    loadControlStreams(),
+    loadObservationTracks(),
+  ])
 
   loading.value = false
 
@@ -518,13 +691,13 @@ onMounted(() => {
     offset: [0, -15],
   })
 
-  // Create vector sources and layers for each spatial type
-  for (const rt of SPATIAL_TYPES) {
+  // Create vector sources and layers for each map type
+  for (const rt of MAP_TYPES) {
     const source = new VectorSource()
     vectorSources[rt.key] = source
     const layer = new VectorLayer({
       source,
-      zIndex: 10,
+      zIndex: rt.key === 'observationTracks' ? 5 : 10,
     })
     vectorLayers[rt.key] = layer
   }
@@ -688,8 +861,21 @@ async function createTestFeature() {
       </div>
 
       <div class="layer-controls">
+        <div class="layer-section-label">Part 1 — Features</div>
         <button
           v-for="rt in SPATIAL_TYPES"
+          :key="rt.key"
+          :class="['layer-toggle', { inactive: !activeLayers[rt.key] }]"
+          @click="toggleLayer(rt.key)"
+        >
+          <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS[rt.key] }"></span>
+          <span class="layer-label">{{ rt.plural }}</span>
+          <span class="layer-count">{{ featureCounts[rt.key] ?? '—' }}</span>
+        </button>
+
+        <div class="layer-section-label" style="margin-top: 0.5rem;">Part 2 — Dynamic Data</div>
+        <button
+          v-for="rt in [...PART2_MAP_TYPES, OBS_TRACK_ENTRY]"
           :key="rt.key"
           :class="['layer-toggle', { inactive: !activeLayers[rt.key] }]"
           @click="toggleLayer(rt.key)"
@@ -758,7 +944,7 @@ async function createTestFeature() {
         </div>
         <div class="detail-field">
           <span class="field-label">Type:</span>
-          {{ SPATIAL_TYPES.find(r => r.key === selectedFeature.resourceType)?.label }}
+          {{ MAP_TYPES.find(r => r.key === selectedFeature.resourceType)?.label }}
         </div>
         <div v-if="selectedFeature.enriched" class="enrichment-banner">
           <i class="pi pi-info-circle"></i>
@@ -796,7 +982,7 @@ async function createTestFeature() {
         <a href="#" class="ol-popup-closer" @click.prevent="closePopup"></a>
         <div v-if="selectedFeature" class="popup-content">
           <span class="popup-badge" :style="{ backgroundColor: TYPE_COLORS[selectedFeature.resourceType] }">
-            {{ SPATIAL_TYPES.find(r => r.key === selectedFeature.resourceType)?.label }}
+            {{ MAP_TYPES.find(r => r.key === selectedFeature.resourceType)?.label }}
           </span>
           <strong>{{ selectedFeature.resourceName }}</strong>
           <div class="popup-id">{{ selectedFeature.resourceId }}</div>
@@ -836,6 +1022,15 @@ async function createTestFeature() {
 
 .layer-controls {
   padding: 0.25rem 0.5rem;
+}
+
+.layer-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  padding: 0.35rem 0.75rem 0.15rem;
 }
 
 .layer-toggle {
