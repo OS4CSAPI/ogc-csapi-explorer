@@ -688,7 +688,8 @@ onMounted(() => {
   overlay = new Overlay({
     element: popupContainer.value,
     autoPan: { animation: { duration: 250 } },
-    offset: [0, -15],
+    positioning: 'bottom-center',
+    offset: [0, -10],
   })
 
   // Create vector sources and layers for each map type
