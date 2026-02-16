@@ -57,6 +57,35 @@ In `csapi-bridge.ts`, the `initializeBuilder()` function:
 
 This fallback is what makes 52North work — we optimistically try all standard CSAPI paths and let the server respond with data or errors.
 
+## Critical Finding: Demo Does Not Validate the Public API
+
+This bypass architecture means **the demo app is not using the library the way a real developer would**. A normal consumer of ogc-client would write:
+
+```typescript
+import { OgcApiEndpoint } from 'ogc-client';
+
+const endpoint = new OgcApiEndpoint('https://csa.demo.52north.org');
+
+const hasCSAPI = await endpoint.hasConnectedSystems; // → false (blocked by conformance)
+const collections = await endpoint.csapiCollections;  // → [] (empty)
+```
+
+They would conclude that the server does not support Connected Systems, and never see any resources.
+
+### What this means
+
+1. **Our demo validates parsing/formatting logic** (CSAPIQueryBuilder URL building, GeoJSON extraction, SWE parsing) — which is valuable — but **does not validate the developer experience** of using the library as intended
+2. **52North would be completely broken** for any real consumer using `OgcApiEndpoint` as the entry point — they would never discover CSAPI resources
+3. **OSH SensorHub likely has the same problem** — given that it returns `Content-Type: auto` and other non-standard behaviors, it very likely also does not declare CSAPI conformance classes
+4. This is arguably **the most significant finding** from the demo project, and it is **not captured in any of the existing issues #5–#17**
+
+### Recommended actions
+
+- **Verify** whether OSH SensorHub also fails the `OgcApiEndpoint` conformance check
+- **Create a new upstream issue** about `OgcApiEndpoint` being unusable with real CSAPI servers due to missing or incomplete conformance declarations
+- **Propose** that `checkHasConnectedSystems()` add a duck-typing fallback: if `/conformance` doesn't declare CSAPI classes, probe for CSAPI collections by `featureType` or attempt a request to `/systems` as a secondary signal
+- **Consider refactoring** part of the demo to also exercise the `OgcApiEndpoint` public API path, so both the intended developer workflow and the internal utilities are validated
+
 ## Implications
 
 ### For the library (upstream concern)
@@ -75,6 +104,8 @@ The server arguably has an incomplete conformance declaration. It implements Con
 ### For the demo app
 
 The current bypass architecture is **intentional and appropriate** for a demo/testing tool. It validates the library's URL construction, parsing, and data extraction capabilities in isolation, without being blocked by conformance negotiation issues. This separation has been valuable for discovering server quirks (Content-Type: auto, Accept header requirements, etc.) that would be masked by `OgcApiEndpoint`'s gating logic.
+
+However, the demo should ideally also exercise the `OgcApiEndpoint` path to validate the complete intended developer workflow.
 
 ## Related Issues
 
