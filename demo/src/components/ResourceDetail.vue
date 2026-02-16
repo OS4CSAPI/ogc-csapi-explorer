@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { apiFetch } from '../api'
-import { getDetailUrl, extractCSAPIFeature, getCSAPIResourceType } from '../csapi-bridge'
+import { getDetailUrl } from '../csapi-bridge'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 import SweSchemaDisplay from './SweSchemaDisplay.vue'
+import ParsedResourceView from './ParsedResourceView.vue'
 
 const props = defineProps<{
   resourceType: string
@@ -17,23 +18,6 @@ const manualId = ref('')
 const loading = ref(false)
 const error = ref('')
 const detail = ref<any>(null)
-
-// Use the library's extractCSAPIFeature for typed display when applicable
-const typedResource = computed(() => {
-  if (!detail.value) return null
-  try {
-    // Only works for Part 1 GeoJSON resources with recognized featureType
-    if (getCSAPIResourceType(detail.value)) {
-      return extractCSAPIFeature(detail.value)
-    }
-  } catch { /* Not a recognized CSAPI feature — show raw */ }
-  return null
-})
-
-const recognizedType = computed(() => {
-  if (!detail.value) return null
-  return getCSAPIResourceType(detail.value)
-})
 
 /** True when viewing a datastream — triggers schema display */
 const isDatastream = computed(() => props.resourceType === 'datastreams')
@@ -92,79 +76,31 @@ watch(
     </div>
 
     <template v-if="detail">
-      <!-- Library recognition badge -->
-      <div v-if="recognizedType" class="recognition-badge">
-        <i class="pi pi-check-circle"></i>
-        <span>Recognized by library as: <strong>{{ recognizedType }}</strong></span>
+      <!-- Side-by-side layout: Raw JSON | Library Parsed Output -->
+      <div class="side-by-side">
+        <!-- Left panel: Raw Server Response -->
+        <div class="panel raw-panel">
+          <h3 class="panel-title">
+            <i class="pi pi-server"></i>
+            Raw Server Response
+          </h3>
+          <pre class="raw-json">{{ JSON.stringify(detail, null, 2) }}</pre>
+        </div>
+
+        <!-- Right panel: Library Parsed Output -->
+        <div class="panel parsed-panel">
+          <h3 class="panel-title">
+            <i class="pi pi-cog"></i>
+            Library Parsed Output
+          </h3>
+          <ParsedResourceView :resource="detail" :resourceType="props.resourceType" />
+        </div>
       </div>
 
-      <!-- Summary fields -->
-      <div class="detail-summary">
-        <div v-if="detail.id" class="field">
-          <span class="field-label">ID:</span>
-          <code>{{ detail.id }}</code>
-        </div>
-        <div v-if="detail.type" class="field">
-          <span class="field-label">Type:</span>
-          <span>{{ detail.type }}</span>
-        </div>
-        <!-- Typed properties from extractCSAPIFeature -->
-        <template v-if="typedResource">
-          <div v-if="typedResource.properties?.name" class="field">
-            <span class="field-label">Name:</span>
-            <span>{{ typedResource.properties.name }}</span>
-          </div>
-          <div v-if="typedResource.properties?.description" class="field">
-            <span class="field-label">Description:</span>
-            <span>{{ typedResource.properties.description }}</span>
-          </div>
-          <div v-if="typedResource.properties?.featureType" class="field">
-            <span class="field-label">Feature Type:</span>
-            <span>{{ typedResource.properties.featureType }}</span>
-          </div>
-          <div v-if="typedResource.properties?.uid" class="field">
-            <span class="field-label">UID:</span>
-            <code>{{ typedResource.properties.uid }}</code>
-          </div>
-          <div v-if="(typedResource.properties as any)?.validTime" class="field">
-            <span class="field-label">Valid Time:</span>
-            <span>{{ (typedResource.properties as any).validTime.start.toISOString() }}{{ (typedResource.properties as any).validTime.end ? ' – ' + (typedResource.properties as any).validTime.end.toISOString() : ' – (ongoing)' }}</span>
-          </div>
-        </template>
-        <!-- Fallback: raw property display for non-GeoJSON resources -->
-        <template v-else>
-          <div v-if="detail.properties?.name" class="field">
-            <span class="field-label">Name:</span>
-            <span>{{ detail.properties.name }}</span>
-          </div>
-          <div v-if="detail.properties?.description" class="field">
-            <span class="field-label">Description:</span>
-            <span>{{ detail.properties.description }}</span>
-          </div>
-          <div v-if="detail.properties?.featureType" class="field">
-            <span class="field-label">Feature Type:</span>
-            <span>{{ detail.properties.featureType }}</span>
-          </div>
-          <div v-if="detail.properties?.validTime" class="field">
-            <span class="field-label">Valid Time:</span>
-            <span>{{ JSON.stringify(detail.properties.validTime) }}</span>
-          </div>
-          <!-- Part 2 flat objects -->
-          <div v-if="detail.name && !detail.properties" class="field">
-            <span class="field-label">Name:</span>
-            <span>{{ detail.name }}</span>
-          </div>
-          <div v-if="detail.description && !detail.properties" class="field">
-            <span class="field-label">Description:</span>
-            <span>{{ detail.description }}</span>
-          </div>
-        </template>
-      </div>
-
-      <!-- Observation Schema (datastreams only) -->
+      <!-- Observation Schema (datastreams only) — full width below -->
       <SweSchemaDisplay v-if="isDatastream && effectiveId" :datastreamId="effectiveId" />
 
-      <!-- Links -->
+      <!-- Links — full width below -->
       <details v-if="detail.links?.length || detail.properties?.links?.length" class="detail-section">
         <summary>Links ({{ (detail.links || detail.properties?.links || []).length }})</summary>
         <table class="links-table">
@@ -178,12 +114,6 @@ watch(
           </tbody>
         </table>
       </details>
-
-      <!-- Full JSON -->
-      <details class="detail-section" open>
-        <summary>Full JSON</summary>
-        <pre class="raw-json">{{ JSON.stringify(detail, null, 2) }}</pre>
-      </details>
     </template>
   </div>
 </template>
@@ -196,17 +126,25 @@ watch(
 .mt-3 { margin-top: 0.75rem; }
 .empty-hint { display: flex; align-items: center; gap: 0.5rem; color: #94a3b8; padding: 1.5rem 0; }
 .loading { display: flex; align-items: center; gap: 0.5rem; color: #64748b; }
-.recognition-badge { display: flex; align-items: center; gap: 0.5rem; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem; color: #166534; }
-.recognition-badge i { color: #16a34a; }
-.detail-summary { background: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 0.4rem; }
-.field { display: flex; gap: 0.5rem; font-size: 0.9rem; }
-.field-label { font-weight: 600; min-width: 110px; color: #475569; }
-.field code { background: #e2e8f0; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.85rem; }
+
+/* Side-by-side layout */
+.side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; min-height: 200px; }
+@media (max-width: 900px) {
+  .side-by-side { grid-template-columns: 1fr; }
+}
+.panel { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+.panel-title { margin: 0; padding: 0.6rem 0.75rem; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; }
+.raw-panel .panel-title { background: #f8fafc; color: #475569; border-bottom: 1px solid #e2e8f0; }
+.parsed-panel .panel-title { background: #f0fdf4; color: #166534; border-bottom: 1px solid #bbf7d0; }
+.raw-panel .raw-json { flex: 1; margin: 0; border-radius: 0; max-height: 600px; }
+.parsed-panel { }
+.parsed-panel > :deep(.parsed-view) { padding: 0.75rem; flex: 1; overflow-y: auto; max-height: 600px; }
+
+.raw-json { background: #f8fafc; padding: 0.75rem; overflow-x: auto; font-size: 0.75rem; max-height: 500px; overflow-y: auto; }
 .detail-section { margin-top: 0.5rem; }
 .detail-section summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; color: #475569; }
 .links-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 0.5rem; }
 .links-table th, .links-table td { padding: 0.35rem 0.5rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
 .links-table th { background: #f8fafc; font-weight: 600; }
 .href-cell { font-family: monospace; font-size: 0.75rem; word-break: break-all; }
-.raw-json { background: #f8fafc; padding: 0.75rem; border-radius: 6px; overflow-x: auto; font-size: 0.75rem; max-height: 500px; overflow-y: auto; margin-top: 0.5rem; }
 </style>
