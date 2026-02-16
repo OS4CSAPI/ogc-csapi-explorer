@@ -7,6 +7,7 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Message from 'primevue/message'
+import StructuredResourceForm from './StructuredResourceForm.vue'
 
 const props = defineProps<{
   resourceType: string
@@ -23,6 +24,14 @@ const parentId = ref('')
 
 const jsonBody = ref(getDefaultBody())
 const loading = ref(false)
+
+// Whether this resource type supports structured forms (Part 1 feature types)
+const STRUCTURED_TYPES = new Set(['systems', 'deployments', 'procedures', 'samplingFeatures'])
+const useStructuredForm = computed(() => STRUCTURED_TYPES.has(props.resourceType))
+
+function onFormJsonUpdate(json: string) {
+  jsonBody.value = json
+}
 const error = ref('')
 const success = ref('')
 const responseData = ref<any>(null)
@@ -168,7 +177,15 @@ async function create() {
       <small class="hint">Required — {{ rtInfo.label }} is created under a {{ rtInfo.createParentLabel?.replace(' ID', '') }}</small>
     </div>
 
-    <div class="editor-container">
+    <!-- Structured form for Part 1 resources -->
+    <StructuredResourceForm
+      v-if="useStructuredForm"
+      :resourceType="props.resourceType"
+      @update:json="onFormJsonUpdate"
+    />
+
+    <!-- Raw JSON editor for Part 2 resources -->
+    <div v-else class="editor-container">
       <label>Request Body (JSON):</label>
       <Textarea
         v-model="jsonBody"

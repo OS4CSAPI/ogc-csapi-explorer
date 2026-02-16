@@ -7,6 +7,7 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Message from 'primevue/message'
+import StructuredResourceForm from './StructuredResourceForm.vue'
 
 const props = defineProps<{
   resourceType: string
@@ -26,12 +27,25 @@ const error = ref('')
 const success = ref('')
 const responseData = ref<any>(null)
 
+// Whether this resource type supports structured forms
+const STRUCTURED_TYPES = new Set(['systems', 'deployments', 'procedures', 'samplingFeatures'])
+const useStructuredForm = computed(() => STRUCTURED_TYPES.has(props.resourceType))
+
+// Initial JSON for the structured form (from the selected resource)
+const initialFormJson = ref('')
+
+function onFormJsonUpdate(json: string) {
+  jsonBody.value = json
+}
+
 // When a resource is selected (from list or detail), populate the editor
 watch(
   () => props.resource,
   (resource) => {
     if (resource) {
-      jsonBody.value = JSON.stringify(resource, null, 2)
+      const json = JSON.stringify(resource, null, 2)
+      jsonBody.value = json
+      initialFormJson.value = json
     }
   },
   { immediate: true }
@@ -105,7 +119,16 @@ async function update() {
       <p>Click the edit (pencil) icon on a resource in the List tab to load it here.</p>
     </div>
 
-    <div v-if="jsonBody" class="editor-container">
+    <!-- Structured form for Part 1 resources -->
+    <StructuredResourceForm
+      v-if="useStructuredForm && (jsonBody || effectiveId)"
+      :resourceType="props.resourceType"
+      :initialJson="initialFormJson"
+      @update:json="onFormJsonUpdate"
+    />
+
+    <!-- Raw JSON editor for Part 2 resources -->
+    <div v-else-if="jsonBody" class="editor-container">
       <label>Request Body (JSON):</label>
       <Textarea
         v-model="jsonBody"
