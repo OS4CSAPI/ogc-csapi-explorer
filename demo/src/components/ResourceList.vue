@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { apiFetch, getResourcePath, buildQueryString } from '../api'
+import { apiFetch } from '../api'
+import { getListUrl, parseCollectionResponse } from '../csapi-bridge'
+import type { QueryOptions } from '@csapi/ogc-api/csapi/model'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
@@ -47,16 +49,24 @@ async function fetchResources(cursorUrl?: string) {
   try {
     let path: string
     if (cursorUrl) {
-      // Cursor-based pagination: use the full link path
+      // Cursor-based pagination: use the link path directly
       path = cursorUrl
     } else {
-      const params: Record<string, any> = {}
-      if (limit.value) params.limit = limit.value
-      if (paginationMode.value === 'offset' && offset.value > 0) params.offset = offset.value
-      if (q.value) params.q = q.value
-      if (bbox.value) params.bbox = bbox.value
-      if (datetime.value) params.datetime = datetime.value
-      path = getResourcePath(props.resourceType) + buildQueryString(params)
+      // Build query options using the library's typed QueryOptions interface
+      const options: QueryOptions = {}
+      if (limit.value) options.limit = limit.value
+      if (paginationMode.value === 'offset' && offset.value > 0) options.offset = offset.value
+      if (q.value) options.q = q.value
+      if (bbox.value) {
+        const parts = bbox.value.split(',').map(Number)
+        if (parts.length === 4 && parts.every(n => !isNaN(n))) {
+          options.bbox = parts as [number, number, number, number]
+        }
+      }
+      if (datetime.value) options.datetime = datetime.value as any
+
+      // Use CSAPIQueryBuilder via bridge to construct the URL
+      path = getListUrl(props.resourceType, options)
     }
 
     const res = await apiFetch(path)
@@ -67,33 +77,35 @@ async function fetchResources(cursorUrl?: string) {
 
     rawResponse.value = res.data
 
-    // Parse response — handle both FeatureCollection (Part 1) and items envelope (Part 2)
-    const data = res.data
-    if (data?.type === 'FeatureCollection' && Array.isArray(data.features)) {
-      items.value = data.features
-    } else if (Array.isArray(data?.items)) {
-      items.value = data.items
-    } else if (Array.isArray(data)) {
-      items.value = data
-    } else {
-      items.value = []
-    }
+    // Use the library's parseCollectionResponse to normalize both envelope formats
+    // (FeatureCollection and items envelope) into a consistent structure
+    try {
+      const parsed = parseCollectionResponse(res.data)
+      items.value = parsed.items as any[]
+      numberMatched.value = parsed.numberMatched ?? null
+      numberReturned.value = parsed.numberReturned ?? parsed.items.length
 
-    numberMatched.value = data?.numberMatched ?? null
-    numberReturned.value = data?.numberReturned ?? items.value.length
-
-    // Extract pagination links
-    cursorNext.value = null
-    cursorPrev.value = null
-    const links = data?.links || []
-    for (const link of links) {
-      if (link.rel === 'next' && link.href) {
-        // Convert absolute URL to relative path through proxy
-        cursorNext.value = extractProxyPath(link.href)
+      // Extract pagination links from the normalized response
+      cursorNext.value = null
+      cursorPrev.value = null
+      for (const link of parsed.links) {
+        if (link.rel === 'next' && link.href) {
+          cursorNext.value = extractProxyPath(link.href)
+        }
+        if (link.rel === 'prev' && link.href) {
+          cursorPrev.value = extractProxyPath(link.href)
+        }
       }
-      if (link.rel === 'prev' && link.href) {
-        cursorPrev.value = extractProxyPath(link.href)
+    } catch {
+      // Fallback: if parseCollectionResponse fails (unexpected format),
+      // try to display raw data
+      if (Array.isArray(res.data)) {
+        items.value = res.data
+      } else {
+        items.value = []
       }
+      numberMatched.value = null
+      numberReturned.value = items.value.length
     }
   } catch (err: any) {
     error.value = err.message || 'Request failed'

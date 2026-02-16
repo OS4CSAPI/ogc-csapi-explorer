@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { apiFetch, getResourcePath } from '../api'
+import { apiFetch } from '../api'
+import { getUpdateUrl, getContentType } from '../csapi-bridge'
 import { getResourceType } from '../state'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -58,12 +59,11 @@ async function update() {
 
   loading.value = true
 
-  const path = `${getResourcePath(props.resourceType)}/${effectiveId.value}`
+  // Use CSAPIQueryBuilder via bridge to construct the PUT URL
+  const path = getUpdateUrl(props.resourceType, effectiveId.value)
 
-  const contentType = (props.resourceType === 'systems' || props.resourceType === 'deployments' ||
-    props.resourceType === 'procedures' || props.resourceType === 'samplingFeatures')
-    ? 'application/geo+json'
-    : 'application/json'
+  // Use bridge helper for correct Content-Type
+  const contentType = getContentType(props.resourceType)
 
   const res = await apiFetch(path, {
     method: 'PUT',

@@ -1,6 +1,9 @@
 /**
  * Thin wrapper around fetch for CSAPI requests.
  * Handles auth headers, JSON parsing, and error formatting.
+ *
+ * URL construction is handled by csapi-bridge.ts (which uses the library's
+ * CSAPIQueryBuilder). This module just handles the HTTP transport layer.
  */
 import { connection } from './state'
 
@@ -13,6 +16,11 @@ export interface ApiResponse<T = any> {
   headers: Record<string, string>
 }
 
+/**
+ * Fetch a CSAPI resource. The path should be a relative path produced by
+ * the CSAPIQueryBuilder (e.g., `/systems?limit=10`). The proxy base URL
+ * from the connection state is automatically prepended.
+ */
 export async function apiFetch<T = any>(
   path: string,
   options: RequestInit = {}
@@ -85,39 +93,4 @@ export async function apiFetch<T = any>(
       headers: {},
     }
   }
-}
-
-/**
- * Map resource type keys to their API path segments
- */
-const RESOURCE_PATHS: Record<string, string> = {
-  systems: '/systems',
-  deployments: '/deployments',
-  procedures: '/procedures',
-  samplingFeatures: '/samplingFeatures',
-  properties: '/properties',
-  datastreams: '/datastreams',
-  observations: '/observations',
-  controlStreams: '/controlStreams',
-  commands: '/commands',
-}
-
-export function getResourcePath(resourceType: string): string {
-  return RESOURCE_PATHS[resourceType] || `/${resourceType}`
-}
-
-/**
- * Build query string from filter options
- */
-export function buildQueryString(params: Record<string, any>): string {
-  const parts: string[] = []
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined || value === null || value === '') continue
-    if (Array.isArray(value)) {
-      parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value.join(','))}`)
-    } else {
-      parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
-    }
-  }
-  return parts.length > 0 ? '?' + parts.join('&') : ''
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { apiFetch, getResourcePath } from '../api'
+import { apiFetch } from '../api'
+import { getDeleteUrl } from '../csapi-bridge'
 import { getResourceType } from '../state'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -49,7 +50,8 @@ async function executeDelete() {
 
   loading.value = true
 
-  const path = `${getResourcePath(props.resourceType)}/${effectiveId.value}`
+  // Use CSAPIQueryBuilder via bridge to construct the DELETE URL
+  const path = getDeleteUrl(props.resourceType, effectiveId.value)
   const res = await apiFetch(path, { method: 'DELETE' })
 
   loading.value = false

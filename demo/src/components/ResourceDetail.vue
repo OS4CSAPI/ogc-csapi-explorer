@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { apiFetch, getResourcePath } from '../api'
+import { ref, watch, computed } from 'vue'
+import { apiFetch } from '../api'
+import { getDetailUrl, extractCSAPIFeature, getCSAPIResourceType } from '../csapi-bridge'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
@@ -16,6 +17,23 @@ const loading = ref(false)
 const error = ref('')
 const detail = ref<any>(null)
 
+// Use the library's extractCSAPIFeature for typed display when applicable
+const typedResource = computed(() => {
+  if (!detail.value) return null
+  try {
+    // Only works for Part 1 GeoJSON resources with recognized featureType
+    if (getCSAPIResourceType(detail.value)) {
+      return extractCSAPIFeature(detail.value)
+    }
+  } catch { /* Not a recognized CSAPI feature — show raw */ }
+  return null
+})
+
+const recognizedType = computed(() => {
+  if (!detail.value) return null
+  return getCSAPIResourceType(detail.value)
+})
+
 async function fetchDetail(id?: string) {
   const useId = id || manualId.value || props.resourceId
   if (!useId) return
@@ -24,7 +42,8 @@ async function fetchDetail(id?: string) {
   error.value = ''
   detail.value = null
 
-  const path = `${getResourcePath(props.resourceType)}/${useId}`
+  // Use CSAPIQueryBuilder via bridge to construct the detail URL
+  const path = getDetailUrl(props.resourceType, useId)
   const res = await apiFetch(path)
 
   if (!res.ok) {
@@ -66,6 +85,12 @@ watch(
     </div>
 
     <template v-if="detail">
+      <!-- Library recognition badge -->
+      <div v-if="recognizedType" class="recognition-badge">
+        <i class="pi pi-check-circle"></i>
+        <span>Recognized by library as: <strong>{{ recognizedType }}</strong></span>
+      </div>
+
       <!-- Summary fields -->
       <div class="detail-summary">
         <div v-if="detail.id" class="field">
@@ -76,31 +101,57 @@ watch(
           <span class="field-label">Type:</span>
           <span>{{ detail.type }}</span>
         </div>
-        <div v-if="detail.properties?.name" class="field">
-          <span class="field-label">Name:</span>
-          <span>{{ detail.properties.name }}</span>
-        </div>
-        <div v-if="detail.properties?.description" class="field">
-          <span class="field-label">Description:</span>
-          <span>{{ detail.properties.description }}</span>
-        </div>
-        <div v-if="detail.properties?.featureType" class="field">
-          <span class="field-label">Feature Type:</span>
-          <span>{{ detail.properties.featureType }}</span>
-        </div>
-        <div v-if="detail.properties?.validTime" class="field">
-          <span class="field-label">Valid Time:</span>
-          <span>{{ JSON.stringify(detail.properties.validTime) }}</span>
-        </div>
-        <!-- Part 2 flat objects -->
-        <div v-if="detail.name && !detail.properties" class="field">
-          <span class="field-label">Name:</span>
-          <span>{{ detail.name }}</span>
-        </div>
-        <div v-if="detail.description && !detail.properties" class="field">
-          <span class="field-label">Description:</span>
-          <span>{{ detail.description }}</span>
-        </div>
+        <!-- Typed properties from extractCSAPIFeature -->
+        <template v-if="typedResource">
+          <div v-if="typedResource.properties?.name" class="field">
+            <span class="field-label">Name:</span>
+            <span>{{ typedResource.properties.name }}</span>
+          </div>
+          <div v-if="typedResource.properties?.description" class="field">
+            <span class="field-label">Description:</span>
+            <span>{{ typedResource.properties.description }}</span>
+          </div>
+          <div v-if="typedResource.properties?.featureType" class="field">
+            <span class="field-label">Feature Type:</span>
+            <span>{{ typedResource.properties.featureType }}</span>
+          </div>
+          <div v-if="typedResource.properties?.uid" class="field">
+            <span class="field-label">UID:</span>
+            <code>{{ typedResource.properties.uid }}</code>
+          </div>
+          <div v-if="(typedResource.properties as any)?.validTime" class="field">
+            <span class="field-label">Valid Time:</span>
+            <span>{{ (typedResource.properties as any).validTime.start.toISOString() }}{{ (typedResource.properties as any).validTime.end ? ' – ' + (typedResource.properties as any).validTime.end.toISOString() : ' – (ongoing)' }}</span>
+          </div>
+        </template>
+        <!-- Fallback: raw property display for non-GeoJSON resources -->
+        <template v-else>
+          <div v-if="detail.properties?.name" class="field">
+            <span class="field-label">Name:</span>
+            <span>{{ detail.properties.name }}</span>
+          </div>
+          <div v-if="detail.properties?.description" class="field">
+            <span class="field-label">Description:</span>
+            <span>{{ detail.properties.description }}</span>
+          </div>
+          <div v-if="detail.properties?.featureType" class="field">
+            <span class="field-label">Feature Type:</span>
+            <span>{{ detail.properties.featureType }}</span>
+          </div>
+          <div v-if="detail.properties?.validTime" class="field">
+            <span class="field-label">Valid Time:</span>
+            <span>{{ JSON.stringify(detail.properties.validTime) }}</span>
+          </div>
+          <!-- Part 2 flat objects -->
+          <div v-if="detail.name && !detail.properties" class="field">
+            <span class="field-label">Name:</span>
+            <span>{{ detail.name }}</span>
+          </div>
+          <div v-if="detail.description && !detail.properties" class="field">
+            <span class="field-label">Description:</span>
+            <span>{{ detail.description }}</span>
+          </div>
+        </template>
       </div>
 
       <!-- Links -->
@@ -135,6 +186,8 @@ watch(
 .mt-3 { margin-top: 0.75rem; }
 .empty-hint { display: flex; align-items: center; gap: 0.5rem; color: #94a3b8; padding: 1.5rem 0; }
 .loading { display: flex; align-items: center; gap: 0.5rem; color: #64748b; }
+.recognition-badge { display: flex; align-items: center; gap: 0.5rem; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem; color: #166534; }
+.recognition-badge i { color: #16a34a; }
 .detail-summary { background: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 0.4rem; }
 .field { display: flex; gap: 0.5rem; font-size: 0.9rem; }
 .field-label { font-weight: 600; min-width: 110px; color: #475569; }

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { connection } from '../state'
+import { initializeBuilder, destroyBuilder } from '../csapi-bridge'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
@@ -90,6 +91,11 @@ async function connect() {
     connection.landingPage = landingData
     connection.conformance = conformance.value
     connection.collections = collections.value
+
+    // Initialize the CSAPIQueryBuilder from discovered links
+    const csapiBuilder = initializeBuilder(landingData, collections.value)
+    console.log('[CSAPI Bridge] Builder initialized. Available resources:',
+      Array.from(csapiBuilder.availableResources))
   } catch (err: any) {
     error.value = err.message || 'Connection failed'
   } finally {
@@ -98,6 +104,7 @@ async function connect() {
 }
 
 function disconnect() {
+  destroyBuilder()
   connection.connected = false
   connection.label = ''
   connection.baseUrl = ''

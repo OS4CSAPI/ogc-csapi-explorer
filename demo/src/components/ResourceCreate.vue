@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { apiFetch, getResourcePath } from '../api'
+import { apiFetch } from '../api'
+import { getCreateUrl, getContentType } from '../csapi-bridge'
 import { getResourceType } from '../state'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -121,19 +122,15 @@ async function create() {
 
   loading.value = true
 
-  // Build the POST path
-  let path: string
-  if (rtInfo.value?.createParentType && parentId.value) {
-    // Nested creation: e.g., POST /datastreams/{id}/observations
-    path = `${getResourcePath(rtInfo.value.createParentType)}/${parentId.value}${getResourcePath(props.resourceType)}`
-  } else {
-    path = getResourcePath(props.resourceType)
-  }
+  // Use CSAPIQueryBuilder via bridge to construct the POST URL
+  // Handles nested creation (observations → datastreams, commands → controlStreams)
+  const path = getCreateUrl(
+    props.resourceType,
+    rtInfo.value?.createParentType ? parentId.value : undefined
+  )
 
-  const contentType = (props.resourceType === 'systems' || props.resourceType === 'deployments' ||
-    props.resourceType === 'procedures' || props.resourceType === 'samplingFeatures')
-    ? 'application/geo+json'
-    : 'application/json'
+  // Use bridge helper for correct Content-Type (geo+json for Part 1, json for Part 2)
+  const contentType = getContentType(props.resourceType)
 
   const res = await apiFetch(path, {
     method: 'POST',
