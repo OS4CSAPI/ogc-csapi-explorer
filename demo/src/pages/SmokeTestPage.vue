@@ -150,28 +150,41 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
 // ─── Step Building ───────────────────────────────────────
 
 const PART1_TYPES = ['systems', 'procedures', 'deployments', 'samplingFeatures']
-const PART2_TYPES = ['datastreams', 'observations', 'controlStreams', 'commands']
-const PART1_OPS: OpType[] = ['CREATE', 'READ', 'UPDATE', 'VERIFY']  // No DELETE — Part 2 needs parents alive
+const PART2_PARENT_TYPES = ['datastreams', 'controlStreams']   // Need parent system alive
+const PART2_CHILD_TYPES = ['observations', 'commands']          // Need parent datastream/controlStream alive
+const CRUV_OPS: OpType[] = ['CREATE', 'READ', 'UPDATE', 'VERIFY']  // No DELETE — children need parents alive
 const CRUD_OPS: OpType[] = ['CREATE', 'READ', 'UPDATE', 'VERIFY', 'DELETE']
 
 function buildSteps(): Step[] {
   const steps: Step[] = []
   let id = 1
-  // Phase 1: Part 1 CRUD without DELETE (keep parents alive for Part 2)
+  // Phase 1: Part 1 CRUV (keep Part 1 resources alive for Part 2 parents)
   for (const key of PART1_TYPES) {
     const info = RESOURCE_TYPES.find((r) => r.key === key)!
-    for (const op of PART1_OPS) {
+    for (const op of CRUV_OPS) {
       steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op, status: 'pending' })
     }
   }
-  // Phase 2: Part 2 full CRUD (parents still exist)
-  for (const key of PART2_TYPES) {
+  // Phase 2a: Part 2 parent CRUV (keep datastreams/controlStreams alive for observations/commands)
+  for (const key of PART2_PARENT_TYPES) {
+    const info = RESOURCE_TYPES.find((r) => r.key === key)!
+    for (const op of CRUV_OPS) {
+      steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op, status: 'pending' })
+    }
+  }
+  // Phase 2b: Part 2 child full CRUD (observations, commands — parents still exist)
+  for (const key of PART2_CHILD_TYPES) {
     const info = RESOURCE_TYPES.find((r) => r.key === key)!
     for (const op of CRUD_OPS) {
       steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op, status: 'pending' })
     }
   }
-  // Phase 3: Part 1 DELETE (cleanup after Part 2 is done)
+  // Phase 2c: Part 2 parent DELETE (cleanup datastreams/controlStreams after children are done)
+  for (const key of PART2_PARENT_TYPES) {
+    const info = RESOURCE_TYPES.find((r) => r.key === key)!
+    steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op: 'DELETE', status: 'pending' })
+  }
+  // Phase 3: Part 1 DELETE (cleanup systems, procedures, etc.)
   for (const key of PART1_TYPES) {
     const info = RESOURCE_TYPES.find((r) => r.key === key)!
     steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op: 'DELETE', status: 'pending' })
@@ -892,8 +905,8 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
         <div class="panel-header">Map View</div>
         <div ref="mapContainer" class="map-container"></div>
         <div class="map-legend">
-          <div v-for="(color, type) in TYPE_COLORS" :key="type" class="legend-item">
-            <span class="legend-dot" :style="{ background: color }"></span>
+          <div v-for="type in ['systems', 'procedures', 'deployments', 'samplingFeatures']" :key="type" class="legend-item">
+            <span class="legend-dot" :style="{ background: TYPE_COLORS[type] }"></span>
             <span class="legend-label">{{ type }}</span>
           </div>
         </div>
