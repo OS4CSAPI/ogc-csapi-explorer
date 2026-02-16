@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { apiFetch } from '../api'
-import { getListUrl, parseCollectionResponse } from '../csapi-bridge'
+import { getListUrl, getContentType, parseCollectionResponse } from '../csapi-bridge'
 import type { QueryOptions } from '@csapi/ogc-api/csapi/model'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -69,7 +69,10 @@ async function fetchResources(cursorUrl?: string) {
       path = getListUrl(props.resourceType, options)
     }
 
-    const res = await apiFetch(path)
+    const acceptType = getContentType(props.resourceType)
+    const res = await apiFetch(path, {
+      headers: { 'Accept': acceptType },
+    })
     if (!res.ok) {
       error.value = res.error || 'Failed to fetch resources'
       return
@@ -297,7 +300,8 @@ watch(() => props.resourceType, () => {
 .filter-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.5rem; }
 .filter-item { display: flex; flex-direction: column; gap: 0.15rem; }
 .filter-item label { font-size: 0.75rem; font-weight: 600; color: #64748b; }
-.w-sm { width: 80px; }
+.w-sm { width: 90px; }
+.w-sm :deep(.p-inputnumber-input) { width: 90px; }
 .w-md { width: 180px; }
 .filter-actions { display: flex; align-items: center; gap: 1rem; }
 .pagination-toggle { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #64748b; }

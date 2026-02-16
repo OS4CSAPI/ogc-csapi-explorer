@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { apiFetch } from '../api'
-import { getDetailUrl } from '../csapi-bridge'
+import { getDetailUrl, getContentType } from '../csapi-bridge'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
@@ -35,7 +35,10 @@ async function fetchDetail(id?: string) {
 
   // Use CSAPIQueryBuilder via bridge to construct the detail URL
   const path = getDetailUrl(props.resourceType, useId)
-  const res = await apiFetch(path)
+  const acceptType = getContentType(props.resourceType)
+  const res = await apiFetch(path, {
+    headers: { 'Accept': acceptType },
+  })
 
   if (!res.ok) {
     error.value = res.error || 'Failed to fetch resource'

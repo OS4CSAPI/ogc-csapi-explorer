@@ -64,18 +64,36 @@ export async function apiFetch<T = any>(
 
     // For DELETE or responses with no body
     const contentType = response.headers.get('content-type') || ''
-    if (response.status === 204 || !contentType.includes('json')) {
-      const text = await response.text()
+    if (response.status === 204) {
       return {
         ok: true,
         status: response.status,
         statusText: response.statusText,
-        data: (text ? text : null) as any,
+        data: null as any,
         headers: responseHeaders,
       }
     }
 
-    const data = await response.json()
+    // Some servers (e.g. OSH) return Content-Type: auto instead of
+    // application/json. Try JSON.parse on all text responses to handle this.
+    let data: any
+    if (contentType.includes('json')) {
+      data = await response.json()
+    } else {
+      const text = await response.text()
+      try {
+        data = JSON.parse(text)
+      } catch {
+        // Genuinely non-JSON response (HTML, XML, etc.)
+        return {
+          ok: true,
+          status: response.status,
+          statusText: response.statusText,
+          data: (text || null) as any,
+          headers: responseHeaders,
+        }
+      }
+    }
     return {
       ok: true,
       status: response.status,
