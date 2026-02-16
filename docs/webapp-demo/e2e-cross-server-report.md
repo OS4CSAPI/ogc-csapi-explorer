@@ -1,6 +1,6 @@
 # Cross-Server Interoperability Test Report
 
-**Date:** 2026-02-16  
+**Date:** 2026-02-16 (v2 — corrected for 52North content negotiation)  
 **Test Script:** `examples/e2e-cross-server.ts`  
 **Results Data:** `examples/e2e-cross-server-results.json`
 
@@ -10,12 +10,22 @@ Cross-server E2E testing validates the `ogc-client` CSAPI library against **both
 
 | Server | Base URL | Tests | Passed | Failed | Pass Rate |
 |--------|----------|-------|--------|--------|-----------|
-| **OSH SensorHub** | `http://45.55.99.236:8080/sensorhub/api` | 35 | 33 | 2 | **94%** |
-| **52North CSA** | `https://csa.demo.52north.org` | 26 | 22 | 4 | **85%** |
+| **OSH SensorHub** | `http://45.55.99.236:8080/sensorhub/api` | 39 | 37 | 2 | **95%** |
+| **52North CSA** | `https://csa.demo.52north.org` | 30 | 25 | 5 | **83%** |
 
-**Overall: 55/61 tests passed (90%) — the library works correctly across both server implementations.**
+**Overall: 62/69 tests passed (90%) — the library works correctly across both server implementations.**
 
-The library's parsers (`parseCollectionResponse`, `extractCSAPIFeature`) and URL builder (`CSAPIQueryBuilder`) successfully handle both servers' different response envelopes, discovery patterns, and naming conventions.
+### Critical Context: 52North Content Negotiation (Issue #15)
+
+52North routes `Accept` headers to different data providers:
+- **`application/sml+json`** → SensorML provider → **3 systems, 1 deployment, 1 procedure**
+- **`application/json`** → GeoJSON provider → **empty** (0 features loaded)
+- **`application/geo+json`** → GeoJSON provider → **3 systems, 1 deployment, 1 procedure** (!)
+
+This test uses `Accept: application/sml+json` as the default for 52North. See:
+- [Issue #15](https://github.com/52North/connected-systems-pygeoapi/issues/15) — filed by us
+- [OS4CSAPI Discussion #2](https://github.com/orgs/OS4CSAPI/discussions/2) — reported during Code Sprint 26
+- [F57 Correction Report](../implementation/f57-content-negotiation-correction.md) — our own mistake of forgetting this
 
 ---
 
@@ -25,101 +35,120 @@ The library's parsers (`parseCollectionResponse`, `extractCSAPIFeature`) and URL
 |---|---|---|
 | Discovery Mode | Root-level links on landing page | Collection-scoped `items` links |
 | Conformance | 33 classes (22 CSA-specific) | 1 class (`ogcapi-common-1` only) |
-| Response Envelope | `{ items: [...] }` (non-standard) | `{ type: "FeatureCollection", features: [...] }` (spec-compliant) |
-| Data Present | Yes (12+ systems, 100+ observations) | No (all collections empty) |
+| Response Envelope (SML) | `{ items: [...] }` | `{ items: [...] }` |
+| Response Envelope (JSON) | `{ items: [...] }` | `{ type: "FeatureCollection", features: [...] }` |
+| Data Present | Yes (12+ systems, 51+ SF, 100+ obs) | Yes (3 systems, 1 deploy, 1 proc) |
 | CRUD Support | Full create/read/update/delete | Read-only (401 on POST) |
 | Authentication | Basic auth (`admin/admin`) | None required |
 | SSL | Plain HTTP | HTTPS with expired cert |
-| Part 2 Endpoints | Fully functional | 500 Internal Server Error |
+| Part 2 Resources | Fully functional | 400 "InvalidMimetype" (SML) / 500 (JSON) |
+| Accept:json behavior | Returns data (same as SML) | **Returns empty** (Issue #15) |
+| Accept:sml+json behavior | Returns data | Returns data |
+| Accept:geo+json behavior | Returns data (ignored, serves json) | Returns data (!) |
 
 ---
 
 ## Test Results by Category
 
-### 1. Landing Page — Both Pass ✅
+### 1. Landing Page — Both Pass
 
 | Test | OSH | 52N | Notes |
 |------|-----|-----|-------|
 | Accessible | ✅ | ✅ | Both return 200 with valid JSON |
 | Has title | ✅ | ✅ | OSH: "Connected Systems API Service", 52N: "connected-systems-pygeoapi" |
 | Links array | ✅ | ✅ | OSH: 10 links, 52N: 7 links |
-| Has `rel="data"` link | ❌ | ✅ | **Finding #1**: OSH uses resource-name rels, not standard `data` rel |
+| Has `rel="data"` link | ❌ | ✅ | **Finding #1**: OSH omits standard `data` rel |
 
 ### 2. Conformance — Split
 
 | Test | OSH | 52N | Notes |
 |------|-----|-----|-------|
 | Endpoint accessible | ✅ | ✅ | Both return 200 |
-| Conformance classes | ✅ | ✅ | OSH: 33 classes, 52N: 1 class |
+| Conformance class count | ✅ | ✅ | OSH: 33 classes, 52N: 1 class |
 | CSA-specific classes | ✅ | ❌ | **Finding #2**: 52N declares zero CSA conformance classes |
 
-### 3. Discovery — Library Handles Both Patterns
+### 3. Content Negotiation — THE Critical Test
+
+| Accept Header | OSH: items | OSH: envelope | OSH: CT | 52N: items | 52N: envelope | 52N: CT |
+|---|---|---|---|---|---|---|
+| `application/json` | **5** | items | application/json | **0** | features | application/json |
+| `application/sml+json` | **5** | items | application/json | **3** | items | application/sml+json |
+| `application/geo+json` | **5** | items | application/json | **3** | features | application/geo+json |
+| No header (default) | **5** | items | application/json | **3** | — | application/sml+json |
+
+**Key findings from this section:**
+
+- **Finding #3 (Issue #15 confirmed)**: `Accept: application/json` returns 0 items from 52North while all other formats return 3 items.
+- **OSH ignores Accept header entirely**: Always returns JSON with `items` envelope regardless of what you ask for. All 4 Accept values return 5 items.
+- **52North respects Accept header**: Returns different content types AND different response shapes depending on the Accept value.
+- **`application/geo+json` works on 52North** and returns actual data in standard `FeatureCollection/features` envelope — this may be the best content type for interoperability.
+- **Envelope varies by content type on 52North**: SML → `items`, JSON → `features`, GeoJSON → `features`.
+
+### 4. Discovery — Library Handles Both Patterns
 
 | Test | OSH | 52N | Notes |
 |------|-----|-----|-------|
-| `scanCsapiLinks` on landing page | ✅ (6 types) | ❌ (0 types) | **Finding #3**: Library requires fallback for servers without root links |
+| `scanCsapiLinks` on landing page | ✅ (6 types) | ❌ (0 types) | **Finding #4** |
 | Collections endpoint | ✅ (4 cols) | ✅ (5 cols) | |
-| Collection-scoped links | ✅ (4 types) | ✅ (5 types) | Both discovered via `items` rel convention |
+| Collection-scoped links | ✅ (4 types) | ✅ (5 types) | Both discovered via `items` rel |
 
-**Key insight**: `scanCsapiLinks` correctly discovers resources from collection-level links on 52North, even though the landing page has none. The library's three-convention approach (`ogc-cs:` prefix, plain name, `items` rel) works across both servers at the collection level.
-
-### 4. Builder Setup — Both Pass ✅
+### 5. Builder Setup — Both Pass ✅
 
 | Test | OSH | 52N | Notes |
 |------|-----|-----|-------|
 | `CSAPIQueryBuilder` created | ✅ | ✅ | |
 | Available resource types | 6 types | 9 types (fallback) | 52N uses fallback standard paths |
 
-### 5. Read Operations — Part 1 Passes, Part 2 Diverges
+### 6. Read Operations — Part 1 Works, Part 2 Diverges
 
 | Test | OSH | 52N | Notes |
 |------|-----|-----|-------|
-| LIST systems | ✅ (3 items) | ✅ (0 items) | |
-| LIST deployments | ✅ (0 items) | ✅ (0 items) | |
-| LIST procedures | ✅ (0 items) | ✅ (0 items) | |
-| LIST datastreams | ✅ (3 items) | ❌ (500) | **Finding #4**: 52N Part 2 endpoints broken |
-| LIST observations | ✅ (3 items) | ❌ (500) | **Finding #4** |
+| LIST systems | ✅ (3 items) | ✅ (**3 items**) | **52N has real system data** |
+| LIST deployments | ✅ (0 items) | ✅ (**1 item**) | **52N has deployment data** |
+| LIST procedures | ✅ (0 items) | ✅ (**1 item**) | **52N has procedure data** |
+| LIST datastreams | ✅ (3 items) | ❌ (400) | **Finding #5**: 52N rejects SML on Part 2 |
+| LIST observations | ✅ (3 items) | ❌ (400) | **Finding #5** |
 | Query: `limit=2` | ✅ | ✅ | |
 | Query: `limit=2, offset=1` | ✅ | ✅ | |
 
-### 6. Response Envelope — Both Handled Correctly ✅
+**52North Part 2 error**: `{"code":"InvalidMimetype","type":"InvalidMimetype","description":"invalid mimetype supplied! expected [] got 'application/sml+json'"}` — the datastreams/observations endpoints **don't support `application/sml+json`** and declare `expected []` (no valid mimetypes at all).
+
+### 7. Response Envelope — Both Use `items` with SML
 
 | Test | OSH | 52N | Notes |
 |------|-----|-----|-------|
-| Envelope format | ✅ (`items`) | ✅ (`FeatureCollection/features`) | **Finding #5** |
-| Response metadata | ✅ | ✅ | Neither provides `numberMatched`/`numberReturned`/`timeStamp` |
+| Envelope format | ✅ `items` | ✅ `items` | **Both use SML items envelope** |
+| Response metadata | ✅ | ✅ | Neither provides numberMatched/numberReturned/timeStamp |
 
-### 7. Parsers — All Pass ✅
+Important: When 52North is queried with `Accept: application/sml+json`, it returns the `{ items: [...] }` envelope — same as OSH. The `FeatureCollection/features` envelope only appears with `application/json` or `application/geo+json` responses.
 
-| Test | OSH | 52N | Notes |
-|------|-----|-----|-------|
-| `parseCollectionResponse` — systems | ✅ (3 items) | ✅ (0 items) | |
-| `parseCollectionResponse` — deployments | ✅ (0 items) | ✅ (0 items) | |
-| `parseCollectionResponse` — procedures | ✅ (0 items) | ✅ (0 items) | |
-| `parseCollectionResponse` — datastreams | ✅ (3 items) | — (skipped, 500) | |
-| `parseCollectionResponse` — observations | ✅ (3 items) | — (skipped, 500) | |
-| `extractCSAPIFeature` | ✅ | — (no data) | |
-
-**`parseCollectionResponse` handles both envelope formats correctly** — this is a major validation that the parser is interoperable.
-
-### 8. Nested Resources — Works on OSH
+### 8. Parsers — Works for Collections, GeoJSON Extraction Fails on SML
 
 | Test | OSH | 52N | Notes |
 |------|-----|-----|-------|
-| `getSystemDataStreams()` | ✅ (10 ds) | — (no data) | |
+| `parseCollectionResponse` — systems | ✅ (3 items) | ✅ (**3 items**) | **Parser handles 52N SML data** |
+| `parseCollectionResponse` — deployments | ✅ (0 items) | ✅ (**1 item**) | |
+| `parseCollectionResponse` — procedures | ✅ (0 items) | ✅ (**1 item**) | |
+| `parseCollectionResponse` — datastreams | ✅ (3 items) | — (400) | |
+| `parseCollectionResponse` — observations | ✅ (3 items) | — (400) | |
+| `extractCSAPIFeature` (OSH) | ✅ | — | type=System, name="LIVE - Field Drone" |
+| `extractCSAPIFeature` (52N) | — | ❌ | **Finding #6**: "unrecognized or missing featureType" |
+
+**Finding #6 details**: `extractCSAPIFeature` fails on 52North's SML system responses because the SensorML response format has a different structure than GeoJSON Features. The function expects `properties.featureType` (GeoJSON), but SML responses use a different object shape. This confirms the library needs a SensorML-aware extraction path.
+
+### 9. Nested Resources — 52N Part 2 Not Available
+
+| Test | OSH | 52N | Notes |
+|------|-----|-----|-------|
+| `getSystemDataStreams()` | ✅ (10 ds) | — | 52N Part 2 endpoints return errors |
 | Nested parse | ✅ | — | |
-| `getObservationsForDatastream()` | ❌ | — | **Finding #6**: Method doesn't exist |
+| `getObservationsForDatastream()` | ❌ | — | **Finding #7**: Method doesn't exist |
 
-### 9. CRUD Operations — Full Cycle on OSH, Read-Only on 52N
+### 10. CRUD Operations — Full Cycle on OSH, Read-Only on 52N
 
 | Test | OSH | 52N | Notes |
 |------|-----|-----|-------|
-| CREATE System | ✅ (201) | — | |
-| GET System (read-back) | ✅ | — | |
-| UPDATE System (PUT) | ✅ (204) | — | |
-| UPDATE verification | ✅ | — | |
-| DELETE System | ✅ (204) | — | |
-| DELETE verification | ✅ (404) | — | |
+| CREATE/GET/UPDATE/DELETE System | ✅ (all 6) | — | Full CRUD cycle passes |
 | Read-only enforcement | — | ✅ (401) | 52N correctly rejects writes |
 
 ---
@@ -128,74 +157,72 @@ The library's parsers (`parseCollectionResponse`, `extractCSAPIFeature`) and URL
 
 ### Finding #1 — OSH Omits Standard `rel="data"` Link
 
-**Severity:** Low  
-**Affects:** OSH SensorHub only
+**Severity:** Low | **Affects:** OSH SensorHub
 
-OSH SensorHub's landing page does not include a `rel="data"` link pointing to `/collections`. Instead, it uses resource-name-based link relations (`systems`, `deployments`, etc.) directly on the root. The 52North server correctly includes `rel="data"` → `/collections`.
-
-This means OGC API clients that rely on the standard `rel="data"` discovery path will not find collections on OSH. The library should support both discovery patterns (which it already does via `scanCsapiLinks`).
+OSH uses resource-name-based link relations directly on the root document rather than the standard `rel="data"` pointing to `/collections`.
 
 ### Finding #2 — 52North Declares Zero CSA Conformance Classes
 
-**Severity:** Medium  
-**Affects:** 52North CSA only
+**Severity:** Medium | **Affects:** 52North CSA
 
-The 52North server's `/conformance` endpoint returns only `ogcapi-common-1/1.0/conf/core`. It does not advertise any Connected Systems API conformance classes (OGC 23-001 or 23-002).
+Only declares `ogcapi-common-1/1.0/conf/core`. Library should not gate features on conformance declarations alone.
 
-This means any client checking conformance before using CSA features would skip this server entirely. Since the server *does* implement Part 1 resources (systems, deployments, procedures), this is a server-side metadata omission. The library should not gate functionality on conformance declarations alone.
+### Finding #3 — Content Negotiation Routes to Different Providers (Issue #15)
 
-### Finding #3 — Library Needs Fallback Discovery for Empty Landing Pages
+**Severity:** HIGH | **Affects:** 52North CSA, Library
 
-**Severity:** Medium  
-**Affects:** Library  
+This is the Issue #15 behavior confirmed end-to-end:
 
-`scanCsapiLinks(landingPage.links)` returns 0 resource types for 52North because its landing page has no CSAPI-related link relations. Resource discovery only works at the collection level.
+| Accept Header | 52N Items | 52N Envelope | 52N Content-Type |
+|---|---|---|---|
+| `application/json` | **0** | features (empty) | application/json |
+| `application/sml+json` | **3** | items | application/sml+json |
+| `application/geo+json` | **3** | features | application/geo+json |
+| (none) | **3** | items | application/sml+json |
 
-**Recommendation:** The library's endpoint discovery should:
-1. Try root-level links first (works for OSH)
-2. Fall back to collection-scoped discovery if root yields nothing (needed for 52N)
-3. Use standard resource paths as a final fallback
+**Impact on the library:** Any client that sends `Accept: application/json` (the standard default for most HTTP libraries and OGC API Features clients) will see an empty 52North server. The library MUST negotiate the correct Accept header.
 
-This is the discovery interoperability gap documented in our earlier [cross-server interoperability analysis](../implementation/cross-server-interoperability-analysis.md).
+**Recommendation:** The library's HTTP layer should use `application/geo+json` as the primary Accept header for Part 1 resources. This content type returns data from both servers in standard GeoJSON format.
 
-### Finding #4 — 52North Part 2 Endpoints Return 500
+**Important discovery:** `application/geo+json` returns data from 52North (3 items in a `FeatureCollection/features` envelope) — this is potentially the most interoperable content type since it works on both servers and uses the standard GeoJSON envelope.
 
-**Severity:** High  
-**Affects:** 52North CSA
+### Finding #4 — Library Needs Fallback Discovery for Empty Landing Pages
 
-Requesting `/datastreams` or `/observations` (Part 2 resources) from 52North returns HTTP 500 Internal Server Error with an HTML error page instead of JSON.
+**Severity:** Medium | **Affects:** Library
 
-**Impact:** The library must handle non-JSON error responses gracefully. If `fetch()` returns HTML, `JSON.parse()` will throw — the library should catch this and provide a meaningful error rather than a parse failure.
+`scanCsapiLinks(landingPage.links)` returns 0 resource types for 52North. Must fall back to collection-scoped discovery.
 
-**Server-side implication:** 52North's `connected-systems-pygeoapi` implementation appears to only support Part 1 resources (systems, deployments, procedures, sampling features) and breaks on Part 2 resources.
+### Finding #5 — 52North Part 2 Endpoints Reject All Accept Headers
 
-### Finding #5 — Servers Use Different Response Envelopes
+**Severity:** High | **Affects:** 52North CSA
 
-**Severity:** Medium (already handled)  
-**Affects:** Both servers, but library handles it correctly
+Part 2 endpoints (datastreams, observations) on 52North:
+- `Accept: application/json` → HTTP 500 Internal Server Error
+- `Accept: application/sml+json` → HTTP 400 `{"code":"InvalidMimetype","description":"invalid mimetype supplied! expected [] got 'application/sml+json'"}`
 
-| Server | Envelope Format |
-|--------|----------------|
-| OSH SensorHub | `{ items: [...], links: [...] }` |
-| 52North | `{ type: "FeatureCollection", features: [...], links: [...] }` |
+The error message `expected []` means the endpoints declare **no valid mimetypes at all**. Part 2 resources are not implemented in 52North's `connected-systems-pygeoapi`.
 
-`parseCollectionResponse` correctly handles **both formats**. This is one of the most important interoperability validations — confirmed working.
+### Finding #6 — `extractCSAPIFeature` Fails on SensorML Response Bodies
 
-### Finding #6 — Missing `getObservationsForDatastream()` Method
+**Severity:** HIGH | **Affects:** Library
 
-**Severity:** Medium  
-**Affects:** Library  
+When 52North returns `application/sml+json` responses, the individual system resource is a SensorML object, not a GeoJSON Feature. `extractCSAPIFeature` checks for `properties.featureType` (GeoJSON convention), which doesn't exist in SML responses.
 
-`CSAPIQueryBuilder` does not have a `getObservationsForDatastream(dsId)` method. This is a gap in the nested resource URL builder API. Similar methods like `getSystemDataStreams(sysId)` exist, but the observation-under-datastream pattern is missing.
+Error: `Cannot extract CSAPI feature: unrecognized or missing featureType`
 
-**Impact:** Users cannot build URLs for the critical `/datastreams/{id}/observations` nested path through the builder. Must construct manually.
+**Recommended approach:** Use `Accept: application/geo+json` as the primary request type for Part 1 resources. This returns GeoJSON FeatureCollections from 52North (with data!) and works fine on OSH. Alternatively, implement a SensorML-aware extraction path (the SensorML types defined in Issue #18 are a start).
 
-### Finding #7 — `featuresOfInterest` vs `samplingFeatures` Handled
+### Finding #7 — Missing `getObservationsForDatastream()` Method
 
-**Severity:** Info  
-**Successfully handled by library**
+**Severity:** Medium | **Affects:** Library
 
-52North uses the path `/featuresOfInterest` while OSH uses `/samplingFeatures`. The `scanCsapiLinks` helper includes normalization logic (`featuresOfInterest` → `samplingFeatures`), and this works correctly — 52North's `all_fois` collection is discovered as `samplingFeatures` in the resource map.
+`CSAPIQueryBuilder` lacks this nested resource method.
+
+### Finding #8 — Both Servers Use `items` Envelope for SML Responses
+
+**Severity:** Info (positive)
+
+When both servers respond with `application/sml+json`, both use the `{ items: [...] }` envelope format. `parseCollectionResponse` handles both `items` and `features` envelopes correctly.
 
 ---
 
@@ -206,39 +233,47 @@ Requesting `/datastreams` or `/observations` (Part 2 resources) from 52North ret
                               ─────────────    ───────────
 Landing Page                  ✅ (no "data")   ✅
 Conformance (CSA)             ✅ (22 classes)  ❌ (0 classes)
+Accept:json data              ✅ (5 items)     ❌ (0 items — Issue #15)
+Accept:sml+json data          ✅ (5 items)     ✅ (3 items)
+Accept:geo+json data          ✅ (5 items)     ✅ (3 items)
 Root Discovery                ✅ (6 types)     ❌ (0 types)
 Collection Discovery          ✅ (4 types)     ✅ (5 types)
-Part 1 Read (sys/dep/proc)    ✅               ✅ (empty)
-Part 2 Read (ds/obs)          ✅               ❌ (500)
+Part 1: Systems               ✅ (12 sys)      ✅ (3 sys)
+Part 1: Deployments           ✅ (0)           ✅ (1 deployment)
+Part 1: Procedures            ✅ (0)           ✅ (1 procedure)
+Part 2: Datastreams           ✅               ❌ (400/500)
+Part 2: Observations          ✅               ❌ (400/500)
 Query Params (limit, offset)  ✅               ✅
-Response Envelope             items (custom)   FeatureCollection (standard)
-Parser Compatibility          ✅               ✅
-Nested Resources              ✅               — (no data)
+parseCollectionResponse       ✅               ✅ (systems/dep/proc)
+extractCSAPIFeature           ✅               ❌ (SML format incompatible)
+Nested Resources              ✅               — (Part 2 broken)
 CRUD                          ✅ full cycle    ❌ read-only (401)
-Auth Required                 Yes (Basic)      No
-SSL                           HTTP             HTTPS (expired cert)
 ```
 
 ---
 
 ## Recommendations for Upstream Library
 
-1. **Multi-strategy discovery** (Finding #3): Implement root → collection → fallback discovery chain to handle both server patterns.
+1. **Use `application/geo+json` as default Accept header for Part 1** (Finding #3): This is the single highest-impact change. `application/geo+json` returns data from both servers in standard GeoJSON format. `application/json` returns empty from 52North.
 
-2. **Handle HTML error responses** (Finding #4): When `Content-Type` is `text/html`, don't attempt JSON parse — return a meaningful `EndpointError` instead.
+2. **Add SensorML response extraction** or **force GeoJSON content type** (Finding #6): `extractCSAPIFeature` only works on GeoJSON. Either add SML parsing or ensure requests always use `Accept: application/geo+json`.
 
-3. **Add `getObservationsForDatastream()`** (Finding #6): Add nested resource methods for all Part 2 parent-child relationships.
+3. **Handle non-JSON error responses** (Finding #5): Part 2 endpoints on 52North return 400/500 with JSON error objects or HTML. The library should parse error bodies gracefully.
 
-4. **Don't gate on conformance** (Finding #2): Server may implement CSA resources without declaring CSA conformance classes. Discovery should be capabilities-based, not conformance-based.
+4. **Multi-strategy discovery** (Finding #4): Root → collection → fallback discovery chain.
 
-5. **Test both envelopes in unit tests** (Finding #5): The parser handles both, but the unit test suite should include explicit test cases for both `items` and `features` envelopes.
+5. **Add `getObservationsForDatastream()`** (Finding #7): Missing nested resource method.
+
+6. **Don't gate on conformance** (Finding #2): 52North implements CSA resources without declaring CSA conformance classes.
+
+7. **Content negotiation is critical for correctness** (Finding #3, #8): The same server returns different data, different envelopes, and different content types depending on `Accept`. The library must be explicit about what it requests.
 
 ---
 
 ## Conclusion
 
-The `ogc-client` CSAPI library demonstrates **strong cross-server interoperability** for Part 1 resources. The core parsers (`parseCollectionResponse`, `extractCSAPIFeature`) handle both servers' response formats correctly, and the `CSAPIQueryBuilder` generates valid URLs for both implementations.
+The corrected cross-server test **confirms 52North has data** (3 systems, 1 deployment, 1 procedure) and validates the library against two independent CSA implementations with fundamentally different architectures.
 
-The main gaps are in discovery strategy (root vs. collection-scoped), error handling for non-JSON responses, and missing nested resource builder methods. These are addressable library improvements that would make the code robust across the full spectrum of server implementations.
+The most actionable finding is that **`Accept: application/geo+json` is the most interoperable content type** — it returns data from both servers in standard GeoJSON format. The library should default to this for Part 1 resources rather than `application/json`.
 
-**Bottom line:** The library's core read/parse pipeline works correctly against two independent CSA server implementations with fundamentally different architectures.
+`parseCollectionResponse` handles both servers' response formats correctly for Part 1 resources. `extractCSAPIFeature` needs GeoJSON input (which `application/geo+json` provides). The Content Negotiation test section permanently documents the Issue #15 behavior as a reproducible, automated test.

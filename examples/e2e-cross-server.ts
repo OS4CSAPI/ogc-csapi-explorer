@@ -3,7 +3,13 @@
  *
  * Tests CSAPIQueryBuilder and library parsers against BOTH available servers:
  *   1. OSH SensorHub — http://45.55.99.236:8080/sensorhub/api (data-rich, CRUD)
- *   2. 52North CSA   — https://csa.demo.52north.org (empty data, read-only)
+ *   2. 52North CSA   — https://csa.demo.52north.org (data via application/sml+json, read-only)
+ *
+ * IMPORTANT: 52North routes Accept headers to different data providers:
+ *   - application/sml+json → SensorML provider → HAS DATA (3 systems, 1 deployment, 1 procedure)
+ *   - application/json     → GeoJSON provider  → EMPTY (no features loaded)
+ *   See: https://github.com/52North/connected-systems-pygeoapi/issues/15
+ *   See: docs/implementation/f57-content-negotiation-correction.md
  *
  * This validates that the library works across different server implementations
  * with different discovery patterns, response envelopes, and naming conventions.
@@ -27,6 +33,7 @@ interface ServerConfig {
   name: string;
   baseUrl: string;
   auth?: string;
+  acceptHeader?: string; // Content-type for Accept header (critical for 52North — see Issue #15)
   tlsReject?: boolean;
   discoveryMode: 'root-links' | 'collection-links' | 'both';
   hasData: boolean;
@@ -45,9 +52,10 @@ const SERVERS: ServerConfig[] = [
   {
     name: '52North CSA',
     baseUrl: 'https://csa.demo.52north.org',
+    acceptHeader: 'application/sml+json', // SML provider has data; application/json routes to empty GeoJSON provider
     tlsReject: false,
     discoveryMode: 'collection-links',
-    hasData: false,
+    hasData: true, // 3 systems, 1 deployment, 1 procedure (via SML provider)
     supportsCrud: false,
   },
 ];
@@ -69,10 +77,12 @@ async function httpRequest(
   method: string,
   path: string,
   body?: object,
-  contentType?: string
+  contentType?: string,
+  acceptOverride?: string
 ): Promise<HttpResult> {
   const url = path.startsWith('http') ? path : `${server.baseUrl}${path}`;
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  const accept = acceptOverride || server.acceptHeader || 'application/json';
+  const headers: Record<string, string> = { Accept: accept };
   if (server.auth) headers['Authorization'] = server.auth;
   if (body && contentType) headers['Content-Type'] = contentType;
 
@@ -183,6 +193,56 @@ async function testConformance(server: ServerConfig) {
   } else {
     fail(server.name, category, 'CSA conformance classes', 'No CSA conformance classes declared',
       { finding: `${server.name}: Server does not advertise CSA conformance classes` });
+  }
+}
+
+async function testContentNegotiation(server: ServerConfig) {
+  const category = 'Content Negotiation';
+  console.log(`\n--- ${category} ---`);
+
+  // Test both Accept headers to document the routing behavior
+  // This is the core Issue #15 validation — see https://github.com/52North/connected-systems-pygeoapi/issues/15
+  const acceptHeaders = [
+    { accept: 'application/json', label: 'application/json' },
+    { accept: 'application/sml+json', label: 'application/sml+json' },
+    { accept: 'application/geo+json', label: 'application/geo+json' },
+  ];
+
+  for (const { accept, label } of acceptHeaders) {
+    const r = await httpRequest(server, 'GET', '/systems?limit=5', undefined, undefined, accept);
+    if (r.ok) {
+      const items = r.body?.features || r.body?.items || [];
+      const envelope = r.body?.features ? 'features' : r.body?.items ? 'items' : 'unknown';
+      const responseContentType = r.headers['content-type'] || 'none';
+      pass(server.name, category, `Accept: ${label}`,
+        `${items.length} items, envelope: ${envelope}, response CT: ${responseContentType}`,
+        { httpStatus: r.status });
+
+      if (items.length === 0 && server.hasData) {
+        results[results.length - 1].finding =
+          `${server.name}: Accept=${label} returns 0 items even though server has data (content negotiation routing — Issue #15)`;
+      }
+    } else {
+      fail(server.name, category, `Accept: ${label}`,
+        `HTTP ${r.status}`, { httpStatus: r.status });
+    }
+  }
+
+  // Test with no Accept header (server default)
+  const noAcceptUrl = `${server.baseUrl}/systems?limit=5`;
+  try {
+    const response = await fetch(noAcceptUrl, {
+      headers: server.auth ? { Authorization: server.auth } : {},
+    });
+    const text = await response.text();
+    let body: any;
+    try { body = JSON.parse(text); } catch { body = text; }
+    const items = body?.features || body?.items || [];
+    const ct = response.headers.get('content-type') || 'none';
+    pass(server.name, category, 'No Accept header (server default)',
+      `${items.length} items, response CT: ${ct}`, { httpStatus: response.status });
+  } catch (e: any) {
+    fail(server.name, category, 'No Accept header (server default)', `Error: ${e.message}`);
   }
 }
 
@@ -668,26 +728,29 @@ async function main() {
     // Phase 2: Conformance
     await testConformance(server);
 
-    // Phase 3: Discovery
+    // Phase 3: Content negotiation (critical for 52North — Issue #15)
+    await testContentNegotiation(server);
+
+    // Phase 4: Discovery
     const rootLinks = await testDiscovery(server, landingPage);
 
-    // Phase 4: Builder setup
+    // Phase 5: Builder setup
     const builder = await testBuilderSetup(server, rootLinks || new Map());
     if (!builder) continue;
 
-    // Phase 5: Read operations
+    // Phase 6: Read operations
     await testReadOperations(server, builder);
 
-    // Phase 6: Response envelope analysis
+    // Phase 7: Response envelope analysis
     await testResponseEnvelope(server, builder);
 
-    // Phase 7: Parser validation
+    // Phase 8: Parser validation
     await testParsers(server, builder);
 
-    // Phase 8: Nested resources
+    // Phase 9: Nested resources
     await testNestedResources(server, builder);
 
-    // Phase 9: CRUD operations
+    // Phase 10: CRUD operations
     await testCrudOperations(server, builder);
   }
 

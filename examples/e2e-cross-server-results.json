@@ -1,5 +1,5 @@
 {
-  "date": "2026-02-16T16:53:51.610Z",
+  "date": "2026-02-16T16:59:18.065Z",
   "testSuite": "cross-server-interoperability",
   "servers": [
     {
@@ -11,31 +11,33 @@
     {
       "name": "52North CSA",
       "baseUrl": "https://csa.demo.52north.org",
-      "hasData": false,
+      "hasData": true,
       "supportsCrud": false
     }
   ],
   "summary": [
     {
       "server": "OSH SensorHub",
-      "total": 35,
-      "passed": 33,
+      "total": 39,
+      "passed": 37,
       "failed": 2
     },
     {
       "server": "52North CSA",
-      "total": 26,
-      "passed": 22,
-      "failed": 4
+      "total": 30,
+      "passed": 25,
+      "failed": 5
     }
   ],
   "findings": [
     "OSH SensorHub: No \"data\" link on landing page",
     "OSH SensorHub: Uses non-standard \"items\" envelope instead of FeatureCollection",
     "52North CSA: Server does not advertise CSA conformance classes",
+    "52North CSA: Accept=application/json returns 0 items even though server has data (content negotiation routing — Issue #15)",
     "52North CSA: scanCsapiLinks finds 0 resources from landing page. Server uses collection-scoped discovery.",
-    "52North CSA: datastreams endpoint returned 500",
-    "52North CSA: observations endpoint returned 500"
+    "52North CSA: datastreams endpoint returned 400",
+    "52North CSA: observations endpoint returned 400",
+    "52North CSA: Uses non-standard \"items\" envelope instead of FeatureCollection"
   ],
   "results": [
     {
@@ -89,6 +91,38 @@
       "name": "CSA conformance classes",
       "passed": true,
       "details": "22 CSA classes found"
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Content Negotiation",
+      "name": "Accept: application/json",
+      "passed": true,
+      "details": "5 items, envelope: items, response CT: application/json",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Content Negotiation",
+      "name": "Accept: application/sml+json",
+      "passed": true,
+      "details": "5 items, envelope: items, response CT: application/json",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Content Negotiation",
+      "name": "Accept: application/geo+json",
+      "passed": true,
+      "details": "5 items, envelope: items, response CT: application/json",
+      "httpStatus": 200
+    },
+    {
+      "server": "OSH SensorHub",
+      "category": "Content Negotiation",
+      "name": "No Accept header (server default)",
+      "passed": true,
+      "details": "5 items, response CT: application/json",
+      "httpStatus": 200
     },
     {
       "server": "OSH SensorHub",
@@ -378,6 +412,39 @@
     },
     {
       "server": "52North CSA",
+      "category": "Content Negotiation",
+      "name": "Accept: application/json",
+      "passed": true,
+      "details": "0 items, envelope: features, response CT: application/json",
+      "httpStatus": 200,
+      "finding": "52North CSA: Accept=application/json returns 0 items even though server has data (content negotiation routing — Issue #15)"
+    },
+    {
+      "server": "52North CSA",
+      "category": "Content Negotiation",
+      "name": "Accept: application/sml+json",
+      "passed": true,
+      "details": "3 items, envelope: items, response CT: application/sml+json",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Content Negotiation",
+      "name": "Accept: application/geo+json",
+      "passed": true,
+      "details": "3 items, envelope: features, response CT: application/geo+json",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
+      "category": "Content Negotiation",
+      "name": "No Accept header (server default)",
+      "passed": true,
+      "details": "3 items, response CT: application/sml+json",
+      "httpStatus": 200
+    },
+    {
+      "server": "52North CSA",
       "category": "Discovery",
       "name": "Root-level CSAPI links (scanCsapiLinks)",
       "passed": false,
@@ -417,7 +484,7 @@
       "category": "Read Operations",
       "name": "LIST systems",
       "passed": true,
-      "details": "0 items, envelope: FeatureCollection/features",
+      "details": "3 items, envelope: items",
       "url": "/systems?limit=3",
       "httpStatus": 200
     },
@@ -426,7 +493,7 @@
       "category": "Read Operations",
       "name": "LIST deployments",
       "passed": true,
-      "details": "0 items, envelope: FeatureCollection/features",
+      "details": "1 items, envelope: items",
       "url": "/deployments?limit=3",
       "httpStatus": 200
     },
@@ -435,7 +502,7 @@
       "category": "Read Operations",
       "name": "LIST procedures",
       "passed": true,
-      "details": "0 items, envelope: FeatureCollection/features",
+      "details": "1 items, envelope: items",
       "url": "/procedures?limit=3",
       "httpStatus": 200
     },
@@ -444,27 +511,27 @@
       "category": "Read Operations",
       "name": "LIST datastreams",
       "passed": false,
-      "details": "HTTP 500: <!doctype html>\n<html lang=en>\n<title>500 Internal Server Error</title>\n<h1>Internal Server Error</h1>\n<p>The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.</p>\n",
+      "details": "HTTP 400: {\"code\":\"InvalidMimetype\",\"type\":\"InvalidMimetype\",\"description\":\"invalid mimetype supplied! expected [] got 'application/sml+json'\"}",
       "url": "/datastreams?limit=3",
-      "httpStatus": 500,
-      "finding": "52North CSA: datastreams endpoint returned 500"
+      "httpStatus": 400,
+      "finding": "52North CSA: datastreams endpoint returned 400"
     },
     {
       "server": "52North CSA",
       "category": "Read Operations",
       "name": "LIST observations",
       "passed": false,
-      "details": "HTTP 500: <!doctype html>\n<html lang=en>\n<title>500 Internal Server Error</title>\n<h1>Internal Server Error</h1>\n<p>The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.</p>\n",
+      "details": "HTTP 400: {\"code\":\"InvalidMimetype\",\"type\":\"InvalidMimetype\",\"description\":\"invalid mimetype supplied! expected [] got 'application/sml+json'\"}",
       "url": "/observations?limit=3",
-      "httpStatus": 500,
-      "finding": "52North CSA: observations endpoint returned 500"
+      "httpStatus": 400,
+      "finding": "52North CSA: observations endpoint returned 400"
     },
     {
       "server": "52North CSA",
       "category": "Read Operations",
       "name": "getSystems({\"limit\":2})",
       "passed": true,
-      "details": "0 items",
+      "details": "2 items",
       "url": "/systems?limit=2",
       "httpStatus": 200
     },
@@ -473,7 +540,7 @@
       "category": "Read Operations",
       "name": "getSystems({\"limit\":2,\"offset\":1})",
       "passed": true,
-      "details": "0 items",
+      "details": "2 items",
       "url": "/systems?limit=2&offset=1",
       "httpStatus": 200
     },
@@ -482,7 +549,8 @@
       "category": "Response Envelope",
       "name": "Envelope format",
       "passed": true,
-      "details": "Standard FeatureCollection/features (spec-compliant)"
+      "details": "Items envelope ({ items: [...] }) — non-standard but supported",
+      "finding": "52North CSA: Uses non-standard \"items\" envelope instead of FeatureCollection"
     },
     {
       "server": "52North CSA",
@@ -496,7 +564,7 @@
       "category": "Parsers",
       "name": "parseCollectionResponse — systems",
       "passed": true,
-      "details": "0 items, 0 links, numberMatched=N/A",
+      "details": "3 items, 1 links, numberMatched=N/A",
       "url": "/systems?limit=3",
       "httpStatus": 200
     },
@@ -505,7 +573,7 @@
       "category": "Parsers",
       "name": "parseCollectionResponse — deployments",
       "passed": true,
-      "details": "0 items, 0 links, numberMatched=N/A",
+      "details": "1 items, 0 links, numberMatched=N/A",
       "url": "/deployments?limit=3",
       "httpStatus": 200
     },
@@ -514,16 +582,18 @@
       "category": "Parsers",
       "name": "parseCollectionResponse — procedures",
       "passed": true,
-      "details": "0 items, 0 links, numberMatched=N/A",
+      "details": "1 items, 0 links, numberMatched=N/A",
       "url": "/procedures?limit=3",
       "httpStatus": 200
     },
     {
       "server": "52North CSA",
-      "category": "Nested Resources",
-      "name": "Nested resource tests",
-      "passed": true,
-      "details": "Skipped — no data"
+      "category": "Parsers",
+      "name": "extractCSAPIFeature — system/5400-526",
+      "passed": false,
+      "details": "Error: Cannot extract CSAPI feature: unrecognized or missing featureType",
+      "url": "/systems/5400-526",
+      "httpStatus": 200
     },
     {
       "server": "52North CSA",
