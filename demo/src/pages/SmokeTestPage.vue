@@ -130,19 +130,27 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
   }
 
   if (type === 'controlStreams') {
+    // CREATE: include full schema; UPDATE: omit schema — OSH returns 500 on
+    // PUT when the schema block is present (server bug in control stream update handler)
+    if (phase === 'create') {
+      return {
+        name,
+        inputName: 'smoke-test-input',
+        schema: {
+          commandFormat: 'application/swe+json',
+          parametersSchema: {
+            type: 'DataRecord',
+            label: 'Smoke Test Command',
+            fields: [
+              { type: 'Boolean', label: 'Active', name: 'active' },
+            ]
+          }
+        }
+      }
+    }
     return {
       name,
       inputName: 'smoke-test-input',
-      schema: {
-        commandFormat: 'application/swe+json',
-        parametersSchema: {
-          type: 'DataRecord',
-          label: 'Smoke Test Command',
-          fields: [
-            { type: 'Boolean', label: 'Active', name: 'active' },
-          ]
-        }
-      }
     }
   }
 
