@@ -698,30 +698,34 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
         </span>
       </div>
       <div class="toolbar-right">
-        <!-- Before test starts -->
-        <button v-if="!testStarted" class="btn btn-primary" @click="beginTest">
-          <i class="pi pi-play"></i> Begin Test
-        </button>
+        <!-- Fixed-width action slot so buttons never shift -->
+        <div class="action-slot">
+          <button v-if="!testStarted" class="btn btn-primary" @click="beginTest">
+            <i class="pi pi-play"></i> Begin Test
+          </button>
+          <button v-else-if="isStepReady" class="btn btn-execute" @click="executeAndWait" :disabled="running">
+            <i class="pi pi-bolt"></i> Execute Step
+          </button>
+          <button v-else-if="isStepDone && hasMoreSteps" class="btn btn-primary" @click="advanceToNextStep">
+            <i class="pi pi-arrow-right"></i> Next Step
+          </button>
+          <span v-else-if="isStepDone && !hasMoreSteps" class="done-badge">
+            <i class="pi pi-check-circle"></i> Test Complete
+          </span>
+          <span v-else class="btn-placeholder"></span>
+        </div>
 
-        <!-- Step is ready to execute (preview shown) -->
-        <button v-if="isStepReady" class="btn btn-execute" @click="executeAndWait" :disabled="running">
-          <i class="pi pi-bolt"></i> Execute Step
-        </button>
-        <button v-if="isStepReady" class="btn btn-secondary" @click="skipCurrentStep">
-          <i class="pi pi-angle-double-right"></i> Skip
-        </button>
+        <!-- Fixed-width skip slot -->
+        <div class="action-slot action-slot-sm">
+          <button v-if="isStepReady" class="btn btn-secondary" @click="skipCurrentStep">
+            <i class="pi pi-angle-double-right"></i> Skip
+          </button>
+          <span v-else class="btn-placeholder"></span>
+        </div>
 
-        <!-- Step is done, advance to next -->
-        <button v-if="isStepDone && hasMoreSteps" class="btn btn-primary" @click="advanceToNextStep">
-          <i class="pi pi-arrow-right"></i> Next Step
-        </button>
+        <div class="toolbar-divider"></div>
 
-        <!-- End of test -->
-        <span v-if="isStepDone && !hasMoreSteps" class="done-badge">
-          <i class="pi pi-check-circle"></i> Test Complete
-        </span>
-
-        <!-- Always available during test -->
+        <!-- Always-present utility buttons -->
         <button v-if="testStarted" class="btn btn-danger" @click="abortAndCleanup" :disabled="running">
           <i class="pi pi-trash"></i> Cleanup
         </button>
@@ -906,7 +910,25 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
+}
+.action-slot {
+  width: 150px;
+  display: flex;
+  justify-content: flex-end;
+}
+.action-slot-sm {
+  width: 70px;
+}
+.btn-placeholder {
+  display: block;
+  width: 100%;
+  height: 32px;
+}
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: #cbd5e1;
+  margin: 0 0.25rem;
 }
 .progress-badge {
   font-size: 0.85rem;
