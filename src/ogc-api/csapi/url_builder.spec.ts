@@ -1,5 +1,5 @@
 import type { OgcApiCollectionInfo } from '../model.js';
-import { EndpointError } from '../../shared/errors.js';
+import { EndpointError } from '../../shared/endpoint-error.js';
 import CSAPIQueryBuilder from './url_builder.js';
 
 /**

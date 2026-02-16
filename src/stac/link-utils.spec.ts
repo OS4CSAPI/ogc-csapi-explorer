@@ -1,7 +1,7 @@
 import * as linkUtils from './link-utils.js';
 import { StacDocument } from './link-utils.js';
 import * as httpUtils from '../shared/http-utils.js';
-import { EndpointError } from '../shared/errors.js';
+import { EndpointError } from '../shared/endpoint-error.js';
 
 describe('stac/link-utils', () => {
   beforeEach(() => {

@@ -13,7 +13,7 @@
 
 import type { OgcApiCollectionInfo } from '../../model.js';
 import CSAPIQueryBuilder from '../url_builder.js';
-import { EndpointError } from '../../../shared/errors.js';
+import { EndpointError } from '../../../shared/endpoint-error.js';
 import { parseCollectionResponse } from '../formats/response.js';
 import {
   isCSAPIFeature,

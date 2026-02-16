@@ -20,7 +20,7 @@ import {
   StacEndpointInfo,
 } from './info.js';
 import { StacCatalog, StacCollection, StacItem } from './model.js';
-import { EndpointError } from '../shared/errors.js';
+import { EndpointError } from '../shared/endpoint-error.js';
 import { BoundingBox, DateTimeParameter } from '../shared/models.js';
 import { clampBoundingBox } from '../shared/bbox-utils.js';
 import { getBaseUrl } from '../shared/url-utils.js';

@@ -1,7 +1,7 @@
 import type { OgcApiCollectionInfo } from '../model.js';
 import type { QueryOptions, SystemQueryOptions, DeploymentQueryOptions, ProcedureQueryOptions, SamplingFeatureQueryOptions, PropertyQueryOptions, DatastreamQueryOptions, ObservationQueryOptions, ControlStreamQueryOptions, CommandQueryOptions } from './model.js';
 import { CSAPIResourceTypes } from './model.js';
-import { EndpointError } from '../../shared/errors.js';
+import { EndpointError } from '../../shared/endpoint-error.js';
 import {
   encodeResourceId,
   formatDateTimeParameter,

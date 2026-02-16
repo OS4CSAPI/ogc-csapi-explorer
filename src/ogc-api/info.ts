@@ -13,7 +13,7 @@ import {
   TileMatrixSet,
 } from './model.js';
 import { assertHasLinks } from './link-utils.js';
-import { EndpointError } from '../shared/errors.js';
+import { EndpointError } from '../shared/endpoint-error.js';
 import {
   isMimeTypeGeoJson,
   isMimeTypeJson,

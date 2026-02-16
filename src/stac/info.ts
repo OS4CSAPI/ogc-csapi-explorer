@@ -1,4 +1,4 @@
-import { EndpointError } from '../shared/errors.js';
+import { EndpointError } from '../shared/endpoint-error.js';
 import { StacCatalog, StacCollection, StacItem, StacLink } from './model.js';
 import { StacDocument } from './link-utils.js';
 

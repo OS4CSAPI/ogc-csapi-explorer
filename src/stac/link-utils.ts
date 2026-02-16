@@ -9,7 +9,7 @@ import {
   getLinkUrl as ogcGetLinkUrl,
 } from '../ogc-api/link-utils.js';
 import { OgcApiDocumentLink } from '../ogc-api/model.js';
-import { EndpointError } from '../shared/errors.js';
+import { EndpointError } from '../shared/endpoint-error.js';
 import { sharedFetch } from '../shared/http-utils.js';
 import { getBaseUrl } from '../shared/url-utils.js';
 

@@ -8,16 +8,12 @@ import {
   stripNamespace,
 } from '../shared/xml-utils.js';
 
-export class EndpointError extends Error {
-  constructor(
-    message: string,
-    public readonly httpStatus?: number,
-    public readonly isCrossOriginRelated?: boolean
-  ) {
-    super(message);
-    this.name = 'EndpointError';
-  }
-}
+// Import EndpointError from its own module so it is available at runtime
+// (used by encodeError/decodeError below) and re-export it for backward
+// compatibility.  EndpointError lives in endpoint-error.ts to avoid pulling
+// in the XML parsing stack for consumers that only need EndpointError.
+import { EndpointError } from './endpoint-error.js';
+export { EndpointError };
 
 /**
  * Representation of an Exception reported by an OWS service

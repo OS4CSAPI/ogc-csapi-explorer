@@ -1,7 +1,7 @@
 import OgcApiEndpoint from './endpoint.js';
 import { readFile, stat } from 'fs/promises';
 import * as path from 'path';
-import { EndpointError } from '../shared/errors.js';
+import { EndpointError } from '../shared/endpoint-error.js';
 
 const FIXTURES_ROOT = path.join(__dirname, '../../fixtures/ogc-api');
 

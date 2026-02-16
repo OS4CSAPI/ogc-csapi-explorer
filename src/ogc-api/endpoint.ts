@@ -35,7 +35,7 @@ import {
   getLinkUrl,
   hasLinks,
 } from './link-utils.js';
-import { EndpointError } from '../shared/errors.js';
+import { EndpointError } from '../shared/endpoint-error.js';
 import {
   BoundingBox,
   CrsCode,

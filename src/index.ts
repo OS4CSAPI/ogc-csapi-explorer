@@ -226,8 +226,8 @@ export {
 export {
   check,
   ServiceExceptionError,
-  EndpointError,
 } from './shared/errors.js';
+export { EndpointError } from './shared/endpoint-error.js';
 
 export { enableFallbackWithoutWorker } from './worker/index.js';
 import './worker-fallback/index.js';

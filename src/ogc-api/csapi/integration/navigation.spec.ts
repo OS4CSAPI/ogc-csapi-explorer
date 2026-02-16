@@ -38,7 +38,7 @@ import {
   MEDIA_TYPE_SENSORML_JSON,
 } from '../formats/constants.js';
 import { parseSWEComponent } from '../formats/swecommon/parser.js';
-import { EndpointError } from '../../../shared/errors.js';
+import { EndpointError } from '../../../shared/endpoint-error.js';
 
 // ========================================
 // Shared Fixtures
