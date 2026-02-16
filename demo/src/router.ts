@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ServerConnectPage from './pages/ServerConnectPage.vue'
 import ResourceExplorerPage from './pages/ResourceExplorerPage.vue'
+import MapViewPage from './pages/MapViewPage.vue'
 
 const routes = [
   {
@@ -13,6 +14,11 @@ const routes = [
     name: 'explore',
     component: ResourceExplorerPage,
     props: true,
+  },
+  {
+    path: '/map',
+    name: 'map',
+    component: MapViewPage,
   },
 ]
 

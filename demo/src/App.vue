@@ -16,6 +16,9 @@ import { connection } from './state'
         <router-link to="/explore/systems" class="nav-link">
           <i class="pi pi-th-large"></i> Explorer
         </router-link>
+        <router-link to="/map" class="nav-link">
+          <i class="pi pi-map"></i> Map
+        </router-link>
       </template>
       <router-link to="/" class="nav-link">
         <i class="pi pi-link"></i> Connect
