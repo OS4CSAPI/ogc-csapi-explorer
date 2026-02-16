@@ -100,7 +100,7 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
       name,
       outputName: 'smoke-test-output',
       schema: {
-        obsFormat: 'application/json',
+        obsFormat: 'application/swe+json',
         recordSchema: {
           type: 'DataRecord',
           label: 'Smoke Test Record',
@@ -125,7 +125,7 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
       name,
       inputName: 'smoke-test-input',
       schema: {
-        cmdFormat: 'application/json',
+        cmdFormat: 'application/swe+json',
         recordSchema: {
           type: 'DataRecord',
           label: 'Smoke Test Command',
