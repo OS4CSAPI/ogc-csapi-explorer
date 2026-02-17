@@ -13,10 +13,20 @@ import Column from 'primevue/column'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 
-/** Hints for resource types that are typically only available as nested sub-resources */
-const NESTED_RESOURCE_HINTS: Record<string, string> = {
-  commands: 'Commands are nested under individual control streams. Try viewing a control stream\'s detail page to browse its commands.',
-  observations: 'If observations are unavailable at the top level, try viewing a datastream\'s detail page to browse its observations.',
+/**
+ * Friendly guidance for resource types that some servers only expose as nested
+ * sub-resources. Each entry includes a brief explanation of the server
+ * limitation and a concrete navigation hint so users know where to look.
+ */
+const NESTED_RESOURCE_HINTS: Record<string, { explanation: string; hint: string }> = {
+  commands: {
+    explanation: 'This server requires commands to be accessed through their parent control stream (e.g., GET /controlstreams/{id}/commands) rather than as a standalone collection (GET /commands). This is a common server-side routing limitation — the CSAPI spec supports both patterns, but not all servers implement the top-level route.',
+    hint: 'To browse commands: navigate to Control Streams → select a control stream → view its detail page to see associated commands.',
+  },
+  observations: {
+    explanation: 'This server requires observations to be accessed through their parent datastream (e.g., GET /datastreams/{id}/observations) rather than as a standalone collection (GET /observations). Some servers only expose observations as nested resources under their datastream.',
+    hint: 'To browse observations: navigate to Datastreams → select a datastream → view its detail page to see associated observations.',
+  },
 }
 
 const props = defineProps<{
@@ -154,14 +164,15 @@ async function fetchResources(cursorUrl?: string) {
       headers: { 'Accept': acceptType },
     })
     if (!res.ok) {
-      // Provide a friendlier message for 400 errors on resource types that
-      // are typically nested (commands under controlstreams, etc.)
+      // Provide a friendlier, more informative message for 400 errors on
+      // resource types that are typically nested (commands under controlstreams, etc.)
       if (res.status === 400) {
         const parentHint = NESTED_RESOURCE_HINTS[props.resourceType]
         if (parentHint) {
-          error.value = `This server does not support listing ${props.resourceType} as a top-level resource. ` +
-            `${parentHint} ` +
-            `(Server returned: ${res.status} ${res.statusText})`
+          error.value = `⚠️ Server limitation: ${props.resourceType} are not available as a top-level collection on this server.\n\n` +
+            `${parentHint.explanation}\n\n` +
+            `${parentHint.hint}\n\n` +
+            `(Server response: ${res.status} ${res.statusText})`
         } else {
           error.value = `Server rejected the request (${res.status}). This resource type may not be supported by this server.`
         }
@@ -334,7 +345,9 @@ watch(() => props.resourceType, () => {
     </div>
 
     <!-- Error -->
-    <Message v-if="error" :severity="error.startsWith('This server does not support') ? 'warn' : 'error'" :closable="false" class="mt-3">{{ error }}</Message>
+    <Message v-if="error" :severity="error.startsWith('⚠️ Server limitation') ? 'warn' : 'error'" :closable="false" class="mt-3">
+      <span style="white-space: pre-line">{{ error }}</span>
+    </Message>
 
     <!-- Loading -->
     <div v-if="loading" class="loading">
