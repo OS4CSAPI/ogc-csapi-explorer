@@ -574,6 +574,12 @@ async function loadDatastreams(): Promise<void> {
       const loc = systemLocationCache[sysId]
       if (!loc) continue
 
+      // When bbox is active, only show datastreams whose parent system is in the bbox
+      if (bboxFilter.value) {
+        const [minX, minY, maxX, maxY] = bboxFilter.value
+        if (loc.lon < minX || loc.lon > maxX || loc.lat < minY || loc.lat > maxY) continue
+      }
+
       const feature = createEnrichedFeature(
         ds, 'datastreams', loc.lat, loc.lon,
         `At parent system ${sysId} (${loc.datastreamName || 'location obs'})`
@@ -605,6 +611,12 @@ async function loadControlStreams(): Promise<void> {
       if (!sysId) continue
       const loc = systemLocationCache[sysId]
       if (!loc) continue
+
+      // When bbox is active, only show controlStreams whose parent system is in the bbox
+      if (bboxFilter.value) {
+        const [minX, minY, maxX, maxY] = bboxFilter.value
+        if (loc.lon < minX || loc.lon > maxX || loc.lat < minY || loc.lat > maxY) continue
+      }
 
       const feature = createEnrichedFeature(
         cs, 'controlStreams', loc.lat, loc.lon,
@@ -652,6 +664,12 @@ async function loadObservationLayers(): Promise<void> {
           lat = result.Location.lat; lon = result.Location.lon; alt = result.Location.alt
         }
         if (lat == null || lon == null) continue
+
+        // When bbox is active, skip observations outside the bbox
+        if (bboxFilter.value) {
+          const [minX, minY, maxX, maxY] = bboxFilter.value
+          if (lon < minX || lon > maxX || lat < minY || lat > maxY) continue
+        }
 
         trackCoords.push([lon, lat])
 
@@ -772,6 +790,8 @@ function startDrawBbox() {
       const max = toLonLat([extent[2], extent[3]])
       bboxFilter.value = [min[0], min[1], max[0], max[1]]
     }
+    // Remove any inline style Draw may have set so the layer style applies
+    evt.feature.setStyle(undefined)
     if (map && drawInteraction) {
       map.removeInteraction(drawInteraction)
       drawInteraction = null
@@ -842,6 +862,9 @@ onMounted(() => {
 
   // Click handler for features
   map.on('singleclick', (evt) => {
+    // Suppress feature clicks while drawing a bbox
+    if (drawingBbox.value) return
+
     let hit = false
     map!.forEachFeatureAtPixel(evt.pixel, (feature) => {
       if (hit) return // only handle first
