@@ -106,7 +106,7 @@ const bboxLayer = new VectorLayer({
   source: bboxSource,
   style: new Style({
     stroke: new Stroke({ color: '#3b82f6', width: 2, lineDash: [6, 4] }),
-    fill: new Fill({ color: 'rgba(59, 130, 246, 0.08)' }),
+    fill: new Fill({ color: 'rgba(59, 130, 246, 0)' }),
   }),
   zIndex: 20,
 })
@@ -890,6 +890,8 @@ onMounted(() => {
     let hit = false
     map!.forEachFeatureAtPixel(evt.pixel, (feature) => {
       if (hit) return // only handle first
+      // Skip bbox rectangle feature
+      if (!feature.get('resourceType')) return
       hit = true
 
       const resourceType = feature.get('resourceType')
