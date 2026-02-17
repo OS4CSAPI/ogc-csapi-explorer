@@ -1,7 +1,7 @@
 # Server Observations Gap Analysis — OSH SensorHub & 52North CSA
 
-> **Date**: 2026-02-16
-> **Context**: During integration testing and CRUD smoke testing against two live OGC Connected Systems API servers — OSH SensorHub (`http://45.55.99.236:8080/sensorhub/api`) and 52North CSA (`https://csa.demo.52north.org`) — nine server-side observations were identified. These document real server behaviors that affect library consumers but are **not bugs in the client library itself**. They inform documentation, defensive coding practices, and workaround strategies.
+> **Date**: 2026-02-16 (updated 2026-02-17)
+> **Context**: During integration testing, CRUD smoke testing, and hierarchical navigation testing against two live OGC Connected Systems API servers — OSH SensorHub (`http://45.55.99.236:8080/sensorhub/api`) and 52North CSA (`https://csa.demo.52north.org`) — ten server-side observations were identified. These document real server behaviors that affect library consumers but are **not bugs in the client library itself**. They inform documentation, defensive coding practices, and workaround strategies.
 
 ---
 
@@ -18,6 +18,7 @@
 | **S-7** | 52North | Write preflight CORS fails | Medium | CORS preflight test |
 | **S-8** | OSH | Rejects `Accept: application/geo+json` on POST | Medium | CRUD smoke test |
 | **S-9** | OSH | Rejects `obsFormat: "application/json"` in datastream schema payloads | Medium | CRUD smoke test |
+| **S-15** | OSH | Requires `type` as first JSON property in SWE Common schema objects | Medium | Subsystem hierarchy testing |
 
 ---
 
@@ -418,6 +419,103 @@ Committed at [`7f7510f`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/7
 | S-7 | [`upstream-findings.md`](../upstream-findings.md), [`cors-preflight-test-results.md`](./cors-preflight-test-results.md) | |
 | S-8 | [`crud-smoke-test-findings.md`](./crud-smoke-test-findings.md) | |
 | S-9 | **New** — first documented here | Discovered during CRUD smoke test datastream creation |
+| S-15 | **New** — first documented here | Discovered during subsystem hierarchy sample data creation |
+
+---
+
+### S-15. OSH SensorHub: Requires `type` as First JSON Property in SWE Common Schema Objects
+
+| | |
+|---|---|
+| **Severity** | Medium |
+| **Server** | OSH SensorHub |
+| **Endpoint** | `POST /systems/{id}/datastreams` (and any endpoint accepting SWE Common payloads) |
+| **Discovered In** | Subsystem hierarchy sample data creation (2026-02-17) |
+
+#### What happens
+
+When creating datastreams with a `recordSchema` containing SWE Common objects (`DataRecord`, `Time`, `Quantity`, etc.), OSH rejects the request if the `type` property is not the **first** property in each JSON object. The server parses the JSON payload using a streaming/ordered parser and expects `type` to appear before any other fields.
+
+#### Why it matters
+
+RFC 8259 (JSON specification) explicitly states that JSON objects are **unordered** collections of name/value pairs. While JavaScript's `JSON.stringify()` preserves insertion order for string keys (per ES2015+), this is an implementation detail — not a guarantee. Any of the following common operations could reorder properties and break the payload:
+
+- Object spread: `{ ...existingSchema, type: 'DataRecord' }` (type moves to the end)
+- Deserialization → reserialization: `JSON.parse(JSON.stringify(obj))` (order *usually* preserved, but not guaranteed by spec)
+- Schema builders or validation libraries that reconstruct objects
+- Some serialization frameworks in non-JavaScript languages
+
+#### Evidence
+
+During creation of sample datastreams for the "Demo - Weather Station Alpha" hierarchy, payloads with `type` not as the first property were rejected:
+
+```json
+// ❌ REJECTED — type not first in Time field
+{
+  "resultSchema": {
+    "type": "DataRecord",
+    "fields": [
+      {
+        "name": "time",
+        "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime",
+        "type": "Time",
+        "referenceFrame": "http://www.opengis.net/def/trs/BIPM/0/UTC",
+        "uom": { "href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian" }
+      }
+    ]
+  }
+}
+// → Server error (fails to determine field type)
+```
+
+```json
+// ✅ ACCEPTED — type is first property in every SWE Common object
+{
+  "resultSchema": {
+    "type": "DataRecord",
+    "fields": [
+      {
+        "type": "Time",
+        "name": "time",
+        "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime",
+        "referenceFrame": "http://www.opengis.net/def/trs/BIPM/0/UTC",
+        "uom": { "href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian" }
+      }
+    ]
+  }
+}
+// → 201 Created
+```
+
+#### Impact on consumers
+
+Any client library that builds SWE Common schema payloads programmatically must ensure `type` is the first property in every schema object when targeting OSH SensorHub. This is a server-side strictness bug — the server should parse `type` from anywhere in the JSON object, not depend on property ordering.
+
+#### Workaround
+
+When constructing SWE Common JSON objects, always place `type` as the first property:
+
+```typescript
+// ✅ Safe pattern
+const field = {
+  type: 'Quantity',     // MUST be first for OSH
+  name: 'temperature',
+  definition: '...',
+  uom: { code: 'Cel' }
+};
+```
+
+Alternatively, use a helper that ensures `type` is first:
+
+```typescript
+function sweObject(type: string, props: Record<string, unknown>) {
+  return { type, ...props };
+}
+```
+
+#### Relationship to other findings
+
+This is distinct from S-9 (rejected `obsFormat` values), which concerns top-level datastream properties rather than nested schema object ordering. Both indicate OSH's SWE Common JSON parser is stricter than the JSON specification requires.
 
 ---
 
@@ -430,6 +528,7 @@ Committed at [`7f7510f`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/7
 | [`crud-smoke-test-findings.md`](./crud-smoke-test-findings.md) | F-15, F-16, S-8 from CRUD testing | Source for S-8 |
 | [`conformance-bypass-architecture-notes.md`](./conformance-bypass-architecture-notes.md) | Architectural impact of S-3 | Deep-dive on conformance gap |
 | [`cors-preflight-test-results.md`](./cors-preflight-test-results.md) | Detailed CORS test results | Evidence for S-7 |
+| [`hierarchical-navigation-implementation.md`](./hierarchical-navigation-implementation.md) | Hierarchical navigation feature | Context for S-15 discovery |
 
 ---
 
@@ -437,9 +536,9 @@ Committed at [`7f7510f`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/7
 
 ### By Server
 
-**OSH SensorHub** (5 observations: S-1, S-2, S-5, S-8, S-9):
+**OSH SensorHub** (6 observations: S-1, S-2, S-5, S-8, S-9, S-15):
 - Most observations relate to the distinction between sensor-driven resources (auto-managed, read-only) and REST-created resources (full CRUD)
-- S-8 and S-9 are conformance gaps where the server rejects spec-compliant requests
+- S-8, S-9, and S-15 are conformance gaps where the server rejects spec-compliant requests or depends on non-standard behavior
 - S-5 is a minor link structure difference that the library already handles
 
 **52North CSA** (4 observations: S-3, S-4, S-6, S-7):
@@ -454,5 +553,6 @@ Committed at [`7f7510f`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/7
 | **Feature discovery** | S-3, S-5 | Don't gate on conformance alone; support multiple link patterns |
 | **Write operations** | S-1, S-2, S-8 | Omit Accept on writes; document system-dependent behavior |
 | **Content negotiation** | S-8, S-9 | Separate GET Accept headers from POST Content-Types; document `obsFormat` values |
+| **Payload construction** | S-15 | Ensure `type` is first property in SWE Common JSON objects for OSH compatibility |
 | **Error handling** | S-4 | Gracefully handle 400/500 from unimplemented endpoints |
 | **Infrastructure** | S-6, S-7 | Proxy/CORS guidance in library docs |

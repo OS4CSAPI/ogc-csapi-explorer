@@ -1,7 +1,7 @@
 # Library Findings Gap Analysis — GitHub Issues vs. Full Findings
 
-> **Date**: 2026-02-16
-> **Context**: After building the CSAPI Explorer demo webapp, we documented 16 library findings and 7 server observations in [`docs/upstream-findings.md`](../upstream-findings.md). Four of those findings were selected as the initial set of GitHub issues for upstream contribution. This document maps all findings to their issue status and provides detailed analysis of each.
+> **Date**: 2026-02-16 (updated 2026-02-17)
+> **Context**: After building the CSAPI Explorer demo webapp, we documented 16 library findings and 7 server observations in [`docs/upstream-findings.md`](../upstream-findings.md). Four of those findings were selected as the initial set of GitHub issues for upstream contribution. This document maps all findings to their issue status and provides detailed analysis of each. Three additional findings (F-83–F-85) were identified during subsystem/subdeployment hierarchy testing on 2026-02-17.
 
 ---
 
@@ -29,6 +29,14 @@
 | **F-9** | `extractCSAPIFeature()` union return requires type guards | Yes — DX improvement |
 | **F-11** | Resource discovery depends on server link quality | Design note — hard to fix |
 | **F-12** | No `Location` header parsing helper | Yes — utility addition |
+
+### Findings from subsystem/subdeployment hierarchy testing (2026-02-17):
+
+| Finding | Summary | Actionable? |
+|---|---|---|
+| **F-83** | Missing `createSubsystem(parentId)` and `createSubdeployment(parentId)` URL builder methods | Yes — amends [#5](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/5) |
+| **F-84** | No nested resource type abstraction for CRUD operations | Yes — new issue needed |
+| **F-85** | No resource deletion ordering guidance | Yes — documentation (low priority) |
 
 ### Server-side observations (S-1 through S-7):
 
@@ -567,6 +575,170 @@ The 52North demo server at `https://csa.demo.52north.org` has an expired SSL cer
 
 ---
 
+## Findings from Subsystem/Subdeployment Hierarchy Testing (2026-02-17)
+
+> **Context**: During implementation of hierarchical navigation (commit `8ee5ecb`) and the expansion of the automated CRUD smoke test to cover subsystem and subdeployment resources (commit `bdeae49`), three additional library findings were identified. These are numbered in the global finding sequence (F-83 through F-85) to maintain continuity with findings documented in `docs/implementation/`.
+
+---
+
+### F-83. Missing `createSubsystem(parentId)` and `createSubdeployment(parentId)` URL Builder Methods
+
+| | |
+|---|---|
+| **Severity** | Medium |
+| **GitHub Issue** | Amends [#5](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/5) |
+| **Status** | Workaround applied in demo app |
+| **Affected File** | `src/ogc-api/csapi/url_builder.ts` |
+
+#### What's missing
+
+The `CSAPIQueryBuilder` provides listing methods for nested resources:
+- `getSystemSubsystems(id)` → `GET /systems/{id}/subsystems`
+- `getDeploymentSubdeployments(id)` → `GET /deployments/{id}/subdeployments`
+
+But there are **no corresponding creation methods**:
+- ❌ No `createSubsystem(parentId)` → `POST /systems/{id}/subsystems`
+- ❌ No `createSubdeployment(parentId)` → `POST /deployments/{id}/subdeployments`
+
+This is the same gap identified in F-2 (missing nested create methods for datastreams, observations, etc.), extended to the hierarchy-forming resource relationships.
+
+#### Demo app workaround
+
+The demo's `csapi-bridge.ts` repurposes the listing URL as a creation URL by stripping query parameters:
+
+```typescript
+case 'subsystems':
+  return parentId ? b.getSystemSubsystems(parentId).split('?')[0] : '/systems';
+case 'subdeployments':
+  return parentId ? b.getDeploymentSubdeployments(parentId).split('?')[0] : '/deployments';
+```
+
+This works but is fragile — it depends on the listing URL having the same path as the creation endpoint, which is true today but not guaranteed.
+
+#### Recommended fix
+
+Add explicit creation methods to `CSAPIQueryBuilder`:
+
+```typescript
+createSubsystem(systemId: string): string {
+  this.assertResourceAvailable('systems');
+  return this.buildResourceUrl('systems', systemId, 'subsystems');
+}
+
+createSubdeployment(deploymentId: string): string {
+  this.assertResourceAvailable('deployments');
+  return this.buildResourceUrl('deployments', deploymentId, 'subdeployments');
+}
+```
+
+#### Relationship to existing issues
+
+Issue [#5](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/5) covers `createDataStream()`, `createObservation()`, `createControlStream()`, and `createCommand()`. The subsystem/subdeployment creation methods should be added to the same issue scope or filed as a follow-up.
+
+---
+
+### F-84. No Nested Resource Type Abstraction for CRUD Operations
+
+| | |
+|---|---|
+| **Severity** | Medium |
+| **GitHub Issue** | Not yet — new issue needed |
+| **Status** | Workaround applied in demo app |
+| **Affected Area** | Library API design / consumer DX |
+
+#### The problem
+
+When performing CRUD operations on subsystems and subdeployments, consumers face a type-resolution challenge: these are the same underlying API resource types (`systems` and `deployments`) but accessed through different URL paths and requiring parent context. The demo app's smoke test needed **three lookup tables** to bridge this gap:
+
+```typescript
+const NESTED_ACTUAL_TYPE: Record<string, string> = {
+  subsystems: 'systems',
+  subdeployments: 'deployments',
+};
+
+const NESTED_PARENT_TYPE: Record<string, string> = {
+  subsystems: 'systems',
+  subdeployments: 'deployments',
+};
+
+const NESTED_LABELS: Record<string, string> = {
+  subsystems: 'Subsystem',
+  subdeployments: 'Subdeployment',
+};
+```
+
+Every CRUD operation must resolve the actual type before calling any URL builder or content-type helper:
+
+```typescript
+const actualType = NESTED_ACTUAL_TYPE[step.resourceType] || step.resourceType;
+const contentType = getContentType(actualType); // not getContentType('subsystems')
+const detailUrl = getDetailUrl(actualType, id);  // not getDetailUrl('subsystems', id)
+```
+
+#### Why it matters
+
+Any consumer that needs subsystem/subdeployment CRUD (admin UIs, data management tools, migration scripts) would independently reinvent this same boilerplate. The library already has all the knowledge needed to resolve these relationships.
+
+#### Recommended enhancement
+
+Add a nested resource type resolver to the library:
+
+```typescript
+interface NestedResourceInfo {
+  actualType: string;        // 'systems' | 'deployments'
+  parentType: string;        // 'systems' | 'deployments'
+  relation: string;          // 'subsystems' | 'subdeployments'
+  contentType: string;       // 'application/geo+json'
+  label: string;             // 'Subsystem' | 'Subdeployment'
+}
+
+function resolveNestedType(virtualType: string): NestedResourceInfo | null;
+```
+
+This complements F-7 (generic CRUD method) — a generic dispatch method that understood nested resource types would eliminate most of the consumer-side boilerplate.
+
+---
+
+### F-85. No Resource Deletion Ordering Guidance
+
+| | |
+|---|---|
+| **Severity** | Low |
+| **GitHub Issue** | Not yet — optional, documentation-only |
+| **Status** | Documented in smoke test implementation |
+| **Affected Area** | Library documentation |
+
+#### The problem
+
+The OGC Connected Systems API has implicit resource dependency ordering that affects deletion. The demo app's smoke test must delete resources in a specific order to avoid server-side referential integrity errors:
+
+```typescript
+const deleteOrder = [
+  'commands',          // depends on controlStreams
+  'controlStreams',    // depends on systems
+  'observations',      // depends on datastreams
+  'datastreams',       // depends on systems
+  'subsystems',        // depends on parent systems
+  'subdeployments',    // depends on parent deployments
+  'samplingFeatures',  // depends on systems
+  'deployments',       // may reference systems
+  'procedures',        // may be referenced by systems
+  'systems',           // root resource — delete last
+];
+```
+
+Deleting in the wrong order (e.g., parent system before subsystem) results in 409 Conflict or cascading failures depending on server implementation.
+
+#### Why it matters
+
+This is standard REST resource lifecycle knowledge, but it's not documented anywhere in the library or the OGC spec examples. Consumers building cleanup, migration, or admin tooling must discover this ordering empirically.
+
+#### Recommended enhancement
+
+Add a `CSAPI_DELETE_ORDER` constant or a `getDependencySafeDeleteOrder()` helper to the library, paired with JSDoc explaining the dependency graph. This could live alongside the `CSAPI_CONTENT_TYPES` map proposed in Issue [#6](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/6).
+
+---
+
 ## Actionability Summary
 
 | Finding | Has GitHub Issue? | Actionable? | Effort | Priority |
@@ -583,4 +755,8 @@ The 52North demo server at `https://csa.demo.52north.org` has an expired SSL cer
 | **F-10** | [#6](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/6) | Yes — helper constant | Low | **3** (Medium) |
 | **F-11** | Not yet | Partially — design challenge | Medium | **5** (Medium) |
 | **F-12** | Not yet | Yes — utility function | Low | **6** (Low) |
-| **S-1–S-7** | N/A | No — server-side issues | N/A | N/A |
+| **F-83** | Amends [#5](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/5) | Yes — API gap | Low | **2** (High) |
+| **F-84** | Not yet | Yes — DX improvement | Medium | **4** (Medium) |
+| **F-85** | Not yet | Yes — documentation | Low | **6** (Low) |
+| **S-1–S-9** | N/A | No — server-side issues | N/A | N/A |
+| **S-15** | N/A | No — server-side issue | N/A | N/A |
