@@ -244,6 +244,13 @@ function createOlFeature(item: any, resourceType: string): Feature | null {
   const geom = extractGeometry(item)
   if (!geom) return null
 
+  // Client-side bbox filter: if a bbox is active, skip features outside it.
+  // This catches cases where the server ignores the bbox query parameter.
+  if (bboxCoords.value && geom.type === 'Point') {
+    const [lon, lat] = geom.coordinates
+    if (!isInBbox(lon, lat)) return null
+  }
+
   let olGeom
   try {
     if (geom.type === 'Point') {
@@ -437,7 +444,9 @@ async function enrichSystems(): Promise<void> {
   // We need to know which systems were loaded but have no geometry on the map.
   // Re-fetch the raw items list to check which have null geometry.
   try {
-    const url = getListUrl('systems', { limit: 200 })
+    const opts: Record<string, any> = { limit: 200 }
+    if (bboxCoords.value) opts.bbox = bboxCoords.value
+    const url = getListUrl('systems', opts)
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -478,7 +487,9 @@ async function enrichDeployments(): Promise<void> {
   if (!source) return
 
   try {
-    const url = getListUrl('deployments', { limit: 200 })
+    const dopts: Record<string, any> = { limit: 200 }
+    if (bboxCoords.value) dopts.bbox = bboxCoords.value
+    const url = getListUrl('deployments', dopts)
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -873,9 +884,14 @@ onMounted(() => {
 
   // Click handler for features
   map.on('singleclick', (evt) => {
+    // Don't handle clicks while drawing a bbox
+    if (bboxActive.value) return
+
     let hit = false
     map!.forEachFeatureAtPixel(evt.pixel, (feature) => {
       if (hit) return // only handle first
+      // Skip bbox rectangle features
+      if (bboxSource.hasFeature(feature as Feature)) return
       hit = true
 
       const resourceType = feature.get('resourceType')
@@ -924,8 +940,11 @@ onMounted(() => {
 
   // Pointer cursor on features
   map.on('pointermove', (evt) => {
+    if (bboxActive.value) return  // Don't change cursor while drawing
     const pixel = map!.getEventPixel(evt.originalEvent)
-    const hit = map!.hasFeatureAtPixel(pixel)
+    const hit = map!.hasFeatureAtPixel(pixel, {
+      layerFilter: (layer) => layer !== bboxLayer,
+    })
     const target = map!.getTargetElement()
     if (target) {
       ;(target as HTMLElement).style.cursor = hit ? 'pointer' : ''
