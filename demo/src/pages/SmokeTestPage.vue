@@ -225,6 +225,7 @@ const steps = ref<Step[]>(buildSteps())
 const currentStepIndex = ref(-1)
 const running = ref(false)
 const testStarted = ref(false)
+const cleanupMessage = ref('')
 
 const createdIds = reactive<Record<string, string>>({})
 const createdUids = reactive<Record<string, string>>({})
@@ -668,7 +669,17 @@ function skipCurrentStep() {
 }
 
 async function abortAndCleanup() {
+  cleanupMessage.value = ''
+  const idsToDelete = Object.keys(createdIds).filter(k => createdIds[k])
+  if (idsToDelete.length === 0) {
+    cleanupMessage.value = 'Nothing to clean up \u2014 all resources already deleted'
+    setTimeout(() => { cleanupMessage.value = '' }, 4000)
+    return
+  }
   running.value = true
+  cleanupMessage.value = `Deleting ${idsToDelete.length} resource(s)...`
+  let deleted = 0
+  let failed = 0
   const deleteOrder = ['controlStreams', 'observations', 'datastreams', 'samplingFeatures', 'deployments', 'procedures', 'systems']
   for (const type of deleteOrder) {
     const id = createdIds[type]
@@ -678,9 +689,16 @@ async function abortAndCleanup() {
       await apiFetch(url, { method: 'DELETE' })
       delete createdIds[type]
       removeMarker(`smoke-${type}`)
-    } catch { /* best effort */ }
+      deleted++
+    } catch {
+      failed++
+    }
   }
   running.value = false
+  cleanupMessage.value = failed
+    ? `Cleaned up ${deleted} resource(s), ${failed} failed`
+    : `Cleaned up ${deleted} resource(s) successfully`
+  setTimeout(() => { cleanupMessage.value = '' }, 5000)
 }
 
 function resetTest() {
@@ -811,6 +829,7 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
             <i class="pi pi-trash"></i> Cleanup
           </button>
           <span v-else class="btn-placeholder"></span>
+          <span v-if="cleanupMessage" class="cleanup-message">{{ cleanupMessage }}</span>
         </div>
         <button class="btn btn-secondary" @click="resetTest" :disabled="running">
           <i class="pi pi-refresh"></i> Reset
@@ -1005,6 +1024,21 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
 }
 .action-slot-cleanup {
   width: 110px;
+  position: relative;
+}
+.cleanup-message {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #64748b;
+  white-space: nowrap;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .btn-placeholder {
   display: block;
