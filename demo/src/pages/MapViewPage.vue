@@ -325,7 +325,8 @@ async function buildSystemLocationCache(): Promise<void> {
       return hasLocationProp || name.includes('gps_data') || name.includes('location')
     })
 
-    // Deduplicate by system — keep only one datastream per system (prefer "Location" in name)
+    // Deduplicate by system for the location cache (one lat/lon per system)
+    // but keep ALL location datastreams for observation track rendering
     const bySystem: Record<string, any> = {}
     for (const ds of locationDs) {
       const sysId = ds['system@id'] || ds.system?.id
@@ -336,12 +337,14 @@ async function buildSystemLocationCache(): Promise<void> {
       }
     }
 
-    // Save all location datastream info for observation track rendering
-    locationDatastreamList = Object.entries(bySystem).map(([sysId, ds]) => ({
-      id: ds.id,
-      name: ds.name || ds.outputName || 'Unknown',
-      systemId: sysId,
-    }))
+    // Save ALL location datastreams for observation track rendering (not deduplicated)
+    locationDatastreamList = locationDs
+      .filter((ds: any) => ds['system@id'] || ds.system?.id)
+      .map((ds: any) => ({
+        id: ds.id,
+        name: ds.name || ds.outputName || 'Unknown',
+        systemId: ds['system@id'] || ds.system?.id,
+      }))
 
     // Fetch latest observation from each location datastream in parallel
     const promises = Object.entries(bySystem).map(async ([sysId, ds]) => {
@@ -664,7 +667,7 @@ async function loadObservationLayers(): Promise<void> {
 
   const promises = locationDatastreamList.map(async (dsInfo) => {
     try {
-      const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=50`, {
+      const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=500`, {
         headers: { 'Accept': 'application/om+json' },
       })
       if (!obsRes.ok || !obsRes.data) return
