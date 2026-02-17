@@ -48,6 +48,37 @@ const datetimePreview = computed(() => {
   return ''
 })
 
+/**
+ * Apply the temporal filter to the correct query option for the resource type.
+ * Part 1 types (systems, deployments, etc.) use `datetime`.
+ * Observations use `phenomenonTime`. Commands use `issueTime`.
+ * Datastreams use `phenomenonTime`. Others fall back to `datetime`.
+ */
+function applyTemporalFilter(options: Record<string, any>, resourceType: string, dt: DateTimeParameter) {
+  switch (resourceType) {
+    case 'observations':
+    case 'datastreams':
+      options.phenomenonTime = dt
+      break
+    case 'commands':
+      options.issueTime = dt
+      break
+    default:
+      options.datetime = dt
+      break
+  }
+}
+
+/** Label showing which query parameter the temporal filter maps to */
+const temporalParamName = computed(() => {
+  switch (props.resourceType) {
+    case 'observations':
+    case 'datastreams': return 'phenomenonTime'
+    case 'commands': return 'issueTime'
+    default: return 'datetime'
+  }
+})
+
 // Pagination
 const cursorNext = ref<string | null>(null)
 const cursorPrev = ref<string | null>(null)
@@ -69,10 +100,9 @@ const rawResponse = ref<any>(null)
  */
 async function fetchTotalCount(): Promise<number | null> {
   try {
-    const countOptions: QueryOptions = {}
+    const countOptions: QueryOptions = { limit: 1000 }
     if (q.value) countOptions.q = q.value
-    if (datetimeParam.value) countOptions.datetime = datetimeParam.value
-    // No limit/offset — let the server return everything so we can count
+    if (datetimeParam.value) applyTemporalFilter(countOptions, props.resourceType, datetimeParam.value)
     const countPath = getListUrl(props.resourceType, countOptions)
     const acceptType = getContentType(props.resourceType)
     const countRes = await apiFetch(countPath, {
@@ -104,7 +134,7 @@ async function fetchResources(cursorUrl?: string) {
       if (limit.value) options.limit = limit.value
       if (paginationMode.value === 'offset' && offset.value > 0) options.offset = offset.value
       if (q.value) options.q = q.value
-      if (datetimeParam.value) options.datetime = datetimeParam.value
+      if (datetimeParam.value) applyTemporalFilter(options, props.resourceType, datetimeParam.value)
 
       // Use CSAPIQueryBuilder via bridge to construct the URL
       path = getListUrl(props.resourceType, options)
@@ -266,7 +296,7 @@ watch(() => props.resourceType, () => {
           />
         </div>
         <div v-if="datetimePreview" class="filter-item datetime-preview">
-          <label>Query</label>
+          <label>{{ temporalParamName }}</label>
           <code class="dt-value">{{ datetimePreview }}</code>
         </div>
       </div>
