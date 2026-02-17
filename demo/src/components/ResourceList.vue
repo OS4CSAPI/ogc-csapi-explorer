@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { apiFetch } from '../api'
 import { getListUrl, getContentType, parseCollectionResponse } from '../csapi-bridge'
 import type { QueryOptions } from '@csapi/ogc-api/csapi/model'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
+import DatePicker from 'primevue/datepicker'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Message from 'primevue/message'
@@ -25,7 +26,18 @@ const limit = ref(10)
 const offset = ref(0)
 const q = ref('')
 const bbox = ref('')
-const datetime = ref('')
+const dtStart = ref<Date | null>(null)
+const dtEnd = ref<Date | null>(null)
+
+/** Build OGC API datetime parameter from the two date pickers.
+ *  Formats: instant, ../end, start/.., or start/end */
+const datetime = computed(() => {
+  const fmt = (d: Date) => d.toISOString()
+  if (dtStart.value && dtEnd.value) return `${fmt(dtStart.value)}/${fmt(dtEnd.value)}`
+  if (dtStart.value) return `${fmt(dtStart.value)}/..`
+  if (dtEnd.value) return `../${fmt(dtEnd.value)}`
+  return ''
+})
 
 // Pagination
 const cursorNext = ref<string | null>(null)
@@ -192,8 +204,34 @@ watch(() => props.resourceType, () => {
           <InputText v-model="bbox" placeholder="minx,miny,maxx,maxy" class="w-md" />
         </div>
         <div class="filter-item">
-          <label>DateTime</label>
-          <InputText v-model="datetime" placeholder="2024-01-01/2024-12-31" class="w-md" />
+          <label>Start date/time</label>
+          <DatePicker
+            v-model="dtStart"
+            showTime
+            hourFormat="24"
+            showIcon
+            showButtonBar
+            dateFormat="yy-mm-dd"
+            placeholder="Start"
+            class="w-dt"
+          />
+        </div>
+        <div class="filter-item">
+          <label>End date/time</label>
+          <DatePicker
+            v-model="dtEnd"
+            showTime
+            hourFormat="24"
+            showIcon
+            showButtonBar
+            dateFormat="yy-mm-dd"
+            placeholder="End"
+            class="w-dt"
+          />
+        </div>
+        <div v-if="datetime" class="filter-item datetime-preview">
+          <label>Query</label>
+          <code class="dt-value">{{ datetime }}</code>
         </div>
       </div>
       <div class="filter-actions">
@@ -303,6 +341,10 @@ watch(() => props.resourceType, () => {
 .w-sm { width: 90px; }
 .w-sm :deep(.p-inputnumber-input) { width: 90px; }
 .w-md { width: 180px; }
+.w-dt { width: 210px; }
+.w-dt :deep(.p-datepicker-input) { font-size: 0.8rem; }
+.datetime-preview { justify-content: center; }
+.dt-value { font-size: 0.7rem; color: #475569; background: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 3px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .filter-actions { display: flex; align-items: center; gap: 1rem; }
 .pagination-toggle { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #64748b; }
 .mt-2 { margin-top: 0.5rem; }
