@@ -1,16 +1,38 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { connection, RESOURCE_TYPES } from '../state'
+import { useRouter, useRoute } from 'vue-router'
+import { connection, RESOURCE_TYPES, getResourceType } from '../state'
 import ResourcePanel from '../components/ResourcePanel.vue'
+import Button from 'primevue/button'
 
 const router = useRouter()
+const route = useRoute()
 
 const props = defineProps<{
   resourceType?: string
 }>()
 
 const activeType = computed(() => props.resourceType || 'systems')
+
+/** Nested context from query params (e.g., ?parentType=systems&parentId=abc&relation=subsystems) */
+const parentType = computed(() => (route.query.parentType as string) || null)
+const parentId = computed(() => (route.query.parentId as string) || null)
+const parentRelation = computed(() => (route.query.relation as string) || null)
+
+/** True when viewing a nested/sub-resource list */
+const isNested = computed(() => !!(parentType.value && parentId.value && parentRelation.value))
+
+/** Human-readable breadcrumb label for nested context */
+const nestedLabel = computed(() => {
+  if (!isNested.value) return ''
+  const parentInfo = getResourceType(parentType.value!)
+  return `${parentInfo?.label || parentType.value} ${parentId.value} → ${parentRelation.value}`
+})
+
+/** Clear nested context and go back to top-level list */
+function clearNested() {
+  router.push(`/explore/${activeType.value}`)
+}
 
 // Redirect to connect page if not connected
 watch(
@@ -62,7 +84,22 @@ function selectType(key: string) {
 
     <!-- Main Content -->
     <main class="explorer-main">
-      <ResourcePanel :resource-type="activeType" :key="activeType" />
+      <!-- Nested breadcrumb bar -->
+      <div v-if="isNested" class="nested-breadcrumb">
+        <Button icon="pi pi-arrow-left" label="Back to top-level" size="small" severity="secondary" text @click="clearNested" />
+        <div class="breadcrumb-label">
+          <i class="pi pi-sitemap"></i>
+          <span>{{ nestedLabel }}</span>
+        </div>
+      </div>
+
+      <ResourcePanel
+        :resource-type="activeType"
+        :parent-type="parentType"
+        :parent-id="parentId"
+        :parent-relation="parentRelation"
+        :key="activeType + (parentId || '') + (parentRelation || '')"
+      />
     </main>
   </div>
 </template>
@@ -157,5 +194,25 @@ function selectType(key: string) {
   flex: 1;
   overflow-y: auto;
   padding: 1.5rem;
+}
+
+.nested-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+}
+
+.breadcrumb-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e40af;
 }
 </style>

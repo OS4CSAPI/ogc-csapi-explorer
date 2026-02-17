@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { apiFetch } from '../api'
-import { getListUrl, getContentType, parseCollectionResponse } from '../csapi-bridge'
+import { getListUrl, getNestedListUrl, getContentType, parseCollectionResponse } from '../csapi-bridge'
 import type { QueryOptions } from '@csapi/ogc-api/csapi/model'
 import type { DateTimeParameter } from '@csapi/shared/models'
 import Button from 'primevue/button'
@@ -31,12 +31,26 @@ const NESTED_RESOURCE_HINTS: Record<string, { explanation: string; hint: string 
 
 const props = defineProps<{
   resourceType: string
+  parentType?: string | null
+  parentId?: string | null
+  parentRelation?: string | null
 }>()
 
 const emit = defineEmits<{
   (e: 'view', resource: any): void
   (e: 'edit', resource: any): void
 }>()
+
+/** Whether we're showing nested/related resources (e.g. subsystems of a system) */
+const isNested = computed(() => !!(props.parentType && props.parentId && props.parentRelation))
+
+/** Build the list URL — uses the nested builder when parent context is present */
+function buildListUrl(options: QueryOptions): string {
+  if (isNested.value) {
+    return getNestedListUrl(props.parentType!, props.parentId!, props.parentRelation!, options)
+  }
+  return getListUrl(props.resourceType, options)
+}
 
 // Filter state
 const limit = ref(10)
@@ -119,7 +133,7 @@ async function fetchTotalCount(): Promise<number | null> {
     const countOptions: QueryOptions = { limit: 1000 }
     if (q.value) countOptions.q = q.value
     if (datetimeParam.value) applyTemporalFilter(countOptions, props.resourceType, datetimeParam.value)
-    const countPath = getListUrl(props.resourceType, countOptions)
+    const countPath = buildListUrl(countOptions)
     const acceptType = getContentType(props.resourceType)
     const countRes = await apiFetch(countPath, {
       headers: { 'Accept': acceptType },
@@ -153,7 +167,7 @@ async function fetchResources(cursorUrl?: string) {
       if (datetimeParam.value) applyTemporalFilter(options, props.resourceType, datetimeParam.value)
 
       // Use CSAPIQueryBuilder via bridge to construct the URL
-      path = getListUrl(props.resourceType, options)
+      path = buildListUrl(options)
     }
 
     // Fire total-count request in parallel (will be used if server omits numberMatched)
@@ -277,13 +291,17 @@ function getDisplayType(item: any): string {
   return item?.type || item?.properties?.featureType || ''
 }
 
-// Fetch on mount and when resource type changes
-watch(() => props.resourceType, () => {
-  offset.value = 0
-  cursorNext.value = null
-  cursorPrev.value = null
-  fetchResources()
-}, { immediate: true })
+// Fetch on mount and when resource type or parent context changes
+watch(
+  () => [props.resourceType, props.parentType, props.parentId, props.parentRelation],
+  () => {
+    offset.value = 0
+    cursorNext.value = null
+    cursorPrev.value = null
+    fetchResources()
+  },
+  { immediate: true }
+)
 </script>
 
 <template>

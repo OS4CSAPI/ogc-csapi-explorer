@@ -14,6 +14,9 @@ import ResourceDelete from './ResourceDelete.vue'
 
 const props = defineProps<{
   resourceType: string
+  parentType?: string | null
+  parentId?: string | null
+  parentRelation?: string | null
 }>()
 
 const rtInfo = computed(() => getResourceType(props.resourceType))
@@ -72,6 +75,9 @@ function onDeleted() {
         <TabPanel :value="0">
           <ResourceList
             :resource-type="resourceType"
+            :parent-type="parentType"
+            :parent-id="parentId"
+            :parent-relation="parentRelation"
             @view="viewDetail"
             @edit="editResource"
           />

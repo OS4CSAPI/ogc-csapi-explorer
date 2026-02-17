@@ -287,6 +287,51 @@ export function getDeleteUrl(resourceType: string, id: string): string {
 }
 
 // ========================================
+// Nested / Hierarchical Resource URL Helpers
+// ========================================
+
+/**
+ * Build the list URL for a nested (child) resource under a parent.
+ * Maps parentType + relation to the correct builder method.
+ *
+ * Examples:
+ *   getNestedListUrl('systems', 'abc', 'subsystems')      → /systems/abc/subsystems
+ *   getNestedListUrl('systems', 'abc', 'datastreams')      → /systems/abc/datastreams
+ *   getNestedListUrl('deployments', 'x', 'subdeployments') → /deployments/x/subdeployments
+ */
+export function getNestedListUrl(
+  parentType: string,
+  parentId: string,
+  relation: string,
+  options?: QueryOptions
+): string {
+  const b = builder.value
+  if (!b) return `/${toUrlPath(parentType)}/${parentId}/${relation}`
+
+  try {
+    if (parentType === 'systems') {
+      switch (relation) {
+        case 'subsystems': return b.getSystemSubsystems(parentId, options as SystemQueryOptions)
+        case 'datastreams': return b.getSystemDataStreams(parentId, options as DatastreamQueryOptions)
+        case 'controlstreams': return b.getSystemControlStreams(parentId, options as ControlStreamQueryOptions)
+        case 'samplingFeatures': return b.getSystemSamplingFeatures(parentId, options)
+        case 'deployments': return b.getSystemDeployments(parentId, options as DeploymentQueryOptions)
+        case 'procedures': return b.getSystemProcedures(parentId, options)
+      }
+    }
+    if (parentType === 'deployments') {
+      switch (relation) {
+        case 'subdeployments': return b.getDeploymentSubdeployments(parentId, options as DeploymentQueryOptions)
+        case 'systems': return b.getDeploymentSystems(parentId, options as SystemQueryOptions)
+      }
+    }
+  } catch {
+    // Fall through to manual path
+  }
+  return `/${toUrlPath(parentType)}/${parentId}/${relation}`
+}
+
+// ========================================
 // Schema URL Helper
 // ========================================
 

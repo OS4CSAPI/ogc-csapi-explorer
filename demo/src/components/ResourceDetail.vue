@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { apiFetch } from '../api'
 import { getDetailUrl, getContentType } from '../csapi-bridge'
+import { RELATED_RESOURCES } from '../state'
+import type { RelatedResourceLink } from '../state'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
@@ -9,11 +12,32 @@ import ProgressSpinner from 'primevue/progressspinner'
 import SweSchemaDisplay from './SweSchemaDisplay.vue'
 import ParsedResourceView from './ParsedResourceView.vue'
 
+const router = useRouter()
+
 const props = defineProps<{
   resourceType: string
   resourceId: string | null
   resource: any | null
 }>()
+
+/** Related resources available for this resource type */
+const relatedResources = computed<RelatedResourceLink[]>(() => {
+  return RELATED_RESOURCES[props.resourceType] || []
+})
+
+/** Navigate to a nested resource list */
+function browseRelated(link: RelatedResourceLink) {
+  const id = detail.value?.id || props.resourceId
+  if (!id) return
+  router.push({
+    path: `/explore/${link.childType}`,
+    query: {
+      parentType: props.resourceType,
+      parentId: String(id),
+      relation: link.relation,
+    },
+  })
+}
 const manualId = ref('')
 const loading = ref(false)
 const error = ref('')
@@ -79,6 +103,26 @@ watch(
     </div>
 
     <template v-if="detail">
+      <!-- Related Resources Navigation -->
+      <div v-if="relatedResources.length > 0 && (detail?.id || props.resourceId)" class="related-resources">
+        <div class="related-header">
+          <i class="pi pi-sitemap"></i>
+          <span>Related Resources</span>
+        </div>
+        <div class="related-buttons">
+          <Button
+            v-for="link in relatedResources"
+            :key="link.relation"
+            :label="link.label"
+            :icon="link.icon"
+            size="small"
+            severity="secondary"
+            outlined
+            @click="browseRelated(link)"
+          />
+        </div>
+      </div>
+
       <!-- Side-by-side layout: Raw JSON | Library Parsed Output -->
       <div class="side-by-side">
         <!-- Left panel: Raw Server Response -->
@@ -123,6 +167,9 @@ watch(
 
 <style scoped>
 .resource-detail { display: flex; flex-direction: column; gap: 0.75rem; }
+.related-resources { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 0.75rem; }
+.related-header { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 0.85rem; color: #0369a1; margin-bottom: 0.5rem; }
+.related-buttons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .manual-fetch { display: flex; align-items: center; gap: 0.5rem; }
 .manual-fetch label { font-weight: 600; font-size: 0.9rem; }
 .w-md { width: 300px; }

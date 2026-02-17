@@ -53,3 +53,33 @@ export const RESOURCE_TYPES: ResourceTypeInfo[] = [
 export function getResourceType(key: string): ResourceTypeInfo | undefined {
   return RESOURCE_TYPES.find((r) => r.key === key)
 }
+
+/**
+ * Defines the nested/related resource navigation available from each parent resource type.
+ * Each entry maps a parent type to the list of child relations the CSAPI spec supports.
+ */
+export interface RelatedResourceLink {
+  /** Resource type key of the child collection (e.g., 'systems' for subsystems) */
+  childType: string
+  /** Button label (e.g., 'Subsystems') */
+  label: string
+  /** PrimeIcons class */
+  icon: string
+  /** The nested endpoint segment (e.g., 'subsystems', 'datastreams') */
+  relation: string
+}
+
+export const RELATED_RESOURCES: Record<string, RelatedResourceLink[]> = {
+  systems: [
+    { childType: 'systems', label: 'Subsystems', icon: 'pi pi-sitemap', relation: 'subsystems' },
+    { childType: 'datastreams', label: 'Datastreams', icon: 'pi pi-chart-line', relation: 'datastreams' },
+    { childType: 'controlStreams', label: 'Control Streams', icon: 'pi pi-sliders-h', relation: 'controlstreams' },
+    { childType: 'samplingFeatures', label: 'Sampling Features', icon: 'pi pi-map-marker', relation: 'samplingFeatures' },
+    { childType: 'deployments', label: 'Deployments', icon: 'pi pi-map', relation: 'deployments' },
+    { childType: 'procedures', label: 'Procedures', icon: 'pi pi-cog', relation: 'procedures' },
+  ],
+  deployments: [
+    { childType: 'deployments', label: 'Subdeployments', icon: 'pi pi-sitemap', relation: 'subdeployments' },
+    { childType: 'systems', label: 'Deployed Systems', icon: 'pi pi-server', relation: 'systems' },
+  ],
+}
