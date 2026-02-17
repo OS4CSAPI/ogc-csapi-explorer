@@ -25,7 +25,6 @@ const emit = defineEmits<{
 const limit = ref(10)
 const offset = ref(0)
 const q = ref('')
-const bbox = ref('')
 const dtStart = ref<Date | null>(null)
 const dtEnd = ref<Date | null>(null)
 
@@ -69,12 +68,6 @@ async function fetchResources(cursorUrl?: string) {
       if (limit.value) options.limit = limit.value
       if (paginationMode.value === 'offset' && offset.value > 0) options.offset = offset.value
       if (q.value) options.q = q.value
-      if (bbox.value) {
-        const parts = bbox.value.split(',').map(Number)
-        if (parts.length === 4 && parts.every(n => !isNaN(n))) {
-          options.bbox = parts as [number, number, number, number]
-        }
-      }
       if (datetime.value) options.datetime = datetime.value as any
 
       // Use CSAPIQueryBuilder via bridge to construct the URL
@@ -198,10 +191,6 @@ watch(() => props.resourceType, () => {
         <div class="filter-item">
           <label>Search (q)</label>
           <InputText v-model="q" placeholder="free text search" class="w-md" />
-        </div>
-        <div class="filter-item">
-          <label>Bbox</label>
-          <InputText v-model="bbox" placeholder="minx,miny,maxx,maxy" class="w-md" />
         </div>
         <div class="filter-item">
           <label>Start date/time</label>
