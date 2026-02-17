@@ -147,6 +147,71 @@ The refactor eliminated this transitive dependency by moving `EndpointError` (ze
 
 ---
 
+### Who Is Affected by This Problem?
+
+**This build-breaking issue is specific to our setup — not all upstream consumers.**
+
+Normal upstream consumers do `import { OgcApiEndpoint } from 'ogc-client'` — they get the **pre-built npm package** where the library's own build step has already resolved `@rgrove/parse-xml` and bundled everything into self-contained JavaScript. The XML parser ships inside the built output and works fine in browsers because it's pure JS.
+
+Our demo app is unusual: we import **directly from TypeScript source files** using path aliases (`@csapi/ogc-api/csapi/url_builder`). This means **our bundler** (Vite) has to walk the full import graph from scratch and resolve every transitive dependency at build time. When Vite follows `url_builder.ts` → `errors.ts` → `xml-utils.ts` → `@rgrove/parse-xml`, it hits Node.js-specific module resolution issues that break the browser build.
+
+| Consumer Type | Affected? | Why |
+|---|---|---|
+| Normal npm consumers (`import from 'ogc-client'`) | **No** — works fine | Pre-built package has all dependencies resolved |
+| Anyone forking and importing library source directly | **Yes** — build-breaking | Bundler must resolve full transitive import graph |
+| Anyone creating a tree-shakeable sub-package of CSAPI | **Yes** — build-breaking | Same transitive import graph issue |
+| Anyone trying to isolate CSAPI modules for a micro-frontend | **Yes** — build-breaking | Same issue |
+
+**What IS a legitimate upstream concern (for everyone):**
+
+- **Bundle size**: Every consumer of the pre-built package gets ~40KB of XML parsing code in their bundle even if they only use CSAPI (JSON-only). They can't tree-shake it away because the import sits at the module level in `errors.ts`, and both `EndpointError` and `ServiceExceptionError` are exported from the same module.
+- **Modularity**: The coupling prevents the library from being cleanly split into independent sub-packages in the future — a direction the project may want to go as CSAPI grows.
+
+**Bottom line**: The refactor was **required for us** (source-import approach) and is **good architectural hygiene for upstream** (modularity, tree-shaking, bundle size), but it is not currently blocking anyone who uses the library via the normal `npm install ogc-client` path.
+
+---
+
+### Why We Import from Source Instead of Using the Pre-Built Package
+
+The demo app imports library source directly rather than using the published `ogc-client` npm package. This was an intentional architectural decision driven by two factors:
+
+#### 1. The `OgcApiEndpoint` public API doesn't work with real CSAPI servers
+
+The library's intended entry point — `OgcApiEndpoint` — checks the server's `/conformance` endpoint for specific conformance class URIs before exposing CSAPI functionality. **Neither of the two available live CSAPI servers declares the expected conformance URIs correctly:**
+
+- **52North CSA** declares only generic OGC API conformance classes, not the CSAPI-specific URIs the library looks for
+- **OSH SensorHub** similarly has incomplete conformance declarations
+
+If we instantiated `new OgcApiEndpoint("https://csa.demo.52north.org")`, the library would resolve `hasConnectedSystems` → `false`, and all CSAPI collection getters would return empty arrays — despite the server fully implementing the CSAPI endpoints.
+
+This is documented in detail in the [Conformance Bypass Architecture Notes](./conformance-bypass-architecture-notes.md) and is tracked as a broader library issue: `OgcApiEndpoint` gates CSAPI features on conformance declarations that real servers don't provide.
+
+#### 2. We needed to validate the library's internal modules independently
+
+By importing `CSAPIQueryBuilder`, `parseCollectionResponse`, `extractCSAPIFeature`, `parseSWEComponent`, and other modules directly, the demo app validates the library's **URL construction, response parsing, GeoJSON extraction, and SWE Common schema parsing** in isolation — without being blocked by the conformance negotiation gate.
+
+This source-level approach has been valuable for discovering findings (F-1 through F-17, S-1 through S-14) that would have been completely masked by `OgcApiEndpoint`'s gating logic. A consumer using the pre-built package through `OgcApiEndpoint` would simply see "no CSAPI resources" and never discover these underlying issues.
+
+#### The source imports used
+
+The demo's `csapi-bridge.ts` imports individual library pieces:
+
+| Import | Purpose | Dependency on `OgcApiEndpoint`? |
+|---|---|---|
+| `CSAPIQueryBuilder` | URL construction (e.g., `/systems?limit=10`) | None — pure string builder |
+| `parseCollectionResponse` | Normalize response envelopes (FeatureCollection vs. items) | None — pure parser |
+| `extractCSAPIFeature` | Type GeoJSON features into `System`, `Deployment`, etc. | None — pure classifier |
+| `getCSAPIResourceType` | Detect resource type from featureType | None — pure function |
+| `parseSWEComponent` | Parse SWE Common schema blocks | None — pure parser |
+
+None of these modules require `OgcApiEndpoint`. They are self-contained utilities. The source-import approach lets us use them directly, which is what exposed the `EndpointError` transitive XML dependency problem.
+
+For more detail, see:
+- [Conformance Bypass Architecture Notes](./conformance-bypass-architecture-notes.md) — Full analysis of why `OgcApiEndpoint` doesn't work with real servers
+- [Library Integration Report](./library-integration-report.md) — Step-by-step integration decisions and findings
+
+---
+
 ### Verification
 
 | Check | Result |
