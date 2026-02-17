@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { connection, RESOURCE_TYPES } from '../state'
 import { apiFetch } from '../api'
-import { getListUrl } from '../csapi-bridge'
+import { getListUrl, builder } from '../csapi-bridge'
 
 // OpenLayers imports
 import Map from 'ol/Map'
@@ -56,13 +56,6 @@ const bboxLayer = new VectorLayer({
   }),
   zIndex: 100,
 })
-
-/** Check whether a WGS84 point falls inside the current bbox filter. */
-function isInBbox(lon: number, lat: number): boolean {
-  const b = bboxCoords.value
-  if (!b) return true  // no bbox active → everything passes
-  return lon >= b[0] && lat >= b[1] && lon <= b[2] && lat <= b[3]
-}
 
 // Part 1 resource types that may have geometry
 const SPATIAL_TYPES = RESOURCE_TYPES.filter(r => r.part === 1 && r.key !== 'properties')
@@ -244,26 +237,6 @@ function createOlFeature(item: any, resourceType: string): Feature | null {
   const geom = extractGeometry(item)
   if (!geom) return null
 
-  // Client-side bbox filter: if a bbox is active, skip features outside it.
-  // This catches cases where the server ignores the bbox query parameter.
-  // Check ALL geometry types, not just Point.
-  if (bboxCoords.value) {
-    let repLon: number | undefined, repLat: number | undefined
-    const coords = geom.coordinates
-    if (geom.type === 'Point' && coords) {
-      ;[repLon, repLat] = coords
-    } else if (geom.type === 'Polygon' && Array.isArray(coords) && Array.isArray(coords[0]) && coords[0].length > 0) {
-      // Centroid of exterior ring
-      const ring = coords[0]
-      repLon = ring.reduce((s: number, c: number[]) => s + c[0], 0) / ring.length
-      repLat = ring.reduce((s: number, c: number[]) => s + c[1], 0) / ring.length
-    } else if (geom.type === 'LineString' && Array.isArray(coords) && coords.length > 0) {
-      repLon = coords.reduce((s: number, c: number[]) => s + c[0], 0) / coords.length
-      repLat = coords.reduce((s: number, c: number[]) => s + c[1], 0) / coords.length
-    }
-    if (repLon != null && repLat != null && !isInBbox(repLon, repLat)) return null
-  }
-
   let olGeom
   try {
     if (geom.type === 'Point') {
@@ -341,8 +314,9 @@ async function buildSystemLocationCache(): Promise<void> {
   locationDatastreamList = []
 
   try {
-    // Fetch all datastreams
-    const dsRes = await apiFetch('/datastreams?limit=200')
+    // Fetch all datastreams using the client library
+    const dsUrl = getListUrl('datastreams', { limit: 200 })
+    const dsRes = await apiFetch(dsUrl)
     if (!dsRes.ok || !dsRes.data) return
 
     const allDs = dsRes.data.items || dsRes.data.features || dsRes.data || []
@@ -376,7 +350,12 @@ async function buildSystemLocationCache(): Promise<void> {
     // Fetch latest observation from each location datastream in parallel
     const promises = Object.entries(bySystem).map(async ([sysId, ds]) => {
       try {
-        const obsRes = await apiFetch(`/datastreams/${ds.id}/observations?limit=1`, {
+        // Use client library for sub-resource URL
+        const b = builder.value
+        const obsUrl = b
+          ? b.getDataStreamObservations(ds.id, { limit: 1 })
+          : `/datastreams/${ds.id}/observations?limit=1`
+        const obsRes = await apiFetch(obsUrl, {
           headers: { 'Accept': 'application/om+json' },
         })
         if (!obsRes.ok || !obsRes.data) return
@@ -419,10 +398,7 @@ function createEnrichedFeature(
   lat: number,
   lon: number,
   enrichmentSource: string,
-): Feature | null {
-  // Centralized bbox filter: skip enriched locations outside the drawn bbox
-  if (!isInBbox(lon, lat)) return null
-
+): Feature {
   const olFeature = new Feature({
     geometry: new Point(fromLonLat([lon, lat])),
   })
@@ -488,7 +464,6 @@ async function enrichSystems(): Promise<void> {
         item, 'systems', loc.lat, loc.lon,
         `Latest observation from ${loc.datastreamName || 'location datastream'} at ${loc.phenomenonTime || 'unknown time'}`
       )
-      if (!feature) continue
       source.addFeature(feature)
       enriched++
     }
@@ -533,7 +508,6 @@ async function enrichDeployments(): Promise<void> {
             item, 'deployments', loc.lat, loc.lon,
             `Derived from deployed system ${sysId} (${loc.datastreamName || 'location obs'})`
           )
-          if (!feature) break
           source.addFeature(feature)
           enriched++
           break // one location per deployment is enough
@@ -558,7 +532,17 @@ async function enrichSamplingFeatures(): Promise<void> {
   let enriched = 0
   const promises = Object.entries(systemLocationCache).map(async ([sysId, loc]) => {
     try {
-      const sfRes = await apiFetch(`/systems/${sysId}/samplingFeatures?limit=100`, {
+      // Use the client library to build the sub-resource URL with bbox
+      const b = builder.value
+      let sfUrl: string
+      if (b) {
+        const sfOpts: Record<string, any> = { limit: 100 }
+        if (bboxCoords.value) sfOpts.bbox = bboxCoords.value
+        sfUrl = b.getSystemSamplingFeatures(sysId, sfOpts)
+      } else {
+        sfUrl = `/systems/${sysId}/samplingFeatures?limit=100`
+      }
+      const sfRes = await apiFetch(sfUrl, {
         headers: { 'Accept': 'application/geo+json' },
       })
       if (!sfRes.ok || !sfRes.data) return
@@ -581,7 +565,6 @@ async function enrichSamplingFeatures(): Promise<void> {
           item, 'samplingFeatures', loc.lat, loc.lon,
           `Derived from parent system ${sysId} (${loc.datastreamName || 'location obs'})`
         )
-        if (!feature) continue
         source.addFeature(feature)
         enriched++
       }
@@ -595,14 +578,19 @@ async function enrichSamplingFeatures(): Promise<void> {
 
 /**
  * Load Part 2 DataStreams and place them at their parent system's cached location.
+ * Uses the client library to pass bbox so the server filters spatially.
  */
 async function loadDatastreams(): Promise<void> {
   const source = vectorSources['datastreams']
   if (!source) return
+  source.clear()
 
   let count = 0
   try {
-    const res = await apiFetch('/datastreams?limit=200')
+    const opts: Record<string, any> = { limit: 200 }
+    if (bboxCoords.value) opts.bbox = bboxCoords.value
+    const url = getListUrl('datastreams', opts)
+    const res = await apiFetch(url)
     if (!res.ok || !res.data) return
 
     const items = res.data.items || []
@@ -616,7 +604,6 @@ async function loadDatastreams(): Promise<void> {
         ds, 'datastreams', loc.lat, loc.lon,
         `At parent system ${sysId} (${loc.datastreamName || 'location obs'})`
       )
-      if (!feature) continue
       source.addFeature(feature)
       count++
     }
@@ -626,14 +613,19 @@ async function loadDatastreams(): Promise<void> {
 
 /**
  * Load Part 2 ControlStreams and place them at their parent system's cached location.
+ * Uses the client library to pass bbox so the server filters spatially.
  */
 async function loadControlStreams(): Promise<void> {
   const source = vectorSources['controlStreams']
   if (!source) return
+  source.clear()
 
   let count = 0
   try {
-    const res = await apiFetch('/controlstreams?limit=200')
+    const opts: Record<string, any> = { limit: 200 }
+    if (bboxCoords.value) opts.bbox = bboxCoords.value
+    const url = getListUrl('controlStreams', opts)
+    const res = await apiFetch(url)
     if (!res.ok || !res.data) return
 
     const items = res.data.items || []
@@ -647,7 +639,6 @@ async function loadControlStreams(): Promise<void> {
         cs, 'controlStreams', loc.lat, loc.lon,
         `At parent system ${sysId} (${loc.datastreamName || 'location obs'})`
       )
-      if (!feature) continue
       source.addFeature(feature)
       count++
     }
@@ -669,7 +660,17 @@ async function loadObservationLayers(): Promise<void> {
 
   const promises = locationDatastreamList.map(async (dsInfo) => {
     try {
-      const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=50`, {
+      // Use the client library for sub-resource URL with bbox if available
+      const b = builder.value
+      let obsUrl: string
+      if (b) {
+        const obsOpts: Record<string, any> = { limit: 50 }
+        if (bboxCoords.value) obsOpts.bbox = bboxCoords.value
+        obsUrl = b.getDataStreamObservations(dsInfo.id, obsOpts)
+      } else {
+        obsUrl = `/datastreams/${dsInfo.id}/observations?limit=50`
+      }
+      const obsRes = await apiFetch(obsUrl, {
         headers: { 'Accept': 'application/om+json' },
       })
       if (!obsRes.ok || !obsRes.data) return
@@ -688,9 +689,6 @@ async function loadObservationLayers(): Promise<void> {
           lat = result.Location.lat; lon = result.Location.lon; alt = result.Location.alt
         }
         if (lat == null || lon == null) continue
-
-        // Bbox filter: skip observations outside the drawn bbox
-        if (!isInBbox(lon, lat)) continue
 
         trackCoords.push([lon, lat])
 
