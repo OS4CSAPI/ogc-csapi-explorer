@@ -96,3 +96,37 @@ The library handles serialization, URL construction, and type validation. The de
 - **`demo/src/csapi-bridge.ts`** — Bridge between demo app and client library; `getListUrl()` dispatches to `CSAPIQueryBuilder` methods
 - **`src/ogc-api/csapi/url_builder.ts`** — Client library `CSAPIQueryBuilder` class with typed query methods
 - **`src/ogc-api/csapi/model.ts`** — `QueryOptions`, `BoundingBox`, and per-resource-type option interfaces
+
+## About csapi-bridge.ts — Scaffolding, Not a Deviation
+
+### What it is
+
+`csapi-bridge.ts` is a **thin adapter** that sits between the demo app's Vue components and the `CSAPIQueryBuilder` class from the library. It does two things:
+
+1. Holds a reactive `shallowRef` to the builder instance (Vue needs this for reactivity)
+2. Provides a `getListUrl(resourceType, options)` convenience function that dispatches to the correct typed method (`getSystems()`, `getDataStreams()`, etc.)
+
+That's it. No business logic. No custom query parameter handling. No URL construction. All the actual work — bbox serialization, URL building, type validation — happens inside `CSAPIQueryBuilder` in the library source (`src/ogc-api/csapi/url_builder.ts`).
+
+### Could the upstream fork do this without csapi-bridge.ts?
+
+Yes. The upstream `ogc-client` library's existing pattern uses `OgcApiEndpoint`, which is a higher-level class. If/when the CSAPI work gets upstreamed, the equivalent would be something like:
+
+```ts
+const endpoint = await new OgcApiEndpoint(serverUrl)
+const systems = await endpoint.csapi.getSystems({ bbox: [-79.6, 37.8, -74.7, 39.6] })
+```
+
+The `CSAPIQueryBuilder` would be wired internally behind `OgcApiEndpoint`, just like `WfsEndpoint`, `WmtsEndpoint`, etc. are today. The bridge file wouldn't be needed — `OgcApiEndpoint` would handle the lifecycle.
+
+### Why the demo uses csapi-bridge.ts instead of OgcApiEndpoint
+
+The demo app can't use `OgcApiEndpoint` for CSAPI resources because:
+
+- `OgcApiEndpoint` doesn't know about CSAPI yet (that's the whole point of this fork)
+- Wiring CSAPI into `OgcApiEndpoint` requires architectural decisions the upstream maintainers should make (discovery, capability negotiation, etc.)
+- The bridge gives us a way to **validate the builder works end-to-end** without prematurely committing to an integration pattern
+
+### Bottom line
+
+The bridge is **scaffolding**, not a deviation. The real value is in `CSAPIQueryBuilder` and `QueryOptions` — those live in the library and will work regardless of how they're accessed. Any fork that has those classes can enable bbox filtering the same way. The bridge just makes it convenient for this particular Vue app.
