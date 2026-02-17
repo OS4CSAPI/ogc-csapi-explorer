@@ -518,6 +518,14 @@ async function executeCurrentStep() {
           }
         }
 
+        // For observations: merge updated fields into server's current state.
+        // OSH returns 500 on observation PUT with a from-scratch payload — the
+        // server likely requires internal fields (datastream@id, etc.) that only
+        // appear in the GET response. Fetch-then-merge preserves them. (S-13)
+        if (step.resourceType === 'observations' && readResp.ok && readResp.data) {
+          payload = { ...readResp.data, ...payload }
+        }
+
         const bodyStr = JSON.stringify(payload, null, 2)
 
         step.request = {
