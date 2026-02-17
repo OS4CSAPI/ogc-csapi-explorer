@@ -14,6 +14,7 @@
 | **S-11** | Server observation | OSH enforces strict lowercase `controlstreams` URL path segment | Medium | No — server enforcement of spec |
 | **S-12** | Server observation | OSH controlStream PUT requires `schema` but crashes (500) when CREATE-format field names are used | High | No — server Catch-22 bug |
 | **S-13** | Server observation | OSH observations and commands are immutable — PUT returns 500, only CREATE/READ/DELETE supported | Medium | No — server design decision |
+| **S-14** | Server observation | OSH commands use async dispatch — POST returns 202 (not 201), no Location header or persisted resource | Medium | No — server design decision |
 
 ---
 
@@ -427,6 +428,94 @@ Committed at [`12a7640`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/1
 
 ---
 
+### S-14. OSH SensorHub: Commands Use Async Dispatch — POST Returns 202, No Persisted Resource
+
+| | |
+|---|---|
+| **Severity** | Medium |
+| **Server** | OSH SensorHub |
+| **Endpoint** | `POST /controlstreams/{id}/commands` |
+| **Discovered In** | CRUD smoke test — command CREATE step |
+
+#### What happens
+
+OSH handles command creation as an **asynchronous dispatch** operation rather than standard resource creation. Instead of persisting the command and returning `201 Created` with a `Location` header (as the OGC CSAPI spec defines for resource creation), OSH dispatches the command to the target actuator and waits for acknowledgment.
+
+If no actuator is listening (or acknowledgment times out), the server returns:
+
+```
+POST /controlstreams/0450/commands
+Content-Type: application/json
+
+{ "issueTime": "2026-02-17T00:17:39.351Z", "parameters": { "active": true } }
+
+→ 202 Accepted (after ~29.6s timeout)
+→ {
+    "status": 202,
+    "message": "Command accepted but request timed out before command was acknowledged by receiving system"
+  }
+```
+
+#### Key differences from standard resource creation
+
+| Aspect | Standard CREATE (201) | Command Dispatch (202) |
+|---|---|---|
+| **Status code** | `201 Created` | `202 Accepted` |
+| **Location header** | Present (URL of new resource) | Absent |
+| **Response time** | Fast (~70-150ms) | Slow (~29s, waits for actuator) |
+| **Resource persisted?** | Yes — GET/DELETE available | No — fire-and-forget |
+| **Response body** | Resource representation or empty | Status message |
+
+#### Why the delay
+
+The 29.6-second response time is caused by OSH waiting for a real actuator to acknowledge receipt of the command. Since the smoke test's control stream is synthetic (no real actuator connected), the server waits until its internal timeout before returning 202.
+
+#### Impact on consumers
+
+Clients implementing command workflows need to handle:
+
+1. **202 vs. 201**: The response is success (2xx) but not creation. Standard `fetch` treats `response.ok` as true for both, but the semantics differ.
+2. **No resource ID**: Without a `Location` header, there's no command resource to READ, UPDATE, or DELETE. Subsequent CRUD operations will have no target.
+3. **Long timeouts**: The ~30-second wait may exceed client-side timeout settings, causing false failures.
+4. **No read-back**: Commands cannot be verified via GET after dispatch — the fire-and-forget model means the client only knows the command was *accepted*, not *executed*.
+
+#### Contrast with observations
+
+| Resource | POST Response | Persisted? | READ/DELETE? |
+|---|---|---|---|
+| **Observations** | `201 Created` + `Location` header | Yes | Yes |
+| **Commands** | `202 Accepted` (no `Location`) | No | No |
+
+Both are child resources of Part 2 parents, but they have fundamentally different persistence models:
+- **Observations** are recorded measurements — persisted as time-series data, readable and deletable.
+- **Commands** are dispatched instructions — forwarded to actuators, not stored as queryable resources.
+
+#### OGC spec alignment
+
+The OGC Connected Systems API Part 2 spec defines `POST /commands` as returning `201 Created` with a `Location` header for the new command resource. OSH's 202 behavior deviates from this, treating commands as transient dispatches rather than persistent resources. This is a valid server implementation choice but differs from the spec's resource-oriented model.
+
+#### Workaround applied in demo app
+
+Reduced command steps to CREATE-only (1 operation). Since no resource ID is returned, READ and DELETE steps are not applicable.
+
+```typescript
+const CREATE_ONLY_OPS: OpType[] = ['CREATE']  // Commands — async dispatch, 202 with no persisted ID
+
+// Phase 2b-2: Commands — async dispatch only
+for (const key of PART2_CHILD_TYPES_CREATE_ONLY) {
+  steps.push(...CREATE_ONLY_OPS.map(op => ({ resourceType: key, op })))
+}
+```
+
+Committed at [`c6118bb`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/c6118bb).
+
+#### Related
+
+- S-13 — Observations/commands immutable (no PUT). S-14 goes further: commands aren't even persisted resources.
+- S-8 — Server capability differences (OSH vs. 52North)
+
+---
+
 ## Cross-Reference with Prior Findings
 
 | New Finding | Related Prior Finding | Relationship |
@@ -440,6 +529,8 @@ Committed at [`12a7640`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/1
 | S-12 (PUT schema Catch-22) | S-9 (obsFormat) | Broader pattern of schema field name confusion |
 | S-13 (immutable obs/cmds) | S-12 (PUT schema Catch-22) | Both involve PUT failures on Part 2 resources; different root causes |
 | S-13 (immutable obs/cmds) | S-8 (OSH read-write vs. 52North read-only) | Server capability differences affecting write operations |
+| S-14 (async command dispatch) | S-13 (immutable obs/cmds) | Both involve non-standard write behavior for child resources |
+| S-14 (async command dispatch) | S-8 (OSH read-write vs. 52North read-only) | Server capability differences affecting write operations |
 
 ---
 
@@ -454,3 +545,5 @@ Committed at [`12a7640`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/1
 | [`0f07c5c`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/0f07c5c) | ControlStream UPDATE: fetch schema from `/controlstreams/{id}/schema` |
 | [`406aba8`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/406aba8) | Observation UPDATE: fetch-then-merge attempt (unsuccessful) |
 | [`12a7640`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/12a7640) | Observations/commands: CRD only — removed UPDATE steps (immutable on OSH) |
+| [`b415a1e`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/b415a1e) | Command payload: `parameters` (not `params`) per OGC CSAPI spec |
+| [`c6118bb`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/c6118bb) | Commands: CREATE-only — async dispatch (202), no persisted resource |
