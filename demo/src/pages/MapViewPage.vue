@@ -57,6 +57,13 @@ const bboxLayer = new VectorLayer({
   zIndex: 100,
 })
 
+/** Check whether a WGS84 point falls inside the current bbox filter. */
+function isInBbox(lon: number, lat: number): boolean {
+  const b = bboxCoords.value
+  if (!b) return true  // no bbox active → everything passes
+  return lon >= b[0] && lat >= b[1] && lon <= b[2] && lat <= b[3]
+}
+
 // Part 1 resource types that may have geometry
 const SPATIAL_TYPES = RESOURCE_TYPES.filter(r => r.part === 1 && r.key !== 'properties')
 
@@ -451,6 +458,8 @@ async function enrichSystems(): Promise<void> {
       const sysId = extractId(item)
       const loc = systemLocationCache[sysId]
       if (!loc) continue
+      // Bbox filter: skip if enriched location is outside the drawn bbox
+      if (!isInBbox(loc.lon, loc.lat)) continue
 
       const feature = createEnrichedFeature(
         item, 'systems', loc.lat, loc.lon,
@@ -494,6 +503,8 @@ async function enrichDeployments(): Promise<void> {
         const sysId = sysHref.split('/').pop()
         if (sysId && systemLocationCache[sysId]) {
           const loc = systemLocationCache[sysId]
+          // Bbox filter: skip if enriched location is outside the drawn bbox
+          if (!isInBbox(loc.lon, loc.lat)) break
           const feature = createEnrichedFeature(
             item, 'deployments', loc.lat, loc.lon,
             `Derived from deployed system ${sysId} (${loc.datastreamName || 'location obs'})`
@@ -545,6 +556,8 @@ async function enrichSamplingFeatures(): Promise<void> {
           item, 'samplingFeatures', loc.lat, loc.lon,
           `Derived from parent system ${sysId} (${loc.datastreamName || 'location obs'})`
         )
+        // Bbox filter: skip if enriched location is outside the drawn bbox
+        if (!isInBbox(loc.lon, loc.lat)) continue
         source.addFeature(feature)
         enriched++
       }
@@ -574,6 +587,8 @@ async function loadDatastreams(): Promise<void> {
       if (!sysId) continue
       const loc = systemLocationCache[sysId]
       if (!loc) continue
+      // Bbox filter: skip if parent system location is outside the drawn bbox
+      if (!isInBbox(loc.lon, loc.lat)) continue
 
       const feature = createEnrichedFeature(
         ds, 'datastreams', loc.lat, loc.lon,
@@ -604,6 +619,8 @@ async function loadControlStreams(): Promise<void> {
       if (!sysId) continue
       const loc = systemLocationCache[sysId]
       if (!loc) continue
+      // Bbox filter: skip if parent system location is outside the drawn bbox
+      if (!isInBbox(loc.lon, loc.lat)) continue
 
       const feature = createEnrichedFeature(
         cs, 'controlStreams', loc.lat, loc.lon,
@@ -649,6 +666,9 @@ async function loadObservationLayers(): Promise<void> {
           lat = result.Location.lat; lon = result.Location.lon; alt = result.Location.alt
         }
         if (lat == null || lon == null) continue
+
+        // Bbox filter: skip observations outside the drawn bbox
+        if (!isInBbox(lon, lat)) continue
 
         trackCoords.push([lon, lat])
 
@@ -776,12 +796,12 @@ function startBboxDraw() {
     const geom = evt.feature.getGeometry()
     if (geom) {
       const extent = geom.getExtent()
-      const tl = toLonLat(getTopLeft(extent))
-      const br = toLonLat(getBottomRight(extent))
-      const minx = Math.min(tl[0], br[0])
-      const miny = Math.min(tl[1], br[1])
-      const maxx = Math.max(tl[0], br[0])
-      const maxy = Math.max(tl[1], br[1])
+      const tl = toLonLat(getTopLeft(extent) as [number, number])
+      const br = toLonLat(getBottomRight(extent) as [number, number])
+      const minx = Math.min(tl[0]!, br[0]!)
+      const miny = Math.min(tl[1]!, br[1]!)
+      const maxx = Math.max(tl[0]!, br[0]!)
+      const maxy = Math.max(tl[1]!, br[1]!)
       bboxCoords.value = [
         Math.round(minx * 1e6) / 1e6,
         Math.round(miny * 1e6) / 1e6,
