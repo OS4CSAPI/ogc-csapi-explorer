@@ -59,13 +59,39 @@ const loading = ref(false)
 const error = ref('')
 const numberMatched = ref<number | null>(null)
 const numberReturned = ref<number | null>(null)
+const totalCount = ref<number | null>(null)
 const rawResponse = ref<any>(null)
+
+/**
+ * Fetch the total number of matching resources (same filters, no limit/offset).
+ * Fires in parallel with the paginated request so it doesn't slow things down.
+ * Only used when the server doesn't provide numberMatched in the response.
+ */
+async function fetchTotalCount(): Promise<number | null> {
+  try {
+    const countOptions: QueryOptions = {}
+    if (q.value) countOptions.q = q.value
+    if (datetimeParam.value) countOptions.datetime = datetimeParam.value
+    // No limit/offset — let the server return everything so we can count
+    const countPath = getListUrl(props.resourceType, countOptions)
+    const acceptType = getContentType(props.resourceType)
+    const countRes = await apiFetch(countPath, {
+      headers: { 'Accept': acceptType },
+    })
+    if (!countRes.ok || !countRes.data) return null
+    const parsed = parseCollectionResponse(countRes.data)
+    return parsed.items.length
+  } catch {
+    return null
+  }
+}
 
 async function fetchResources(cursorUrl?: string) {
   loading.value = true
   error.value = ''
   items.value = []
   rawResponse.value = null
+  totalCount.value = null
 
   try {
     let path: string
@@ -84,6 +110,9 @@ async function fetchResources(cursorUrl?: string) {
       path = getListUrl(props.resourceType, options)
     }
 
+    // Fire total-count request in parallel (will be used if server omits numberMatched)
+    const totalCountPromise = fetchTotalCount()
+
     const acceptType = getContentType(props.resourceType)
     const res = await apiFetch(path, {
       headers: { 'Accept': acceptType },
@@ -100,8 +129,15 @@ async function fetchResources(cursorUrl?: string) {
     try {
       const parsed = parseCollectionResponse(res.data)
       items.value = parsed.items as any[]
-      numberMatched.value = parsed.numberMatched ?? null
       numberReturned.value = parsed.numberReturned ?? parsed.items.length
+
+      // Use server-provided total if available, otherwise await our parallel count
+      if (parsed.numberMatched != null) {
+        numberMatched.value = parsed.numberMatched
+      } else {
+        const counted = await totalCountPromise
+        numberMatched.value = counted
+      }
 
       // Extract pagination links from the normalized response
       cursorNext.value = null
@@ -122,7 +158,8 @@ async function fetchResources(cursorUrl?: string) {
       } else {
         items.value = []
       }
-      numberMatched.value = null
+      const counted = await totalCountPromise
+      numberMatched.value = counted
       numberReturned.value = items.value.length
     }
   } catch (err: any) {
@@ -259,7 +296,7 @@ watch(() => props.resourceType, () => {
     <!-- Results info -->
     <div v-if="!loading && items.length > 0" class="results-info">
       <span>Showing {{ numberReturned ?? items.length }} results</span>
-      <span v-if="numberMatched != null"> of {{ numberMatched }} total</span>
+      <span v-if="numberMatched != null"> of <strong>{{ numberMatched }}</strong> total</span>
       <span v-if="paginationMode === 'offset'"> (offset: {{ offset }})</span>
     </div>
 
