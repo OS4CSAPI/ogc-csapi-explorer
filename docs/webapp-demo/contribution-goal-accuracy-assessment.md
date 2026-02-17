@@ -83,6 +83,77 @@ This is the one phrase that invites scrutiny. Through our demo app testing, we d
 
 ---
 
+## Deep Dive: The Validation Scope Change
+
+The contribution-goal document references "validation" in two places. During implementation, a significant design decision was made to remove an entire category of validation from scope. This section examines how that decision impacts the document's accuracy.
+
+### Three Distinct Validation Concerns
+
+The word "validation" in this codebase maps to three fundamentally different things:
+
+| # | Validation Concern | Document Phrase | Status |
+|---|---|---|---|
+| 1 | **Client input validation** — Does the caller pass valid `limit`, `bbox`, resource type? | "Resource validation in all methods with fail-fast error handling" | **Remains — fully implemented** |
+| 2 | **SWE Common schema validation** — Does an observation value conform to a DataComponent schema (type checks, range constraints, required fields)? | "with schema validation" | **Remains — fully implemented** (~500 lines in `swecommon/parser.ts` L847–L1406) |
+| 3 | **Feature-level response validation** — Does a GeoJSON Feature returned by a server have all OGC-required fields with correct formats? | *Not explicitly mentioned* | **Removed — F49, Postel's Law** |
+
+### What Happened During Implementation
+
+The original intent (as articulated by the project lead before implementation began) was firm about including the capability to validate responses from the server. This encompassed all three concerns above. The implementation roadmap ([ROADMAP.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/planning/ROADMAP.md)) originally included Phase 3 Task 3: "Validator Extensions."
+
+During Phase 3 implementation, the following sequence occurred:
+
+1. **Feature-level validators were built** — `validateCSAPIFeature()` plus 13 per-type validators (`validateSystem`, `validateDeployment`, etc.), a `ValidationError` type with path/message/severity, totaling ~500 lines of validation code plus ~200 lines of tests.
+
+2. **F49 was discovered** — When tested against the live OSH SensorHub, the validators blocked **100% of OSH SamplingFeatures** from extraction because they lacked the spec-required `sampledFeature@link` property. The data was perfectly usable (geometry, uid, name, featureType, validTime) but the validation gate made it completely inaccessible.
+
+3. **Upstream pattern analysis** — A thorough audit of the upstream ogc-client library found:
+   - The mature handlers (WMS, WFS, WMTS, TMS) perform **zero validation** of server response data — pure tolerant extraction following Postel's Law.
+   - The STAC handler has inline required-field checks (~20 ad-hoc `if/throw` patterns), but **no handler has a formal validation framework** — no separate `validate*()` functions, no `ValidationError` types, no structured error arrays.
+   - The EDR handler validates only **client input parameters** (valid CRS, supported query types), not server responses — analogous to concern #1 above.
+
+4. **Design decision: remove entirely** — After analysis, the feature-level validators were removed from scope completely (not just decoupled from extraction). The rationale:
+   - No upstream precedent for a formal validation framework
+   - No caller within the library after decoupling from extraction
+   - Maintenance burden on upstream maintainers for a feature with no consumer
+   - Connected Systems servers (OSH) are early implementations with frequent spec-deviations
+   - The STAC inline-check pattern would reproduce F49's fragility
+   - A 10-line future PR could add STAC-style guards on fundamental fields if upstream reviewers want them
+
+5. **Documented** — The decision is captured in:
+   - [ROADMAP.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/planning/ROADMAP.md) Phase 3 Task 3: struck through with `🚫 OUT OF SCOPE` banner
+   - [design-notes-validation-extraction-decoupling.md](../implementation/design-notes-validation-extraction-decoupling.md): 173-line rationale document
+   - ROADMAP version history: v3.5 (decouple) → v3.6 (remove entirely)
+   - `extractCSAPIFeature()` JSDoc: "Follows Postel's Law — extraction succeeds for any recognized feature, regardless of missing optional or required spec fields"
+
+### What Survived vs. What Was Removed
+
+**Still in the codebase:**
+
+- `assertResourceAvailable()` — called as the first line of every public QueryBuilder method
+- `validateLimit()` — rejects non-positive-integer limits
+- `validateBbox()` — rejects malformed bounding boxes (wrong element count, NaN, Infinity, min > max)
+- `validateAgainstSchema()` — validates observation values against SWE Common DataComponent schemas (type checks, range violations, required fields, array dimensions) — 500+ lines with full test coverage, exported from `swecommon/index.ts`
+- `ValidationResult` and `ValidationError` types in the SWE Common parser
+
+**Removed from the codebase:**
+
+- `validateCSAPIFeature()` — unified GeoJSON feature validation entry point
+- 13 per-type validators (`validateSystem`, `validateDeployment`, `validateProcedure`, `validateSamplingFeature`, `validateProperty`, `validateDataStream`, `validateObservation`, `validateControlStream`, `validateCommand`, plus partial validators)
+- The validation gate in `extractCSAPIFeature()` — extraction now relies only on recognition, not conformance
+
+### Impact on the Contribution Goal Document
+
+**Literal accuracy**: The document's two validation phrases remain accurate. "Resource validation in all methods with fail-fast error handling" describes client input validation (concern #1), which is fully implemented. "With schema validation" describes SWE Common schema validation (concern #2), which is fully implemented. Neither phrase claims feature-level response validation.
+
+**Intent accuracy**: The document was written when the original intent included server response validation. Someone reading only the contribution-goal document would not know that a formal feature-level validation framework was planned, built (~500+ lines), found to block real server data, and deliberately removed after upstream pattern analysis. The document is silent on this scope change — understandable for a planning document that predates implementation, but a gap for anyone assessing the full implementation story.
+
+**Recommendation**: The document could benefit from a brief scope note acknowledging the change:
+
+> *Feature-level response validation (validating server-returned GeoJSON features against OGC required fields) was evaluated during implementation and excluded. The library follows Postel's Law, consistent with the upstream codebase's dominant pattern of tolerant extraction. See `design-notes-validation-extraction-decoupling.md`.*
+
+---
+
 ## What The Document Does NOT Cover (Gaps in Completeness)
 
 These are things that **were actually built** but are **not mentioned** in the document:
@@ -97,14 +168,18 @@ These are things that **were actually built** but are **not mentioned** in the d
 
 5. **Known bugs** — F-1 (`createDataStream()` wrong URL) and F-2 (missing nested create methods) are documented in our [library-findings-gap-analysis.md](./library-findings-gap-analysis.md) and tracked in GitHub issues. The document doesn't acknowledge known limitations — understandable for a pre-implementation charter, but worth noting for accuracy.
 
+6. **Feature-level validation scope change** — The removal of `validateCSAPIFeature()` and 13 per-type validators after F49 is a significant implementation-phase design decision not reflected in the document. See the [Deep Dive: The Validation Scope Change](#deep-dive-the-validation-scope-change) section above for full analysis.
+
 ---
 
 ## Summary
 
-The document is **accurate, true, and comprehensive as a pre-implementation end-state vision**. It describes the architecture, scope, and quality bar that were in fact achieved. The two nuances are:
+The document is **accurate, true, and comprehensive as a pre-implementation end-state vision**. It describes the architecture, scope, and quality bar that were in fact achieved. The nuances are:
 
 - **Line count metrics are conservative** — the actual implementation is roughly 67–76% larger than claimed (10,222 vs ~5,354 midpoint for implementation; 11,548 vs ~4,690 midpoint for tests). This means the document under-promised and over-delivered, which is the safer direction for a planning document.
 
 - **Two "partial" claims** — "supporting all three encodings" and "content negotiation" overstate slightly. Binary encoding is recognized and parsed but not decoded at the byte level. Content negotiation guidance exists via constants and the `f` query parameter, but HTTP-level `Accept` header management is outside the library's scope as a URL builder.
+
+- **Validation scope change not reflected** — The document's two validation claims (client input validation and SWE Common schema validation) remain literally accurate. However, the broader original intent to validate server responses was explored during implementation and deliberately excluded after the F49 finding and upstream pattern analysis. The document does not mention this scope change, the rationale (Postel's Law, no upstream precedent), or the ~500 lines of validators that were built and removed. The full story is captured in [design-notes-validation-extraction-decoupling.md](../implementation/design-notes-validation-extraction-decoupling.md) and the [ROADMAP.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/planning/ROADMAP.md) version history (v3.5 → v3.6).
 
 Neither of these rises to the level of "inaccurate." The document is an honest, lightly conservative description of what was built, written before implementation began. That's unusual for a planning document — they typically over-promise. This one didn't.
