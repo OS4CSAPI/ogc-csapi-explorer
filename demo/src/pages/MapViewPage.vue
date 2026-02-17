@@ -12,7 +12,7 @@ import TileLayer from 'ol/layer/Tile'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
 import OSM from 'ol/source/OSM'
-import { fromLonLat } from 'ol/proj'
+import { fromLonLat, toLonLat } from 'ol/proj'
 import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
 import Polygon from 'ol/geom/Polygon'
@@ -20,6 +20,7 @@ import LineString from 'ol/geom/LineString'
 import { Style, Circle as CircleStyle, Fill, Stroke, Text as OlText } from 'ol/style'
 import Overlay from 'ol/Overlay'
 import type { Coordinate } from 'ol/coordinate'
+import Draw, { createBox } from 'ol/interaction/Draw'
 
 const router = useRouter()
 
@@ -95,6 +96,20 @@ const systemLocationCache: Record<string, { lat: number; lon: number; alt?: numb
 let locationDatastreamList: Array<{ id: string; name: string; systemId: string }> = []
 // Track how many features were enriched from observations
 const enrichedCounts = ref<Record<string, number>>({})
+
+// Bounding box filter state
+const bboxFilter = ref<[number, number, number, number] | null>(null)
+const drawingBbox = ref(false)
+let drawInteraction: Draw | null = null
+const bboxSource = new VectorSource()
+const bboxLayer = new VectorLayer({
+  source: bboxSource,
+  style: new Style({
+    stroke: new Stroke({ color: '#3b82f6', width: 2, lineDash: [6, 4] }),
+    fill: new Fill({ color: 'rgba(59, 130, 246, 0.08)' }),
+  }),
+  zIndex: 20,
+})
 
 // Vector sources per type so we can toggle layers
 const vectorSources: Record<string, VectorSource> = {}
@@ -254,7 +269,7 @@ async function loadResourceType(resourceType: string): Promise<number> {
   source.clear()
 
   try {
-    const url = getListUrl(resourceType, { limit: 200 })
+    const url = getListUrl(resourceType, { limit: 200, bbox: bboxFilter.value ?? undefined })
     // Request geo+json so servers return GeoJSON features with geometry
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
@@ -412,7 +427,7 @@ async function enrichSystems(): Promise<void> {
   // We need to know which systems were loaded but have no geometry on the map.
   // Re-fetch the raw items list to check which have null geometry.
   try {
-    const url = getListUrl('systems', { limit: 200 })
+    const url = getListUrl('systems', { limit: 200, bbox: bboxFilter.value ?? undefined })
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -451,7 +466,7 @@ async function enrichDeployments(): Promise<void> {
   if (!source) return
 
   try {
-    const url = getListUrl('deployments', { limit: 200 })
+    const url = getListUrl('deployments', { limit: 200, bbox: bboxFilter.value ?? undefined })
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -545,9 +560,11 @@ async function loadDatastreams(): Promise<void> {
   const source = vectorSources['datastreams']
   if (!source) return
 
+  source.clear()
   let count = 0
   try {
-    const res = await apiFetch('/datastreams?limit=200')
+    const url = getListUrl('datastreams', { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const res = await apiFetch(url)
     if (!res.ok || !res.data) return
 
     const items = res.data.items || []
@@ -575,9 +592,11 @@ async function loadControlStreams(): Promise<void> {
   const source = vectorSources['controlStreams']
   if (!source) return
 
+  source.clear()
   let count = 0
   try {
-    const res = await apiFetch('/controlstreams?limit=200')
+    const url = getListUrl('controlStreams', { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const res = await apiFetch(url)
     if (!res.ok || !res.data) return
 
     const items = res.data.items || []
@@ -606,6 +625,8 @@ async function loadControlStreams(): Promise<void> {
 async function loadObservationLayers(): Promise<void> {
   const pointSource = vectorSources['observationPoints']
   const trackSource = vectorSources['observationTracks']
+  if (pointSource) pointSource.clear()
+  if (trackSource) trackSource.clear()
 
   let pointCount = 0
   let trackCount = 0
@@ -727,6 +748,53 @@ async function loadAllResources() {
   }
 }
 
+// --- Bbox Filter ---
+
+function startDrawBbox() {
+  if (!map) return
+  if (drawInteraction) {
+    map.removeInteraction(drawInteraction)
+    drawInteraction = null
+  }
+  bboxSource.clear()
+
+  drawInteraction = new Draw({
+    source: bboxSource,
+    type: 'Circle',
+    geometryFunction: createBox(),
+  })
+
+  drawInteraction.on('drawend', (evt) => {
+    const geom = evt.feature.getGeometry()
+    if (geom) {
+      const extent = geom.getExtent()
+      const min = toLonLat([extent[0], extent[1]])
+      const max = toLonLat([extent[2], extent[3]])
+      bboxFilter.value = [min[0], min[1], max[0], max[1]]
+    }
+    if (map && drawInteraction) {
+      map.removeInteraction(drawInteraction)
+      drawInteraction = null
+    }
+    drawingBbox.value = false
+    loadAllResources()
+  })
+
+  map.addInteraction(drawInteraction)
+  drawingBbox.value = true
+}
+
+function clearBbox() {
+  bboxFilter.value = null
+  bboxSource.clear()
+  if (map && drawInteraction) {
+    map.removeInteraction(drawInteraction)
+    drawInteraction = null
+  }
+  drawingBbox.value = false
+  loadAllResources()
+}
+
 function toggleLayer(key: string) {
   activeLayers.value[key] = !activeLayers.value[key]
   const layer = vectorLayers[key]
@@ -763,6 +831,7 @@ onMounted(() => {
     layers: [
       new TileLayer({ source: new OSM() }),
       ...Object.values(vectorLayers),
+      bboxLayer,
     ],
     overlays: [overlay],
     view: new View({
@@ -838,6 +907,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (map) {
+    if (drawInteraction) map.removeInteraction(drawInteraction)
     map.setTarget(undefined)
     map = null
   }
@@ -967,6 +1037,31 @@ async function createTestFeature() {
       <button class="refresh-btn" @click="loadAllResources" :disabled="loading">
         <i class="pi pi-refresh"></i> Reload
       </button>
+
+      <!-- Bbox spatial filter -->
+      <div class="bbox-controls">
+        <button
+          :class="['bbox-draw-btn', { active: drawingBbox }]"
+          @click="drawingBbox ? clearBbox() : startDrawBbox()"
+          :disabled="loading"
+        >
+          <i :class="drawingBbox ? 'pi pi-times' : 'pi pi-stop'"></i>
+          {{ drawingBbox ? 'Cancel' : 'Draw Bbox Filter' }}
+        </button>
+        <template v-if="bboxFilter">
+          <div class="bbox-active">
+            <i class="pi pi-filter"></i>
+            <span class="bbox-label">Bbox active</span>
+            <button class="bbox-clear" @click="clearBbox" :disabled="loading" title="Clear filter">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+          <div class="bbox-coords">
+            {{ bboxFilter[0].toFixed(3) }}, {{ bboxFilter[1].toFixed(3) }} &rarr;
+            {{ bboxFilter[2].toFixed(3) }}, {{ bboxFilter[3].toFixed(3) }}
+          </div>
+        </template>
+      </div>
 
       <!-- Empty state message -->
       <div v-if="!loading && totalFeatures === 0" class="empty-state">
@@ -1471,5 +1566,79 @@ async function createTestFeature() {
 .popup-id {
   font-size: 0.75rem;
   color: #64748b;
+}
+
+.bbox-controls {
+  margin: 0 0.75rem 0.75rem;
+}
+
+.bbox-draw-btn {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px dashed #3b82f6;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  color: #3b82f6;
+}
+
+.bbox-draw-btn:hover {
+  background: #eff6ff;
+}
+
+.bbox-draw-btn.active {
+  background: #dbeafe;
+  border-style: solid;
+  color: #1d4ed8;
+}
+
+.bbox-draw-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bbox-active {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #1d4ed8;
+}
+
+.bbox-label {
+  flex: 1;
+  font-weight: 600;
+}
+
+.bbox-clear {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.15rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+}
+
+.bbox-clear:hover {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.bbox-coords {
+  font-size: 0.7rem;
+  color: #64748b;
+  padding: 0.2rem 0.5rem;
+  font-family: monospace;
 }
 </style>
