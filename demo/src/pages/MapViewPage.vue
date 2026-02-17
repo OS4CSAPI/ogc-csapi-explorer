@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { connection, RESOURCE_TYPES } from '../state'
 import { apiFetch } from '../api'
-import { getListUrl, builder } from '../csapi-bridge'
+import { getListUrl } from '../csapi-bridge'
 
 // OpenLayers imports
 import Map from 'ol/Map'
@@ -12,16 +12,14 @@ import TileLayer from 'ol/layer/Tile'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
 import OSM from 'ol/source/OSM'
-import { fromLonLat, toLonLat } from 'ol/proj'
+import { fromLonLat } from 'ol/proj'
 import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
 import Polygon from 'ol/geom/Polygon'
 import LineString from 'ol/geom/LineString'
 import { Style, Circle as CircleStyle, Fill, Stroke, Text as OlText } from 'ol/style'
 import Overlay from 'ol/Overlay'
-import Draw, { createBox } from 'ol/interaction/Draw'
 import type { Coordinate } from 'ol/coordinate'
-import { getTopLeft, getBottomRight } from 'ol/extent'
 
 const router = useRouter()
 
@@ -37,25 +35,11 @@ const mapContainer = ref<HTMLDivElement>()
 const popupContainer = ref<HTMLDivElement>()
 let map: Map | null = null
 let overlay: Overlay | null = null
-let drawInteraction: Draw | null = null
 
 const loading = ref(false)
 const error = ref('')
 const featureCounts = ref<Record<string, number>>({})
 const selectedFeature = ref<any>(null)
-
-// Bbox filter state
-const bboxActive = ref(false)
-const bboxCoords = ref<[number, number, number, number] | null>(null)  // [minx, miny, maxx, maxy] in WGS84
-const bboxSource = new VectorSource()
-const bboxLayer = new VectorLayer({
-  source: bboxSource,
-  style: new Style({
-    stroke: new Stroke({ color: '#f59e0b', width: 2, lineDash: [6, 4] }),
-    fill: new Fill({ color: 'rgba(245, 158, 11, 0.08)' }),
-  }),
-  zIndex: 100,
-})
 
 // Part 1 resource types that may have geometry
 const SPATIAL_TYPES = RESOURCE_TYPES.filter(r => r.part === 1 && r.key !== 'properties')
@@ -270,9 +254,7 @@ async function loadResourceType(resourceType: string): Promise<number> {
   source.clear()
 
   try {
-    const opts: Record<string, any> = { limit: 200 }
-    if (bboxCoords.value) opts.bbox = bboxCoords.value
-    const url = getListUrl(resourceType, opts)
+    const url = getListUrl(resourceType, { limit: 200 })
     // Request geo+json so servers return GeoJSON features with geometry
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
@@ -314,9 +296,8 @@ async function buildSystemLocationCache(): Promise<void> {
   locationDatastreamList = []
 
   try {
-    // Fetch all datastreams using the client library
-    const dsUrl = getListUrl('datastreams', { limit: 200 })
-    const dsRes = await apiFetch(dsUrl)
+    // Fetch all datastreams
+    const dsRes = await apiFetch('/datastreams?limit=200')
     if (!dsRes.ok || !dsRes.data) return
 
     const allDs = dsRes.data.items || dsRes.data.features || dsRes.data || []
@@ -350,12 +331,7 @@ async function buildSystemLocationCache(): Promise<void> {
     // Fetch latest observation from each location datastream in parallel
     const promises = Object.entries(bySystem).map(async ([sysId, ds]) => {
       try {
-        // Use client library for sub-resource URL
-        const b = builder.value
-        const obsUrl = b
-          ? b.getDataStreamObservations(ds.id, { limit: 1 })
-          : `/datastreams/${ds.id}/observations?limit=1`
-        const obsRes = await apiFetch(obsUrl, {
+        const obsRes = await apiFetch(`/datastreams/${ds.id}/observations?limit=1`, {
           headers: { 'Accept': 'application/om+json' },
         })
         if (!obsRes.ok || !obsRes.data) return
@@ -436,9 +412,7 @@ async function enrichSystems(): Promise<void> {
   // We need to know which systems were loaded but have no geometry on the map.
   // Re-fetch the raw items list to check which have null geometry.
   try {
-    const opts: Record<string, any> = { limit: 200 }
-    if (bboxCoords.value) opts.bbox = bboxCoords.value
-    const url = getListUrl('systems', opts)
+    const url = getListUrl('systems', { limit: 200 })
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -477,9 +451,7 @@ async function enrichDeployments(): Promise<void> {
   if (!source) return
 
   try {
-    const dopts: Record<string, any> = { limit: 200 }
-    if (bboxCoords.value) dopts.bbox = bboxCoords.value
-    const url = getListUrl('deployments', dopts)
+    const url = getListUrl('deployments', { limit: 200 })
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -532,17 +504,7 @@ async function enrichSamplingFeatures(): Promise<void> {
   let enriched = 0
   const promises = Object.entries(systemLocationCache).map(async ([sysId, loc]) => {
     try {
-      // Use the client library to build the sub-resource URL with bbox
-      const b = builder.value
-      let sfUrl: string
-      if (b) {
-        const sfOpts: Record<string, any> = { limit: 100 }
-        if (bboxCoords.value) sfOpts.bbox = bboxCoords.value
-        sfUrl = b.getSystemSamplingFeatures(sysId, sfOpts)
-      } else {
-        sfUrl = `/systems/${sysId}/samplingFeatures?limit=100`
-      }
-      const sfRes = await apiFetch(sfUrl, {
+      const sfRes = await apiFetch(`/systems/${sysId}/samplingFeatures?limit=100`, {
         headers: { 'Accept': 'application/geo+json' },
       })
       if (!sfRes.ok || !sfRes.data) return
@@ -578,19 +540,14 @@ async function enrichSamplingFeatures(): Promise<void> {
 
 /**
  * Load Part 2 DataStreams and place them at their parent system's cached location.
- * Uses the client library to pass bbox so the server filters spatially.
  */
 async function loadDatastreams(): Promise<void> {
   const source = vectorSources['datastreams']
   if (!source) return
-  source.clear()
 
   let count = 0
   try {
-    const opts: Record<string, any> = { limit: 200 }
-    if (bboxCoords.value) opts.bbox = bboxCoords.value
-    const url = getListUrl('datastreams', opts)
-    const res = await apiFetch(url)
+    const res = await apiFetch('/datastreams?limit=200')
     if (!res.ok || !res.data) return
 
     const items = res.data.items || []
@@ -613,19 +570,14 @@ async function loadDatastreams(): Promise<void> {
 
 /**
  * Load Part 2 ControlStreams and place them at their parent system's cached location.
- * Uses the client library to pass bbox so the server filters spatially.
  */
 async function loadControlStreams(): Promise<void> {
   const source = vectorSources['controlStreams']
   if (!source) return
-  source.clear()
 
   let count = 0
   try {
-    const opts: Record<string, any> = { limit: 200 }
-    if (bboxCoords.value) opts.bbox = bboxCoords.value
-    const url = getListUrl('controlStreams', opts)
-    const res = await apiFetch(url)
+    const res = await apiFetch('/controlstreams?limit=200')
     if (!res.ok || !res.data) return
 
     const items = res.data.items || []
@@ -654,25 +606,13 @@ async function loadControlStreams(): Promise<void> {
 async function loadObservationLayers(): Promise<void> {
   const pointSource = vectorSources['observationPoints']
   const trackSource = vectorSources['observationTracks']
-  if (pointSource) pointSource.clear()
-  if (trackSource) trackSource.clear()
 
   let pointCount = 0
   let trackCount = 0
 
   const promises = locationDatastreamList.map(async (dsInfo) => {
     try {
-      // Use the client library for sub-resource URL with bbox if available
-      const b = builder.value
-      let obsUrl: string
-      if (b) {
-        const obsOpts: Record<string, any> = { limit: 50 }
-        if (bboxCoords.value) obsOpts.bbox = bboxCoords.value
-        obsUrl = b.getDataStreamObservations(dsInfo.id, obsOpts)
-      } else {
-        obsUrl = `/datastreams/${dsInfo.id}/observations?limit=50`
-      }
-      const obsRes = await apiFetch(obsUrl, {
+      const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=50`, {
         headers: { 'Accept': 'application/om+json' },
       })
       if (!obsRes.ok || !obsRes.data) return
@@ -795,67 +735,6 @@ function toggleLayer(key: string) {
   }
 }
 
-// --- Bbox Draw Interaction ---
-
-function startBboxDraw() {
-  if (!map) return
-  // Remove any previous draw interaction
-  stopBboxDraw()
-  bboxActive.value = true
-
-  drawInteraction = new Draw({
-    source: bboxSource,
-    type: 'Circle',
-    geometryFunction: createBox(),
-  })
-
-  drawInteraction.on('drawstart', () => {
-    bboxSource.clear()
-  })
-
-  drawInteraction.on('drawend', (evt) => {
-    // Extract extent from the drawn box polygon, convert to WGS84
-    const geom = evt.feature.getGeometry()
-    if (geom) {
-      const extent = geom.getExtent()
-      const tl = toLonLat(getTopLeft(extent) as [number, number])
-      const br = toLonLat(getBottomRight(extent) as [number, number])
-      const minx = Math.min(tl[0]!, br[0]!)
-      const miny = Math.min(tl[1]!, br[1]!)
-      const maxx = Math.max(tl[0]!, br[0]!)
-      const maxy = Math.max(tl[1]!, br[1]!)
-      bboxCoords.value = [
-        Math.round(minx * 1e6) / 1e6,
-        Math.round(miny * 1e6) / 1e6,
-        Math.round(maxx * 1e6) / 1e6,
-        Math.round(maxy * 1e6) / 1e6,
-      ]
-    }
-    // Deactivate draw mode after one box, then reload
-    setTimeout(() => {
-      stopBboxDraw()
-      loadAllResources()
-    }, 100)
-  })
-
-  map.addInteraction(drawInteraction)
-}
-
-function stopBboxDraw() {
-  bboxActive.value = false
-  if (drawInteraction && map) {
-    map.removeInteraction(drawInteraction)
-    drawInteraction = null
-  }
-}
-
-function clearBbox() {
-  stopBboxDraw()
-  bboxCoords.value = null
-  bboxSource.clear()
-  loadAllResources()
-}
-
 // --- Map Setup ---
 
 onMounted(() => {
@@ -884,7 +763,6 @@ onMounted(() => {
     layers: [
       new TileLayer({ source: new OSM() }),
       ...Object.values(vectorLayers),
-      bboxLayer,
     ],
     overlays: [overlay],
     view: new View({
@@ -895,14 +773,9 @@ onMounted(() => {
 
   // Click handler for features
   map.on('singleclick', (evt) => {
-    // Don't handle clicks while drawing a bbox
-    if (bboxActive.value) return
-
     let hit = false
     map!.forEachFeatureAtPixel(evt.pixel, (feature) => {
       if (hit) return // only handle first
-      // Skip bbox rectangle features
-      if (bboxSource.hasFeature(feature as Feature)) return
       hit = true
 
       const resourceType = feature.get('resourceType')
@@ -951,11 +824,8 @@ onMounted(() => {
 
   // Pointer cursor on features
   map.on('pointermove', (evt) => {
-    if (bboxActive.value) return  // Don't change cursor while drawing
     const pixel = map!.getEventPixel(evt.originalEvent)
-    const hit = map!.hasFeatureAtPixel(pixel, {
-      layerFilter: (layer) => layer !== bboxLayer,
-    })
+    const hit = map!.hasFeatureAtPixel(pixel)
     const target = map!.getTargetElement()
     if (target) {
       ;(target as HTMLElement).style.cursor = hit ? 'pointer' : ''
@@ -1097,34 +967,6 @@ async function createTestFeature() {
       <button class="refresh-btn" @click="loadAllResources" :disabled="loading">
         <i class="pi pi-refresh"></i> Reload
       </button>
-
-      <!-- Bbox filter -->
-      <div class="bbox-section">
-        <div class="bbox-header">
-          <span class="layer-section-label" style="padding-left: 0;">Spatial Filter</span>
-        </div>
-        <div class="bbox-actions">
-          <button
-            :class="['bbox-btn', { active: bboxActive }]"
-            @click="bboxActive ? stopBboxDraw() : startBboxDraw()"
-            :disabled="loading"
-          >
-            <i :class="bboxActive ? 'pi pi-times' : 'pi pi-stop'"></i>
-            {{ bboxActive ? 'Cancel Draw' : 'Draw Bbox' }}
-          </button>
-          <button
-            v-if="bboxCoords"
-            class="bbox-clear-btn"
-            @click="clearBbox"
-            :disabled="loading"
-          >
-            <i class="pi pi-filter-slash"></i> Clear
-          </button>
-        </div>
-        <div v-if="bboxCoords" class="bbox-value">
-          <code>{{ bboxCoords[0] }}, {{ bboxCoords[1] }},<br>{{ bboxCoords[2] }}, {{ bboxCoords[3] }}</code>
-        </div>
-      </div>
 
       <!-- Empty state message -->
       <div v-if="!loading && totalFeatures === 0" class="empty-state">
@@ -1344,88 +1186,6 @@ async function createTestFeature() {
 .refresh-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.bbox-section {
-  margin: 0 0.75rem 0.75rem;
-  padding: 0.5rem;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-}
-
-.bbox-header {
-  margin-bottom: 0.35rem;
-}
-
-.bbox-actions {
-  display: flex;
-  gap: 0.35rem;
-}
-
-.bbox-btn {
-  flex: 1;
-  padding: 0.4rem 0.5rem;
-  border: 1px solid #f59e0b;
-  background: #fffbeb;
-  color: #92400e;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-}
-
-.bbox-btn:hover {
-  background: #fef3c7;
-}
-
-.bbox-btn.active {
-  background: #f59e0b;
-  color: #fff;
-  border-color: #d97706;
-}
-
-.bbox-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.bbox-clear-btn {
-  padding: 0.4rem 0.5rem;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #64748b;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.bbox-clear-btn:hover {
-  background: #f1f5f9;
-}
-
-.bbox-clear-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.bbox-value {
-  margin-top: 0.35rem;
-  font-size: 0.7rem;
-  color: #64748b;
-}
-
-.bbox-value code {
-  background: #f8fafc;
-  padding: 0.15rem 0.3rem;
-  border-radius: 3px;
-  font-size: 0.7rem;
 }
 
 .empty-state {
