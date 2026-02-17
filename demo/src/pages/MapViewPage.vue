@@ -449,6 +449,12 @@ async function enrichSystems(): Promise<void> {
       const loc = systemLocationCache[sysId]
       if (!loc) continue
 
+      // When bbox is active, skip if enriched location falls outside
+      if (bboxFilter.value) {
+        const [minX, minY, maxX, maxY] = bboxFilter.value
+        if (loc.lon < minX || loc.lon > maxX || loc.lat < minY || loc.lat > maxY) continue
+      }
+
       const feature = createEnrichedFeature(
         item, 'systems', loc.lat, loc.lon,
         `Latest observation from ${loc.datastreamName || 'location datastream'} at ${loc.phenomenonTime || 'unknown time'}`
@@ -491,6 +497,13 @@ async function enrichDeployments(): Promise<void> {
         const sysId = sysHref.split('/').pop()
         if (sysId && systemLocationCache[sysId]) {
           const loc = systemLocationCache[sysId]
+
+          // When bbox is active, skip if enriched location falls outside
+          if (bboxFilter.value) {
+            const [minX, minY, maxX, maxY] = bboxFilter.value
+            if (loc.lon < minX || loc.lon > maxX || loc.lat < minY || loc.lat > maxY) continue
+          }
+
           const feature = createEnrichedFeature(
             item, 'deployments', loc.lat, loc.lon,
             `Derived from deployed system ${sysId} (${loc.datastreamName || 'location obs'})`
@@ -518,6 +531,12 @@ async function enrichSamplingFeatures(): Promise<void> {
 
   let enriched = 0
   const promises = Object.entries(systemLocationCache).map(async ([sysId, loc]) => {
+    // When bbox is active, skip systems whose location is outside the bbox
+    if (bboxFilter.value) {
+      const [minX, minY, maxX, maxY] = bboxFilter.value
+      if (loc.lon < minX || loc.lon > maxX || loc.lat < minY || loc.lat > maxY) return
+    }
+
     try {
       const sfRes = await apiFetch(`/systems/${sysId}/samplingFeatures?limit=100`, {
         headers: { 'Accept': 'application/geo+json' },
@@ -727,6 +746,9 @@ async function loadAllResources() {
   error.value = ''
   featureCounts.value = {}
   for (const key of Object.keys(enrichedCounts.value)) delete enrichedCounts.value[key]
+
+  // Close any open popup and clear selection
+  closePopup()
 
   // 1. Load Part 1 resources (systems, deployments, procedures, samplingFeatures)
   const promises = SPATIAL_TYPES.map(async (rt) => {
