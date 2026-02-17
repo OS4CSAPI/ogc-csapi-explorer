@@ -14,9 +14,9 @@ import ProgressSpinner from 'primevue/progressspinner'
 const router = useRouter()
 
 const presets = [
-  { label: '52North CSA Demo', proxyPath: '/api/52north', description: 'Public demo — no auth required' },
-  { label: 'OSH SensorHub', proxyPath: '/api/osh', description: 'Requires basic auth' },
-  { label: 'Custom URL', proxyPath: '', description: 'Enter a custom server URL' },
+  { label: '52North CSA Demo', proxyPath: '/api/52north', description: 'Public demo — no auth required', externalUrl: 'https://csa.demo.52north.org' },
+  { label: 'OSH SensorHub', proxyPath: '/api/osh', description: 'Requires basic auth', externalUrl: 'http://45.55.99.236:8080/sensorhub/api' },
+  { label: 'Custom URL', proxyPath: '', description: 'Enter a custom server URL', externalUrl: '' },
 ]
 
 const selectedPreset = ref(presets[0])
@@ -149,7 +149,18 @@ function otherConformance(classes: string[]): string[] {
         <div class="form-row">
           <label>Server</label>
           <Select v-model="selectedPreset" :options="presets" optionLabel="label" class="w-full" />
-          <small class="hint">{{ selectedPreset?.description }}</small>
+          <small class="hint">
+            {{ selectedPreset?.description }}
+            <a
+              v-if="selectedPreset?.externalUrl"
+              :href="selectedPreset.externalUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="server-link"
+            >
+              <i class="pi pi-external-link"></i> {{ selectedPreset.externalUrl }}
+            </a>
+          </small>
         </div>
 
         <div v-if="!selectedPreset?.proxyPath" class="form-row">
@@ -248,6 +259,9 @@ function otherConformance(classes: string[]): string[] {
 .form-row { display: flex; flex-direction: column; gap: 0.25rem; }
 .form-row label { font-weight: 600; font-size: 0.9rem; }
 .hint { color: #64748b; font-size: 0.85rem; }
+.server-link { display: inline-flex; align-items: center; gap: 0.25rem; margin-left: 0.5rem; color: #3b82f6; text-decoration: none; font-size: 0.82rem; }
+.server-link:hover { text-decoration: underline; }
+.server-link .pi { font-size: 0.75rem; }
 .form-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 .w-full { width: 100%; }
 .mt-0 { margin-top: 0; }
