@@ -168,10 +168,12 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
 
 const PART1_TYPES = ['systems', 'procedures', 'deployments', 'samplingFeatures']
 const PART2_PARENT_TYPES = ['datastreams', 'controlStreams']   // Need parent system alive
-const PART2_CHILD_TYPES = ['observations', 'commands']          // Need parent datastream/controlStream alive
+const PART2_CHILD_TYPES_CRD = ['observations']                    // Immutable but persisted — CREATE/READ/DELETE
+const PART2_CHILD_TYPES_CREATE_ONLY = ['commands']                 // Async dispatch (202) — CREATE only, no persisted resource
 const CRUV_OPS: OpType[] = ['CREATE', 'READ', 'UPDATE', 'VERIFY']  // No DELETE — children need parents alive
 const CRUD_OPS: OpType[] = ['CREATE', 'READ', 'UPDATE', 'VERIFY', 'DELETE']
-const CRD_OPS: OpType[] = ['CREATE', 'READ', 'DELETE']  // Observations/commands are immutable — no UPDATE
+const CRD_OPS: OpType[] = ['CREATE', 'READ', 'DELETE']  // Observations — immutable, no UPDATE
+const CREATE_ONLY_OPS: OpType[] = ['CREATE']  // Commands — async dispatch, 202 with no persisted ID
 
 function buildSteps(): Step[] {
   const steps: Step[] = []
@@ -190,10 +192,17 @@ function buildSteps(): Step[] {
       steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op, status: 'pending' })
     }
   }
-  // Phase 2b: Part 2 child CRD (observations, commands — immutable, no UPDATE)
-  for (const key of PART2_CHILD_TYPES) {
+  // Phase 2b: Part 2 child CRD (observations — immutable, no UPDATE)
+  for (const key of PART2_CHILD_TYPES_CRD) {
     const info = RESOURCE_TYPES.find((r) => r.key === key)!
     for (const op of CRD_OPS) {
+      steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op, status: 'pending' })
+    }
+  }
+  // Phase 2b-2: Commands — async dispatch only (OSH returns 202, no persisted resource)
+  for (const key of PART2_CHILD_TYPES_CREATE_ONLY) {
+    const info = RESOURCE_TYPES.find((r) => r.key === key)!
+    for (const op of CREATE_ONLY_OPS) {
       steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op, status: 'pending' })
     }
   }
@@ -660,7 +669,7 @@ function skipCurrentStep() {
 
 async function abortAndCleanup() {
   running.value = true
-  const deleteOrder = ['commands', 'controlStreams', 'observations', 'datastreams', 'samplingFeatures', 'deployments', 'procedures', 'systems']
+  const deleteOrder = ['controlStreams', 'observations', 'datastreams', 'samplingFeatures', 'deployments', 'procedures', 'systems']
   for (const type of deleteOrder) {
     const id = createdIds[type]
     if (!id) continue
