@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { apiFetch } from '../api'
 import { getListUrl, getContentType, parseCollectionResponse } from '../csapi-bridge'
 import type { QueryOptions } from '@csapi/ogc-api/csapi/model'
+import type { DateTimeParameter } from '@csapi/shared/models'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
@@ -29,8 +30,17 @@ const dtStart = ref<Date | null>(null)
 const dtEnd = ref<Date | null>(null)
 
 /** Build OGC API datetime parameter from the two date pickers.
- *  Formats: instant, ../end, start/.., or start/end */
-const datetime = computed(() => {
+ *  Returns a DateTimeParameter object (Date or {start}/{end}/{start,end})
+ *  that the library's formatDateTimeParameter() can serialize. */
+const datetimeParam = computed((): DateTimeParameter | null => {
+  if (dtStart.value && dtEnd.value) return { start: dtStart.value, end: dtEnd.value }
+  if (dtStart.value) return { start: dtStart.value }
+  if (dtEnd.value) return { end: dtEnd.value }
+  return null
+})
+
+/** Human-readable preview of the datetime filter for the UI */
+const datetimePreview = computed(() => {
   const fmt = (d: Date) => d.toISOString()
   if (dtStart.value && dtEnd.value) return `${fmt(dtStart.value)}/${fmt(dtEnd.value)}`
   if (dtStart.value) return `${fmt(dtStart.value)}/..`
@@ -68,7 +78,7 @@ async function fetchResources(cursorUrl?: string) {
       if (limit.value) options.limit = limit.value
       if (paginationMode.value === 'offset' && offset.value > 0) options.offset = offset.value
       if (q.value) options.q = q.value
-      if (datetime.value) options.datetime = datetime.value as any
+      if (datetimeParam.value) options.datetime = datetimeParam.value
 
       // Use CSAPIQueryBuilder via bridge to construct the URL
       path = getListUrl(props.resourceType, options)
@@ -218,9 +228,9 @@ watch(() => props.resourceType, () => {
             class="w-dt"
           />
         </div>
-        <div v-if="datetime" class="filter-item datetime-preview">
+        <div v-if="datetimePreview" class="filter-item datetime-preview">
           <label>Query</label>
-          <code class="dt-value">{{ datetime }}</code>
+          <code class="dt-value">{{ datetimePreview }}</code>
         </div>
       </div>
       <div class="filter-actions">
