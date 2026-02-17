@@ -654,6 +654,8 @@ async function loadControlStreams(): Promise<void> {
 async function loadObservationLayers(): Promise<void> {
   const pointSource = vectorSources['observationPoints']
   const trackSource = vectorSources['observationTracks']
+  if (pointSource) pointSource.clear()
+  if (trackSource) trackSource.clear()
 
   let pointCount = 0
   let trackCount = 0
