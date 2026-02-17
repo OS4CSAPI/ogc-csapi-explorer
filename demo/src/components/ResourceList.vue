@@ -13,6 +13,12 @@ import Column from 'primevue/column'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 
+/** Hints for resource types that are typically only available as nested sub-resources */
+const NESTED_RESOURCE_HINTS: Record<string, string> = {
+  commands: 'Commands are nested under individual control streams. Try viewing a control stream\'s detail page to browse its commands.',
+  observations: 'If observations are unavailable at the top level, try viewing a datastream\'s detail page to browse its observations.',
+}
+
 const props = defineProps<{
   resourceType: string
 }>()
@@ -148,7 +154,20 @@ async function fetchResources(cursorUrl?: string) {
       headers: { 'Accept': acceptType },
     })
     if (!res.ok) {
-      error.value = res.error || 'Failed to fetch resources'
+      // Provide a friendlier message for 400 errors on resource types that
+      // are typically nested (commands under controlstreams, etc.)
+      if (res.status === 400) {
+        const parentHint = NESTED_RESOURCE_HINTS[props.resourceType]
+        if (parentHint) {
+          error.value = `This server does not support listing ${props.resourceType} as a top-level resource. ` +
+            `${parentHint} ` +
+            `(Server returned: ${res.status} ${res.statusText})`
+        } else {
+          error.value = `Server rejected the request (${res.status}). This resource type may not be supported by this server.`
+        }
+      } else {
+        error.value = res.error || 'Failed to fetch resources'
+      }
       return
     }
 
@@ -315,7 +334,7 @@ watch(() => props.resourceType, () => {
     </div>
 
     <!-- Error -->
-    <Message v-if="error" severity="error" :closable="false" class="mt-3">{{ error }}</Message>
+    <Message v-if="error" :severity="error.startsWith('This server does not support') ? 'warn' : 'error'" :closable="false" class="mt-3">{{ error }}</Message>
 
     <!-- Loading -->
     <div v-if="loading" class="loading">
