@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { connection } from '../state'
 import { initializeBuilder, destroyBuilder } from '../csapi-bridge'
@@ -25,6 +25,13 @@ const username = ref('')
 const password = ref('')
 const connecting = ref(false)
 const error = ref('')
+
+// Clear credentials when switching servers
+watch(selectedPreset, () => {
+  username.value = ''
+  password.value = ''
+  error.value = ''
+})
 
 // Display data (not shared — only shown on this page)
 const landingPage = ref<any>(null)
