@@ -246,9 +246,22 @@ function createOlFeature(item: any, resourceType: string): Feature | null {
 
   // Client-side bbox filter: if a bbox is active, skip features outside it.
   // This catches cases where the server ignores the bbox query parameter.
-  if (bboxCoords.value && geom.type === 'Point') {
-    const [lon, lat] = geom.coordinates
-    if (!isInBbox(lon, lat)) return null
+  // Check ALL geometry types, not just Point.
+  if (bboxCoords.value) {
+    let repLon: number | undefined, repLat: number | undefined
+    const coords = geom.coordinates
+    if (geom.type === 'Point' && coords) {
+      ;[repLon, repLat] = coords
+    } else if (geom.type === 'Polygon' && Array.isArray(coords) && Array.isArray(coords[0]) && coords[0].length > 0) {
+      // Centroid of exterior ring
+      const ring = coords[0]
+      repLon = ring.reduce((s: number, c: number[]) => s + c[0], 0) / ring.length
+      repLat = ring.reduce((s: number, c: number[]) => s + c[1], 0) / ring.length
+    } else if (geom.type === 'LineString' && Array.isArray(coords) && coords.length > 0) {
+      repLon = coords.reduce((s: number, c: number[]) => s + c[0], 0) / coords.length
+      repLat = coords.reduce((s: number, c: number[]) => s + c[1], 0) / coords.length
+    }
+    if (repLon != null && repLat != null && !isInBbox(repLon, repLat)) return null
   }
 
   let olGeom
@@ -406,7 +419,10 @@ function createEnrichedFeature(
   lat: number,
   lon: number,
   enrichmentSource: string,
-): Feature {
+): Feature | null {
+  // Centralized bbox filter: skip enriched locations outside the drawn bbox
+  if (!isInBbox(lon, lat)) return null
+
   const olFeature = new Feature({
     geometry: new Point(fromLonLat([lon, lat])),
   })
@@ -467,13 +483,12 @@ async function enrichSystems(): Promise<void> {
       const sysId = extractId(item)
       const loc = systemLocationCache[sysId]
       if (!loc) continue
-      // Bbox filter: skip if enriched location is outside the drawn bbox
-      if (!isInBbox(loc.lon, loc.lat)) continue
 
       const feature = createEnrichedFeature(
         item, 'systems', loc.lat, loc.lon,
         `Latest observation from ${loc.datastreamName || 'location datastream'} at ${loc.phenomenonTime || 'unknown time'}`
       )
+      if (!feature) continue
       source.addFeature(feature)
       enriched++
     }
@@ -514,12 +529,11 @@ async function enrichDeployments(): Promise<void> {
         const sysId = sysHref.split('/').pop()
         if (sysId && systemLocationCache[sysId]) {
           const loc = systemLocationCache[sysId]
-          // Bbox filter: skip if enriched location is outside the drawn bbox
-          if (!isInBbox(loc.lon, loc.lat)) break
           const feature = createEnrichedFeature(
             item, 'deployments', loc.lat, loc.lon,
             `Derived from deployed system ${sysId} (${loc.datastreamName || 'location obs'})`
           )
+          if (!feature) break
           source.addFeature(feature)
           enriched++
           break // one location per deployment is enough
@@ -567,8 +581,7 @@ async function enrichSamplingFeatures(): Promise<void> {
           item, 'samplingFeatures', loc.lat, loc.lon,
           `Derived from parent system ${sysId} (${loc.datastreamName || 'location obs'})`
         )
-        // Bbox filter: skip if enriched location is outside the drawn bbox
-        if (!isInBbox(loc.lon, loc.lat)) continue
+        if (!feature) continue
         source.addFeature(feature)
         enriched++
       }
@@ -598,13 +611,12 @@ async function loadDatastreams(): Promise<void> {
       if (!sysId) continue
       const loc = systemLocationCache[sysId]
       if (!loc) continue
-      // Bbox filter: skip if parent system location is outside the drawn bbox
-      if (!isInBbox(loc.lon, loc.lat)) continue
 
       const feature = createEnrichedFeature(
         ds, 'datastreams', loc.lat, loc.lon,
         `At parent system ${sysId} (${loc.datastreamName || 'location obs'})`
       )
+      if (!feature) continue
       source.addFeature(feature)
       count++
     }
@@ -630,13 +642,12 @@ async function loadControlStreams(): Promise<void> {
       if (!sysId) continue
       const loc = systemLocationCache[sysId]
       if (!loc) continue
-      // Bbox filter: skip if parent system location is outside the drawn bbox
-      if (!isInBbox(loc.lon, loc.lat)) continue
 
       const feature = createEnrichedFeature(
         cs, 'controlStreams', loc.lat, loc.lon,
         `At parent system ${sysId} (${loc.datastreamName || 'location obs'})`
       )
+      if (!feature) continue
       source.addFeature(feature)
       count++
     }
