@@ -171,6 +171,7 @@ const PART2_PARENT_TYPES = ['datastreams', 'controlStreams']   // Need parent sy
 const PART2_CHILD_TYPES = ['observations', 'commands']          // Need parent datastream/controlStream alive
 const CRUV_OPS: OpType[] = ['CREATE', 'READ', 'UPDATE', 'VERIFY']  // No DELETE — children need parents alive
 const CRUD_OPS: OpType[] = ['CREATE', 'READ', 'UPDATE', 'VERIFY', 'DELETE']
+const CRD_OPS: OpType[] = ['CREATE', 'READ', 'DELETE']  // Observations/commands are immutable — no UPDATE
 
 function buildSteps(): Step[] {
   const steps: Step[] = []
@@ -189,10 +190,10 @@ function buildSteps(): Step[] {
       steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op, status: 'pending' })
     }
   }
-  // Phase 2b: Part 2 child full CRUD (observations, commands — parents still exist)
+  // Phase 2b: Part 2 child CRD (observations, commands — immutable, no UPDATE)
   for (const key of PART2_CHILD_TYPES) {
     const info = RESOURCE_TYPES.find((r) => r.key === key)!
-    for (const op of CRUD_OPS) {
+    for (const op of CRD_OPS) {
       steps.push({ id: id++, resourceType: key, resourceLabel: info.label, op, status: 'pending' })
     }
   }
@@ -516,14 +517,6 @@ async function executeCurrentStep() {
           if (schemaResp.ok && schemaResp.data) {
             payload.schema = schemaResp.data
           }
-        }
-
-        // For observations: merge updated fields into server's current state.
-        // OSH returns 500 on observation PUT with a from-scratch payload — the
-        // server likely requires internal fields (datastream@id, etc.) that only
-        // appear in the GET response. Fetch-then-merge preserves them. (S-13)
-        if (step.resourceType === 'observations' && readResp.ok && readResp.data) {
-          payload = { ...readResp.data, ...payload }
         }
 
         const bodyStr = JSON.stringify(payload, null, 2)
