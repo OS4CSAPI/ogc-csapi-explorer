@@ -226,6 +226,11 @@ export function getCreateUrl(resourceType: string, parentId?: string): string {
       case 'controlStreams':
         return parentId ? b.getSystemControlStreams(parentId).split('?')[0] : b.createControlStream()
       case 'commands': return b.createCommand(parentId || '')
+      // Nested hierarchical creation — subsystems & subdeployments
+      case 'subsystems':
+        return parentId ? b.getSystemSubsystems(parentId).split('?')[0] : '/systems'
+      case 'subdeployments':
+        return parentId ? b.getDeploymentSubdeployments(parentId).split('?')[0] : '/deployments'
       default: return `/${toUrlPath(resourceType)}`
     }
   } catch {
@@ -234,6 +239,8 @@ export function getCreateUrl(resourceType: string, parentId?: string): string {
     if (resourceType === 'controlStreams' && parentId) return `/systems/${parentId}/controlstreams`
     if (resourceType === 'observations' && parentId) return `/datastreams/${parentId}/observations`
     if (resourceType === 'commands' && parentId) return `/controlstreams/${parentId}/commands`
+    if (resourceType === 'subsystems' && parentId) return `/systems/${parentId}/subsystems`
+    if (resourceType === 'subdeployments' && parentId) return `/deployments/${parentId}/subdeployments`
     return `/${toUrlPath(resourceType)}`
   }
 }
