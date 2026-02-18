@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { apiFetch } from '../api'
+import { connection } from '../state'
 import { getListUrl, getNestedListUrl, getContentType, parseCollectionResponse } from '../csapi-bridge'
 import type { QueryOptions } from '@csapi/ogc-api/csapi/model'
 import type { DateTimeParameter } from '@csapi/shared/models'
@@ -58,6 +59,11 @@ const offset = ref(0)
 const q = ref('')
 const dtStart = ref<Date | null>(null)
 const dtEnd = ref<Date | null>(null)
+
+// Reset offset when limit changes so pagination stays coherent
+watch(limit, () => {
+  offset.value = 0
+})
 
 /** Build OGC API datetime parameter from the two date pickers.
  *  Returns a DateTimeParameter object (Date or {start}/{end}/{start,end})
@@ -244,16 +250,39 @@ async function fetchResources(cursorUrl?: string) {
 }
 
 function extractProxyPath(absoluteUrl: string): string {
-  // The server returns absolute URLs like https://csa.demo.52north.org/systems?offset=10
-  // We need to convert to the proxy path like /api/52north/systems?offset=10
-  // For now, just strip the origin and keep the path + query
+  // The server returns absolute URLs like http://45.55.99.236:8080/sensorhub/api/systems?offset=10
+  // connection.baseUrl is like http://45.55.99.236:8080/sensorhub/api (via proxy or direct)
+  // We need to strip the origin AND the base path prefix, keeping only the
+  // resource path + query (e.g., /systems?offset=10) that apiFetch can use.
   try {
     const url = new URL(absoluteUrl)
-    return url.pathname + url.search
+    const fullPath = url.pathname + url.search
+
+    // Try to strip the server's base path prefix to avoid double-pathing
+    // e.g., /sensorhub/api/systems → /systems
+    if (connection.baseUrl) {
+      try {
+        const base = new URL(connection.baseUrl)
+        if (fullPath.startsWith(base.pathname)) {
+          return fullPath.substring(base.pathname.length) || '/'
+        }
+      } catch { /* ignore */ }
+    }
+    return fullPath
   } catch {
     return absoluteUrl
   }
 }
+
+/** True when there are more results beyond the current page */
+const hasMoreResults = computed(() => {
+  // If server told us total count, use that
+  if (numberMatched.value != null) {
+    return offset.value + (numberReturned.value ?? items.value.length) < numberMatched.value
+  }
+  // Fallback: if we got exactly `limit` items, there may be more
+  return items.value.length >= limit.value
+})
 
 function refresh() {
   cursorNext.value = null
@@ -435,7 +464,7 @@ watch(
         iconPos="right"
         size="small"
         severity="secondary"
-        :disabled="paginationMode === 'cursor' ? !cursorNext : items.length < limit"
+        :disabled="paginationMode === 'cursor' ? !cursorNext : !hasMoreResults"
         @click="nextPage"
       />
     </div>
