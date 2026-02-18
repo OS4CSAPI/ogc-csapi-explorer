@@ -332,6 +332,16 @@ export function getNestedListUrl(
         case 'systems': return b.getDeploymentSystems(parentId, options as SystemQueryOptions)
       }
     }
+    if (parentType === 'datastreams') {
+      switch (relation) {
+        case 'observations': return b.getDataStreamObservations(parentId, options as ObservationQueryOptions)
+      }
+    }
+    if (parentType === 'controlStreams') {
+      switch (relation) {
+        case 'commands': return b.getControlStreamCommands(parentId, options as CommandQueryOptions)
+      }
+    }
   } catch {
     // Fall through to manual path
   }
