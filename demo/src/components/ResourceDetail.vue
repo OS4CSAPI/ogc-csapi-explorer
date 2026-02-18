@@ -11,6 +11,7 @@ import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 import SweSchemaDisplay from './SweSchemaDisplay.vue'
 import ParsedResourceView from './ParsedResourceView.vue'
+import DataModelDiagram from './DataModelDiagram.vue'
 
 const router = useRouter()
 
@@ -121,6 +122,13 @@ watch(
             @click="browseRelated(link)"
           />
         </div>
+        <details class="diagram-details">
+          <summary class="diagram-summary">
+            <i class="pi pi-share-alt"></i>
+            Data Model — SOSA / SSN / CSAPI Relationships
+          </summary>
+          <DataModelDiagram :activeType="props.resourceType" :activeId="detail?.id || props.resourceId" />
+        </details>
       </div>
 
       <!-- Side-by-side layout: Raw JSON | Library Parsed Output -->
@@ -170,6 +178,9 @@ watch(
 .related-resources { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 0.75rem; }
 .related-header { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 0.85rem; color: #0369a1; margin-bottom: 0.5rem; }
 .related-buttons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.diagram-details { margin-top: 0.6rem; }
+.diagram-summary { cursor: pointer; font-size: 0.8rem; font-weight: 600; color: #0369a1; display: flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0; user-select: none; }
+.diagram-summary:hover { color: #0284c7; }
 .manual-fetch { display: flex; align-items: center; gap: 0.5rem; }
 .manual-fetch label { font-weight: 600; font-size: 0.9rem; }
 .w-md { width: 300px; }
