@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- OS4CSAPI Globe Logo — Icon only (no text) -->
+  <!-- Based on the official OS4CSAPI brand: globe with network nodes -->
+
+  <!-- Outer globe circle -->
+  <circle cx="100" cy="100" r="88" fill="none" stroke="#1a5276" stroke-width="8"/>
+
+  <!-- Globe grid lines — latitude -->
+  <ellipse cx="100" cy="100" rx="88" ry="35" fill="none" stroke="#1a5276" stroke-width="4"/>
+  <ellipse cx="100" cy="100" rx="88" ry="65" fill="none" stroke="#1a5276" stroke-width="3" opacity="0.5"/>
+
+  <!-- Globe grid lines — longitude -->
+  <ellipse cx="100" cy="100" rx="35" ry="88" fill="none" stroke="#1a5276" stroke-width="4"/>
+  <line x1="12" y1="100" x2="188" y2="100" stroke="#1a5276" stroke-width="3"/>
+  <line x1="100" y1="12" x2="100" y2="188" stroke="#1a5276" stroke-width="3"/>
+
+  <!-- Network connection lines -->
+  <line x1="60" y1="68" x2="100" y2="100" stroke="#1a5276" stroke-width="3"/>
+  <line x1="100" y1="100" x2="145" y2="72" stroke="#1a5276" stroke-width="3"/>
+  <line x1="100" y1="100" x2="65" y2="140" stroke="#1a5276" stroke-width="3"/>
+  <line x1="100" y1="100" x2="148" y2="130" stroke="#1a5276" stroke-width="3"/>
+
+  <!-- Green arc from top-left node upward -->
+  <path d="M 60 68 Q 40 30, 72 22" fill="none" stroke="#5dae3e" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Green highlight node (top-left — the distinctive green dot) -->
+  <circle cx="72" cy="22" r="10" fill="#5dae3e"/>
+
+  <!-- Network nodes (blue dots at intersections) -->
+  <circle cx="60" cy="68" r="7" fill="#1a5276"/>
+  <circle cx="100" cy="100" r="8" fill="#1a5276"/>
+  <circle cx="145" cy="72" r="7" fill="#1a5276"/>
+  <circle cx="65" cy="140" r="7" fill="#1a5276"/>
+  <circle cx="148" cy="130" r="7" fill="#1a5276"/>
+</svg>

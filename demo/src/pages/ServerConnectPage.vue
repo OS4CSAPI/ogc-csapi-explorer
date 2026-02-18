@@ -10,6 +10,7 @@ import Select from 'primevue/select'
 import Panel from 'primevue/panel'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
+import os4csapiLogo from '../assets/os4csapi-logo.svg'
 
 const router = useRouter()
 
@@ -147,6 +148,7 @@ function otherConformance(classes: string[]): string[] {
 <template>
   <div class="connect-page">
     <div class="page-intro">
+      <img :src="os4csapiLogo" alt="OS4CSAPI — Open Source for OGC API Connected Systems" class="connect-logo" />
       <h2>Server Connection</h2>
       <p>Connect to a CSAPI server to explore its resources.</p>
     </div>
@@ -259,9 +261,10 @@ function otherConformance(classes: string[]): string[] {
   margin: 0 auto;
   padding: 1.5rem 1rem;
 }
-.page-intro { margin-bottom: 1.5rem; }
+.page-intro { margin-bottom: 1.5rem; text-align: center; }
 .page-intro h2 { margin: 0 0 0.25rem; }
 .page-intro p { margin: 0; color: #64748b; }
+.connect-logo { display: block; margin: 0 auto 1rem; height: 80px; width: auto; }
 .form-grid { display: flex; flex-direction: column; gap: 1rem; }
 .form-row { display: flex; flex-direction: column; gap: 0.25rem; }
 .form-row label { font-weight: 600; font-size: 0.9rem; }

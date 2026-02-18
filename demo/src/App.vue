@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { connection } from './state'
+import os4csapiIcon from './assets/os4csapi-logo.svg'
 </script>
 
 <template>
   <header class="app-header">
     <div class="header-left">
-      <h1><router-link to="/" class="title-link">CSAPI Explorer</router-link></h1>
+      <router-link to="/" class="title-link">
+        <img :src="os4csapiIcon" alt="OS4CSAPI" class="header-logo" />
+        <h1>CSAPI Explorer</h1>
+      </router-link>
     </div>
     <div class="header-right">
       <template v-if="connection.connected">
@@ -47,6 +51,13 @@ import { connection } from './state'
 .title-link {
   text-decoration: none;
   color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.header-logo {
+  height: 36px;
+  width: auto;
 }
 .header-right {
   display: flex;
