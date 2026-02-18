@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { connection } from '../state'
 import { initializeBuilder, destroyBuilder } from '../csapi-bridge'
 import InputText from 'primevue/inputtext'
@@ -10,9 +9,6 @@ import Select from 'primevue/select'
 import Panel from 'primevue/panel'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
-import os4csapiLogo from '../assets/os4csapi-logo.svg'
-
-const router = useRouter()
 
 const presets = [
   { label: '52North CSA Demo', proxyPath: '/api/52north', description: 'Public demo — no auth required', externalUrl: 'https://csa.demo.52north.org' },
@@ -27,8 +23,9 @@ const password = ref('')
 const connecting = ref(false)
 const error = ref('')
 
-// Clear credentials when switching servers
+// Disconnect and reset when switching servers
 watch(selectedPreset, () => {
+  if (connection.connected) disconnect()
   username.value = ''
   password.value = ''
   error.value = ''
@@ -126,10 +123,6 @@ function disconnect() {
   error.value = ''
 }
 
-function goToExplorer() {
-  router.push('/explore/systems')
-}
-
 function csapiConformance(classes: string[]): string[] {
   return classes.filter(c =>
     c.includes('connected-systems') || c.includes('csapi') ||
@@ -147,13 +140,7 @@ function otherConformance(classes: string[]): string[] {
 
 <template>
   <div class="connect-page">
-    <div class="page-intro">
-      <img :src="os4csapiLogo" alt="OS4CSAPI — Open Source for OGC API Connected Systems" class="connect-logo" />
-      <h2>Server Connection</h2>
-      <p>Connect to a CSAPI server to explore its resources.</p>
-    </div>
-
-    <Panel header="Connection Settings">
+    <Panel header="Server Connection">
       <div class="form-grid">
         <div class="form-row">
           <label>Server</label>
@@ -177,14 +164,15 @@ function otherConformance(classes: string[]): string[] {
           <InputText v-model="customUrl" placeholder="https://example.com/api" class="w-full" />
         </div>
 
-        <div class="form-row">
-          <label>Username (optional)</label>
-          <InputText v-model="username" placeholder="username" class="w-full" />
-        </div>
-
-        <div class="form-row">
-          <label>Password (optional)</label>
-          <Password v-model="password" :feedback="false" toggleMask placeholder="password" class="w-full" />
+        <div class="auth-row">
+          <div class="form-row">
+            <label>Username</label>
+            <InputText v-model="username" placeholder="optional" class="w-full" />
+          </div>
+          <div class="form-row">
+            <label>Password</label>
+            <Password v-model="password" :feedback="false" toggleMask placeholder="optional" class="w-full" />
+          </div>
         </div>
 
         <div class="form-actions">
@@ -193,17 +181,17 @@ function otherConformance(classes: string[]): string[] {
             label="Connect" icon="pi pi-link" :loading="connecting"
             @click="connect"
           />
-          <template v-else>
-            <Button label="Open Explorer" icon="pi pi-th-large" @click="goToExplorer" />
-            <Button label="Disconnect" icon="pi pi-times" severity="secondary" @click="disconnect" />
-          </template>
+          <Button
+            v-else
+            label="Disconnect" icon="pi pi-times" severity="secondary" @click="disconnect"
+          />
         </div>
       </div>
 
       <Message v-if="error" severity="error" :closable="false" class="mt-3">{{ error }}</Message>
 
       <div v-if="connecting" class="connecting-spinner">
-        <ProgressSpinner style="width: 40px; height: 40px" />
+        <ProgressSpinner style="width: 32px; height: 32px" />
         <span>Connecting...</span>
       </div>
     </Panel>
@@ -257,22 +245,19 @@ function otherConformance(classes: string[]): string[] {
 
 <style scoped>
 .connect-page {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 1.5rem 1rem;
+  max-width: 640px;
+  margin: 2rem auto;
+  padding: 0 1rem;
 }
-.page-intro { margin-bottom: 1.5rem; text-align: center; }
-.page-intro h2 { margin: 0 0 0.25rem; }
-.page-intro p { margin: 0; color: #64748b; }
-.connect-logo { display: block; margin: 0 auto 1rem; height: 80px; width: auto; }
-.form-grid { display: flex; flex-direction: column; gap: 1rem; }
-.form-row { display: flex; flex-direction: column; gap: 0.25rem; }
-.form-row label { font-weight: 600; font-size: 0.9rem; }
+.form-grid { display: flex; flex-direction: column; gap: 0.75rem; }
+.form-row { display: flex; flex-direction: column; gap: 0.2rem; }
+.form-row label { font-weight: 600; font-size: 0.85rem; }
+.auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .hint { color: #64748b; font-size: 0.85rem; }
 .server-link { display: inline-flex; align-items: center; gap: 0.25rem; margin-left: 0.5rem; color: #3b82f6; text-decoration: none; font-size: 0.82rem; }
 .server-link:hover { text-decoration: underline; }
 .server-link .pi { font-size: 0.75rem; }
-.form-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.form-actions { display: flex; gap: 0.5rem; }
 .w-full { width: 100%; }
 .mt-0 { margin-top: 0; }
 .mt-3 { margin-top: 0.75rem; }

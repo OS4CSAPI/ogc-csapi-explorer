@@ -30,6 +30,9 @@ import os4csapiIcon from './assets/os4csapi-logo.svg'
       <router-link to="/" class="nav-link">
         <i class="pi pi-link"></i> Connect
       </router-link>
+      <a href="https://github.com/OS4CSAPI" target="_blank" rel="noopener noreferrer" class="nav-link">
+        <i class="pi pi-github"></i> GitHub
+      </a>
     </div>
   </header>
   <router-view />
