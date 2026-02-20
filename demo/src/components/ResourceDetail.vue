@@ -5,8 +5,13 @@ import { apiFetch } from '../api'
 import { getDetailUrl, getContentType, getNestedListUrl, parseCollectionResponse } from '../csapi-bridge'
 import { RELATED_RESOURCES } from '../state'
 import type { RelatedResourceLink } from '../state'
+import type { QueryOptions } from '@csapi/ogc-api/csapi/model'
+import type { DateTimeParameter } from '@csapi/shared/models'
+import { CommandStatusCodes } from '@csapi/ogc-api/csapi/model'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
+import DatePicker from 'primevue/datepicker'
+import Select from 'primevue/select'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 import SweSchemaDisplay from './SweSchemaDisplay.vue'
@@ -44,31 +49,131 @@ const allRelations = computed<RelatedResourceLink[]>(() => {
   return RELATED_RESOURCES[props.resourceType] || []
 })
 
-/** Per-relation reactive state: items, loading, error, expanded */
+/** Per-relation reactive state: items, loading, error, expanded, filters */
 interface RelationState {
   items: any[]
   loading: boolean
   error: string
   expanded: boolean
+  /** Whether the filter row is visible (progressive disclosure) */
+  filtersOpen: boolean
+  /** Free-text keyword filter */
+  q: string
+  /** Temporal filter start */
+  dtStart: Date | null
+  /** Temporal filter end */
+  dtEnd: Date | null
+  /** Command status filter (commands only) */
+  currentStatus: string
+  /** Client-side fallback diagnostic messages (empty = server handled it) */
+  clientSideFallbackDetails: string[]
 }
 const relationStates = reactive<Record<string, RelationState>>({})
 
 function getRelState(relation: string): RelationState {
   if (!relationStates[relation]) {
-    relationStates[relation] = { items: [], loading: false, error: '', expanded: true }
+    relationStates[relation] = {
+      items: [], loading: false, error: '', expanded: true,
+      filtersOpen: false, q: '', dtStart: null, dtEnd: null, currentStatus: '',
+      clientSideFallbackDetails: [],
+    }
   }
   return relationStates[relation]
 }
 
-/** Fetch a single related resource collection */
+/** Command status options for the dropdown */
+const commandStatusOptions = CommandStatusCodes.map(s => ({ label: s, value: s }))
+
+/**
+ * Apply the temporal filter to the correct query option for the child resource type.
+ * Observations & datastreams → phenomenonTime, commands → issueTime, others → datetime.
+ */
+function applyTemporalFilter(options: Record<string, any>, childType: string, dt: DateTimeParameter) {
+  switch (childType) {
+    case 'observations':
+    case 'datastreams':
+      options.phenomenonTime = dt
+      break
+    case 'commands':
+      options.issueTime = dt
+      break
+    default:
+      options.datetime = dt
+      break
+  }
+}
+
+/** Get the temporal param name for display in the filter hint */
+function temporalParamName(childType: string): string {
+  switch (childType) {
+    case 'observations':
+    case 'datastreams': return 'phenomenonTime'
+    case 'commands': return 'issueTime'
+    default: return 'datetime'
+  }
+}
+
+/** Build a DateTimeParameter from a relation's date picker state */
+function buildDatetimeParam(state: RelationState): DateTimeParameter | null {
+  if (state.dtStart && state.dtEnd) return { start: state.dtStart, end: state.dtEnd }
+  if (state.dtStart) return { start: state.dtStart }
+  if (state.dtEnd) return { end: state.dtEnd }
+  return null
+}
+
+/** Whether a given child type supports temporal filtering */
+function supportsTemporalFilter(childType: string): boolean {
+  return ['observations', 'datastreams', 'commands', 'systems', 'deployments'].includes(childType)
+}
+
+/** Whether a given child type supports command status filtering */
+function supportsStatusFilter(childType: string): boolean {
+  return childType === 'commands'
+}
+
+/** Whether a given child type supports text search (q) */
+function supportsKeywordFilter(_childType: string): boolean {
+  return true // All CSAPI collections support ?q
+}
+
+/** True if any filter is active for this relation */
+function hasActiveFilters(state: RelationState, childType: string): boolean {
+  if (state.q) return true
+  if (state.dtStart || state.dtEnd) return true
+  if (supportsStatusFilter(childType) && state.currentStatus) return true
+  return false
+}
+
+/** Clear all filters for a relation and re-fetch */
+function clearFilters(link: RelatedResourceLink) {
+  const state = getRelState(link.relation)
+  state.q = ''
+  state.dtStart = null
+  state.dtEnd = null
+  state.currentStatus = ''
+  const parentId = detail.value?.id || props.resourceId
+  if (parentId) fetchRelation(link, String(parentId))
+}
+
+/** Fetch a single related resource collection (with filters and client-side fallback) */
 async function fetchRelation(link: RelatedResourceLink, parentId: string) {
   const state = getRelState(link.relation)
   state.loading = true
   state.error = ''
   state.items = []
+  state.clientSideFallbackDetails = []
 
   try {
-    const path = getNestedListUrl(props.resourceType, parentId, link.relation, { limit: 20 })
+    // Build query options from current filter state
+    const options: QueryOptions = { limit: 20 }
+    if (state.q) options.q = state.q
+    const dtParam = buildDatetimeParam(state)
+    if (dtParam) applyTemporalFilter(options, link.childType, dtParam)
+    if (supportsStatusFilter(link.childType) && state.currentStatus) {
+      ;(options as any).currentStatus = state.currentStatus
+    }
+
+    const path = getNestedListUrl(props.resourceType, parentId, link.relation, options)
     const acceptType = getContentType(link.childType)
     const res = await apiFetch(path, { headers: { 'Accept': acceptType } })
 
@@ -81,7 +186,75 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
 
     try {
       const parsed = parseCollectionResponse(res.data)
-      state.items = parsed.items as any[]
+      let resultItems = parsed.items as any[]
+
+      // --- Client-side fallback for servers that ignore query parameters ---
+
+      // 1) Keyword filter fallback
+      if (state.q && resultItems.length > 0) {
+        const keyword = state.q.toLowerCase()
+        const filtered = resultItems.filter((item: any) => {
+          const fields = [
+            item?.id,
+            item?.properties?.name,
+            item?.properties?.title,
+            item?.properties?.description,
+            item?.properties?.uniqueId,
+            item?.name,
+            item?.title,
+            item?.description,
+          ]
+          return fields.some(f => typeof f === 'string' && f.toLowerCase().includes(keyword))
+        })
+        if (filtered.length < resultItems.length) {
+          const serverCount = resultItems.length
+          resultItems = filtered
+          state.clientSideFallbackDetails.push(
+            `q="${state.q}": server returned ${serverCount} items unfiltered — reduced to ${filtered.length} client-side`
+          )
+        }
+      }
+
+      // 2) Temporal filter fallback — check result times against requested range
+      if (dtParam && resultItems.length > 0) {
+        const paramName = temporalParamName(link.childType)
+        const before = resultItems.length
+        resultItems = resultItems.filter((item: any) => {
+          // Try to extract the item's time from known field names
+          const raw = item?.properties || item
+          const timeStr = raw?.phenomenonTime || raw?.resultTime || raw?.issueTime || raw?.executionTime || raw?.validTime
+          if (!timeStr) return true // Can't verify — keep item
+          try {
+            const itemDate = new Date(typeof timeStr === 'string' ? timeStr : timeStr.start || timeStr)
+            if ((dtParam as any).start && itemDate < (dtParam as any).start) return false
+            if ((dtParam as any).end && itemDate > (dtParam as any).end) return false
+          } catch { return true }
+          return true
+        })
+        if (resultItems.length < before) {
+          state.clientSideFallbackDetails.push(
+            `${paramName}: server returned ${before} items ignoring temporal filter — reduced to ${resultItems.length} client-side`
+          )
+        }
+      }
+
+      // 3) Command status filter fallback
+      if (supportsStatusFilter(link.childType) && state.currentStatus && resultItems.length > 0) {
+        const before = resultItems.length
+        resultItems = resultItems.filter((item: any) => {
+          const raw = item?.properties || item
+          const status = raw?.currentStatus || raw?.statusCode
+          if (!status) return true // Can't verify — keep
+          return status === state.currentStatus
+        })
+        if (resultItems.length < before) {
+          state.clientSideFallbackDetails.push(
+            `currentStatus="${state.currentStatus}": server returned ${before} items unfiltered — reduced to ${resultItems.length} client-side`
+          )
+        }
+      }
+
+      state.items = resultItems
     } catch {
       if (Array.isArray(res.data)) state.items = res.data
     }
@@ -303,8 +476,105 @@ watch(
             <span>{{ link.label }}</span>
             <span v-if="!getRelState(link.relation).loading" class="relation-count">{{ getRelState(link.relation).items.length }}</span>
             <ProgressSpinner v-if="getRelState(link.relation).loading" style="width: 14px; height: 14px" />
+            <button
+              class="filter-toggle-btn"
+              :class="{ active: getRelState(link.relation).filtersOpen || hasActiveFilters(getRelState(link.relation), link.childType) }"
+              @click.stop="getRelState(link.relation).filtersOpen = !getRelState(link.relation).filtersOpen"
+              title="Toggle filters"
+            >
+              <i class="pi pi-filter"></i>
+            </button>
             <i :class="['chevron', 'pi', getRelState(link.relation).expanded ? 'pi-chevron-down' : 'pi-chevron-right']" />
           </div>
+
+          <!-- Collapsible filter row -->
+          <div v-if="getRelState(link.relation).filtersOpen" class="relation-filters" @click.stop>
+            <div class="relation-filter-row">
+              <!-- Keyword search — available for all types -->
+              <div class="rel-filter-item">
+                <label>Search (q)</label>
+                <InputText
+                  v-model="getRelState(link.relation).q"
+                  placeholder="keyword"
+                  class="rel-filter-input"
+                  size="small"
+                />
+              </div>
+              <!-- Temporal filter — observations, datastreams, commands, systems, deployments -->
+              <template v-if="supportsTemporalFilter(link.childType)">
+                <div class="rel-filter-item">
+                  <label>{{ temporalParamName(link.childType) }} start</label>
+                  <DatePicker
+                    v-model="getRelState(link.relation).dtStart"
+                    showTime
+                    hourFormat="24"
+                    showIcon
+                    showButtonBar
+                    dateFormat="yy-mm-dd"
+                    placeholder="Start"
+                    class="rel-filter-dt"
+                  />
+                </div>
+                <div class="rel-filter-item">
+                  <label>{{ temporalParamName(link.childType) }} end</label>
+                  <DatePicker
+                    v-model="getRelState(link.relation).dtEnd"
+                    showTime
+                    hourFormat="24"
+                    showIcon
+                    showButtonBar
+                    dateFormat="yy-mm-dd"
+                    placeholder="End"
+                    class="rel-filter-dt"
+                  />
+                </div>
+              </template>
+              <!-- Command status dropdown — commands only -->
+              <div v-if="supportsStatusFilter(link.childType)" class="rel-filter-item">
+                <label>currentStatus</label>
+                <Select
+                  v-model="getRelState(link.relation).currentStatus"
+                  :options="commandStatusOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Any"
+                  showClear
+                  class="rel-filter-select"
+                />
+              </div>
+            </div>
+            <div class="relation-filter-actions">
+              <Button
+                label="Apply"
+                icon="pi pi-search"
+                size="small"
+                @click="fetchRelation(link, String(detail?.id || props.resourceId))"
+                :loading="getRelState(link.relation).loading"
+              />
+              <Button
+                v-if="hasActiveFilters(getRelState(link.relation), link.childType)"
+                label="Clear"
+                icon="pi pi-times"
+                size="small"
+                severity="secondary"
+                @click="clearFilters(link)"
+              />
+            </div>
+          </div>
+
+          <!-- Client-side fallback warning -->
+          <Message
+            v-if="getRelState(link.relation).clientSideFallbackDetails.length > 0"
+            severity="warn"
+            :closable="false"
+            class="relation-fallback-msg"
+          >
+            <div style="font-size: 0.72rem;">Server ignored query parameters — results corrected client-side:</div>
+            <ul style="margin: 0.15rem 0 0 0; padding-left: 1rem; font-size: 0.7rem; list-style: disc;">
+              <li v-for="(d, i) in getRelState(link.relation).clientSideFallbackDetails" :key="i">{{ d }}</li>
+            </ul>
+          </Message>
+
           <div v-if="getRelState(link.relation).expanded" class="relation-body">
             <div v-if="getRelState(link.relation).items.length > 0" class="relation-list">
               <div
@@ -396,12 +666,12 @@ watch(
 .resource-detail { display: flex; flex-direction: column; gap: 0.75rem; }
 
 /* Related resources grid */
-.relations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.6rem; }
+.relations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.6rem; }
 .relation-card { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
 .relation-header { display: flex; align-items: center; gap: 0.35rem; padding: 0.5rem 0.65rem; font-weight: 700; font-size: 0.8rem; color: #0369a1; cursor: pointer; user-select: none; }
 .relation-header:hover { background: #e0f2fe; }
 .relation-count { background: #0369a1; color: #fff; font-size: 0.65rem; font-weight: 700; min-width: 1.1rem; height: 1.1rem; line-height: 1.1rem; text-align: center; border-radius: 999px; padding: 0 0.3rem; }
-.chevron { margin-left: auto; font-size: 0.65rem; color: #7dd3fc; }
+.chevron { font-size: 0.65rem; color: #7dd3fc; }
 .relation-body { border-top: 1px solid #bae6fd; max-height: 200px; overflow-y: auto; }
 .relation-list { display: flex; flex-direction: column; }
 .relation-item { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.65rem; cursor: pointer; font-size: 0.8rem; border-bottom: 1px solid #e0f2fe; transition: background 0.1s; }
@@ -415,6 +685,27 @@ watch(
 .relation-error { padding: 0.4rem 0.65rem; color: #dc2626; font-size: 0.75rem; }
 .browse-all-link { display: block; width: 100%; padding: 0.3rem 0.65rem; border: none; background: transparent; color: #0369a1; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-align: left; }
 .browse-all-link:hover { background: #e0f2fe; }
+
+/* Filter toggle button in relation header */
+.filter-toggle-btn { display: inline-flex; align-items: center; justify-content: center; width: 1.3rem; height: 1.3rem; border: 1px solid #bae6fd; border-radius: 4px; background: transparent; color: #7dd3fc; font-size: 0.6rem; cursor: pointer; padding: 0; transition: all 0.15s; margin-left: auto; }
+.filter-toggle-btn:hover { background: #e0f2fe; color: #0369a1; border-color: #0369a1; }
+.filter-toggle-btn.active { background: #0369a1; color: #fff; border-color: #0369a1; }
+
+/* Filter row inside relation card */
+.relation-filters { border-top: 1px solid #bae6fd; background: #f0f9ff; padding: 0.45rem 0.55rem; }
+.relation-filter-row { display: flex; flex-wrap: wrap; gap: 0.35rem 0.5rem; align-items: flex-end; }
+.rel-filter-item { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.rel-filter-item label { font-size: 0.65rem; font-weight: 600; color: #0369a1; white-space: nowrap; }
+.rel-filter-input { width: 110px; font-size: 0.72rem; }
+.rel-filter-dt { width: 155px; font-size: 0.72rem; }
+.rel-filter-dt :deep(.p-datepicker-input) { font-size: 0.72rem; padding: 0.25rem 0.4rem; }
+.rel-filter-select { width: 120px; font-size: 0.72rem; }
+.rel-filter-select :deep(.p-select-label) { font-size: 0.72rem; padding: 0.25rem 0.4rem; }
+.relation-filter-actions { display: flex; gap: 0.3rem; margin-top: 0.35rem; }
+
+/* Fallback warning inside relation card */
+.relation-fallback-msg { margin: 0; border-radius: 0; }
+.relation-fallback-msg :deep(.p-message-text) { font-size: 0.72rem; }
 
 /* Parent navigation bar */
 .parent-nav { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.65rem; background: #fefce8; border: 1px solid #fde68a; border-radius: 6px; flex-wrap: wrap; }
