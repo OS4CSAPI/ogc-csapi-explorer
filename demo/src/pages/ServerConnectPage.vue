@@ -122,6 +122,42 @@ async function connect() {
     // --- Dynamic warning detection ---
     const detectedWarnings: ConnectionWarning[] = []
 
+    // 0. Transport security: HTTP vs HTTPS and SSL certificate validation
+    // Determine the actual external URL (not the proxy path)
+    const actualExternalUrl = selectedPreset.value?.externalUrl || customUrl.value
+    const isProxied = !!selectedPreset.value?.proxyPath
+
+    if (actualExternalUrl && actualExternalUrl.startsWith('http://')) {
+      detectedWarnings.push({
+        severity: 'warn',
+        summary: 'Unencrypted HTTP connection',
+        detail: `The server URL (${actualExternalUrl}) uses plain HTTP. `
+          + 'All traffic — including authentication credentials — is transmitted without '
+          + 'encryption and can be intercepted. A production deployment should use HTTPS.',
+      })
+    } else if (isProxied && actualExternalUrl && actualExternalUrl.startsWith('https://')) {
+      // The app connected through a dev proxy (which may bypass SSL validation).
+      // Probe the real external URL with no-cors mode to check SSL independently.
+      // no-cors avoids CORS blocking — a failure here means the SSL handshake failed.
+      try {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 5000)
+        await fetch(actualExternalUrl, { mode: 'no-cors', signal: controller.signal })
+        clearTimeout(timeout)
+        // Opaque response received — SSL handshake succeeded, cert is valid
+      } catch {
+        // Proxy succeeded but direct browser connection failed — cert issue
+        detectedWarnings.push({
+          severity: 'warn',
+          summary: 'SSL certificate issue',
+          detail: `The server's HTTPS certificate at ${actualExternalUrl} could not be validated `
+            + 'by the browser. The app connected through a development proxy that bypasses SSL '
+            + 'validation, but a direct browser connection would fail. The certificate may be '
+            + 'expired, self-signed, or misconfigured.',
+        })
+      }
+    }
+
     // 1. Conformance endpoint
     if (conformanceFetchFailed) {
       detectedWarnings.push({
