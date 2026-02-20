@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiFetch } from '../api'
+import { getListUrl } from '../csapi-bridge'
+import { connection } from '../state'
 
 const router = useRouter()
 
@@ -172,6 +175,64 @@ function edgeLabelPos(edge: ModelEdge): { x: number; y: number } {
   }
 }
 
+// ─── Live Resource Counts ─────────────────────────────────────────
+
+/** Map of resource-type key → count (null = loading, -1 = unavailable/error) */
+const counts = reactive<Record<string, number | null>>({})
+let fetchGeneration = 0
+
+async function fetchCounts() {
+  const gen = ++fetchGeneration
+  // Reset all to loading
+  for (const n of nodes) counts[n.id] = null
+
+  // Fire all requests in parallel
+  const requests = nodes.map(async (n) => {
+    try {
+      const path = getListUrl(n.id, { limit: 0 })
+      const res = await apiFetch(path)
+      if (gen !== fetchGeneration) return  // stale
+      if (!res.ok) {
+        counts[n.id] = -1
+        return
+      }
+      // Try numberMatched (GeoJSON/SWE collections), then items array length
+      const data = res.data
+      if (data?.numberMatched != null) {
+        counts[n.id] = data.numberMatched
+      } else if (Array.isArray(data?.items)) {
+        // If limit=0 but server still returns items array, count is the numberMatched or items length
+        counts[n.id] = data.items.length
+      } else if (Array.isArray(data?.features)) {
+        counts[n.id] = data.features.length
+      } else {
+        // Server returned OK but no recognizable count — mark available but unknown
+        counts[n.id] = -1
+      }
+    } catch {
+      if (gen !== fetchGeneration) return
+      counts[n.id] = -1
+    }
+  })
+  await Promise.allSettled(requests)
+}
+
+function formatCount(n: number | null | undefined): string {
+  if (n == null) return '…'         // loading
+  if (n < 0) return '—'             // unavailable
+  if (n >= 10000) return `${(n / 1000).toFixed(0)}k`
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
+  return String(n)
+}
+
+onMounted(() => {
+  if (connection.connected) fetchCounts()
+})
+
+watch(() => connection.connected, (c) => {
+  if (c) fetchCounts()
+})
+
 /** Navigate to a resource type in the explorer */
 function navigateToType(nodeId: string) {
   // If it's the active type, do nothing
@@ -211,7 +272,7 @@ function navigateToType(nodeId: string) {
 <template>
   <div class="diagram-container">
     <svg
-      viewBox="0 0 800 430"
+      viewBox="-5 -15 810 450"
       xmlns="http://www.w3.org/2000/svg"
       class="model-svg"
     >
@@ -318,6 +379,28 @@ function navigateToType(nodeId: string) {
           :fill="isActive(node.id) ? 'rgba(255,255,255,0.7)' : '#94a3b8'"
           dominant-baseline="central"
         >Part {{ node.part }}</text>
+
+        <!-- Count badge -->
+        <g v-if="counts[node.id] !== undefined" class="count-badge-group">
+          <rect
+            :x="node.x + NODE_W/2 - 28"
+            :y="node.y - NODE_H/2 - 7"
+            :width="Math.max(22, formatCount(counts[node.id]).length * 8 + 8)"
+            height="16"
+            rx="8"
+            :fill="counts[node.id] == null ? '#e2e8f0' : counts[node.id]! < 0 ? '#f1f5f9' : counts[node.id] === 0 ? '#f8fafc' : node.color"
+            :stroke="counts[node.id] != null && counts[node.id]! > 0 ? node.color : '#cbd5e1'"
+            stroke-width="1"
+          />
+          <text
+            :x="node.x + NODE_W/2 - 28 + Math.max(22, formatCount(counts[node.id]).length * 8 + 8) / 2"
+            :y="node.y - NODE_H/2 + 1"
+            text-anchor="middle"
+            dominant-baseline="central"
+            class="count-label"
+            :fill="counts[node.id] != null && counts[node.id]! > 0 ? '#ffffff' : '#94a3b8'"
+          >{{ formatCount(counts[node.id]) }}</text>
+        </g>
       </g>
     </svg>
 
@@ -380,6 +463,16 @@ function navigateToType(nodeId: string) {
   font-size: 8.5px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
+/* Count badge */
+.count-badge-group {
+  pointer-events: none;
+}
+.count-label {
+  font-size: 8px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
 .edge-label {
   font-size: 8.5px;
   fill: #94a3b8;
