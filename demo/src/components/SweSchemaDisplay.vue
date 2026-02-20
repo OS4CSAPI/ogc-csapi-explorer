@@ -374,8 +374,30 @@ function shortenUri(uri: string): string {
           <div class="encoding-field"><span class="encoding-key">Byte Order:</span> {{ encoding.byteOrder }}</div>
           <div class="encoding-field"><span class="encoding-key">Byte Encoding:</span> {{ encoding.byteEncoding }}</div>
           <div v-if="encoding.byteLength" class="encoding-field"><span class="encoding-key">Byte Length:</span> {{ encoding.byteLength }}</div>
-          <div v-if="encoding.members?.length" class="encoding-field">
-            <span class="encoding-key">Members:</span> {{ encoding.members.length }} component(s)
+          <div v-if="encoding.members?.length" class="encoding-members">
+            <div class="encoding-key" style="margin-bottom: 0.25rem;">Members ({{ encoding.members.length }}):</div>
+            <table class="encoding-members-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Ref</th>
+                  <th>Data Type</th>
+                  <th>Byte Length</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(member, mi) in encoding.members" :key="mi">
+                  <td><span class="member-type-chip">{{ member.type }}</span></td>
+                  <td><code>{{ member.ref }}</code></td>
+                  <td>
+                    <code v-if="member.dataType">{{ shortenUri(member.dataType) }}</code>
+                    <span v-else-if="member.compression">{{ member.compression }}</span>
+                    <span v-else>—</span>
+                  </td>
+                  <td>{{ member.byteLength ?? '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </template>
         <!-- XMLEncoding -->
@@ -552,5 +574,41 @@ function shortenUri(uri: string): string {
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   font-size: 0.78rem;
+}
+.encoding-members {
+  margin-top: 0.35rem;
+}
+.encoding-members-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+.encoding-members-table th,
+.encoding-members-table td {
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+.encoding-members-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.72rem;
+}
+.encoding-members-table code {
+  background: #f1f5f9;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+}
+.member-type-chip {
+  display: inline-block;
+  background: #ede9fe;
+  color: #5b21b6;
+  padding: 0.1rem 0.35rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
 }
 </style>
