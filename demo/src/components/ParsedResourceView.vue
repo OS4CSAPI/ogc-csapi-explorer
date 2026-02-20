@@ -4,13 +4,17 @@
  *
  * For Part 1 recognized resources: shows extractCSAPIFeature() typed fields
  * (name, description, uid, featureType, validTime as Dates, geometry, links).
- * For unrecognized resources: shows parseCollectionResponse metadata if applicable.
- * Includes a type badge from getCSAPIResourceType().
+ * For Part 2 resources: uses typed parsers (parseDatastream, parseObservation, etc.)
+ * to show structured fields with proper type conversion.
+ * For unrecognized resources: shows raw field extraction.
+ * Includes a type badge from getCSAPIResourceType() with 52North fallback.
  */
 import { computed } from 'vue'
 import {
   extractCSAPIFeature,
   getCSAPIResourceType,
+  classifyResource,
+  parsePart2Resource,
 } from '../csapi-bridge'
 
 const props = defineProps<{
@@ -18,13 +22,17 @@ const props = defineProps<{
   resource: any
   /** The current resource type key (e.g. 'systems', 'datastreams') */
   resourceType: string
+  /** The endpoint URL this resource was fetched from (used for 52North classification fallback) */
+  endpointUrl?: string
 }>()
 
 // ─── Library recognition ─────────────────────────────────────
 const recognizedType = computed(() => {
   if (!props.resource) return null
   try {
-    return getCSAPIResourceType(props.resource)
+    // Use classifyResource which tries featureType first, then falls back to URL path
+    // (handles 52North's featureType:null issue)
+    return classifyResource(props.resource, props.endpointUrl) ?? getCSAPIResourceType(props.resource)
   } catch {
     return null
   }
@@ -39,10 +47,27 @@ const typedResource = computed(() => {
   }
 })
 
-// ─── Part 2 / flat resource fields ──────────────────────────
-const isPart2 = computed(() =>
-  ['datastreams', 'observations', 'controlStreams', 'commands', 'properties'].includes(props.resourceType)
-)
+// ─── Part 2 typed parsing ───────────────────────────────────
+const PART_2_TYPES = ['datastreams', 'observations', 'controlStreams', 'commands', 'properties']
+
+const isPart2 = computed(() => PART_2_TYPES.includes(props.resourceType))
+
+const parsedPart2 = computed(() => {
+  if (!props.resource || !isPart2.value) return null
+  return parsePart2Resource(props.resourceType, props.resource)
+})
+
+/** Label for the parser function used */
+const part2ParserName = computed(() => {
+  switch (props.resourceType) {
+    case 'datastreams': return 'parseDatastream()'
+    case 'observations': return 'parseObservation()'
+    case 'controlStreams': return 'parseControlStream()'
+    case 'commands': return 'parseCommand()'
+    case 'properties': return 'parseProperty()'
+    default: return null
+  }
+})
 
 // ─── ValidTime formatting ───────────────────────────────────
 function formatDate(d: Date | undefined): string {
@@ -67,6 +92,10 @@ function geometrySummary(geom: any): string {
     <div v-if="recognizedType" class="badge recognized">
       <i class="pi pi-check-circle"></i>
       <span><strong>{{ recognizedType }}</strong> — recognized by <code>getCSAPIResourceType()</code></span>
+    </div>
+    <div v-else-if="parsedPart2" class="badge part2-recognized">
+      <i class="pi pi-check-circle"></i>
+      <span><strong>{{ resourceType }}</strong> — parsed by <code>{{ part2ParserName }}</code></span>
     </div>
     <div v-else class="badge unrecognized">
       <i class="pi pi-info-circle"></i>
@@ -160,6 +189,155 @@ function geometrySummary(geom: any): string {
           </tbody>
         </table>
       </details>
+    </div>
+
+    <!-- Part 2: Typed fields from library parsers -->
+    <div v-else-if="parsedPart2" class="typed-fields">
+      <h4 class="section-title">
+        <code>{{ part2ParserName }}</code> output
+      </h4>
+
+      <table class="field-table">
+        <tbody>
+          <tr v-if="parsedPart2.id">
+            <td class="field-label">id</td>
+            <td><code>{{ parsedPart2.id }}</code></td>
+            <td class="field-type">string</td>
+          </tr>
+          <tr v-if="parsedPart2.name">
+            <td class="field-label">name</td>
+            <td>{{ parsedPart2.name }}</td>
+            <td class="field-type">string</td>
+          </tr>
+          <tr v-if="parsedPart2.description">
+            <td class="field-label">description</td>
+            <td>{{ parsedPart2.description }}</td>
+            <td class="field-type">string</td>
+          </tr>
+          <!-- Datastream-specific fields -->
+          <tr v-if="parsedPart2.outputName">
+            <td class="field-label">outputName</td>
+            <td><code>{{ parsedPart2.outputName }}</code></td>
+            <td class="field-type">string</td>
+          </tr>
+          <tr v-if="parsedPart2.observedProperties?.length">
+            <td class="field-label">observedProperties</td>
+            <td><code>{{ parsedPart2.observedProperties.join(', ') }}</code></td>
+            <td class="field-type">string[]</td>
+          </tr>
+          <tr v-if="parsedPart2.resultType !== undefined">
+            <td class="field-label">resultType</td>
+            <td><code>{{ parsedPart2.resultType ?? 'null' }}</code></td>
+            <td class="field-type">enum | null</td>
+          </tr>
+          <tr v-if="parsedPart2.live !== undefined">
+            <td class="field-label">live</td>
+            <td>
+              <span :class="parsedPart2.live ? 'live-badge live' : 'live-badge'">
+                {{ parsedPart2.live ? 'LIVE' : 'false' }}
+              </span>
+            </td>
+            <td class="field-type">boolean | null</td>
+          </tr>
+          <tr v-if="parsedPart2.formats?.length">
+            <td class="field-label">formats</td>
+            <td><code>{{ parsedPart2.formats.join(', ') }}</code></td>
+            <td class="field-type">string[]</td>
+          </tr>
+          <!-- ControlStream-specific fields -->
+          <tr v-if="parsedPart2.inputName">
+            <td class="field-label">inputName</td>
+            <td><code>{{ parsedPart2.inputName }}</code></td>
+            <td class="field-type">string</td>
+          </tr>
+          <!-- Observation-specific fields -->
+          <tr v-if="parsedPart2.phenomenonTime">
+            <td class="field-label">phenomenonTime</td>
+            <td class="date-value">
+              <code>{{ formatDate(parsedPart2.phenomenonTime.start) }}</code>
+              <span v-if="parsedPart2.phenomenonTime.end"> → <code>{{ formatDate(parsedPart2.phenomenonTime.end) }}</code></span>
+              <span class="converted-badge">TimeInterval</span>
+            </td>
+            <td class="field-type">TimeInterval</td>
+          </tr>
+          <tr v-if="parsedPart2.resultTime">
+            <td class="field-label">resultTime</td>
+            <td class="date-value">
+              <code>{{ formatDate(parsedPart2.resultTime.start) }}</code>
+              <span class="converted-badge">TimeInterval</span>
+            </td>
+            <td class="field-type">TimeInterval</td>
+          </tr>
+          <tr v-if="parsedPart2.result !== undefined">
+            <td class="field-label">result</td>
+            <td><code>{{ typeof parsedPart2.result === 'object' ? JSON.stringify(parsedPart2.result).slice(0, 200) : parsedPart2.result }}</code></td>
+            <td class="field-type">{{ typeof parsedPart2.result }}</td>
+          </tr>
+          <!-- Command-specific fields -->
+          <tr v-if="parsedPart2.issueTime">
+            <td class="field-label">issueTime</td>
+            <td class="date-value">
+              <code>{{ parsedPart2.issueTime }}</code>
+              <span class="converted-badge">string (ISO)</span>
+            </td>
+            <td class="field-type">string</td>
+          </tr>
+          <tr v-if="parsedPart2.executionTime">
+            <td class="field-label">executionTime</td>
+            <td class="date-value">
+              <code>{{ formatDate(parsedPart2.executionTime.start) }}</code>
+              <span v-if="parsedPart2.executionTime.end"> → <code>{{ formatDate(parsedPart2.executionTime.end) }}</code></span>
+              <span class="converted-badge">TimeInterval</span>
+            </td>
+            <td class="field-type">TimeInterval</td>
+          </tr>
+          <tr v-if="parsedPart2.currentStatus">
+            <td class="field-label">currentStatus</td>
+            <td>
+              <span class="status-badge">{{ parsedPart2.currentStatus }}</span>
+            </td>
+            <td class="field-type">CommandStatusCode</td>
+          </tr>
+          <tr v-if="parsedPart2.parameters !== undefined">
+            <td class="field-label">parameters</td>
+            <td><code>{{ typeof parsedPart2.parameters === 'object' ? JSON.stringify(parsedPart2.parameters).slice(0, 200) : parsedPart2.parameters }}</code></td>
+            <td class="field-type">{{ typeof parsedPart2.parameters }}</td>
+          </tr>
+          <!-- Property-specific fields -->
+          <tr v-if="parsedPart2.definition">
+            <td class="field-label">definition</td>
+            <td><code>{{ parsedPart2.definition }}</code></td>
+            <td class="field-type">string (URI)</td>
+          </tr>
+          <tr v-if="parsedPart2.label">
+            <td class="field-label">label</td>
+            <td>{{ parsedPart2.label }}</td>
+            <td class="field-type">string</td>
+          </tr>
+          <!-- ValidTime (shared across types) -->
+          <tr v-if="parsedPart2.validTime">
+            <td class="field-label">validTime.start</td>
+            <td class="date-value">
+              <code>{{ formatDate(parsedPart2.validTime.start) }}</code>
+              <span class="converted-badge">Date object</span>
+            </td>
+            <td class="field-type">Date</td>
+          </tr>
+          <tr v-if="parsedPart2.validTime">
+            <td class="field-label">validTime.end</td>
+            <td class="date-value">
+              <code>{{ formatDate(parsedPart2.validTime.end) }}</code>
+              <span class="converted-badge">Date object</span>
+            </td>
+            <td class="field-type">Date | undefined</td>
+          </tr>
+          <tr v-if="parsedPart2.links?.length">
+            <td class="field-label">links</td>
+            <td>{{ parsedPart2.links.length }} link(s)</td>
+            <td class="field-type">ResourceLink[]</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Part 2 / unrecognized: show flat field extraction -->
@@ -262,8 +440,15 @@ function geometrySummary(geom: any): string {
 .badge code { font-size: 0.78rem; background: rgba(0,0,0,0.06); padding: 0.1rem 0.3rem; border-radius: 3px; }
 .recognized { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
 .recognized i { color: #16a34a; }
+.part2-recognized { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+.part2-recognized i { color: #3b82f6; }
 .unrecognized { background: #fefce8; border: 1px solid #fef08a; color: #854d0e; }
 .unrecognized i { color: #ca8a04; }
+
+.live-badge { font-size: 0.75rem; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 700; background: #f1f5f9; color: #64748b; }
+.live-badge.live { background: #dcfce7; color: #166534; animation: pulse-live 2s ease-in-out infinite; }
+@keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+.status-badge { font-size: 0.78rem; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; background: #e0e7ff; color: #3730a3; }
 
 .section-title { font-size: 0.85rem; margin: 0; color: #334155; font-weight: 600; }
 .section-title code { font-size: 0.78rem; color: #7c3aed; background: #ede9fe; padding: 0.1rem 0.4rem; border-radius: 3px; }

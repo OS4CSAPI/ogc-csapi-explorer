@@ -13,6 +13,11 @@ import { shallowRef } from 'vue'
 import CSAPIQueryBuilder from '@csapi/ogc-api/csapi/url_builder'
 import { parseCollectionResponse } from '@csapi/ogc-api/csapi/formats/response'
 import { extractCSAPIFeature, getCSAPIResourceType } from '@csapi/ogc-api/csapi/formats/geojson'
+import { classifyFeature, inferResourceTypeFromPath } from '@csapi/ogc-api/csapi/formats/classification'
+import { getContentTypeForResource } from '@csapi/ogc-api/csapi/formats/constants'
+import { parseDatastream, parseObservation, parseControlStream, parseCommand, parseCommandStatus } from '@csapi/ogc-api/csapi/formats/part2'
+import { parseProperty } from '@csapi/ogc-api/csapi/formats/property'
+import { parseSensorML30 } from '@csapi/ogc-api/csapi/formats/sensorml/parser'
 import { scanCsapiLinks } from '@csapi/ogc-api/csapi/helpers'
 import { CSAPIResourceTypes } from '@csapi/ogc-api/csapi/model'
 import type { OgcApiCollectionInfo } from '@csapi/ogc-api/model'
@@ -367,21 +372,86 @@ export function getSchemaUrl(datastreamId: string): string | null {
 }
 
 // ========================================
-// Content-Type Helper
+// Content-Type Helper (backed by library)
 // ========================================
 
-/** Part 1 resource types use application/geo+json; Part 2 uses application/json */
-const PART_1_TYPES = new Set(['systems', 'deployments', 'procedures', 'samplingFeatures'])
-
+/**
+ * Returns the correct Accept/Content-Type for a CSAPI resource type.
+ * Uses the library's getContentTypeForResource() which maps Part 1 types
+ * to application/geo+json and Part 2 types to application/json.
+ */
 export function getContentType(resourceType: string): string {
-  return PART_1_TYPES.has(resourceType) ? 'application/geo+json' : 'application/json'
+  return getContentTypeForResource(resourceType)
+}
+
+// ========================================
+// Part 2 Typed Parsers
+// ========================================
+
+/**
+ * Parse a raw Part 2 resource into a typed object using the library's parsers.
+ * Returns null for unrecognized types or parse failures.
+ *
+ * Supported: datastreams, observations, controlStreams, commands, properties
+ */
+export function parsePart2Resource(resourceType: string, raw: unknown): any | null {
+  try {
+    switch (resourceType) {
+      case 'datastreams': return parseDatastream(raw)
+      case 'observations': return parseObservation(raw)
+      case 'controlStreams': return parseControlStream(raw)
+      case 'commands': return parseCommand(raw)
+      case 'properties': return parseProperty(raw)
+      default: return null
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Try to parse a command status from raw JSON.
+ * Returns null on failure.
+ */
+export function tryParseCommandStatus(raw: unknown): any | null {
+  try {
+    return parseCommandStatus(raw)
+  } catch {
+    return null
+  }
+}
+
+// ========================================
+// Classification Fallback (for 52North)
+// ========================================
+
+/**
+ * Classify a feature using featureType first, then endpoint URL path fallback.
+ * Solves 52North's featureType:null issue — infers type from the URL.
+ */
+export function classifyResource(feature: unknown, endpointUrl?: string): string | null {
+  const hint = endpointUrl ? inferResourceTypeFromPath(endpointUrl) : null
+  return classifyFeature(feature, hint)
 }
 
 // ========================================
 // Re-exports from the library
 // ========================================
 
-export { parseCollectionResponse, extractCSAPIFeature, getCSAPIResourceType }
+export {
+  parseCollectionResponse,
+  extractCSAPIFeature,
+  getCSAPIResourceType,
+  classifyFeature,
+  inferResourceTypeFromPath,
+  parseDatastream,
+  parseObservation,
+  parseControlStream,
+  parseCommand,
+  parseCommandStatus,
+  parseProperty,
+  parseSensorML30,
+}
 export { parseSWEComponent } from '@csapi/ogc-api/csapi/formats/swecommon/parser'
 export type { AnyComponent } from '@csapi/ogc-api/csapi/formats/swecommon/types'
 export type { CollectionResponse }

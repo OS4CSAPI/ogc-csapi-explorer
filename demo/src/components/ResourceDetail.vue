@@ -282,7 +282,7 @@ watch(
             <i class="pi pi-cog"></i>
             Library Parsed Output
           </h3>
-          <ParsedResourceView :resource="detail" :resourceType="props.resourceType" />
+          <ParsedResourceView :resource="detail" :resourceType="props.resourceType" :endpointUrl="`/${props.resourceType}/${effectiveId}`" />
         </div>
       </div>
 
