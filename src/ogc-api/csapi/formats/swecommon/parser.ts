@@ -741,7 +741,7 @@ export function parseSWEComponent(json: unknown): AnyComponent {
 
     // Complex components — delegate to dedicated parsers
     case 'DataRecord':
-      return parseDataRecord(json);
+      return parseDataRecord(json, parseSWEComponent);
 
     case 'DataArray':
       return parseDataArray(json);

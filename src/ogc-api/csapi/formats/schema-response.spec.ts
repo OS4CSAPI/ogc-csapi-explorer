@@ -12,6 +12,7 @@ import type {
   SweBoolean,
   SweCount,
   SweCategory,
+  Vector,
 } from './swecommon/types.js';
 
 describe('parseDatastreamSchemaResponse', () => {
@@ -368,7 +369,65 @@ describe('parseControlStreamSchemaResponse', () => {
   });
 
   // ========================================
-  // Test 4: Non-object input
+  // Test 4: DataRecord with Vector field (real OSH payload)
+  // ========================================
+
+  it('parses a control stream schema with Vector fields (OSH FCU pattern)', () => {
+    const raw = {
+      commandFormat: 'application/json',
+      parametersSchema: {
+        type: 'DataRecord',
+        name: 'mavControl',
+        label: 'Location Control',
+        description: 'Interfaces with MAVLINK and OSH to effectuate control over the platform',
+        fields: [
+          {
+            type: 'Vector',
+            name: 'locationVectorLLA',
+            referenceFrame: '',
+            coordinates: [
+              { type: 'Quantity', name: 'Latitude', uom: { code: 'deg' } },
+              { type: 'Quantity', name: 'Longitude', uom: { code: 'deg' } },
+              { type: 'Quantity', name: 'AltitudeAGL', uom: { code: 'm' } },
+            ],
+          },
+          { type: 'Boolean', name: 'returnToStart' },
+          { type: 'Count', name: 'hoverSeconds' },
+        ],
+      },
+    };
+    const schema = parseControlStreamSchemaResponse(raw);
+    expect(schema.commandFormat).toBe('application/json');
+    expect(schema.parametersSchema).toBeDefined();
+
+    const dr = schema.parametersSchema as DataRecord;
+    expect(dr.type).toBe('DataRecord');
+    expect(dr.fields).toHaveLength(3);
+
+    // Field 0: Vector with 3 coordinates
+    const vf = dr.fields[0] as TypedDataField;
+    expect(vf.name).toBe('locationVectorLLA');
+    const vec = vf.component as Vector;
+    expect(vec.type).toBe('Vector');
+    expect(vec.coordinates).toHaveLength(3);
+    expect(vec.coordinates[0].name).toBe('Latitude');
+    expect(((vec.coordinates[0] as TypedDataField).component as SweQuantity).uom).toEqual({ code: 'deg' });
+    expect(vec.coordinates[2].name).toBe('AltitudeAGL');
+    expect(((vec.coordinates[2] as TypedDataField).component as SweQuantity).uom).toEqual({ code: 'm' });
+
+    // Field 1: Boolean
+    const bf = dr.fields[1] as TypedDataField;
+    expect(bf.name).toBe('returnToStart');
+    expect((bf.component as SweBoolean).type).toBe('Boolean');
+
+    // Field 2: Count
+    const cf = dr.fields[2] as TypedDataField;
+    expect(cf.name).toBe('hoverSeconds');
+    expect((cf.component as SweCount).type).toBe('Count');
+  });
+
+  // ========================================
+  // Test 5: Non-object input
   // ========================================
 
   it('throws on non-object input', () => {

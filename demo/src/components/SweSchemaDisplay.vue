@@ -269,8 +269,8 @@ function shortenUri(uri: string): string {
       {{ error }}
     </Message>
 
-    <!-- Parse warning -->
-    <div v-if="error && schemaFields.length" class="schema-parse-warn">
+    <!-- Parse warning (raw data available but parsing had issues) -->
+    <div v-if="error && rawSchema" class="schema-parse-warn">
       <i class="pi pi-exclamation-triangle"></i>
       <span>{{ error }}</span>
     </div>
