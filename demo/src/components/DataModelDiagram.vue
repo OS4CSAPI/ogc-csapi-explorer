@@ -2,7 +2,7 @@
 import { computed, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../api'
-import { getNestedListUrl } from '../csapi-bridge'
+import { getNestedListUrl, getListUrl } from '../csapi-bridge'
 import { connection, RELATED_RESOURCES } from '../state'
 
 const router = useRouter()
@@ -207,7 +207,8 @@ let fetchGeneration = 0
 
 /**
  * Fetch counts of related/nested resources for the currently viewed resource.
- * Only fetches for types directly connected to the active type via RELATED_RESOURCES.
+ * Fetches direct relations, then transitive grandchild counts
+ * (observations via datastreams, commands via controlStreams).
  */
 async function fetchCounts() {
   const gen = ++fetchGeneration
@@ -225,7 +226,7 @@ async function fetchCounts() {
   // Set connected types to loading
   for (const rel of relations) counts[rel.childType] = null
 
-  // Fire all requests in parallel
+  // Fire all direct requests in parallel
   const requests = relations.map(async (rel) => {
     try {
       const path = getNestedListUrl(parentType, parentId, rel.relation, { limit: 0 })
@@ -251,6 +252,66 @@ async function fetchCounts() {
     }
   })
   await Promise.allSettled(requests)
+  if (gen !== fetchGeneration) return
+
+  // ── Transitive grandchild counts ──────────────────────────────
+  // If the active type has datastreams → also count observations
+  // If the active type has controlStreams → also count commands
+  const transitiveJobs: Array<{ intermediateType: string; intermediateRelation: string; grandchildType: string; grandchildRelation: string }> = []
+
+  if (counts['datastreams'] != null && counts['datastreams'] > 0) {
+    transitiveJobs.push({ intermediateType: 'datastreams', intermediateRelation: 'datastreams', grandchildType: 'observations', grandchildRelation: 'observations' })
+  }
+  if (counts['controlStreams'] != null && counts['controlStreams'] > 0) {
+    transitiveJobs.push({ intermediateType: 'controlStreams', intermediateRelation: 'controlstreams', grandchildType: 'commands', grandchildRelation: 'commands' })
+  }
+
+  if (!transitiveJobs.length) return
+
+  for (const job of transitiveJobs) {
+    counts[job.grandchildType] = null  // loading
+  }
+
+  const transitiveRequests = transitiveJobs.map(async (job) => {
+    try {
+      // First fetch the intermediate resource IDs
+      const listPath = getNestedListUrl(parentType, parentId, job.intermediateRelation, { limit: 100 })
+      const listRes = await apiFetch(listPath)
+      if (gen !== fetchGeneration) return
+      if (!listRes.ok) { counts[job.grandchildType] = -1; return }
+
+      const items = listRes.data?.items || listRes.data?.features || []
+      const ids: string[] = items.map((item: any) => item?.id || item?.properties?.id).filter(Boolean)
+
+      if (!ids.length) { counts[job.grandchildType] = 0; return }
+
+      // Fetch grandchild count from each intermediate resource in parallel
+      let total = 0
+      const subRequests = ids.map(async (id: string) => {
+        try {
+          const path = getNestedListUrl(job.intermediateType, id, job.grandchildRelation, { limit: 0 })
+          const res = await apiFetch(path)
+          if (gen !== fetchGeneration) return 0
+          if (!res.ok) return 0
+          const data = res.data
+          if (data?.numberMatched != null) return data.numberMatched
+          if (Array.isArray(data?.items)) return data.items.length
+          if (Array.isArray(data?.features)) return data.features.length
+          return 0
+        } catch { return 0 }
+      })
+      const results = await Promise.allSettled(subRequests)
+      for (const r of results) {
+        if (r.status === 'fulfilled') total += (r.value ?? 0)
+      }
+      if (gen !== fetchGeneration) return
+      counts[job.grandchildType] = total
+    } catch {
+      if (gen !== fetchGeneration) return
+      counts[job.grandchildType] = -1
+    }
+  })
+  await Promise.allSettled(transitiveRequests)
 }
 
 function formatCount(n: number | null | undefined): string {
