@@ -135,6 +135,12 @@ async function connect() {
           + 'All traffic — including authentication credentials — is transmitted without '
           + 'encryption and can be intercepted. A production deployment should use HTTPS.',
       })
+    } else if (actualExternalUrl && actualExternalUrl.startsWith('https://')) {
+      detectedWarnings.push({
+        severity: 'success',
+        summary: 'HTTPS connection',
+        detail: 'The server uses HTTPS — traffic is encrypted.',
+      })
     }
 
     // For proxied connections, probe the external URL to detect SSL and CORS issues.
@@ -150,6 +156,13 @@ async function connect() {
         await fetch(actualExternalUrl, { mode: 'no-cors', signal: controller.signal })
         clearTimeout(timeout)
         sslOk = true
+        if (actualExternalUrl.startsWith('https://')) {
+          detectedWarnings.push({
+            severity: 'success',
+            summary: 'SSL certificate valid',
+            detail: 'The server\'s HTTPS certificate was validated successfully by the browser.',
+          })
+        }
       } catch {
         if (actualExternalUrl.startsWith('https://')) {
           detectedWarnings.push({
@@ -172,6 +185,11 @@ async function connect() {
           const timeout = setTimeout(() => controller.abort(), 5000)
           await fetch(actualExternalUrl, { mode: 'cors', signal: controller.signal })
           clearTimeout(timeout)
+          detectedWarnings.push({
+            severity: 'success',
+            summary: 'CORS headers present',
+            detail: `The server at ${actualExternalUrl} includes CORS headers, allowing direct browser access from other origins.`,
+          })
         } catch {
           detectedWarnings.push({
             severity: 'warn',
@@ -213,6 +231,14 @@ async function connect() {
           + 'or SWE Common. The ogc-client library\'s OgcApiEndpoint class would report '
           + 'no CSAPI capabilities for this server.',
       })
+    } else {
+      const csapiCount = csapiConformance(conformance.value).length
+      detectedWarnings.push({
+        severity: 'success',
+        summary: `${csapiCount} CSAPI conformance class${csapiCount !== 1 ? 'es' : ''}`,
+        detail: `The server declares ${csapiCount} Connected Systems API / SensorML / SWE Common `
+          + `conformance class${csapiCount !== 1 ? 'es' : ''} out of ${conformance.value.length} total.`,
+      })
     }
 
     // 2. Collections link relation
@@ -243,6 +269,13 @@ async function connect() {
           + '"collections" pointing to the collections endpoint. The ogc-client library\'s '
           + 'OgcApiEndpoint class would be unable to discover available collections.',
       })
+    } else {
+      detectedWarnings.push({
+        severity: 'success',
+        summary: 'Standard collections link relation',
+        detail: 'The server\'s landing page provides a link with the OGC API Common-specified "data" '
+          + 'relation, enabling the ogc-client library to discover collections correctly.',
+      })
     }
 
     // 3. CSAPI resource link discovery
@@ -255,6 +288,14 @@ async function connect() {
           + 'landing page or collection links. The app is assuming all 9 standard CSAPI '
           + 'resource types are available at their default paths. Some types may not '
           + 'actually be supported by this server.',
+      })
+    } else {
+      detectedWarnings.push({
+        severity: 'success',
+        summary: `${initResult.discoveredTypes.length} CSAPI resource types discovered`,
+        detail: `The server advertises ${initResult.discoveredTypes.length} Connected Systems API `
+          + `resource type${initResult.discoveredTypes.length !== 1 ? 's' : ''} via landing page `
+          + `or collection links: ${initResult.discoveredTypes.join(', ')}.`,
       })
     }
 
@@ -380,12 +421,12 @@ function otherConformance(classes: string[]): string[] {
         </div>
       </Panel>
 
-      <Panel v-if="warnings.length > 0" header="Connection Warnings" class="mt-4" toggleable>
+      <Panel header="Connection Diagnostics" class="mt-4" toggleable>
         <div class="warnings-list">
           <Message
             v-for="(w, i) in warnings"
             :key="i"
-            :severity="w.severity === 'warn' ? 'warn' : 'info'"
+            :severity="w.severity"
             :closable="false"
             class="warning-message"
           >
@@ -395,7 +436,7 @@ function otherConformance(classes: string[]): string[] {
             </div>
           </Message>
         </div>
-        <p class="text-muted mb-0">These warnings indicate where the app had to bypass or work around standard OGC API behavior to connect to this server.</p>
+        <p class="text-muted mb-0">Green items passed standard OGC API checks. Amber items indicate where the app had to bypass or work around expected behavior.</p>
       </Panel>
 
       <Panel v-if="conformance.length > 0" header="Conformance Classes" class="mt-4" toggleable>

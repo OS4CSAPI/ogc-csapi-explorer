@@ -6,7 +6,7 @@ import { reactive } from 'vue'
  * based on what the server actually returns (or fails to return).
  */
 export interface ConnectionWarning {
-  severity: 'warn' | 'info'
+  severity: 'warn' | 'info' | 'success'
   summary: string
   detail: string
 }
