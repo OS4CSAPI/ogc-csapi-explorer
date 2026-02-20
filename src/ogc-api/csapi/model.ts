@@ -286,7 +286,11 @@ export interface System {
  * Deployments represent the deployment of one or more systems at a location
  * for a specific time period.
  *
- * Required properties: `featureType`, `uid`, `name`, `validTime` (per OGC spec).
+ * Required properties per OGC 23-001 Table 10: `featureType`, `uid`, `name`,
+ * `validTime`.  However, §8.7 Requirement 3B explicitly handles the case where
+ * "the validTime attribute is null or not set", and some servers (e.g. OSH)
+ * omit it in practice.  `validTime` is therefore typed as **optional** here
+ * to follow Postel's Law — be liberal in what you accept.
  *
  * @see https://docs.ogc.org/is/23-001/23-001.html#_deployment_resources
  */
@@ -303,8 +307,14 @@ export interface Deployment {
     name: string;
     /** Human-readable description. */
     description?: string;
-    /** Time period during which systems are deployed (required). */
-    validTime: TimeInterval;
+    /**
+     * Time period during which systems are deployed.
+     *
+     * OGC 23-001 Table 10 marks this as "Required", but §8.7 Req 3B
+     * explicitly handles missing/null validTime.  Typed optional to
+     * tolerate servers that omit it.
+     */
+    validTime?: TimeInterval;
   };
   geometry?: Geometry;
   links: ResourceLink[];
@@ -316,8 +326,16 @@ export interface Deployment {
  * Procedures describe methodologies for observation, actuation, or sampling.
  * In GeoJSON encoding, geometry is always null; detailed descriptions use SensorML.
  *
+ * When the same Procedure resource is requested with
+ * `Accept: application/sml+json`, the server returns it as one of four
+ * concrete SensorML 3.0 process types: {@link SimpleProcess},
+ * {@link AggregateProcess}, {@link PhysicalComponent}, or
+ * {@link PhysicalSystem} (collectively {@link SensorMLProcess}).
+ *
  * Required properties: `featureType`, `uid`, `name` (per OGC spec).
  *
+ * @see {@link SensorMLProcess} for the SensorML representation of this resource
+ * @see ../formats/sensorml/types.ts — SensorML 3.0 type definitions
  * @see https://docs.ogc.org/is/23-001/23-001.html#_procedure_resources
  */
 export interface Procedure {
@@ -552,6 +570,58 @@ export interface CommandStatus {
   /** Human-readable status message. */
   message?: string;
   links?: ResourceLink[];
+}
+
+// ========================================
+// Schema Response Types
+// ========================================
+
+/**
+ * Parsed response from the `/datastreams/{id}/schema` endpoint.
+ *
+ * The schema format varies by `obsFormat`:
+ * - JSON format (`application/om+json`): uses `resultSchema`
+ * - SWE Common format (`application/swe+json`): uses `recordSchema` + `encoding`
+ *
+ * Schema fields are parsed via `parseSWEComponent()` from the SWE Common parser
+ * layer. The `encoding` field is parsed via `parseEncoding()`.
+ *
+ * @see https://docs.ogc.org/is/23-002/23-002.html — Datastream schema endpoint
+ * @see https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/17 — Demo app finding F-14
+ */
+export interface DatastreamSchemaResponse {
+  /** The observation format identifier (e.g., `"application/om+json"`). */
+  obsFormat: string;
+  /** Result schema for JSON observation format. Parsed via `parseSWEComponent()`. */
+  resultSchema?: import('./formats/swecommon/types.js').AnyComponent;
+  /** Record schema for SWE Common observation format. Parsed via `parseSWEComponent()`. */
+  recordSchema?: import('./formats/swecommon/types.js').AnyComponent;
+  /** Encoding descriptor for SWE Common observation format. Parsed via `parseEncoding()`. */
+  encoding?: import('./formats/swecommon/types.js').DataEncoding;
+}
+
+/**
+ * Typed representation of the response from a Control Stream schema endpoint
+ * (`/controlstreams/{id}/schema`).
+ *
+ * This is the Phase 5 Task 7b counterpart to {@link DatastreamSchemaResponse}.
+ * The response varies by command format:
+ * - **JSON format** (`application/json`): contains `parametersSchema` — a
+ *   SWE Common component describing the command parameters structure.
+ *
+ * Schema fields are parsed via `parseSWEComponent()` from the SWE Common parser
+ * layer. The `encoding` field is parsed via `parseEncoding()`.
+ *
+ * @see https://docs.ogc.org/is/23-002/23-002.html — Control stream schema endpoint
+ * @see https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/87 — Task 7b
+ */
+export interface ControlStreamSchemaResponse {
+  /** The command format identifier (e.g., `"application/json"`). */
+  commandFormat: string;
+  /** Parameters schema for the command. Parsed via `parseSWEComponent()`. */
+  parametersSchema?: import('./formats/swecommon/types.js').AnyComponent;
+  /** Encoding descriptor for SWE Common command format. Parsed via `parseEncoding()`. */
+  encoding?: import('./formats/swecommon/types.js').DataEncoding;
 }
 
 // ========================================

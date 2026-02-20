@@ -205,11 +205,11 @@ export function parseDataRecord(json: unknown): DataRecord {
     (fieldJson, index) => parseField(fieldJson, index)
   );
 
-  const result: Record<string, unknown> = {
+  const result: DataRecord = {
     ...parseBaseProperties(json),
-    type: 'DataRecord' as const,
+    type: 'DataRecord',
     fields,
   };
 
-  return result as unknown as DataRecord;
+  return result;
 }

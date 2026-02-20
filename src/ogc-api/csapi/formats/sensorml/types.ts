@@ -38,6 +38,13 @@
  *   used in §6 Position and §9 ComponentList respectively; TypeScript
  *   resolves these lazily within a module.
  *
+ * **CSAPI Relationship:** These process types represent what the CSAPI API
+ * calls "Procedure" resources. When a {@link Procedure} resource is requested
+ * with `Accept: application/sml+json`, the server returns one of the four
+ * concrete types defined here ({@link SimpleProcess}, {@link AggregateProcess},
+ * {@link PhysicalComponent}, {@link PhysicalSystem}).
+ *
+ * @see {@link Procedure} in `model.ts` for the GeoJSON representation
  * @see https://docs.ogc.org/is/23-000/23-000.html — OGC SensorML 3.0 (JSON)
  * @see https://docs.ogc.org/is/12-000r2/12-000r2.html — SensorML 2.0 (UML reference)
  * @see ogcapi-connectedsystems-1.bundled.oas31.yaml — Part 1 OAS schemas
@@ -799,6 +806,9 @@ export interface PhysicalSystem extends AbstractPhysicalProcess {
 /**
  * Discriminated union of all four concrete SensorML process types.
  *
+ * This is the SensorML representation of a "Procedure" resource.
+ * The GeoJSON representation is the {@link Procedure} interface in `model.ts`.
+ *
  * Narrow using the `type` property:
  * ```typescript
  * function handle(proc: SensorMLProcess) {
@@ -810,6 +820,8 @@ export interface PhysicalSystem extends AbstractPhysicalProcess {
  *   }
  * }
  * ```
+ *
+ * @see {@link Procedure} for the GeoJSON representation
  */
 export type SensorMLProcess =
   | SimpleProcess

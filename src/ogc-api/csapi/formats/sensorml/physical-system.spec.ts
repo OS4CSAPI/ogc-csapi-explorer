@@ -1137,6 +1137,87 @@ describe('parseComponentEntry', () => {
     expect(entry.name).toBe('proc1');
     expect(entry.type).toBe('SimpleProcess');
   });
+
+  // --- Cross-type delegation tests (Task 8b) ---
+
+  it('parses SimpleProcess child component via cross-type delegation', () => {
+    const entry = parseComponentEntry(
+      {
+        name: 'tempSensor',
+        type: 'SimpleProcess',
+        uniqueId: 'urn:simple',
+        label: 'Temperature Sensor',
+        method: { algorithm: ['kalman-filter'] },
+      },
+      0
+    );
+    expect(entry.name).toBe('tempSensor');
+    expect(entry.type).toBe('SimpleProcess');
+    expect((entry as any).uniqueId).toBe('urn:simple');
+    expect((entry as any).method).toBeDefined();
+  });
+
+  it('parses PhysicalComponent child component via cross-type delegation', () => {
+    const entry = parseComponentEntry(
+      {
+        name: 'windVane',
+        type: 'PhysicalComponent',
+        uniqueId: 'urn:phycomp',
+        label: 'Wind Vane',
+      },
+      0
+    );
+    expect(entry.name).toBe('windVane');
+    expect(entry.type).toBe('PhysicalComponent');
+    expect((entry as any).uniqueId).toBe('urn:phycomp');
+  });
+
+  it('parses AggregateProcess child component via cross-type delegation', () => {
+    const entry = parseComponentEntry(
+      {
+        name: 'procChain',
+        type: 'AggregateProcess',
+        uniqueId: 'urn:agg',
+        label: 'Processing Chain',
+        components: [],
+      },
+      0
+    );
+    expect(entry.name).toBe('procChain');
+    expect(entry.type).toBe('AggregateProcess');
+    expect((entry as any).uniqueId).toBe('urn:agg');
+    expect((entry as any).components).toEqual([]);
+  });
+
+  it('parses PhysicalSystem child component (regression)', () => {
+    const entry = parseComponentEntry(
+      {
+        name: 'subPlatform',
+        type: 'PhysicalSystem',
+        uniqueId: 'urn:subsys',
+        label: 'Sub Platform',
+      },
+      0
+    );
+    expect(entry.name).toBe('subPlatform');
+    expect(entry.type).toBe('PhysicalSystem');
+    expect((entry as any).uniqueId).toBe('urn:subsys');
+    expect((entry as any).label).toBe('Sub Platform');
+  });
+
+  it('passes through external link component as-is', () => {
+    const entry = parseComponentEntry(
+      {
+        name: 'extSensor',
+        type: 'Link',
+        href: 'http://example.org/sensor',
+      },
+      0
+    );
+    expect(entry.name).toBe('extSensor');
+    expect((entry as any).type).toBe('Link');
+    expect((entry as any).href).toBe('http://example.org/sensor');
+  });
 });
 
 // ========================================

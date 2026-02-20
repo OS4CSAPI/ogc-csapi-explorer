@@ -23,8 +23,10 @@ import type {
   Settings,
   Link,
   FeatureList,
+  ComponentEntry,
 } from './types.js';
 import { SensorMLParseError } from './errors.js';
+import { parseSensorML30 } from './parser.js';
 
 // ========================================
 // Primitive Helpers
@@ -221,4 +223,57 @@ export function parseProcessMethod(
   if (typeof value.description === 'string')
     method.description = value.description;
   return method;
+}
+
+// ========================================
+// Component Entry (shared by PhysicalSystem & AggregateProcess)
+// ========================================
+
+/**
+ * Parse a single {@link ComponentEntry}.
+ *
+ * Each component entry must have a `name` property (from SoftNamedProperty).
+ * The entry is either:
+ * - An **inline process** (any of the 4 concrete SensorML process types,
+ *   identified by `type` being one of `'SimpleProcess'`, `'AggregateProcess'`,
+ *   `'PhysicalComponent'`, `'PhysicalSystem'`)
+ * - An **external link** (`type: 'Link'` with `href`)
+ *
+ * All 4 inline process types (`PhysicalSystem`, `PhysicalComponent`,
+ * `SimpleProcess`, `AggregateProcess`) are parsed by delegating to
+ * {@link parseSensorML30}, which dispatches to the correct sub-parser.
+ * External links and unrecognized types are passed through as-is.
+ *
+ * @param value - Raw JSON value
+ * @param index - Array index for error messages
+ * @returns Parsed ComponentEntry
+ * @throws {SensorMLParseError} If the entry is not a valid object or
+ *   lacks a required `name` property
+ * @see {@link parseSensorML30} in `parser.ts` — dispatches all 4 process types
+ * @see OAS: ComponentList (L4112), SoftNamedProperty (L1938)
+ */
+export function parseComponentEntry(
+  value: unknown,
+  index: number
+): ComponentEntry {
+  if (!isRecord(value)) {
+    throw new SensorMLParseError(
+      `components[${index}] must be an object`
+    );
+  }
+  if (typeof value.name !== 'string') {
+    throw new SensorMLParseError(
+      `components[${index}] must have a string "name" property`
+    );
+  }
+
+  // Delegate all inline process types to the main SensorML dispatcher
+  const knownTypes = ['PhysicalSystem', 'PhysicalComponent', 'SimpleProcess', 'AggregateProcess'];
+  if (typeof value.type === 'string' && knownTypes.includes(value.type)) {
+    const parsed = parseSensorML30(value);
+    return { ...parsed, name: value.name as string } as ComponentEntry;
+  }
+
+  // External links and unrecognized types are passed through
+  return value as unknown as ComponentEntry;
 }

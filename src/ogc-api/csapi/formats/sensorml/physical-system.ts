@@ -12,7 +12,7 @@
  * - **PhysicalComponent**: `method`
  *
  * This is a sub-parser — it is intended to be called by the main
- * SensorML parser (Issue #22) when the `type` discriminator is
+ * SensorML parser (`parseSensorML30()`) when the `type` discriminator is
  * `'PhysicalSystem'` or `'PhysicalComponent'`.
  *
  * @see https://docs.ogc.org/is/23-000/23-000.html — OGC SensorML 3.0
@@ -45,6 +45,7 @@ import {
   optionalString,
   parseLink,
   parseProcessMethod,
+  parseComponentEntry,
   parseIOComponentChoice,
   parseIOList,
   parseSettings,
@@ -53,60 +54,11 @@ import {
 } from './_helpers.js';
 
 export { SensorMLParseError };
-export { parseProcessMethod } from './_helpers.js';
+export { parseProcessMethod, parseComponentEntry } from './_helpers.js';
 
 // ========================================
 // Internal Helpers — Components & Connections
 // ========================================
-
-/**
- * Parse a single {@link ComponentEntry}.
- *
- * Each component entry must have a `name` property (from SoftNamedProperty).
- * The entry is either:
- * - An **inline process** (any of the 4 concrete SensorML process types,
- *   identified by `type` being one of `'SimpleProcess'`, `'AggregateProcess'`,
- *   `'PhysicalComponent'`, `'PhysicalSystem'`)
- * - An **external link** (`type: 'Link'` with `href`)
- *
- * Inline `PhysicalSystem` components are parsed recursively via
- * {@link parsePhysicalSystem}. Other inline process types are
- * passed through as-is until the main parser (Issue #22) coordinates
- * full sub-parser delegation.
- *
- * @param value - Raw JSON value
- * @param index - Array index for error messages
- * @returns Parsed ComponentEntry
- * @throws {SensorMLParseError} If the entry is not a valid object or
- *   lacks a required `name` property
- * @see OAS: ComponentList (L4112), SoftNamedProperty (L1938)
- */
-export function parseComponentEntry(
-  value: unknown,
-  index: number
-): ComponentEntry {
-  if (!isRecord(value)) {
-    throw new SensorMLParseError(
-      `components[${index}] must be an object`
-    );
-  }
-  if (typeof value.name !== 'string') {
-    throw new SensorMLParseError(
-      `components[${index}] must have a string "name" property`
-    );
-  }
-
-  // Recursive PhysicalSystem parsing
-  if (value.type === 'PhysicalSystem') {
-    const parsed = parsePhysicalSystem(value);
-    return { ...parsed, name: value.name as string } as ComponentEntry;
-  }
-
-  // Other inline process types and external links are passed through.
-  // Full sub-parser delegation (SimpleProcess, AggregateProcess,
-  // PhysicalComponent) is coordinated by the main parser (Issue #22).
-  return value as unknown as ComponentEntry;
-}
 
 /**
  * Parse a {@link ComponentList} — array of named sub-process components.

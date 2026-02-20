@@ -1,6 +1,11 @@
 import type { OgcApiCollectionInfo } from '../model.js';
 import { EndpointError } from '../../shared/endpoint-error.js';
 import CSAPIQueryBuilder from './url_builder.js';
+import { CSAPIResourceTypes } from './model.js';
+import {
+  CSAPI_CONTENT_TYPES,
+  getContentTypeForResource,
+} from './formats/constants.js';
 
 /**
  * Builds a minimal OgcApiCollectionInfo suitable for CSAPIQueryBuilder tests.
@@ -678,6 +683,150 @@ describe('getSystemSamplingFeatures', () => {
     expect(url).toBe(
       'https://example.com/collections/iot/systems/sys-001/samplingFeatures'
     );
+  });
+});
+
+// ========================================
+// Nested Create Methods (F-1, F-2, F-83)
+// ========================================
+
+describe('createSubsystem', () => {
+  function makeIotBuilder() {
+    return new CSAPIQueryBuilder(
+      makeCollection({
+        links: [
+          { rel: 'self', type: '', title: '', href: 'https://example.com/collections/iot' },
+          { rel: 'ogc-cs:systems', type: '', title: '', href: '/systems' },
+        ],
+      })
+    );
+  }
+
+  it('returns correct URL for subsystem creation', () => {
+    const url = makeIotBuilder().createSubsystem('sys-parent');
+    expect(url).toBe('https://example.com/collections/iot/systems/sys-parent/subsystems');
+  });
+
+  it('encodes special characters in parent ID', () => {
+    const url = makeIotBuilder().createSubsystem('urn:example:sys:001');
+    expect(url).toBe('https://example.com/collections/iot/systems/urn%3Aexample%3Asys%3A001/subsystems');
+  });
+
+  it('throws EndpointError when systems is unavailable', () => {
+    const builder = new CSAPIQueryBuilder(makeCollection({ id: 'empty' }));
+    expect(() => builder.createSubsystem('x')).toThrow(EndpointError);
+  });
+});
+
+describe('createDataStreamForSystem', () => {
+  function makeIotBuilder() {
+    return new CSAPIQueryBuilder(
+      makeCollection({
+        links: [
+          { rel: 'self', type: '', title: '', href: 'https://example.com/collections/iot' },
+          { rel: 'ogc-cs:systems', type: '', title: '', href: '/systems' },
+        ],
+      })
+    );
+  }
+
+  it('returns correct URL for nested datastream creation', () => {
+    const url = makeIotBuilder().createDataStreamForSystem('sys-001');
+    expect(url).toBe('https://example.com/collections/iot/systems/sys-001/datastreams');
+  });
+
+  it('encodes special characters in system ID', () => {
+    const url = makeIotBuilder().createDataStreamForSystem('urn:example:sys:001');
+    expect(url).toBe('https://example.com/collections/iot/systems/urn%3Aexample%3Asys%3A001/datastreams');
+  });
+
+  it('throws EndpointError when systems is unavailable', () => {
+    const builder = new CSAPIQueryBuilder(makeCollection({ id: 'empty' }));
+    expect(() => builder.createDataStreamForSystem('x')).toThrow(EndpointError);
+  });
+});
+
+describe('createControlStreamForSystem', () => {
+  function makeIotBuilder() {
+    return new CSAPIQueryBuilder(
+      makeCollection({
+        links: [
+          { rel: 'self', type: '', title: '', href: 'https://example.com/collections/iot' },
+          { rel: 'ogc-cs:systems', type: '', title: '', href: '/systems' },
+        ],
+      })
+    );
+  }
+
+  it('returns correct URL for nested control stream creation', () => {
+    const url = makeIotBuilder().createControlStreamForSystem('sys-001');
+    expect(url).toBe('https://example.com/collections/iot/systems/sys-001/controlstreams');
+  });
+
+  it('encodes special characters in system ID', () => {
+    const url = makeIotBuilder().createControlStreamForSystem('urn:example:sys:001');
+    expect(url).toBe('https://example.com/collections/iot/systems/urn%3Aexample%3Asys%3A001/controlstreams');
+  });
+
+  it('throws EndpointError when systems is unavailable', () => {
+    const builder = new CSAPIQueryBuilder(makeCollection({ id: 'empty' }));
+    expect(() => builder.createControlStreamForSystem('x')).toThrow(EndpointError);
+  });
+});
+
+describe('createSamplingFeatureForSystem', () => {
+  function makeIotBuilder() {
+    return new CSAPIQueryBuilder(
+      makeCollection({
+        links: [
+          { rel: 'self', type: '', title: '', href: 'https://example.com/collections/iot' },
+          { rel: 'ogc-cs:systems', type: '', title: '', href: '/systems' },
+        ],
+      })
+    );
+  }
+
+  it('returns correct URL for nested sampling feature creation', () => {
+    const url = makeIotBuilder().createSamplingFeatureForSystem('sys-001');
+    expect(url).toBe('https://example.com/collections/iot/systems/sys-001/samplingFeatures');
+  });
+
+  it('encodes special characters in system ID', () => {
+    const url = makeIotBuilder().createSamplingFeatureForSystem('urn:example:sys:001');
+    expect(url).toBe('https://example.com/collections/iot/systems/urn%3Aexample%3Asys%3A001/samplingFeatures');
+  });
+
+  it('throws EndpointError when systems is unavailable', () => {
+    const builder = new CSAPIQueryBuilder(makeCollection({ id: 'empty' }));
+    expect(() => builder.createSamplingFeatureForSystem('x')).toThrow(EndpointError);
+  });
+});
+
+describe('createSubdeployment', () => {
+  function makeDepBuilder() {
+    return new CSAPIQueryBuilder(
+      makeCollection({
+        links: [
+          { rel: 'self', type: '', title: '', href: 'https://example.com/collections/iot' },
+          { rel: 'ogc-cs:deployments', type: '', title: '', href: '/deployments' },
+        ],
+      })
+    );
+  }
+
+  it('returns correct URL for subdeployment creation', () => {
+    const url = makeDepBuilder().createSubdeployment('dep-parent');
+    expect(url).toBe('https://example.com/collections/iot/deployments/dep-parent/subdeployments');
+  });
+
+  it('encodes special characters in parent ID', () => {
+    const url = makeDepBuilder().createSubdeployment('urn:example:dep:001');
+    expect(url).toBe('https://example.com/collections/iot/deployments/urn%3Aexample%3Adep%3A001/subdeployments');
+  });
+
+  it('throws EndpointError when deployments is unavailable', () => {
+    const builder = new CSAPIQueryBuilder(makeCollection({ id: 'empty' }));
+    expect(() => builder.createSubdeployment('x')).toThrow(EndpointError);
   });
 });
 
@@ -1653,7 +1802,7 @@ describe('getDataStreamSchema', () => {
     );
   }
 
-  it('returns correct URL with obsFormat parameter', () => {
+  it('returns correct URL with f query parameter', () => {
     const url = makeDsBuilder().getDataStreamSchema('ds-001', { f: 'application/swe+json' });
     expect(url).toBe('https://example.com/collections/iot/datastreams/ds-001/schema?f=application%2Fswe%2Bjson');
   });
@@ -2025,47 +2174,47 @@ describe('getControlStreams', () => {
 
   it('returns correct URL with no options', () => {
     const url = makeCsBuilder().getControlStreams();
-    expect(url).toBe('https://example.com/collections/iot/controlStreams');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams');
   });
 
   it('returns correct URL with systemId filter', () => {
     const url = makeCsBuilder().getControlStreams({ systemId: 'sys-001' });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams?systemId=sys-001');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?systemId=sys-001');
   });
 
   it('returns correct URL with controlledPropertyId filter', () => {
     const url = makeCsBuilder().getControlStreams({ controlledPropertyId: 'prop-001' });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams?controlledPropertyId=prop-001');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?controlledPropertyId=prop-001');
   });
 
   it('returns correct URL with pagination', () => {
     const url = makeCsBuilder().getControlStreams({ limit: 10, offset: 20 });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams?limit=10&offset=20');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?limit=10&offset=20');
   });
 
   it('returns correct URL with standalone offset', () => {
     const url = makeCsBuilder().getControlStreams({ offset: 20 });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams?offset=20');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?offset=20');
   });
 
   it('returns correct URL with q parameter', () => {
     const url = makeCsBuilder().getControlStreams({ q: 'valve' });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams?q=valve');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?q=valve');
   });
 
   it('returns correct URL with single id', () => {
     const url = makeCsBuilder().getControlStreams({ id: 'cs-001' });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams?id=cs-001');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?id=cs-001');
   });
 
   it('returns correct URL with array of ids', () => {
     const url = makeCsBuilder().getControlStreams({ id: ['cs-001', 'cs-002'] });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams?id=cs-001%2Ccs-002');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?id=cs-001%2Ccs-002');
   });
 
   it('returns correct URL with multiple shared options', () => {
     const url = makeCsBuilder().getControlStreams({ limit: 10, offset: 5, q: 'valve' });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams?limit=10&offset=5&q=valve');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?limit=10&offset=5&q=valve');
   });
 });
 
@@ -2083,12 +2232,12 @@ describe('getControlStream', () => {
 
   it('returns correct URL for single control stream', () => {
     const url = makeCsBuilder().getControlStream('cs-001');
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001');
   });
 
   it('returns correct URL with format option', () => {
     const url = makeCsBuilder().getControlStream('cs-001', { f: 'application/json' });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001?f=application%2Fjson');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001?f=application%2Fjson');
   });
 });
 
@@ -2106,17 +2255,17 @@ describe('ControlStream CRUD methods', () => {
 
   it('createControlStream returns correct URL', () => {
     const url = makeCsBuilder().createControlStream();
-    expect(url).toBe('https://example.com/collections/iot/controlStreams');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams');
   });
 
   it('updateControlStream returns correct URL', () => {
     const url = makeCsBuilder().updateControlStream('cs-001');
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001');
   });
 
   it('deleteControlStream returns correct URL', () => {
     const url = makeCsBuilder().deleteControlStream('cs-001');
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001');
   });
 });
 
@@ -2132,14 +2281,14 @@ describe('getControlStreamSchema', () => {
     );
   }
 
-  it('returns correct URL with cmdFormat parameter', () => {
+  it('returns correct URL with f query parameter', () => {
     const url = makeCsBuilder().getControlStreamSchema('cs-001', { f: 'application/swe+json' });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001/schema?f=application%2Fswe%2Bjson');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/schema?f=application%2Fswe%2Bjson');
   });
 
   it('returns correct URL with no options', () => {
     const url = makeCsBuilder().getControlStreamSchema('cs-001');
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001/schema');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/schema');
   });
 });
 
@@ -2157,26 +2306,26 @@ describe('getControlStreamCommands', () => {
 
   it('returns correct URL with no options', () => {
     const url = makeCsBuilder().getControlStreamCommands('cs-001');
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001/commands');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/commands');
   });
 
   it('returns correct URL with pagination', () => {
     const url = makeCsBuilder().getControlStreamCommands('cs-001', { limit: 50 });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001/commands?limit=50');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/commands?limit=50');
   });
 
   it('returns correct URL with issueTime filter', () => {
     const url = makeCsBuilder().getControlStreamCommands('cs-001', {
       issueTime: { start: new Date('2024-01-01T00:00:00Z') },
     });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001/commands?issueTime=2024-01-01T00%3A00%3A00.000Z%2F..');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/commands?issueTime=2024-01-01T00%3A00%3A00.000Z%2F..');
   });
 
   it('returns correct URL with executionTime filter', () => {
     const url = makeCsBuilder().getControlStreamCommands('cs-001', {
       executionTime: { start: new Date('2024-06-01T00:00:00Z'), end: new Date('2024-12-01T00:00:00Z') },
     });
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001/commands?executionTime=2024-06-01T00%3A00%3A00.000Z%2F2024-12-01T00%3A00%3A00.000Z');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/commands?executionTime=2024-06-01T00%3A00%3A00.000Z%2F2024-12-01T00%3A00%3A00.000Z');
   });
 });
 
@@ -2194,12 +2343,12 @@ describe('checkCommandFeasibility', () => {
 
   it('returns correct URL for feasibility checking', () => {
     const url = makeCsBuilder().checkCommandFeasibility('cs-001');
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001/feasibility');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/feasibility');
   });
 
   it('encodes special characters in control stream ID', () => {
     const url = makeCsBuilder().checkCommandFeasibility('urn:example:cs:001');
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/urn%3Aexample%3Acs%3A001/feasibility');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/urn%3Aexample%3Acs%3A001/feasibility');
   });
 });
 
@@ -2337,12 +2486,12 @@ describe('Command CRUD methods', () => {
 
   it('createCommand returns correct URL via control stream', () => {
     const url = makeCmdBuilder().createCommand('cs-001');
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001/commands');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/commands');
   });
 
   it('createCommands returns correct URL for bulk creation', () => {
     const url = makeCmdBuilder().createCommands('cs-001');
-    expect(url).toBe('https://example.com/collections/iot/controlStreams/cs-001/commands');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/commands');
   });
 
   it('updateCommand returns correct URL', () => {
@@ -2985,5 +3134,46 @@ describe('Top-level resource URL override', () => {
     );
     const url = builder.getSystems({ limit: 10 });
     expect(url).toBe('https://api.example.com/sensorhub/api/systems?limit=10');
+  });
+});
+
+// ========================================
+// Content-Type Map (F-10)
+// ========================================
+
+describe('CSAPI_CONTENT_TYPES', () => {
+  it('maps all 5 Part 1 resources to application/geo+json', () => {
+    const part1Types = ['systems', 'deployments', 'procedures', 'samplingFeatures', 'properties'] as const;
+    for (const type of part1Types) {
+      expect(CSAPI_CONTENT_TYPES[type]).toBe('application/geo+json');
+    }
+  });
+
+  it('maps all 4 Part 2 resources to application/json', () => {
+    const part2Types = ['datastreams', 'observations', 'controlStreams', 'commands'] as const;
+    for (const type of part2Types) {
+      expect(CSAPI_CONTENT_TYPES[type]).toBe('application/json');
+    }
+  });
+
+  it('has an entry for every CSAPIResourceType', () => {
+    for (const type of CSAPIResourceTypes) {
+      expect(CSAPI_CONTENT_TYPES).toHaveProperty(type);
+    }
+    expect(Object.keys(CSAPI_CONTENT_TYPES)).toHaveLength(CSAPIResourceTypes.length);
+  });
+});
+
+describe('getContentTypeForResource', () => {
+  it('returns application/geo+json for a known Part 1 type', () => {
+    expect(getContentTypeForResource('systems')).toBe('application/geo+json');
+  });
+
+  it('returns application/json for a known Part 2 type', () => {
+    expect(getContentTypeForResource('datastreams')).toBe('application/json');
+  });
+
+  it('returns application/json fallback for an unrecognized type', () => {
+    expect(getContentTypeForResource('unknownType')).toBe('application/json');
   });
 });

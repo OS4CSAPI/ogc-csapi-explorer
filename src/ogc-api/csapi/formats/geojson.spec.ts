@@ -6,6 +6,7 @@ import {
   extractCSAPIFeature,
   SOSA_NS,
   SENSORML_NS,
+  SSN_NS,
 } from './geojson.js';
 
 // ========================================
@@ -120,6 +121,24 @@ describe('isCSAPIFeature', () => {
     ).toBe(true);
   });
 
+  it('returns true for SSN-namespaced Deployment (full URI)', () => {
+    expect(isCSAPIFeature(makeFeature(`${SSN_NS}Deployment`))).toBe(true);
+  });
+
+  it('returns true for SSN-namespaced System (full URI)', () => {
+    expect(isCSAPIFeature(makeFeature(`${SSN_NS}System`))).toBe(true);
+  });
+
+  it('returns true for SSN-namespaced types (compact CURIE)', () => {
+    expect(isCSAPIFeature(makeFeature('ssn:Deployment'))).toBe(true);
+    expect(isCSAPIFeature(makeFeature('ssn:System'))).toBe(true);
+  });
+
+  it('returns false for unrecognized SSN local name', () => {
+    expect(isCSAPIFeature(makeFeature('ssn:UnknownType'))).toBe(false);
+    expect(isCSAPIFeature(makeFeature(`${SSN_NS}UnknownType`))).toBe(false);
+  });
+
   it('returns false for unrecognized SensorML local name', () => {
     expect(
       isCSAPIFeature(makeFeature(`${SENSORML_NS}UnknownThing`))
@@ -216,6 +235,33 @@ describe('getCSAPIResourceType', () => {
     expect(
       getCSAPIResourceType(makeFeature(`${SENSORML_NS}UnknownThing`))
     ).toBe(null);
+  });
+
+  it('classifies SSN Deployment (full URI)', () => {
+    expect(getCSAPIResourceType(makeFeature(`${SSN_NS}Deployment`))).toBe(
+      'Deployment'
+    );
+  });
+
+  it('classifies SSN System (full URI)', () => {
+    expect(getCSAPIResourceType(makeFeature(`${SSN_NS}System`))).toBe(
+      'System'
+    );
+  });
+
+  it('classifies SSN types with compact CURIE prefix', () => {
+    expect(getCSAPIResourceType(makeFeature('ssn:Deployment'))).toBe(
+      'Deployment'
+    );
+    expect(getCSAPIResourceType(makeFeature('ssn:System'))).toBe('System');
+    expect(getCSAPIResourceType(makeFeature('ssn:Sensor'))).toBe('System');
+  });
+
+  it('returns null for unrecognized SSN local name', () => {
+    expect(getCSAPIResourceType(makeFeature('ssn:UnknownType'))).toBe(null);
+    expect(getCSAPIResourceType(makeFeature(`${SSN_NS}UnknownType`))).toBe(
+      null
+    );
   });
 });
 
@@ -465,6 +511,27 @@ describe('extractCSAPIFeature', () => {
     const result = extractCSAPIFeature(raw);
     expect(result.properties.featureType).toBe('sosa:Deployment');
     expect(result.properties.uid).toBe('urn:x-test:feature:1');
+  });
+
+  it('extracts a Deployment from SSN namespace (full URI)', () => {
+    const raw = makeFeature(`${SSN_NS}Deployment`, {
+      validTime: ['2026-01-01T00:00:00Z', '2027-01-01T00:00:00Z'],
+    });
+    const result = extractCSAPIFeature(raw);
+    expect(result.properties.featureType).toBe(`${SSN_NS}Deployment`);
+    expect((result as any).properties.validTime).toEqual({
+      start: new Date('2026-01-01T00:00:00Z'),
+      end: new Date('2027-01-01T00:00:00Z'),
+    });
+  });
+
+  it('extracts a System from SSN namespace (compact CURIE)', () => {
+    const raw = makeFeature('ssn:System', {
+      description: 'An SSN system',
+    });
+    const result = extractCSAPIFeature(raw);
+    expect(result.properties.featureType).toBe('ssn:System');
+    expect(result.properties.description).toBe('An SSN system');
   });
 
   it('extracts System with missing uid and name (tolerant extraction)', () => {

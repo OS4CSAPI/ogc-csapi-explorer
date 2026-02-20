@@ -635,3 +635,60 @@ describe('parseSWEComponent — error handling', () => {
     }
   });
 });
+
+// ========================================
+// Invalid Schema Pattern Handling
+// ========================================
+
+describe('validateAgainstSchema — invalid schema patterns', () => {
+  it('reports invalid regex pattern in AllowedTokens constraint', () => {
+    const schema = parseSWEComponent({
+      type: 'DataRecord',
+      fields: [
+        {
+          name: 'tag',
+          type: 'Category',
+          constraint: { pattern: '[invalid' },
+        },
+      ],
+    });
+    const result = validateAgainstSchema({ tag: 'anything' }, schema);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].code).toBe('SCHEMA_ERROR');
+    expect(result.errors[0].message).toContain('invalid regex pattern');
+  });
+});
+
+// ========================================
+// Geometry Constraint Validation
+// ========================================
+
+describe('validateAgainstSchema — geometry constraints', () => {
+  it('reports geometry type not in allowed geomTypes', () => {
+    const schema = parseSWEComponent({
+      type: 'Geometry',
+      srs: 'http://www.opengis.net/def/crs/EPSG/0/4326',
+      constraint: { geomTypes: ['Point', 'MultiPoint'] },
+    });
+    const result = validateAgainstSchema(
+      { type: 'Polygon', coordinates: [[[0, 0], [1, 0], [1, 1], [0, 0]]] },
+      schema
+    );
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.code === 'CONSTRAINT_VIOLATION')).toBe(true);
+  });
+
+  it('passes when geometry type is in allowed geomTypes', () => {
+    const schema = parseSWEComponent({
+      type: 'Geometry',
+      srs: 'http://www.opengis.net/def/crs/EPSG/0/4326',
+      constraint: { geomTypes: ['Point', 'MultiPoint'] },
+    });
+    const result = validateAgainstSchema(
+      { type: 'Point', coordinates: [0, 0] },
+      schema
+    );
+    expect(result.valid).toBe(true);
+  });
+});

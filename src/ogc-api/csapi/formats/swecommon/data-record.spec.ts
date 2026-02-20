@@ -123,9 +123,9 @@ describe('parseDataRecord — nested records', () => {
         },
       ],
     });
-    const l1 = (result.fields[0] as any).component;
+    const l1 = (result.fields[0] as unknown as { component: { type: string; fields: { name: string }[] } }).component;
     expect(l1.type).toBe('DataRecord');
-    const l2 = (l1.fields[0] as any).component;
+    const l2 = (l1.fields[0] as unknown as { component: { type: string; fields: { name: string }[] } }).component;
     expect(l2.type).toBe('DataRecord');
     expect(l2.fields[0].name).toBe('level3');
   });

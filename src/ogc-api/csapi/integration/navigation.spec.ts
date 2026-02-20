@@ -224,7 +224,7 @@ describe('Navigation — multi-hop top-level → nested chain', () => {
 
     // 3. Submit a command to a control stream
     const cmdUrl = builder.createCommand('cs-valve');
-    expect(cmdUrl).toContain('/controlStreams/cs-valve/commands');
+    expect(cmdUrl).toContain('/controlstreams/cs-valve/commands');
 
     // 4. Check command status
     const statusUrl = builder.getCommandStatus('cmd-001');

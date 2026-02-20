@@ -14,6 +14,8 @@
  * @module
  */
 
+import type { CSAPIResourceType } from '../model.js';
+
 // ========================================
 // Media Type Constants
 // ========================================
@@ -283,3 +285,51 @@ export const AssetTypes = [
 
 /** Union type of System `assetType` values. */
 export type AssetType = (typeof AssetTypes)[number];
+
+// ========================================
+// Content-Type Map for Write Operations
+// ========================================
+
+/**
+ * Maps each CSAPI resource type to the required `Content-Type` header
+ * for write operations (POST/PUT).
+ *
+ * Part 1 resources (OGC 23-001r1 §7–§11) are GeoJSON Features and
+ * require `application/geo+json`. Part 2 resources (OGC 23-002r1
+ * §7–§10) use plain JSON encoding and require `application/json`.
+ *
+ * @see https://docs.ogc.org/is/23-001/23-001.html — Part 1 (GeoJSON encoding)
+ * @see https://docs.ogc.org/is/23-002/23-002.html — Part 2 (JSON encoding)
+ */
+export const CSAPI_CONTENT_TYPES: Record<CSAPIResourceType, string> = {
+  // Part 1 resources — GeoJSON Features (OGC 23-001r1)
+  systems: MEDIA_TYPE_GEOJSON,
+  deployments: MEDIA_TYPE_GEOJSON,
+  procedures: MEDIA_TYPE_GEOJSON,
+  samplingFeatures: MEDIA_TYPE_GEOJSON,
+  properties: MEDIA_TYPE_GEOJSON,
+  // Part 2 resources — plain JSON (OGC 23-002r1)
+  datastreams: MEDIA_TYPE_JSON,
+  observations: MEDIA_TYPE_JSON,
+  controlStreams: MEDIA_TYPE_JSON,
+  commands: MEDIA_TYPE_JSON,
+} as const;
+
+/**
+ * Returns the required `Content-Type` header for write operations (POST/PUT)
+ * against the given CSAPI resource type.
+ *
+ * Part 1 resources (systems, deployments, procedures, samplingFeatures,
+ * properties) require `application/geo+json`. Part 2 resources (datastreams,
+ * observations, controlStreams, commands) require `application/json`.
+ *
+ * @param resourceType - A CSAPI resource type string.
+ * @returns The Content-Type string, defaulting to `application/json` for unrecognized types.
+ * @see https://docs.ogc.org/is/23-001/23-001.html — Part 1 (GeoJSON encoding)
+ * @see https://docs.ogc.org/is/23-002/23-002.html — Part 2 (JSON encoding)
+ */
+export function getContentTypeForResource(resourceType: string): string {
+  return (
+    CSAPI_CONTENT_TYPES[resourceType as CSAPIResourceType] ?? MEDIA_TYPE_JSON
+  );
+}

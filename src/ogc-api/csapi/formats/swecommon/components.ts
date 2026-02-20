@@ -28,6 +28,7 @@
  */
 
 import type {
+  AbstractSimpleComponent,
   UnitOfMeasure,
   AllowedValues,
   AllowedTokens,
@@ -223,7 +224,7 @@ export function parseAllowedTimes(json: unknown): AllowedTimes {
  *
  * @see https://docs.ogc.org/is/24-014/24-014.html — NilValues
  */
-export function parseNilValues(json: unknown): NilValue<unknown>[] {
+export function parseNilValues<T = unknown>(json: unknown): NilValue<T>[] {
   if (!Array.isArray(json)) return [];
   return json
     .filter((entry): entry is Record<string, unknown> =>
@@ -231,7 +232,7 @@ export function parseNilValues(json: unknown): NilValue<unknown>[] {
     )
     .map((entry) => ({
       reason: entry.reason as string,
-      value: entry.value,
+      value: entry.value as T,
     }));
 }
 
@@ -273,8 +274,10 @@ export function parseQuality(json: unknown): AnySimpleComponent[] {
  * Extracts: `id`, `label`, `description`, `definition`, `updatable`,
  * `optional`, `referenceFrame`, `axisID`.
  */
-function parseBaseProperties(json: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
+// Return type narrowed from Record<string, unknown> to Partial<AbstractSimpleComponent>
+// to enable type-safe construction in component parsers (Issue #72).
+function parseBaseProperties(json: Record<string, unknown>): Partial<AbstractSimpleComponent> {
+  const result: Partial<AbstractSimpleComponent> = {};
   if (typeof json.id === 'string') result.id = json.id;
   if (typeof json.label === 'string') result.label = json.label;
   if (typeof json.description === 'string') result.description = json.description;
@@ -315,7 +318,7 @@ export function parseQuantity(json: unknown): SweQuantity {
   if (!isRecord(json)) {
     throw new SweCommonParseError('Quantity input must be a non-null object');
   }
-  const result: Record<string, unknown> = {
+  const result: SweQuantity = {
     ...parseBaseProperties(json),
     type: 'Quantity',
     uom: parseUnitOfMeasure(json.uom),
@@ -324,12 +327,12 @@ export function parseQuantity(json: unknown): SweQuantity {
     result.constraint = parseAllowedValues(json.constraint);
   }
   if (Array.isArray(json.nilValues)) {
-    result.nilValues = parseNilValues(json.nilValues);
+    result.nilValues = parseNilValues<NumberOrSpecial>(json.nilValues);
   }
   if (typeof json.value === 'number') {
     result.value = json.value;
   }
-  return result as unknown as SweQuantity;
+  return result;
 }
 
 /**
@@ -352,7 +355,7 @@ export function parseCount(json: unknown): SweCount {
   if (!isRecord(json)) {
     throw new SweCommonParseError('Count input must be a non-null object');
   }
-  const result: Record<string, unknown> = {
+  const result: SweCount = {
     ...parseBaseProperties(json),
     type: 'Count',
   };
@@ -360,12 +363,12 @@ export function parseCount(json: unknown): SweCount {
     result.constraint = parseAllowedValues(json.constraint);
   }
   if (Array.isArray(json.nilValues)) {
-    result.nilValues = parseNilValues(json.nilValues);
+    result.nilValues = parseNilValues<number>(json.nilValues);
   }
   if (typeof json.value === 'number') {
     result.value = json.value;
   }
-  return result as unknown as SweCount;
+  return result;
 }
 
 /**
@@ -390,14 +393,14 @@ export function parseBoolean(json: unknown): SweBoolean {
   if (!isRecord(json)) {
     throw new SweCommonParseError('Boolean input must be a non-null object');
   }
-  const result: Record<string, unknown> = {
+  const result: SweBoolean = {
     ...parseBaseProperties(json),
     type: 'Boolean',
   };
   if (typeof json.value === 'boolean') {
     result.value = json.value;
   }
-  return result as unknown as SweBoolean;
+  return result;
 }
 
 /**
@@ -420,7 +423,7 @@ export function parseText(json: unknown): SweText {
   if (!isRecord(json)) {
     throw new SweCommonParseError('Text input must be a non-null object');
   }
-  const result: Record<string, unknown> = {
+  const result: SweText = {
     ...parseBaseProperties(json),
     type: 'Text',
   };
@@ -428,12 +431,12 @@ export function parseText(json: unknown): SweText {
     result.constraint = parseAllowedTokens(json.constraint);
   }
   if (Array.isArray(json.nilValues)) {
-    result.nilValues = parseNilValues(json.nilValues);
+    result.nilValues = parseNilValues<string>(json.nilValues);
   }
   if (typeof json.value === 'string') {
     result.value = json.value;
   }
-  return result as unknown as SweText;
+  return result;
 }
 
 /**
@@ -460,7 +463,7 @@ export function parseTime(json: unknown): SweTime {
   if (!isRecord(json)) {
     throw new SweCommonParseError('Time input must be a non-null object');
   }
-  const result: Record<string, unknown> = {
+  const result: SweTime = {
     ...parseBaseProperties(json),
     type: 'Time',
     uom: parseUnitOfMeasure(json.uom),
@@ -475,12 +478,12 @@ export function parseTime(json: unknown): SweTime {
     result.constraint = parseAllowedTimes(json.constraint);
   }
   if (Array.isArray(json.nilValues)) {
-    result.nilValues = parseNilValues(json.nilValues);
+    result.nilValues = parseNilValues<DateTimeNumberOrSpecial>(json.nilValues);
   }
   if (typeof json.value === 'string' || typeof json.value === 'number') {
     result.value = json.value;
   }
-  return result as unknown as SweTime;
+  return result;
 }
 
 /**
@@ -508,7 +511,7 @@ export function parseCategory(json: unknown): SweCategory {
   if (!isRecord(json)) {
     throw new SweCommonParseError('Category input must be a non-null object');
   }
-  const result: Record<string, unknown> = {
+  const result: SweCategory = {
     ...parseBaseProperties(json),
     type: 'Category',
   };
@@ -519,12 +522,12 @@ export function parseCategory(json: unknown): SweCategory {
     result.constraint = parseAllowedTokens(json.constraint);
   }
   if (Array.isArray(json.nilValues)) {
-    result.nilValues = parseNilValues(json.nilValues);
+    result.nilValues = parseNilValues<string>(json.nilValues);
   }
   if (typeof json.value === 'string') {
     result.value = json.value;
   }
-  return result as unknown as SweCategory;
+  return result;
 }
 
 // ========================================
@@ -555,7 +558,7 @@ export function parseQuantityRange(json: unknown): SweQuantityRange {
   if (!isRecord(json)) {
     throw new SweCommonParseError('QuantityRange input must be a non-null object');
   }
-  const result: Record<string, unknown> = {
+  const result: SweQuantityRange = {
     ...parseBaseProperties(json),
     type: 'QuantityRange',
     uom: parseUnitOfMeasure(json.uom),
@@ -564,12 +567,12 @@ export function parseQuantityRange(json: unknown): SweQuantityRange {
     result.constraint = parseAllowedValues(json.constraint);
   }
   if (Array.isArray(json.nilValues)) {
-    result.nilValues = parseNilValues(json.nilValues);
+    result.nilValues = parseNilValues<NumberOrSpecial>(json.nilValues);
   }
   if (Array.isArray(json.value) && json.value.length === 2) {
     result.value = json.value as [NumberOrSpecial, NumberOrSpecial];
   }
-  return result as unknown as SweQuantityRange;
+  return result;
 }
 
 /**
@@ -592,7 +595,7 @@ export function parseCountRange(json: unknown): SweCountRange {
   if (!isRecord(json)) {
     throw new SweCommonParseError('CountRange input must be a non-null object');
   }
-  const result: Record<string, unknown> = {
+  const result: SweCountRange = {
     ...parseBaseProperties(json),
     type: 'CountRange',
   };
@@ -600,12 +603,12 @@ export function parseCountRange(json: unknown): SweCountRange {
     result.constraint = parseAllowedValues(json.constraint);
   }
   if (Array.isArray(json.nilValues)) {
-    result.nilValues = parseNilValues(json.nilValues);
+    result.nilValues = parseNilValues<string>(json.nilValues);
   }
   if (Array.isArray(json.value) && json.value.length === 2) {
     result.value = json.value as [number, number];
   }
-  return result as unknown as SweCountRange;
+  return result;
 }
 
 /**
@@ -631,7 +634,7 @@ export function parseTimeRange(json: unknown): SweTimeRange {
   if (!isRecord(json)) {
     throw new SweCommonParseError('TimeRange input must be a non-null object');
   }
-  const result: Record<string, unknown> = {
+  const result: SweTimeRange = {
     ...parseBaseProperties(json),
     type: 'TimeRange',
     uom: parseUnitOfMeasure(json.uom),
@@ -646,12 +649,12 @@ export function parseTimeRange(json: unknown): SweTimeRange {
     result.constraint = parseAllowedTimes(json.constraint);
   }
   if (Array.isArray(json.nilValues)) {
-    result.nilValues = parseNilValues(json.nilValues);
+    result.nilValues = parseNilValues<DateTimeNumberOrSpecial>(json.nilValues);
   }
   if (Array.isArray(json.value) && json.value.length === 2) {
     result.value = json.value as [DateTimeNumberOrSpecial, DateTimeNumberOrSpecial];
   }
-  return result as unknown as SweTimeRange;
+  return result;
 }
 
 /**
@@ -678,7 +681,7 @@ export function parseCategoryRange(json: unknown): SweCategoryRange {
   if (!isRecord(json)) {
     throw new SweCommonParseError('CategoryRange input must be a non-null object');
   }
-  const result: Record<string, unknown> = {
+  const result: SweCategoryRange = {
     ...parseBaseProperties(json),
     type: 'CategoryRange',
   };
@@ -689,12 +692,12 @@ export function parseCategoryRange(json: unknown): SweCategoryRange {
     result.constraint = parseAllowedTokens(json.constraint);
   }
   if (Array.isArray(json.nilValues)) {
-    result.nilValues = parseNilValues(json.nilValues);
+    result.nilValues = parseNilValues<string>(json.nilValues);
   }
   if (Array.isArray(json.value) && json.value.length === 2) {
     result.value = json.value as [string, string];
   }
-  return result as unknown as SweCategoryRange;
+  return result;
 }
 
 // ========================================

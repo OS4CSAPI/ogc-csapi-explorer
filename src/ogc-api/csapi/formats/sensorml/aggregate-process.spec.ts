@@ -705,4 +705,84 @@ describe('parseComponentEntry', () => {
       parseComponentEntry({ type: 'SimpleProcess' }, 2)
     ).toThrow('components[2] must have a string "name" property');
   });
+
+  // --- Cross-type delegation tests (Task 8b) ---
+
+  it('parses SimpleProcess child component via cross-type delegation', () => {
+    const entry = parseComponentEntry(
+      {
+        name: 'step1',
+        type: 'SimpleProcess',
+        uniqueId: 'urn:step1',
+        label: 'Step 1',
+      },
+      0
+    );
+    expect(entry.name).toBe('step1');
+    expect(entry.type).toBe('SimpleProcess');
+    expect((entry as any).uniqueId).toBe('urn:step1');
+  });
+
+  it('parses PhysicalSystem child component via cross-type delegation', () => {
+    const entry = parseComponentEntry(
+      {
+        name: 'subStation',
+        type: 'PhysicalSystem',
+        uniqueId: 'urn:station',
+        label: 'Sub Station',
+        components: [],
+      },
+      0
+    );
+    expect(entry.name).toBe('subStation');
+    expect(entry.type).toBe('PhysicalSystem');
+    expect((entry as any).uniqueId).toBe('urn:station');
+    expect((entry as any).components).toEqual([]);
+  });
+
+  it('parses PhysicalComponent child component via cross-type delegation', () => {
+    const entry = parseComponentEntry(
+      {
+        name: 'sensor1',
+        type: 'PhysicalComponent',
+        uniqueId: 'urn:sensor1',
+        label: 'Sensor 1',
+      },
+      0
+    );
+    expect(entry.name).toBe('sensor1');
+    expect(entry.type).toBe('PhysicalComponent');
+    expect((entry as any).uniqueId).toBe('urn:sensor1');
+  });
+
+  it('parses AggregateProcess child component (regression)', () => {
+    const entry = parseComponentEntry(
+      {
+        name: 'subChain',
+        type: 'AggregateProcess',
+        uniqueId: 'urn:sub',
+        label: 'Sub Chain',
+        components: [],
+      },
+      0
+    );
+    expect(entry.name).toBe('subChain');
+    expect(entry.type).toBe('AggregateProcess');
+    expect((entry as any).uniqueId).toBe('urn:sub');
+    expect((entry as any).components).toEqual([]);
+  });
+
+  it('passes through unknown type string without throwing', () => {
+    const entry = parseComponentEntry(
+      {
+        name: 'mystery',
+        type: 'FutureProcessType',
+        uniqueId: 'urn:future',
+      },
+      0
+    );
+    expect(entry.name).toBe('mystery');
+    expect((entry as any).type).toBe('FutureProcessType');
+    expect((entry as any).uniqueId).toBe('urn:future');
+  });
 });

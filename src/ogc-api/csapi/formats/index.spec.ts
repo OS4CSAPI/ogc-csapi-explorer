@@ -72,6 +72,18 @@ import {
   // --- Classification ---
   classifyFeature,
   inferResourceTypeFromPath,
+  // --- Part 1: Property Parser ---
+  parseProperty,
+  // --- Part 2: Resource Parsers ---
+  parseDatastream,
+  parseObservation,
+  parseControlStream,
+  parseCommand,
+  parseCommandStatus,
+  normalizeStatusCode,
+  // --- Schema Response Parsers ---
+  parseDatastreamSchemaResponse,
+  parseControlStreamSchemaResponse,
 } from './index.js';
 
 // ========================================
@@ -249,6 +261,54 @@ describe('Format Index — Classification', () => {
 
   it('exports inferResourceTypeFromPath as a callable function', () => {
     expect(typeof inferResourceTypeFromPath).toBe('function');
+  });
+});
+
+// ========================================
+// Part 1 — Property Parser Export Accessibility
+// ========================================
+
+describe('Format Index — Property Parser', () => {
+  it('exports parseProperty as a callable function', () => {
+    expect(typeof parseProperty).toBe('function');
+  });
+});
+
+// ========================================
+// Part 2 — Resource Parser Export Accessibility
+// ========================================
+
+describe('Format Index — Part 2 Resource Parsers', () => {
+  it('exports parseDatastream as a callable function', () => {
+    expect(typeof parseDatastream).toBe('function');
+  });
+  it('exports parseObservation as a callable function', () => {
+    expect(typeof parseObservation).toBe('function');
+  });
+  it('exports parseControlStream as a callable function', () => {
+    expect(typeof parseControlStream).toBe('function');
+  });
+  it('exports parseCommand as a callable function', () => {
+    expect(typeof parseCommand).toBe('function');
+  });
+  it('exports parseCommandStatus as a callable function', () => {
+    expect(typeof parseCommandStatus).toBe('function');
+  });
+  it('exports normalizeStatusCode as a callable function', () => {
+    expect(typeof normalizeStatusCode).toBe('function');
+  });
+});
+
+// ========================================
+// Schema Response Parser Export Accessibility
+// ========================================
+
+describe('Format Index — Schema Response Parsers', () => {
+  it('exports parseDatastreamSchemaResponse as a callable function', () => {
+    expect(typeof parseDatastreamSchemaResponse).toBe('function');
+  });
+  it('exports parseControlStreamSchemaResponse as a callable function', () => {
+    expect(typeof parseControlStreamSchemaResponse).toBe('function');
   });
 });
 

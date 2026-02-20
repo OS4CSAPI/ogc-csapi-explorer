@@ -154,35 +154,35 @@ describe('buildNestedCommandUrl', () => {
   it('builds a nested commands list URL (getCommands fallback)', () => {
     const url = buildNestedCommandUrl(builder, 'cs-001');
     expect(url).toBe(
-      'https://example.com/collections/iot/controlStreams/cs-001/commands'
+      'https://example.com/collections/iot/controlstreams/cs-001/commands'
     );
   });
 
   it('builds a nested single command URL (getCommand fallback)', () => {
     const url = buildNestedCommandUrl(builder, 'cs-001', 'cmd-001');
     expect(url).toBe(
-      'https://example.com/collections/iot/controlStreams/cs-001/commands/cmd-001'
+      'https://example.com/collections/iot/controlstreams/cs-001/commands/cmd-001'
     );
   });
 
   it('builds a nested command status URL (getCommandStatus fallback)', () => {
     const url = buildNestedCommandUrl(builder, 'cs-001', 'cmd-001', 'status');
     expect(url).toBe(
-      'https://example.com/collections/iot/controlStreams/cs-001/commands/cmd-001/status'
+      'https://example.com/collections/iot/controlstreams/cs-001/commands/cmd-001/status'
     );
   });
 
   it('builds a nested command result URL (getCommandResult fallback)', () => {
     const url = buildNestedCommandUrl(builder, 'cs-001', 'cmd-001', 'result');
     expect(url).toBe(
-      'https://example.com/collections/iot/controlStreams/cs-001/commands/cmd-001/result'
+      'https://example.com/collections/iot/controlstreams/cs-001/commands/cmd-001/result'
     );
   });
 
   it('builds a nested command cancel URL (cancelCommand fallback)', () => {
     const url = buildNestedCommandUrl(builder, 'cs-001', 'cmd-001', 'cancel');
     expect(url).toBe(
-      'https://example.com/collections/iot/controlStreams/cs-001/commands/cmd-001/cancel'
+      'https://example.com/collections/iot/controlstreams/cs-001/commands/cmd-001/cancel'
     );
   });
 
@@ -192,14 +192,14 @@ describe('buildNestedCommandUrl', () => {
       limit: 50,
     });
     expect(url).toBe(
-      'https://example.com/collections/iot/controlStreams/cs-001/commands?issueTime=2024-01-01T00%3A00%3A00.000Z%2F..&limit=50'
+      'https://example.com/collections/iot/controlstreams/cs-001/commands?issueTime=2024-01-01T00%3A00%3A00.000Z%2F..&limit=50'
     );
   });
 
   it('encodes special characters in command IDs', () => {
     const url = buildNestedCommandUrl(builder, 'cs-001', 'cmd/special id');
     expect(url).toBe(
-      'https://example.com/collections/iot/controlStreams/cs-001/commands/cmd%2Fspecial%20id'
+      'https://example.com/collections/iot/controlstreams/cs-001/commands/cmd%2Fspecial%20id'
     );
   });
 
@@ -207,7 +207,7 @@ describe('buildNestedCommandUrl', () => {
     const url = buildNestedCommandUrl(builder, 'cs-001', 'cmd-001', 'status', {
       limit: 10,
     });
-    expect(url).toContain('/controlStreams/cs-001/commands/cmd-001/status');
+    expect(url).toContain('/controlstreams/cs-001/commands/cmd-001/status');
     expect(url).toContain('limit=10');
   });
 });
@@ -249,7 +249,7 @@ describe('end-to-end fallback flow', () => {
     // Step 4: Build the nested fallback URL
     const nestedUrl = buildNestedCommandUrl(builder, 'cs-001', 'cmd-001');
     expect(nestedUrl).toBe(
-      'https://example.com/collections/iot/controlStreams/cs-001/commands/cmd-001'
+      'https://example.com/collections/iot/controlstreams/cs-001/commands/cmd-001'
     );
 
     // Step 5: Subsequent calls skip top-level attempt
@@ -262,7 +262,7 @@ describe('end-to-end fallback flow', () => {
     // Caller goes straight to nested URL — no top-level attempt
     const url = buildNestedCommandUrl(builder, 'cs-001', 'cmd-001', 'status');
     expect(url).toBe(
-      'https://example.com/collections/iot/controlStreams/cs-001/commands/cmd-001/status'
+      'https://example.com/collections/iot/controlstreams/cs-001/commands/cmd-001/status'
     );
   });
 });

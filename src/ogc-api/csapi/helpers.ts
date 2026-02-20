@@ -116,8 +116,14 @@ export function encodeResourceId(id: string): string {
  *    before matching; the alias `featuresOfInterest` is normalized to
  *    `samplingFeatures`)
  *
+ * **Note:** Servers that do not use any of these three conventions will
+ * produce an empty map. In that case, consumers should supply explicit
+ * resource URLs via the `resourceUrls` constructor parameter of
+ * {@link CSAPIQueryBuilder}.
+ *
  * @param links - Array of link objects (e.g., from a collection or root document).
  * @returns Map of resource type name → href string. Empty if no CSAPI links found.
+ * @see {@link CSAPIQueryBuilder} constructor for the `resourceUrls` workaround
  * @see https://docs.ogc.org/is/23-001/23-001.html
  */
 export function scanCsapiLinks(

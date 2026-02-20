@@ -182,7 +182,7 @@ describe('Command workflow — feasibility check', () => {
   it('builds feasibility check URL for a control stream', () => {
     const url = builder.checkCommandFeasibility('cs-valve');
     expect(url).toBe(
-      'https://api.example.com/collections/actuators/controlStreams/cs-valve/feasibility'
+      'https://api.example.com/collections/actuators/controlstreams/cs-valve/feasibility'
     );
   });
 });
@@ -197,14 +197,14 @@ describe('Command workflow — command submission', () => {
   it('builds command creation URL using nested path', () => {
     const url = builder.createCommand('cs-valve');
     expect(url).toBe(
-      'https://api.example.com/collections/actuators/controlStreams/cs-valve/commands'
+      'https://api.example.com/collections/actuators/controlstreams/cs-valve/commands'
     );
   });
 
   it('builds bulk command creation URL', () => {
     const url = builder.createCommands('cs-valve');
     expect(url).toBe(
-      'https://api.example.com/collections/actuators/controlStreams/cs-valve/commands'
+      'https://api.example.com/collections/actuators/controlstreams/cs-valve/commands'
     );
   });
 
@@ -312,7 +312,7 @@ describe('Command workflow — fallback routing (F34)', () => {
 
     // Step 4: Build nested fallback
     const nestedUrl = buildNestedCommandUrl(builder, 'cs-valve', 'cmd-001');
-    expect(nestedUrl).toContain('/controlStreams/cs-valve/commands/cmd-001');
+    expect(nestedUrl).toContain('/controlstreams/cs-valve/commands/cmd-001');
   });
 
   it('top-level URL → 400 rejection → nested fallback for getCommandStatus', () => {
@@ -325,7 +325,7 @@ describe('Command workflow — fallback routing (F34)', () => {
       'status'
     );
     expect(nestedUrl).toContain(
-      '/controlStreams/cs-valve/commands/cmd-001/status'
+      '/controlstreams/cs-valve/commands/cmd-001/status'
     );
   });
 
@@ -336,7 +336,7 @@ describe('Command workflow — fallback routing (F34)', () => {
       issueTime: { start: new Date('2024-01-01T00:00:00Z') },
       limit: 50,
     });
-    expect(nestedUrl).toContain('/controlStreams/cs-valve/commands');
+    expect(nestedUrl).toContain('/controlstreams/cs-valve/commands');
     expect(nestedUrl).toContain('issueTime=');
     expect(nestedUrl).toContain('limit=50');
   });
@@ -348,7 +348,7 @@ describe('Command workflow — fallback routing (F34)', () => {
     // Caller uses top-level URL directly — no fallback needed
     const url = builder.getCommand('cmd-001');
     expect(url).toContain('/commands/cmd-001');
-    expect(url).not.toContain('/controlStreams/');
+    expect(url).not.toContain('/controlstreams/');
   });
 
   it('caches preference per server base URL', () => {

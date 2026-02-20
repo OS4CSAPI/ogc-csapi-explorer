@@ -86,10 +86,34 @@ import {
  * @see https://docs.ogc.org/is/23-001/23-001.html — OGC API - Connected Systems Part 1
  * @see https://docs.ogc.org/is/23-002/23-002.html — OGC API - Connected Systems Part 2
  */
+
+/**
+ * Maps internal resource type keys to their OGC API URL path segments.
+ *
+ * NOTE: The `controlStreams → controlstreams` mapping affects all `@example`
+ * JSDoc blocks that show `/controlstreams` in output URLs. If this map is
+ * updated, the corresponding `@example` outputs must be updated to match.
+ */
+const RESOURCE_PATH_OVERRIDES: Readonly<Record<string, string>> = {
+  controlStreams: 'controlstreams',
+};
+
+function toUrlPathSegment(resourceType: string): string {
+  return RESOURCE_PATH_OVERRIDES[resourceType] ?? resourceType;
+}
+
 export default class CSAPIQueryBuilder {
   /**
    * The set of CSAPI resource types available on this collection,
-   * discovered from the collection's link relations.
+   * discovered from the collection's link relations via
+   * {@link scanCsapiLinks}.
+   *
+   * This reflects link scanning results, **not** actual server capability.
+   * Resources may exist at standard well-known paths even if they are not
+   * listed here. Consumers who supply `resourceUrls` to the constructor
+   * will also see those keys appear in this set.
+   *
+   * @see {@link scanCsapiLinks} for the recognized link conventions
    */
   public readonly availableResources: Set<string>;
 
@@ -116,10 +140,32 @@ export default class CSAPIQueryBuilder {
    *   collection-scoped self link. This supports servers that expose
    *   CSAPI resources at the API root (e.g., `/api/systems`) rather than
    *   under a collection path (e.g., `/collections/{id}/systems`).
+   *
+   * @remarks
+   * Resource availability (`availableResources`) is populated by scanning
+   * link relations in the collection document via {@link scanCsapiLinks},
+   * **not** by probing the server with HTTP requests. Some servers
+   * (e.g., 52North CSA) do not advertise CSAPI resources via standard link
+   * relations, which results in an empty `availableResources` set and
+   * causes {@link assertResourceAvailable} to throw for every resource type.
+   *
+   * The `resourceUrls` parameter is the recommended workaround for such
+   * servers: when provided, its keys are merged into `availableResources`,
+   * and its values are used as endpoint base URLs.
+   *
+   * @example
+   * // For servers that don't advertise CSAPI links, provide explicit resource URLs:
+   * const resourceUrls = new Map(
+   *   CSAPIResourceTypes.map(t => [t, `${baseUrl}/${t}`])
+   * );
+   * const builder = new CSAPIQueryBuilder(collection, resourceUrls);
+   *
+   * @see {@link scanCsapiLinks} for the link conventions recognized during discovery
+   * @see {@link assertResourceAvailable} for the validation that guards every query method
    * @see https://docs.ogc.org/is/23-001/23-001.html
    */
   constructor(
-    private collection_: OgcApiCollectionInfo,
+    private collection_: Pick<OgcApiCollectionInfo, 'id' | 'title' | 'links'>,
     resourceUrls?: Map<string, string>
   ) {
     this.resourceUrls_ = resourceUrls ?? new Map();
@@ -207,7 +253,7 @@ export default class CSAPIQueryBuilder {
     const topLevelUrl = this.resourceUrls_.get(resourceType);
     const resourceBase = topLevelUrl
       ? topLevelUrl.replace(/\/+$/, '')
-      : `${this.baseUrl}/${resourceType}`;
+      : `${this.baseUrl}/${toUrlPathSegment(resourceType)}`;
     let url = resourceBase;
     if (id) url += `/${encodeResourceId(id)}`;
     if (subPath) url += `/${subPath}`;
@@ -266,6 +312,10 @@ export default class CSAPIQueryBuilder {
    * Validates that a resource type is available on this collection.
    * @param resourceType - The resource type to validate.
    * @throws {EndpointError} If the resource type is not available.
+   *
+   * @see The constructor's `resourceUrls` parameter for a workaround when
+   *   a resource type exists on the server but was not discovered via links.
+   * @see {@link scanCsapiLinks} for the link conventions used during discovery
    */
   private assertResourceAvailable(resourceType: string): void {
     if (!this.availableResources.has(resourceType)) {
@@ -343,14 +393,35 @@ export default class CSAPIQueryBuilder {
   /**
    * Returns the URL for updating an existing system (PUT target).
    *
+   * @remarks
+   * **uid strictness (P4-F2):** The server rejects PUT requests with
+   * `400 "Feature UID cannot be changed"` if the `uid` in the request body
+   * does not byte-for-byte match the server-stored value. Consumers must
+   * preserve the exact `uid` from the original creation response or GET the
+   * resource before PUT to read the current uid.
+   *
+   * Recommended patterns:
+   * - **Preserve from creation:** Store the `uid` returned in the POST
+   *   `Location` header or GET response; reuse it unchanged in the PUT body.
+   * - **GET-then-PUT:** Fetch the current resource, merge your changes into
+   *   the fetched body, then PUT it back (see example below).
+   *
    * @param id - The system resource identifier to update.
    * @returns URL string for the individual system endpoint.
    * @throws {EndpointError} If 'systems' is not available on this collection.
    *
    * @example
    * ```ts
-   * const url = builder.updateSystem('abc123');
-   * // PUT to => "https://example.com/collections/iot/systems/abc123"
+   * // Safe update pattern: GET then PUT
+   * const getUrl = builder.getSystem('abc123');
+   * const current = await fetch(getUrl).then(r => r.json());
+   * current.properties.name = 'Updated Name';
+   * // uid is preserved from GET response
+   * await fetch(builder.updateSystem('abc123'), {
+   *   method: 'PUT',
+   *   headers: { 'Content-Type': 'application/geo+json' },
+   *   body: JSON.stringify(current),
+   * });
    * ```
    *
    * @see https://docs.ogc.org/is/23-001/23-001.html#_system_resources
@@ -424,6 +495,28 @@ export default class CSAPIQueryBuilder {
   }
 
   /**
+   * Returns the URL for creating a subsystem within a parent system.
+   *
+   * The request body (not part of the URL) must describe the new child system.
+   *
+   * @param parentId - The parent system resource identifier.
+   * @returns URL string for the subsystem creation endpoint (POST).
+   * @throws {EndpointError} If 'systems' is not available on this collection.
+   *
+   * @example
+   * ```ts
+   * const url = builder.createSubsystem('sys-parent');
+   * // => "https://example.com/collections/iot/systems/sys-parent/subsystems"
+   * ```
+   *
+   * @see https://docs.ogc.org/is/23-001/23-001.html#_system_resources
+   */
+  createSubsystem(parentId: string): string {
+    this.assertResourceAvailable('systems');
+    return this.buildResourceUrl('systems', parentId, 'subsystems');
+  }
+
+  /**
    * Returns the URL for listing datastreams associated with a system.
    *
    * @param id - The system resource identifier.
@@ -442,6 +535,30 @@ export default class CSAPIQueryBuilder {
   getSystemDataStreams(id: string, options?: QueryOptions): string {
     this.assertResourceAvailable('systems');
     return this.buildResourceUrl('systems', id, 'datastreams', options);
+  }
+
+  /**
+   * Returns the URL for creating a datastream within a system.
+   *
+   * OGC 23-002r1 §7.2 requires datastreams to be created as nested
+   * sub-resources of a System. The request body (not part of the URL)
+   * must include the result schema, observed properties, and system association.
+   *
+   * @param systemId - The parent system resource identifier.
+   * @returns URL string for the nested datastream creation endpoint (POST).
+   * @throws {EndpointError} If 'systems' is not available on this collection.
+   *
+   * @example
+   * ```ts
+   * const url = builder.createDataStreamForSystem('sys-001');
+   * // => "https://example.com/collections/iot/systems/sys-001/datastreams"
+   * ```
+   *
+   * @see https://docs.ogc.org/is/23-002/23-002.html#_datastream_resources
+   */
+  createDataStreamForSystem(systemId: string): string {
+    this.assertResourceAvailable('systems');
+    return this.buildResourceUrl('systems', systemId, 'datastreams');
   }
 
   /**
@@ -466,6 +583,29 @@ export default class CSAPIQueryBuilder {
   }
 
   /**
+   * Returns the URL for creating a control stream within a system.
+   *
+   * The request body (not part of the URL) must include the parameter schema
+   * and controlled properties.
+   *
+   * @param systemId - The parent system resource identifier.
+   * @returns URL string for the nested control stream creation endpoint (POST).
+   * @throws {EndpointError} If 'systems' is not available on this collection.
+   *
+   * @example
+   * ```ts
+   * const url = builder.createControlStreamForSystem('sys-001');
+   * // => "https://example.com/collections/iot/systems/sys-001/controlstreams"
+   * ```
+   *
+   * @see https://docs.ogc.org/is/23-002/23-002.html#_controlstream_resources
+   */
+  createControlStreamForSystem(systemId: string): string {
+    this.assertResourceAvailable('systems');
+    return this.buildResourceUrl('systems', systemId, 'controlstreams');
+  }
+
+  /**
    * Returns the URL for listing sampling features associated with a system.
    *
    * @param id - The system resource identifier.
@@ -484,6 +624,29 @@ export default class CSAPIQueryBuilder {
   getSystemSamplingFeatures(id: string, options?: QueryOptions): string {
     this.assertResourceAvailable('systems');
     return this.buildResourceUrl('systems', id, 'samplingFeatures', options);
+  }
+
+  /**
+   * Returns the URL for creating a sampling feature within a system.
+   *
+   * The request body (not part of the URL) must include the feature type,
+   * geometry, and sampled feature link relation.
+   *
+   * @param systemId - The parent system resource identifier.
+   * @returns URL string for the nested sampling feature creation endpoint (POST).
+   * @throws {EndpointError} If 'systems' is not available on this collection.
+   *
+   * @example
+   * ```ts
+   * const url = builder.createSamplingFeatureForSystem('sys-001');
+   * // => "https://example.com/collections/iot/systems/sys-001/samplingFeatures"
+   * ```
+   *
+   * @see https://docs.ogc.org/is/23-001/23-001.html#_sampling_feature_resources
+   */
+  createSamplingFeatureForSystem(systemId: string): string {
+    this.assertResourceAvailable('systems');
+    return this.buildResourceUrl('systems', systemId, 'samplingFeatures');
   }
 
   /**
@@ -596,6 +759,14 @@ export default class CSAPIQueryBuilder {
   /**
    * Returns the URL for updating an existing deployment (PUT target).
    *
+   * @remarks
+   * **uid strictness (P4-F2):** The server rejects PUT requests with
+   * `400 "Feature UID cannot be changed"` if the `uid` in the request body
+   * does not byte-for-byte match the server-stored value. Consumers must
+   * preserve the exact `uid` from the original creation response or GET the
+   * resource before PUT to read the current uid.
+   * See {@link updateSystem} for a full GET-then-PUT example.
+   *
    * @param id - The deployment resource identifier to update.
    * @returns URL string for the individual deployment endpoint.
    * @throws {EndpointError} If 'deployments' is not available on this collection.
@@ -653,6 +824,28 @@ export default class CSAPIQueryBuilder {
   getDeploymentSubdeployments(id: string, options?: DeploymentQueryOptions): string {
     this.assertResourceAvailable('deployments');
     return this.buildResourceUrl('deployments', id, 'subdeployments', options);
+  }
+
+  /**
+   * Returns the URL for creating a subdeployment within a parent deployment.
+   *
+   * The request body (not part of the URL) must describe the new child deployment.
+   *
+   * @param parentId - The parent deployment resource identifier.
+   * @returns URL string for the subdeployment creation endpoint (POST).
+   * @throws {EndpointError} If 'deployments' is not available on this collection.
+   *
+   * @example
+   * ```ts
+   * const url = builder.createSubdeployment('dep-parent');
+   * // => "https://example.com/collections/iot/deployments/dep-parent/subdeployments"
+   * ```
+   *
+   * @see https://docs.ogc.org/is/23-001/23-001.html#_deployment_resources
+   */
+  createSubdeployment(parentId: string): string {
+    this.assertResourceAvailable('deployments');
+    return this.buildResourceUrl('deployments', parentId, 'subdeployments');
   }
 
   /**
@@ -765,6 +958,14 @@ export default class CSAPIQueryBuilder {
 
   /**
    * Returns the URL for updating an existing procedure (PUT target).
+   *
+   * @remarks
+   * **uid strictness (P4-F2):** The server rejects PUT requests with
+   * `400 "Feature UID cannot be changed"` if the `uid` in the request body
+   * does not byte-for-byte match the server-stored value. Consumers must
+   * preserve the exact `uid` from the original creation response or GET the
+   * resource before PUT to read the current uid.
+   * See {@link updateSystem} for a full GET-then-PUT example.
    *
    * @param id - The procedure resource identifier to update.
    * @returns URL string for the individual procedure endpoint.
@@ -934,6 +1135,14 @@ export default class CSAPIQueryBuilder {
 
   /**
    * Returns the URL for updating an existing sampling feature (PUT target).
+   *
+   * @remarks
+   * **uid strictness (P4-F2):** The server rejects PUT requests with
+   * `400 "Feature UID cannot be changed"` if the `uid` in the request body
+   * does not byte-for-byte match the server-stored value. Consumers must
+   * preserve the exact `uid` from the original creation response or GET the
+   * resource before PUT to read the current uid.
+   * See {@link updateSystem} for a full GET-then-PUT example.
    *
    * @param id - The sampling feature resource identifier to update.
    * @returns URL string for the individual sampling feature endpoint.
@@ -1262,6 +1471,15 @@ export default class CSAPIQueryBuilder {
    *
    * Caution: schema changes may affect existing observations.
    *
+   * @remarks
+   * **uid strictness (P4-F2):** The server rejects PUT requests with
+   * `400 "Feature UID cannot be changed"` if the `uid` in the request body
+   * does not byte-for-byte match the server-stored value. Consumers must
+   * preserve the exact `uid` from the original creation response or GET the
+   * resource before PUT to read the current uid.
+   * See {@link updateSystem} for a full GET-then-PUT example
+   * (use `Content-Type: application/json` for Part 2 resources).
+   *
    * @param id - The datastream resource identifier.
    * @returns URL string for the datastream update endpoint (PUT).
    * @throws {EndpointError} If 'datastreams' is not available on this collection.
@@ -1302,19 +1520,24 @@ export default class CSAPIQueryBuilder {
   /**
    * Returns the URL for retrieving a datastream's result schema.
    *
-   * The `obsFormat` query parameter is **required** per Part 2, Req 11.
-   * Omitting it causes the server to return 400 Bad Request.
+   * Per OGC 23-002 §Req 11, the `obsFormat` query parameter specifies
+   * which observation encoding the schema describes. Note that `obsFormat`
+   * is distinct from the OGC API — Common `f` parameter (response format
+   * negotiation). Many servers return a valid default schema when
+   * `obsFormat` is omitted.
    *
    * @param id - The datastream resource identifier.
-   * @param options - Optional query parameters. Should include `f` set to the
-   *   desired observation format (e.g., `application/swe+json`).
+   * @param options - Optional query parameters. To request a specific
+   *   observation format schema, pass `obsFormat` (not `f`) as a key
+   *   (e.g., `{ obsFormat: 'application/swe+json' }`).
    * @returns URL string for the datastream schema endpoint.
    * @throws {EndpointError} If 'datastreams' is not available on this collection.
    *
    * @example
    * ```ts
-   * const url = builder.getDataStreamSchema('ds-001', { f: 'application/swe+json' });
-   * // => "https://example.com/collections/iot/datastreams/ds-001/schema?f=application%2Fswe%2Bjson"
+   * // Without obsFormat — server returns the default schema:
+   * const url = builder.getDataStreamSchema('ds-001');
+   * // => "https://example.com/collections/iot/datastreams/ds-001/schema"
    * ```
    *
    * @see https://docs.ogc.org/is/23-002/23-002.html#req_datastream_schema
@@ -1487,6 +1710,15 @@ export default class CSAPIQueryBuilder {
 
   /**
    * Returns the URL for updating an existing observation.
+   *
+   * @remarks
+   * **uid strictness (P4-F2):** The server rejects PUT requests with
+   * `400 "Feature UID cannot be changed"` if the `uid` in the request body
+   * does not byte-for-byte match the server-stored value. Consumers must
+   * preserve the exact `uid` from the original creation response or GET the
+   * resource before PUT to read the current uid.
+   * See {@link updateSystem} for a full GET-then-PUT example
+   * (use `Content-Type: application/json` for Part 2 resources).
    *
    * @param id - The observation resource identifier.
    * @returns URL string for the observation update endpoint (PUT).
@@ -1692,6 +1924,15 @@ export default class CSAPIQueryBuilder {
    *
    * Caution: schema changes may affect pending commands.
    *
+   * @remarks
+   * **uid strictness (P4-F2):** The server rejects PUT requests with
+   * `400 "Feature UID cannot be changed"` if the `uid` in the request body
+   * does not byte-for-byte match the server-stored value. Consumers must
+   * preserve the exact `uid` from the original creation response or GET the
+   * resource before PUT to read the current uid.
+   * See {@link updateSystem} for a full GET-then-PUT example
+   * (use `Content-Type: application/json` for Part 2 resources).
+   *
    * @param id - The control stream resource identifier.
    * @returns URL string for the control stream update endpoint (PUT).
    * @throws {EndpointError} If 'controlStreams' is not available on this collection.
@@ -1732,20 +1973,24 @@ export default class CSAPIQueryBuilder {
   /**
    * Returns the URL for retrieving a control stream's parameter schema.
    *
-   * The `cmdFormat` query parameter is **required** per Part 2, Req 25.
-   * Omitting it causes the server to return 400 Bad Request.
-   * Pass it via the `f` option (e.g., `{ f: 'application/swe+json' }`).
+   * Per OGC 23-002 §Req 25, the `cmdFormat` query parameter specifies
+   * which command encoding the schema describes. Note that `cmdFormat`
+   * is distinct from the OGC API — Common `f` parameter (response format
+   * negotiation). Many servers return a valid default schema when
+   * `cmdFormat` is omitted.
    *
    * @param id - The control stream resource identifier.
-   * @param options - Optional query parameters. Should include `f` set to the
-   *   desired command format (e.g., `application/swe+json`).
+   * @param options - Optional query parameters. To request a specific
+   *   command format schema, pass `cmdFormat` (not `f`) as a key
+   *   (e.g., `{ cmdFormat: 'application/swe+json' }`).
    * @returns URL string for the control stream schema endpoint.
    * @throws {EndpointError} If 'controlStreams' is not available on this collection.
    *
    * @example
    * ```ts
-   * const url = builder.getControlStreamSchema('cs-001', { f: 'application/swe+json' });
-   * // => "https://example.com/collections/iot/controlstreams/cs-001/schema?f=application%2Fswe%2Bjson"
+   * // Without cmdFormat — server returns the default schema:
+   * const url = builder.getControlStreamSchema('cs-001');
+   * // => "https://example.com/collections/iot/controlStreams/cs-001/schema"
    * ```
    *
    * @see https://docs.ogc.org/is/23-002/23-002.html#req_controlstream_schema
@@ -1858,14 +2103,38 @@ export default class CSAPIQueryBuilder {
    * The request body (not part of the URL) must conform to the control stream's
    * parameter schema.
    *
+   * @remarks
+   * **Streaming POST behavior (P4-F1):** Some OGC API servers (e.g. OSH)
+   * hold the HTTP connection open after receiving a command POST — the server
+   * streams back a long-lived response rather than returning `201 Created`.
+   * Standard `fetch()` calls will appear to hang. Consumers should use
+   * `AbortController` with a timeout, or treat the request as fire-and-forget.
+   *
    * @param controlStreamId - The control stream resource identifier.
    * @returns URL string for the command creation endpoint (POST).
    * @throws {EndpointError} If 'controlStreams' is not available on this collection.
    *
    * @example
    * ```ts
-   * const url = builder.createCommand('cs-001');
-   * // => "https://example.com/collections/iot/controlStreams/cs-001/commands"
+   * // Safe pattern: AbortController with timeout
+   * const controller = new AbortController();
+   * const timeoutId = setTimeout(() => controller.abort(), 5000);
+   * try {
+   *   await fetch(builder.createCommand('cs-001'), {
+   *     method: 'POST',
+   *     headers: { 'Content-Type': 'application/json' },
+   *     body: JSON.stringify(commandBody),
+   *     signal: controller.signal,
+   *   });
+   * } catch (e) {
+   *   if (e.name === 'AbortError') {
+   *     // Expected — command was received, connection just stayed open
+   *   } else {
+   *     throw e;
+   *   }
+   * } finally {
+   *   clearTimeout(timeoutId);
+   * }
    * ```
    *
    * @see https://docs.ogc.org/is/23-002/23-002.html#_command_resources
@@ -1880,6 +2149,14 @@ export default class CSAPIQueryBuilder {
    *
    * The request body (not part of the URL) must contain an array of command
    * objects, each conforming to the control stream's parameter schema.
+   *
+   * @remarks
+   * **Streaming POST behavior (P4-F1):** Some OGC API servers (e.g. OSH)
+   * hold the HTTP connection open after receiving a command POST — the server
+   * streams back a long-lived response rather than returning `201 Created`.
+   * Standard `fetch()` calls will appear to hang. Consumers should use
+   * `AbortController` with a timeout, or treat the request as fire-and-forget.
+   * See {@link createCommand} for a full AbortController example.
    *
    * @param controlStreamId - The control stream resource identifier.
    * @returns URL string for the bulk command creation endpoint (POST).
@@ -1900,6 +2177,15 @@ export default class CSAPIQueryBuilder {
 
   /**
    * Returns the URL for updating an existing command.
+   *
+   * @remarks
+   * **uid strictness (P4-F2):** The server rejects PUT requests with
+   * `400 "Feature UID cannot be changed"` if the `uid` in the request body
+   * does not byte-for-byte match the server-stored value. Consumers must
+   * preserve the exact `uid` from the original creation response or GET the
+   * resource before PUT to read the current uid.
+   * See {@link updateSystem} for a full GET-then-PUT example
+   * (use `Content-Type: application/json` for Part 2 resources).
    *
    * @param id - The command resource identifier.
    * @returns URL string for the command update endpoint (PUT).
@@ -1966,6 +2252,15 @@ export default class CSAPIQueryBuilder {
    *
    * Used for system-generated status updates as a command progresses
    * through its lifecycle (e.g., from PENDING to EXECUTING).
+   *
+   * @remarks
+   * **uid strictness (P4-F2):** The server rejects PUT/PATCH requests with
+   * `400 "Feature UID cannot be changed"` if the `uid` in the request body
+   * does not byte-for-byte match the server-stored value. Consumers must
+   * preserve the exact `uid` from the original creation response or GET the
+   * resource before updating to read the current uid.
+   * See {@link updateSystem} for a full GET-then-PUT example
+   * (use `Content-Type: application/json` for Part 2 resources).
    *
    * @param id - The command resource identifier.
    * @returns URL string for the command status update endpoint (PATCH).

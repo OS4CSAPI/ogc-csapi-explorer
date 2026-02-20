@@ -71,7 +71,7 @@ export default class OgcApiEndpoint {
   private get root(): Promise<OgcApiDocument> {
     if (!this.root_) {
       this.root_ = fetchRoot(this.baseUrl).catch((e) => {
-        throw new Error(`The endpoint appears non-conforming, the following error was encountered:
+        throw new EndpointError(`The endpoint appears non-conforming, the following error was encountered:
 ${e.message}`);
       });
     }
