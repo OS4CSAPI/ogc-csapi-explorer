@@ -17,8 +17,9 @@ import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
 import Polygon from 'ol/geom/Polygon'
 import LineString from 'ol/geom/LineString'
-import { Style, Circle as CircleStyle, Fill, Stroke, Text as OlText } from 'ol/style'
+import { Style, Circle as CircleStyle, Fill, Stroke, Text as OlText, Icon as OlIcon } from 'ol/style'
 import Overlay from 'ol/Overlay'
+import { getSymbolForResource, getSymbolSizeForType, type MilSymbolResult } from '../symbol-mapper'
 import type { Coordinate } from 'ol/coordinate'
 import Draw, { createBox } from 'ol/interaction/Draw'
 
@@ -115,7 +116,10 @@ const bboxLayer = new VectorLayer({
 const vectorSources: Record<string, VectorSource> = {}
 const vectorLayers: Record<string, VectorLayer> = {}
 
-function getStyle(resourceType: string, enriched = false): Style {
+// Enable/disable milsymbol rendering (toggle for A/B comparison)
+const useMilSymbols = ref(true)
+
+function getStyle(resourceType: string, enriched = false, rawData?: any): Style {
   const color = TYPE_COLORS[resourceType] || '#6b7280'
   const label = TYPE_LABELS[resourceType] || '?'
 
@@ -137,7 +141,27 @@ function getStyle(resourceType: string, enriched = false): Style {
     })
   }
 
-  // Part 2 associated types use smaller markers to reduce clutter at shared locations
+  // --- MIL-STD-2525 symbol rendering ---
+  if (useMilSymbols.value && rawData) {
+    const sz = getSymbolSizeForType(resourceType)
+    const sym = getSymbolForResource(resourceType, rawData, sz)
+    if (sym) {
+      return new Style({
+        image: new OlIcon({
+          src: sym.svgDataUrl,
+          anchor: [sym.anchor.x / sym.size.width, sym.anchor.y / sym.size.height],
+          anchorXUnits: 'fraction',
+          anchorYUnits: 'fraction',
+          scale: 1,
+          opacity: enriched ? 0.85 : 1,
+        }),
+        stroke: new Stroke({ color, width: 2 }),
+        fill: new Fill({ color: color + '33' }),
+      })
+    }
+  }
+
+  // --- Fallback: colored circle with letter ---
   const isPart2 = resourceType === 'datastreams' || resourceType === 'controlStreams'
   const radius = isPart2 ? 7 : 10
   const font = isPart2 ? 'bold 8px sans-serif' : 'bold 11px sans-serif'
@@ -163,7 +187,7 @@ function getStyle(resourceType: string, enriched = false): Style {
   })
 }
 
-function getSelectedStyle(resourceType: string): Style {
+function getSelectedStyle(resourceType: string, rawData?: any): Style {
   const color = TYPE_COLORS[resourceType] || '#6b7280'
   const label = TYPE_LABELS[resourceType] || '?'
 
@@ -183,6 +207,25 @@ function getSelectedStyle(resourceType: string): Style {
     })
   }
 
+  // --- MIL-STD-2525 selected: render at larger size ---
+  if (useMilSymbols.value && rawData) {
+    const sym = getSymbolForResource(resourceType, rawData, 'normal')
+    if (sym) {
+      return new Style({
+        image: new OlIcon({
+          src: sym.svgDataUrl,
+          anchor: [sym.anchor.x / sym.size.width, sym.anchor.y / sym.size.height],
+          anchorXUnits: 'fraction',
+          anchorYUnits: 'fraction',
+          scale: 1.3,
+        }),
+        stroke: new Stroke({ color: '#fbbf24', width: 3 }),
+        fill: new Fill({ color: color + '55' }),
+      })
+    }
+  }
+
+  // --- Fallback: colored circle selected ---
   const isPart2 = resourceType === 'datastreams' || resourceType === 'controlStreams'
   const radius = isPart2 ? 10 : 14
   const font = isPart2 ? 'bold 10px sans-serif' : 'bold 13px sans-serif'
@@ -254,7 +297,7 @@ function createOlFeature(item: any, resourceType: string): Feature | null {
   }
 
   const feature = new Feature({ geometry: olGeom })
-  feature.setStyle(getStyle(resourceType))
+  feature.setStyle(getStyle(resourceType, false, item))
   feature.set('resourceType', resourceType)
   feature.set('resourceId', extractId(item))
   feature.set('resourceName', extractName(item))
@@ -396,7 +439,7 @@ function createEnrichedFeature(
   const olFeature = new Feature({
     geometry: new Point(fromLonLat([lon, lat])),
   })
-  olFeature.setStyle(getStyle(resourceType, true))
+  olFeature.setStyle(getStyle(resourceType, true, item))
   olFeature.set('resourceType', resourceType)
   olFeature.set('resourceId', extractId(item))
   olFeature.set('resourceName', extractName(item))
@@ -848,6 +891,25 @@ function toggleLayer(key: string) {
   }
 }
 
+/**
+ * Re-apply styles to all features on the map when the milsymbol toggle changes.
+ */
+function refreshAllStyles() {
+  for (const [resourceType, source] of Object.entries(vectorSources)) {
+    if (!source) continue
+    for (const feature of source.getFeatures()) {
+      const rawData = feature.get('rawData')
+      const isEnriched = feature.get('enriched') || false
+      feature.setStyle(getStyle(resourceType, isEnriched, rawData))
+    }
+  }
+  // Also refresh the selected feature highlight if one is active
+  if (selectedFeature.value?._olFeature) {
+    const sf = selectedFeature.value
+    sf._olFeature.setStyle(getSelectedStyle(sf.resourceType, sf.rawData))
+  }
+}
+
 // --- Map Setup ---
 
 onMounted(() => {
@@ -906,11 +968,11 @@ onMounted(() => {
       if (selectedFeature.value?._olFeature) {
         const prevType = selectedFeature.value.resourceType
         const prevEnriched = selectedFeature.value.enriched || false
-        selectedFeature.value._olFeature.setStyle(getStyle(prevType, prevEnriched))
+        selectedFeature.value._olFeature.setStyle(getStyle(prevType, prevEnriched, selectedFeature.value.rawData))
       }
 
       // Highlight new selection
-      ;(feature as Feature).setStyle(getSelectedStyle(resourceType))
+      ;(feature as Feature).setStyle(getSelectedStyle(resourceType, rawData))
 
       selectedFeature.value = {
         resourceType,
@@ -968,7 +1030,7 @@ function closePopup() {
   if (selectedFeature.value?._olFeature) {
     const prevType = selectedFeature.value.resourceType
     const prevEnriched = selectedFeature.value.enriched || false
-    selectedFeature.value._olFeature.setStyle(getStyle(prevType, prevEnriched))
+    selectedFeature.value._olFeature.setStyle(getStyle(prevType, prevEnriched, selectedFeature.value.rawData))
   }
   selectedFeature.value = null
 }
@@ -1073,6 +1135,14 @@ async function createTestFeature() {
         <span class="enrichment-text">
           {{ Object.values(enrichedCounts).reduce((s, n) => s + n, 0) }} locations derived from observations
         </span>
+      </div>
+
+      <!-- MIL-STD-2525 symbol toggle -->
+      <div class="milsymbol-toggle">
+        <label class="milsymbol-label">
+          <input type="checkbox" v-model="useMilSymbols" @change="refreshAllStyles" />
+          <span>MIL-STD-2525 Symbols</span>
+        </label>
       </div>
 
       <div class="sidebar-status">
@@ -1307,6 +1377,28 @@ async function createTestFeature() {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.milsymbol-toggle {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.milsymbol-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: #334155;
+  cursor: pointer;
+  user-select: none;
+}
+
+.milsymbol-label input[type="checkbox"] {
+  accent-color: #3b82f6;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
 }
 
 .refresh-btn {
