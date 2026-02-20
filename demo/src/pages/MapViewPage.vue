@@ -117,7 +117,7 @@ const vectorSources: Record<string, VectorSource> = {}
 const vectorLayers: Record<string, VectorLayer> = {}
 
 // Enable/disable milsymbol rendering (toggle for A/B comparison)
-const useMilSymbols = ref(true)
+const useMilSymbols = ref(false)
 
 function getStyle(resourceType: string, enriched = false, rawData?: any): Style {
   const color = TYPE_COLORS[resourceType] || '#6b7280'

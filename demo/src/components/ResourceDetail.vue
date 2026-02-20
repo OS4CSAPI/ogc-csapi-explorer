@@ -12,6 +12,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import SweSchemaDisplay from './SweSchemaDisplay.vue'
 import ParsedResourceView from './ParsedResourceView.vue'
 import DataModelDiagram from './DataModelDiagram.vue'
+import SensorMLDisplay from './SensorMLDisplay.vue'
 
 const router = useRouter()
 
@@ -28,6 +29,8 @@ const detail = ref<any>(null)
 
 /** True when viewing a datastream — triggers schema display */
 const isDatastream = computed(() => props.resourceType === 'datastreams')
+/** True when viewing a procedure — triggers SensorML display */
+const isProcedure = computed(() => props.resourceType === 'procedures')
 const effectiveId = computed(() => detail.value?.id || props.resourceId || '')
 
 // ========================================
@@ -288,6 +291,9 @@ watch(
 
       <!-- Observation Schema (datastreams only) — full width below -->
       <SweSchemaDisplay v-if="isDatastream && effectiveId" :datastreamId="effectiveId" />
+
+      <!-- SensorML Process Description (procedures only) — full width below -->
+      <SensorMLDisplay v-if="isProcedure && effectiveId" :procedureId="effectiveId" />
 
       <!-- Links — full width below -->
       <details v-if="detail.links?.length || detail.properties?.links?.length" class="detail-section">
