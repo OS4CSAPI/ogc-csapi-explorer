@@ -56,6 +56,8 @@ interface ModelEdge {
   label: string
   /** Edge style hint */
   style: 'solid' | 'dashed'
+  /** Plain-language tooltip shown on hover */
+  tooltip: string
 }
 
 /*
@@ -82,23 +84,23 @@ const nodes: ModelNode[] = [
 
 const edges: ModelEdge[] = [
   // System is central hub
-  { from: 'systems',    to: 'procedures',       label: 'implements',       style: 'solid' },
-  { from: 'systems',    to: 'deployments',       label: 'deployedIn',       style: 'solid' },
-  { from: 'systems',    to: 'samplingFeatures',  label: 'samples',          style: 'solid' },
-  { from: 'systems',    to: 'datastreams',       label: 'outputs',          style: 'solid' },
-  { from: 'systems',    to: 'controlStreams',    label: 'controls',         style: 'solid' },
-  { from: 'systems',    to: 'systems',           label: 'subsystems',       style: 'dashed' },
+  { from: 'systems',    to: 'procedures',       label: 'implements',       style: 'solid',  tooltip: 'A System implements a Procedure that describes its sensing or actuating capabilities' },
+  { from: 'systems',    to: 'deployments',       label: 'deployedIn',       style: 'solid',  tooltip: 'A System is deployed as part of a Deployment that describes when/where it operates' },
+  { from: 'systems',    to: 'samplingFeatures',  label: 'samples',          style: 'solid',  tooltip: 'A System samples a Sampling Feature \u2014 the real-world entity being observed' },
+  { from: 'systems',    to: 'datastreams',       label: 'outputs',          style: 'solid',  tooltip: 'A System produces Datastreams that represent its continuous data outputs' },
+  { from: 'systems',    to: 'controlStreams',    label: 'controls',         style: 'solid',  tooltip: 'A System exposes Control Streams that accept commands to change its behavior' },
+  { from: 'systems',    to: 'systems',           label: 'subsystems',       style: 'dashed', tooltip: 'Systems can contain child sub-systems, forming a hierarchical tree' },
 
   // Deployment self-reference
-  { from: 'deployments', to: 'deployments',      label: 'subdeployments',   style: 'dashed' },
+  { from: 'deployments', to: 'deployments',      label: 'subdeployments',   style: 'dashed', tooltip: 'Deployments can contain child sub-deployments for nested deployment structures' },
 
   // Part 2 chains
-  { from: 'datastreams',    to: 'observations',  label: 'produces',         style: 'solid' },
-  { from: 'controlStreams', to: 'commands',       label: 'receives',         style: 'solid' },
+  { from: 'datastreams',    to: 'observations',  label: 'produces',         style: 'solid',  tooltip: 'A Datastream produces individual Observations \u2014 each a timestamped measurement' },
+  { from: 'controlStreams', to: 'commands',       label: 'receives',         style: 'solid',  tooltip: 'A Control Stream receives individual Commands \u2014 each a timestamped instruction' },
 
   // Property links
-  { from: 'datastreams',    to: 'properties',    label: 'observes',         style: 'dashed' },
-  { from: 'controlStreams', to: 'properties',     label: 'controls',         style: 'dashed' },
+  { from: 'datastreams',    to: 'properties',    label: 'observes',         style: 'dashed', tooltip: 'A Datastream observes a Property \u2014 the physical quantity being measured' },
+  { from: 'controlStreams', to: 'properties',     label: 'controls',         style: 'dashed', tooltip: 'A Control Stream controls a Property \u2014 the parameter being commanded' },
 ]
 
 const NODE_RX = 12
@@ -608,12 +610,7 @@ function navigateToType(nodeId: string) {
 
       <!-- Edges (rendered first so nodes are on top) -->
       <g v-for="edge in edges" :key="`${edge.from}-${edge.to}-${edge.label}`">
-        <!-- Tooltip for self-loop (hierarchy) edges -->
-        <title v-if="edge.from === edge.to">{{
-          edge.from === 'systems'
-            ? 'Systems can contain child sub-systems (subsystem hierarchy)'
-            : 'Deployments can contain child sub-deployments (subdeployment hierarchy)'
-        }}</title>
+        <title>{{ edge.tooltip }}</title>
         <path
           :d="edgePath(edge)"
           :stroke="isEdgeActive(edge) ? '#0ea5e9' : '#cbd5e1'"
