@@ -76,10 +76,16 @@ export const builder = shallowRef<CSAPIQueryBuilder | null>(null)
  * Resource URLs in the builder use relative paths (e.g., `/systems`)
  * so that apiFetch() can prepend the proxy base URL transparently.
  */
+export interface BuilderInitResult {
+  builder: CSAPIQueryBuilder
+  discoveredTypes: string[]
+  usedFallback: boolean
+}
+
 export function initializeBuilder(
   landingPage: any,
   collections: any[]
-): CSAPIQueryBuilder {
+): BuilderInitResult {
   // Gather all links from landing page and collections
   const allLinks: Array<{ rel?: string; href?: string }> = []
 
@@ -130,7 +136,11 @@ export function initializeBuilder(
 
   const newBuilder = new CSAPIQueryBuilder(collectionInfo, resourceUrls)
   builder.value = newBuilder
-  return newBuilder
+  return {
+    builder: newBuilder,
+    discoveredTypes: Array.from(discovered.keys()),
+    usedFallback: discovered.size === 0,
+  }
 }
 
 /** Clear the builder on disconnect. */

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { connection } from '../state'
+import { connection, type ConnectionWarning } from '../state'
 import { initializeBuilder, destroyBuilder } from '../csapi-bridge'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
@@ -22,6 +22,7 @@ const username = ref('')
 const password = ref('')
 const connecting = ref(false)
 const error = ref('')
+const warnings = ref<ConnectionWarning[]>([])
 
 // Disconnect and reset when switching servers
 watch(selectedPreset, () => {
@@ -53,6 +54,7 @@ async function connect() {
   landingPage.value = null
   conformance.value = []
   collections.value = []
+  warnings.value = []
 
   const baseUrl = getEffectiveUrl()
   if (!baseUrl) {
@@ -77,13 +79,18 @@ async function connect() {
     landingPage.value = landingData
 
     // Conformance
+    let conformanceFetchFailed = false
     try {
       const conformRes = await fetch(baseUrl + '/conformance', { headers })
       if (conformRes.ok) {
         const conformData = await conformRes.json()
         conformance.value = conformData.conformsTo || []
+      } else {
+        conformanceFetchFailed = true
       }
-    } catch { /* not fatal */ }
+    } catch {
+      conformanceFetchFailed = true
+    }
 
     // Collections
     try {
@@ -94,6 +101,68 @@ async function connect() {
       }
     } catch { /* not fatal */ }
 
+    // --- Credential verification ---
+    // The landing page may be public (returns 200 regardless of credentials),
+    // so verify credentials against an actual CSAPI resource endpoint.
+    if (username.value && password.value) {
+      try {
+        const authCheckRes = await fetch(baseUrl + '/systems?limit=1', { headers })
+        if (authCheckRes.status === 401 || authCheckRes.status === 403) {
+          throw new Error(
+            'Authentication failed — the server rejected the provided credentials. '
+            + 'Please check your username and password.'
+          )
+        }
+      } catch (authErr: any) {
+        // Re-throw auth failures; swallow network/404 errors (endpoint may not exist)
+        if (authErr.message?.includes('Authentication failed')) throw authErr
+      }
+    }
+
+    // --- Dynamic warning detection ---
+    const detectedWarnings: ConnectionWarning[] = []
+
+    // 1. Conformance endpoint
+    if (conformanceFetchFailed) {
+      detectedWarnings.push({
+        severity: 'warn',
+        summary: 'Conformance endpoint unavailable',
+        detail: 'The /conformance endpoint returned an error or could not be reached. '
+          + 'The app cannot determine which API capabilities this server supports. '
+          + 'The ogc-client library\'s OgcApiEndpoint class would be unable to discover server features.',
+      })
+    } else if (conformance.value.length === 0) {
+      detectedWarnings.push({
+        severity: 'warn',
+        summary: 'No conformance classes declared',
+        detail: 'The server\'s /conformance endpoint returned an empty list. '
+          + 'Without conformance declarations, the ogc-client library\'s OgcApiEndpoint class '
+          + 'would report no capabilities for this server.',
+      })
+    } else if (csapiConformance(conformance.value).length === 0) {
+      detectedWarnings.push({
+        severity: 'warn',
+        summary: 'No CSAPI conformance classes',
+        detail: `This server declares ${conformance.value.length} conformance class(es), `
+          + 'but none relate to the OGC Connected Systems API (Part 1 or Part 2), SensorML, '
+          + 'or SWE Common. The ogc-client library\'s OgcApiEndpoint class would report '
+          + 'no CSAPI capabilities for this server.',
+      })
+    }
+
+    // 2. CSAPI resource link discovery
+    const initResult = initializeBuilder(landingData, collections.value)
+    if (initResult.usedFallback) {
+      detectedWarnings.push({
+        severity: 'warn',
+        summary: 'CSAPI resource links not advertised',
+        detail: 'No Connected Systems API resource links were found in the server\'s '
+          + 'landing page or collection links. The app is assuming all 9 standard CSAPI '
+          + 'resource types are available at their default paths. Some types may not '
+          + 'actually be supported by this server.',
+      })
+    }
+
     // Store in shared state
     connection.connected = true
     connection.label = selectedPreset.value?.label || customUrl.value
@@ -102,11 +171,14 @@ async function connect() {
     connection.landingPage = landingData
     connection.conformance = conformance.value
     connection.collections = collections.value
+    connection.warnings = detectedWarnings
+    warnings.value = detectedWarnings
 
-    // Initialize the CSAPIQueryBuilder from discovered links
-    const csapiBuilder = initializeBuilder(landingData, collections.value)
     console.log('[CSAPI Bridge] Builder initialized. Available resources:',
-      Array.from(csapiBuilder.availableResources))
+      Array.from(initResult.builder.availableResources))
+    if (detectedWarnings.length > 0) {
+      console.warn('[Connect] Detected warnings:', detectedWarnings.map(w => w.summary))
+    }
   } catch (err: any) {
     error.value = err.message || 'Connection failed'
   } finally {
@@ -123,9 +195,11 @@ function disconnect() {
   connection.landingPage = null
   connection.conformance = []
   connection.collections = []
+  connection.warnings = []
   landingPage.value = null
   conformance.value = []
   collections.value = []
+  warnings.value = []
   error.value = ''
 }
 
@@ -211,6 +285,24 @@ function otherConformance(classes: string[]): string[] {
         </div>
       </Panel>
 
+      <Panel v-if="warnings.length > 0" header="Connection Warnings" class="mt-4" toggleable>
+        <div class="warnings-list">
+          <Message
+            v-for="(w, i) in warnings"
+            :key="i"
+            :severity="w.severity === 'warn' ? 'warn' : 'info'"
+            :closable="false"
+            class="warning-message"
+          >
+            <div>
+              <strong>{{ w.summary }}</strong>
+              <p class="warning-detail">{{ w.detail }}</p>
+            </div>
+          </Message>
+        </div>
+        <p class="text-muted mb-0">These warnings indicate where the app had to bypass or work around standard OGC API behavior to connect to this server.</p>
+      </Panel>
+
       <Panel v-if="conformance.length > 0" header="Conformance Classes" class="mt-4" toggleable>
         <div v-if="csapiConformance(conformance).length > 0">
           <h4 class="mt-0">CSAPI / SensorML / SWE Common</h4>
@@ -279,4 +371,7 @@ function otherConformance(classes: string[]): string[] {
 .collections-table th { background: #f8fafc; font-weight: 600; }
 .collections-table code { background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.85rem; }
 .raw-json { background: #f8fafc; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; max-height: 400px; overflow-y: auto; margin: 0; }
+.warnings-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; }
+.warning-message { margin: 0; }
+.warning-detail { margin: 0.25rem 0 0; font-size: 0.85rem; opacity: 0.9; line-height: 1.4; }
 </style>

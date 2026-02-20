@@ -1,6 +1,17 @@
 import { reactive } from 'vue'
 
 /**
+ * A dynamic warning detected during the connection handshake.
+ * These are NOT hardcoded per-server — they're detected at connect time
+ * based on what the server actually returns (or fails to return).
+ */
+export interface ConnectionWarning {
+  severity: 'warn' | 'info'
+  summary: string
+  detail: string
+}
+
+/**
  * Shared application state — connection info accessible to all components
  */
 export interface ServerConnection {
@@ -11,6 +22,7 @@ export interface ServerConnection {
   landingPage: any | null
   conformance: string[]
   collections: any[]
+  warnings: ConnectionWarning[]
 }
 
 export const connection = reactive<ServerConnection>({
@@ -21,6 +33,7 @@ export const connection = reactive<ServerConnection>({
   landingPage: null,
   conformance: [],
   collections: [],
+  warnings: [],
 })
 
 /**
