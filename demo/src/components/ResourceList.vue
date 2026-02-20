@@ -407,7 +407,7 @@ watch(
 <template>
   <div class="resource-list">
     <!-- Filters -->
-    <div class="filters">
+    <div class="filters" @keydown.enter="refresh">
       <div class="filter-row">
         <div class="filter-item">
           <label>Limit</label>
