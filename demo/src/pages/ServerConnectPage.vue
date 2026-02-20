@@ -150,7 +150,37 @@ async function connect() {
       })
     }
 
-    // 2. CSAPI resource link discovery
+    // 2. Collections link relation
+    // The ogc-client library expects link rel "data" or the full OGC URI
+    // "http://www.opengis.net/def/rel/ogc/1.0/data" in the root landing page
+    // to discover the collections URL. Some servers (e.g. OSH) use rel "collections"
+    // instead, which causes the library's collectionsUrl to resolve to null.
+    const rootLinks: Array<{ rel?: string; href?: string }> = landingData?.links || []
+    const hasDataRel = rootLinks.some((l: any) =>
+      l.rel === 'data' || l.rel === 'http://www.opengis.net/def/rel/ogc/1.0/data'
+    )
+    const hasCollectionsRel = rootLinks.some((l: any) => l.rel === 'collections')
+    if (!hasDataRel && hasCollectionsRel) {
+      detectedWarnings.push({
+        severity: 'warn',
+        summary: 'Non-standard collections link relation',
+        detail: 'The server\'s landing page advertises its collections endpoint using link rel '
+          + '"collections" instead of the OGC API Common-specified "data" relation. '
+          + 'The ogc-client library\'s OgcApiEndpoint class would fail to discover the '
+          + 'collections URL, causing csapiCollections to return an empty array even though '
+          + 'the server fully implements the Connected Systems API.',
+      })
+    } else if (!hasDataRel && !hasCollectionsRel) {
+      detectedWarnings.push({
+        severity: 'warn',
+        summary: 'No collections link in landing page',
+        detail: 'The server\'s landing page does not contain a link with rel "data" or '
+          + '"collections" pointing to the collections endpoint. The ogc-client library\'s '
+          + 'OgcApiEndpoint class would be unable to discover available collections.',
+      })
+    }
+
+    // 3. CSAPI resource link discovery
     const initResult = initializeBuilder(landingData, collections.value)
     if (initResult.usedFallback) {
       detectedWarnings.push({
