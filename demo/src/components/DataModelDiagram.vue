@@ -2,8 +2,8 @@
 import { computed, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../api'
-import { getListUrl } from '../csapi-bridge'
-import { connection } from '../state'
+import { getNestedListUrl } from '../csapi-bridge'
+import { connection, RELATED_RESOURCES } from '../state'
 
 const router = useRouter()
 
@@ -175,43 +175,55 @@ function edgeLabelPos(edge: ModelEdge): { x: number; y: number } {
   }
 }
 
-// ─── Live Resource Counts ─────────────────────────────────────────
+// ─── Live Resource Counts (scoped to active resource) ─────────────
 
 /** Map of resource-type key → count (null = loading, -1 = unavailable/error) */
 const counts = reactive<Record<string, number | null>>({})
 let fetchGeneration = 0
 
+/**
+ * Fetch counts of related/nested resources for the currently viewed resource.
+ * Only fetches for types directly connected to the active type via RELATED_RESOURCES.
+ */
 async function fetchCounts() {
   const gen = ++fetchGeneration
-  // Reset all to loading
-  for (const n of nodes) counts[n.id] = null
+  const parentType = props.activeType
+  const parentId = props.activeId
+
+  // Clear previous counts
+  for (const key of Object.keys(counts)) delete counts[key]
+
+  if (!parentId || !parentType) return
+
+  const relations = RELATED_RESOURCES[parentType]
+  if (!relations?.length) return
+
+  // Set connected types to loading
+  for (const rel of relations) counts[rel.childType] = null
 
   // Fire all requests in parallel
-  const requests = nodes.map(async (n) => {
+  const requests = relations.map(async (rel) => {
     try {
-      const path = getListUrl(n.id, { limit: 0 })
+      const path = getNestedListUrl(parentType, parentId, rel.relation, { limit: 0 })
       const res = await apiFetch(path)
       if (gen !== fetchGeneration) return  // stale
       if (!res.ok) {
-        counts[n.id] = -1
+        counts[rel.childType] = -1
         return
       }
-      // Try numberMatched (GeoJSON/SWE collections), then items array length
       const data = res.data
       if (data?.numberMatched != null) {
-        counts[n.id] = data.numberMatched
+        counts[rel.childType] = data.numberMatched
       } else if (Array.isArray(data?.items)) {
-        // If limit=0 but server still returns items array, count is the numberMatched or items length
-        counts[n.id] = data.items.length
+        counts[rel.childType] = data.items.length
       } else if (Array.isArray(data?.features)) {
-        counts[n.id] = data.features.length
+        counts[rel.childType] = data.features.length
       } else {
-        // Server returned OK but no recognizable count — mark available but unknown
-        counts[n.id] = -1
+        counts[rel.childType] = -1
       }
     } catch {
       if (gen !== fetchGeneration) return
-      counts[n.id] = -1
+      counts[rel.childType] = -1
     }
   })
   await Promise.allSettled(requests)
@@ -226,11 +238,11 @@ function formatCount(n: number | null | undefined): string {
 }
 
 onMounted(() => {
-  if (connection.connected) fetchCounts()
+  if (connection.connected && props.activeId) fetchCounts()
 })
 
-watch(() => connection.connected, (c) => {
-  if (c) fetchCounts()
+watch([() => props.activeType, () => props.activeId], () => {
+  if (connection.connected && props.activeId) fetchCounts()
 })
 
 /** Navigate to a resource type in the explorer */
