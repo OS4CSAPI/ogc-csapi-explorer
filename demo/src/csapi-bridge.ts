@@ -471,6 +471,7 @@ export {
   parseControlStreamSchemaResponse,
   parseSensorML30,
 }
-export { parseSWEComponent } from '@csapi/ogc-api/csapi/formats/swecommon/parser'
+export { parseSWEComponent, validateAgainstSchema } from '@csapi/ogc-api/csapi/formats/swecommon/parser'
 export type { AnyComponent } from '@csapi/ogc-api/csapi/formats/swecommon/types'
+export type { ValidationResult, ValidationError } from '@csapi/ogc-api/csapi/formats/swecommon/parser'
 export type { CollectionResponse }

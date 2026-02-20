@@ -16,6 +16,7 @@ import {
   classifyResource,
   parsePart2Resource,
 } from '../csapi-bridge'
+import ObservationResultTable from './ObservationResultTable.vue'
 
 const props = defineProps<{
   /** Raw server JSON for one resource */
@@ -25,6 +26,30 @@ const props = defineProps<{
   /** The endpoint URL this resource was fetched from (used for 52North classification fallback) */
   endpointUrl?: string
 }>()
+
+// ─── Parent datastream ID extraction ────────────────────────
+/**
+ * Extract the parent datastream ID from the raw observation JSON.
+ * OGC Connected Systems observations carry `datastream@id` as a
+ * cross-reference field in the server response.
+ */
+const parentDatastreamId = computed<string | null>(() => {
+  if (props.resourceType !== 'observations') return null
+  const raw = props.resource
+  if (!raw) return null
+  // Check datastream@id (standard cross-reference in API JSON)
+  if (typeof raw['datastream@id'] === 'string') return raw['datastream@id']
+  // Check links for a 'datastream' rel
+  if (Array.isArray(raw.links)) {
+    const dsLink = raw.links.find((l: any) => l.rel === 'datastream' || l.rel === 'collection')
+    if (dsLink?.href) {
+      // Extract ID from href like /datastreams/abc
+      const match = dsLink.href.match(/datastreams\/([^/?]+)/)
+      if (match) return match[1]
+    }
+  }
+  return null
+})
 
 // ─── Library recognition ─────────────────────────────────────
 const recognizedType = computed(() => {
@@ -270,8 +295,12 @@ function geometrySummary(geom: any): string {
           </tr>
           <tr v-if="parsedPart2.result !== undefined">
             <td class="field-label">result</td>
-            <td><code>{{ typeof parsedPart2.result === 'object' ? JSON.stringify(parsedPart2.result).slice(0, 200) : parsedPart2.result }}</code></td>
-            <td class="field-type">{{ typeof parsedPart2.result }}</td>
+            <td colspan="2">
+              <ObservationResultTable
+                :result="parsedPart2.result"
+                :datastreamId="parentDatastreamId"
+              />
+            </td>
           </tr>
           <!-- Command-specific fields -->
           <tr v-if="parsedPart2.issueTime">
