@@ -121,12 +121,19 @@ function isActive(nodeId: string) {
 
 /** Is this node connected to the active resource? */
 function isConnected(nodeId: string) {
-  return connectedNodeIds.value.has(nodeId)
+  if (!connectedNodeIds.value.has(nodeId)) return false
+  // If we have a definitive count of 0 for this related type, treat as not connected
+  if (nodeId !== props.activeType && counts[nodeId] === 0) return false
+  return true
 }
 
 /** Is this edge connected to the active type? */
 function isEdgeActive(edge: ModelEdge) {
-  return edge.from === props.activeType || edge.to === props.activeType
+  if (edge.from !== props.activeType && edge.to !== props.activeType) return false
+  // Dim edge if the other end has a count of 0
+  const otherEnd = edge.from === props.activeType ? edge.to : edge.from
+  if (counts[otherEnd] === 0) return false
+  return true
 }
 
 /** Compute edge path between two nodes.
