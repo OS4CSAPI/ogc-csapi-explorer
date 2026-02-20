@@ -129,8 +129,8 @@ const numberReturned = ref<number | null>(null)
 const totalCount = ref<number | null>(null)
 const rawResponse = ref<any>(null)
 
-/** True when we had to apply client-side filtering/limit because the server ignored params */
-const clientSideFallback = ref(false)
+/** Details about which client-side fallbacks were triggered (empty = no fallback) */
+const clientSideFallbackDetails = ref<string[]>([])
 
 /**
  * Fetch the total number of matching resources (same filters, no limit/offset).
@@ -235,7 +235,7 @@ async function fetchResources(cursorUrl?: string) {
     try {
       const parsed = parseCollectionResponse(res.data)
       let resultItems = parsed.items as any[]
-      clientSideFallback.value = false
+      clientSideFallbackDetails.value = []
 
       // --- Client-side fallback for servers that ignore query parameters ---
       // Some servers (e.g., OSH) ignore ?q= and ?limit= entirely.
@@ -262,15 +262,21 @@ async function fetchResources(cursorUrl?: string) {
         // have already filtered and the keyword just doesn't appear in our
         // checked fields — we don't want a false negative)
         if (filtered.length < resultItems.length) {
+          const serverCount = resultItems.length
           resultItems = filtered
-          clientSideFallback.value = true
+          clientSideFallbackDetails.value.push(
+            `q="${q.value}": server returned ${serverCount} items unfiltered — reduced to ${filtered.length} client-side`
+          )
         }
       }
 
       // 2) Client-side limit enforcement
       if (limit.value && !cursorUrl && resultItems.length > limit.value) {
+        const serverCount = resultItems.length
         resultItems = resultItems.slice(0, limit.value)
-        clientSideFallback.value = true
+        clientSideFallbackDetails.value.push(
+          `limit=${limit.value}: server returned ${serverCount} items — truncated client-side`
+        )
       }
 
       items.value = resultItems
@@ -475,8 +481,11 @@ watch(
     </div>
 
     <!-- Client-side fallback warning -->
-    <Message v-if="!loading && clientSideFallback" severity="warn" :closable="false" class="mt-2">
-      Server ignored filter/limit parameters — results filtered client-side.
+    <Message v-if="!loading && clientSideFallbackDetails.length" severity="warn" :closable="false" class="mt-2">
+      <div>Server ignored query parameters — results corrected client-side:</div>
+      <ul class="mt-1 mb-0 pl-4" style="list-style: disc;">
+        <li v-for="(detail, i) in clientSideFallbackDetails" :key="i">{{ detail }}</li>
+      </ul>
     </Message>
 
     <!-- Data Table -->
