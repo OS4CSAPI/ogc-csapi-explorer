@@ -229,10 +229,6 @@ export function getSymbolForResource(
   try {
     const sym = new ms.Symbol(sidc, {
       size: pixelSize,
-      frame: true,
-      fill: true,
-      colorMode: undefined,
-      infoSize: 40,
     })
 
     const svgString = sym.asSVG()

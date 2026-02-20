@@ -5,6 +5,9 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
+  optimizeDeps: {
+    exclude: ['milsymbol'],
+  },
   resolve: {
     alias: {
       '@csapi': path.resolve(__dirname, '../src'),
