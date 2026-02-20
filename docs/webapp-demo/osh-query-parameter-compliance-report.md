@@ -1,6 +1,6 @@
 # OSH Server Query Parameter Compliance Report
 
-> **Date**: 2026-02-20  
+> **Date**: 2026-02-20 (updated)  
 > **Commit**: `caa7415` (fix: client-side fallback for servers that ignore q/limit params)  
 > **Server under test**: OpenSensorHub (OSH) at `http://45.55.99.236:8080/sensorhub/api`  
 > **Spec references**: OGC API — Features Part 1: Core (17-069r4), OGC API — Connected Systems Part 1 & 2 (Draft)
@@ -9,49 +9,42 @@
 
 ## 1. Executive Summary
 
-During testing of the CSAPI Explorer demo app against a live OpenSensorHub (OSH) server, we discovered that OSH **silently ignores** the `?limit=` and `?q=` query parameters on collection endpoints. The server accepts both parameters without returning an error (no HTTP 400), but does not apply them — it returns the full, unfiltered collection regardless. This violates the OGC API — Features Core requirement for `limit` and the Connected Systems Part 2 requirement for `q`.
+During testing of the CSAPI Explorer demo app against a live OpenSensorHub (OSH) server, we initially observed that OSH appeared to silently ignore the `?limit=` and `?q=` query parameters on collection endpoints — the server returned all 33 systems despite `?limit=10&q=FCU` being sent. A client-side fallback was implemented (commit `caa7415`) to protect against non-compliant servers.
 
-A client-side workaround has been implemented in the Explorer demo (commit `caa7415`), but the root cause is a server-side compliance gap that should be addressed by the OSH maintainers.
+**Update:** Follow-up testing confirmed that OSH **does correctly honor** both `limit` and `q` parameters. The `q=FCU` filter correctly returned 1 matching system, and `limit=10` correctly capped results. No client-side fallback banner appeared, and the raw server response confirmed server-side filtering. The initial observation was likely caused by a transient server condition (restart, cache, or initialization delay).
+
+The client-side fallback code remains in place as a **defensive measure** for interoperability with other OGC API servers that may not implement these parameters. The report has been revised to document the investigation, the spec requirements, the fallback architecture, and remaining OSH compliance gaps in other areas.
 
 ---
 
 ## 2. Observed Behavior
 
-### 2.1 The `limit` Parameter Is Ignored
+### 2.1 Initial Observation (Transient)
 
-**Request sent:**
-```
-GET /sensorhub/api/systems?limit=10
-Accept: application/json
-```
+During the first test pass, a request to `GET /systems?limit=10&q=FCU` returned all 33 systems unfiltered. This appeared to indicate that both `limit` and `q` were being silently ignored by the server.
 
-**Expected behavior:** Response contains at most 10 items, with a `next` link if more are available.
+### 2.2 Follow-Up Verification (Confirmed Working)
 
-**Actual behavior:** Response contains all 33 systems. The `limit` parameter is accepted (no error) but has no effect on the result set.
+On subsequent testing, the same parameters worked correctly:
 
-### 2.2 The `q` (Keyword Search) Parameter Is Ignored
+- **`q=FCU`**: Server returned exactly 1 system — "FCU Field Drone CubePilot" (id: `8o30`). The raw response confirmed the server performed the filtering (only 1 item in the JSON payload).
+- **`limit=10`** (without `q`): Server returned 10 systems out of the full collection, confirming server-side pagination.
+- **No warning banner**: The client-side fallback did not activate, confirming the server handled the parameters.
 
-**Request sent:**
-```
-GET /sensorhub/api/systems?limit=10&q=FCU
-Accept: application/json
-```
+### 2.3 Likely Cause of Initial Observation
 
-**Expected behavior:** Response contains only systems matching the keyword "FCU", limited to 10 results.
+The initial "33 of 33" result was most likely caused by one of:
+- A server restart or reinitialization that temporarily bypassed the query engine
+- A cached response from a prior unfiltered request
+- A first-fetch initialization delay before the query parameter processing was ready
 
-**Actual behavior:** Response contains all 33 systems, unfiltered. The `q` parameter is accepted (no error) but has no effect on the result set.
-
-### 2.3 Impact on Client Applications
-
-The demo UI showed **"33 of 33 results"** even though the user had:
-- Set the limit to 10
-- Entered "FCU" as a keyword filter
-
-This is confusing because the URL bar confirms the parameters were sent correctly — the server simply did not honor them.
+This could not be reproduced after the initial occurrence.
 
 ---
 
-## 3. Specification Requirements
+## 3. Specification Requirements (Reference)
+
+The following spec requirements motivated the investigation and the defensive fallback code. OSH was confirmed to comply with these after follow-up testing.
 
 ### 3.1 `limit` — OGC API Features Core (Requirement 22)
 
@@ -66,17 +59,17 @@ The `limit` parameter is a **Core requirement** in OGC API — Features Part 1 (
 
 The word **"SHALL"** makes this a normative requirement. A conformant server **must** respect the `limit` parameter and return no more items than requested.
 
+**OSH status:** ✅ Confirmed compliant — `limit` is honored correctly.
+
 ### 3.2 `q` — OGC API Connected Systems Part 2
 
-The `q` parameter is defined in OGC API — Connected Systems Part 2 as a free-text keyword search filter. While this is still a draft specification, OSH claims to implement Connected Systems and its API definition (OpenAPI) advertises the `q` parameter. Per **Requirement 9 (/req/core/query-param-invalid)** from the Features Core:
+The `q` parameter is defined in OGC API — Connected Systems Part 2 as a free-text keyword search filter. OSH's OpenAPI definition advertises `q` as a supported parameter.
 
-> The server SHALL respond with a response with the status code 400, if the request URI includes a query parameter that has an invalid value.
+**OSH status:** ✅ Confirmed working — `q=FCU` correctly returned 1 matching system.
 
-And per **Requirement 8 (/req/core/query-param-unknown)**:
+### 3.3 Why Defensive Fallback Code Matters
 
-> The server SHALL respond with a response with the status code 400, if the request URI includes a query parameter that is not specified in the API definition.
-
-Since OSH accepts `q` without a 400 error, it implicitly claims to support it. Accepting the parameter and silently ignoring it is worse than rejecting it — it gives the client a false impression that filtering was applied.
+Even though OSH honors these parameters, the OGC API ecosystem includes many server implementations. Per **Requirement 8 (/req/core/query-param-unknown)**, servers SHALL return HTTP 400 for unknown parameters — but in practice, some servers silently accept and ignore unsupported parameters instead. The client-side fallback protects against this real-world interoperability risk.
 
 ---
 
@@ -109,9 +102,9 @@ This suggests a systemic implementation gap in OSH's query parameter processing 
 
 ---
 
-## 5. Client-Side Workaround
+## 5. Client-Side Defensive Fallback
 
-Commit `caa7415` implements a client-side fallback in `ResourceList.vue` to maintain a correct UI when servers ignore parameters:
+Commit `caa7415` implements a client-side fallback in `ResourceList.vue` as a **defensive measure** for interoperability with any OGC API server that may not implement `limit` or `q`. While OSH was confirmed to honor these parameters, the fallback protects against non-compliant servers:
 
 ### 5.1 Client-Side Keyword Filtering
 
@@ -165,57 +158,24 @@ When the fallback activates, a warning banner appears:
 
 This transparency is important: the user knows the server didn't honor their request, and the client compensated.
 
-### 5.5 Limitations of the Workaround
+### 5.5 Limitations of the Fallback
+
+These limitations only apply when the fallback activates (i.e., when connected to a non-compliant server):
 
 | Limitation | Impact |
 |-----------|--------|
 | **Client filtering only works on data already fetched** | If the server has 10,000 items and returns all of them, the client can filter — but if the server's own default limit caps at, say, 100, the client can only filter within those 100 |
 | **`q` matching is naive** | The client matches against a limited set of string fields (`id`, `name`, `title`, `description`, `uniqueId`). Server-side `q` could match against additional fields, nested properties, or use full-text search |
-| **Pagination is broken** | With the server ignoring `limit` and `offset`, offset-based pagination cannot work correctly. The client can only paginate within locally-held data |
+| **Pagination is broken** | With a non-compliant server ignoring `limit` and `offset`, offset-based pagination cannot work correctly. The client can only paginate within locally-held data |
 | **Performance** | Fetching all items when only a page is needed wastes bandwidth and processing time |
 
 ---
 
-## 6. Recommendations for OSH Maintainers
+## 6. Remaining Recommendations for OSH Maintainers
 
-### 6.1 Priority 1: Implement `limit` Parameter (Core Compliance)
+Since `limit` and `q` are confirmed working, the remaining recommendations focus on other gaps found during this testing session:
 
-**Why:** This is a normative SHALL requirement from OGC API — Features Core. Without it, the server cannot claim OGC API Core conformance.
-
-**Expected implementation:**
-- Parse the `limit` query parameter from the request URL
-- Cap the result set to `min(limit, server_max_limit)` items
-- Include a `next` link in the response if more items are available
-- Set `numberReturned` to the actual count of items in the response
-- Optionally set `numberMatched` to the total number of matching items
-
-**Spec reference:** Requirement 22, `/req/core/fc-limit-response-1`
-
-### 6.2 Priority 2: Implement `offset` Parameter (Paging Support)
-
-**Why:** Without `offset` (or an equivalent cursor mechanism), clients cannot paginate through collections. The `next` link in the response should provide the mechanism, but OSH does not include `next` links either.
-
-**Expected implementation:**
-- Parse the `offset` query parameter
-- Skip the first `offset` items in the result set
-- Include `next` and optionally `prev` links in the response with correct offset values
-- Example: `?limit=10&offset=10` → skip first 10, return next 10
-
-**Spec reference:** Recommendation 17–19, response `next` links
-
-### 6.3 Priority 3: Implement `q` Parameter (CSAPI Part 2 Compliance)
-
-**Why:** The OSH OpenAPI definition advertises `q` as a supported parameter. Accepting it without applying it violates the principle of least surprise and makes the API unreliable.
-
-**Expected implementation:**
-- Parse the `q` query parameter as a case-insensitive free-text keyword
-- Match against relevant text properties of each resource (at minimum: `name`, `description`, `uniqueId`)
-- Return only items that match the keyword
-- If `q` is not yet implementable, **return HTTP 400** rather than silently ignoring it, per Requirement 8
-
-**Spec reference:** CSAPI Part 2, Features Core Requirement 8 (`/req/core/query-param-unknown`)
-
-### 6.4 Priority 4: Include `numberMatched` / `numberReturned` in Responses
+### 6.1 Include `numberMatched` / `numberReturned` in Responses
 
 **Why:** Clients need these values to display accurate pagination metadata ("Showing X of Y"). Without them, clients must make additional requests or guess.
 
@@ -225,9 +185,23 @@ This transparency is important: the user knows the server didn't honor their req
 
 **Spec reference:** Requirements 31–32, `/req/core/fc-numberMatched`, `/req/core/fc-numberReturned`
 
-### 6.5 General: Reject Unknown/Unsupported Parameters with HTTP 400
+### 6.2 Honor the HTTP `Accept` Header
 
-Per OGC API — Features Core Requirements 8 and 9, the server **SHALL** return HTTP 400 for unknown or invalid query parameters. If a parameter like `q` is advertised in the OpenAPI definition but not yet implemented, the server should either:
+**Why:** OSH currently ignores the `Accept` header entirely, always returning JSON. This prevents clients from requesting SensorML (`application/sml+json`), XML, or other formats via standard HTTP content negotiation.
+
+**Spec reference:** RFC 7231 §5.3.2, OGC API Features Core Requirement 7 (HTTP 1.1 conformance)
+
+**Filed as:** Library issue [#99](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/99)
+
+### 6.3 Expose Top-Level Collections for Part 2 Resources
+
+**Why:** Part 2 resources (datastreams, control streams, etc.) are only available nested under systems. Exposing them as top-level collections (`/datastreams`, `/controlstreams`) improves discoverability and allows clients to query across all systems.
+
+**Filed as:** Library issue [#100](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/100)
+
+### 6.4 General: Reject Unknown/Unsupported Parameters with HTTP 400
+
+Per OGC API — Features Core Requirements 8 and 9, the server **SHALL** return HTTP 400 for unknown or invalid query parameters. If any parameter is advertised in the OpenAPI definition but not implemented, the server should either:
 
 1. **Implement it**, or
 2. **Remove it from the OpenAPI definition** and return HTTP 400 when it's used, or
@@ -239,12 +213,13 @@ Silent acceptance without application is the worst option — it prevents client
 
 ## 7. Other OSH Interoperability Gaps Found in This Session
 
-This report focuses on `limit` and `q`, but other compliance gaps were discovered during this testing session:
+While `limit` and `q` were confirmed working, other compliance gaps were discovered during this testing session:
 
-| Issue | Description | Filed As |
-|-------|-------------|----------|
-| **Accept header ignored** | OSH ignores the HTTP `Accept` header entirely, always returning JSON regardless of requested content type. The SensorML `Accept: application/sml+json` header is ignored. | Library issue [#99](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/99) |
-| **Top-level collections missing** | Datastreams, control streams, and other Part 2 resources are only available nested under systems (e.g., `/systems/{id}/datastreams`), not as top-level collections (`/datastreams`). The `assertResourceAvailable()` check in the client library is overly strict for per-ID methods. | Library issue [#100](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/100) |
+| Issue | Description | Status | Filed As |
+|-------|-------------|--------|----------|
+| **Accept header ignored** | OSH ignores the HTTP `Accept` header entirely, always returning JSON regardless of requested content type. The SensorML `Accept: application/sml+json` header is ignored. | Confirmed | Library issue [#99](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/99) |
+| **Top-level collections missing** | Datastreams, control streams, and other Part 2 resources are only available nested under systems (e.g., `/systems/{id}/datastreams`), not as top-level collections (`/datastreams`). | Confirmed | Library issue [#100](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/100) |
+| **`numberMatched` / `numberReturned` absent** | Server does not include pagination metadata in collection responses, requiring clients to compute counts from the raw item array. | Confirmed | Documented in section 6.1 |
 
 ---
 
@@ -255,8 +230,11 @@ All testing was performed using the CSAPI Explorer demo app (`http://localhost:5
 1. **UI interaction**: Set limit=10, keyword="FCU", clicked Fetch
 2. **Client library trace**: Confirmed `CSAPIQueryBuilder.buildQueryString()` produces `?limit=10&q=FCU`
 3. **Network inspection**: Verified the HTTP request URL includes both parameters
-4. **Response analysis**: Server returns all 33 systems with no filtering applied
-5. **Code audit**: Full read of `ResourceList.vue`, `csapi-bridge.ts`, `url_builder.ts`, and `model.ts` confirmed no client-side parameter dropping
+4. **Response analysis (initial)**: Server returned all 33 systems with no filtering applied
+5. **Response analysis (follow-up)**: Server correctly returned 1 system for `q=FCU`, and 10 systems for `limit=10`
+6. **Raw response verification**: The raw JSON payload confirmed server-side filtering (1 item in payload, not 33 items filtered client-side)
+7. **Warning banner verification**: No client-side fallback banner appeared, confirming the server handled filtering
+8. **Code audit**: Full read of `ResourceList.vue`, `csapi-bridge.ts`, `url_builder.ts`, and `model.ts` confirmed no client-side parameter dropping
 
 ---
 
@@ -270,8 +248,8 @@ All testing was performed using the CSAPI Explorer demo app (`http://localhost:5
 
 ## 10. Conclusion
 
-The OSH server's silent ignoring of `limit` and `q` query parameters is a significant interoperability gap that affects any client attempting to use standard OGC API filtering and pagination. The `limit` violation is particularly notable because it is a normative **SHALL** requirement from the OGC API — Features Core specification.
+Follow-up testing confirmed that OSH **correctly honors** both `limit` and `q` query parameters. The initial observation of parameters being ignored was a transient condition that could not be reproduced.
 
-The client-side workaround implemented in the Explorer demo provides a reasonable user experience despite the server limitation, but it is inherently limited — true pagination and server-side full-text search cannot be replicated client-side.
+The client-side fallback code (commit `caa7415`) remains in place as a **defensive interoperability measure**. It activates only when a server demonstrably ignores `limit` or `q`, and displays a warning banner so the user knows client-side filtering was applied. This protects against real-world server diversity in the OGC API ecosystem.
 
-We recommend the OSH maintainers prioritize `limit` implementation (Core compliance), followed by `offset`/pagination support, and then `q` keyword search. If any parameter is not yet implementable, it should be rejected with HTTP 400 rather than silently ignored.
+Remaining OSH compliance gaps center on HTTP `Accept` header content negotiation (always returns JSON regardless of requested format) and Part 2 resource collection exposure (datastreams/control streams only available nested under systems). These are documented in library issues [#99](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/99) and [#100](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/100) respectively.
