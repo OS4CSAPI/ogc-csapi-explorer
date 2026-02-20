@@ -352,7 +352,7 @@ async function fetchCounts() {
       if (!pRelations?.length) return
 
       // Mark parent node as having a resource (count = 1 since we know it exists)
-      if (counts[pLink.resourceType] === undefined) counts[pLink.resourceType] = 1
+      if (!hasResources(pLink.resourceType)) counts[pLink.resourceType] = 1
 
       const childRequests = pRelations.map(async (rel) => {
         // Don't overwrite counts we already fetched directly
@@ -405,25 +405,26 @@ async function fetchCounts() {
         const raw = res.data
 
         // Extract parent references from the parent's JSON (same logic as ResourceDetail)
-        if (typeof raw?.['system@id'] === 'string' && counts['systems'] === undefined) {
+        // Use !hasResources() so we override error (-1) and undefined counts
+        if (typeof raw?.['system@id'] === 'string' && !hasResources('systems')) {
           const ref = { resourceType: 'systems', resourceId: raw['system@id'] }
           discoveredGrandparents.push(ref)
           discoveredAncestors['systems'] = ref
           counts['systems'] = 1
         }
-        if (typeof raw?.['datastream@id'] === 'string' && counts['datastreams'] === undefined) {
+        if (typeof raw?.['datastream@id'] === 'string' && !hasResources('datastreams')) {
           const ref = { resourceType: 'datastreams', resourceId: raw['datastream@id'] }
           discoveredGrandparents.push(ref)
           discoveredAncestors['datastreams'] = ref
           counts['datastreams'] = 1
         }
-        if (typeof raw?.['controlstream@id'] === 'string' && counts['controlStreams'] === undefined) {
+        if (typeof raw?.['controlstream@id'] === 'string' && !hasResources('controlStreams')) {
           const ref = { resourceType: 'controlStreams', resourceId: raw['controlstream@id'] }
           discoveredGrandparents.push(ref)
           discoveredAncestors['controlStreams'] = ref
           counts['controlStreams'] = 1
         }
-        if (typeof raw?.['deployment@id'] === 'string' && counts['deployments'] === undefined) {
+        if (typeof raw?.['deployment@id'] === 'string' && !hasResources('deployments')) {
           const ref = { resourceType: 'deployments', resourceId: raw['deployment@id'] }
           discoveredGrandparents.push(ref)
           discoveredAncestors['deployments'] = ref
@@ -442,7 +443,8 @@ async function fetchCounts() {
         if (!gpRelations?.length) return
 
         const gpChildRequests = gpRelations.map(async (rel) => {
-          if (counts[rel.childType] !== undefined) return  // already have data
+          // Skip if we already have a positive count; allow overriding errors (-1)
+          if (counts[rel.childType] != null && counts[rel.childType]! >= 0) return
           counts[rel.childType] = null  // loading
           try {
             const path = getNestedListUrl(gp.resourceType, gp.resourceId, rel.relation, { limit: 0 })
