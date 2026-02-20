@@ -291,11 +291,33 @@ function geometrySummary(geom: any): string {
             <td><code>{{ parsedPart2.formats.join(', ') }}</code></td>
             <td class="field-type">string[]</td>
           </tr>
+          <!-- Datastream type classification -->
+          <tr v-if="parsedPart2.type">
+            <td class="field-label">type</td>
+            <td>
+              <span class="type-badge">{{ parsedPart2.type }}</span>
+            </td>
+            <td class="field-type">'status' | 'observation'</td>
+          </tr>
           <!-- ControlStream-specific fields -->
           <tr v-if="parsedPart2.inputName">
             <td class="field-label">inputName</td>
             <td><code>{{ parsedPart2.inputName }}</code></td>
             <td class="field-type">string</td>
+          </tr>
+          <tr v-if="parsedPart2.controlledProperties?.length">
+            <td class="field-label">controlledProperties</td>
+            <td><code>{{ parsedPart2.controlledProperties.join(', ') }}</code></td>
+            <td class="field-type">string[]</td>
+          </tr>
+          <tr v-if="parsedPart2.async !== undefined">
+            <td class="field-label">async</td>
+            <td>
+              <span :class="parsedPart2.async ? 'async-badge async-true' : 'async-badge'">
+                {{ parsedPart2.async ? 'ASYNC' : 'sync' }}
+              </span>
+            </td>
+            <td class="field-type">boolean</td>
           </tr>
           <!-- Observation-specific fields (plain ISO strings, NOT TimeInterval) -->
           <tr v-if="parsedPart2.phenomenonTime && typeof parsedPart2.phenomenonTime === 'string'">
@@ -369,6 +391,11 @@ function geometrySummary(geom: any): string {
             </td>
             <td class="field-type">CommandStatusCode</td>
           </tr>
+          <tr v-if="parsedPart2.sender">
+            <td class="field-label">sender</td>
+            <td><code>{{ parsedPart2.sender }}</code></td>
+            <td class="field-type">string</td>
+          </tr>
           <tr v-if="parsedPart2.parameters !== undefined">
             <td class="field-label">parameters</td>
             <td><code>{{ typeof parsedPart2.parameters === 'object' ? JSON.stringify(parsedPart2.parameters).slice(0, 200) : parsedPart2.parameters }}</code></td>
@@ -391,6 +418,26 @@ function geometrySummary(geom: any): string {
             <td class="field-label">label</td>
             <td>{{ parsedPart2.label }}</td>
             <td class="field-type">string</td>
+          </tr>
+          <tr v-if="parsedPart2.uniqueId">
+            <td class="field-label">uniqueId</td>
+            <td><code>{{ parsedPart2.uniqueId }}</code></td>
+            <td class="field-type">string (URI)</td>
+          </tr>
+          <tr v-if="parsedPart2.baseProperty">
+            <td class="field-label">baseProperty</td>
+            <td><code>{{ parsedPart2.baseProperty }}</code></td>
+            <td class="field-type">string (URI)</td>
+          </tr>
+          <tr v-if="parsedPart2.objectType">
+            <td class="field-label">objectType</td>
+            <td><code>{{ parsedPart2.objectType }}</code></td>
+            <td class="field-type">string (URI)</td>
+          </tr>
+          <tr v-if="parsedPart2.statistic">
+            <td class="field-label">statistic</td>
+            <td><code>{{ parsedPart2.statistic }}</code></td>
+            <td class="field-type">string (URI)</td>
           </tr>
           <!-- ValidTime (shared across types) -->
           <tr v-if="parsedPart2.validTime">
@@ -527,6 +574,9 @@ function geometrySummary(geom: any): string {
 .live-badge.live { background: #dcfce7; color: #166534; animation: pulse-live 2s ease-in-out infinite; }
 @keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 .status-badge { font-size: 0.78rem; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; background: #e0e7ff; color: #3730a3; }
+.type-badge { font-size: 0.75rem; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; background: #fef3c7; color: #92400e; }
+.async-badge { font-size: 0.75rem; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 700; background: #f1f5f9; color: #64748b; }
+.async-badge.async-true { background: #dbeafe; color: #1e40af; }
 
 .section-title { font-size: 0.85rem; margin: 0; color: #334155; font-weight: 600; }
 .section-title code { font-size: 0.78rem; color: #7c3aed; background: #ede9fe; padding: 0.1rem 0.4rem; border-radius: 3px; }
