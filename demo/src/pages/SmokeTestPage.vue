@@ -300,6 +300,7 @@ const currentStepIndex = ref(-1)
 const running = ref(false)
 const testStarted = ref(false)
 const cleanupMessage = ref('')
+const showReport = ref(false)
 
 const createdIds = reactive<Record<string, string>>({})
 const createdUids = reactive<Record<string, string>>({})
@@ -317,6 +318,52 @@ const skippedCount = computed(() => steps.value.filter((s) => s.status === 'skip
 const hasMoreSteps = computed(() => currentStepIndex.value < steps.value.length - 1)
 const isStepReady = computed(() => activeStep.value?.status === 'active')
 const isStepDone = computed(() => activeStep.value && ['success', 'fail', 'skipped'].includes(activeStep.value.status))
+
+// ─── Report computeds ────────────────────────────────────
+
+const testComplete = computed(() => isStepDone.value && !hasMoreSteps.value)
+
+const testTotalElapsed = computed(() =>
+  steps.value.reduce((sum, s) => sum + (s.elapsed ?? 0), 0)
+)
+
+const failedSteps = computed(() => steps.value.filter(s => s.status === 'fail'))
+
+const typeStats = computed(() => {
+  const map = new Map<string, { label: string; pass: number; fail: number; skip: number; total: number; elapsed: number }>()
+  for (const s of steps.value) {
+    if (!map.has(s.resourceType)) {
+      map.set(s.resourceType, { label: s.resourceLabel, pass: 0, fail: 0, skip: 0, total: 0, elapsed: 0 })
+    }
+    const stat = map.get(s.resourceType)!
+    stat.total++
+    if (s.status === 'success') stat.pass++
+    else if (s.status === 'fail') stat.fail++
+    else if (s.status === 'skipped') stat.skip++
+    stat.elapsed += s.elapsed ?? 0
+  }
+  return [...map.entries()].map(([key, stat]) => ({ key, ...stat }))
+})
+
+const opStats = computed(() => {
+  const ops: OpType[] = ['CREATE', 'READ', 'UPDATE', 'VERIFY', 'DELETE']
+  const map = new Map<OpType, { pass: number; fail: number; skip: number; total: number }>()
+  for (const op of ops) map.set(op, { pass: 0, fail: 0, skip: 0, total: 0 })
+  for (const s of steps.value) {
+    const stat = map.get(s.op)!
+    stat.total++
+    if (s.status === 'success') stat.pass++
+    else if (s.status === 'fail') stat.fail++
+    else if (s.status === 'skipped') stat.skip++
+  }
+  return [...map.entries()].map(([op, stat]) => ({ op, ...stat })).filter(s => s.total > 0)
+})
+
+const overallVerdict = computed(() => {
+  if (failCount.value === 0 && skippedCount.value === 0) return 'pass'
+  if (failCount.value > 0) return 'fail'
+  return 'partial'
+})
 
 // ─── Map ─────────────────────────────────────────────────
 
@@ -796,6 +843,7 @@ function resetTest() {
   currentStepIndex.value = -1
   testStarted.value = false
   running.value = false
+  showReport.value = false
   for (const key of Object.keys(createdIds)) delete createdIds[key]
   for (const key of Object.keys(createdUids)) delete createdUids[key]
   clearMap()
@@ -897,16 +945,22 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
           <button v-else-if="isStepDone && hasMoreSteps" class="btn btn-primary" @click="advanceToNextStep">
             <i class="pi pi-arrow-right"></i> Next Step
           </button>
-          <span v-else-if="isStepDone && !hasMoreSteps" class="done-badge">
+          <span v-else-if="isStepDone && !hasMoreSteps && !showReport" class="done-badge">
             <i class="pi pi-check-circle"></i> Test Complete
           </span>
+          <button v-else-if="showReport" class="btn btn-secondary" @click="showReport = false">
+            <i class="pi pi-arrow-left"></i> Back to Steps
+          </button>
           <span v-else class="btn-placeholder"></span>
         </div>
 
-        <!-- Fixed-width skip slot -->
-        <div class="action-slot action-slot-sm">
+        <!-- Fixed-width skip slot / View Report -->
+        <div class="action-slot" :class="{ 'action-slot-sm': !testComplete }">
           <button v-if="isStepReady" class="btn btn-secondary" @click="skipCurrentStep">
             <i class="pi pi-angle-double-right"></i> Skip
+          </button>
+          <button v-else-if="testComplete && !showReport" class="btn btn-primary" @click="showReport = true">
+            <i class="pi pi-chart-bar"></i> View Report
           </button>
           <span v-else class="btn-placeholder"></span>
         </div>
@@ -928,7 +982,7 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
     </div>
 
     <!-- Tri-panel -->
-    <div class="panels">
+    <div class="panels" :class="{ 'report-mode': showReport }">
       <!-- LEFT: Test Plan -->
       <div class="panel panel-plan">
         <div class="panel-header">Test Plan</div>
@@ -952,6 +1006,7 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
       </div>
 
       <!-- CENTER: Request / Response -->
+      <template v-if="!showReport">
       <div class="panel panel-detail">
         <div class="panel-header">Request / Response</div>
 
@@ -1061,6 +1116,122 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
             <span class="legend-dot" :style="{ background: TYPE_COLORS[type] }"></span>
             <span class="legend-label">{{ type }}</span>
           </div>
+        </div>
+      </div>
+      </template>
+
+      <!-- REPORT VIEW (replaces center + right panels) -->
+      <div v-else class="panel panel-report">
+        <div class="panel-header">Test Report</div>
+        <div class="report-content">
+
+          <!-- Verdict Banner -->
+          <div class="report-verdict" :class="`verdict-${overallVerdict}`">
+            <i :class="overallVerdict === 'pass' ? 'pi pi-check-circle' : overallVerdict === 'fail' ? 'pi pi-times-circle' : 'pi pi-exclamation-circle'"></i>
+            <span v-if="overallVerdict === 'pass'">All Steps Passed</span>
+            <span v-else-if="overallVerdict === 'fail'">Failures Detected</span>
+            <span v-else>Completed with Skips</span>
+          </div>
+
+          <!-- Summary Cards -->
+          <div class="report-summary-cards">
+            <div class="summary-card card-total">
+              <div class="card-number">{{ steps.length }}</div>
+              <div class="card-label">Total Steps</div>
+            </div>
+            <div class="summary-card card-pass">
+              <div class="card-number">{{ successCount }}</div>
+              <div class="card-label">Passed</div>
+            </div>
+            <div class="summary-card card-fail">
+              <div class="card-number">{{ failCount }}</div>
+              <div class="card-label">Failed</div>
+            </div>
+            <div class="summary-card card-skip">
+              <div class="card-number">{{ skippedCount }}</div>
+              <div class="card-label">Skipped</div>
+            </div>
+            <div class="summary-card card-time">
+              <div class="card-number">{{ formatMs(testTotalElapsed) }}</div>
+              <div class="card-label">Total Time</div>
+            </div>
+          </div>
+
+          <!-- Server Info -->
+          <div class="report-server-info">
+            <i class="pi pi-server"></i>
+            {{ connection.url }}
+          </div>
+
+          <!-- Operation Breakdown -->
+          <div class="report-section">
+            <div class="report-section-title"><i class="pi pi-list"></i> Operation Breakdown</div>
+            <div class="report-op-grid">
+              <div v-for="stat in opStats" :key="stat.op" class="report-op-row">
+                <span class="op-badge" :class="opBadgeClass(stat.op)">{{ stat.op }}</span>
+                <div class="report-op-bar-wrapper">
+                  <div class="report-op-bar">
+                    <div v-if="stat.pass" class="bar-segment bar-pass" :style="{ width: (stat.pass / stat.total * 100) + '%' }"></div>
+                    <div v-if="stat.fail" class="bar-segment bar-fail" :style="{ width: (stat.fail / stat.total * 100) + '%' }"></div>
+                    <div v-if="stat.skip" class="bar-segment bar-skip" :style="{ width: (stat.skip / stat.total * 100) + '%' }"></div>
+                  </div>
+                </div>
+                <span class="report-op-counts">
+                  <span style="color:#16a34a">{{ stat.pass }}</span>
+                  <span v-if="stat.fail" style="color:#dc2626"> / {{ stat.fail }}</span>
+                  <span v-if="stat.skip" style="color:#f59e0b"> / {{ stat.skip }}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Per-Resource-Type Table -->
+          <div class="report-section">
+            <div class="report-section-title"><i class="pi pi-th-large"></i> Results by Resource Type</div>
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Resource Type</th>
+                  <th class="col-num">Pass</th>
+                  <th class="col-num">Fail</th>
+                  <th class="col-num">Skip</th>
+                  <th class="col-num">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="stat in typeStats" :key="stat.key">
+                  <td>
+                    <span class="type-dot" :style="{ background: TYPE_COLORS[stat.key] || '#6b7280' }"></span>
+                    {{ stat.label }}
+                  </td>
+                  <td class="col-num col-pass">{{ stat.pass }}</td>
+                  <td class="col-num" :class="{ 'col-fail': stat.fail > 0 }">{{ stat.fail }}</td>
+                  <td class="col-num" :class="{ 'col-skip': stat.skip > 0 }">{{ stat.skip }}</td>
+                  <td class="col-num col-time">{{ formatMs(stat.elapsed) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Failures Detail -->
+          <div v-if="failedSteps.length" class="report-section">
+            <div class="report-section-title" style="color:#dc2626"><i class="pi pi-exclamation-triangle"></i> Failures ({{ failedSteps.length }})</div>
+            <div v-for="step in failedSteps" :key="step.id" class="report-failure-card">
+              <div class="failure-header">
+                <span class="op-badge" :class="opBadgeClass(step.op)">{{ step.op }}</span>
+                <span class="failure-resource">{{ step.resourceLabel }}</span>
+                <span v-if="step.response" class="status-badge status-err">
+                  {{ step.response.status }} {{ step.response.statusText }}
+                </span>
+                <span v-if="step.elapsed != null" class="elapsed">{{ formatMs(step.elapsed) }}</span>
+              </div>
+              <div v-if="step.request" class="failure-url">
+                {{ step.request.method }} {{ step.request.url }}
+              </div>
+              <pre v-if="step.error" class="failure-error">{{ step.error }}</pre>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -1456,13 +1627,248 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
   flex-shrink: 0;
 }
 
+/* ── Report Panel ─────────────────── */
+.report-mode {
+  grid-template-columns: 220px 1fr !important;
+}
+.panel-report {
+  overflow-y: auto;
+}
+.report-content {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Verdict Banner */
+.report-verdict {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.verdict-pass {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.verdict-fail {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+.verdict-partial {
+  background: #fef3c7;
+  color: #a16207;
+  border: 1px solid #fde68a;
+}
+
+/* Summary Cards */
+.report-summary-cards {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.summary-card {
+  flex: 1;
+  min-width: 100px;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+.card-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.card-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.15rem;
+}
+.card-total { background: #f8fafc; }
+.card-total .card-number { color: #1e293b; }
+.card-total .card-label { color: #64748b; }
+.card-pass { background: #f0fdf4; }
+.card-pass .card-number { color: #16a34a; }
+.card-pass .card-label { color: #15803d; }
+.card-fail { background: #fef2f2; }
+.card-fail .card-number { color: #dc2626; }
+.card-fail .card-label { color: #b91c1c; }
+.card-skip { background: #fffbeb; }
+.card-skip .card-number { color: #f59e0b; }
+.card-skip .card-label { color: #a16207; }
+.card-time { background: #f0f9ff; }
+.card-time .card-number { color: #0284c7; font-size: 1.15rem; }
+.card-time .card-label { color: #0369a1; }
+
+/* Server info */
+.report-server-info {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #64748b;
+  padding: 0.4rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+/* Report Sections */
+.report-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: #fff;
+}
+.report-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
+  color: #334155;
+}
+
+/* Operation Breakdown */
+.report-op-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.report-op-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.report-op-bar-wrapper {
+  flex: 1;
+}
+.report-op-bar {
+  display: flex;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+.bar-segment {
+  min-width: 2px;
+  transition: width 0.3s ease;
+}
+.bar-pass { background: #4ade80; }
+.bar-fail { background: #f87171; }
+.bar-skip { background: #fbbf24; }
+.report-op-counts {
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: right;
+}
+
+/* Resource Type Table */
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.report-table th {
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  border-bottom: 2px solid #e2e8f0;
+}
+.report-table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.report-table tbody tr:hover {
+  background: #f8fafc;
+}
+.col-num {
+  text-align: center;
+  font-weight: 600;
+  min-width: 50px;
+}
+.col-pass { color: #16a34a; }
+.col-fail { color: #dc2626; }
+.col-skip { color: #f59e0b; }
+.col-time { color: #64748b; font-size: 0.75rem; }
+.type-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+/* Failure Cards */
+.report-failure-card {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.report-failure-card:last-child { margin-bottom: 0; }
+.failure-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.3rem;
+}
+.failure-resource {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.failure-url {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 0.3rem;
+  word-break: break-all;
+}
+.failure-error {
+  font-size: 0.75rem;
+  color: #dc2626;
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
 /* ── Responsive ───────────────────── */
 @media (max-width: 1000px) {
   .panels {
     grid-template-columns: 180px 1fr;
     grid-template-rows: 1fr 300px;
   }
+  .panels.report-mode {
+    grid-template-rows: 1fr;
+  }
   .panel-plan { grid-row: 1 / 3; }
+  .panels.report-mode .panel-plan { grid-row: auto; }
   .panel-map { border-right: none; border-top: 1px solid #e2e8f0; }
 }
 @media (max-width: 700px) {
@@ -1470,6 +1876,11 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
     grid-template-columns: 1fr;
     grid-template-rows: 200px 1fr 250px;
   }
+  .panels.report-mode {
+    grid-template-columns: 1fr;
+    grid-template-rows: 200px 1fr;
+  }
   .panel-plan { grid-row: auto; border-right: none; border-bottom: 1px solid #e2e8f0; }
+  .report-summary-cards { flex-direction: column; }
 }
 </style>
