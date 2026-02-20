@@ -2,7 +2,7 @@
 import { computed, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../api'
-import { getNestedListUrl, getListUrl } from '../csapi-bridge'
+import { getNestedListUrl, getListUrl, getDetailUrl, getContentType } from '../csapi-bridge'
 import { connection, RELATED_RESOURCES } from '../state'
 
 const router = useRouter()
@@ -146,6 +146,10 @@ function isConnected(nodeId: string) {
   // Parent link: always connected if a parent reference exists for this type
   if (props.parentLinks?.some(p => p.resourceType === nodeId)) return true
 
+  // Node has resources discovered from parent/grandparent context
+  // (we only ever populate counts for structurally related nodes)
+  if (hasResources(nodeId)) return true
+
   // Transitive: observations are reachable if datastreams > 0
   if (nodeId === 'observations' && hasResources('datastreams')) return true
   // Transitive: commands are reachable if controlStreams > 0
@@ -225,6 +229,8 @@ function edgeLabelPos(edge: ModelEdge): { x: number; y: number } {
 
 /** Map of resource-type key → count (null = loading, -1 = unavailable/error) */
 const counts = reactive<Record<string, number | null>>({})
+/** Grandparent references discovered by fetching parent detail JSON */
+const discoveredAncestors = reactive<Record<string, ParentRef>>({})
 let fetchGeneration = 0
 
 /**
@@ -240,6 +246,7 @@ async function fetchCounts() {
 
   // Clear previous counts
   for (const key of Object.keys(counts)) delete counts[key]
+  for (const key of Object.keys(discoveredAncestors)) delete discoveredAncestors[key]
 
   if (!parentId || !parentType) return
 
@@ -380,6 +387,87 @@ async function fetchCounts() {
       await Promise.allSettled(childRequests)
     })
     await Promise.allSettled(parentRequests)
+
+    if (gen !== fetchGeneration) return
+
+    // ── Grandparent discovery ──────────────────────────────────────
+    // Fetch each parent's detail JSON to discover its own parent references
+    // (e.g., fetch datastream 083g → find system@id → mark system as count=1)
+    // Then fetch that grandparent's child relations for sibling counts.
+    const discoveredGrandparents: ParentRef[] = []
+
+    const detailRequests = props.parentLinks.map(async (pLink) => {
+      try {
+        const path = getDetailUrl(pLink.resourceType, pLink.resourceId)
+        const acceptType = getContentType(pLink.resourceType)
+        const res = await apiFetch(path, { headers: { Accept: acceptType } })
+        if (gen !== fetchGeneration || !res.ok) return
+        const raw = res.data
+
+        // Extract parent references from the parent's JSON (same logic as ResourceDetail)
+        if (typeof raw?.['system@id'] === 'string' && counts['systems'] === undefined) {
+          const ref = { resourceType: 'systems', resourceId: raw['system@id'] }
+          discoveredGrandparents.push(ref)
+          discoveredAncestors['systems'] = ref
+          counts['systems'] = 1
+        }
+        if (typeof raw?.['datastream@id'] === 'string' && counts['datastreams'] === undefined) {
+          const ref = { resourceType: 'datastreams', resourceId: raw['datastream@id'] }
+          discoveredGrandparents.push(ref)
+          discoveredAncestors['datastreams'] = ref
+          counts['datastreams'] = 1
+        }
+        if (typeof raw?.['controlstream@id'] === 'string' && counts['controlStreams'] === undefined) {
+          const ref = { resourceType: 'controlStreams', resourceId: raw['controlstream@id'] }
+          discoveredGrandparents.push(ref)
+          discoveredAncestors['controlStreams'] = ref
+          counts['controlStreams'] = 1
+        }
+        if (typeof raw?.['deployment@id'] === 'string' && counts['deployments'] === undefined) {
+          const ref = { resourceType: 'deployments', resourceId: raw['deployment@id'] }
+          discoveredGrandparents.push(ref)
+          discoveredAncestors['deployments'] = ref
+          counts['deployments'] = 1
+        }
+      } catch { /* ignore — best effort */ }
+    })
+    await Promise.allSettled(detailRequests)
+
+    if (gen !== fetchGeneration) return
+
+    // Fetch grandparent child relations for further sibling counts
+    if (discoveredGrandparents.length) {
+      const gpRequests = discoveredGrandparents.map(async (gp) => {
+        const gpRelations = RELATED_RESOURCES[gp.resourceType]
+        if (!gpRelations?.length) return
+
+        const gpChildRequests = gpRelations.map(async (rel) => {
+          if (counts[rel.childType] !== undefined) return  // already have data
+          counts[rel.childType] = null  // loading
+          try {
+            const path = getNestedListUrl(gp.resourceType, gp.resourceId, rel.relation, { limit: 0 })
+            const res = await apiFetch(path)
+            if (gen !== fetchGeneration) return
+            if (!res.ok) { counts[rel.childType] = -1; return }
+            const data = res.data
+            if (data?.numberMatched != null) {
+              counts[rel.childType] = data.numberMatched
+            } else if (Array.isArray(data?.items)) {
+              counts[rel.childType] = data.items.length
+            } else if (Array.isArray(data?.features)) {
+              counts[rel.childType] = data.features.length
+            } else {
+              counts[rel.childType] = -1
+            }
+          } catch {
+            if (gen !== fetchGeneration) return
+            counts[rel.childType] = -1
+          }
+        })
+        await Promise.allSettled(gpChildRequests)
+      })
+      await Promise.allSettled(gpRequests)
+    }
   }
 }
 
@@ -419,6 +507,16 @@ function navigateToType(nodeId: string) {
     return
   }
 
+  // Check if this is a discovered ancestor (grandparent, e.g., datastream's system)
+  const ancestor = discoveredAncestors[nodeId]
+  if (ancestor) {
+    router.push({
+      path: `/explore/${ancestor.resourceType}`,
+      query: { resourceId: ancestor.resourceId },
+    })
+    return
+  }
+
   if (!props.activeId) {
     // No active resource — just navigate to the top-level list
     router.push({ path: `/explore/${nodeId}` })
@@ -443,21 +541,23 @@ function navigateToType(nodeId: string) {
   }
 
   // Check if a parent has a relation to this node (sibling via parent)
-  if (props.parentLinks) {
-    for (const pLink of props.parentLinks) {
-      const pRelations = RELATED_RESOURCES[pLink.resourceType]
-      const pRel = pRelations?.find(r => r.childType === nodeId)
-      if (pRel) {
-        router.push({
-          path: `/explore/${pRel.childType}`,
-          query: {
-            parentType: pLink.resourceType,
-            parentId: pLink.resourceId,
-            relation: pRel.relation,
-          },
-        })
-        return
-      }
+  const allAncestors = [
+    ...(props.parentLinks || []),
+    ...Object.values(discoveredAncestors),
+  ]
+  for (const pLink of allAncestors) {
+    const pRelations = RELATED_RESOURCES[pLink.resourceType]
+    const pRel = pRelations?.find(r => r.childType === nodeId)
+    if (pRel) {
+      router.push({
+        path: `/explore/${pRel.childType}`,
+        query: {
+          parentType: pLink.resourceType,
+          parentId: pLink.resourceId,
+          relation: pRel.relation,
+        },
+      })
+      return
     }
   }
 
