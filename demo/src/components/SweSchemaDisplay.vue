@@ -58,42 +58,49 @@ function flattenComponent(component: AnyComponent, prefix: string, depth: number
   if (component.type === 'DataRecord') {
     for (const f of (component as any).fields ?? []) {
       const name = prefix ? `${prefix}.${f.name}` : f.name
-      // Each field is a DataField — it has name + the component properties merged in
-      const fieldType: string = f.type || 'unknown'
+      // The library's parsedField() produces TypedDataField: { name, component: <AnyComponent> }
+      // Raw JSON fields have properties at the top level. Handle both shapes.
+      const inner = f.component || f
+      const fieldType: string = inner.type || 'unknown'
       fields.push({
         name,
         type: fieldType,
-        label: f.label,
-        definition: f.definition,
-        uom: f.uom?.code || f.uom?.href || f.uom?.label,
+        label: inner.label,
+        definition: inner.definition,
+        uom: inner.uom?.code || inner.uom?.href || inner.uom?.label,
         depth,
-        constraint: f.constraint,
-        nilValues: f.nilValues,
+        constraint: inner.constraint,
+        nilValues: inner.nilValues,
       })
       // Recurse if this field is itself a record/vector/array
       if (fieldType === 'DataRecord' || fieldType === 'Vector' || fieldType === 'DataArray' || fieldType === 'DataChoice') {
         try {
-          const nested = parseSWEComponent(f)
+          // If already parsed (TypedDataField), use the component directly
+          const nested = f.component ? f.component as AnyComponent : parseSWEComponent(f)
           fields.push(...flattenComponent(nested, name, depth + 1))
         } catch { /* non-parseable nested — skip */ }
       }
     }
   } else if (component.type === 'Vector') {
     for (const c of (component as any).coordinates ?? []) {
+      // Vector coordinates may also be TypedDataField or raw JSON
+      const inner = c.component || c
       const name = prefix ? `${prefix}.${c.name}` : c.name
       fields.push({
         name,
-        type: c.type || 'Quantity',
-        label: c.label,
-        definition: c.definition,
-        uom: c.uom?.code || c.uom?.href || c.uom?.label,
+        type: inner.type || 'Quantity',
+        label: inner.label,
+        definition: inner.definition,
+        uom: inner.uom?.code || inner.uom?.href || inner.uom?.label,
         depth,
-        constraint: c.constraint,
-        nilValues: c.nilValues,
+        constraint: inner.constraint,
+        nilValues: inner.nilValues,
       })
     }
   } else if (component.type === 'DataArray') {
-    const et = (component as any).elementType
+    const raw = (component as any).elementType
+    // elementType may be a TypedDataField wrapper or direct component
+    const et = raw?.component || raw
     if (et) {
       const name = prefix ? `${prefix}[*]` : `[*]`
       fields.push({
@@ -108,23 +115,25 @@ function flattenComponent(component: AnyComponent, prefix: string, depth: number
       })
       if (et.type === 'DataRecord' || et.type === 'Vector') {
         try {
-          const nested = parseSWEComponent(et)
+          const nested = raw?.component ? (raw.component as AnyComponent) : parseSWEComponent(raw)
           fields.push(...flattenComponent(nested, name, depth + 1))
         } catch { /* skip */ }
       }
     }
   } else if (component.type === 'DataChoice') {
     for (const item of (component as any).items ?? []) {
+      // DataChoice items may also be TypedDataField wrappers
+      const inner = item.component || item
       const name = prefix ? `${prefix}|${item.name}` : item.name
       fields.push({
         name,
-        type: item.type || 'unknown',
-        label: item.label,
-        definition: item.definition,
-        uom: item.uom?.code || item.uom?.href || item.uom?.label,
+        type: inner.type || 'unknown',
+        label: inner.label,
+        definition: inner.definition,
+        uom: inner.uom?.code || inner.uom?.href || inner.uom?.label,
         depth,
-        constraint: item.constraint,
-        nilValues: item.nilValues,
+        constraint: inner.constraint,
+        nilValues: inner.nilValues,
       })
     }
   } else {
