@@ -122,7 +122,7 @@ async function connect() {
     // --- Dynamic warning detection ---
     const detectedWarnings: ConnectionWarning[] = []
 
-    // 0. Transport security: HTTP vs HTTPS and SSL certificate validation
+    // 0. Transport security: HTTP vs HTTPS, SSL certificate, and CORS
     // Determine the actual external URL (not the proxy path)
     const actualExternalUrl = selectedPreset.value?.externalUrl || customUrl.value
     const isProxied = !!selectedPreset.value?.proxyPath
@@ -135,26 +135,54 @@ async function connect() {
           + 'All traffic — including authentication credentials — is transmitted without '
           + 'encryption and can be intercepted. A production deployment should use HTTPS.',
       })
-    } else if (isProxied && actualExternalUrl && actualExternalUrl.startsWith('https://')) {
-      // The app connected through a dev proxy (which may bypass SSL validation).
-      // Probe the real external URL with no-cors mode to check SSL independently.
-      // no-cors avoids CORS blocking — a failure here means the SSL handshake failed.
+    }
+
+    // For proxied connections, probe the external URL to detect SSL and CORS issues.
+    // The dev proxy (changeOrigin + secure:false) hides both problems from the browser.
+    if (isProxied && actualExternalUrl) {
+      let sslOk = false
+
+      // SSL check: no-cors mode still requires a valid TLS handshake.
+      // If this fails, the cert is bad (expired, self-signed, etc.).
       try {
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), 5000)
         await fetch(actualExternalUrl, { mode: 'no-cors', signal: controller.signal })
         clearTimeout(timeout)
-        // Opaque response received — SSL handshake succeeded, cert is valid
+        sslOk = true
       } catch {
-        // Proxy succeeded but direct browser connection failed — cert issue
-        detectedWarnings.push({
-          severity: 'warn',
-          summary: 'SSL certificate issue',
-          detail: `The server's HTTPS certificate at ${actualExternalUrl} could not be validated `
-            + 'by the browser. The app connected through a development proxy that bypasses SSL '
-            + 'validation, but a direct browser connection would fail. The certificate may be '
-            + 'expired, self-signed, or misconfigured.',
-        })
+        if (actualExternalUrl.startsWith('https://')) {
+          detectedWarnings.push({
+            severity: 'warn',
+            summary: 'SSL certificate issue',
+            detail: `The server's HTTPS certificate at ${actualExternalUrl} could not be validated `
+              + 'by the browser. The app connected through a development proxy that bypasses SSL '
+              + 'validation, but a direct browser connection would fail. The certificate may be '
+              + 'expired, self-signed, or misconfigured.',
+          })
+        }
+      }
+
+      // CORS check: if SSL passed (or the server is HTTP), test with mode: 'cors'.
+      // A no-cors success + cors failure = the server doesn't send CORS headers.
+      if (sslOk) {
+        try {
+          const controller = new AbortController()
+          const timeout = setTimeout(() => controller.abort(), 5000)
+          await fetch(actualExternalUrl, { mode: 'cors', signal: controller.signal })
+          clearTimeout(timeout)
+        } catch {
+          detectedWarnings.push({
+            severity: 'warn',
+            summary: 'CORS headers not provided',
+            detail: `The server at ${actualExternalUrl} does not include CORS `
+              + '(Cross-Origin Resource Sharing) headers in its responses. A browser-based '
+              + 'application on a different origin would be blocked from accessing this API. '
+              + 'This app connects through a development proxy that bypasses CORS, '
+              + 'but a production web application would need the server to send '
+              + 'Access-Control-Allow-Origin headers or use a backend proxy.',
+          })
+        }
       }
     }
 
