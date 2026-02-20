@@ -17,6 +17,7 @@ import { classifyFeature, inferResourceTypeFromPath } from '@csapi/ogc-api/csapi
 import { getContentTypeForResource } from '@csapi/ogc-api/csapi/formats/constants'
 import { parseDatastream, parseObservation, parseControlStream, parseCommand, parseCommandStatus } from '@csapi/ogc-api/csapi/formats/part2'
 import { parseProperty } from '@csapi/ogc-api/csapi/formats/property'
+import { parseDatastreamSchemaResponse } from '@csapi/ogc-api/csapi/formats/schema-response'
 import { parseSensorML30 } from '@csapi/ogc-api/csapi/formats/sensorml/parser'
 import { scanCsapiLinks } from '@csapi/ogc-api/csapi/helpers'
 import { CSAPIResourceTypes } from '@csapi/ogc-api/csapi/model'
@@ -450,6 +451,7 @@ export {
   parseCommand,
   parseCommandStatus,
   parseProperty,
+  parseDatastreamSchemaResponse,
   parseSensorML30,
 }
 export { parseSWEComponent } from '@csapi/ogc-api/csapi/formats/swecommon/parser'

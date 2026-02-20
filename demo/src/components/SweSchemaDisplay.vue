@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { apiFetch } from '../api'
-import { getSchemaUrl, parseSWEComponent } from '../csapi-bridge'
+import { getSchemaUrl, parseSWEComponent, parseDatastreamSchemaResponse } from '../csapi-bridge'
 import type { AnyComponent } from '../csapi-bridge'
 import ProgressSpinner from 'primevue/progressspinner'
 import Message from 'primevue/message'
@@ -13,7 +13,17 @@ const props = defineProps<{
 const loading = ref(false)
 const error = ref('')
 const rawSchema = ref<any>(null)
-const parsed = ref<AnyComponent | null>(null)
+
+/**
+ * Typed envelope from the library's parseDatastreamSchemaResponse().
+ * Contains: obsFormat, resultSchema?, recordSchema?, encoding?
+ */
+const parsedEnvelope = ref<{
+  obsFormat: string
+  resultSchema?: AnyComponent
+  recordSchema?: AnyComponent
+  encoding?: any
+} | null>(null)
 
 /**
  * Recursively flatten an AnyComponent into a flat list of displayable fields.
@@ -111,14 +121,32 @@ function flattenComponent(component: AnyComponent, prefix: string, depth: number
   return fields
 }
 
-const schemaFields = computed<SchemaField[]>(() => {
-  if (!parsed.value) return []
-  return flattenComponent(parsed.value, '', 0)
+/** Fields from the resultSchema (JSON observation format) */
+const resultSchemaFields = computed<SchemaField[]>(() => {
+  if (!parsedEnvelope.value?.resultSchema) return []
+  return flattenComponent(parsedEnvelope.value.resultSchema, '', 0)
 })
 
-const parsedTypeLabel = computed(() => parsed.value?.type ?? null)
+/** Fields from the recordSchema (SWE Common observation format) */
+const recordSchemaFields = computed<SchemaField[]>(() => {
+  if (!parsedEnvelope.value?.recordSchema) return []
+  return flattenComponent(parsedEnvelope.value.recordSchema, '', 0)
+})
 
-const obsFormat = computed(() => rawSchema.value?.obsFormat ?? null)
+/** Backward-compatible: first available schema fields for single-schema display */
+const schemaFields = computed<SchemaField[]>(() => {
+  return resultSchemaFields.value.length ? resultSchemaFields.value : recordSchemaFields.value
+})
+
+const hasResultSchema = computed(() => resultSchemaFields.value.length > 0)
+const hasRecordSchema = computed(() => recordSchemaFields.value.length > 0)
+const hasBothSchemas = computed(() => hasResultSchema.value && hasRecordSchema.value)
+
+const resultSchemaTypeLabel = computed(() => parsedEnvelope.value?.resultSchema?.type ?? null)
+const recordSchemaTypeLabel = computed(() => parsedEnvelope.value?.recordSchema?.type ?? null)
+
+const obsFormat = computed(() => parsedEnvelope.value?.obsFormat || null)
+const encoding = computed(() => parsedEnvelope.value?.encoding ?? null)
 
 async function fetchSchema() {
   const url = getSchemaUrl(props.datastreamId)
@@ -130,7 +158,7 @@ async function fetchSchema() {
   loading.value = true
   error.value = ''
   rawSchema.value = null
-  parsed.value = null
+  parsedEnvelope.value = null
 
   const res = await apiFetch(url, {
     headers: { 'Accept': 'application/swe+json, application/json' },
@@ -150,16 +178,29 @@ async function fetchSchema() {
 
   rawSchema.value = data
 
-  // The schema response is typically { obsFormat, resultSchema }.
-  // Extract the resultSchema for parsing; fall back to the entire response.
-  const sweJson = data?.resultSchema ?? data
-
-  // Attempt to parse with the library's SWE Common parser
+  // Use the library's parseDatastreamSchemaResponse() to properly parse the envelope.
+  // This extracts obsFormat, resultSchema, recordSchema, and encoding — delegating
+  // schema fields to parseSWEComponent() and encoding to parseEncoding() internally.
   try {
-    parsed.value = parseSWEComponent(sweJson)
-  } catch (e: any) {
-    error.value = `Schema fetched but parsing failed: ${e.message || e}`
-    // Still show raw JSON even when parsing fails
+    const envelope = parseDatastreamSchemaResponse(data)
+    if (envelope.resultSchema || envelope.recordSchema) {
+      // Normal envelope response — library parsed successfully
+      parsedEnvelope.value = envelope
+    } else {
+      // Server returned a bare SWE component without the envelope wrapper.
+      // Fall back to parsing the raw data as a SWE component directly.
+      const component = parseSWEComponent(data)
+      parsedEnvelope.value = { obsFormat: '', resultSchema: component }
+    }
+  } catch (outerErr: any) {
+    // parseDatastreamSchemaResponse failed — try bare SWE component fallback
+    try {
+      const component = parseSWEComponent(data)
+      parsedEnvelope.value = { obsFormat: '', resultSchema: component }
+    } catch (innerErr: any) {
+      error.value = `Schema fetched but parsing failed: ${innerErr.message || innerErr}`
+      // Still show raw JSON even when parsing fails
+    }
   }
 
   loading.value = false
@@ -186,7 +227,7 @@ function shortenUri(uri: string): string {
     <summary>
       <i class="pi pi-sitemap"></i>
       Observation Schema
-      <span v-if="parsedTypeLabel" class="schema-type-badge">{{ parsedTypeLabel }}</span>
+      <span v-if="!hasBothSchemas && (resultSchemaTypeLabel || recordSchemaTypeLabel)" class="schema-type-badge">{{ resultSchemaTypeLabel || recordSchemaTypeLabel }}</span>
       <span v-if="obsFormat" class="schema-format-badge">{{ obsFormat }}</span>
     </summary>
 
@@ -199,11 +240,17 @@ function shortenUri(uri: string): string {
       {{ error }}
     </Message>
 
-    <!-- Parsed structured view -->
-    <div v-if="schemaFields.length" class="schema-parsed">
-      <div v-if="error" class="schema-parse-warn">
-        <i class="pi pi-exclamation-triangle"></i>
-        <span>{{ error }}</span>
+    <!-- Parse warning -->
+    <div v-if="error && schemaFields.length" class="schema-parse-warn">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>{{ error }}</span>
+    </div>
+
+    <!-- Result Schema (JSON observation format) -->
+    <div v-if="hasResultSchema" class="schema-parsed">
+      <div v-if="hasBothSchemas" class="schema-section-label">
+        <i class="pi pi-table"></i> Result Schema
+        <span v-if="resultSchemaTypeLabel" class="schema-type-badge">{{ resultSchemaTypeLabel }}</span>
       </div>
       <table class="schema-table">
         <thead>
@@ -216,7 +263,7 @@ function shortenUri(uri: string): string {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(field, i) in schemaFields" :key="i" :class="{ 'nested-row': field.depth > 0 }">
+          <tr v-for="(field, i) in resultSchemaFields" :key="'r-' + i" :class="{ 'nested-row': field.depth > 0 }">
             <td>
               <span :style="{ paddingLeft: field.depth * 16 + 'px' }">
                 <code>{{ field.name }}</code>
@@ -235,6 +282,80 @@ function shortenUri(uri: string): string {
         </tbody>
       </table>
     </div>
+
+    <!-- Record Schema (SWE Common observation format) -->
+    <div v-if="hasRecordSchema" class="schema-parsed">
+      <div class="schema-section-label">
+        <i class="pi pi-table"></i> Record Schema
+        <span v-if="recordSchemaTypeLabel" class="schema-type-badge">{{ recordSchemaTypeLabel }}</span>
+      </div>
+      <table class="schema-table">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Label</th>
+            <th>UoM</th>
+            <th>Definition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(field, i) in recordSchemaFields" :key="'s-' + i" :class="{ 'nested-row': field.depth > 0 }">
+            <td>
+              <span :style="{ paddingLeft: field.depth * 16 + 'px' }">
+                <code>{{ field.name }}</code>
+              </span>
+            </td>
+            <td><span class="type-chip">{{ field.type }}</span></td>
+            <td>{{ field.label || '—' }}</td>
+            <td><code v-if="field.uom">{{ field.uom }}</code><span v-else>—</span></td>
+            <td class="definition-cell">
+              <a v-if="field.definition" :href="field.definition" target="_blank" rel="noopener" :title="field.definition">
+                {{ shortenUri(field.definition) }}
+              </a>
+              <span v-else>—</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Encoding section -->
+    <details v-if="encoding" class="schema-encoding-section" open>
+      <summary class="schema-section-label">
+        <i class="pi pi-code"></i> Encoding
+        <span class="encoding-type-badge">{{ encoding.type }}</span>
+      </summary>
+      <div class="encoding-details">
+        <!-- TextEncoding -->
+        <template v-if="encoding.type === 'TextEncoding'">
+          <div class="encoding-field"><span class="encoding-key">Token Separator:</span> <code>{{ JSON.stringify(encoding.tokenSeparator) }}</code></div>
+          <div class="encoding-field"><span class="encoding-key">Block Separator:</span> <code>{{ JSON.stringify(encoding.blockSeparator) }}</code></div>
+          <div v-if="encoding.decimalSeparator" class="encoding-field"><span class="encoding-key">Decimal Separator:</span> <code>{{ encoding.decimalSeparator }}</code></div>
+          <div v-if="encoding.collapseWhiteSpaces !== undefined" class="encoding-field"><span class="encoding-key">Collapse Whitespace:</span> {{ encoding.collapseWhiteSpaces ? 'Yes' : 'No' }}</div>
+        </template>
+        <!-- JSONEncoding -->
+        <template v-else-if="encoding.type === 'JSONEncoding'">
+          <div v-if="encoding.recordsAsArrays !== undefined" class="encoding-field"><span class="encoding-key">Records as Arrays:</span> {{ encoding.recordsAsArrays ? 'Yes' : 'No' }}</div>
+          <div v-if="encoding.vectorsAsArrays !== undefined" class="encoding-field"><span class="encoding-key">Vectors as Arrays:</span> {{ encoding.vectorsAsArrays ? 'Yes' : 'No' }}</div>
+          <div v-if="encoding.recordsAsArrays === undefined && encoding.vectorsAsArrays === undefined" class="encoding-field"><em>Default JSON encoding (no custom options)</em></div>
+        </template>
+        <!-- BinaryEncoding -->
+        <template v-else-if="encoding.type === 'BinaryEncoding'">
+          <div class="encoding-field"><span class="encoding-key">Byte Order:</span> {{ encoding.byteOrder }}</div>
+          <div class="encoding-field"><span class="encoding-key">Byte Encoding:</span> {{ encoding.byteEncoding }}</div>
+          <div v-if="encoding.byteLength" class="encoding-field"><span class="encoding-key">Byte Length:</span> {{ encoding.byteLength }}</div>
+          <div v-if="encoding.members?.length" class="encoding-field">
+            <span class="encoding-key">Members:</span> {{ encoding.members.length }} component(s)
+          </div>
+        </template>
+        <!-- XMLEncoding -->
+        <template v-else-if="encoding.type === 'XMLEncoding'">
+          <div v-if="encoding.namespace" class="encoding-field"><span class="encoding-key">Namespace:</span> <code>{{ encoding.namespace }}</code></div>
+          <div v-else class="encoding-field"><em>Default XML encoding</em></div>
+        </template>
+      </div>
+    </details>
 
     <!-- Raw schema JSON (always shown if available) -->
     <details v-if="rawSchema" class="schema-raw-section">
@@ -360,5 +481,47 @@ function shortenUri(uri: string): string {
   max-height: 350px;
   overflow-y: auto;
   margin-top: 0.25rem;
+}
+.schema-section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: #475569;
+  margin: 0.75rem 0 0.25rem 0;
+}
+.encoding-type-badge {
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 0.1rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  font-family: monospace;
+}
+.schema-encoding-section {
+  margin-top: 0.75rem;
+}
+.schema-encoding-section > summary {
+  cursor: pointer;
+}
+.encoding-details {
+  padding: 0.5rem 0 0.5rem 1.25rem;
+}
+.encoding-field {
+  font-size: 0.82rem;
+  color: #334155;
+  padding: 0.15rem 0;
+}
+.encoding-key {
+  font-weight: 600;
+  color: #475569;
+}
+.encoding-details code {
+  background: #f1f5f9;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.78rem;
 }
 </style>

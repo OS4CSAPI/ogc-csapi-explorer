@@ -26,8 +26,11 @@ async function fetchSensorML() {
   rawData.value = null
   parsed.value = null
 
+  const processTypes = ['SimpleProcess', 'AggregateProcess', 'PhysicalComponent', 'PhysicalSystem']
+
+  // First, try fetching with Accept: application/sml+json
   const path = getDetailUrl('procedures', props.procedureId)
-  const res = await apiFetch(path, {
+  let res = await apiFetch(path, {
     headers: { 'Accept': 'application/sml+json, application/json' },
   })
 
@@ -42,10 +45,50 @@ async function fetchSensorML() {
     try { data = JSON.parse(data) } catch { /* leave as-is */ }
   }
 
+  // If the server returned GeoJSON instead of SensorML, look for an
+  // alternate link with type=application/sml+json and follow it
+  if (data && !processTypes.includes(data.type)) {
+    const links = data.links || data.properties?.links || []
+    const smlLink = links.find((l: any) =>
+      l.type === 'application/sml+json' ||
+      (l.href && (l.href.includes('f=sml3') || l.href.includes('f=sml')))
+    )
+    if (smlLink?.href) {
+      // The link is absolute — extract the path portion after the API base
+      let smlPath = smlLink.href
+      // Convert absolute URL to relative path for apiFetch
+      try {
+        const url = new URL(smlPath)
+        // Use pathname + search as the relative path, strip the API prefix
+        smlPath = url.pathname + url.search
+        // Strip common API prefixes — apiFetch prepends the proxy base
+        const prefixes = ['/sensorhub/api', '/api']
+        for (const prefix of prefixes) {
+          if (smlPath.startsWith(prefix)) {
+            smlPath = smlPath.slice(prefix.length)
+            break
+          }
+        }
+      } catch {
+        // Not a valid URL — try using as-is
+      }
+
+      const smlRes = await apiFetch(smlPath, {
+        headers: { 'Accept': 'application/sml+json, application/json' },
+      })
+
+      if (smlRes.ok) {
+        data = smlRes.data
+        if (typeof data === 'string') {
+          try { data = JSON.parse(data) } catch { /* leave as-is */ }
+        }
+      }
+    }
+  }
+
   rawData.value = data
 
   // Only attempt SensorML parse if data has a recognizable process type
-  const processTypes = ['SimpleProcess', 'AggregateProcess', 'PhysicalComponent', 'PhysicalSystem']
   if (data && processTypes.includes(data.type)) {
     try {
       parsed.value = parseSensorML30(data)
@@ -53,7 +96,7 @@ async function fetchSensorML() {
       parseError.value = e.message || 'SensorML parse failed'
     }
   } else {
-    parseError.value = 'Response is not a SensorML process description (no recognized type field)'
+    parseError.value = 'Server did not return a SensorML process description. The procedure may not have a SensorML representation.'
   }
 
   loading.value = false
