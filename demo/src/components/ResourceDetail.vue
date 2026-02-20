@@ -606,7 +606,7 @@ watch(
       </div>
 
       <!-- Data Model diagram (collapsed by default) -->
-      <details v-if="allRelations.length > 0 && (detail?.id || props.resourceId)" class="diagram-details">
+      <details v-if="detail?.id || props.resourceId" class="diagram-details">
         <summary class="diagram-summary">
           <i class="pi pi-share-alt"></i>
           Data Model — SOSA / SSN / CSAPI Relationships
