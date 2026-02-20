@@ -3,7 +3,7 @@ import { ref, watch, computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../api'
 import { getDetailUrl, getContentType, getNestedListUrl, parseCollectionResponse } from '../csapi-bridge'
-import { RELATED_RESOURCES } from '../state'
+import { RELATED_RESOURCES, getResourceType } from '../state'
 import type { RelatedResourceLink } from '../state'
 import type { QueryOptions } from '@csapi/ogc-api/csapi/model'
 import type { DateTimeParameter } from '@csapi/shared/models'
@@ -25,6 +25,10 @@ const props = defineProps<{
   resourceType: string
   resourceId: string | null
   resource: any | null
+  /** Parent type from nested navigation context (e.g., 'systems' when viewing samplingFeatures under a system) */
+  nestedParentType?: string | null
+  /** Parent ID from nested navigation context */
+  nestedParentId?: string | null
 }>()
 
 const manualId = ref('')
@@ -342,34 +346,57 @@ const parentLinks = computed<ParentLink[]>(() => {
   if (!detail.value) return []
   const links: ParentLink[] = []
   const raw = detail.value
+  const seen = new Set<string>()
 
   // system@id (present on datastreams, controlStreams)
   if (typeof raw['system@id'] === 'string') {
     links.push({ label: 'System', resourceType: 'systems', resourceId: raw['system@id'], icon: 'pi pi-server' })
+    seen.add('systems')
   } else if (raw['system@link']?.uid) {
     // Some servers use system@link with href containing the ID
     const match = raw['system@link']?.href?.match(/systems\/([^/?]+)/)
-    if (match) links.push({ label: 'System', resourceType: 'systems', resourceId: match[1], icon: 'pi pi-server' })
+    if (match) {
+      links.push({ label: 'System', resourceType: 'systems', resourceId: match[1], icon: 'pi pi-server' })
+      seen.add('systems')
+    }
   }
 
   // datastream@id (present on observations)
   if (typeof raw['datastream@id'] === 'string') {
     links.push({ label: 'Datastream', resourceType: 'datastreams', resourceId: raw['datastream@id'], icon: 'pi pi-chart-line' })
+    seen.add('datastreams')
   }
 
   // controlstream@id (present on commands)
   if (typeof raw['controlstream@id'] === 'string') {
     links.push({ label: 'Control Stream', resourceType: 'controlStreams', resourceId: raw['controlstream@id'], icon: 'pi pi-sliders-h' })
+    seen.add('controlStreams')
   }
 
   // command@id (present on commandStatuses — future-proofing)
   if (typeof raw['command@id'] === 'string') {
     links.push({ label: 'Command', resourceType: 'commands', resourceId: raw['command@id'], icon: 'pi pi-send' })
+    seen.add('commands')
   }
 
   // deployment@id (present on deployed systems)
   if (typeof raw['deployment@id'] === 'string') {
     links.push({ label: 'Deployment', resourceType: 'deployments', resourceId: raw['deployment@id'], icon: 'pi pi-map' })
+    seen.add('deployments')
+  }
+
+  // Nested navigation context (e.g., sampling features under a system, procedures under a system)
+  // Add if the parent type isn't already discovered from the JSON fields above
+  if (props.nestedParentType && props.nestedParentId && !seen.has(props.nestedParentType)) {
+    const typeInfo = getResourceType(props.nestedParentType)
+    if (typeInfo) {
+      links.push({
+        label: typeInfo.label,
+        resourceType: props.nestedParentType,
+        resourceId: props.nestedParentId,
+        icon: typeInfo.icon,
+      })
+    }
   }
 
   return links
@@ -605,8 +632,8 @@ watch(
         </div>
       </div>
 
-      <!-- Data Model diagram (collapsed by default) -->
-      <details v-if="detail?.id || props.resourceId" class="diagram-details">
+      <!-- Data Model diagram (open by default) -->
+      <details v-if="detail?.id || props.resourceId" class="diagram-details" open>
         <summary class="diagram-summary">
           <i class="pi pi-share-alt"></i>
           Data Model — SOSA / SSN / CSAPI Relationships

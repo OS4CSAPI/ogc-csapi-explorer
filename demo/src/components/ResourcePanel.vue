@@ -102,6 +102,8 @@ function onDeleted() {
             :resource-type="resourceType"
             :resource-id="selectedResourceId"
             :resource="selectedResource"
+            :nested-parent-type="parentType"
+            :nested-parent-id="parentId"
           />
         </TabPanel>
 
