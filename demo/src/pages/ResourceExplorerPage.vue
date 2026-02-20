@@ -19,6 +19,9 @@ const parentType = computed(() => (route.query.parentType as string) || null)
 const parentId = computed(() => (route.query.parentId as string) || null)
 const parentRelation = computed(() => (route.query.relation as string) || null)
 
+/** Direct-link to a specific resource's detail view (e.g., from clicking a related item) */
+const initialResourceId = computed(() => (route.query.resourceId as string) || null)
+
 /** True when viewing a nested/sub-resource list */
 const isNested = computed(() => !!(parentType.value && parentId.value && parentRelation.value))
 
@@ -98,7 +101,8 @@ function selectType(key: string) {
         :parent-type="parentType"
         :parent-id="parentId"
         :parent-relation="parentRelation"
-        :key="activeType + (parentId || '') + (parentRelation || '')"
+        :initial-resource-id="initialResourceId"
+        :key="activeType + (parentId || '') + (parentRelation || '') + (initialResourceId || '')"
       />
     </main>
   </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { getResourceType } from '../state'
 import Tabs from 'primevue/tabs'
 import TabList from 'primevue/tablist'
@@ -17,12 +17,26 @@ const props = defineProps<{
   parentType?: string | null
   parentId?: string | null
   parentRelation?: string | null
+  initialResourceId?: string | null
 }>()
 
 const rtInfo = computed(() => getResourceType(props.resourceType))
 const activeTab = ref(0)
 const selectedResourceId = ref<string | null>(null)
 const selectedResource = ref<any>(null)
+
+// Auto-select a resource and show its Detail tab when navigated with a direct resourceId
+watch(
+  () => props.initialResourceId,
+  (id) => {
+    if (id) {
+      selectedResourceId.value = id
+      selectedResource.value = null // will be fetched by ResourceDetail
+      activeTab.value = 1
+    }
+  },
+  { immediate: true }
+)
 
 function viewDetail(resource: any) {
   // Extract ID from GeoJSON feature or flat object

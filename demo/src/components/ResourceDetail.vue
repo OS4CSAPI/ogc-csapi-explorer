@@ -111,7 +111,7 @@ function getItemName(item: any): string {
   return item?.properties?.name || item?.properties?.title || item?.name || item?.title || ''
 }
 
-/** Click a related item → load its detail (if same type) or navigate */
+/** Click a related item → navigate directly to its detail view */
 function viewRelatedItem(link: RelatedResourceLink, item: any) {
   const id = getItemId(item)
   if (id === '—') return
@@ -121,13 +121,14 @@ function viewRelatedItem(link: RelatedResourceLink, item: any) {
     manualId.value = ''
     fetchDetail(id)
   } else {
-    // Different type — navigate to that type's explorer with the item selected
+    // Different type — navigate directly to that item's detail view
     router.push({
       path: `/explore/${link.childType}`,
       query: {
         parentType: props.resourceType,
         parentId: String(detail.value?.id || props.resourceId),
         relation: link.relation,
+        resourceId: id,
       },
     })
   }
@@ -150,6 +151,62 @@ function browseAll(link: RelatedResourceLink) {
 function toggleRelation(relation: string) {
   const state = getRelState(relation)
   state.expanded = !state.expanded
+}
+
+// ========================================
+// Parent navigation (observation → datastream → system, etc.)
+// ========================================
+
+interface ParentLink {
+  label: string
+  resourceType: string
+  resourceId: string
+  icon: string
+}
+
+/** Extract navigable parent references from the raw detail JSON cross-reference fields */
+const parentLinks = computed<ParentLink[]>(() => {
+  if (!detail.value) return []
+  const links: ParentLink[] = []
+  const raw = detail.value
+
+  // system@id (present on datastreams, controlStreams)
+  if (typeof raw['system@id'] === 'string') {
+    links.push({ label: 'System', resourceType: 'systems', resourceId: raw['system@id'], icon: 'pi pi-server' })
+  } else if (raw['system@link']?.uid) {
+    // Some servers use system@link with href containing the ID
+    const match = raw['system@link']?.href?.match(/systems\/([^/?]+)/)
+    if (match) links.push({ label: 'System', resourceType: 'systems', resourceId: match[1], icon: 'pi pi-server' })
+  }
+
+  // datastream@id (present on observations)
+  if (typeof raw['datastream@id'] === 'string') {
+    links.push({ label: 'Datastream', resourceType: 'datastreams', resourceId: raw['datastream@id'], icon: 'pi pi-chart-line' })
+  }
+
+  // controlstream@id (present on commands)
+  if (typeof raw['controlstream@id'] === 'string') {
+    links.push({ label: 'Control Stream', resourceType: 'controlStreams', resourceId: raw['controlstream@id'], icon: 'pi pi-sliders-h' })
+  }
+
+  // command@id (present on commandStatuses — future-proofing)
+  if (typeof raw['command@id'] === 'string') {
+    links.push({ label: 'Command', resourceType: 'commands', resourceId: raw['command@id'], icon: 'pi pi-send' })
+  }
+
+  // deployment@id (present on deployed systems)
+  if (typeof raw['deployment@id'] === 'string') {
+    links.push({ label: 'Deployment', resourceType: 'deployments', resourceId: raw['deployment@id'], icon: 'pi pi-map' })
+  }
+
+  return links
+})
+
+function navigateToParent(parent: ParentLink) {
+  router.push({
+    path: `/explore/${parent.resourceType}`,
+    query: { resourceId: parent.resourceId },
+  })
 }
 
 async function fetchDetail(id?: string) {
@@ -217,6 +274,23 @@ watch(
     </div>
 
     <template v-if="detail">
+      <!-- Parent navigation breadcrumbs -->
+      <div v-if="parentLinks.length > 0" class="parent-nav">
+        <i class="pi pi-arrow-up parent-nav-icon"></i>
+        <span class="parent-nav-label">Parent:</span>
+        <button
+          v-for="parent in parentLinks"
+          :key="parent.resourceType"
+          class="parent-link"
+          @click="navigateToParent(parent)"
+        >
+          <i :class="parent.icon"></i>
+          {{ parent.label }}
+          <code>{{ parent.resourceId }}</code>
+          <i class="pi pi-arrow-up-right parent-link-arrow"></i>
+        </button>
+      </div>
+
       <!-- Inline related resource panels in a grid -->
       <div v-if="allRelations.length > 0 && (detail?.id || props.resourceId)" class="relations-grid">
         <div
@@ -341,6 +415,15 @@ watch(
 .relation-error { padding: 0.4rem 0.65rem; color: #dc2626; font-size: 0.75rem; }
 .browse-all-link { display: block; width: 100%; padding: 0.3rem 0.65rem; border: none; background: transparent; color: #0369a1; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-align: left; }
 .browse-all-link:hover { background: #e0f2fe; }
+
+/* Parent navigation bar */
+.parent-nav { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.65rem; background: #fefce8; border: 1px solid #fde68a; border-radius: 6px; flex-wrap: wrap; }
+.parent-nav-icon { font-size: 0.8rem; color: #ca8a04; }
+.parent-nav-label { font-size: 0.78rem; font-weight: 600; color: #92400e; white-space: nowrap; }
+.parent-link { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.5rem; border: 1px solid #fde68a; border-radius: 4px; background: #fffbeb; color: #92400e; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.parent-link:hover { background: #fef3c7; border-color: #f59e0b; }
+.parent-link code { font-size: 0.72rem; background: rgba(0,0,0,0.05); padding: 0.05rem 0.25rem; border-radius: 2px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.parent-link-arrow { font-size: 0.6rem; color: #d97706; opacity: 0.6; }
 
 .diagram-details { margin-top: 0.25rem; }
 .diagram-summary { cursor: pointer; font-size: 0.8rem; font-weight: 600; color: #0369a1; display: flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0; user-select: none; }
