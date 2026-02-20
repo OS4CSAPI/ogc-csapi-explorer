@@ -375,6 +375,20 @@ export function getSchemaUrl(datastreamId: string): string | null {
 }
 
 /**
+ * Build the URL for a command's status history.
+ * Falls back to direct path construction if the builder is unavailable or throws.
+ */
+export function getCommandStatusUrl(commandId: string): string | null {
+  const b = builder.value
+  if (!b) return `/commands/${commandId}/status`
+  try {
+    return b.getCommandStatus(commandId)
+  } catch {
+    return `/commands/${commandId}/status`
+  }
+}
+
+/**
  * Build the URL for a control stream's command schema.
  * Falls back to direct path construction if the builder is unavailable or throws.
  */

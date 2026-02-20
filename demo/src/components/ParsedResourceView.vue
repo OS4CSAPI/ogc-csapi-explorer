@@ -17,6 +17,7 @@ import {
   parsePart2Resource,
 } from '../csapi-bridge'
 import ObservationResultTable from './ObservationResultTable.vue'
+import CommandStatusHistory from './CommandStatusHistory.vue'
 
 const props = defineProps<{
   /** Raw server JSON for one resource */
@@ -351,6 +352,13 @@ function geometrySummary(geom: any): string {
             <td class="field-label">parameters</td>
             <td><code>{{ typeof parsedPart2.parameters === 'object' ? JSON.stringify(parsedPart2.parameters).slice(0, 200) : parsedPart2.parameters }}</code></td>
             <td class="field-type">{{ typeof parsedPart2.parameters }}</td>
+          </tr>
+          <!-- Command status history panel -->
+          <tr v-if="resourceType === 'commands' && parsedPart2.id">
+            <td class="field-label">statusHistory</td>
+            <td colspan="2">
+              <CommandStatusHistory :commandId="parsedPart2.id" />
+            </td>
           </tr>
           <!-- Property-specific fields -->
           <tr v-if="parsedPart2.definition">
