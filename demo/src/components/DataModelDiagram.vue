@@ -110,6 +110,11 @@ function findNode(id: string): ModelNode | undefined {
   return nodes.find(n => n.id === id)
 }
 
+/** Does this node have a self-referencing (hierarchy) edge? */
+function hasSelfLoop(nodeId: string): boolean {
+  return edges.some(e => e.from === e.to && e.from === nodeId)
+}
+
 /** Which nodes are directly connected to the active type? */
 const connectedNodeIds = computed<Set<string>>(() => {
   const set = new Set<string>()
@@ -603,6 +608,12 @@ function navigateToType(nodeId: string) {
 
       <!-- Edges (rendered first so nodes are on top) -->
       <g v-for="edge in edges" :key="`${edge.from}-${edge.to}-${edge.label}`">
+        <!-- Tooltip for self-loop (hierarchy) edges -->
+        <title v-if="edge.from === edge.to">{{
+          edge.from === 'systems'
+            ? 'Systems can contain child sub-systems (subsystem hierarchy)'
+            : 'Deployments can contain child sub-deployments (subdeployment hierarchy)'
+        }}</title>
         <path
           :d="edgePath(edge)"
           :stroke="isEdgeActive(edge) ? '#0ea5e9' : '#cbd5e1'"
@@ -633,6 +644,31 @@ function navigateToType(nodeId: string) {
         }"
         @click="navigateToType(node.id)"
       >
+        <!-- Stacked card effect for hierarchical (self-referencing) nodes -->
+        <template v-if="hasSelfLoop(node.id)">
+          <rect
+            :x="node.x - NODE_W/2 + 6"
+            :y="node.y - NODE_H/2 + 6"
+            :width="NODE_W"
+            :height="NODE_H"
+            :rx="NODE_RX"
+            :fill="isActive(node.id) ? node.color : '#f8fafc'"
+            :stroke="isActive(node.id) ? node.color : isConnected(node.id) ? node.color : '#e2e8f0'"
+            :stroke-width="0.8"
+            :opacity="isActive(node.id) ? 0.4 : 0.5"
+          />
+          <rect
+            :x="node.x - NODE_W/2 + 3"
+            :y="node.y - NODE_H/2 + 3"
+            :width="NODE_W"
+            :height="NODE_H"
+            :rx="NODE_RX"
+            :fill="isActive(node.id) ? node.color : '#f8fafc'"
+            :stroke="isActive(node.id) ? node.color : isConnected(node.id) ? node.color : '#e2e8f0'"
+            :stroke-width="0.8"
+            :opacity="isActive(node.id) ? 0.6 : 0.7"
+          />
+        </template>
         <!-- Shadow -->
         <rect
           :x="node.x - NODE_W/2 + 2"
@@ -717,7 +753,15 @@ function navigateToType(nodeId: string) {
       </span>
       <span class="legend-item">
         <svg width="30" height="10"><line x1="0" y1="5" x2="30" y2="5" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 2" /></svg>
-        Self/optional
+        Hierarchy / optional
+      </span>
+      <span class="legend-item">
+        <svg width="22" height="16" viewBox="0 0 22 16">
+          <rect x="4" y="4" width="14" height="10" rx="2" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8" opacity="0.5" />
+          <rect x="2" y="2" width="14" height="10" rx="2" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8" opacity="0.7" />
+          <rect x="0" y="0" width="14" height="10" rx="2" fill="#fff" stroke="#94a3b8" stroke-width="1" />
+        </svg>
+        Can nest children
       </span>
     </div>
   </div>
