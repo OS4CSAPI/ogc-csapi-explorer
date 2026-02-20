@@ -341,11 +341,32 @@ export function getNestedListUrl(
     if (parentType === 'datastreams') {
       switch (relation) {
         case 'observations': return b.getDataStreamObservations(parentId, options as ObservationQueryOptions)
+        case 'systems': return b.getDataStreamSystems(parentId, options)
+        case 'procedures': return b.getDataStreamProcedures(parentId, options)
       }
     }
     if (parentType === 'controlStreams') {
       switch (relation) {
         case 'commands': return b.getControlStreamCommands(parentId, options as CommandQueryOptions)
+      }
+    }
+    if (parentType === 'procedures') {
+      switch (relation) {
+        case 'systems': return b.getProcedureSystems(parentId, options)
+        case 'datastreams': return b.getProcedureDataStreams(parentId, options)
+      }
+    }
+    if (parentType === 'samplingFeatures') {
+      switch (relation) {
+        case 'systems': return b.getSamplingFeatureSystems(parentId, options)
+        case 'observations': return b.getSamplingFeatureObservations(parentId, options)
+      }
+    }
+    if (parentType === 'properties') {
+      switch (relation) {
+        case 'systems': return b.getPropertySystems(parentId, options)
+        case 'datastreams': return b.getPropertyDataStreams(parentId, options)
+        case 'controlstreams': return b.getPropertyControlStreams(parentId, options)
       }
     }
   } catch {
