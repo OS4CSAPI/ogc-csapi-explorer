@@ -330,39 +330,42 @@ watch([() => props.activeType, () => props.activeId], () => {
   if (connection.connected && props.activeId) fetchCounts()
 })
 
-/** Navigate to a resource type in the explorer */
+/** Navigate to a related resource type's list, scoped to the active resource.
+ *  Matches the behavior of the related resource panels in ResourceDetail. */
 function navigateToType(nodeId: string) {
   // If it's the active type, do nothing
   if (nodeId === props.activeType) return
 
-  // Check if this is a related resource that should be browsed as nested
-  const isRelated = edges.some(
-    e => (e.from === props.activeType && e.to === nodeId) ||
-         (e.to === props.activeType && e.from === nodeId)
-  )
+  // Observations and commands are transitive (grandchildren) — out of scope for now
+  if (nodeId === 'observations' || nodeId === 'commands') return
 
-  if (isRelated && props.activeId) {
-    // Navigate to nested resource list under this parent
-    const relation = edges.find(
-      e => e.from === props.activeType && e.to === nodeId
-    )
-    if (relation) {
-      router.push({
-        path: `/explore/${nodeId}`,
-        query: {
-          parentType: props.activeType,
-          parentId: props.activeId,
-          relation: relation.label === 'subsystems' ? 'subsystems'
-                  : relation.label === 'subdeployments' ? 'subdeployments'
-                  : nodeId,
-        },
-      })
-      return
-    }
+  // Only navigate if this node is highlighted (has resources)
+  if (!isConnected(nodeId)) return
+
+  if (!props.activeId) {
+    // No active resource — just navigate to the top-level list
+    router.push({ path: `/explore/${nodeId}` })
+    return
   }
 
-  // Default: navigate to that resource type's list
-  router.push({ path: `/explore/${nodeId}` })
+  // Find the RELATED_RESOURCES entry for this relation
+  const relations = RELATED_RESOURCES[props.activeType]
+  const rel = relations?.find(r => r.childType === nodeId)
+
+  if (rel) {
+    // Navigate to the nested list, same as the "browse all" in ResourceDetail
+    router.push({
+      path: `/explore/${rel.childType}`,
+      query: {
+        parentType: props.activeType,
+        parentId: props.activeId,
+        relation: rel.relation,
+      },
+    })
+  } else {
+    // Fallback: top-level list
+    router.push({ path: `/explore/${nodeId}` })
+  }
 }
 </script>
 
@@ -426,8 +429,9 @@ function navigateToType(nodeId: string) {
         class="node-group"
         :class="{
           'node-active': isActive(node.id),
-          'node-connected': !isActive(node.id) && isConnected(node.id),
+          'node-connected': !isActive(node.id) && isConnected(node.id) && node.id !== 'observations' && node.id !== 'commands',
           'node-dimmed': !isConnected(node.id),
+          'node-inert': node.id === 'observations' || node.id === 'commands',
         }"
         @click="navigateToType(node.id)"
       >
@@ -544,8 +548,9 @@ function navigateToType(nodeId: string) {
   filter: brightness(0.95);
 }
 .node-active { cursor: default; }
-.node-dimmed { opacity: 0.45; }
+.node-dimmed { opacity: 0.45; cursor: default; }
 .node-dimmed:hover { opacity: 0.7; }
+.node-inert { cursor: default; }
 
 /* Text styles */
 .node-label {
