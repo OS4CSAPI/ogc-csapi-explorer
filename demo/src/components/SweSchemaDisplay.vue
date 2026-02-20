@@ -1,14 +1,23 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { apiFetch } from '../api'
-import { getSchemaUrl, parseSWEComponent, parseDatastreamSchemaResponse } from '../csapi-bridge'
+import { getSchemaUrl, getControlStreamSchemaUrl, parseSWEComponent, parseDatastreamSchemaResponse, parseControlStreamSchemaResponse } from '../csapi-bridge'
 import type { AnyComponent } from '../csapi-bridge'
 import ProgressSpinner from 'primevue/progressspinner'
 import Message from 'primevue/message'
 
 const props = defineProps<{
-  datastreamId: string
+  datastreamId?: string
+  controlStreamId?: string
 }>()
+
+/** Derived mode — determines which parser and URL builder to use */
+const mode = computed<'datastream' | 'controlstream'>(() =>
+  props.controlStreamId ? 'controlstream' : 'datastream'
+)
+const activeId = computed(() => props.controlStreamId || props.datastreamId || '')
+const sectionTitle = computed(() => mode.value === 'controlstream' ? 'Command Schema' : 'Observation Schema')
+const sectionIcon = computed(() => mode.value === 'controlstream' ? 'pi pi-sliders-h' : 'pi pi-sitemap')
 
 const loading = ref(false)
 const error = ref('')
@@ -146,12 +155,18 @@ const resultSchemaTypeLabel = computed(() => parsedEnvelope.value?.resultSchema?
 const recordSchemaTypeLabel = computed(() => parsedEnvelope.value?.recordSchema?.type ?? null)
 
 const obsFormat = computed(() => parsedEnvelope.value?.obsFormat || null)
+/** commandFormat is present only for control stream schemas */
+const commandFormat = computed(() => (parsedEnvelope.value as any)?.commandFormat || null)
+/** Show obsFormat or commandFormat depending on mode */
+const formatBadge = computed(() => commandFormat.value || obsFormat.value || null)
 const encoding = computed(() => parsedEnvelope.value?.encoding ?? null)
 
 async function fetchSchema() {
-  const url = getSchemaUrl(props.datastreamId)
+  const url = mode.value === 'controlstream'
+    ? getControlStreamSchemaUrl(activeId.value)
+    : getSchemaUrl(activeId.value)
   if (!url) {
-    error.value = 'Schema URL not available (builder not initialized or datastreams unavailable)'
+    error.value = `Schema URL not available (builder not initialized or ${mode.value === 'controlstream' ? 'controlStreams' : 'datastreams'} unavailable)`
     return
   }
 
@@ -178,22 +193,36 @@ async function fetchSchema() {
 
   rawSchema.value = data
 
-  // Use the library's parseDatastreamSchemaResponse() to properly parse the envelope.
-  // This extracts obsFormat, resultSchema, recordSchema, and encoding — delegating
-  // schema fields to parseSWEComponent() and encoding to parseEncoding() internally.
+  // Use the library's schema response parser appropriate for the mode.
+  // Datastream: parseDatastreamSchemaResponse() → { obsFormat, resultSchema, recordSchema, encoding }
+  // ControlStream: parseControlStreamSchemaResponse() → { commandFormat, parametersSchema, encoding }
   try {
-    const envelope = parseDatastreamSchemaResponse(data)
-    if (envelope.resultSchema || envelope.recordSchema) {
-      // Normal envelope response — library parsed successfully
-      parsedEnvelope.value = envelope
+    if (mode.value === 'controlstream') {
+      const envelope = parseControlStreamSchemaResponse(data)
+      if (envelope.parametersSchema) {
+        // Map parametersSchema into resultSchema slot for unified rendering
+        parsedEnvelope.value = {
+          obsFormat: '',
+          resultSchema: envelope.parametersSchema,
+          encoding: envelope.encoding,
+          ...({ commandFormat: envelope.commandFormat } as any),
+        }
+      } else {
+        // Bare SWE component fallback
+        const component = parseSWEComponent(data)
+        parsedEnvelope.value = { obsFormat: '', resultSchema: component }
+      }
     } else {
-      // Server returned a bare SWE component without the envelope wrapper.
-      // Fall back to parsing the raw data as a SWE component directly.
-      const component = parseSWEComponent(data)
-      parsedEnvelope.value = { obsFormat: '', resultSchema: component }
+      const envelope = parseDatastreamSchemaResponse(data)
+      if (envelope.resultSchema || envelope.recordSchema) {
+        parsedEnvelope.value = envelope
+      } else {
+        const component = parseSWEComponent(data)
+        parsedEnvelope.value = { obsFormat: '', resultSchema: component }
+      }
     }
   } catch (outerErr: any) {
-    // parseDatastreamSchemaResponse failed — try bare SWE component fallback
+    // Parser failed — try bare SWE component fallback
     try {
       const component = parseSWEComponent(data)
       parsedEnvelope.value = { obsFormat: '', resultSchema: component }
@@ -206,8 +235,8 @@ async function fetchSchema() {
   loading.value = false
 }
 
-watch(() => props.datastreamId, () => {
-  if (props.datastreamId) fetchSchema()
+watch(() => activeId.value, () => {
+  if (activeId.value) fetchSchema()
 }, { immediate: true })
 
 /** Shorten a definition URI for display — show last 1-2 path segments */
@@ -225,10 +254,10 @@ function shortenUri(uri: string): string {
 <template>
   <details class="schema-section" open>
     <summary>
-      <i class="pi pi-sitemap"></i>
-      Observation Schema
+      <i :class="sectionIcon"></i>
+      {{ sectionTitle }}
       <span v-if="!hasBothSchemas && (resultSchemaTypeLabel || recordSchemaTypeLabel)" class="schema-type-badge">{{ resultSchemaTypeLabel || recordSchemaTypeLabel }}</span>
-      <span v-if="obsFormat" class="schema-format-badge">{{ obsFormat }}</span>
+      <span v-if="formatBadge" class="schema-format-badge">{{ formatBadge }}</span>
     </summary>
 
     <div v-if="loading" class="schema-loading">

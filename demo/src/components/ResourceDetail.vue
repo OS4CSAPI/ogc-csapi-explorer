@@ -29,6 +29,8 @@ const detail = ref<any>(null)
 
 /** True when viewing a datastream — triggers schema display */
 const isDatastream = computed(() => props.resourceType === 'datastreams')
+/** True when viewing a control stream — triggers command schema display */
+const isControlStream = computed(() => props.resourceType === 'controlStreams')
 /** True when viewing a procedure — triggers SensorML display */
 const isProcedure = computed(() => props.resourceType === 'procedures')
 const effectiveId = computed(() => detail.value?.id || props.resourceId || '')
@@ -291,6 +293,9 @@ watch(
 
       <!-- Observation Schema (datastreams only) — full width below -->
       <SweSchemaDisplay v-if="isDatastream && effectiveId" :datastreamId="effectiveId" />
+
+      <!-- Command Schema (control streams only) — full width below -->
+      <SweSchemaDisplay v-if="isControlStream && effectiveId" :controlStreamId="effectiveId" />
 
       <!-- SensorML Process Description (procedures only) — full width below -->
       <SensorMLDisplay v-if="isProcedure && effectiveId" :procedureId="effectiveId" />
