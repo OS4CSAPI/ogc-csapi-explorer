@@ -114,26 +114,43 @@ const connectedNodeIds = computed<Set<string>>(() => {
   return set
 })
 
+/** Does this related type have actual resources? (positive count) */
+function hasResources(nodeId: string): boolean {
+  const c = counts[nodeId]
+  return c != null && c > 0
+}
+
 /** Is this node the actively viewed resource? */
 function isActive(nodeId: string) {
   return nodeId === props.activeType
 }
 
-/** Is this node connected to the active resource? */
+/** Is this node connected to the active resource (and actually has data)? */
 function isConnected(nodeId: string) {
-  if (!connectedNodeIds.value.has(nodeId)) return false
-  // If we have a definitive count of 0 for this related type, treat as not connected
-  if (nodeId !== props.activeType && counts[nodeId] === 0) return false
-  return true
+  if (nodeId === props.activeType) return true
+
+  // Direct relation with positive count
+  if (connectedNodeIds.value.has(nodeId) && hasResources(nodeId)) return true
+
+  // Transitive: observations are reachable if datastreams > 0
+  if (nodeId === 'observations' && hasResources('datastreams')) return true
+  // Transitive: commands are reachable if controlStreams > 0
+  if (nodeId === 'commands' && hasResources('controlStreams')) return true
+
+  return false
 }
 
-/** Is this edge connected to the active type? */
+/** Is this edge connected to the active type (and the far end has data)? */
 function isEdgeActive(edge: ModelEdge) {
-  if (edge.from !== props.activeType && edge.to !== props.activeType) return false
-  // Dim edge if the other end has a count of 0
+  if (edge.from !== props.activeType && edge.to !== props.activeType) {
+    // Check transitive edges: datastreams→observations, controlStreams→commands
+    if (edge.from === 'datastreams' && edge.to === 'observations' && hasResources('datastreams')) return true
+    if (edge.from === 'controlStreams' && edge.to === 'commands' && hasResources('controlStreams')) return true
+    return false
+  }
+  // Direct edge: dim if the other end has no resources
   const otherEnd = edge.from === props.activeType ? edge.to : edge.from
-  if (counts[otherEnd] === 0) return false
-  return true
+  return hasResources(otherEnd)
 }
 
 /** Compute edge path between two nodes.
