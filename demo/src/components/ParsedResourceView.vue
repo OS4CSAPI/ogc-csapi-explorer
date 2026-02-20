@@ -52,6 +52,27 @@ const parentDatastreamId = computed<string | null>(() => {
   return null
 })
 
+// ─── Parent control stream ID extraction ─────────────────────
+/**
+ * Extract the parent control stream ID from the raw command JSON.
+ * Commands carry `controlstream@id` as a cross-reference field.
+ * Needed because OSH only exposes commands nested under control streams.
+ */
+const parentControlStreamId = computed<string | null>(() => {
+  if (props.resourceType !== 'commands') return null
+  const raw = props.resource
+  if (!raw) return null
+  if (typeof raw['controlstream@id'] === 'string') return raw['controlstream@id']
+  if (Array.isArray(raw.links)) {
+    const csLink = raw.links.find((l: any) => l.rel === 'controlstream' || l.rel === 'collection')
+    if (csLink?.href) {
+      const match = csLink.href.match(/controlstreams\/([^/?]+)/)
+      if (match) return match[1]
+    }
+  }
+  return null
+})
+
 // ─── Library recognition ─────────────────────────────────────
 const recognizedType = computed(() => {
   if (!props.resource) return null
@@ -357,7 +378,7 @@ function geometrySummary(geom: any): string {
           <tr v-if="resourceType === 'commands' && parsedPart2.id">
             <td class="field-label">statusHistory</td>
             <td colspan="2">
-              <CommandStatusHistory :commandId="parsedPart2.id" />
+              <CommandStatusHistory :commandId="parsedPart2.id" :controlStreamId="parentControlStreamId" />
             </td>
           </tr>
           <!-- Property-specific fields -->

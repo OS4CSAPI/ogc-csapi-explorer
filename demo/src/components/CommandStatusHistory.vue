@@ -21,6 +21,8 @@ import { getCommandStatusUrl, tryParseCommandStatus } from '../csapi-bridge'
 const props = defineProps<{
   /** The command ID whose status history to fetch */
   commandId?: string | null
+  /** Parent control stream ID (for servers that nest commands under control streams) */
+  controlStreamId?: string | null
 }>()
 
 // ========================================
@@ -110,7 +112,7 @@ async function fetchStatusHistory() {
   statuses.value = []
 
   try {
-    const url = getCommandStatusUrl(id)
+    const url = getCommandStatusUrl(id, props.controlStreamId)
     if (!url) {
       error.value = 'Could not build status URL'
       loading.value = false

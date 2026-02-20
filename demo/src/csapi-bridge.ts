@@ -376,9 +376,22 @@ export function getSchemaUrl(datastreamId: string): string | null {
 
 /**
  * Build the URL for a command's status history.
- * Falls back to direct path construction if the builder is unavailable or throws.
+ *
+ * OSH (and potentially other servers) only exposes commands nested under
+ * control streams, not as a top-level resource. When `controlStreamId` is
+ * provided, builds the nested path:
+ *   `/controlstreams/{csId}/commands/{cmdId}/status`
+ *
+ * Falls back to the builder's `getCommandStatus()` or direct top-level path
+ * if no parent control stream ID is available.
  */
-export function getCommandStatusUrl(commandId: string): string | null {
+export function getCommandStatusUrl(commandId: string, controlStreamId?: string | null): string | null {
+  // Prefer nested path when parent control stream is known
+  if (controlStreamId) {
+    return `/controlstreams/${controlStreamId}/commands/${commandId}/status`
+  }
+
+  // Top-level fallback (servers that expose commands at root)
   const b = builder.value
   if (!b) return `/commands/${commandId}/status`
   try {
