@@ -129,6 +129,9 @@ const numberReturned = ref<number | null>(null)
 const totalCount = ref<number | null>(null)
 const rawResponse = ref<any>(null)
 
+/** True when we had to apply client-side filtering/limit because the server ignored params */
+const clientSideFallback = ref(false)
+
 /**
  * Fetch the total number of matching resources (same filters, no limit/offset).
  * Fires in parallel with the paginated request so it doesn't slow things down.
@@ -146,7 +149,30 @@ async function fetchTotalCount(): Promise<number | null> {
     })
     if (!countRes.ok || !countRes.data) return null
     const parsed = parseCollectionResponse(countRes.data)
-    return parsed.items.length
+    let countItems = parsed.items as any[]
+
+    // Client-side keyword filter fallback for the total count too
+    if (q.value && countItems.length > 0) {
+      const keyword = q.value.toLowerCase()
+      const filtered = countItems.filter((item: any) => {
+        const fields = [
+          item?.id,
+          item?.properties?.name,
+          item?.properties?.title,
+          item?.properties?.description,
+          item?.properties?.uniqueId,
+          item?.name,
+          item?.title,
+          item?.description,
+        ]
+        return fields.some(f => typeof f === 'string' && f.toLowerCase().includes(keyword))
+      })
+      if (filtered.length < countItems.length) {
+        countItems = filtered
+      }
+    }
+
+    return countItems.length
   } catch {
     return null
   }
@@ -208,8 +234,47 @@ async function fetchResources(cursorUrl?: string) {
     // (FeatureCollection and items envelope) into a consistent structure
     try {
       const parsed = parseCollectionResponse(res.data)
-      items.value = parsed.items as any[]
-      numberReturned.value = parsed.numberReturned ?? parsed.items.length
+      let resultItems = parsed.items as any[]
+      clientSideFallback.value = false
+
+      // --- Client-side fallback for servers that ignore query parameters ---
+      // Some servers (e.g., OSH) ignore ?q= and ?limit= entirely.
+      // Detect this and apply filters locally so the UI stays correct.
+
+      // 1) Client-side keyword filter fallback
+      if (q.value && !cursorUrl && resultItems.length > 0) {
+        const keyword = q.value.toLowerCase()
+        const filtered = resultItems.filter((item: any) => {
+          // Match against common text fields: id, name, title, description, uniqueId
+          const fields = [
+            item?.id,
+            item?.properties?.name,
+            item?.properties?.title,
+            item?.properties?.description,
+            item?.properties?.uniqueId,
+            item?.name,
+            item?.title,
+            item?.description,
+          ]
+          return fields.some(f => typeof f === 'string' && f.toLowerCase().includes(keyword))
+        })
+        // Only apply if it actually reduced the set (otherwise the server may
+        // have already filtered and the keyword just doesn't appear in our
+        // checked fields — we don't want a false negative)
+        if (filtered.length < resultItems.length) {
+          resultItems = filtered
+          clientSideFallback.value = true
+        }
+      }
+
+      // 2) Client-side limit enforcement
+      if (limit.value && !cursorUrl && resultItems.length > limit.value) {
+        resultItems = resultItems.slice(0, limit.value)
+        clientSideFallback.value = true
+      }
+
+      items.value = resultItems
+      numberReturned.value = resultItems.length
 
       // Use server-provided total if available, otherwise await our parallel count
       if (parsed.numberMatched != null) {
@@ -408,6 +473,11 @@ watch(
       <span v-if="numberMatched != null"> of <strong>{{ numberMatched }}</strong> total</span>
       <span v-if="paginationMode === 'offset'"> (offset: {{ offset }})</span>
     </div>
+
+    <!-- Client-side fallback warning -->
+    <Message v-if="!loading && clientSideFallback" severity="warn" :closable="false" class="mt-2">
+      Server ignored filter/limit parameters — results filtered client-side.
+    </Message>
 
     <!-- Data Table -->
     <DataTable
