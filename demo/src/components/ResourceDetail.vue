@@ -611,7 +611,11 @@ watch(
           <i class="pi pi-share-alt"></i>
           Data Model — SOSA / SSN / CSAPI Relationships
         </summary>
-        <DataModelDiagram :activeType="props.resourceType" :activeId="detail?.id || props.resourceId" />
+        <DataModelDiagram
+          :activeType="props.resourceType"
+          :activeId="detail?.id || props.resourceId"
+          :parentLinks="parentLinks.map(p => ({ resourceType: p.resourceType, resourceId: p.resourceId }))"
+        />
       </details>
 
       <!-- Side-by-side layout: Raw JSON | Library Parsed Output -->

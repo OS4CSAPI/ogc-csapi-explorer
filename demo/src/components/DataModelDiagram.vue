@@ -7,11 +7,18 @@ import { connection, RELATED_RESOURCES } from '../state'
 
 const router = useRouter()
 
+interface ParentRef {
+  resourceType: string
+  resourceId: string
+}
+
 const props = defineProps<{
   /** The resource type currently being viewed */
   activeType: string
   /** The resource ID currently being viewed (for navigation context) */
   activeId?: string
+  /** Parent references extracted from the resource JSON (e.g., observation → datastream) */
+  parentLinks?: ParentRef[]
 }>()
 
 /* ──────────────────────────────────────────────────────────────────────
@@ -111,6 +118,10 @@ const connectedNodeIds = computed<Set<string>>(() => {
     if (e.from === props.activeType) set.add(e.to)
     if (e.to === props.activeType) set.add(e.from)
   }
+  // Also include parent-linked nodes
+  if (props.parentLinks) {
+    for (const p of props.parentLinks) set.add(p.resourceType)
+  }
   return set
 })
 
@@ -132,6 +143,9 @@ function isConnected(nodeId: string) {
   // Direct relation with positive count
   if (connectedNodeIds.value.has(nodeId) && hasResources(nodeId)) return true
 
+  // Parent link: always connected if a parent reference exists for this type
+  if (props.parentLinks?.some(p => p.resourceType === nodeId)) return true
+
   // Transitive: observations are reachable if datastreams > 0
   if (nodeId === 'observations' && hasResources('datastreams')) return true
   // Transitive: commands are reachable if controlStreams > 0
@@ -142,15 +156,23 @@ function isConnected(nodeId: string) {
 
 /** Is this edge connected to the active type (and the far end has data)? */
 function isEdgeActive(edge: ModelEdge) {
-  if (edge.from !== props.activeType && edge.to !== props.activeType) {
-    // Check transitive edges: datastreams→observations, controlStreams→commands
-    if (edge.from === 'datastreams' && edge.to === 'observations' && hasResources('datastreams')) return true
-    if (edge.from === 'controlStreams' && edge.to === 'commands' && hasResources('controlStreams')) return true
-    return false
+  // Direct edge from/to active type
+  if (edge.from === props.activeType || edge.to === props.activeType) {
+    const otherEnd = edge.from === props.activeType ? edge.to : edge.from
+    // Parent-linked nodes are always active
+    if (props.parentLinks?.some(p => p.resourceType === otherEnd)) return true
+    return hasResources(otherEnd)
   }
-  // Direct edge: dim if the other end has no resources
-  const otherEnd = edge.from === props.activeType ? edge.to : edge.from
-  return hasResources(otherEnd)
+
+  // Check transitive edges: datastreams→observations, controlStreams→commands
+  if (edge.from === 'datastreams' && edge.to === 'observations' && hasResources('datastreams')) return true
+  if (edge.from === 'controlStreams' && edge.to === 'commands' && hasResources('controlStreams')) return true
+
+  // Parent-chain edges: if both ends are connected, light up the edge between them
+  // e.g., viewing observations with parent datastream → light up systems↔datastreams edge too
+  if (isConnected(edge.from) && isConnected(edge.to)) return true
+
+  return false
 }
 
 /** Compute edge path between two nodes.
@@ -209,6 +231,7 @@ let fetchGeneration = 0
  * Fetch counts of related/nested resources for the currently viewed resource.
  * Fetches direct relations, then transitive grandchild counts
  * (observations via datastreams, commands via controlStreams).
+ * For leaf types with parent links, also fetches counts from parent perspective.
  */
 async function fetchCounts() {
   const gen = ++fetchGeneration
@@ -221,97 +244,143 @@ async function fetchCounts() {
   if (!parentId || !parentType) return
 
   const relations = RELATED_RESOURCES[parentType]
-  if (!relations?.length) return
 
-  // Set connected types to loading
-  for (const rel of relations) counts[rel.childType] = null
+  // ── Direct child counts (if this type has RELATED_RESOURCES) ───
+  if (relations?.length) {
+    // Set connected types to loading
+    for (const rel of relations) counts[rel.childType] = null
 
-  // Fire all direct requests in parallel
-  const requests = relations.map(async (rel) => {
-    try {
-      const path = getNestedListUrl(parentType, parentId, rel.relation, { limit: 0 })
-      const res = await apiFetch(path)
-      if (gen !== fetchGeneration) return  // stale
-      if (!res.ok) {
+    // Fire all direct requests in parallel
+    const requests = relations.map(async (rel) => {
+      try {
+        const path = getNestedListUrl(parentType, parentId, rel.relation, { limit: 0 })
+        const res = await apiFetch(path)
+        if (gen !== fetchGeneration) return  // stale
+        if (!res.ok) {
+          counts[rel.childType] = -1
+          return
+        }
+        const data = res.data
+        if (data?.numberMatched != null) {
+          counts[rel.childType] = data.numberMatched
+        } else if (Array.isArray(data?.items)) {
+          counts[rel.childType] = data.items.length
+        } else if (Array.isArray(data?.features)) {
+          counts[rel.childType] = data.features.length
+        } else {
+          counts[rel.childType] = -1
+        }
+      } catch {
+        if (gen !== fetchGeneration) return
         counts[rel.childType] = -1
-        return
       }
-      const data = res.data
-      if (data?.numberMatched != null) {
-        counts[rel.childType] = data.numberMatched
-      } else if (Array.isArray(data?.items)) {
-        counts[rel.childType] = data.items.length
-      } else if (Array.isArray(data?.features)) {
-        counts[rel.childType] = data.features.length
-      } else {
-        counts[rel.childType] = -1
-      }
-    } catch {
-      if (gen !== fetchGeneration) return
-      counts[rel.childType] = -1
+    })
+    await Promise.allSettled(requests)
+    if (gen !== fetchGeneration) return
+
+    // ── Transitive grandchild counts ──────────────────────────────
+    const transitiveJobs: Array<{ intermediateType: string; intermediateRelation: string; grandchildType: string; grandchildRelation: string }> = []
+
+    if (counts['datastreams'] != null && counts['datastreams'] > 0) {
+      transitiveJobs.push({ intermediateType: 'datastreams', intermediateRelation: 'datastreams', grandchildType: 'observations', grandchildRelation: 'observations' })
     }
-  })
-  await Promise.allSettled(requests)
+    if (counts['controlStreams'] != null && counts['controlStreams'] > 0) {
+      transitiveJobs.push({ intermediateType: 'controlStreams', intermediateRelation: 'controlstreams', grandchildType: 'commands', grandchildRelation: 'commands' })
+    }
+
+    if (transitiveJobs.length) {
+      for (const job of transitiveJobs) {
+        counts[job.grandchildType] = null  // loading
+      }
+
+      const transitiveRequests = transitiveJobs.map(async (job) => {
+        try {
+          const listPath = getNestedListUrl(parentType, parentId, job.intermediateRelation, { limit: 100 })
+          const listRes = await apiFetch(listPath)
+          if (gen !== fetchGeneration) return
+          if (!listRes.ok) { counts[job.grandchildType] = -1; return }
+
+          const items = listRes.data?.items || listRes.data?.features || []
+          const ids: string[] = items.map((item: any) => item?.id || item?.properties?.id).filter(Boolean)
+
+          if (!ids.length) { counts[job.grandchildType] = 0; return }
+
+          let total = 0
+          const subRequests = ids.map(async (id: string) => {
+            try {
+              const path = getNestedListUrl(job.intermediateType, id, job.grandchildRelation, { limit: 0 })
+              const res = await apiFetch(path)
+              if (gen !== fetchGeneration) return 0
+              if (!res.ok) return 0
+              const data = res.data
+              if (data?.numberMatched != null) return data.numberMatched
+              if (Array.isArray(data?.items)) return data.items.length
+              if (Array.isArray(data?.features)) return data.features.length
+              return 0
+            } catch { return 0 }
+          })
+          const results = await Promise.allSettled(subRequests)
+          for (const r of results) {
+            if (r.status === 'fulfilled') total += (r.value ?? 0)
+          }
+          if (gen !== fetchGeneration) return
+          counts[job.grandchildType] = total
+        } catch {
+          if (gen !== fetchGeneration) return
+          counts[job.grandchildType] = -1
+        }
+      })
+      await Promise.allSettled(transitiveRequests)
+    }
+  }
+
   if (gen !== fetchGeneration) return
 
-  // ── Transitive grandchild counts ──────────────────────────────
-  // If the active type has datastreams → also count observations
-  // If the active type has controlStreams → also count commands
-  const transitiveJobs: Array<{ intermediateType: string; intermediateRelation: string; grandchildType: string; grandchildRelation: string }> = []
+  // ── Parent-link counts ─────────────────────────────────────────
+  // For each parent reference (e.g., observation's datastream, datastream's system),
+  // fetch the parent's child relations to populate counts on sibling/ancestor nodes.
+  if (props.parentLinks?.length) {
+    const parentRequests = props.parentLinks.map(async (pLink) => {
+      const pRelations = RELATED_RESOURCES[pLink.resourceType]
+      if (!pRelations?.length) return
 
-  if (counts['datastreams'] != null && counts['datastreams'] > 0) {
-    transitiveJobs.push({ intermediateType: 'datastreams', intermediateRelation: 'datastreams', grandchildType: 'observations', grandchildRelation: 'observations' })
-  }
-  if (counts['controlStreams'] != null && counts['controlStreams'] > 0) {
-    transitiveJobs.push({ intermediateType: 'controlStreams', intermediateRelation: 'controlstreams', grandchildType: 'commands', grandchildRelation: 'commands' })
-  }
+      // Mark parent node as having a resource (count = 1 since we know it exists)
+      if (counts[pLink.resourceType] === undefined) counts[pLink.resourceType] = 1
 
-  if (!transitiveJobs.length) return
+      const childRequests = pRelations.map(async (rel) => {
+        // Don't overwrite counts we already fetched directly
+        if (counts[rel.childType] !== undefined) return
+        // Skip fetching for the active type (we know it has at least 1 — us)
+        if (rel.childType === parentType) {
+          counts[rel.childType] = counts[rel.childType] ?? 1
+          return
+        }
 
-  for (const job of transitiveJobs) {
-    counts[job.grandchildType] = null  // loading
-  }
-
-  const transitiveRequests = transitiveJobs.map(async (job) => {
-    try {
-      // First fetch the intermediate resource IDs
-      const listPath = getNestedListUrl(parentType, parentId, job.intermediateRelation, { limit: 100 })
-      const listRes = await apiFetch(listPath)
-      if (gen !== fetchGeneration) return
-      if (!listRes.ok) { counts[job.grandchildType] = -1; return }
-
-      const items = listRes.data?.items || listRes.data?.features || []
-      const ids: string[] = items.map((item: any) => item?.id || item?.properties?.id).filter(Boolean)
-
-      if (!ids.length) { counts[job.grandchildType] = 0; return }
-
-      // Fetch grandchild count from each intermediate resource in parallel
-      let total = 0
-      const subRequests = ids.map(async (id: string) => {
+        counts[rel.childType] = null  // loading
         try {
-          const path = getNestedListUrl(job.intermediateType, id, job.grandchildRelation, { limit: 0 })
+          const path = getNestedListUrl(pLink.resourceType, pLink.resourceId, rel.relation, { limit: 0 })
           const res = await apiFetch(path)
-          if (gen !== fetchGeneration) return 0
-          if (!res.ok) return 0
+          if (gen !== fetchGeneration) return
+          if (!res.ok) { counts[rel.childType] = -1; return }
           const data = res.data
-          if (data?.numberMatched != null) return data.numberMatched
-          if (Array.isArray(data?.items)) return data.items.length
-          if (Array.isArray(data?.features)) return data.features.length
-          return 0
-        } catch { return 0 }
+          if (data?.numberMatched != null) {
+            counts[rel.childType] = data.numberMatched
+          } else if (Array.isArray(data?.items)) {
+            counts[rel.childType] = data.items.length
+          } else if (Array.isArray(data?.features)) {
+            counts[rel.childType] = data.features.length
+          } else {
+            counts[rel.childType] = -1
+          }
+        } catch {
+          if (gen !== fetchGeneration) return
+          counts[rel.childType] = -1
+        }
       })
-      const results = await Promise.allSettled(subRequests)
-      for (const r of results) {
-        if (r.status === 'fulfilled') total += (r.value ?? 0)
-      }
-      if (gen !== fetchGeneration) return
-      counts[job.grandchildType] = total
-    } catch {
-      if (gen !== fetchGeneration) return
-      counts[job.grandchildType] = -1
-    }
-  })
-  await Promise.allSettled(transitiveRequests)
+      await Promise.allSettled(childRequests)
+    })
+    await Promise.allSettled(parentRequests)
+  }
 }
 
 function formatCount(n: number | null | undefined): string {
@@ -326,7 +395,7 @@ onMounted(() => {
   if (connection.connected && props.activeId) fetchCounts()
 })
 
-watch([() => props.activeType, () => props.activeId], () => {
+watch([() => props.activeType, () => props.activeId, () => props.parentLinks], () => {
   if (connection.connected && props.activeId) fetchCounts()
 })
 
@@ -336,11 +405,19 @@ function navigateToType(nodeId: string) {
   // If it's the active type, do nothing
   if (nodeId === props.activeType) return
 
-  // Observations and commands are transitive (grandchildren) — out of scope for now
-  if (nodeId === 'observations' || nodeId === 'commands') return
-
   // Only navigate if this node is highlighted (has resources)
   if (!isConnected(nodeId)) return
+
+  // Check if this is a parent-linked node (e.g., observation's datastream, datastream's system)
+  const parentLink = props.parentLinks?.find(p => p.resourceType === nodeId)
+  if (parentLink) {
+    // Navigate directly to the parent resource's detail view
+    router.push({
+      path: `/explore/${parentLink.resourceType}`,
+      query: { resourceId: parentLink.resourceId },
+    })
+    return
+  }
 
   if (!props.activeId) {
     // No active resource — just navigate to the top-level list
@@ -348,7 +425,7 @@ function navigateToType(nodeId: string) {
     return
   }
 
-  // Find the RELATED_RESOURCES entry for this relation
+  // Find the RELATED_RESOURCES entry for this relation (direct child)
   const relations = RELATED_RESOURCES[props.activeType]
   const rel = relations?.find(r => r.childType === nodeId)
 
@@ -362,10 +439,30 @@ function navigateToType(nodeId: string) {
         relation: rel.relation,
       },
     })
-  } else {
-    // Fallback: top-level list
-    router.push({ path: `/explore/${nodeId}` })
+    return
   }
+
+  // Check if a parent has a relation to this node (sibling via parent)
+  if (props.parentLinks) {
+    for (const pLink of props.parentLinks) {
+      const pRelations = RELATED_RESOURCES[pLink.resourceType]
+      const pRel = pRelations?.find(r => r.childType === nodeId)
+      if (pRel) {
+        router.push({
+          path: `/explore/${pRel.childType}`,
+          query: {
+            parentType: pLink.resourceType,
+            parentId: pLink.resourceId,
+            relation: pRel.relation,
+          },
+        })
+        return
+      }
+    }
+  }
+
+  // Fallback: top-level list
+  router.push({ path: `/explore/${nodeId}` })
 }
 </script>
 
@@ -429,9 +526,8 @@ function navigateToType(nodeId: string) {
         class="node-group"
         :class="{
           'node-active': isActive(node.id),
-          'node-connected': !isActive(node.id) && isConnected(node.id) && node.id !== 'observations' && node.id !== 'commands',
+          'node-connected': !isActive(node.id) && isConnected(node.id),
           'node-dimmed': !isConnected(node.id),
-          'node-inert': node.id === 'observations' || node.id === 'commands',
         }"
         @click="navigateToType(node.id)"
       >
@@ -550,7 +646,6 @@ function navigateToType(nodeId: string) {
 .node-active { cursor: default; }
 .node-dimmed { opacity: 0.45; cursor: default; }
 .node-dimmed:hover { opacity: 0.7; }
-.node-inert { cursor: default; }
 
 /* Text styles */
 .node-label {
