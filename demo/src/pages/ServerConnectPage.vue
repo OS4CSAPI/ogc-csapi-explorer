@@ -158,7 +158,8 @@ async function connect() {
             detail: `The server's HTTPS certificate at ${actualExternalUrl} could not be validated `
               + 'by the browser. The app connected through a development proxy that bypasses SSL '
               + 'validation, but a direct browser connection would fail. The certificate may be '
-              + 'expired, self-signed, or misconfigured.',
+              + 'expired, self-signed, or misconfigured. CORS support could not be verified '
+              + 'because the SSL handshake failed first.',
           })
         }
       }
