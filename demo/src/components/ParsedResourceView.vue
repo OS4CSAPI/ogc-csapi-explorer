@@ -275,8 +275,17 @@ function geometrySummary(geom: any): string {
             <td><code>{{ parsedPart2.inputName }}</code></td>
             <td class="field-type">string</td>
           </tr>
-          <!-- Observation-specific fields -->
-          <tr v-if="parsedPart2.phenomenonTime">
+          <!-- Observation-specific fields (plain ISO strings, NOT TimeInterval) -->
+          <tr v-if="parsedPart2.phenomenonTime && typeof parsedPart2.phenomenonTime === 'string'">
+            <td class="field-label">phenomenonTime</td>
+            <td class="date-value">
+              <code>{{ parsedPart2.phenomenonTime }}</code>
+              <span class="converted-badge">string (ISO)</span>
+            </td>
+            <td class="field-type">string</td>
+          </tr>
+          <!-- Datastream-level phenomenonTime (TimeInterval extent) -->
+          <tr v-else-if="parsedPart2.phenomenonTime && parsedPart2.phenomenonTime.start">
             <td class="field-label">phenomenonTime</td>
             <td class="date-value">
               <code>{{ formatDate(parsedPart2.phenomenonTime.start) }}</code>
@@ -285,10 +294,21 @@ function geometrySummary(geom: any): string {
             </td>
             <td class="field-type">TimeInterval</td>
           </tr>
-          <tr v-if="parsedPart2.resultTime">
+          <!-- Observation resultTime (plain ISO string) -->
+          <tr v-if="parsedPart2.resultTime && typeof parsedPart2.resultTime === 'string'">
+            <td class="field-label">resultTime</td>
+            <td class="date-value">
+              <code>{{ parsedPart2.resultTime }}</code>
+              <span class="converted-badge">string (ISO)</span>
+            </td>
+            <td class="field-type">string</td>
+          </tr>
+          <!-- Datastream-level resultTime (TimeInterval extent) -->
+          <tr v-else-if="parsedPart2.resultTime && parsedPart2.resultTime.start">
             <td class="field-label">resultTime</td>
             <td class="date-value">
               <code>{{ formatDate(parsedPart2.resultTime.start) }}</code>
+              <span v-if="parsedPart2.resultTime.end"> → <code>{{ formatDate(parsedPart2.resultTime.end) }}</code></span>
               <span class="converted-badge">TimeInterval</span>
             </td>
             <td class="field-type">TimeInterval</td>

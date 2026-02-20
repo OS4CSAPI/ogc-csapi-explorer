@@ -11,8 +11,8 @@ import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 
 const presets = [
-  { label: '52North CSA Demo', proxyPath: '/api/52north', description: 'Public demo — no auth required', externalUrl: 'https://csa.demo.52north.org', requiresAuth: false },
   { label: 'OSH SensorHub', proxyPath: '/api/osh', description: 'Requires basic auth', externalUrl: 'http://45.55.99.236:8080/sensorhub/api', requiresAuth: true },
+  { label: '52North CSA Demo', proxyPath: '/api/52north', description: 'Public demo — no auth required', externalUrl: 'https://csa.demo.52north.org', requiresAuth: false },
   { label: 'Custom URL', proxyPath: '', description: 'Enter a custom server URL', externalUrl: '', requiresAuth: false },
 ]
 
