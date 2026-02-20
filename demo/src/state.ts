@@ -97,8 +97,6 @@ export const RELATED_RESOURCES: Record<string, RelatedResourceLink[]> = {
   ],
   datastreams: [
     { childType: 'observations', label: 'Observations', icon: 'pi pi-eye', relation: 'observations' },
-    { childType: 'systems', label: 'Observing Systems', icon: 'pi pi-server', relation: 'systems' },
-    { childType: 'procedures', label: 'Procedures', icon: 'pi pi-cog', relation: 'procedures' },
   ],
   controlStreams: [
     { childType: 'commands', label: 'Commands', icon: 'pi pi-send', relation: 'commands' },
