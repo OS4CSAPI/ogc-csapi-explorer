@@ -364,25 +364,27 @@ export function getNestedListUrl(
  */
 export function getSchemaUrl(datastreamId: string): string | null {
   const b = builder.value
-  if (!b) return null
+  if (!b) return `/datastreams/${datastreamId}/schema`
   try {
     return b.getDataStreamSchema(datastreamId)
   } catch {
-    return null
+    // Builder may throw if 'datastreams' wasn't discovered as a top-level resource
+    // (e.g., OSH only advertises it nested under systems). Fall back to direct path.
+    return `/datastreams/${datastreamId}/schema`
   }
 }
 
 /**
  * Build the URL for a control stream's command schema.
- * Returns null if the builder is not initialized or the resource is unavailable.
+ * Falls back to direct path construction if the builder is unavailable or throws.
  */
 export function getControlStreamSchemaUrl(controlStreamId: string): string | null {
   const b = builder.value
-  if (!b) return null
+  if (!b) return `/controlstreams/${controlStreamId}/schema`
   try {
     return b.getControlStreamSchema(controlStreamId)
   } catch {
-    return null
+    return `/controlstreams/${controlStreamId}/schema`
   }
 }
 
