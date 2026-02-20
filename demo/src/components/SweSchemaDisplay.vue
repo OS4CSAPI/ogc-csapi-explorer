@@ -46,6 +46,10 @@ interface SchemaField {
   definition?: string
   uom?: string
   depth: number
+  /** AllowedValues / AllowedTokens / AllowedTimes constraint */
+  constraint?: any
+  /** NilValues array: { reason, value }[] */
+  nilValues?: { reason: string; value: any }[]
 }
 
 function flattenComponent(component: AnyComponent, prefix: string, depth: number): SchemaField[] {
@@ -63,6 +67,8 @@ function flattenComponent(component: AnyComponent, prefix: string, depth: number
         definition: f.definition,
         uom: f.uom?.code || f.uom?.href || f.uom?.label,
         depth,
+        constraint: f.constraint,
+        nilValues: f.nilValues,
       })
       // Recurse if this field is itself a record/vector/array
       if (fieldType === 'DataRecord' || fieldType === 'Vector' || fieldType === 'DataArray' || fieldType === 'DataChoice') {
@@ -82,6 +88,8 @@ function flattenComponent(component: AnyComponent, prefix: string, depth: number
         definition: c.definition,
         uom: c.uom?.code || c.uom?.href || c.uom?.label,
         depth,
+        constraint: c.constraint,
+        nilValues: c.nilValues,
       })
     }
   } else if (component.type === 'DataArray') {
@@ -95,6 +103,8 @@ function flattenComponent(component: AnyComponent, prefix: string, depth: number
         definition: et.definition,
         uom: et.uom?.code || et.uom?.href || et.uom?.label,
         depth,
+        constraint: et.constraint,
+        nilValues: et.nilValues,
       })
       if (et.type === 'DataRecord' || et.type === 'Vector') {
         try {
@@ -113,6 +123,8 @@ function flattenComponent(component: AnyComponent, prefix: string, depth: number
         definition: item.definition,
         uom: item.uom?.code || item.uom?.href || item.uom?.label,
         depth,
+        constraint: item.constraint,
+        nilValues: item.nilValues,
       })
     }
   } else {
@@ -124,6 +136,8 @@ function flattenComponent(component: AnyComponent, prefix: string, depth: number
       definition: (component as any).definition,
       uom: (component as any).uom?.code || (component as any).uom?.href,
       depth,
+      constraint: (component as any).constraint,
+      nilValues: (component as any).nilValues,
     })
   }
 
@@ -249,6 +263,71 @@ function shortenUri(uri: string): string {
     return uri.length > 50 ? '…' + uri.slice(-45) : uri
   }
 }
+
+// ========================================
+// Constraint & NilValues formatting
+// ========================================
+
+/** Format an AllowedValues constraint into a human-readable summary */
+function formatConstraint(constraint: any): string {
+  if (!constraint) return ''
+  const parts: string[] = []
+
+  // AllowedValues — values and/or intervals
+  if (constraint.type === 'AllowedValues' || constraint.values || constraint.intervals) {
+    if (constraint.values?.length) {
+      parts.push(`values: {${constraint.values.join(', ')}}`)
+    }
+    if (constraint.intervals?.length) {
+      const ranges = constraint.intervals.map((iv: any[]) => `[${iv[0]}, ${iv[1]}]`)
+      parts.push(`range: ${ranges.join(', ')}`)
+    }
+    if (constraint.significantFigures != null) {
+      parts.push(`sig. figs: ${constraint.significantFigures}`)
+    }
+  }
+
+  // AllowedTokens — values and/or pattern
+  if (constraint.type === 'AllowedTokens' || constraint.pattern) {
+    if (constraint.values?.length) {
+      parts.push(`tokens: {${constraint.values.join(', ')}}`)
+    }
+    if (constraint.pattern) {
+      parts.push(`pattern: /${constraint.pattern}/`)
+    }
+  }
+
+  // AllowedTimes — values and/or intervals
+  if (constraint.type === 'AllowedTimes') {
+    if (constraint.values?.length) {
+      parts.push(`times: {${constraint.values.join(', ')}}`)
+    }
+    if (constraint.intervals?.length) {
+      const ranges = constraint.intervals.map((iv: any[]) => `[${iv[0]}, ${iv[1]}]`)
+      parts.push(`range: ${ranges.join(', ')}`)
+    }
+  }
+
+  return parts.join('; ')
+}
+
+/** Format a NilValues array into a human-readable summary */
+function formatNilValues(nilValues: { reason: string; value: any }[] | undefined): string {
+  if (!nilValues?.length) return ''
+  return nilValues.map(nv => {
+    const reason = shortenUri(nv.reason)
+    return `${nv.value} = ${reason}`
+  }).join('; ')
+}
+
+/** Whether any field in a list has constraints or nilValues (used to show/hide columns) */
+function hasAnyConstraints(fields: SchemaField[]): boolean {
+  return fields.some(f => f.constraint && formatConstraint(f.constraint))
+}
+
+function hasAnyNilValues(fields: SchemaField[]): boolean {
+  return fields.some(f => f.nilValues?.length)
+}
 </script>
 
 <template>
@@ -289,6 +368,8 @@ function shortenUri(uri: string): string {
             <th>Label</th>
             <th>UoM</th>
             <th>Definition</th>
+            <th v-if="hasAnyConstraints(resultSchemaFields)">Constraints</th>
+            <th v-if="hasAnyNilValues(resultSchemaFields)">Nil Values</th>
           </tr>
         </thead>
         <tbody>
@@ -305,6 +386,14 @@ function shortenUri(uri: string): string {
               <a v-if="field.definition" :href="field.definition" target="_blank" rel="noopener" :title="field.definition">
                 {{ shortenUri(field.definition) }}
               </a>
+              <span v-else>—</span>
+            </td>
+            <td v-if="hasAnyConstraints(resultSchemaFields)" class="constraint-cell">
+              <span v-if="formatConstraint(field.constraint)" class="constraint-badge" :title="formatConstraint(field.constraint)">{{ formatConstraint(field.constraint) }}</span>
+              <span v-else>—</span>
+            </td>
+            <td v-if="hasAnyNilValues(resultSchemaFields)" class="nilvalue-cell">
+              <span v-if="field.nilValues?.length" class="nilvalue-badge" :title="formatNilValues(field.nilValues)">{{ formatNilValues(field.nilValues) }}</span>
               <span v-else>—</span>
             </td>
           </tr>
@@ -326,6 +415,8 @@ function shortenUri(uri: string): string {
             <th>Label</th>
             <th>UoM</th>
             <th>Definition</th>
+            <th v-if="hasAnyConstraints(recordSchemaFields)">Constraints</th>
+            <th v-if="hasAnyNilValues(recordSchemaFields)">Nil Values</th>
           </tr>
         </thead>
         <tbody>
@@ -342,6 +433,14 @@ function shortenUri(uri: string): string {
               <a v-if="field.definition" :href="field.definition" target="_blank" rel="noopener" :title="field.definition">
                 {{ shortenUri(field.definition) }}
               </a>
+              <span v-else>—</span>
+            </td>
+            <td v-if="hasAnyConstraints(recordSchemaFields)" class="constraint-cell">
+              <span v-if="formatConstraint(field.constraint)" class="constraint-badge" :title="formatConstraint(field.constraint)">{{ formatConstraint(field.constraint) }}</span>
+              <span v-else>—</span>
+            </td>
+            <td v-if="hasAnyNilValues(recordSchemaFields)" class="nilvalue-cell">
+              <span v-if="field.nilValues?.length" class="nilvalue-badge" :title="formatNilValues(field.nilValues)">{{ formatNilValues(field.nilValues) }}</span>
               <span v-else>—</span>
             </td>
           </tr>
@@ -513,6 +612,42 @@ function shortenUri(uri: string): string {
 }
 .definition-cell a:hover {
   text-decoration: underline;
+}
+.constraint-cell {
+  font-size: 0.73rem;
+  max-width: 200px;
+  word-break: break-word;
+}
+.constraint-badge {
+  display: inline-block;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+.nilvalue-cell {
+  font-size: 0.73rem;
+  max-width: 180px;
+  word-break: break-word;
+}
+.nilvalue-badge {
+  display: inline-block;
+  background: #fce7f3;
+  color: #9d174d;
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
 .schema-raw-section {
   margin-top: 0.5rem;
