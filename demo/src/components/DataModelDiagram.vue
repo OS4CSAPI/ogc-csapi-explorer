@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, onMounted, watch } from 'vue'
+import { computed, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../api'
 import { getNestedListUrl, getListUrl, getDetailUrl, getContentType } from '../csapi-bridge'
@@ -239,9 +239,6 @@ const counts = reactive<Record<string, number | null>>({})
 /** Grandparent references discovered by fetching parent detail JSON */
 const discoveredAncestors = reactive<Record<string, ParentRef>>({})
 let fetchGeneration = 0
-
-/** State for the traveling-dot edge animation (null = idle) */
-const animatingEdge = ref<{ path: string; reverse: boolean } | null>(null)
 
 /**
  * Fetch counts of related/nested resources for the currently viewed resource.
@@ -500,39 +497,18 @@ watch([() => props.activeType, () => props.activeId, () => props.parentLinks], (
 })
 
 /** Navigate to a related resource type's list, scoped to the active resource.
- *  When a direct edge exists between the active type and the target,
- *  a traveling-dot animation plays along the edge before navigating. */
+ *  Matches the behavior of the related resource panels in ResourceDetail. */
 function navigateToType(nodeId: string) {
+  // If it's the active type, do nothing
   if (nodeId === props.activeType) return
+
+  // Only navigate if this node is highlighted (has resources)
   if (!isConnected(nodeId)) return
-  if (animatingEdge.value) return // animation already in progress
 
-  // Find a direct edge between the active type and the clicked node
-  const directEdge = edges.find(e =>
-    (e.from === props.activeType && e.to === nodeId) ||
-    (e.to === props.activeType && e.from === nodeId),
-  )
-
-  if (directEdge) {
-    // Reverse = the edge is defined target→active, so the dot must travel backwards
-    const reverse = directEdge.to === props.activeType
-    animatingEdge.value = { path: edgePath(directEdge), reverse }
-    setTimeout(() => {
-      animatingEdge.value = null
-      doNavigate(nodeId)
-    }, 500)
-    return
-  }
-
-  // No direct edge (transitive connection) — navigate immediately
-  doNavigate(nodeId)
-}
-
-/** Execute the actual router navigation for a resource type. */
-function doNavigate(nodeId: string) {
-  // Parent-linked node (e.g., observation's datastream, datastream's system)
+  // Check if this is a parent-linked node (e.g., observation's datastream, datastream's system)
   const parentLink = props.parentLinks?.find(p => p.resourceType === nodeId)
   if (parentLink) {
+    // Navigate directly to the parent resource's detail view
     router.push({
       path: `/explore/${parentLink.resourceType}`,
       query: { resourceId: parentLink.resourceId },
@@ -540,7 +516,7 @@ function doNavigate(nodeId: string) {
     return
   }
 
-  // Discovered ancestor (grandparent, e.g., datastream's system)
+  // Check if this is a discovered ancestor (grandparent, e.g., datastream's system)
   const ancestor = discoveredAncestors[nodeId]
   if (ancestor) {
     router.push({
@@ -551,14 +527,17 @@ function doNavigate(nodeId: string) {
   }
 
   if (!props.activeId) {
+    // No active resource — just navigate to the top-level list
     router.push({ path: `/explore/${nodeId}` })
     return
   }
 
-  // Direct child via RELATED_RESOURCES
+  // Find the RELATED_RESOURCES entry for this relation (direct child)
   const relations = RELATED_RESOURCES[props.activeType]
   const rel = relations?.find(r => r.childType === nodeId)
+
   if (rel) {
+    // Navigate to the nested list, same as the "browse all" in ResourceDetail
     router.push({
       path: `/explore/${rel.childType}`,
       query: {
@@ -570,7 +549,7 @@ function doNavigate(nodeId: string) {
     return
   }
 
-  // Sibling via parent relation
+  // Check if a parent has a relation to this node (sibling via parent)
   const allAncestors = [
     ...(props.parentLinks || []),
     ...Object.values(discoveredAncestors),
@@ -649,24 +628,6 @@ function doNavigate(nodeId: string) {
           text-anchor="middle"
         >{{ edge.label }}</text>
       </g>
-
-      <!-- Traveling dot animation along edge on navigation -->
-      <circle
-        v-if="animatingEdge"
-        r="5"
-        fill="#0ea5e9"
-        filter="url(#glow)"
-        class="traveling-dot"
-      >
-        <animateMotion
-          dur="0.5s"
-          fill="freeze"
-          :path="animatingEdge.path"
-          :keyPoints="animatingEdge.reverse ? '1;0' : '0;1'"
-          keyTimes="0;1"
-          calcMode="linear"
-        />
-      </circle>
 
       <!-- Nodes -->
       <g
@@ -861,11 +822,6 @@ function doNavigate(nodeId: string) {
 .edge-active {
   fill: #0ea5e9;
   font-weight: 600;
-}
-
-/* Traveling dot animation */
-.traveling-dot {
-  pointer-events: none;
 }
 .partition-label {
   font-size: 10px;
