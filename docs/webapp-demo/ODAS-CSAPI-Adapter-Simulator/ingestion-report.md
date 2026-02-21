@@ -458,3 +458,35 @@ Both scripts are idempotent for Part 1 (409 Conflict on duplicate UIDs) but Part
 **Server credentials:** HTTP Basic Auth, username `ogc`, password `ogc`.
 
 **Expected runtime:** Part 1 ≈ 15 seconds, Part 2 ≈ 30 seconds (+ ~90 seconds if commands are dispatched, due to S-14 async wait).
+
+---
+
+## 14. Root Cause Analysis: Why Cross-Resource Navigation Fails
+
+OSH SensorHub is a **partial CSAPI implementation focused on the sensor data pipeline, not the full resource graph**.
+
+The server was originally a SensorML/SWE engine (Java/OSGi) that got a CSAPI REST facade bolted on top. What it does well — and what clearly got attention first — is the **vertical data path**:
+
+```
+systems → subsystems → datastreams → observations
+systems → controlstreams → commands
+```
+
+That's the core sensor hub functionality: ingest data, serve it back. Everything along this axis works: CRUD, nesting, schema validation, even datastream inheritance from child to parent systems.
+
+What **doesn't** work is the **horizontal/cross-resource graph** that CSAPI defines:
+
+| Missing Feature | Root Cause |
+|---|---|
+| `/systems/{id}/procedures` | OSH's internal model has no system→procedure FK — procedures are standalone |
+| `/systems/{id}/deployments` | Same — deployments exist but aren't linked to systems in the DB schema |
+| `/deployments/{id}/systems` | Reverse navigation never implemented |
+| `deployedSystems@link` dropped | Server likely whitelists known property names; array-valued `@link` fields aren't in the whitelist |
+| `/deployments?system=` → 500 | Query filter references a join that doesn't exist, causing a null pointer or SQL error |
+| `links` array missing entries | Server only advertises endpoints it actually implements |
+
+The `systemKind@link` and `platform@link` persisting is likely because OSH stores them as opaque JSON properties (scalar objects pass through), while `deployedSystems@link` (an **array** of link objects) hits a different code path that strips it.
+
+The 302-redirect-as-silent-rejection pattern is the classic tell — it's a Java servlet where unrecognized routes fall through to the default handler serving the HTML landing page, rather than returning a proper 4xx error.
+
+**In short**: CSAPI is a relatively new spec, and OSH implemented the parts it needed (the sensor data pipeline) first. The cross-resource association graph — which is what makes the Explorer's detail view panels work — simply hasn't been built yet on the server side. That's exactly why we needed the `@link` fallback in the Explorer: to bridge the gap between what the spec defines and what this particular server supports.
