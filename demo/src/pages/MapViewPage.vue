@@ -508,11 +508,35 @@ async function buildSystemLocationCache(): Promise<void> {
 
   // --- Phase C: Observation-derived locations (broadened filter) ---
   try {
-    // Fetch all datastreams
+    // Fetch datastreams from the global endpoint
     const dsRes = await apiFetch('/datastreams?limit=200')
-    if (!dsRes.ok || !dsRes.data) return
+    let allDs: any[] = []
+    if (dsRes.ok && dsRes.data) {
+      allDs = dsRes.data.items || dsRes.data.features || dsRes.data || []
+    }
 
-    const allDs = dsRes.data.items || dsRes.data.features || dsRes.data || []
+    // Also fetch datastreams for each system in the location cache,
+    // since subsystem datastreams may not appear at the global endpoint
+    // (OSH nests them under the system hierarchy)
+    const seenDsIds = new Set(allDs.map((ds: any) => ds.id))
+    const cachedSystemIds = Object.keys(systemLocationCache)
+    const systemDsResults = await Promise.all(
+      cachedSystemIds.map(async (sysId) => {
+        try {
+          const res = await apiFetch(`/systems/${sysId}/datastreams?limit=100`)
+          if (!res.ok || !res.data) return [] as any[]
+          return (res.data.items || res.data.features || []) as any[]
+        } catch { return [] as any[] }
+      })
+    )
+    for (const dsList of systemDsResults) {
+      for (const ds of dsList) {
+        if (ds.id && !seenDsIds.has(ds.id)) {
+          seenDsIds.add(ds.id)
+          allDs.push(ds)
+        }
+      }
+    }
 
     // Filter to location-related datastreams (broadened to catch more patterns)
     const locationDs = allDs.filter(isLocationRelatedDatastream)
@@ -785,9 +809,28 @@ async function loadDatastreams(): Promise<void> {
   try {
     const url = getListUrl('datastreams', { limit: 200, bbox: bboxFilter.value ?? undefined })
     const res = await apiFetch(url)
-    if (!res.ok || !res.data) return
+    let items: any[] = (res.ok && res.data) ? (res.data.items || []) : []
 
-    const items = res.data.items || []
+    // Also fetch datastreams from systems in the location cache,
+    // since subsystem datastreams may not appear at the global endpoint
+    const seenIds = new Set(items.map((d: any) => d.id))
+    const sysResults = await Promise.all(
+      Object.keys(systemLocationCache).map(async (sysId) => {
+        try {
+          const r = await apiFetch(`/systems/${sysId}/datastreams?limit=100`)
+          return (r.ok && r.data) ? (r.data.items || r.data.features || []) as any[] : [] as any[]
+        } catch { return [] as any[] }
+      })
+    )
+    for (const dsList of sysResults) {
+      for (const ds of dsList) {
+        if (ds.id && !seenIds.has(ds.id)) {
+          seenIds.add(ds.id)
+          items.push(ds)
+        }
+      }
+    }
+
     for (const ds of items) {
       const sysId = ds['system@id'] || ds.system?.id
       if (!sysId) continue
@@ -823,9 +866,27 @@ async function loadControlStreams(): Promise<void> {
   try {
     const url = getListUrl('controlStreams', { limit: 200, bbox: bboxFilter.value ?? undefined })
     const res = await apiFetch(url)
-    if (!res.ok || !res.data) return
+    let items: any[] = (res.ok && res.data) ? (res.data.items || []) : []
 
-    const items = res.data.items || []
+    // Also fetch control streams from systems in the location cache
+    const seenIds = new Set(items.map((d: any) => d.id))
+    const sysResults = await Promise.all(
+      Object.keys(systemLocationCache).map(async (sysId) => {
+        try {
+          const r = await apiFetch(`/systems/${sysId}/controlStreams?limit=100`)
+          return (r.ok && r.data) ? (r.data.items || r.data.features || []) as any[] : [] as any[]
+        } catch { return [] as any[] }
+      })
+    )
+    for (const csList of sysResults) {
+      for (const cs of csList) {
+        if (cs.id && !seenIds.has(cs.id)) {
+          seenIds.add(cs.id)
+          items.push(cs)
+        }
+      }
+    }
+
     for (const cs of items) {
       const sysId = cs['system@id'] || cs.system?.id
       if (!sysId) continue
