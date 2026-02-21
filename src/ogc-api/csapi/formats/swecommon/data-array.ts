@@ -49,6 +49,7 @@ import type {
 
 import { parseSimpleComponent, SweCommonParseError } from './components.js';
 import { parseDataRecord } from './data-record.js';
+import type { ComponentParser } from './data-record.js';
 import { isRecord, parseBaseProperties, parseAssociationAttributeGroup } from './_helpers.js';
 
 // ========================================
@@ -87,12 +88,17 @@ function isLinkReference(json: Record<string, unknown>): boolean {
  * Parse the `elementType` property (SoftNamedProperty wrapper).
  *
  * @param json - Raw JSON value for elementType
+ * @param componentParser - Optional callback for complex types (Vector,
+ *   Matrix, DataChoice, Geometry). When omitted, these types throw.
  * @returns Parsed DataField
  * @throws {SweCommonParseError} If invalid or missing name
  *
  * @see OAS: SoftNamedProperty (L1127-1136)
  */
-function parseElementType(json: unknown): DataField {
+function parseElementType(
+  json: unknown,
+  componentParser?: ComponentParser
+): DataField {
   if (!isRecord(json)) {
     throw new SweCommonParseError(
       'DataArray "elementType" must be a non-null object',
@@ -128,19 +134,25 @@ function parseElementType(json: unknown): DataField {
     );
   }
 
-  // Recursive DataRecord
+  // Recursive DataRecord (pass componentParser through)
   if (type === 'DataRecord') {
-    return { name, component: parseDataRecord(json) };
+    return { name, component: parseDataRecord(json, componentParser) };
   }
 
-  // Recursive DataArray
+  // Recursive DataArray (pass componentParser through)
   if (type === 'DataArray') {
-    return { name, component: parseDataArray(json) };
+    return { name, component: parseDataArray(json, componentParser) };
   }
 
   // Simple components
   if (SIMPLE_COMPONENT_TYPES.has(type)) {
     return { name, component: parseSimpleComponent(json) };
+  }
+
+  // Complex types (Vector, Matrix, DataChoice, Geometry) —
+  // delegate to injected callback when available
+  if (componentParser) {
+    return { name, component: componentParser(json) };
   }
 
   throw new SweCommonParseError(
@@ -499,7 +511,10 @@ export function decodeValues(
  * @see https://docs.ogc.org/is/24-014/24-014.html — DataArray
  * @see OAS: DataArray (L7638), required: type + elementType (L1314-1316)
  */
-export function parseDataArray(json: unknown): DataArray {
+export function parseDataArray(
+  json: unknown,
+  componentParser?: ComponentParser
+): DataArray {
   if (!isRecord(json)) {
     throw new SweCommonParseError(
       'DataArray input must be a non-null object'
@@ -520,7 +535,7 @@ export function parseDataArray(json: unknown): DataArray {
       'elementType'
     );
   }
-  const elementType = parseElementType(json.elementType);
+  const elementType = parseElementType(json.elementType, componentParser);
 
   // elementCount — optional
   const elementCount = parseElementCount(json.elementCount);

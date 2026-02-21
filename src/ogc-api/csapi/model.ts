@@ -103,6 +103,27 @@ export interface TimeInterval {
  */
 export type ResourceLink = OgcApiDocumentLink;
 
+/**
+ * Parsed form of a CS API `@link` inline property.
+ *
+ * `@link` properties appear on Part 1 GeoJSON resources to encode structural
+ * associations between resources (e.g., which procedure a system implements,
+ * which platform a deployment sits on). They are distinct from the HATEOAS
+ * `links[]` array which provides navigation URLs.
+ *
+ * @see https://docs.ogc.org/is/23-001/23-001.html §16 — JSON encoding for Part 1 resources
+ */
+export interface CSAPIResourceRef {
+  /** URL of the referenced resource. */
+  href: string;
+  /** Globally unique identifier of the referenced resource. */
+  uid?: string;
+  /** Human-readable title. */
+  title?: string;
+  /** Resource type URI. */
+  rt?: string;
+}
+
 // ========================================
 // Query Options
 // ========================================
@@ -207,6 +228,11 @@ export interface DatastreamQueryOptions extends QueryOptions {
   phenomenonTime?: DateTimeParameter;
   /** Filter by result time interval or the special `'latest'` keyword. */
   resultTime?: CsapiDateTimeParameter;
+  /**
+   * Filter by feature-of-interest ID.
+   * @see https://docs.ogc.org/is/23-002/23-002.html#clause-datastream-query-params §13.2.4 Req 48
+   */
+  foiId?: string;
 }
 
 /**
@@ -218,6 +244,11 @@ export interface ObservationQueryOptions extends QueryOptions {
   phenomenonTime?: DateTimeParameter;
   /** Filter by result time interval or the special `'latest'` keyword. */
   resultTime?: CsapiDateTimeParameter;
+  /**
+   * Filter by feature-of-interest ID.
+   * @see https://docs.ogc.org/is/23-002/23-002.html#clause-observation-query-params §13.3.3 Req 51
+   */
+  foiId?: string;
 }
 
 /**
@@ -229,6 +260,21 @@ export interface ControlStreamQueryOptions extends QueryOptions {
   systemId?: string;
   /** Filter by controlled property ID. */
   controlledPropertyId?: string;
+  /**
+   * Filter by issue time interval.
+   * @see https://docs.ogc.org/is/23-002/23-002.html#clause-controlstream-query-params §13.4.1 Req 52
+   */
+  issueTime?: DateTimeParameter;
+  /**
+   * Filter by execution time interval.
+   * @see https://docs.ogc.org/is/23-002/23-002.html#clause-controlstream-query-params §13.4.2 Req 53
+   */
+  executionTime?: DateTimeParameter;
+  /**
+   * Filter by feature-of-interest ID.
+   * @see https://docs.ogc.org/is/23-002/23-002.html#clause-controlstream-query-params §13.4.4 Req 55
+   */
+  foiId?: string;
 }
 
 /**
@@ -242,6 +288,26 @@ export interface CommandQueryOptions extends QueryOptions {
   executionTime?: DateTimeParameter;
   /** Filter by current status code. */
   currentStatus?: CommandStatusCode;
+  /**
+   * Filter by command sender.
+   * @see https://docs.ogc.org/is/23-002/23-002.html#clause-command-query-params §13.5.4 Req 59
+   */
+  sender?: string;
+  /**
+   * Filter by feature-of-interest ID.
+   * @see https://docs.ogc.org/is/23-002/23-002.html#clause-command-query-params §13.5.5 Req 60
+   */
+  foiId?: string;
+}
+
+/**
+ * Query options for CommandStatus list endpoints.
+ * @see https://docs.ogc.org/is/23-002/23-002.html#_command_resources
+ * @see https://docs.ogc.org/is/23-002/23-002.html#_CommandStatus_Query_Params §13.6.1 Req 61
+ */
+export interface CommandStatusQueryOptions extends QueryOptions {
+  /** Filter by status code. */
+  statusCode?: CommandStatusCode;
 }
 
 // ========================================
@@ -275,6 +341,11 @@ export interface System {
     assetType?: 'Equipment' | 'Human' | 'LivingThing' | 'Simulation' | 'Process' | 'Group' | 'Other';
     /** Validity time period for this system. */
     validTime?: TimeInterval;
+    /**
+     * Link to the procedure/method this system implements (from `systemKind@link`).
+     * @see https://docs.ogc.org/is/23-001/23-001.html §8.3 Table 8 — Conditional (when a procedure exists)
+     */
+    systemKindLink?: CSAPIResourceRef;
   };
   geometry?: Geometry;
   links: ResourceLink[];
@@ -315,6 +386,16 @@ export interface Deployment {
      * tolerate servers that omit it.
      */
     validTime?: TimeInterval;
+    /**
+     * Link to the platform system (from `platform@link`).
+     * @see https://docs.ogc.org/is/23-001/23-001.html §8.5 Table 10 — Optional
+     */
+    platformLink?: CSAPIResourceRef;
+    /**
+     * Links to deployed systems (from `deployedSystems@link`).
+     * @see https://docs.ogc.org/is/23-001/23-001.html §8.5 Table 10 — Required (array)
+     */
+    deployedSystemsLink?: CSAPIResourceRef[];
   };
   geometry?: Geometry;
   links: ResourceLink[];
@@ -383,6 +464,11 @@ export interface SamplingFeature {
     description?: string;
     /** Optional validity time period. */
     validTime?: TimeInterval;
+    /**
+     * Link to the sampled feature (from `sampledFeature@link`).
+     * @see https://docs.ogc.org/is/23-001/23-001.html §8.9 Table 14 — Required
+     */
+    sampledFeatureLink?: CSAPIResourceRef;
   };
   geometry?: Geometry;
   links: ResourceLink[];
@@ -457,6 +543,8 @@ export interface Datastream {
   /** Datastream classification: status reporting or observation. */
   type?: 'status' | 'observation';
   links: ResourceLink[];
+  /** ID of the parent system (from `system@id` in raw JSON). @see OGC 23-002 §9.2 Table 5 */
+  systemId?: string;
 }
 
 /**
@@ -482,6 +570,12 @@ export interface Observation {
   /** Inline result value (type depends on observed property). */
   result?: unknown;
   links?: ResourceLink[];
+  /** ID of the parent datastream (from `datastream@id` in raw JSON). @see OGC 23-002 §9.7 Table 7 */
+  datastreamId?: string;
+  /** ID of the sampling feature (from `samplingFeature@id` in raw JSON). @see OGC 23-002 §9.7 Table 7 */
+  samplingFeatureId?: string;
+  /** ID of the feature of interest (from `foi@id` in raw JSON). @see OGC 23-002 §9.7 Table 7 */
+  featureOfInterestId?: string;
 }
 
 /**
@@ -519,6 +613,8 @@ export interface ControlStream {
   /** Whether commands are handled asynchronously. */
   async: boolean;
   links: ResourceLink[];
+  /** ID of the parent system (from `system@id` in raw JSON). @see OGC 23-002 §10.2 Table 10 */
+  systemId?: string;
 }
 
 /**
@@ -545,6 +641,8 @@ export interface Command {
   /** Command parameters (required). */
   parameters: Record<string, unknown>;
   links?: ResourceLink[];
+  /** ID of the parent control stream (from `controlstream@id` in raw JSON). @see OGC 23-002 §10.7 Table 12 */
+  controlStreamId?: string;
 }
 
 /**
@@ -570,6 +668,8 @@ export interface CommandStatus {
   /** Human-readable status message. */
   message?: string;
   links?: ResourceLink[];
+  /** ID of the parent command (from `command@id` in raw JSON). @see OGC 23-002 §10.11 Table 15 */
+  commandId?: string;
 }
 
 // ========================================

@@ -259,3 +259,123 @@ describe('parseDataRecord — error handling', () => {
     ).toThrow('must have a "type" property or be a link reference');
   });
 });
+
+// ========================================
+// Complex Type Callback Tests
+// ========================================
+
+describe('parseDataRecord — complex types via componentParser callback', () => {
+  it('delegates Vector field to componentParser', () => {
+    const vectorFixture = {
+      name: 'locationVectorLLA',
+      type: 'Vector',
+      label: 'Location',
+      referenceFrame: 'http://www.opengis.net/def/crs/EPSG/0/4979',
+      coordinates: [
+        { name: 'lat', type: 'Quantity', uom: { code: 'deg' } },
+        { name: 'lon', type: 'Quantity', uom: { code: 'deg' } },
+        { name: 'alt', type: 'Quantity', uom: { code: 'm' } },
+      ],
+    };
+
+    const mockParser = jest.fn().mockReturnValue({
+      type: 'Vector',
+      label: 'Location',
+      referenceFrame: 'http://www.opengis.net/def/crs/EPSG/0/4979',
+      coordinates: [
+        { name: 'lat', component: { type: 'Quantity', uom: { code: 'deg' } } },
+        { name: 'lon', component: { type: 'Quantity', uom: { code: 'deg' } } },
+        { name: 'alt', component: { type: 'Quantity', uom: { code: 'm' } } },
+      ],
+    });
+
+    const result = parseDataRecord(
+      {
+        type: 'DataRecord',
+        fields: [
+          vectorFixture,
+          { name: 'active', type: 'Boolean', value: true },
+        ],
+      },
+      mockParser
+    );
+
+    expect(result.fields).toHaveLength(2);
+    expect(result.fields[0].name).toBe('locationVectorLLA');
+    expect(mockParser).toHaveBeenCalledTimes(1);
+    expect(mockParser).toHaveBeenCalledWith(vectorFixture);
+    const comp = (result.fields[0] as unknown as { component: { type: string } }).component;
+    expect(comp.type).toBe('Vector');
+    // Simple component is still handled directly, not via callback
+    expect(result.fields[1].name).toBe('active');
+  });
+
+  it('delegates DataArray field to componentParser', () => {
+    const dataArrayFixture = {
+      name: 'readings',
+      type: 'DataArray',
+      elementType: { name: 'temp', type: 'Quantity', uom: { code: 'Cel' } },
+      encoding: { type: 'JSONEncoding' },
+      values: [23.5, 24.1],
+    };
+
+    const mockParser = jest.fn().mockReturnValue({
+      type: 'DataArray',
+      elementType: { name: 'temp', component: { type: 'Quantity', uom: { code: 'Cel' } } },
+    });
+
+    const result = parseDataRecord(
+      {
+        type: 'DataRecord',
+        fields: [dataArrayFixture],
+      },
+      mockParser
+    );
+
+    expect(result.fields).toHaveLength(1);
+    expect(mockParser).toHaveBeenCalledWith(dataArrayFixture);
+    const comp = (result.fields[0] as unknown as { component: { type: string } }).component;
+    expect(comp.type).toBe('DataArray');
+  });
+
+  it('still throws for unsupported types WITHOUT componentParser', () => {
+    // Backward compatibility: without callback, complex types still throw
+    expect(() =>
+      parseDataRecord({
+        type: 'DataRecord',
+        fields: [{ name: 'vec', type: 'Vector' }],
+      })
+    ).toThrow('unsupported component type');
+  });
+
+  it('passes componentParser through to nested DataRecords', () => {
+    const innerVector = {
+      name: 'position',
+      type: 'Vector',
+      coordinates: [{ name: 'x', type: 'Quantity', uom: { code: 'm' } }],
+    };
+
+    const mockParser = jest.fn().mockReturnValue({
+      type: 'Vector',
+      coordinates: [{ name: 'x', component: { type: 'Quantity', uom: { code: 'm' } } }],
+    });
+
+    const result = parseDataRecord(
+      {
+        type: 'DataRecord',
+        fields: [
+          {
+            name: 'outer',
+            type: 'DataRecord',
+            fields: [innerVector],
+          },
+        ],
+      },
+      mockParser
+    );
+
+    // The callback should have been passed through to the nested DataRecord
+    expect(mockParser).toHaveBeenCalledTimes(1);
+    expect(mockParser).toHaveBeenCalledWith(innerVector);
+  });
+});

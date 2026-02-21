@@ -381,14 +381,14 @@ describe('getSystems', () => {
   it('returns correct URL with procedureId parameter', () => {
     const url = makeIotBuilder().getSystems({ procedureId: 'proc-001' });
     expect(url).toBe(
-      'https://example.com/collections/iot/systems?procedureId=proc-001'
+      'https://example.com/collections/iot/systems?procedure=proc-001'
     );
   });
 
   it('returns correct URL with foiId parameter', () => {
     const url = makeIotBuilder().getSystems({ foiId: 'foi-001' });
     expect(url).toBe(
-      'https://example.com/collections/iot/systems?foiId=foi-001'
+      'https://example.com/collections/iot/systems?foi=foi-001'
     );
   });
 
@@ -397,7 +397,7 @@ describe('getSystems', () => {
       observedPropertyId: 'temp-prop',
     });
     expect(url).toBe(
-      'https://example.com/collections/iot/systems?observedPropertyId=temp-prop'
+      'https://example.com/collections/iot/systems?observedProperty=temp-prop'
     );
   });
 
@@ -406,7 +406,7 @@ describe('getSystems', () => {
       controlledPropertyId: 'ctrl-prop',
     });
     expect(url).toBe(
-      'https://example.com/collections/iot/systems?controlledPropertyId=ctrl-prop'
+      'https://example.com/collections/iot/systems?controlledProperty=ctrl-prop'
     );
   });
 
@@ -916,7 +916,7 @@ describe('getDeployments', () => {
 
   it('returns correct URL with systemId filter', () => {
     const url = makeDepBuilder().getDeployments({ systemId: 'sys-001' });
-    expect(url).toBe('https://example.com/collections/iot/deployments?systemId=sys-001');
+    expect(url).toBe('https://example.com/collections/iot/deployments?system=sys-001');
   });
 
   it('returns correct URL with parent parameter', () => {
@@ -1683,12 +1683,12 @@ describe('getDataStreams', () => {
 
   it('returns correct URL with systemId filter', () => {
     const url = makeDsBuilder().getDataStreams({ systemId: 'sys-001' });
-    expect(url).toBe('https://example.com/collections/iot/datastreams?systemId=sys-001');
+    expect(url).toBe('https://example.com/collections/iot/datastreams?system=sys-001');
   });
 
   it('returns correct URL with observedPropertyId filter', () => {
     const url = makeDsBuilder().getDataStreams({ observedPropertyId: 'temperature' });
-    expect(url).toBe('https://example.com/collections/iot/datastreams?observedPropertyId=temperature');
+    expect(url).toBe('https://example.com/collections/iot/datastreams?observedProperty=temperature');
   });
 
   it('returns correct URL with phenomenonTime temporal filter', () => {
@@ -1710,7 +1710,7 @@ describe('getDataStreams', () => {
 
   it('returns correct URL with multiple options', () => {
     const url = makeDsBuilder().getDataStreams({ limit: 10, offset: 5, systemId: 'sys-001' });
-    expect(url).toBe('https://example.com/collections/iot/datastreams?limit=10&offset=5&systemId=sys-001');
+    expect(url).toBe('https://example.com/collections/iot/datastreams?limit=10&offset=5&system=sys-001');
   });
 
   it('returns correct URL with q parameter', () => {
@@ -1736,6 +1736,11 @@ describe('getDataStreams', () => {
   it('returns correct URL with f (format) parameter', () => {
     const url = makeDsBuilder().getDataStreams({ f: 'application/json' });
     expect(url).toBe('https://example.com/collections/iot/datastreams?f=application%2Fjson');
+  });
+
+  it('returns correct URL with foiId filter', () => {
+    const url = makeDsBuilder().getDataStreams({ foiId: 'foi-001' });
+    expect(url).toBe('https://example.com/collections/iot/datastreams?foi=foi-001');
   });
 });
 
@@ -2027,6 +2032,11 @@ describe('getObservations', () => {
     const url = makeObsBuilder().getObservations({ limit: 10, offset: 5, q: 'temperature' });
     expect(url).toBe('https://example.com/collections/iot/observations?limit=10&offset=5&q=temperature');
   });
+
+  it('returns correct URL with foiId filter', () => {
+    const url = makeObsBuilder().getObservations({ foiId: 'foi-001' });
+    expect(url).toBe('https://example.com/collections/iot/observations?foi=foi-001');
+  });
 });
 
 describe('getObservation', () => {
@@ -2179,12 +2189,12 @@ describe('getControlStreams', () => {
 
   it('returns correct URL with systemId filter', () => {
     const url = makeCsBuilder().getControlStreams({ systemId: 'sys-001' });
-    expect(url).toBe('https://example.com/collections/iot/controlstreams?systemId=sys-001');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?system=sys-001');
   });
 
   it('returns correct URL with controlledPropertyId filter', () => {
     const url = makeCsBuilder().getControlStreams({ controlledPropertyId: 'prop-001' });
-    expect(url).toBe('https://example.com/collections/iot/controlstreams?controlledPropertyId=prop-001');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?controlledProperty=prop-001');
   });
 
   it('returns correct URL with pagination', () => {
@@ -2215,6 +2225,25 @@ describe('getControlStreams', () => {
   it('returns correct URL with multiple shared options', () => {
     const url = makeCsBuilder().getControlStreams({ limit: 10, offset: 5, q: 'valve' });
     expect(url).toBe('https://example.com/collections/iot/controlstreams?limit=10&offset=5&q=valve');
+  });
+
+  it('returns correct URL with issueTime temporal filter', () => {
+    const url = makeCsBuilder().getControlStreams({
+      issueTime: { start: new Date('2024-01-01T00:00:00Z'), end: new Date('2024-12-31T23:59:59Z') },
+    });
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?issueTime=2024-01-01T00%3A00%3A00.000Z%2F2024-12-31T23%3A59%3A59.000Z');
+  });
+
+  it('returns correct URL with executionTime temporal filter', () => {
+    const url = makeCsBuilder().getControlStreams({
+      executionTime: new Date('2024-06-01T00:00:00Z'),
+    });
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?executionTime=2024-06-01T00%3A00%3A00.000Z');
+  });
+
+  it('returns correct URL with foiId filter', () => {
+    const url = makeCsBuilder().getControlStreams({ foiId: 'foi-001' });
+    expect(url).toBe('https://example.com/collections/iot/controlstreams?foi=foi-001');
   });
 });
 
@@ -2352,6 +2381,75 @@ describe('checkCommandFeasibility', () => {
   });
 });
 
+describe('getControlStreamSystems', () => {
+  function makeCsBuilder() {
+    return new CSAPIQueryBuilder(
+      makeCollection({
+        links: [
+          { rel: 'self', type: '', title: '', href: 'https://example.com/collections/iot' },
+          { rel: 'ogc-cs:controlStreams', type: '', title: '', href: '/controlstreams' },
+        ],
+      })
+    );
+  }
+
+  it('returns correct URL with no options', () => {
+    const url = makeCsBuilder().getControlStreamSystems('cs-001');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/systems');
+  });
+
+  it('returns correct URL with pagination', () => {
+    const url = makeCsBuilder().getControlStreamSystems('cs-001', { limit: 5, offset: 10 });
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/systems?limit=5&offset=10');
+  });
+});
+
+describe('getControlStreamProcedures', () => {
+  function makeCsBuilder() {
+    return new CSAPIQueryBuilder(
+      makeCollection({
+        links: [
+          { rel: 'self', type: '', title: '', href: 'https://example.com/collections/iot' },
+          { rel: 'ogc-cs:controlStreams', type: '', title: '', href: '/controlstreams' },
+        ],
+      })
+    );
+  }
+
+  it('returns correct URL with no options', () => {
+    const url = makeCsBuilder().getControlStreamProcedures('cs-001');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/procedures');
+  });
+
+  it('returns correct URL with options', () => {
+    const url = makeCsBuilder().getControlStreamProcedures('cs-001', { limit: 10 });
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/procedures?limit=10');
+  });
+});
+
+describe('getControlStreamHistory', () => {
+  function makeCsBuilder() {
+    return new CSAPIQueryBuilder(
+      makeCollection({
+        links: [
+          { rel: 'self', type: '', title: '', href: 'https://example.com/collections/iot' },
+          { rel: 'ogc-cs:controlStreams', type: '', title: '', href: '/controlstreams' },
+        ],
+      })
+    );
+  }
+
+  it('returns correct URL with no options', () => {
+    const url = makeCsBuilder().getControlStreamHistory('cs-001');
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/history');
+  });
+
+  it('returns correct URL with limit', () => {
+    const url = makeCsBuilder().getControlStreamHistory('cs-001', { limit: 5 });
+    expect(url).toBe('https://example.com/collections/iot/controlstreams/cs-001/history?limit=5');
+  });
+});
+
 describe('ControlStream resource validation', () => {
   it('throws EndpointError when controlStreams is unavailable', () => {
     const builder = new CSAPIQueryBuilder(
@@ -2371,6 +2469,9 @@ describe('ControlStream resource validation', () => {
     expect(() => builder.getControlStreamSchema('x')).toThrow(EndpointError);
     expect(() => builder.getControlStreamCommands('x')).toThrow(EndpointError);
     expect(() => builder.checkCommandFeasibility('x')).toThrow(EndpointError);
+    expect(() => builder.getControlStreamSystems('x')).toThrow(EndpointError);
+    expect(() => builder.getControlStreamProcedures('x')).toThrow(EndpointError);
+    expect(() => builder.getControlStreamHistory('x')).toThrow(EndpointError);
   });
 });
 
@@ -2414,7 +2515,7 @@ describe('getCommands', () => {
 
   it('returns correct URL with currentStatus filter', () => {
     const url = makeCmdBuilder().getCommands({ currentStatus: 'EXECUTING' });
-    expect(url).toBe('https://example.com/collections/iot/commands?currentStatus=EXECUTING');
+    expect(url).toBe('https://example.com/collections/iot/commands?statusCode=EXECUTING');
   });
 
   it('returns correct URL with f parameter', () => {
@@ -2439,12 +2540,22 @@ describe('getCommands', () => {
 
   it('returns correct URL with multiple options', () => {
     const url = makeCmdBuilder().getCommands({ limit: 10, currentStatus: 'PENDING', cursor: 'abc' });
-    expect(url).toBe('https://example.com/collections/iot/commands?limit=10&currentStatus=PENDING&cursor=abc');
+    expect(url).toBe('https://example.com/collections/iot/commands?limit=10&statusCode=PENDING&cursor=abc');
   });
 
   it('returns correct URL with multiple options including offset', () => {
     const url = makeCmdBuilder().getCommands({ limit: 10, offset: 5, currentStatus: 'PENDING' });
-    expect(url).toBe('https://example.com/collections/iot/commands?limit=10&offset=5&currentStatus=PENDING');
+    expect(url).toBe('https://example.com/collections/iot/commands?limit=10&offset=5&statusCode=PENDING');
+  });
+
+  it('returns correct URL with sender filter', () => {
+    const url = makeCmdBuilder().getCommands({ sender: 'user-001' });
+    expect(url).toBe('https://example.com/collections/iot/commands?sender=user-001');
+  });
+
+  it('returns correct URL with foiId filter', () => {
+    const url = makeCmdBuilder().getCommands({ foiId: 'foi-001' });
+    expect(url).toBe('https://example.com/collections/iot/commands?foi=foi-001');
   });
 });
 
@@ -2520,6 +2631,21 @@ describe('Command status and result methods', () => {
   it('getCommandStatus returns correct URL', () => {
     const url = makeCmdBuilder().getCommandStatus('cmd-001');
     expect(url).toBe('https://example.com/collections/iot/commands/cmd-001/status');
+  });
+
+  it('getCommandStatus returns correct URL with statusCode filter', () => {
+    const url = makeCmdBuilder().getCommandStatus('cmd-001', { statusCode: 'EXECUTING' });
+    expect(url).toBe('https://example.com/collections/iot/commands/cmd-001/status?statusCode=EXECUTING');
+  });
+
+  it('getCommandStatus returns correct URL with limit option', () => {
+    const url = makeCmdBuilder().getCommandStatus('cmd-001', { limit: 10 });
+    expect(url).toBe('https://example.com/collections/iot/commands/cmd-001/status?limit=10');
+  });
+
+  it('getCommandStatus returns correct URL with statusCode + limit options', () => {
+    const url = makeCmdBuilder().getCommandStatus('cmd-001', { statusCode: 'EXECUTING', limit: 5 });
+    expect(url).toBe('https://example.com/collections/iot/commands/cmd-001/status?statusCode=EXECUTING&limit=5');
   });
 
   it('updateCommandStatus returns correct URL', () => {

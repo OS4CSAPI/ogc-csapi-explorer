@@ -17,6 +17,7 @@ import type {
   SamplingFeature,
   ResourceLink,
   TimeInterval,
+  CSAPIResourceRef,
 } from '../model.js';
 import type { Geometry } from 'geojson';
 
@@ -389,6 +390,40 @@ export function isValidUri(value: unknown): boolean {
  * @see {@link getCSAPIResourceType} for the type-detection logic
  * @see OGC 23-001r1 for the GeoJSON encoding of Connected Systems feature resources
  */
+
+/**
+ * Type guard for `@link` inline association objects.
+ * Validates that the value is a non-null object with a string `href` property.
+ */
+function isCSAPIResourceRef(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as Record<string, unknown>).href === 'string'
+  );
+}
+
+/**
+ * Parse a raw `@link` object into a typed {@link CSAPIResourceRef}.
+ * Only includes optional fields (`uid`, `title`, `rt`) when they are strings.
+ *
+ * OSH sends `type` (per OGC API / RFC 8288 conventions) rather than `rt` for
+ * the media type field. This function accepts both: `rt` takes precedence, and
+ * `type` is used as a fallback when `rt` is absent.
+ */
+function parseResourceRef(raw: Record<string, unknown>): CSAPIResourceRef {
+  return {
+    href: String(raw.href),
+    ...(typeof raw.uid === 'string' ? { uid: raw.uid } : {}),
+    ...(typeof raw.title === 'string' ? { title: raw.title } : {}),
+    ...(typeof raw.rt === 'string'
+      ? { rt: raw.rt }
+      : typeof raw.type === 'string'
+        ? { rt: raw.type }
+        : {}),
+  };
+}
+
 export function extractCSAPIFeature(
   feature: unknown
 ): System | Deployment | Procedure | SamplingFeature {
@@ -430,6 +465,9 @@ export function extractCSAPIFeature(
           ...baseProperties,
           ...(typeof p.assetType === 'string' ? { assetType: p.assetType as System['properties']['assetType'] } : {}),
           ...(validTime !== undefined ? { validTime } : {}),
+          ...(isCSAPIResourceRef(p['systemKind@link'])
+            ? { systemKindLink: parseResourceRef(p['systemKind@link']) }
+            : {}),
         },
         ...(geometry !== undefined ? { geometry } : {}),
         links,
@@ -442,6 +480,12 @@ export function extractCSAPIFeature(
         properties: {
           ...baseProperties,
           ...(validTime !== undefined ? { validTime } : {}),
+          ...(isCSAPIResourceRef(p['platform@link'])
+            ? { platformLink: parseResourceRef(p['platform@link']) }
+            : {}),
+          ...(Array.isArray(p['deployedSystems@link'])
+            ? { deployedSystemsLink: (p['deployedSystems@link'] as unknown[]).filter(isCSAPIResourceRef).map(parseResourceRef) }
+            : {}),
         },
         ...(geometry !== undefined ? { geometry } : {}),
         links,
@@ -463,6 +507,9 @@ export function extractCSAPIFeature(
         properties: {
           ...baseProperties,
           ...(validTime !== undefined ? { validTime } : {}),
+          ...(isCSAPIResourceRef(p['sampledFeature@link'])
+            ? { sampledFeatureLink: parseResourceRef(p['sampledFeature@link']) }
+            : {}),
         },
         ...(geometry !== undefined ? { geometry } : {}),
         links,

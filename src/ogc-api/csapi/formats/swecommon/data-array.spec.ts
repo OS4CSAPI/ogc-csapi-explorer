@@ -563,3 +563,86 @@ describe('parseDataArray — error handling', () => {
     ).toThrow('unsupported component type');
   });
 });
+
+// ========================================
+// Complex Type Callback Tests
+// ========================================
+
+describe('parseDataArray — complex types via componentParser callback', () => {
+  it('delegates Vector elementType to componentParser', () => {
+    const vectorFixture = {
+      name: 'position',
+      type: 'Vector',
+      referenceFrame: 'http://www.opengis.net/def/crs/EPSG/0/4979',
+      coordinates: [
+        { name: 'lat', type: 'Quantity', uom: { code: 'deg' } },
+        { name: 'lon', type: 'Quantity', uom: { code: 'deg' } },
+      ],
+    };
+
+    const mockParser = jest.fn().mockReturnValue({
+      type: 'Vector',
+      referenceFrame: 'http://www.opengis.net/def/crs/EPSG/0/4979',
+      coordinates: [
+        { name: 'lat', component: { type: 'Quantity', uom: { code: 'deg' } } },
+        { name: 'lon', component: { type: 'Quantity', uom: { code: 'deg' } } },
+      ],
+    });
+
+    const result = parseDataArray(
+      {
+        type: 'DataArray',
+        elementType: vectorFixture,
+        encoding: { type: 'JSONEncoding' },
+        values: [],
+      },
+      mockParser
+    );
+
+    expect(result.type).toBe('DataArray');
+    expect(result.elementType.name).toBe('position');
+    expect(mockParser).toHaveBeenCalledTimes(1);
+    expect(mockParser).toHaveBeenCalledWith(vectorFixture);
+    const comp = (result.elementType as unknown as { component: { type: string } }).component;
+    expect(comp.type).toBe('Vector');
+  });
+
+  it('still throws for unsupported types WITHOUT componentParser', () => {
+    expect(() =>
+      parseDataArray({
+        type: 'DataArray',
+        elementType: { name: 'geo', type: 'Geometry' },
+      })
+    ).toThrow('unsupported component type');
+  });
+
+  it('passes componentParser through to nested DataRecord elementType', () => {
+    const vectorField = {
+      name: 'vec',
+      type: 'Vector',
+      coordinates: [{ name: 'x', type: 'Quantity', uom: { code: 'm' } }],
+    };
+
+    const mockParser = jest.fn().mockReturnValue({
+      type: 'Vector',
+      coordinates: [{ name: 'x', component: { type: 'Quantity', uom: { code: 'm' } } }],
+    });
+
+    const result = parseDataArray(
+      {
+        type: 'DataArray',
+        elementType: {
+          name: 'record',
+          type: 'DataRecord',
+          fields: [vectorField],
+        },
+      },
+      mockParser
+    );
+
+    expect(result.elementType.name).toBe('record');
+    // The callback should have been forwarded through parseDataRecord
+    expect(mockParser).toHaveBeenCalledTimes(1);
+    expect(mockParser).toHaveBeenCalledWith(vectorField);
+  });
+});

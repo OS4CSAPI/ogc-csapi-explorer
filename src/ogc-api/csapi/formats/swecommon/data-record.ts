@@ -35,20 +35,24 @@
  */
 
 import type {
+  AnyComponent,
   DataRecord,
   DataField,
   TypedDataField,
-  AnyComponent,
 } from './types.js';
 
 import { parseSimpleComponent, SweCommonParseError } from './components.js';
 import { isRecord, parseBaseProperties } from './_helpers.js';
 
 /**
- * Callback type for parsing any SWE component.
- * Used to break the circular dependency between data-record.ts and parser.ts.
- * When provided, enables DataRecord fields to contain complex types like
- * Vector, DataArray, Matrix, DataChoice, and Geometry.
+ * Callback signature for delegating complex component parsing.
+ *
+ * When provided, `parseField()` delegates unrecognised (non-simple,
+ * non-DataRecord) component types to this callback instead of throwing.
+ * In practice the callback is `parseSWEComponent` from `parser.ts`,
+ * injected to break the circular import.
+ *
+ * @see https://docs.ogc.org/is/24-014/24-014.html — AnyComponent
  */
 export type ComponentParser = (json: unknown) => AnyComponent;
 
@@ -89,13 +93,20 @@ function isLinkReference(json: Record<string, unknown>): boolean {
  *
  * @param json - Raw JSON object representing one field
  * @param index - Position in the fields array (for error context)
+ * @param componentParser - Optional callback for complex types (Vector,
+ *   DataArray, Matrix, DataChoice, Geometry). When omitted, these types
+ *   throw `SweCommonParseError` (backward-compatible default).
  * @returns Parsed DataField or TypedDataField
  * @throws {SweCommonParseError} If the field is missing a `name` or has an
  *   unrecognised component type
  *
  * @see https://docs.ogc.org/is/24-014/24-014.html — SoftNamedProperty
  */
-function parseField(json: unknown, index: number, componentParser?: ComponentParser): DataField | TypedDataField {
+function parseField(
+  json: unknown,
+  index: number,
+  componentParser?: ComponentParser
+): DataField | TypedDataField {
   if (!isRecord(json)) {
     throw new SweCommonParseError(
       `DataRecord field at index ${index} must be a non-null object`,
@@ -131,7 +142,7 @@ function parseField(json: unknown, index: number, componentParser?: ComponentPar
     );
   }
 
-  // Recursive DataRecord — pass componentParser through for nested records
+  // Recursive DataRecord (pass componentParser through for deeply nested records)
   if (type === 'DataRecord') {
     return {
       name,
@@ -147,10 +158,8 @@ function parseField(json: unknown, index: number, componentParser?: ComponentPar
     } as TypedDataField;
   }
 
-  // Complex types (Vector, DataArray, Matrix, DataChoice, Geometry)
-  // Delegate to the injected componentParser when available.
-  // This breaks the circular dependency: parser.ts provides parseSWEComponent
-  // as the callback, enabling DataRecord fields to contain any SWE component.
+  // Complex types (Vector, DataArray, Matrix, DataChoice, Geometry) —
+  // delegate to injected callback when available
   if (componentParser) {
     return {
       name,
@@ -159,9 +168,7 @@ function parseField(json: unknown, index: number, componentParser?: ComponentPar
   }
 
   throw new SweCommonParseError(
-    `DataRecord field "${name}" has unsupported component type: "${type}". ` +
-      `Complex types (Vector, DataArray, Matrix, DataChoice, Geometry) require ` +
-      `a componentParser callback — use parseSWEComponent from parser.ts.`,
+    `DataRecord field "${name}" has unsupported component type: "${type}"`,
     `fields[${index}].type`
   );
 }
@@ -179,6 +186,9 @@ function parseField(json: unknown, index: number, componentParser?: ComponentPar
  * ordering is preserved.
  *
  * @param json - Raw JSON value (expected: `{ type: 'DataRecord', fields: [...] }`)
+ * @param componentParser - Optional callback for complex types in fields.
+ *   When provided, field types like Vector, DataArray, Matrix, DataChoice,
+ *   and Geometry are delegated to this callback instead of throwing.
  * @returns Parsed DataRecord
  * @throws {SweCommonParseError} If the input is invalid, `type` is not
  *   `'DataRecord'`, `fields` is missing/empty, or a field fails validation
@@ -200,7 +210,10 @@ function parseField(json: unknown, index: number, componentParser?: ComponentPar
  * @see https://docs.ogc.org/is/24-014/24-014.html — DataRecord
  * @see OAS: DataRecord (L7593), fields array (L531-L544)
  */
-export function parseDataRecord(json: unknown, componentParser?: ComponentParser): DataRecord {
+export function parseDataRecord(
+  json: unknown,
+  componentParser?: ComponentParser
+): DataRecord {
   if (!isRecord(json)) {
     throw new SweCommonParseError(
       'DataRecord input must be a non-null object'

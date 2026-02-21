@@ -160,6 +160,9 @@ export function parseDatastream(json: unknown): Datastream {
     (obj.type === 'status' || obj.type === 'observation')
       ? { type: obj.type as 'status' | 'observation' }
       : {}),
+    ...(typeof obj['system@id'] === 'string'
+      ? { systemId: obj['system@id'] as string }
+      : {}),
     links: Array.isArray(obj.links)
       ? (obj.links as ResourceLink[])
       : [],
@@ -250,6 +253,9 @@ export function parseControlStream(json: unknown): ControlStream {
     executionTime,
     live: typeof obj.live === 'boolean' ? obj.live : null,
     async: typeof obj.async === 'boolean' ? obj.async : false,
+    ...(typeof obj['system@id'] === 'string'
+      ? { systemId: obj['system@id'] as string }
+      : {}),
     links: Array.isArray(obj.links)
       ? (obj.links as ResourceLink[])
       : [],
@@ -357,6 +363,9 @@ export function parseCommand(json: unknown): Command {
     ...(typeof obj.sender === 'string' ? { sender: obj.sender } : {}),
     ...(currentStatus !== undefined ? { currentStatus } : {}),
     parameters,
+    ...(typeof obj['controlstream@id'] === 'string'
+      ? { controlStreamId: obj['controlstream@id'] as string }
+      : {}),
     ...(Array.isArray(obj.links)
       ? { links: obj.links as ResourceLink[] }
       : {}),
@@ -430,6 +439,15 @@ export function parseObservation(json: unknown): Observation {
       ? { parameters: parametersValue as Record<string, unknown> }
       : {}),
     ...(obj.result !== undefined ? { result: obj.result } : {}),
+    ...(typeof obj['datastream@id'] === 'string'
+      ? { datastreamId: obj['datastream@id'] as string }
+      : {}),
+    ...(typeof obj['samplingFeature@id'] === 'string'
+      ? { samplingFeatureId: obj['samplingFeature@id'] as string }
+      : {}),
+    ...(typeof obj['foi@id'] === 'string'
+      ? { featureOfInterestId: obj['foi@id'] as string }
+      : {}),
     ...(Array.isArray(obj.links)
       ? { links: obj.links as ResourceLink[] }
       : {}),
@@ -504,6 +522,9 @@ export function parseCommandStatus(json: unknown): CommandStatus {
       : {}),
     ...(executionTime !== undefined ? { executionTime } : {}),
     ...(typeof obj.message === 'string' ? { message: obj.message } : {}),
+    ...(typeof obj['command@id'] === 'string'
+      ? { commandId: obj['command@id'] as string }
+      : {}),
     ...(Array.isArray(obj.links)
       ? { links: obj.links as ResourceLink[] }
       : {}),

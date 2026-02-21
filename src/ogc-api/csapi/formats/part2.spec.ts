@@ -92,8 +92,9 @@ describe('parseDatastream', () => {
       { rel: 'self', href: '/datastreams/0ocb', type: 'application/json' },
     ]);
 
-    // Cross-reference fields must NOT be in output
-    expect(result).not.toHaveProperty('system@id');
+    // Cross-reference fields extracted as typed properties
+    expect(result.systemId).toBe('0o0o');
+    // Raw @link objects are still excluded (not part of the typed model)
     expect(result).not.toHaveProperty('system@link');
   });
 
@@ -320,8 +321,8 @@ describe('parseObservation', () => {
       },
     ]);
 
-    // Cross-reference fields must NOT be in output
-    expect(result).not.toHaveProperty('datastream@id');
+    // Cross-reference fields extracted as typed properties
+    expect(result.datastreamId).toBe('0ocb');
   });
 
   it('handles a minimal Observation with only required fields', () => {
@@ -397,7 +398,7 @@ describe('parseObservation', () => {
     );
   });
 
-  it('ignores all cross-reference fields', () => {
+  it('extracts all cross-reference fields', () => {
     const input = {
       id: 'obs-crossref',
       resultTime: '2026-02-19T14:22:03.12Z',
@@ -410,9 +411,9 @@ describe('parseObservation', () => {
 
     expect(result.id).toBe('obs-crossref');
     expect(result.resultTime).toBe('2026-02-19T14:22:03.12Z');
-    expect(result).not.toHaveProperty('datastream@id');
-    expect(result).not.toHaveProperty('samplingFeature@id');
-    expect(result).not.toHaveProperty('foi@id');
+    expect(result.datastreamId).toBe('0ocb');
+    expect(result.samplingFeatureId).toBe('xyz');
+    expect(result.featureOfInterestId).toBe('feat-001');
   });
 });
 
@@ -497,8 +498,9 @@ describe('parseControlStream', () => {
       },
     ]);
 
-    // Cross-reference fields must NOT be in output
-    expect(result).not.toHaveProperty('system@id');
+    // Cross-reference fields extracted as typed properties
+    expect(result.systemId).toBe('0o30');
+    // Raw @link objects are still excluded (not part of the typed model)
     expect(result).not.toHaveProperty('system@link');
   });
 
@@ -724,8 +726,8 @@ describe('parseCommand', () => {
       },
     ]);
 
-    // Cross-reference field must NOT be in output
-    expect(result).not.toHaveProperty('controlstream@id');
+    // Cross-reference field extracted as typed property
+    expect(result.controlStreamId).toBe('0o10');
   });
 
   it('handles a minimal Command with only required fields', () => {
@@ -939,8 +941,8 @@ describe('parseCommandStatus', () => {
       },
     ]);
 
-    // Cross-reference field must NOT be in output
-    expect(result).not.toHaveProperty('command@id');
+    // Cross-reference field extracted as typed property
+    expect(result.commandId).toBe('0o1qr7kupc33cgmqj0');
   });
 
   it('handles a minimal CommandStatus with only required fields', () => {

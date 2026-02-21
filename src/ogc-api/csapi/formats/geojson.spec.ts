@@ -438,6 +438,9 @@ describe('extractCSAPIFeature', () => {
       type: 'Point',
       coordinates: [12.31, -86.98, -21],
     });
+    expect((result as any).properties.sampledFeatureLink).toEqual({
+      href: 'http://example.com/feature/1',
+    });
   });
 
   it('converts validTime from array format to TimeInterval', () => {
@@ -504,6 +507,7 @@ describe('extractCSAPIFeature', () => {
     expect(result.properties.featureType).toBe('sosa:SamplingFeature');
     expect(result.properties.uid).toBe('urn:x-test:feature:1');
     expect(result.geometry).toEqual({ type: 'Point', coordinates: [10.5, 50.2] });
+    expect((result as any).properties.sampledFeatureLink).toBeUndefined();
   });
 
   it('extracts Deployment without validTime (tolerant extraction)', () => {
@@ -538,6 +542,158 @@ describe('extractCSAPIFeature', () => {
     const raw = makeFeature('sosa:Sensor', { uid: '', name: '' });
     const result = extractCSAPIFeature(raw);
     expect(result.properties.featureType).toBe('sosa:Sensor');
+  });
+
+  // ========================================
+  // @link property extraction
+  // ========================================
+
+  it('extracts System with systemKind@link', () => {
+    const raw = makeFeature('sosa:Sensor', {
+      'systemKind@link': {
+        href: 'http://example.com/api/procedures/proc1',
+        uid: 'urn:x:procedure:1',
+        title: 'Temperature Sensor Procedure',
+        rt: 'http://www.w3.org/ns/sosa/Procedure',
+      },
+    });
+    const result = extractCSAPIFeature(raw);
+    expect((result as any).properties.systemKindLink).toEqual({
+      href: 'http://example.com/api/procedures/proc1',
+      uid: 'urn:x:procedure:1',
+      title: 'Temperature Sensor Procedure',
+      rt: 'http://www.w3.org/ns/sosa/Procedure',
+    });
+  });
+
+  it('extracts System without systemKind@link (tolerant extraction)', () => {
+    const raw = makeFeature('sosa:Sensor');
+    const result = extractCSAPIFeature(raw);
+    expect((result as any).properties.systemKindLink).toBeUndefined();
+  });
+
+  it('extracts System with systemKind@link containing only href', () => {
+    const raw = makeFeature('sosa:System', {
+      'systemKind@link': { href: 'http://example.com/procedures/1' },
+    });
+    const result = extractCSAPIFeature(raw);
+    expect((result as any).properties.systemKindLink).toEqual({
+      href: 'http://example.com/procedures/1',
+    });
+  });
+
+  it('skips malformed systemKind@link missing href (tolerant extraction)', () => {
+    const raw = makeFeature('sosa:Sensor', {
+      'systemKind@link': { title: 'No href' },
+    });
+    const result = extractCSAPIFeature(raw);
+    expect((result as any).properties.systemKindLink).toBeUndefined();
+  });
+
+  it('skips systemKind@link when value is a string (tolerant extraction)', () => {
+    const raw = makeFeature('sosa:Sensor', {
+      'systemKind@link': 'http://example.com/procedures/1',
+    });
+    const result = extractCSAPIFeature(raw);
+    expect((result as any).properties.systemKindLink).toBeUndefined();
+  });
+
+  it('extracts Deployment with platform@link and deployedSystems@link', () => {
+    const raw = makeFeature('sosa:Deployment', {
+      'platform@link': {
+        href: 'http://example.com/api/systems/platform1',
+        uid: 'urn:x:platform:1',
+        title: 'Weather Station',
+      },
+      'deployedSystems@link': [
+        { href: 'http://example.com/api/systems/sensor1', uid: 'urn:x:sensor:1' },
+        { href: 'http://example.com/api/systems/sensor2', uid: 'urn:x:sensor:2', title: 'Wind Sensor' },
+      ],
+    });
+    const result = extractCSAPIFeature(raw);
+    expect((result as any).properties.platformLink).toEqual({
+      href: 'http://example.com/api/systems/platform1',
+      uid: 'urn:x:platform:1',
+      title: 'Weather Station',
+    });
+    expect((result as any).properties.deployedSystemsLink).toEqual([
+      { href: 'http://example.com/api/systems/sensor1', uid: 'urn:x:sensor:1' },
+      { href: 'http://example.com/api/systems/sensor2', uid: 'urn:x:sensor:2', title: 'Wind Sensor' },
+    ]);
+  });
+
+  it('extracts Deployment without @link fields (tolerant extraction)', () => {
+    const raw = makeFeature('sosa:Deployment');
+    const result = extractCSAPIFeature(raw);
+    expect((result as any).properties.platformLink).toBeUndefined();
+    expect((result as any).properties.deployedSystemsLink).toBeUndefined();
+  });
+
+  it('filters malformed entries from deployedSystems@link array', () => {
+    const raw = makeFeature('sosa:Deployment', {
+      'deployedSystems@link': [
+        { href: 'http://example.com/api/systems/sensor1' },
+        { title: 'missing href' },
+        'not-an-object',
+        null,
+        { href: 'http://example.com/api/systems/sensor2' },
+      ],
+    });
+    const result = extractCSAPIFeature(raw);
+    expect((result as any).properties.deployedSystemsLink).toEqual([
+      { href: 'http://example.com/api/systems/sensor1' },
+      { href: 'http://example.com/api/systems/sensor2' },
+    ]);
+  });
+
+  it('extracts SamplingFeature with sampledFeature@link containing all fields', () => {
+    const raw = makeFeature('sosa:SamplingFeature', {
+      geometry: { type: 'Point', coordinates: [10, 50] },
+      'sampledFeature@link': {
+        href: 'http://example.com/features/river1',
+        uid: 'urn:x:feature:river1',
+        title: 'Rhine River',
+        rt: 'http://example.com/FeatureOfInterest',
+      },
+    });
+    const result = extractCSAPIFeature(raw);
+    expect((result as any).properties.sampledFeatureLink).toEqual({
+      href: 'http://example.com/features/river1',
+      uid: 'urn:x:feature:river1',
+      title: 'Rhine River',
+      rt: 'http://example.com/FeatureOfInterest',
+    });
+  });
+
+  it('normalizes @link type field to rt (OSH wire format)', () => {
+    const raw = makeFeature('sosa:Sensor', {
+      'systemKind@link': {
+        href: 'http://example.com/api/procedures/proc1',
+        uid: 'urn:x:procedure:1',
+        type: 'application/geo+json',
+      },
+    });
+    const result = extractCSAPIFeature(raw);
+    expect((result as any).properties.systemKindLink).toEqual({
+      href: 'http://example.com/api/procedures/proc1',
+      uid: 'urn:x:procedure:1',
+      rt: 'application/geo+json',
+    });
+  });
+
+  it('prefers rt over type when both are present in @link', () => {
+    const raw = makeFeature('sosa:Sensor', {
+      'systemKind@link': {
+        href: 'http://example.com/api/procedures/proc1',
+        rt: 'http://www.w3.org/ns/sosa/Procedure',
+        type: 'application/geo+json',
+      },
+    });
+    const result = extractCSAPIFeature(raw);
+    expect((result as any).properties.systemKindLink).toEqual({
+      href: 'http://example.com/api/procedures/proc1',
+      rt: 'http://www.w3.org/ns/sosa/Procedure',
+    });
   });
 
   it('throws for unrecognized featureType', () => {
