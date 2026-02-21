@@ -3,7 +3,7 @@
 **Date:** February 20, 2026  
 **Server:** `http://45.55.99.236:8080/sensorhub/api` (OSH SensorHub)  
 **Repository:** [OS4CSAPI/ogc-csapi-explorer](https://github.com/OS4CSAPI/ogc-csapi-explorer)  
-**Commits:** `59fa053` (data model doc), `0444796` (ingestion scripts)
+**Commits:** `59fa053` (data model doc), `0444796` (ingestion scripts), `cbbece2` (original report)
 
 ---
 
@@ -346,11 +346,95 @@ Note: The DSP Pipeline (`04k0`) shows 4 datastreams because OSH propagates child
 | `sosa-ssn-csapi-data-model.md` | Complete SOSA/SSN → CSAPI data model with JSON payloads |
 | `ingest-odas-data-model.py` | Part 1 ingestion script (procedures, systems, properties, deployments, sampling features) |
 | `ingest-part2.py` | Part 2 ingestion script (datastreams, observations, control streams, commands) |
+| `fix-associations.py` | One-time script to add `@link` association fields to existing server resources |
 | `ingestion-report.md` | This report |
 
 ---
 
-## 11. Reproducing the Ingestion
+## 11. Cross-Resource Associations (`@link` Fields)
+
+### Problem
+
+After initial ingestion, the CSAPI Explorer Detail view for any system showed **"Deployments: 0 / None found"** and **"Procedures: 0 / None found"**. The original payloads lacked `@link` association fields that connect systems to their procedures and deployments to their deployed systems.
+
+### CSAPI Association Mechanism
+
+The CSAPI spec defines several `@link` property fields for cross-resource references:
+
+| Field | Location | Purpose | Format |
+|---|---|---|---|
+| `systemKind@link` | System properties | Links System → Procedure | `{ href, rel: "systemKind", title }` |
+| `platform@link` | Deployment properties | Links Deployment → Platform System | `{ href, rel: "platform", title }` |
+| `deployedSystems@link` | Deployment properties | Links Deployment → Deployed Systems | `[{ href, rel: "deployedSystem", title }]` |
+
+### What Was Added
+
+**12 systems** received `systemKind@link` pointing to their procedure:
+
+| System | Procedure | Link |
+|---|---|---|
+| Mic Array (`04g0`) | PDM Audio Capture (`0480`) | ✅ Persisted |
+| Mics #1–#7 (`04gg`–`04jg`) | PDM Audio Capture (`0480`) | ✅ Persisted |
+| SSL Module (`04kg`) | SRP-PHAT Beamforming (`048g`) | ✅ Persisted |
+| SST Module (`04l0`) | Particle Filter Tracking (`0490`) | ✅ Persisted |
+| Config Actuator (`04lg`) | Config Actuation (`04a0`) | ✅ Persisted |
+| Triangulation Engine (`04m0`) | Ray-to-Ray Triangulation (`049g`) | ✅ Persisted |
+
+**5 deployments** received `platform@link` and `deployedSystems@link`:
+
+| Deployment | Platform | deployedSystems |
+|---|---|---|
+| Single Array (`049g`) | Platform (`04fg`) ✅ | Platform (`04fg`) ❌ Dropped |
+| Multi-Array (`04a0`) | Platform (`04fg`) ✅ | Platform (`04fg`) ❌ Dropped |
+| North sub (`04ag`) | Platform (`04fg`) ✅ | Platform (`04fg`) ❌ Dropped |
+| SE sub (`04b0`) | Platform (`04fg`) ✅ | Platform (`04fg`) ❌ Dropped |
+| SW sub (`04bg`) | Platform (`04fg`) ✅ | Platform (`04fg`) ❌ Dropped |
+
+### OSH Server Behavior
+
+| Feature | Status | Notes |
+|---|---|---|
+| `systemKind@link` persistence | ✅ Works | GET returns the field after PUT |
+| `platform@link` persistence | ✅ Works | GET returns the field after PUT |
+| `deployedSystems@link` persistence | ❌ Silently dropped | PUT returns 204 but field not in subsequent GET |
+| `/systems/{id}/procedures` | ❌ 400 | "Invalid resource name" — endpoint not implemented |
+| `/systems/{id}/deployments` | ❌ 400 | "Invalid resource name" — endpoint not implemented |
+| `/deployments/{id}/systems` | ❌ 400 | "Invalid resource name" — endpoint not implemented |
+| `/deployments?system={id}` | ❌ 500 | Internal server error (crash) |
+| System `links` array | ⚠️ Partial | Only includes `subsystems`, `samplingFeatures`, `datastreams`, `controlstreams` |
+
+---
+
+## 12. Explorer `@link` Fallback
+
+### Problem
+
+The CSAPI Explorer (`ResourceDetail.vue`) relies exclusively on **navigation endpoints** (e.g., `/systems/{id}/procedures`) to populate related-resource panels. Since OSH doesn't implement these endpoints (returns 400), the panels always showed "0 / None found".
+
+### Solution
+
+Added a `tryLinkFallback()` function to `demo/src/components/ResourceDetail.vue` that activates when a navigation endpoint returns HTTP 400. It uses the `@link` property fields instead:
+
+| Relation | Fallback Strategy |
+|---|---|
+| System → Procedures | Follow `systemKind@link.href` to fetch the linked procedure |
+| System → Deployments | Fetch `/deployments?limit=100`, filter client-side by `platform@link.href` matching system URL |
+| Deployment → Systems | Follow `deployedSystems@link[]` hrefs (limited by OSH dropping the field) |
+| Procedure → Systems | Fetch `/systems?limit=100`, filter by `systemKind@link.href` matching procedure URL |
+
+The fallback is triggered only on 400 responses, preserving normal behavior on spec-compliant servers.
+
+### Files Modified
+
+| File | Change |
+|---|---|
+| `demo/src/components/ResourceDetail.vue` | Added `tryLinkFallback()` (~105 lines), modified `fetchRelation()` 400 handler |
+| `docs/.../fix-associations.py` | One-time script to add `@link` fields to existing server resources |
+| `docs/.../ingest-odas-data-model.py` | Updated to include `@link` fields in original creation payloads |
+
+---
+
+## 13. Reproducing the Ingestion
 
 To re-run the ingestion on a fresh server:
 

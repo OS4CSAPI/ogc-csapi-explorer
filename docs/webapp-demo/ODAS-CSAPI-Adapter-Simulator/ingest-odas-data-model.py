@@ -171,7 +171,12 @@ def create_subsystems():
             "featureType": "http://www.w3.org/ns/sosa/Sensor",
             "name": "7-Microphone Circular PDM Array",
             "description": "Circular arrangement of 7 PDM MEMS microphones with 38mm diameter. Functions as a phased array for spatial sound field sampling. Each microphone captures omnidirectional audio; the spatial geometry enables beamforming and direction-of-arrival estimation via cross-correlation of microphone pairs. Center mic at (0,0,0); ring mics at 19mm radius spaced 60 degrees apart.",
-            "validTime": ["2026-01-15T00:00:00Z", None]
+            "validTime": ["2026-01-15T00:00:00Z", None],
+            "systemKind@link": {
+                "href": f"{BASE_URL}/procedures/{ids['proc_audio']}",
+                "rel": "systemKind",
+                "title": "PDM MEMS Microphone Audio Capture"
+            }
         }
     }, label="Sensor: 7-Mic Array")
 
@@ -196,7 +201,12 @@ def create_subsystems():
                     "featureType": "http://www.w3.org/ns/sosa/Sensor",
                     "name": f"Microphone #{i} ({pos_label})",
                     "description": f"PDM MEMS microphone at array position {pos_label}. Relative coordinates: ({coords}) meters. Omnidirectional sensitivity pattern. SNR: 65 dB. Sensitivity: -26 dBFS. Frequency response: 100 Hz — 10 kHz.",
-                    "validTime": ["2026-01-15T00:00:00Z", None]
+                    "validTime": ["2026-01-15T00:00:00Z", None],
+                    "systemKind@link": {
+                        "href": f"{BASE_URL}/procedures/{ids['proc_audio']}",
+                        "rel": "systemKind",
+                        "title": "PDM MEMS Microphone Audio Capture"
+                    }
                 }
             }, label=f"Sensor: Mic #{i}")
 
@@ -224,7 +234,12 @@ def create_subsystems():
                 "featureType": "http://www.w3.org/ns/sosa/Sensor",
                 "name": "ODAS SSL Module (Sound Source Localizer)",
                 "description": "Steered Response Power with Phase Transform (SRP-PHAT) beamformer. Scans a virtual hemisphere around the microphone array, counting the sum of microphone-pair cross-correlations at each point. Outputs up to 4 potential sound source directions per frame as unit-sphere vectors with associated energy values. Frame rate: ~125 Hz (16000 Hz sample rate / 128 hop size).",
-                "validTime": ["2026-01-15T00:00:00Z", None]
+                "validTime": ["2026-01-15T00:00:00Z", None],
+                "systemKind@link": {
+                    "href": f"{BASE_URL}/procedures/{ids['proc_ssl']}",
+                    "rel": "systemKind",
+                    "title": "SRP-PHAT Steered Response Power Beamforming"
+                }
             }
         }, label="Sensor: SSL Module")
 
@@ -237,7 +252,12 @@ def create_subsystems():
                 "featureType": "http://www.w3.org/ns/sosa/Sensor",
                 "name": "ODAS SST Module (Sound Source Tracker)",
                 "description": "Particle filter-based sound source tracker. Assigns persistent identity to detected sound sources across frames. Manages source birth (instantiation from Gaussian), tracking (weight update + resampling), and death (removal). Uses excitation-damping motion model with three states: stationary (10%), constant velocity (40%), acceleration (50%). H=500 particles per filter. Output: tracked sources with persistent ID, tag, direction (x,y,z), activity level.",
-                "validTime": ["2026-01-15T00:00:00Z", None]
+                "validTime": ["2026-01-15T00:00:00Z", None],
+                "systemKind@link": {
+                    "href": f"{BASE_URL}/procedures/{ids['proc_sst']}",
+                    "rel": "systemKind",
+                    "title": "Particle Filter Sound Source Tracking"
+                }
             }
         }, label="Sensor: SST Module")
 
@@ -250,7 +270,12 @@ def create_subsystems():
             "featureType": "http://www.w3.org/ns/sosa/Actuator",
             "name": "ODAS Runtime Configuration Controller",
             "description": "Actuator interface for modifying ODAS runtime parameters. Controls detection thresholds (E_T), tracking sensitivity (T_new, F_new), particle count (H), microphone gain, and frame processing rate. Acts on system configuration properties to tune the processing pipeline for environmental conditions. Supports synchronous (immediate) and asynchronous (deferred) command execution.",
-            "validTime": ["2026-01-15T00:00:00Z", None]
+            "validTime": ["2026-01-15T00:00:00Z", None],
+            "systemKind@link": {
+                "href": f"{BASE_URL}/procedures/{ids['proc_config']}",
+                "rel": "systemKind",
+                "title": "ODAS Runtime Configuration Actuation"
+            }
         }
     }, label="Actuator: Config Controller")
 
@@ -263,7 +288,12 @@ def create_subsystems():
             "featureType": "http://www.w3.org/ns/ssn/System",
             "name": "Multi-Array 3D Triangulation Engine",
             "description": "Central fusion system that collects DOA vectors from multiple distributed microphone arrays and estimates 3D source positions using Ray-to-Ray intersection (Schneider and Eberly 2002) with particle filtering refinement. Requires NTP-synchronized timestamps from each array. Minimum 2 arrays, 3+ recommended. Based on Lauzon et al. IROS 2017 methodology. Expected accuracy: 1-2m horizontal at 10m array spacing with sigma_phi = 0.0961 rad.",
-            "validTime": ["2026-01-15T00:00:00Z", None]
+            "validTime": ["2026-01-15T00:00:00Z", None],
+            "systemKind@link": {
+                "href": f"{BASE_URL}/procedures/{ids['proc_tri']}",
+                "rel": "systemKind",
+                "title": "Multi-Array Ray-to-Ray 3D Triangulation"
+            }
         }
     }, label="System: Triangulation Engine")
 
@@ -348,7 +378,17 @@ def create_deployments():
             "featureType": "http://www.w3.org/ns/sosa/Deployment",
             "name": "Conference Room 3A — Single Array Deployment",
             "description": "Deployment of XMOS microphone array board #001 on the ceiling of Conference Room 3A, Building 7. Array is mounted facing downward at 2.5m height, centered over the conference table. Orientation: array X-axis aligned with geographic north. Purpose: meeting room occupancy sensing and speaker localization for smart building applications. Carpeted floor, acoustic ceiling tiles, glass wall on south side. Typical background noise: HVAC at ~35 dBA.",
-            "validTime": ["2026-02-01T09:00:00Z", None]
+            "validTime": ["2026-02-01T09:00:00Z", None],
+            "platform@link": {
+                "href": f"{BASE_URL}/systems/{ids.get('platform')}",
+                "rel": "platform",
+                "title": "ODAS \u2014 XMOS xCORE-200 Microphone Array Board #001"
+            },
+            "deployedSystems@link": [{
+                "href": f"{BASE_URL}/systems/{ids.get('platform')}",
+                "rel": "deployedSystem",
+                "title": "ODAS \u2014 XMOS xCORE-200 Microphone Array Board #001"
+            }]
         }
     }, label="Deployment: Single Array (Conference Room)")
 
@@ -370,7 +410,17 @@ def create_deployments():
             "featureType": "http://www.w3.org/ns/sosa/Deployment",
             "name": "Campus Perimeter — 3-Array Triangulation Deployment",
             "description": "Deployment of three distributed microphone arrays in a triangular configuration (10m spacing) for 3D sound source localization via DOA triangulation. Based on Lauzon et al. IROS 2017 methodology. Arrays positioned on the ground facing upward. Central fusion node performs Ray-to-Ray intersection. Expected horizontal accuracy: 1-2m. NTP synchronization required between all nodes.",
-            "validTime": ["2026-02-15T00:00:00Z", None]
+            "validTime": ["2026-02-15T00:00:00Z", None],
+            "platform@link": {
+                "href": f"{BASE_URL}/systems/{ids.get('platform')}",
+                "rel": "platform",
+                "title": "ODAS \u2014 XMOS xCORE-200 Microphone Array Board #001"
+            },
+            "deployedSystems@link": [{
+                "href": f"{BASE_URL}/systems/{ids.get('platform')}",
+                "rel": "deployedSystem",
+                "title": "ODAS \u2014 XMOS xCORE-200 Microphone Array Board #001"
+            }]
         }
     }, label="Deployment: 3-Array Triangulation (parent)")
 
@@ -394,7 +444,17 @@ def create_deployments():
                     "featureType": "http://www.w3.org/ns/sosa/Deployment",
                     "name": f"Array Position — {name}",
                     "description": f"Sub-deployment placing one XMOS microphone array board at the {name.lower()} position of the triangulation triangle. Array mounted on tripod at 1.0m height, facing upward. GPS coordinates surveyed to ±0.5m accuracy.",
-                    "validTime": ["2026-02-15T00:00:00Z", None]
+                    "validTime": ["2026-02-15T00:00:00Z", None],
+                    "platform@link": {
+                        "href": f"{BASE_URL}/systems/{ids.get('platform')}",
+                        "rel": "platform",
+                        "title": "ODAS — XMOS xCORE-200 Microphone Array Board #001"
+                    },
+                    "deployedSystems@link": [{
+                        "href": f"{BASE_URL}/systems/{ids.get('platform')}",
+                        "rel": "deployedSystem",
+                        "title": "ODAS — XMOS xCORE-200 Microphone Array Board #001"
+                    }]
                 }
             }, label=f"Sub-deployment: {name}")
 

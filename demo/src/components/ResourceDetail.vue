@@ -159,6 +159,108 @@ function clearFilters(link: RelatedResourceLink) {
   if (parentId) fetchRelation(link, String(parentId))
 }
 
+/**
+ * @link fallback: When the server doesn't implement a nested navigation endpoint
+ * (e.g. /systems/{id}/procedures returns 400), try to resolve related resources
+ * from @link fields embedded in the parent or by searching the collection.
+ *
+ * Supported fallbacks:
+ *  - systems → procedures: follow systemKind@link href to fetch the procedure
+ *  - systems → deployments: search /deployments and filter by platform@link.href
+ *  - deployments → systems: follow deployedSystems@link hrefs to fetch each system
+ */
+async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Promise<any[]> {
+  const parentProps = detail.value?.properties || detail.value || {}
+
+  // ----- System → Procedure via systemKind@link -----
+  if (props.resourceType === 'systems' && link.relation === 'procedures') {
+    const skLink = parentProps['systemKind@link']
+    if (skLink?.href) {
+      try {
+        const acceptType = getContentType('procedures')
+        // href may be absolute URL — strip base URL to get relative path
+        let path = skLink.href
+        if (path.startsWith('http')) {
+          const idx = path.indexOf('/api/')
+          if (idx !== -1) path = path.substring(idx + 4) // strip everything before /api/
+          else path = new URL(path).pathname.replace(/^.*\/sensorhub/, '') // fallback
+        }
+        const res = await apiFetch(path, { headers: { 'Accept': acceptType } })
+        if (res.ok && res.data) {
+          return [res.data]
+        }
+      } catch { /* fallback failed silently */ }
+    }
+  }
+
+  // ----- System → Deployments via searching deployments for platform@link -----
+  if (props.resourceType === 'systems' && link.relation === 'deployments') {
+    try {
+      const acceptType = getContentType('deployments')
+      const res = await apiFetch('/deployments?limit=100', { headers: { 'Accept': acceptType } })
+      if (res.ok && res.data) {
+        const parsed = parseCollectionResponse(res.data)
+        const systemUrl = `systems/${parentId}`
+        const matched = (parsed.items as any[]).filter((dep: any) => {
+          const props = dep?.properties || dep || {}
+          // Check platform@link.href
+          const platformLink = props['platform@link']
+          if (platformLink?.href && platformLink.href.includes(systemUrl)) return true
+          // Check deployedSystems@link array
+          const dsLinks = props['deployedSystems@link']
+          if (Array.isArray(dsLinks)) {
+            return dsLinks.some((l: any) => l?.href && l.href.includes(systemUrl))
+          }
+          return false
+        })
+        if (matched.length > 0) return matched
+      }
+    } catch { /* fallback failed silently */ }
+  }
+
+  // ----- Deployment → Systems via deployedSystems@link -----
+  if (props.resourceType === 'deployments' && link.relation === 'systems') {
+    const dsLinks = parentProps['deployedSystems@link']
+    if (Array.isArray(dsLinks) && dsLinks.length > 0) {
+      const items: any[] = []
+      for (const l of dsLinks) {
+        if (!l?.href) continue
+        try {
+          let path = l.href
+          if (path.startsWith('http')) {
+            const idx = path.indexOf('/api/')
+            if (idx !== -1) path = path.substring(idx + 4)
+          }
+          const acceptType = getContentType('systems')
+          const res = await apiFetch(path, { headers: { 'Accept': acceptType } })
+          if (res.ok && res.data) items.push(res.data)
+        } catch { /* skip failed links */ }
+      }
+      if (items.length > 0) return items
+    }
+  }
+
+  // ----- Procedure → Systems via systemKind@link reverse search -----
+  if (props.resourceType === 'procedures' && link.relation === 'systems') {
+    try {
+      const acceptType = getContentType('systems')
+      const res = await apiFetch('/systems?limit=100', { headers: { 'Accept': acceptType } })
+      if (res.ok && res.data) {
+        const parsed = parseCollectionResponse(res.data)
+        const procUrl = `procedures/${parentId}`
+        const matched = (parsed.items as any[]).filter((sys: any) => {
+          const props = sys?.properties || sys || {}
+          const skLink = props['systemKind@link']
+          return skLink?.href && skLink.href.includes(procUrl)
+        })
+        if (matched.length > 0) return matched
+      }
+    } catch { /* fallback failed silently */ }
+  }
+
+  return []
+}
+
 /** Fetch a single related resource collection (with filters and client-side fallback) */
 async function fetchRelation(link: RelatedResourceLink, parentId: string) {
   const state = getRelState(link.relation)
@@ -184,6 +286,19 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
     if (!res.ok) {
       if (res.status !== 404 && res.status !== 400) {
         state.error = res.error || 'Failed to fetch'
+      }
+      // --- @link fallback: when server returns 400 (endpoint not implemented),
+      // attempt to populate the panel from @link fields in the parent resource.
+      // This handles OSH SensorHub which doesn't implement /systems/{id}/procedures
+      // or /systems/{id}/deployments navigation endpoints. ---
+      if (res.status === 400 && detail.value) {
+        const fallbackItems = await tryLinkFallback(link, parentId)
+        if (fallbackItems.length > 0) {
+          state.items = fallbackItems
+          state.clientSideFallbackDetails.push(
+            `Server returned 400 for /${link.relation} endpoint — resolved ${fallbackItems.length} item(s) via @link fields`
+          )
+        }
       }
       return
     }
