@@ -344,29 +344,178 @@ async function loadResourceType(resourceType: string): Promise<number> {
 }
 
 /**
- * Build a cache of system locations from their location/GPS datastreams.
- * For each system that has a location datastream, fetches the latest observation
- * and caches the lat/lon so we can use it to enrich any resource linked to that system.
+ * Extract lat/lon from an observation result object, supporting multiple
+ * field naming conventions used by different servers and data models.
+ */
+function extractLatLonFromResult(result: any): { lat: number; lon: number; alt?: number } | null {
+  if (!result || typeof result !== 'object') return null
+
+  // Direct lat/lon (e.g., GPS location datastreams)
+  if (typeof result.lat === 'number' && typeof result.lon === 'number') {
+    return { lat: result.lat, lon: result.lon, alt: result.alt }
+  }
+  // Nested Location/location object
+  if (result.Location && typeof result.Location.lat === 'number') {
+    return { lat: result.Location.lat, lon: result.Location.lon, alt: result.Location.alt }
+  }
+  if (result.location && typeof result.location.lat === 'number') {
+    return { lat: result.location.lat, lon: result.location.lon, alt: result.location.alt }
+  }
+  // Full-word latitude/longitude (e.g., triangulated positions, geodetic outputs)
+  if (typeof result.latitude === 'number' && typeof result.longitude === 'number') {
+    return { lat: result.latitude, lon: result.longitude, alt: result.altitude }
+  }
+  // Common GIS conventions
+  if (typeof result.Latitude === 'number' && typeof result.Longitude === 'number') {
+    return { lat: result.Latitude, lon: result.Longitude, alt: result.Altitude }
+  }
+
+  return null
+}
+
+/**
+ * Check whether a datastream might produce observations with geographic
+ * coordinates, based on its name or observedProperty definitions/labels.
+ */
+function isLocationRelatedDatastream(ds: any): boolean {
+  const name = (ds.name || ds.outputName || '').toLowerCase()
+  // Classic GPS/location keywords
+  if (name.includes('gps_data') || name.includes('location') || name.includes('position')) return true
+
+  const props: any[] = ds.observedProperties || []
+  return props.some((p: any) => {
+    const def = (p.definition || '').toLowerCase()
+    const label = (p.label || '').toLowerCase()
+    return def.includes('location') || label.includes('location')
+      || def.includes('geodeticlatitude') || def.includes('latitude')
+      || def.includes('longitude') || def.includes('geolocation')
+      || label.includes('latitude') || label.includes('longitude')
+  })
+}
+
+/**
+ * Phase A: Cache system locations from already-loaded Part 1 features that
+ * have geometry.  Also derive system locations from deployment geometry via
+ * the `platform@link` association property.
+ */
+function cacheLocationsFromLoadedFeatures(): void {
+  // --- Systems with direct geometry ---
+  const systemSource = vectorSources['systems']
+  if (systemSource) {
+    for (const feature of systemSource.getFeatures()) {
+      const geom = feature.getGeometry()
+      const sysId = feature.get('resourceId')
+      if (geom && sysId && geom.getType() === 'Point') {
+        const coords = toLonLat((geom as Point).getCoordinates())
+        if (!systemLocationCache[sysId]) {
+          systemLocationCache[sysId] = { lat: coords[1], lon: coords[0], datastreamName: 'system geometry' }
+        }
+      }
+    }
+  }
+
+  // --- Deployments → platform@link → system ID ---
+  const deploySource = vectorSources['deployments']
+  if (deploySource) {
+    for (const feature of deploySource.getFeatures()) {
+      const geom = feature.getGeometry()
+      const raw = feature.get('rawData')
+      if (!geom || !raw) continue
+
+      // Extract deployment centroid
+      let lat: number, lon: number
+      if (geom.getType() === 'Point') {
+        const coords = toLonLat((geom as Point).getCoordinates())
+        lon = coords[0]; lat = coords[1]
+      } else {
+        // Polygon/LineString — use extent center
+        const extent = geom.getExtent()
+        const center = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]
+        const coords = toLonLat(center)
+        lon = coords[0]; lat = coords[1]
+      }
+
+      // Read platform@link to find the system this deployment belongs to
+      const platformLink = raw.properties?.['platform@link'] || raw['platform@link']
+      if (platformLink?.href) {
+        const sysId = platformLink.href.replace(/\/+$/, '').split('/').pop()
+        if (sysId && !systemLocationCache[sysId]) {
+          systemLocationCache[sysId] = { lat, lon, datastreamName: 'deployment geometry' }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Phase B: For each system in the location cache, fetch its subsystems and
+ * propagate the parent's location to children.  This enables Part 2 resources
+ * attached to subsystems to inherit the deployment/platform location.
+ */
+async function cacheSubsystemLocations(): Promise<void> {
+  const parentIds = Object.keys(systemLocationCache)
+  const promises = parentIds.map(async (parentId) => {
+    const parentLoc = systemLocationCache[parentId]
+    try {
+      const res = await apiFetch(`/systems/${parentId}/subsystems?limit=200`, {
+        headers: { 'Accept': 'application/geo+json' },
+      })
+      if (!res.ok || !res.data) return
+
+      let items: any[] = []
+      if (res.data.type === 'FeatureCollection' && Array.isArray(res.data.features)) {
+        items = res.data.features
+      } else if (Array.isArray(res.data.items)) {
+        items = res.data.items
+      }
+
+      for (const sub of items) {
+        const subId = sub.id || sub.properties?.uid
+        if (!subId) continue
+
+        // If the subsystem has its own geometry, prefer that
+        const subGeom = extractGeometry(sub)
+        if (subGeom && subGeom.type === 'Point') {
+          const coords = subGeom.coordinates
+          systemLocationCache[subId] = { lat: coords[1], lon: coords[0], datastreamName: 'subsystem geometry' }
+        } else if (!systemLocationCache[subId]) {
+          systemLocationCache[subId] = { ...parentLoc, datastreamName: `inherited from parent ${parentId}` }
+        }
+      }
+    } catch { /* skip — server may not support subsystems endpoint */ }
+  })
+  await Promise.all(promises)
+}
+
+/**
+ * Build a cache of system locations, combining multiple strategies:
+ *   A. Static geometry from loaded Part 1 features (systems + deployments)
+ *   B. Subsystem location propagation from parent systems
+ *   C. Observation-derived locations from datastreams with geographic data
+ *
+ * Also populates locationDatastreamList for observation track/point rendering.
  */
 async function buildSystemLocationCache(): Promise<void> {
   // Clear old cache
   for (const key of Object.keys(systemLocationCache)) delete systemLocationCache[key]
   locationDatastreamList = []
 
+  // --- Phase A: Static geometry from loaded features ---
+  cacheLocationsFromLoadedFeatures()
+
+  // --- Phase B: Propagate to subsystems ---
+  await cacheSubsystemLocations()
+
+  // --- Phase C: Observation-derived locations (broadened filter) ---
   try {
     // Fetch all datastreams
     const dsRes = await apiFetch('/datastreams?limit=200')
     if (!dsRes.ok || !dsRes.data) return
 
     const allDs = dsRes.data.items || dsRes.data.features || dsRes.data || []
-    // Filter to location-related datastreams
-    const locationDs = allDs.filter((ds: any) => {
-      const name = (ds.name || ds.outputName || '').toLowerCase()
-      const hasLocationProp = ds.observedProperties?.some((p: any) =>
-        (p.definition || '').includes('Location') || (p.label || '').toLowerCase().includes('location')
-      )
-      return hasLocationProp || name.includes('gps_data') || name.includes('location')
-    })
+
+    // Filter to location-related datastreams (broadened to catch more patterns)
+    const locationDs = allDs.filter(isLocationRelatedDatastream)
 
     // Deduplicate by system for the location cache (one lat/lon per system)
     // but keep ALL location datastreams for observation track rendering
@@ -374,13 +523,15 @@ async function buildSystemLocationCache(): Promise<void> {
     for (const ds of locationDs) {
       const sysId = ds['system@id'] || ds.system?.id
       if (!sysId) continue
+      // Only use observation-derived location if no static location exists
+      if (systemLocationCache[sysId]) continue
       const existing = bySystem[sysId]
       if (!existing || (ds.name || '').toLowerCase().includes('location')) {
         bySystem[sysId] = ds
       }
     }
 
-    // Save ALL location datastreams for observation track rendering (not deduplicated)
+    // Save location datastreams for observation track rendering
     locationDatastreamList = locationDs
       .filter((ds: any) => ds['system@id'] || ds.system?.id)
       .map((ds: any) => ({
@@ -388,6 +539,21 @@ async function buildSystemLocationCache(): Promise<void> {
         name: ds.name || ds.outputName || 'Unknown',
         systemId: ds['system@id'] || ds.system?.id,
       }))
+
+    // Also include ALL datastreams for systems with cached locations,
+    // so observation layers can render geographic observations from any DS
+    const locationDsIds = new Set(locationDatastreamList.map(d => d.id))
+    for (const ds of allDs) {
+      if (locationDsIds.has(ds.id)) continue
+      const sysId = ds['system@id'] || ds.system?.id
+      if (sysId && systemLocationCache[sysId]) {
+        locationDatastreamList.push({
+          id: ds.id,
+          name: ds.name || ds.outputName || 'Unknown',
+          systemId: sysId,
+        })
+      }
+    }
 
     // Fetch latest observation from each location datastream in parallel
     const promises = Object.entries(bySystem).map(async ([sysId, ds]) => {
@@ -400,22 +566,11 @@ async function buildSystemLocationCache(): Promise<void> {
         const obs = obsRes.data.items?.[0] || obsRes.data[0]
         if (!obs?.result) return
 
-        // Extract lat/lon from various result shapes
-        let lat: number | undefined
-        let lon: number | undefined
-        let alt: number | undefined
-        const result = obs.result
-        if (typeof result.lat === 'number' && typeof result.lon === 'number') {
-          lat = result.lat; lon = result.lon; alt = result.alt
-        } else if (result.Location && typeof result.Location.lat === 'number') {
-          lat = result.Location.lat; lon = result.Location.lon; alt = result.Location.alt
-        } else if (result.location && typeof result.location.lat === 'number') {
-          lat = result.location.lat; lon = result.location.lon; alt = result.location.alt
-        }
-        if (lat == null || lon == null) return
+        const loc = extractLatLonFromResult(obs.result)
+        if (!loc) return
 
         systemLocationCache[sysId] = {
-          lat, lon, alt,
+          lat: loc.lat, lon: loc.lon, alt: loc.alt,
           datastreamName: ds.name,
           phenomenonTime: obs.phenomenonTime,
         }
@@ -719,16 +874,9 @@ async function loadObservationLayers(): Promise<void> {
       const trackCoords: [number, number][] = []
 
       for (const obs of items) {
-        const result = obs.result
-        let lat: number | undefined, lon: number | undefined, alt: number | undefined
-        if (typeof result?.lat === 'number' && typeof result?.lon === 'number') {
-          lat = result.lat; lon = result.lon; alt = result.alt
-        } else if (result?.location?.lat != null) {
-          lat = result.location.lat; lon = result.location.lon; alt = result.location.alt
-        } else if (result?.Location?.lat != null) {
-          lat = result.Location.lat; lon = result.Location.lon; alt = result.Location.alt
-        }
-        if (lat == null || lon == null) continue
+        const loc = extractLatLonFromResult(obs.result)
+        if (!loc) continue
+        const { lat, lon, alt } = loc
 
         // When bbox is active, skip observations outside the bbox
         if (bboxFilter.value) {
@@ -803,7 +951,7 @@ async function loadAllResources() {
   })
   await Promise.all(promises)
 
-  // 2. Build system location cache from observation data
+  // 2. Build system location cache (static geometry + subsystem propagation + observation data)
   await buildSystemLocationCache()
 
   // 3. Enrich Part 1 resource types that have null geometry
