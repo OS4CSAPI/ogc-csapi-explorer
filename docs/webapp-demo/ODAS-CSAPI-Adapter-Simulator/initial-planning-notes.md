@@ -150,20 +150,116 @@ This approach mirrors how military/intelligence direction-finding (DF) systems w
 
 ---
 
+## Findings from IROS2017 Paper
+
+**Paper:** "Localization of RW-UAVs Using Particle Filtering Over Distributed Microphone Arrays"
+*Lauzon, Grondin, Létourneau, Lussier Desbiens, Michaud — IEEE/RSJ IROS 2017*
+**File:** `IROS2017-multi-array-localization.pdf` (in this folder)
+
+### Paper Summary
+
+The paper demonstrates **3D localization of drones** by combining Sound Source Localization (SSL) from multiple distributed microphone arrays using particle filtering. Three 8-microphone arrays were placed in a 10m triangle on the ground and used to track a Parrot Bebop 2 drone outdoors, with GPS providing ground truth.
+
+Each array produces a **Direction of Arrival (DOA)** — a unit vector **q** pointing toward the loudest sound source, plus an energy value **e**. This is exactly the `{x, y, z, E}` format ODAS outputs as SSL "pots." A central node collects DOAs from all arrays and uses particle filtering to estimate the 3D source position.
+
+### Key Takeaways for Our Effort
+
+#### 1. Validates the LOB Architecture
+The paper's entire approach is what we planned: each array produces a direction vector, multiple arrays' directions combine to find position. Our LOB-as-GeoJSON-LineString idea maps 1:1 to their DOA vectors. This isn't a simplification — it's literally how the system works.
+
+#### 2. Ray-to-Ray Intersection Math
+Equations 18–22 provide the triangulation algorithm we need for the `intersections` collection. For two arrays at positions L_a and L_b with DOA unit vectors q_a and q_b, the nearest intersection point is:
+
+```
+Z_ab = ( (L_a + G_a * q_a) + (L_b + G_b * q_b) ) / 2
+```
+
+For K arrays, average all K(K-1)/2 pair intersections. This translates directly into computed Point features with uncertainty polygons.
+
+#### 3. Data Flow Matches Our Pipeline
+Their block diagram maps cleanly:
+- **Per-array SSL** → ODAS `ssl_pots` → our `bearings` collection (LineString)
+- **Central fusion** → particle filter / Ray-to-Ray → our `intersections` collection (Point)
+- **Tracking state** → particle birth/death → our `tracks` collection (updates over time)
+
+#### 4. Realistic Simulation Parameters
+The paper provides concrete values to model:
+
+| Parameter | Value | Relevance |
+|---|---|---|
+| Energy threshold (E_T) | 600 | Source detection vs. noise discrimination |
+| Particle count (H) | 500 | Tracker complexity |
+| Array spacing | 10m triangle | Practical geometry baseline |
+| Sample rate | 48,000 Hz | Audio acquisition (ODAS default is 16kHz) |
+| Position variance (σ_pos) | 25 | Gaussian spread for initial position estimate |
+| Velocity variance (σ_vel) | 25 | Gaussian spread for speed estimate |
+| Angle deviation (σ_φ) | 0.0961 rad (~5.5°) | DOA accuracy — drives LOB beam width |
+| New source threshold (T_new) | 0.75 | Detection confidence threshold |
+| Remove threshold (T_remove) | 0.3 | Track loss threshold |
+| Consecutive frames to confirm (F_new) | 10 | Prevents false positive detections |
+| Consecutive frames to remove (F_remove) | 10 | Prevents premature track loss |
+
+**Motion state model** (per particle):
+| State | Damping (α) | Excitation (β) | Probability |
+|---|---|---|---|
+| Stationary | 2 | 0.05 | 10% |
+| Constant velocity | 0.5 | 3 | 40% |
+| Acceleration | 1.5 | 6 | 50% |
+
+#### 5. Important Constraints to Model
+- **Z-axis precision degrades** as elevation increases (far-field effect with ground-plane arrays) — our uncertainty polygons should be elliptical, elongated vertically
+- **Single loudest source tracked** per filter instance — simulator should respect this for v1
+- **Time synchronization** only needs ~100ms precision via NTP — relevant for distributed array timing
+- **Background noise interference** (trucks, speech, vehicles) causes tracking dropouts — useful for realistic sim scenarios
+
+#### 6. Refined Collection Schema
+
+Based on the paper's data structures:
+
+| Collection | Geometry | Key Properties |
+|---|---|---|
+| `sensors` | Point | array_id, mic_count, position (lat/lon + height), orientation |
+| `bearings` | LineString | array_id, azimuth, elevation, energy, timestamp, confidence (P_k) |
+| `tracks` | Point (+ history as LineString) | track_id, position_3d, velocity, motion_state (stationary/constant/accel), particle_weight_diversity |
+| `intersections` | Point + Polygon uncertainty | source_arrays, ray_ray_distance, estimated_position, uncertainty_ellipse |
+
+#### 7. Future Roadmap Alignment
+Their planned improvements map to incremental features we could add:
+- Time-frequency masking for noise robustness → "noise conditions" parameter in simulator
+- Multi-source SST per array → multiple simultaneous tracks in our collections
+- Elevation-based filtering (ignore ground sources) → filter property in our API
+
+---
+
+## Hardware Reference
+
+**XMOS xCORE 7-microphone array** — The physical device under consideration:
+- 7 PDM MEMS microphones in circular arrangement
+- XMOS xCORE multicore microcontroller for real-time processing
+- USB Audio Class 1.0 interface
+- Compact form factor suitable for distributed deployment
+
+The paper used 8-microphone arrays (8SoundsUSB), but the same principles apply to 7-mic or any geometry — ODAS configuration specifies each mic's position, uncertainty, and directivity.
+
+---
+
 ## Open Questions
 
-- What microphone array configuration to simulate (4-mic, 8-mic, 16-mic)?
+- What microphone array configuration to simulate (7-mic circular matching XMOS, or 8-mic matching the paper)?
 - Should the simulator run as a standalone server or integrate into the existing demo app?
 - What geographic scenario to default to (indoor room-scale, outdoor campus, urban area)?
 - Should we model elevation angles or flatten to 2D bearings for the initial version?
-- How to represent uncertainty / confidence in the LOB (beam width as a wedge polygon)?
+- How to represent uncertainty / confidence in the LOB (beam width as a wedge polygon, using σ_φ ≈ 5.5° from the paper)?
+- Should we implement the full particle filter, or start with simpler Ray-to-Ray intersection only?
 
 ---
 
 ## Next Steps
 
-- [ ] Design the simulator data generation module
+- [ ] Design the simulator data generation module (using paper parameters as defaults)
 - [ ] Define the adapter transformation layer (unit sphere → geographic LOB)
+- [ ] Implement Ray-to-Ray triangulation for the `intersections` collection
 - [ ] Implement OGC API - Features endpoint serving the collections
 - [ ] Build a visual demo showing LOBs on a map
 - [ ] Test integration with the CSAPI client library
+- [ ] Add noise/interference modeling for realistic simulation scenarios
