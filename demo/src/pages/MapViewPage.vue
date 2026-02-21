@@ -52,9 +52,10 @@ const PART2_MAP_TYPES = RESOURCE_TYPES.filter(r => ['datastreams', 'controlStrea
 // Synthetic entries for observation-derived layers (not real API resource types)
 const OBS_TRACK_ENTRY = { key: 'observationTracks', label: 'Obs. Track', plural: 'Observation Tracks', icon: 'pi pi-directions', part: 2 as const, readOnly: true }
 const OBS_POINTS_ENTRY = { key: 'observationPoints', label: 'Observation', plural: 'Observations', icon: 'pi pi-circle', part: 2 as const, readOnly: true }
+const LOB_ENTRY = { key: 'bearingLines', label: 'Bearing', plural: 'Lines of Bearing', icon: 'pi pi-compass', part: 2 as const, readOnly: true }
 
 // All types visible on the map
-const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY]
+const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY, LOB_ENTRY]
 
 // Color map for resource types
 const TYPE_COLORS: Record<string, string> = {
@@ -66,6 +67,7 @@ const TYPE_COLORS: Record<string, string> = {
   controlStreams: '#f97316',    // orange
   observationTracks: '#06b6d4', // cyan
   observationPoints: '#ec4899', // pink
+  bearingLines: '#f43f5e',      // rose
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -77,6 +79,7 @@ const TYPE_LABELS: Record<string, string> = {
   controlStreams: 'CS',
   observationTracks: '~',
   observationPoints: 'O',
+  bearingLines: '►',
 }
 
 // Active layer toggles
@@ -89,6 +92,7 @@ const activeLayers = ref<Record<string, boolean>>({
   controlStreams: true,
   observationTracks: true,
   observationPoints: true,
+  bearingLines: true,
 })
 
 // Cache: systemId → { lat, lon, alt?, datastreamName? }
@@ -138,6 +142,13 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
         fill: new Fill({ color }),
         stroke: new Stroke({ color: '#fff', width: 1 }),
       }),
+    })
+  }
+
+  // Bearing lines — directional lines from sensor locations
+  if (resourceType === 'bearingLines') {
+    return new Style({
+      stroke: new Stroke({ color, width: 2.5 }),
     })
   }
 
@@ -204,6 +215,12 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style {
         fill: new Fill({ color }),
         stroke: new Stroke({ color: '#fbbf24', width: 3 }),
       }),
+    })
+  }
+
+  if (resourceType === 'bearingLines') {
+    return new Style({
+      stroke: new Stroke({ color: '#fbbf24', width: 5 }),
     })
   }
 
@@ -910,6 +927,95 @@ async function loadControlStreams(): Promise<void> {
   featureCounts.value['controlStreams'] = count
 }
 
+// --- Bearing line helpers ---
+
+/** Length of bearing line visualization in meters */
+const BEARING_LINE_LENGTH_M = 1000
+
+/**
+ * Extract bearing/direction information from an observation result.
+ * Supports:
+ *   - LOB format: bearingN objects with explicit azimuth (degrees from north)
+ *   - SSL format: sourceN objects with (x,y) unit direction vectors
+ *   - SST format: trackN objects with (x,y) unit direction vectors
+ */
+function extractBearings(result: any): Array<{ azimuth: number; elevation: number; energy: number; sourceId?: number }> {
+  const bearings: Array<{ azimuth: number; elevation: number; energy: number; sourceId?: number }> = []
+  if (!result || typeof result !== 'object') return bearings
+
+  // LOB format: bearing0..bearingN with { azimuth, elevation, energy, sourceId }
+  if (typeof result.numBearings === 'number') {
+    for (let i = 0; i < result.numBearings; i++) {
+      const b = result[`bearing${i}`]
+      if (b && typeof b.azimuth === 'number') {
+        bearings.push({ azimuth: b.azimuth, elevation: b.elevation || 0, energy: b.energy || 0, sourceId: b.sourceId })
+      }
+    }
+    return bearings
+  }
+
+  // SSL format: source0..sourceN with { x, y, z, energy } — unit direction vectors
+  // Convention: x = East, y = North → azimuth = atan2(x, y) degrees from North
+  if (typeof result.numSources === 'number') {
+    for (let i = 0; i < result.numSources; i++) {
+      const s = result[`source${i}`]
+      if (s && typeof s.x === 'number' && typeof s.y === 'number') {
+        const mag = Math.sqrt(s.x * s.x + s.y * s.y)
+        if (mag < 0.01) continue
+        const azimuth = ((Math.atan2(s.x, s.y) * 180 / Math.PI) + 360) % 360
+        bearings.push({ azimuth, elevation: 0, energy: s.energy || 0 })
+      }
+    }
+    return bearings
+  }
+
+  // SST format: track0..trackN with { id, tag, x, y, z, activity }
+  if (typeof result.numTracks === 'number') {
+    for (let i = 0; i < result.numTracks; i++) {
+      const t = result[`track${i}`]
+      if (t && typeof t.x === 'number' && typeof t.y === 'number') {
+        const mag = Math.sqrt(t.x * t.x + t.y * t.y)
+        if (mag < 0.01) continue
+        const azimuth = ((Math.atan2(t.x, t.y) * 180 / Math.PI) + 360) % 360
+        bearings.push({ azimuth, elevation: 0, energy: t.activity || 0, sourceId: t.id })
+      }
+    }
+    return bearings
+  }
+
+  return bearings
+}
+
+/**
+ * Compute the endpoint of a bearing line given origin, azimuth, and distance.
+ * Uses small-distance approximation (accurate within ~10 km).
+ */
+function computeBearingEndpoint(lat: number, lon: number, azimuthDeg: number, distanceM: number): { lat: number; lon: number } {
+  const azRad = azimuthDeg * Math.PI / 180
+  const dLat = distanceM * Math.cos(azRad) / 111320
+  const dLon = distanceM * Math.sin(azRad) / (111320 * Math.cos(lat * Math.PI / 180))
+  return { lat: lat + dLat, lon: lon + dLon }
+}
+
+/**
+ * Style for a bearing line, with opacity and width proportional to detection energy.
+ */
+function getBearingLineStyle(energy: number): Style {
+  const hex = TYPE_COLORS['bearingLines'] || '#f43f5e'
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const opacity = 0.4 + Math.min(energy, 1) * 0.6
+  const width = 2 + Math.min(energy, 1) * 2
+
+  return new Style({
+    stroke: new Stroke({
+      color: `rgba(${r}, ${g}, ${b}, ${opacity})`,
+      width,
+    }),
+  })
+}
+
 /**
  * Load observation layers — both individual points and GPS trail tracks.
  * Fetches recent observations from all location datastreams once and builds
@@ -918,11 +1024,14 @@ async function loadControlStreams(): Promise<void> {
 async function loadObservationLayers(): Promise<void> {
   const pointSource = vectorSources['observationPoints']
   const trackSource = vectorSources['observationTracks']
+  const bearingSource = vectorSources['bearingLines']
   if (pointSource) pointSource.clear()
   if (trackSource) trackSource.clear()
+  if (bearingSource) bearingSource.clear()
 
   let pointCount = 0
   let trackCount = 0
+  let bearingCount = 0
 
   const promises = locationDatastreamList.map(async (dsInfo) => {
     try {
@@ -935,41 +1044,80 @@ async function loadObservationLayers(): Promise<void> {
       const trackCoords: [number, number][] = []
 
       for (const obs of items) {
+        // --- Observation points: results with lat/lon coordinates ---
         const loc = extractLatLonFromResult(obs.result)
-        if (!loc) continue
-        const { lat, lon, alt } = loc
-
-        // When bbox is active, skip observations outside the bbox
-        if (bboxFilter.value) {
-          const [minX, minY, maxX, maxY] = bboxFilter.value
-          if (lon < minX || lon > maxX || lat < minY || lat > maxY) continue
+        if (loc) {
+          const { lat, lon, alt } = loc
+          let inBbox = true
+          if (bboxFilter.value) {
+            const [minX, minY, maxX, maxY] = bboxFilter.value
+            if (lon < minX || lon > maxX || lat < minY || lat > maxY) inBbox = false
+          }
+          if (inBbox) {
+            trackCoords.push([lon, lat])
+            if (pointSource) {
+              const feature = new Feature({
+                geometry: new Point(fromLonLat([lon, lat])),
+              })
+              feature.setStyle(getStyle('observationPoints'))
+              feature.set('resourceType', 'observationPoints')
+              feature.set('resourceId', obs.id || `${dsInfo.id}-obs-${pointCount}`)
+              feature.set('resourceName', `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
+              feature.set('enriched', true)
+              feature.set('enrichmentSource', dsInfo.name)
+              feature.set('rawData', {
+                observationId: obs.id,
+                datastreamId: dsInfo.id,
+                datastreamName: dsInfo.name,
+                systemId: dsInfo.systemId,
+                phenomenonTime: obs.phenomenonTime,
+                resultTime: obs.resultTime,
+                lat, lon, alt,
+                result: obs.result,
+              })
+              pointSource.addFeature(feature)
+              pointCount++
+            }
+          }
         }
 
-        trackCoords.push([lon, lat])
-
-        // Individual observation point
-        if (pointSource) {
-          const feature = new Feature({
-            geometry: new Point(fromLonLat([lon, lat])),
-          })
-          feature.setStyle(getStyle('observationPoints'))
-          feature.set('resourceType', 'observationPoints')
-          feature.set('resourceId', obs.id || `${dsInfo.id}-obs-${pointCount}`)
-          feature.set('resourceName', `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
-          feature.set('enriched', true)
-          feature.set('enrichmentSource', dsInfo.name)
-          feature.set('rawData', {
-            observationId: obs.id,
-            datastreamId: dsInfo.id,
-            datastreamName: dsInfo.name,
-            systemId: dsInfo.systemId,
-            phenomenonTime: obs.phenomenonTime,
-            resultTime: obs.resultTime,
-            lat, lon, alt,
-            result: obs.result,
-          })
-          pointSource.addFeature(feature)
-          pointCount++
+        // --- Bearing lines: acoustic detection directions ---
+        if (bearingSource && obs.result) {
+          const sensorLoc = systemLocationCache[dsInfo.systemId]
+          if (sensorLoc) {
+            const obsBearings = extractBearings(obs.result)
+            for (const b of obsBearings) {
+              if (b.energy < 0.1) continue
+              const ep = computeBearingEndpoint(sensorLoc.lat, sensorLoc.lon, b.azimuth, BEARING_LINE_LENGTH_M)
+              const feature = new Feature({
+                geometry: new LineString([
+                  fromLonLat([sensorLoc.lon, sensorLoc.lat]),
+                  fromLonLat([ep.lon, ep.lat]),
+                ]),
+              })
+              feature.setStyle(getBearingLineStyle(b.energy))
+              feature.set('resourceType', 'bearingLines')
+              feature.set('resourceId', `${dsInfo.id}-lob-${bearingCount}`)
+              feature.set('resourceName', `Bearing ${b.azimuth.toFixed(1)}° (energy ${b.energy.toFixed(2)})`)
+              feature.set('enriched', true)
+              feature.set('enrichmentSource', dsInfo.name)
+              feature.set('rawData', {
+                observationId: obs.id,
+                datastreamId: dsInfo.id,
+                datastreamName: dsInfo.name,
+                systemId: dsInfo.systemId,
+                phenomenonTime: obs.phenomenonTime,
+                azimuth: b.azimuth,
+                elevation: b.elevation,
+                energy: b.energy,
+                sourceId: b.sourceId,
+                sensorLat: sensorLoc.lat,
+                sensorLon: sensorLoc.lon,
+              })
+              bearingSource.addFeature(feature)
+              bearingCount++
+            }
+          }
         }
       }
 
@@ -994,6 +1142,7 @@ async function loadObservationLayers(): Promise<void> {
   await Promise.all(promises)
   featureCounts.value['observationPoints'] = pointCount
   featureCounts.value['observationTracks'] = trackCount
+  featureCounts.value['bearingLines'] = bearingCount
 }
 
 async function loadAllResources() {
@@ -1136,7 +1285,7 @@ onMounted(() => {
     vectorSources[rt.key] = source
     const layer = new VectorLayer({
       source,
-      zIndex: rt.key === 'observationTracks' ? 5 : rt.key === 'observationPoints' ? 7 : 10,
+      zIndex: rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : 10,
     })
     vectorLayers[rt.key] = layer
   }
@@ -1327,7 +1476,7 @@ async function createTestFeature() {
 
         <div class="layer-section-label" style="margin-top: 0.5rem;">Part 2 — Dynamic Data</div>
         <button
-          v-for="rt in [...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY]"
+          v-for="rt in [...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY, LOB_ENTRY]"
           :key="rt.key"
           :class="['layer-toggle', { inactive: !activeLayers[rt.key] }]"
           @click="toggleLayer(rt.key)"
