@@ -21,6 +21,7 @@
 > **Actionable client scenarios (5 of 50):** Only §4.4 scenarios 36-40 (URL encoding) and §6.1 (`FormatValidator` pre-validation) test actual client behavior. These should be implemented.
 >
 > **Server-behavior scenarios (45 of 50) — DO NOT IMPLEMENT:**
+>
 > - §4.1 scenarios 1-20: Assert server returns correct `Content-Type` for `f=` values
 > - §4.2 scenarios 21-30: Test Accept header behavior the client doesn't use
 > - §4.3 scenarios 31-35: Test server default format selection
@@ -41,6 +42,7 @@
 **Research Time:** 4.0 hours (February 6, 2026)
 
 **Primary Source(s):**
+
 - [Format Negotiation Architecture](../../../architecture/responses/format-negotiation.md)
 - [Format Requirements](../../requirements/format-requirements.md)
 - [CSAPI Part 1 Specification](https://docs.ogc.org/is/23-001/23-001.html) (media type definitions)
@@ -48,6 +50,7 @@
 - [CSAPI Implementation Guide](../../../planning/csapi-implementation-guide.md)
 
 **Supporting Resources:**
+
 - [HTTP Content Negotiation (RFC 7231)](https://datatracker.ietf.org/doc/html/rfc7231#section-5.3)
 - [OGC API - Common](https://docs.ogc.org/is/19-072/19-072.html) (format negotiation patterns)
 - Section 8: [CSAPI Specification Test Requirements](08-csapi-specification-test-requirements.md) (format specifications)
@@ -62,6 +65,7 @@
 CSAPI supports **7 media types** across Parts 1 and 2, with format negotiation through query parameters (`f`) taking precedence over Accept headers. Format selection is simple and follows OGC API - Common conventions.
 
 This document defines a comprehensive testing strategy covering:
+
 - 7 media types with resource applicability matrix
 - 3 format negotiation methods (query parameter, Accept header, link-based)
 - Format precedence rules (f > Accept > default)
@@ -86,52 +90,52 @@ This document defines a comprehensive testing strategy covering:
 
 #### Part 1: Core Resources Media Types
 
-| Media Type | Standard | Resources | Purpose | Status |
-|-----------|----------|-----------|---------|--------|
-| **application/json** | JSON (ECMA-404) | All 9 resources | Base JSON representation | REQUIRED |
-| **application/geo+json** | RFC 7946 | Systems, Deployments, Procedures, SamplingFeatures | GeoJSON Feature/FeatureCollection | REQUIRED (spatial) |
-| **application/sml+json** | SensorML 3.0 | Systems, Procedures | System/procedure metadata | REQUIRED (metadata) |
-| **text/uri-list** | RFC 2483 | Collection additions | URI list (one per line) | OPTIONAL |
+| Media Type               | Standard        | Resources                                          | Purpose                           | Status              |
+| ------------------------ | --------------- | -------------------------------------------------- | --------------------------------- | ------------------- |
+| **application/json**     | JSON (ECMA-404) | All 9 resources                                    | Base JSON representation          | REQUIRED            |
+| **application/geo+json** | RFC 7946        | Systems, Deployments, Procedures, SamplingFeatures | GeoJSON Feature/FeatureCollection | REQUIRED (spatial)  |
+| **application/sml+json** | SensorML 3.0    | Systems, Procedures                                | System/procedure metadata         | REQUIRED (metadata) |
+| **text/uri-list**        | RFC 2483        | Collection additions                               | URI list (one per line)           | OPTIONAL            |
 
 #### Part 2: Dynamic Data Media Types
 
-| Media Type | Standard | Resources | Purpose | Status |
-|-----------|----------|-----------|---------|--------|
-| **application/json** | JSON (ECMA-404) | DataStreams, Observations, ControlStreams, Commands, etc. | Base JSON representation | REQUIRED |
-| **application/swe+json** | SWE Common 3.0 | Observations, Commands, Schemas | SWE Common JSON encoding | OPTIONAL |
-| **application/swe+text** | SWE Common 3.0 | Observations, Commands | CSV/DSV encoding (2-5x smaller) | OPTIONAL |
-| **application/swe+binary** | SWE Common 3.0 | Observations, Commands | Binary encoding (10-100x smaller) | OPTIONAL |
+| Media Type                 | Standard        | Resources                                                 | Purpose                           | Status   |
+| -------------------------- | --------------- | --------------------------------------------------------- | --------------------------------- | -------- |
+| **application/json**       | JSON (ECMA-404) | DataStreams, Observations, ControlStreams, Commands, etc. | Base JSON representation          | REQUIRED |
+| **application/swe+json**   | SWE Common 3.0  | Observations, Commands, Schemas                           | SWE Common JSON encoding          | OPTIONAL |
+| **application/swe+text**   | SWE Common 3.0  | Observations, Commands                                    | CSV/DSV encoding (2-5x smaller)   | OPTIONAL |
+| **application/swe+binary** | SWE Common 3.0  | Observations, Commands                                    | Binary encoding (10-100x smaller) | OPTIONAL |
 
 **Note:** HTML (`text/html`) and JSON-LD (`application/ld+json`) may also be supported but are not part of core CSAPI requirements.
 
 ### 1.2 Media Type Characteristics
 
-| Media Type | Binary | Human-Readable | Requires Schema | Size | Compression |
-|-----------|---------|----------------|-----------------|------|-------------|
-| application/json | No | Yes | No | 100% (baseline) | High (verbose) |
-| application/geo+json | No | Yes | No | ~100% | High (verbose) |
-| application/sml+json | No | Yes | Yes (SensorML) | ~100% | High (verbose) |
-| application/swe+json | No | Yes | Yes (SWE Common) | ~70-80% | Medium |
-| application/swe+text | No | Yes | Yes (SWE Common) | ~20-50% | Medium |
-| application/swe+binary | Yes | No | Yes (SWE Common) | ~1-10% | Low |
-| text/uri-list | No | Yes | No | ~50% | Medium |
+| Media Type             | Binary | Human-Readable | Requires Schema  | Size            | Compression    |
+| ---------------------- | ------ | -------------- | ---------------- | --------------- | -------------- |
+| application/json       | No     | Yes            | No               | 100% (baseline) | High (verbose) |
+| application/geo+json   | No     | Yes            | No               | ~100%           | High (verbose) |
+| application/sml+json   | No     | Yes            | Yes (SensorML)   | ~100%           | High (verbose) |
+| application/swe+json   | No     | Yes            | Yes (SWE Common) | ~70-80%         | Medium         |
+| application/swe+text   | No     | Yes            | Yes (SWE Common) | ~20-50%         | Medium         |
+| application/swe+binary | Yes    | No             | Yes (SWE Common) | ~1-10%          | Low            |
+| text/uri-list          | No     | Yes            | No               | ~50%            | Medium         |
 
 ### 1.3 Resource-Format Matrix
 
-| Resource | JSON | GeoJSON | SensorML | SWE+JSON | SWE+Text | SWE+Binary | URI-List |
-|----------|------|---------|----------|----------|----------|------------|----------|
-| **Systems** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Deployments** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Procedures** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **SamplingFeatures** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Properties** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **DataStreams** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Observations** | ✅ | ❌ | ❌ | ✅* | ✅* | ✅* | ❌ |
-| **ControlStreams** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Commands** | ✅ | ❌ | ❌ | ✅* | ✅* | ✅* | ❌ |
-| **Collection Additions** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Resource                 | JSON | GeoJSON | SensorML | SWE+JSON | SWE+Text | SWE+Binary | URI-List |
+| ------------------------ | ---- | ------- | -------- | -------- | -------- | ---------- | -------- |
+| **Systems**              | ✅   | ✅      | ✅       | ❌       | ❌       | ❌         | ❌       |
+| **Deployments**          | ✅   | ✅      | ❌       | ❌       | ❌       | ❌         | ❌       |
+| **Procedures**           | ✅   | ✅      | ✅       | ❌       | ❌       | ❌         | ❌       |
+| **SamplingFeatures**     | ✅   | ✅      | ❌       | ❌       | ❌       | ❌         | ❌       |
+| **Properties**           | ✅   | ❌      | ❌       | ❌       | ❌       | ❌         | ❌       |
+| **DataStreams**          | ✅   | ❌      | ❌       | ❌       | ❌       | ❌         | ❌       |
+| **Observations**         | ✅   | ❌      | ❌       | ✅\*     | ✅\*     | ✅\*       | ❌       |
+| **ControlStreams**       | ✅   | ❌      | ❌       | ❌       | ❌       | ❌         | ❌       |
+| **Commands**             | ✅   | ❌      | ❌       | ✅\*     | ✅\*     | ✅\*       | ❌       |
+| **Collection Additions** | ❌   | ❌      | ❌       | ❌       | ❌       | ❌         | ✅       |
 
-**Note:** * = Optional, advertised in DataStream/ControlStream `formats` property
+**Note:** \* = Optional, advertised in DataStream/ControlStream `formats` property
 
 ---
 
@@ -140,10 +144,12 @@ This document defines a comprehensive testing strategy covering:
 ### 2.1 Query Parameter Method (Primary)
 
 **Parameters:**
+
 - **`f`** - Short format name (Part 1) or full media type (Part 2)
 - **`format`** - Full media type (alternative to `f`)
 
 **Part 1 Short Format Names:**
+
 ```
 ?f=json      → application/json
 ?f=geojson   → application/geo+json
@@ -151,6 +157,7 @@ This document defines a comprehensive testing strategy covering:
 ```
 
 **Part 2 Full Media Types:**
+
 ```
 ?f=application/json
 ?f=application/swe+json
@@ -159,6 +166,7 @@ This document defines a comprehensive testing strategy covering:
 ```
 
 **URL Encoding:**
+
 - Plus character (`+`) MUST be URL-encoded as `%2B`
 - Examples:
   ```
@@ -168,18 +176,20 @@ This document defines a comprehensive testing strategy covering:
   ```
 
 **Implementation:**
+
 ```typescript
 // Query parameter method
 const url = builder.getSystems({ f: 'geojson' });
 // → /systems?f=geojson
 
-const url = builder.getObservations('ds123', { 
-  f: 'application/swe+binary' 
+const url = builder.getObservations('ds123', {
+  f: 'application/swe+binary',
 });
 // → /datastreams/ds123/observations?f=application%2Fswe%2Bbinary
 ```
 
 **Testing Focus:**
+
 - Valid format names (json, geojson, sml)
 - Valid media types (application/swe+json, etc.)
 - URL encoding of + character
@@ -189,6 +199,7 @@ const url = builder.getObservations('ds123', {
 ### 2.2 Accept Header Method (Fallback)
 
 **Standard HTTP Content Negotiation:**
+
 ```http
 GET /systems/sys123
 Accept: application/geo+json
@@ -198,26 +209,30 @@ Content-Type: application/geo+json; charset=utf-8
 ```
 
 **Multiple Accept Values:**
+
 ```http
 GET /systems/sys123
 Accept: application/geo+json, application/json;q=0.8
 ```
 
 **Quality Values (q):**
+
 - RFC 9110 quality value mechanism
 - Server selects best match based on weights
 - **Not required for client library** (query parameter preferred)
 
 **Implementation:**
+
 ```typescript
 // Accept header method (NOT used by CSAPI client)
 // Included for completeness only
 const response = await fetch('/systems/sys123', {
-  headers: { 'Accept': 'application/geo+json' }
+  headers: { Accept: 'application/geo+json' },
 });
 ```
 
 **Testing Focus:**
+
 - Accept header respected when no query parameter
 - Query parameter overrides Accept header
 - Quality values (optional, not required)
@@ -227,6 +242,7 @@ const response = await fetch('/systems/sys123', {
 ### 2.3 Link-Based Format Discovery (Not Used)
 
 **Link Relations with Media Types:**
+
 ```json
 {
   "links": [
@@ -247,17 +263,20 @@ const response = await fetch('/systems/sys123', {
 ```
 
 **CSAPI Client Strategy:**
+
 - **Does NOT use link-based format selection**
 - Follows EDR pattern: query parameter only
 - Links are informational only (for human consumption)
 
 **Testing Focus:**
+
 - No testing required (link-based selection not implemented)
 - Links validated in Section 13 (Resource Method Testing)
 
 ### 2.4 Content-Type Response Header
 
 **Server Indicates Format:**
+
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/geo+json; charset=utf-8
@@ -269,10 +288,12 @@ Content-Type: application/geo+json; charset=utf-8
 ```
 
 **Charset Parameter:**
+
 - JSON formats: `charset=utf-8` (SHOULD be included)
 - Binary formats: No charset parameter
 
 **Testing Focus:**
+
 - Verify Content-Type matches requested format
 - Verify charset=utf-8 for JSON formats
 - Verify no charset for binary formats
@@ -301,6 +322,7 @@ Server Default Format
 ### 3.2 Query Parameter Takes Precedence
 
 **Test Case:**
+
 ```http
 GET /systems/sys123?f=sml
 Accept: application/geo+json
@@ -314,6 +336,7 @@ Content-Type: application/sml+json
 ### 3.3 Accept Header Fallback
 
 **Test Case:**
+
 ```http
 GET /systems/sys123
 Accept: application/geo+json
@@ -327,6 +350,7 @@ Content-Type: application/geo+json
 ### 3.4 Server Default Format
 
 **Test Case:**
+
 ```http
 GET /systems/sys123
 
@@ -352,6 +376,7 @@ Content-Type: application/geo+json
 ### 3.5 Unsupported Format (406)
 
 **Test Case:**
+
 ```http
 GET /systems/sys123?f=xml
 
@@ -379,54 +404,63 @@ Content-Type: application/json
 #### Valid Format Names (Part 1) - 10 scenarios
 
 1. **f=json (Systems)**
+
    ```
    GET /systems/sys123?f=json
    Expected: 200 OK, Content-Type: application/json
    ```
 
 2. **f=geojson (Systems)**
+
    ```
    GET /systems/sys123?f=geojson
    Expected: 200 OK, Content-Type: application/geo+json
    ```
 
 3. **f=sml (Systems)**
+
    ```
    GET /systems/sys123?f=sml
    Expected: 200 OK, Content-Type: application/sml+json
    ```
 
 4. **f=geojson (Deployments)**
+
    ```
    GET /deployments/dep123?f=geojson
    Expected: 200 OK, Content-Type: application/geo+json
    ```
 
 5. **f=sml (Procedures)**
+
    ```
    GET /procedures/proc123?f=sml
    Expected: 200 OK, Content-Type: application/sml+json
    ```
 
 6. **f=json (Properties)**
+
    ```
    GET /properties/prop123?f=json
    Expected: 200 OK, Content-Type: application/json
    ```
 
 7. **f=geojson (Systems collection)**
+
    ```
    GET /systems?f=geojson&limit=10
    Expected: 200 OK, Content-Type: application/geo+json, FeatureCollection
    ```
 
 8. **f=json (DataStreams)**
+
    ```
    GET /datastreams/ds123?f=json
    Expected: 200 OK, Content-Type: application/json
    ```
 
 9. **format=application/geo+json (full media type)**
+
    ```
    GET /systems/sys123?format=application/geo+json
    Expected: 200 OK, Content-Type: application/geo+json
@@ -441,24 +475,28 @@ Content-Type: application/json
 #### Valid Format Names (Part 2) - 5 scenarios
 
 11. **f=application/json (Observations)**
+
     ```
     GET /observations/obs123?f=application/json
     Expected: 200 OK, Content-Type: application/json
     ```
 
 12. **f=application/swe+json (Observations)**
+
     ```
     GET /observations/obs123?f=application/swe%2Bjson
     Expected: 200 OK, Content-Type: application/swe+json
     ```
 
 13. **f=application/swe+text (Observations)**
+
     ```
     GET /observations/obs123?f=application/swe%2Btext
     Expected: 200 OK, Content-Type: application/swe+text
     ```
 
 14. **f=application/swe+binary (Observations)**
+
     ```
     GET /observations/obs123?f=application/swe%2Bbinary
     Expected: 200 OK, Content-Type: application/swe+binary
@@ -473,24 +511,28 @@ Content-Type: application/json
 #### Invalid Format Names - 5 scenarios
 
 16. **f=xml (unsupported format)**
+
     ```
     GET /systems/sys123?f=xml
     Expected: 406 Not Acceptable
     ```
 
 17. **f=invalid (invalid format name)**
+
     ```
     GET /systems/sys123?f=invalid
     Expected: 406 Not Acceptable
     ```
 
 18. **f=text/html (HTML format - optional)**
+
     ```
     GET /systems/sys123?f=text/html
     Expected: 200 OK OR 406 Not Acceptable (server-dependent)
     ```
 
 19. **f=application/swe+json (wrong resource - Systems)**
+
     ```
     GET /systems/sys123?f=application/swe%2Bjson
     Expected: 406 Not Acceptable (SWE Common only for Observations/Commands)
@@ -511,6 +553,7 @@ Content-Type: application/json
 #### Accept Header Without Query Parameter - 5 scenarios
 
 21. **Accept: application/geo+json (Systems)**
+
     ```
     GET /systems/sys123
     Accept: application/geo+json
@@ -518,6 +561,7 @@ Content-Type: application/json
     ```
 
 22. **Accept: application/sml+json (Systems)**
+
     ```
     GET /systems/sys123
     Accept: application/sml+json
@@ -525,13 +569,15 @@ Content-Type: application/json
     ```
 
 23. **Accept: application/json (Systems)**
+
     ```
     GET /systems/sys123
     Accept: application/json
     Expected: 200 OK, Content-Type: application/json
     ```
 
-24. **Accept: */* (wildcard)**
+24. **Accept: _/_ (wildcard)**
+
     ```
     GET /systems/sys123
     Accept: */*
@@ -548,6 +594,7 @@ Content-Type: application/json
 #### Accept Header With Query Parameter (Precedence) - 5 scenarios
 
 26. **Query parameter overrides Accept header**
+
     ```
     GET /systems/sys123?f=sml
     Accept: application/geo+json
@@ -555,6 +602,7 @@ Content-Type: application/json
     ```
 
 27. **Query parameter overrides Accept (different)**
+
     ```
     GET /systems/sys123?f=json
     Accept: application/sml+json
@@ -562,6 +610,7 @@ Content-Type: application/json
     ```
 
 28. **Query parameter and Accept both GeoJSON**
+
     ```
     GET /systems/sys123?f=geojson
     Accept: application/geo+json
@@ -569,6 +618,7 @@ Content-Type: application/json
     ```
 
 29. **Multiple Accept values with quality (q=)**
+
     ```
     GET /systems/sys123
     Accept: application/geo+json;q=0.9, application/json;q=0.8
@@ -585,24 +635,28 @@ Content-Type: application/json
 ### 4.3 Default Format Test Scenarios (5 scenarios)
 
 31. **No format specified (Systems - spatial)**
+
     ```
     GET /systems/sys123
     Expected: 200 OK, Content-Type: application/geo+json (spatial default)
     ```
 
 32. **No format specified (Properties - non-spatial)**
+
     ```
     GET /properties/prop123
     Expected: 200 OK, Content-Type: application/json (non-spatial default)
     ```
 
 33. **No format specified (DataStreams)**
+
     ```
     GET /datastreams/ds123
     Expected: 200 OK, Content-Type: application/json
     ```
 
 34. **No format specified (collection)**
+
     ```
     GET /systems
     Expected: 200 OK, Content-Type: application/geo+json (FeatureCollection)
@@ -621,24 +675,28 @@ Content-Type: application/json
 > These URL encoding scenarios (36-40) test actual client behavior: how the client encodes `+` as `%2B` in format parameters, handles `/` encoding, and manages edge cases. This is the core client-testable surface for format negotiation. These scenarios plus the `FormatValidator` (Section 6.1) represent the ~10-15 tests that belong in the final implementation.
 
 36. **URL encoding of + in media type**
+
     ```
     GET /observations/obs123?f=application/swe%2Bjson
     Expected: 200 OK, decoded as application/swe+json
     ```
 
 37. **URL encoding of / in media type**
+
     ```
     GET /systems/sys123?f=application%2Fgeo%2Bjson
     Expected: 200 OK, decoded as application/geo+json
     ```
 
 38. **Unencoded + in media type (incorrect)**
+
     ```
     GET /observations/obs123?f=application/swe+json
     Expected: May be misinterpreted (+ decoded as space)
     ```
 
 39. **Multiple encoding scenarios**
+
     ```
     GET /observations/obs123?f=application%2Fswe%2Btext
     Expected: 200 OK, decoded as application/swe+text
@@ -653,24 +711,28 @@ Content-Type: application/json
 ### 4.5 Error Handling Test Scenarios (5 scenarios)
 
 41. **406 Not Acceptable - Unsupported format**
+
     ```
     GET /systems/sys123?f=xml
     Expected: 406 Not Acceptable, error body with supported formats
     ```
 
 42. **406 Not Acceptable - Format for wrong resource**
+
     ```
     GET /systems/sys123?f=application/swe%2Bbinary
     Expected: 406 Not Acceptable
     ```
 
 43. **406 Not Acceptable - Invalid media type**
+
     ```
     GET /systems/sys123?f=invalid/format
     Expected: 406 Not Acceptable
     ```
 
 44. **400 Bad Request - Malformed format parameter**
+
     ```
     GET /systems/sys123?f=application/geo+json&f=application/sml+json
     Expected: 400 Bad Request (duplicate parameter)
@@ -690,11 +752,13 @@ Content-Type: application/json
 ### 5.1 Part 1: Implicit Advertisement
 
 **No Explicit Formats Property:**
+
 - Part 1 resources do not advertise supported formats in resource representation
 - Format support discovered through API metadata or trial-and-error
 - Standard formats (JSON, GeoJSON, SensorML) are expected
 
 **Discovery Pattern:**
+
 ```typescript
 // Try format, handle 406 error
 try {
@@ -710,6 +774,7 @@ try {
 ### 5.2 Part 2: Explicit Advertisement
 
 **DataStream/ControlStream `formats` Property:**
+
 ```json
 {
   "type": "DataStream",
@@ -724,17 +789,19 @@ try {
 ```
 
 **Discovery Pattern:**
+
 ```typescript
 // Check supported formats before requesting
 const datastream = builder.getDataStream('ds123');
 if (datastream.formats.includes('application/swe+binary')) {
   const observations = builder.getObservations('ds123', {
-    f: 'application/swe+binary'
+    f: 'application/swe+binary',
   });
 }
 ```
 
 **Schema Format Parameters:**
+
 ```
 GET /datastreams/ds123/schema?obsFormat=application/swe+binary
 // Returns schema for binary format
@@ -748,18 +815,21 @@ GET /controlstreams/cs456/schema?cmdFormat=application/swe+json
 **Test Scenarios:**
 
 1. **Verify formats property in DataStream**
+
    ```
    GET /datastreams/ds123
    Expected: Response includes "formats" array
    ```
 
 2. **Verify formats property in ControlStream**
+
    ```
    GET /controlstreams/cs456
    Expected: Response includes "formats" array
    ```
 
 3. **Request format not in advertised list**
+
    ```
    GET /datastreams/ds123/observations?f=application/swe+binary
    // If formats = ["application/json", "application/swe+json"]
@@ -767,6 +837,7 @@ GET /controlstreams/cs456/schema?cmdFormat=application/swe+json
    ```
 
 4. **Schema format parameter matches advertised formats**
+
    ```
    GET /datastreams/ds123/schema?obsFormat=application/swe+binary
    // If formats includes application/swe+binary
@@ -787,6 +858,7 @@ GET /controlstreams/cs456/schema?cmdFormat=application/swe+json
 ### 6.1 Client-Side Validation (Before Request)
 
 **Validate Format Parameter:**
+
 ```typescript
 class FormatValidator {
   /**
@@ -794,22 +866,22 @@ class FormatValidator {
    */
   static validatePart1Format(format: string, resourceType: string): void {
     const validFormats: Record<string, string[]> = {
-      'systems': ['json', 'geojson', 'sml'],
-      'deployments': ['json', 'geojson'],
-      'procedures': ['json', 'geojson', 'sml'],
-      'samplingFeatures': ['json', 'geojson'],
-      'properties': ['json']
+      systems: ['json', 'geojson', 'sml'],
+      deployments: ['json', 'geojson'],
+      procedures: ['json', 'geojson', 'sml'],
+      samplingFeatures: ['json', 'geojson'],
+      properties: ['json'],
     };
-    
+
     const allowed = validFormats[resourceType];
     if (!allowed || !allowed.includes(format)) {
       throw new FormatValidationError(
         `Format '${format}' not valid for resource type '${resourceType}'. ` +
-        `Valid formats: ${allowed?.join(', ')}`
+          `Valid formats: ${allowed?.join(', ')}`
       );
     }
   }
-  
+
   /**
    * Validate media type format (full media type string)
    */
@@ -820,17 +892,17 @@ class FormatValidator {
       'application/sml+json',
       'application/swe+json',
       'application/swe+text',
-      'application/swe+binary'
+      'application/swe+binary',
     ];
-    
+
     if (!validMediaTypes.includes(mediaType)) {
       throw new FormatValidationError(
         `Invalid media type: ${mediaType}. ` +
-        `Valid types: ${validMediaTypes.join(', ')}`
+          `Valid types: ${validMediaTypes.join(', ')}`
       );
     }
   }
-  
+
   /**
    * URL-encode format parameter
    */
@@ -855,6 +927,7 @@ class FormatValidationError extends Error {
 > This `ResponseValidator` class verifies that the SERVER correctly set `Content-Type` headers matching the requested format. This validates server behavior, not client transformation. In a mocked-fetch test, the fixture's Content-Type is whatever you set it to — asserting it matches the request tests the fixture, not the client. If the client needs to PARSE responses differently based on Content-Type (e.g., JSON vs SML+JSON), test the parser dispatch logic, not whether the server set the header correctly.
 
 **Validate Content-Type Header:**
+
 ```typescript
 class ResponseValidator {
   /**
@@ -868,35 +941,35 @@ class ResponseValidator {
     if (!contentType) {
       throw new ValidationError('Missing Content-Type header');
     }
-    
+
     // Map short names to media types
     const formatMap: Record<string, string> = {
-      'json': 'application/json',
-      'geojson': 'application/geo+json',
-      'sml': 'application/sml+json'
+      json: 'application/json',
+      geojson: 'application/geo+json',
+      sml: 'application/sml+json',
     };
-    
+
     const expectedType = formatMap[requestedFormat] || requestedFormat;
     const actualType = contentType.split(';')[0].trim();
-    
+
     if (actualType !== expectedType) {
       throw new ValidationError(
         `Content-Type mismatch: expected ${expectedType}, got ${actualType}`
       );
     }
   }
-  
+
   /**
    * Verify charset for JSON formats
    */
   static validateCharset(response: Response): void {
     const contentType = response.headers.get('Content-Type');
     if (!contentType) return;
-    
+
     const [mediaType, ...params] = contentType.split(';');
     const isJson = mediaType.includes('json');
-    const hasCharset = params.some(p => p.trim().startsWith('charset='));
-    
+    const hasCharset = params.some((p) => p.trim().startsWith('charset='));
+
     if (isJson && !hasCharset) {
       console.warn('JSON response missing charset parameter');
     }
@@ -914,6 +987,7 @@ class ValidationError extends Error {
 ### 6.3 Test Patterns
 
 **Test Template:**
+
 ```typescript
 describe('Format Validation', () => {
   describe('Part 1 format validation', () => {
@@ -932,7 +1006,7 @@ describe('Format Validation', () => {
     it('rejects format not applicable to resource type', () => {
       expect(() => {
         FormatValidator.validatePart1Format('sml', 'deployments');
-      }).toThrow('Format \'sml\' not valid for resource type \'deployments\'');
+      }).toThrow("Format 'sml' not valid for resource type 'deployments'");
     });
   });
 
@@ -975,9 +1049,9 @@ describe('Response Validation', () => {
   describe('Content-Type validation', () => {
     it('validates matching Content-Type', () => {
       const response = new Response('{}', {
-        headers: { 'Content-Type': 'application/geo+json; charset=utf-8' }
+        headers: { 'Content-Type': 'application/geo+json; charset=utf-8' },
       });
-      
+
       expect(() => {
         ResponseValidator.validateContentType(response, 'geojson');
       }).not.toThrow();
@@ -985,9 +1059,9 @@ describe('Response Validation', () => {
 
     it('detects Content-Type mismatch', () => {
       const response = new Response('{}', {
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
-      
+
       expect(() => {
         ResponseValidator.validateContentType(response, 'geojson');
       }).toThrow('Content-Type mismatch');
@@ -995,9 +1069,9 @@ describe('Response Validation', () => {
 
     it('validates full media type', () => {
       const response = new Response('{}', {
-        headers: { 'Content-Type': 'application/sml+json' }
+        headers: { 'Content-Type': 'application/sml+json' },
       });
-      
+
       expect(() => {
         ResponseValidator.validateContentType(response, 'application/sml+json');
       }).not.toThrow();
@@ -1008,19 +1082,21 @@ describe('Response Validation', () => {
     it('warns if charset missing for JSON', () => {
       const consoleSpy = jest.spyOn(console, 'warn');
       const response = new Response('{}', {
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
-      
+
       ResponseValidator.validateCharset(response);
-      expect(consoleSpy).toHaveBeenCalledWith('JSON response missing charset parameter');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'JSON response missing charset parameter'
+      );
     });
 
     it('accepts charset=utf-8 for JSON', () => {
       const consoleSpy = jest.spyOn(console, 'warn');
       const response = new Response('{}', {
-        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
       });
-      
+
       ResponseValidator.validateCharset(response);
       expect(consoleSpy).not.toHaveBeenCalled();
     });
@@ -1032,17 +1108,17 @@ describe('Format Negotiation', () => {
     const url = builder.getSystems('sys123', { f: 'geojson' });
     parseAndValidateUrl(url, {
       pathname: '/systems/sys123',
-      query: { f: 'geojson' }
+      query: { f: 'geojson' },
     });
   });
 
   it('encodes + in format parameter', async () => {
-    const url = builder.getObservations('ds123', 'obs123', { 
-      f: 'application/swe+json' 
+    const url = builder.getObservations('ds123', 'obs123', {
+      f: 'application/swe+json',
     });
     parseAndValidateUrl(url, {
       pathname: '/observations/obs123',
-      query: { f: 'application/swe%2Bjson' }
+      query: { f: 'application/swe%2Bjson' },
     });
   });
 
@@ -1062,6 +1138,7 @@ describe('Format Negotiation', () => {
 ### 7.1 Query String Fixtures
 
 **Valid Format Parameters:**
+
 ```typescript
 const validQueryStrings = [
   // Part 1 short names
@@ -1070,50 +1147,54 @@ const validQueryStrings = [
   '?f=sml',
   '?format=application/geo+json',
   '?format=application/sml+json',
-  
+
   // Part 2 full media types
   '?f=application/json',
   '?f=application/swe%2Bjson',
   '?f=application/swe%2Btext',
   '?f=application/swe%2Bbinary',
-  
+
   // Combined with other parameters
   '?f=geojson&limit=10',
   '?f=sml&bbox=-180,-90,180,90',
-  '?f=application/swe%2Bjson&limit=1000&phenomenonTime=2024-01-01/..'
+  '?f=application/swe%2Bjson&limit=1000&phenomenonTime=2024-01-01/..',
 ];
 ```
 
 **Invalid Format Parameters:**
+
 ```typescript
 const invalidQueryStrings = [
-  '?f=xml',                    // Unsupported format
-  '?f=invalid',                // Invalid format name
-  '?f=',                       // Empty format
-  '?f=application/swe+json',   // Not URL-encoded (incorrect)
-  '?f=application/xml',        // Unsupported media type
+  '?f=xml', // Unsupported format
+  '?f=invalid', // Invalid format name
+  '?f=', // Empty format
+  '?f=application/swe+json', // Not URL-encoded (incorrect)
+  '?f=application/xml', // Unsupported media type
 ];
 ```
 
 ### 7.2 Accept Header Fixtures
 
 **Valid Accept Headers:**
+
 ```typescript
 const validAcceptHeaders = {
   'application/geo+json': 'Accept: application/geo+json',
   'application/sml+json': 'Accept: application/sml+json',
   'application/json': 'Accept: application/json',
-  'wildcard': 'Accept: */*',
-  'multiple': 'Accept: application/geo+json, application/json;q=0.8',
-  'quality-values': 'Accept: application/geo+json;q=0.9, application/sml+json;q=0.8, application/json;q=0.7'
+  wildcard: 'Accept: */*',
+  multiple: 'Accept: application/geo+json, application/json;q=0.8',
+  'quality-values':
+    'Accept: application/geo+json;q=0.9, application/sml+json;q=0.8, application/json;q=0.7',
 };
 ```
 
 **Invalid Accept Headers:**
+
 ```typescript
 const invalidAcceptHeaders = {
-  'unsupported': 'Accept: application/xml',
-  'malformed': 'Accept: invalid-type',
+  unsupported: 'Accept: application/xml',
+  malformed: 'Accept: invalid-type',
 };
 ```
 
@@ -1122,6 +1203,7 @@ const invalidAcceptHeaders = {
 **Successful Responses:**
 
 **GeoJSON Response:**
+
 ```json
 {
   "type": "Feature",
@@ -1138,6 +1220,7 @@ const invalidAcceptHeaders = {
 ```
 
 **SensorML Response:**
+
 ```json
 {
   "type": "PhysicalSystem",
@@ -1155,6 +1238,7 @@ const invalidAcceptHeaders = {
 ```
 
 **JSON Response (DataStream):**
+
 ```json
 {
   "type": "DataStream",
@@ -1171,6 +1255,7 @@ const invalidAcceptHeaders = {
 ```
 
 **SWE Common JSON Response (Observation):**
+
 ```json
 {
   "phenomenonTime": "2024-01-15T12:00:00Z",
@@ -1179,6 +1264,7 @@ const invalidAcceptHeaders = {
 ```
 
 **SWE Common Text Response (Observations):**
+
 ```
 2024-01-15T12:00:00Z,23.5
 2024-01-15T12:01:00Z,23.6
@@ -1186,6 +1272,7 @@ const invalidAcceptHeaders = {
 ```
 
 **SWE Common Binary Response:**
+
 ```
 <binary data> (not human-readable)
 ```
@@ -1193,6 +1280,7 @@ const invalidAcceptHeaders = {
 ### 7.4 Error Response Fixtures
 
 **406 Not Acceptable:**
+
 ```json
 {
   "code": "InvalidParameterValue",
@@ -1201,6 +1289,7 @@ const invalidAcceptHeaders = {
 ```
 
 **400 Bad Request (Malformed):**
+
 ```json
 {
   "code": "InvalidParameterValue",
@@ -1209,6 +1298,7 @@ const invalidAcceptHeaders = {
 ```
 
 **406 Not Acceptable (Format for Wrong Resource):**
+
 ```json
 {
   "code": "InvalidParameterValue",
@@ -1218,15 +1308,15 @@ const invalidAcceptHeaders = {
 
 ### 7.5 Fixture Summary
 
-| Fixture Type | Count | Description |
-|--------------|-------|-------------|
-| Valid query strings | 15 | Format parameter variations |
-| Invalid query strings | 5 | Unsupported/malformed formats |
-| Valid Accept headers | 6 | Accept header variations |
-| Invalid Accept headers | 2 | Unsupported formats |
-| Successful responses | 6 | Format-specific responses (JSON, GeoJSON, SensorML, SWE) |
-| Error responses | 3 | 406 Not Acceptable, 400 Bad Request |
-| **TOTAL** | **37** | **37 fixtures** |
+| Fixture Type           | Count  | Description                                              |
+| ---------------------- | ------ | -------------------------------------------------------- |
+| Valid query strings    | 15     | Format parameter variations                              |
+| Invalid query strings  | 5      | Unsupported/malformed formats                            |
+| Valid Accept headers   | 6      | Accept header variations                                 |
+| Invalid Accept headers | 2      | Unsupported formats                                      |
+| Successful responses   | 6      | Format-specific responses (JSON, GeoJSON, SensorML, SWE) |
+| Error responses        | 3      | 406 Not Acceptable, 400 Bad Request                      |
+| **TOTAL**              | **37** | **37 fixtures**                                          |
 
 ---
 
@@ -1245,28 +1335,31 @@ src/ogc-api/csapi/__tests__/
 
 ### 8.2 Test Counts
 
-| Test File | Test Scenarios | Lines of Code (est.) |
-|-----------|---------------|---------------------|
-| `format-negotiation.spec.ts` | 20 | ~600 |
-| `format-validation.spec.ts` | 10 | ~400 |
-| `format-encoding.spec.ts` | 5 | ~200 |
-| `format-precedence.spec.ts` | 10 | ~400 |
-| `format-error-handling.spec.ts` | 5 | ~200 |
-| **TOTAL** | **50** | **~1,800** |
+| Test File                       | Test Scenarios | Lines of Code (est.) |
+| ------------------------------- | -------------- | -------------------- |
+| `format-negotiation.spec.ts`    | 20             | ~600                 |
+| `format-validation.spec.ts`     | 10             | ~400                 |
+| `format-encoding.spec.ts`       | 5              | ~200                 |
+| `format-precedence.spec.ts`     | 10             | ~400                 |
+| `format-error-handling.spec.ts` | 5              | ~200                 |
+| **TOTAL**                       | **50**         | **~1,800**           |
 
 ### 8.3 Integration with Other Sections
 
 **Section 13 (Resource Method Testing):**
+
 - Tests individual resource methods with format parameter
 - Tests format parameter in URL construction
 - Basic format validation (parameter presence)
 
 **Section 24 (Query Parameter Combination Testing):**
+
 - Tests `f` parameter as one of 32 query parameters
 - Tests `f` parameter combined with other parameters (limit, bbox, etc.)
 - Tests format parameter precedence vs other parameters
 
 **Section 25 (This Section):**
+
 - Tests format negotiation mechanisms (query param, Accept header, links)
 - Tests format precedence rules
 - Tests format validation and error handling
@@ -1274,6 +1367,7 @@ src/ogc-api/csapi/__tests__/
 - Tests format advertisement and discovery
 
 **No Duplication:** Each section tests different aspects:
+
 - Section 13: Individual resources + format parameter
 - Section 24: f parameter as part of query parameter system
 - Section 25: Format negotiation mechanisms and precedence
@@ -1284,44 +1378,44 @@ src/ogc-api/csapi/__tests__/
 
 ### 9.1 Test Implementation
 
-| Task | Est. Time | Priority |
-|------|-----------|----------|
-| Format negotiation tests (20) | 3-4 hours | HIGH |
-| Format validation tests (10) | 2-3 hours | HIGH |
-| Format encoding tests (5) | 1-2 hours | MEDIUM |
-| Format precedence tests (10) | 2-3 hours | HIGH |
-| Error handling tests (5) | 1-2 hours | HIGH |
-| **TOTAL** | **9-14 hours** | - |
+| Task                          | Est. Time      | Priority |
+| ----------------------------- | -------------- | -------- |
+| Format negotiation tests (20) | 3-4 hours      | HIGH     |
+| Format validation tests (10)  | 2-3 hours      | HIGH     |
+| Format encoding tests (5)     | 1-2 hours      | MEDIUM   |
+| Format precedence tests (10)  | 2-3 hours      | HIGH     |
+| Error handling tests (5)      | 1-2 hours      | HIGH     |
+| **TOTAL**                     | **9-14 hours** | -        |
 
 ### 9.2 Fixture Creation
 
-| Task | Est. Time | Priority |
-|------|-----------|----------|
-| Query string fixtures (20) | 1 hour | HIGH |
-| Accept header fixtures (8) | 30 minutes | MEDIUM |
-| Response fixtures (6) | 1-2 hours | HIGH |
-| Error response fixtures (3) | 30 minutes | MEDIUM |
-| **TOTAL** | **3-4 hours** | - |
+| Task                        | Est. Time     | Priority |
+| --------------------------- | ------------- | -------- |
+| Query string fixtures (20)  | 1 hour        | HIGH     |
+| Accept header fixtures (8)  | 30 minutes    | MEDIUM   |
+| Response fixtures (6)       | 1-2 hours     | HIGH     |
+| Error response fixtures (3) | 30 minutes    | MEDIUM   |
+| **TOTAL**                   | **3-4 hours** | -        |
 
 ### 9.3 Format Validation/Encoding Utilities
 
-| Task | Est. Time | Priority |
-|------|-----------|----------|
-| `FormatValidator` class | 1-2 hours | HIGH |
-| `ResponseValidator` class | 1-2 hours | HIGH |
-| `FormatEncoder` utilities | 1 hour | HIGH |
-| Unit tests for utilities | 1-2 hours | HIGH |
-| **TOTAL** | **4-7 hours** | - |
+| Task                      | Est. Time     | Priority |
+| ------------------------- | ------------- | -------- |
+| `FormatValidator` class   | 1-2 hours     | HIGH     |
+| `ResponseValidator` class | 1-2 hours     | HIGH     |
+| `FormatEncoder` utilities | 1 hour        | HIGH     |
+| Unit tests for utilities  | 1-2 hours     | HIGH     |
+| **TOTAL**                 | **4-7 hours** | -        |
 
 ### 9.4 Total Effort
 
-| Phase | Est. Time |
-|-------|-----------|
-| Test Implementation | 9-14 hours |
-| Fixture Creation | 3-4 hours |
-| Validation/Encoding Utilities | 4-7 hours |
-| Documentation | 2-3 hours (this document) |
-| **TOTAL** | **18-28 hours** |
+| Phase                         | Est. Time                 |
+| ----------------------------- | ------------------------- |
+| Test Implementation           | 9-14 hours                |
+| Fixture Creation              | 3-4 hours                 |
+| Validation/Encoding Utilities | 4-7 hours                 |
+| Documentation                 | 2-3 hours (this document) |
+| **TOTAL**                     | **18-28 hours**           |
 
 ---
 
@@ -1330,36 +1424,33 @@ src/ogc-api/csapi/__tests__/
 ### 10.1 Prioritization
 
 **HIGH Priority (Implement First):**
+
 1. Query parameter format tests (f=json, f=geojson, f=sml)
 2. Format validation utilities (`FormatValidator`)
 3. URL encoding tests (+ → %2B)
 4. Format precedence tests (query param > Accept > default)
 5. 406 Not Acceptable error handling
 
-**MEDIUM Priority (Implement Second):**
-6. Accept header tests (fallback mechanism)
-7. Response Content-Type validation
-8. Format advertisement tests (Part 2 formats property)
-9. Schema format parameter tests (obsFormat, cmdFormat)
+**MEDIUM Priority (Implement Second):** 6. Accept header tests (fallback mechanism) 7. Response Content-Type validation 8. Format advertisement tests (Part 2 formats property) 9. Schema format parameter tests (obsFormat, cmdFormat)
 
-**LOW Priority (Implement Last):**
-10. Quality value tests (q=) - Not required by client library
-11. Link-based format discovery - Not implemented
-12. HTML format tests - Optional server feature
+**LOW Priority (Implement Last):** 10. Quality value tests (q=) - Not required by client library 11. Link-based format discovery - Not implemented 12. HTML format tests - Optional server feature
 
 ### 10.2 Testing Strategy
 
 **Unit Tests:**
+
 - Validate `FormatValidator` class (10 tests)
 - Validate `ResponseValidator` class (5 tests)
 - Test URL encoding functions (5 tests)
 
 **Integration Tests:**
+
 - Test format parameter in URL construction (20 tests)
 - Test format precedence rules (10 tests)
 - Test error handling (406, 400) (5 tests)
 
 **Mock Strategy:**
+
 - Mock fetch to return format-specific responses based on query parameter
 - Parse URL to extract format parameter and validate encoding
 - Mock Content-Type header in responses
@@ -1368,6 +1459,7 @@ src/ogc-api/csapi/__tests__/
 ### 10.3 Reusable Patterns
 
 **Parameterized Format Tests:**
+
 ```typescript
 describe.each([
   { format: 'json', expected: 'application/json' },
@@ -1377,10 +1469,10 @@ describe.each([
   it(`returns ${expected} for f=${format}`, async () => {
     const url = builder.getSystems('sys123', { f: format });
     expect(url).toContain(`f=${format}`);
-    
+
     // Mock response
     const response = new Response('{}', {
-      headers: { 'Content-Type': expected }
+      headers: { 'Content-Type': expected },
     });
     ResponseValidator.validateContentType(response, format);
   });
@@ -1388,6 +1480,7 @@ describe.each([
 ```
 
 **Format Test Helper:**
+
 ```typescript
 async function testFormat(
   resource: string,
@@ -1398,12 +1491,12 @@ async function testFormat(
   const url = await builder[`get${resource}`](id, { f: format });
   parseAndValidateUrl(url, {
     pathname: `/${resource.toLowerCase()}/${id}`,
-    query: { f: format }
+    query: { f: format },
   });
-  
+
   // Verify Content-Type (with mocked response)
   const response = new Response('{}', {
-    headers: { 'Content-Type': expectedContentType }
+    headers: { 'Content-Type': expectedContentType },
   });
   ResponseValidator.validateContentType(response, format);
 }
@@ -1431,17 +1524,20 @@ it('negotiates GeoJSON format for Systems', async () => {
 ## 12. References
 
 **CSAPI Specifications:**
+
 - OGC API - Connected Systems Part 1: Format negotiation (Section 5.3)
 - OGC API - Connected Systems Part 2: Format options (JSON, SWE Common)
 - OGC API - Common: Query parameter `f` for format selection
 
 **Related Research:**
+
 - Section 8: CSAPI Specification Review (media type definitions)
 - Section 24: Query Parameter Combination Testing (f parameter)
 - Format Requirements: [csapi-format-requirements-3.1.md](../../requirements/csapi-format-requirements-3.1.md)
 - Upstream Format Negotiation: [format-negotiation-analysis.md](../../upstream/format-negotiation-analysis.md)
 
 **Implementation Guides:**
+
 - Format negotiation follows EDR pattern (query parameter only)
 - No custom Accept headers required
 - No link-based format selection
@@ -1457,10 +1553,10 @@ it('negotiates GeoJSON format for Systems', async () => {
 export const PART1_FORMATS = {
   JSON: 'json',
   GEOJSON: 'geojson',
-  SENSORML: 'sml'
+  SENSORML: 'sml',
 } as const;
 
-export type Part1Format = typeof PART1_FORMATS[keyof typeof PART1_FORMATS];
+export type Part1Format = (typeof PART1_FORMATS)[keyof typeof PART1_FORMATS];
 ```
 
 ### 13.2 Media Type Constants
@@ -1473,19 +1569,19 @@ export const MEDIA_TYPES = {
   SWE_JSON: 'application/swe+json',
   SWE_TEXT: 'application/swe+text',
   SWE_BINARY: 'application/swe+binary',
-  URI_LIST: 'text/uri-list'
+  URI_LIST: 'text/uri-list',
 } as const;
 
-export type MediaType = typeof MEDIA_TYPES[keyof typeof MEDIA_TYPES];
+export type MediaType = (typeof MEDIA_TYPES)[keyof typeof MEDIA_TYPES];
 ```
 
 ### 13.3 Format Map (Short Name → Media Type)
 
 ```typescript
 export const FORMAT_MAP: Record<string, string> = {
-  'json': 'application/json',
-  'geojson': 'application/geo+json',
-  'sml': 'application/sml+json'
+  json: 'application/json',
+  geojson: 'application/geo+json',
+  sml: 'application/sml+json',
 };
 ```
 
@@ -1493,15 +1589,15 @@ export const FORMAT_MAP: Record<string, string> = {
 
 ```typescript
 export const DEFAULT_FORMATS: Record<string, string> = {
-  'systems': 'application/geo+json',
-  'deployments': 'application/geo+json',
-  'procedures': 'application/geo+json',
-  'samplingFeatures': 'application/geo+json',
-  'properties': 'application/json',
-  'datastreams': 'application/json',
-  'observations': 'application/json',
-  'controlstreams': 'application/json',
-  'commands': 'application/json'
+  systems: 'application/geo+json',
+  deployments: 'application/geo+json',
+  procedures: 'application/geo+json',
+  samplingFeatures: 'application/geo+json',
+  properties: 'application/json',
+  datastreams: 'application/json',
+  observations: 'application/json',
+  controlstreams: 'application/json',
+  commands: 'application/json',
 };
 ```
 
@@ -1520,6 +1616,7 @@ export const DEFAULT_FORMATS: Record<string, string> = {
 ### Background
 
 The format detector (Guide §7) includes a document structure analysis fallback for cases where the server `Content-Type` header is:
+
 - **Missing** entirely (non-compliant server)
 - **Ambiguous** (e.g., `application/json` for what could be GeoJSON, SensorML JSON, or SWE Common JSON)
 - **Incorrect** (e.g., server returns `application/json` for a GeoJSON FeatureCollection)
@@ -1531,6 +1628,7 @@ The client must determine the correct parser from the response body content. Thi
 #### Missing Content-Type (3 scenarios)
 
 **F1. Missing Content-Type — GeoJSON body detected**
+
 ```typescript
 it('detects GeoJSON from body when Content-Type is missing', () => {
   const body = {
@@ -1546,6 +1644,7 @@ it('detects GeoJSON from body when Content-Type is missing', () => {
 ```
 
 **F2. Missing Content-Type — SensorML body detected**
+
 ```typescript
 it('detects SensorML from body when Content-Type is missing', () => {
   const body = {
@@ -1560,6 +1659,7 @@ it('detects SensorML from body when Content-Type is missing', () => {
 ```
 
 **F3. Missing Content-Type — plain JSON (no distinguishing properties)**
+
 ```typescript
 it('falls back to application/json when body has no format markers', () => {
   const body = {
@@ -1576,12 +1676,18 @@ it('falls back to application/json when body has no format markers', () => {
 #### Ambiguous Content-Type (4 scenarios)
 
 **F4. `application/json` Content-Type but body is GeoJSON FeatureCollection**
+
 ```typescript
 it('detects GeoJSON FeatureCollection despite application/json Content-Type', () => {
   const body = {
     type: 'FeatureCollection',
     features: [
-      { type: 'Feature', id: 'sys-001', properties: { name: 'Sensor' }, geometry: null },
+      {
+        type: 'Feature',
+        id: 'sys-001',
+        properties: { name: 'Sensor' },
+        geometry: null,
+      },
     ],
   };
 
@@ -1591,6 +1697,7 @@ it('detects GeoJSON FeatureCollection despite application/json Content-Type', ()
 ```
 
 **F5. `application/json` Content-Type but body is SensorML**
+
 ```typescript
 it('detects SensorML despite application/json Content-Type', () => {
   const body = {
@@ -1606,6 +1713,7 @@ it('detects SensorML despite application/json Content-Type', () => {
 ```
 
 **F6. `application/json` Content-Type — body is SWE Common DataRecord**
+
 ```typescript
 it('detects SWE Common JSON despite application/json Content-Type', () => {
   const body = {
@@ -1622,6 +1730,7 @@ it('detects SWE Common JSON despite application/json Content-Type', () => {
 ```
 
 **F7. `application/json` Content-Type — body is genuinely plain JSON**
+
 ```typescript
 it('keeps application/json when body has no special format markers', () => {
   const body = {
@@ -1638,15 +1747,19 @@ it('keeps application/json when body has no special format markers', () => {
 #### Detection Logic Tests (3 scenarios)
 
 **F8. GeoJSON detection keys: `type: 'Feature'` or `type: 'FeatureCollection'`**
+
 ```typescript
 it('identifies GeoJSON by type=Feature with geometry property', () => {
-  expect(isGeoJSON({ type: 'Feature', geometry: null, properties: {} })).toBe(true);
+  expect(isGeoJSON({ type: 'Feature', geometry: null, properties: {} })).toBe(
+    true
+  );
   expect(isGeoJSON({ type: 'FeatureCollection', features: [] })).toBe(true);
   expect(isGeoJSON({ type: 'DataRecord', fields: [] })).toBe(false);
 });
 ```
 
 **F9. SensorML detection keys: `type` in `['PhysicalSystem', 'PhysicalComponent', 'SimpleProcess', 'AggregateProcess']`**
+
 ```typescript
 it('identifies SensorML by process type discriminator', () => {
   expect(isSensorML({ type: 'PhysicalSystem' })).toBe(true);
@@ -1658,6 +1771,7 @@ it('identifies SensorML by process type discriminator', () => {
 ```
 
 **F10. SWE Common detection keys: `type` in `['DataRecord', 'DataArray', 'Vector', 'Matrix']` with `fields` or `elementType`**
+
 ```typescript
 it('identifies SWE Common by data component type with structural properties', () => {
   expect(isSWECommon({ type: 'DataRecord', fields: [] })).toBe(true);
@@ -1694,10 +1808,21 @@ function detectFormat(body: unknown, contentType?: string): string {
     if (obj.type === 'Feature' || obj.type === 'FeatureCollection') {
       return 'application/geo+json';
     }
-    if (['PhysicalSystem', 'PhysicalComponent', 'SimpleProcess', 'AggregateProcess'].includes(obj.type as string)) {
+    if (
+      [
+        'PhysicalSystem',
+        'PhysicalComponent',
+        'SimpleProcess',
+        'AggregateProcess',
+      ].includes(obj.type as string)
+    ) {
       return 'application/sml+json';
     }
-    if (['DataRecord', 'DataArray', 'Vector', 'Matrix'].includes(obj.type as string)) {
+    if (
+      ['DataRecord', 'DataArray', 'Vector', 'Matrix'].includes(
+        obj.type as string
+      )
+    ) {
       return 'application/swe+json';
     }
   }

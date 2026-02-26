@@ -13,6 +13,7 @@
 This document analyzes oscar-viewer, a TypeScript React application for OGC API – Connected Systems focused on radiation detection monitoring. The analysis reveals production-grade patterns, TypeScript usage insights, and comparative learnings versus osh-viewer that inform type-safe client library design.
 
 **Key Findings:**
+
 - **TypeScript Adoption:** Strong interfaces but extensive `any` usage and type bypasses
 - **Specialized Focus:** Radiation portal monitoring (gamma, neutron, occupancy, tamper sensors)
 - **Multi-Server Support:** Node abstraction for federated server queries
@@ -57,6 +58,7 @@ This document analyzes oscar-viewer, a TypeScript React application for OGC API 
 - **Command & Control:** Send commands to detection systems
 
 **Tech Stack:**
+
 - React 18 with TypeScript
 - Redux Toolkit for state management
 - Material-UI (MUI) components
@@ -72,6 +74,7 @@ This document analyzes oscar-viewer, a TypeScript React application for OGC API 
 ### 2.1 GET Operations (Primary)
 
 **System Resources:**
+
 ```typescript
 GET /systems                                 // Fetch all systems
 GET /systems?searchMembers=true              // Include subsystems
@@ -81,6 +84,7 @@ GET /systems/{id}/datastreams                // Get datastreams
 ```
 
 **DataStream Resources:**
+
 ```typescript
 GET /datastreams                             // Search all datastreams
 GET /datastreams?system={ids}                // Filter by system IDs
@@ -89,6 +93,7 @@ GET /datastreams/{id}/observations           // Get observations
 ```
 
 **Observation Resources:**
+
 ```typescript
 GET /observations                            // Search observations
 GET /observations?dataStream={ids}           // Filter by datastream
@@ -99,16 +104,18 @@ GET /observations/count                      // Get total count
 ```
 
 **ControlStream Resources:**
+
 ```typescript
-GET /controlstreams                          // Fetch control streams
-GET /controlstreams/{id}/status              // Get command status
+GET / controlstreams; // Fetch control streams
+GET / controlstreams / { id } / status; // Get command status
 ```
 
 ### 2.2 POST Operations
 
 **Command Submission:**
+
 ```typescript
-POST /controlstreams/{id}/commands
+POST / controlstreams / { id } / commands;
 Body: {
   // Command parameters
 }
@@ -117,6 +124,7 @@ Body: {
 ### 2.3 Real-time Streaming
 
 **MQTT Subscriptions:**
+
 - Uses MQTT protocol for live observation streaming
 - Subscribes to datastream topics
 - Receives observations as MQTT messages
@@ -130,6 +138,7 @@ Body: {
 ### 3.1 Common Query Parameters
 
 **System Queries:**
+
 ```typescript
 // Fetch all systems including members
 {
@@ -139,6 +148,7 @@ Body: {
 ```
 
 **DataStream Queries:**
+
 ```typescript
 // Fetch datastreams for specific systems
 {
@@ -150,6 +160,7 @@ Body: {
 ```
 
 **Observation Queries:**
+
 ```typescript
 // Time range with property filter
 {
@@ -175,6 +186,7 @@ Body: {
 ### 3.2 Property-Based Filtering
 
 **Heavy Use of observedProperty URIs:**
+
 ```typescript
 // Define property URIs
 const GAMMA_COUNT_DEF = 'http://www.opengis.net/def/GammaGrossCount';
@@ -185,11 +197,11 @@ const ALARM_DEF = 'http://www.opengis.net/def/Alarm';
 const LOCATION_DEF = 'http://www.opengis.net/def/property/OGC/0/SensorLocation';
 
 // Find datastreams by property
-const gammaStreams = allDatastreams.filter(ds => 
+const gammaStreams = allDatastreams.filter((ds) =>
   ds.properties.observedProperties[0].definition.includes(GAMMA_COUNT_DEF)
 );
 
-const tamperStreams = allDatastreams.filter(ds => 
+const tamperStreams = allDatastreams.filter((ds) =>
   ds.properties.observedProperties[0].definition.includes(TAMPER_STATUS_DEF)
 );
 ```
@@ -199,12 +211,14 @@ const tamperStreams = allDatastreams.filter(ds =>
 ### 3.3 Query Patterns Analysis
 
 **Most Common:**
+
 1. Fetch all systems with members
 2. Fetch datastreams filtered by system IDs
 3. Fetch observations with time range + property filter
 4. Latest observations for real-time status
 
 **Rarely Used:**
+
 - Spatial queries (bbox, geometry)
 - Complex temporal operators
 - Multi-property queries
@@ -216,12 +230,13 @@ const tamperStreams = allDatastreams.filter(ds =>
 ### 4.1 Collection Pattern (osh-js)
 
 **Identical to osh-viewer:**
+
 ```typescript
 const dataStreamCollection = await node
   .getDataStreamsApi()
   .searchDataStreams(filter, 1000);
 
-const allDataStreams: typeof DataStream[] = [];
+const allDataStreams: (typeof DataStream)[] = [];
 
 while (dataStreamCollection.hasNext()) {
   const dataStreams = await dataStreamCollection.nextPage();
@@ -232,6 +247,7 @@ while (dataStreamCollection.hasNext()) {
 ### 4.2 Page Sizes
 
 **Observed page sizes:**
+
 - **Systems:** 500
 - **DataStreams:** 100-1000 (typically 1000 for bulk fetch)
 - **Observations:** 1-10,000 (varies by use case)
@@ -242,25 +258,28 @@ while (dataStreamCollection.hasNext()) {
 ### 4.3 Custom Count Endpoint
 
 **Uses `/observations/count` for metadata:**
+
 ```typescript
 async function fetchTotalObservationCount(
   nodeEndpoint: string,
   dsIds: string[],
   timeRange: string
 ): Promise<number> {
-  const endpoint = `${nodeEndpoint}/observations/count?dataStream=${dsIds.join(',')}&resultTime=${timeRange}`;
-  
+  const endpoint = `${nodeEndpoint}/observations/count?dataStream=${dsIds.join(
+    ','
+  )}&resultTime=${timeRange}`;
+
   try {
     const response = await fetch(endpoint, {
       method: 'GET',
-      headers: getAuthHeaderFromLocalStorage()
+      headers: getAuthHeaderFromLocalStorage(),
     });
-    
+
     if (!response.ok) {
       console.error('Cannot fetch total count');
       return 0;
     }
-    
+
     const count = await response.json();
     return count;
   } catch (error) {
@@ -279,25 +298,28 @@ async function fetchTotalObservationCount(
 ### 5.1 Format Selection
 
 **Primary Formats:**
+
 ```typescript
 // For observations
-responseFormat: isVideoDataStream(dsObj) 
-  ? 'application/swe+binary'    // Video streams only
-  : 'application/swe+json'      // Default for all others
+responseFormat: isVideoDataStream(dsObj)
+  ? 'application/swe+binary' // Video streams only
+  : 'application/swe+json'; // Default for all others
 
 // For API responses (metadata)
-'application/om+json'
-'application/sml+json'
+('application/om+json');
+('application/sml+json');
 ```
 
 ### 5.2 No Explicit Negotiation
 
 **Relies on osh-js defaults:**
+
 - No `Accept` header configuration observed
 - Format selection based on datastream type detection
 - Falls back to library defaults
 
 **Type Detection:**
+
 ```typescript
 function isVideoDataStream(dataStream: typeof DataStream): boolean {
   const videoOutputName = dataStream.properties.outputName;
@@ -314,6 +336,7 @@ function isVideoDataStream(dataStream: typeof DataStream): boolean {
 ### 6.1 Hierarchical Navigation
 
 **System Hierarchy:**
+
 ```typescript
 // Fetch systems
 const systems = await node.fetchSystems();
@@ -321,38 +344,43 @@ const systems = await node.fetchSystems();
 // For each system, fetch subsystems
 for (const system of systems) {
   const subsystems = await node.fetchSubsystems(system.id);
-  
+
   // Fetch datastreams
   const datastreams = await node.fetchDataStreams(system.id);
 }
 ```
 
 **DataStream to Observations:**
+
 ```typescript
 // Get datastreams
-const datastreams = await node.getDataStreamsApi()
+const datastreams = await node
+  .getDataStreamsApi()
   .searchDataStreams(filter, 1000);
 
 // For each datastream, query observations
 for (const ds of datastreams) {
-  const observations = await node.getObservationsApi()
-    .searchObservations(new ObservationFilter({
+  const observations = await node.getObservationsApi().searchObservations(
+    new ObservationFilter({
       dataStream: ds.id,
-      resultTime: timeRange
-    }), 100);
+      resultTime: timeRange,
+    }),
+    100
+  );
 }
 ```
 
 ### 6.2 Cross-Reference Pattern
 
 **Using embedded IDs:**
+
 ```typescript
 // Datastreams contain system@id
 const systemId = datastream.properties['system@id'];
 
 // Match datastreams to systems
-const systemDatastreams = allDatastreams.filter(ds => 
-  ds.properties['system@id'] === system.id
+const systemDatastreams = allDatastreams.filter(
+  (ds) => ds.properties['system@id'] === system.id
 );
 
 // Extract IDs from resource paths
@@ -369,15 +397,16 @@ const dsId = datasource.properties.resource.split('/')[2];
 ### 7.1 Try-Catch with Defaults
 
 **Common Pattern:**
+
 ```typescript
 try {
   const response = await fetch(endpoint, options);
-  
+
   if (!response.ok) {
     console.error('Cannot fetch data');
-    return defaultValue;  // Return default instead of throwing
+    return defaultValue; // Return default instead of throwing
   }
-  
+
   const data = await response.json();
   return data;
 } catch (error) {
@@ -389,6 +418,7 @@ try {
 ### 7.2 Silent Failures
 
 **Graceful Degradation:**
+
 ```typescript
 // Continue operation even if sub-resource fails
 const datastreams = await node.fetchDataStreams(systemId).catch(() => []);
@@ -397,6 +427,7 @@ const datastreams = await node.fetchDataStreams(systemId).catch(() => []);
 ### 7.3 Retry Logic (Limited)
 
 **Video Stream Retries:**
+
 ```typescript
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 750; // ms
@@ -404,7 +435,7 @@ const RETRY_DELAY = 750; // ms
 for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
   try {
     await loadVideoSegment(url);
-    break;  // Success
+    break; // Success
   } catch (error) {
     if (attempt < MAX_RETRIES - 1) {
       await sleep(RETRY_DELAY);
@@ -418,6 +449,7 @@ for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
 ### 7.4 Error Handling Gaps
 
 **Missing:**
+
 - No HTTP status code differentiation (401 vs 403 vs 500)
 - No exponential backoff
 - No circuit breaker pattern
@@ -433,12 +465,13 @@ for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
 ### 8.1 Type Imports from osh-js
 
 **Using `typeof` Pattern:**
+
 ```typescript
 import { System, DataStream, ConSysApi, Observations } from 'osh-js';
 
 // Type references
-const systems: typeof System[] = [];
-const datastreams: typeof DataStream[] = [];
+const systems: (typeof System)[] = [];
+const datastreams: (typeof DataStream)[] = [];
 const api: typeof ConSysApi;
 ```
 
@@ -447,6 +480,7 @@ const api: typeof ConSysApi;
 ### 8.2 Custom Interfaces
 
 **Domain Models:**
+
 ```typescript
 interface INode {
   id: string;
@@ -477,6 +511,7 @@ interface IEventTableData {
 ```
 
 **Collection Wrapper:**
+
 ```typescript
 interface LaneDSColl {
   gamma: typeof DataStream | undefined;
@@ -493,18 +528,22 @@ interface LaneDSColl {
 ### 8.3 Type Safety Issues
 
 **Extensive `any` Usage:**
+
 ```typescript
 // @ts-ignore
 const systemId = datastream.properties['system@id'];
 
 // Untyped API responses
-const response: any = await fetch(url).then(r => r.json());
+const response: any = await fetch(url).then((r) => r.json());
 
 // Untyped event handlers
-const handleClick = (event: any) => { /* ... */ };
+const handleClick = (event: any) => {
+  /* ... */
+};
 ```
 
 **Missing Type Guards:**
+
 ```typescript
 // Should have type narrowing
 if (datastream.properties.observedProperties) {
@@ -518,15 +557,18 @@ if (datastream.properties.observedProperties) {
 ### 8.4 Type Utility Functions
 
 **Custom Type Guards:**
+
 ```typescript
 export function isGammaDataStream(dataStream: typeof DataStream): boolean {
-  return dataStream.properties.observedProperties[0].definition
-    .includes(GAMMA_COUNT_DEF);
+  return dataStream.properties.observedProperties[0].definition.includes(
+    GAMMA_COUNT_DEF
+  );
 }
 
 export function isTamperDataStream(dataStream: typeof DataStream): boolean {
-  return dataStream.properties.observedProperties[0].definition
-    .includes(TAMPER_STATUS_DEF);
+  return dataStream.properties.observedProperties[0].definition.includes(
+    TAMPER_STATUS_DEF
+  );
 }
 
 export function isVideoDataStream(dataStream: typeof DataStream): boolean {
@@ -544,10 +586,11 @@ export function isVideoDataStream(dataStream: typeof DataStream): boolean {
 ### 9.1 Repeated Pagination Boilerplate
 
 **Pattern appears everywhere:**
+
 ```typescript
 // Repeated ~20 times across codebase
 const collection = await api.searchDataStreams(filter, 1000);
-const results: typeof DataStream[] = [];
+const results: (typeof DataStream)[] = [];
 
 while (collection.hasNext()) {
   const items = await collection.nextPage();
@@ -556,6 +599,7 @@ while (collection.hasNext()) {
 ```
 
 **Convenience Method Needed:**
+
 ```typescript
 // Suggested
 const results = await api.fetchAllDataStreams(filter);
@@ -571,21 +615,23 @@ for await (const datastream of api.datastreamsIterator(filter)) {
 ### 9.2 Property-Based Lookup
 
 **Current Pattern:**
+
 ```typescript
-const gammaStreams = allDatastreams.filter(ds => 
-  ds.properties.observedProperties &&
-  ds.properties.observedProperties[0] &&
-  ds.properties.observedProperties[0].definition &&
-  ds.properties.observedProperties[0].definition.includes(GAMMA_COUNT_DEF)
+const gammaStreams = allDatastreams.filter(
+  (ds) =>
+    ds.properties.observedProperties &&
+    ds.properties.observedProperties[0] &&
+    ds.properties.observedProperties[0].definition &&
+    ds.properties.observedProperties[0].definition.includes(GAMMA_COUNT_DEF)
 );
 ```
 
 **Convenience Method Needed:**
+
 ```typescript
-const gammaStreams = await api.findDataStreamsByProperty(
-  GAMMA_COUNT_DEF,
-  { matchType: 'contains' }
-);
+const gammaStreams = await api.findDataStreamsByProperty(GAMMA_COUNT_DEF, {
+  matchType: 'contains',
+});
 ```
 
 ---
@@ -593,21 +639,22 @@ const gammaStreams = await api.findDataStreamsByProperty(
 ### 9.3 Multi-DataStream Observation Query
 
 **Current Pattern:**
+
 ```typescript
-const dsIds = datastreams.map(ds => ds.id).join(',');
+const dsIds = datastreams.map((ds) => ds.id).join(',');
 const filter = new ObservationFilter({
   dataStream: dsIds,
-  resultTime: timeRange
+  resultTime: timeRange,
 });
 const observations = await api.searchObservations(filter, 1000);
 ```
 
 **Convenience Method Needed:**
+
 ```typescript
-const observations = await api.fetchObservationsForDataStreams(
-  datastreams,
-  { resultTime: timeRange }
-);
+const observations = await api.fetchObservationsForDataStreams(datastreams, {
+  resultTime: timeRange,
+});
 ```
 
 ---
@@ -615,23 +662,25 @@ const observations = await api.fetchObservationsForDataStreams(
 ### 9.4 Auth Header Construction
 
 **Current Pattern:**
+
 ```typescript
 function getAuthHeaderFromLocalStorage(): HeadersInit {
   const credentials = localStorage.getItem('credentials');
   if (!credentials) return {};
-  
+
   const { username, password } = JSON.parse(credentials);
   const encoded = btoa(`${username}:${password}`);
-  return { 'Authorization': `Basic ${encoded}` };
+  return { Authorization: `Basic ${encoded}` };
 }
 
 // Used everywhere
 const response = await fetch(url, {
-  headers: getAuthHeaderFromLocalStorage()
+  headers: getAuthHeaderFromLocalStorage(),
 });
 ```
 
 **Convenience Needed:**
+
 ```typescript
 // Library should handle auth automatically
 const client = new CSAPIClient({
@@ -639,8 +688,8 @@ const client = new CSAPIClient({
   auth: {
     type: 'basic',
     username: 'user',
-    password: 'pass'
-  }
+    password: 'pass',
+  },
 });
 
 // No manual header construction needed
@@ -652,6 +701,7 @@ const systems = await client.getSystems();
 ### 9.5 Node/Endpoint Management
 
 **Current Pattern:**
+
 ```typescript
 const protocol = node.protocol || 'https';
 const address = node.address;
@@ -663,6 +713,7 @@ const fullUrl = `${protocol}://${address}:${port}${pathRoot}${csAPIEndpoint}`;
 ```
 
 **Convenience Needed:**
+
 ```typescript
 // Library should provide URL builder
 const client = CSAPIClient.fromNodeConfig({
@@ -670,7 +721,7 @@ const client = CSAPIClient.fromNodeConfig({
   host: 'api.example.org',
   port: 443,
   pathPrefix: '/api/v1',
-  csapiPath: '/consys'
+  csapiPath: '/consys',
 });
 
 // Or from URL
@@ -682,23 +733,27 @@ const client = new CSAPIClient('https://api.example.org:443/api/v1/consys');
 ### 9.6 Observation Count Helper
 
 **Current Pattern:**
+
 ```typescript
 async function fetchTotalObservationCount(
   nodeEndpoint: string,
   dsIds: string[],
   timeRange: string
 ): Promise<number> {
-  const url = `${nodeEndpoint}/observations/count?dataStream=${dsIds.join(',')}&resultTime=${timeRange}`;
+  const url = `${nodeEndpoint}/observations/count?dataStream=${dsIds.join(
+    ','
+  )}&resultTime=${timeRange}`;
   const response = await fetch(url, { headers: auth() });
   return response.json();
 }
 ```
 
 **Convenience Needed:**
+
 ```typescript
 const count = await api.getObservationCount({
   dataStreams: dsIds,
-  resultTime: timeRange
+  resultTime: timeRange,
 });
 ```
 
@@ -709,36 +764,43 @@ const count = await api.getObservationCount({
 ### 10.1 Not Used in oscar-viewer
 
 **Spatial Operations:**
+
 - No `bbox` queries
 - No `geometry` filters
 - No spatial relationships
 - Relies on datastream metadata for location
 
 **Advanced Temporal:**
+
 - Only uses basic time ranges and `latest`
 - No `validTime` queries on observations
 - No complex temporal operators
 
 **Linked Data:**
+
 - No traversal via `@id` references
 - No `$expand` queries
 - Manually constructs relationships
 
 **Content Negotiation:**
+
 - No multiple format preferences
 - No `Accept` header usage
 - Hardcoded format selection
 
 **Conditional Requests:**
+
 - No ETags
 - No `If-Modified-Since`
 - No caching headers
 
 **Resource Management:**
+
 - No POST/PUT/DELETE for systems/datastreams
 - Only POST commands to control streams
 
 **Part 2 Advanced Features:**
+
 - No sampling features queries
 - No procedures
 - No complex system hierarchies (only parent-child)
@@ -747,6 +809,7 @@ const count = await api.getObservationCount({
 ### 10.2 MVP Prioritization Insights
 
 **Essential (P0):**
+
 - GET systems, datastreams, observations
 - Basic filters: system IDs, time ranges, property filters
 - Pagination with large page sizes
@@ -754,11 +817,13 @@ const count = await api.getObservationCount({
 - Real-time subscriptions (MQTT/WebSocket)
 
 **Important (P1):**
+
 - Observation counts
 - Property-based discovery
 - Multi-server support
 
 **Can Defer (P2):**
+
 - Spatial queries
 - Advanced temporal operators
 - Write operations (except commands)
@@ -771,14 +836,15 @@ const count = await api.getObservationCount({
 ### 11.1 Redux State Caching
 
 **Centralized State:**
+
 ```typescript
 // Redux store caches fetched data
 interface AppState {
   nodes: INode[];
-  systems: typeof System[];
-  datastreams: typeof DataStream[];
+  systems: (typeof System)[];
+  datastreams: (typeof DataStream)[];
   observations: Map<string, Observation[]>;
-  controlStreams: typeof ControlStream[];
+  controlStreams: (typeof ControlStream)[];
 }
 
 // Persisted to localStorage
@@ -788,11 +854,12 @@ import storage from 'redux-persist/lib/storage';
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['nodes', 'systems']  // Persist selected slices
+  whitelist: ['nodes', 'systems'], // Persist selected slices
 };
 ```
 
 **Benefits:**
+
 - Avoids re-fetching on page reload
 - Shared across components
 - Survives browser refresh
@@ -800,6 +867,7 @@ const persistConfig = {
 ### 11.2 Large Page Sizes
 
 **Aggressive Pagination:**
+
 ```typescript
 // Systems: 500 per page
 const systems = await api.searchSystems(filter, 500);
@@ -816,17 +884,18 @@ const observations = await api.searchObservations(filter, 10000);
 ### 11.3 Batching with Comma-Separated IDs
 
 **Query Multiple Resources:**
+
 ```typescript
 // Fetch datastreams for multiple systems at once
 const systemIds = ['sys1', 'sys2', 'sys3'];
 const filter = new DataStreamFilter({
-  system: systemIds.join(',')
+  system: systemIds.join(','),
 });
 
 // Fetch observations for multiple datastreams
 const datastreamIds = ['ds1', 'ds2', 'ds3'];
 const obsFilter = new ObservationFilter({
-  dataStream: datastreamIds.join(',')
+  dataStream: datastreamIds.join(','),
 });
 ```
 
@@ -835,42 +904,52 @@ const obsFilter = new ObservationFilter({
 ### 11.4 Pre-fetching and Parallel Requests
 
 **Initialization Pre-fetch:**
+
 ```typescript
 // Fetch all data on app load
 useEffect(() => {
-  Promise.all([
-    fetchSystems(),
-    fetchDataStreams(),
-    fetchControlStreams()
-  ]).then(() => {
-    setInitialized(true);
-  });
+  Promise.all([fetchSystems(), fetchDataStreams(), fetchControlStreams()]).then(
+    () => {
+      setInitialized(true);
+    }
+  );
 }, []);
 ```
 
 **Parallel Node Queries:**
+
 ```typescript
 // Query multiple servers concurrently
-await Promise.all(nodes.map(async (node) => {
-  const systems = await node.fetchSystems();
-  const datastreams = await node.fetchDataStreams();
-  return { node, systems, datastreams };
-}));
+await Promise.all(
+  nodes.map(async (node) => {
+    const systems = await node.fetchSystems();
+    const datastreams = await node.fetchDataStreams();
+    return { node, systems, datastreams };
+  })
+);
 ```
 
 ### 11.5 Time Range Caching
 
 **Cache Query Results:**
+
 ```typescript
 // React ref for mutable cache
 const timeRangeCache = useRef<Map<string, Observation[]>>(new Map());
 
-function getCachedObservations(dsId: string, timeRange: string): Observation[] | undefined {
+function getCachedObservations(
+  dsId: string,
+  timeRange: string
+): Observation[] | undefined {
   const key = `${dsId}:${timeRange}`;
   return timeRangeCache.current.get(key);
 }
 
-function cacheObservations(dsId: string, timeRange: string, obs: Observation[]): void {
+function cacheObservations(
+  dsId: string,
+  timeRange: string,
+  obs: Observation[]
+): void {
   const key = `${dsId}:${timeRange}`;
   timeRangeCache.current.set(key, obs);
 }
@@ -879,6 +958,7 @@ function cacheObservations(dsId: string, timeRange: string, obs: Observation[]):
 ### 11.6 MQTT Connection Pooling
 
 **Shared Client:**
+
 ```typescript
 // Single MQTT client for all subscriptions
 let mqttClientInstance: MQTTClient | null = null;
@@ -892,7 +972,7 @@ export function getMQTTClient(): MQTTClient {
 
 // Subscribe multiple datastreams to same client
 const client = getMQTTClient();
-datastreams.forEach(ds => {
+datastreams.forEach((ds) => {
   client.subscribe(`/datastreams/${ds.id}/observations`, handleMessage);
 });
 ```
@@ -906,30 +986,35 @@ datastreams.forEach(ds => {
 ### 12.1 Leaflet Integration
 
 **Image Overlay for Site Diagrams:**
+
 ```typescript
 import LeafletView from 'osh-js';
 import L from 'leaflet';
 
 const leafletView = new LeafletView({
   container: 'map-container',
-  layers: [/* base layers */]
+  layers: [
+    /* base layers */
+  ],
 });
 
 // Add site diagram as image overlay
-const imageBounds = [[lat1, lon1], [lat2, lon2]];
-leafletView.addImageOverlay(
-  '/assets/site-diagram.png',
-  imageBounds,
-  { opacity: 0.8 }
-);
+const imageBounds = [
+  [lat1, lon1],
+  [lat2, lon2],
+];
+leafletView.addImageOverlay('/assets/site-diagram.png', imageBounds, {
+  opacity: 0.8,
+});
 ```
 
 ### 12.2 Point Markers for Lane Locations
 
 **Extract Location from DataStream:**
+
 ```typescript
 // Find location datastream
-const locationDS = datastreams.find(ds => 
+const locationDS = datastreams.find((ds) =>
   ds.properties.observedProperties[0].definition.includes(LOCATION_DEF)
 );
 
@@ -938,20 +1023,20 @@ if (locationDS) {
   const observations = await api.searchObservations(
     new ObservationFilter({
       dataStream: locationDS.id,
-      resultTime: 'latest'
+      resultTime: 'latest',
     }),
     1
   );
-  
+
   const latestObs = observations.items[0];
-  const [lon, lat] = latestObs.result;  // Assumes [lon, lat] format
-  
+  const [lon, lat] = latestObs.result; // Assumes [lon, lat] format
+
   // Add marker
   const marker = L.marker([lat, lon], {
     icon: customIcon,
-    title: laneName
+    title: laneName,
   });
-  
+
   marker.addTo(leafletView.map);
   marker.bindPopup(`Lane ${laneId}`);
 }
@@ -960,6 +1045,7 @@ if (locationDS) {
 ### 12.3 No Spatial Queries
 
 **Static Location Display:**
+
 - No bbox queries for viewport
 - No dynamic loading based on map extent
 - Locations determined by datastream observations
@@ -1032,7 +1118,7 @@ if (locationDS) {
      });
 
 4. React components watch Redux state
-   → const latestGamma = useSelector(state => 
+   → const latestGamma = useSelector(state =>
        state.observations[gammaDatastreamId]
      );
 
@@ -1070,7 +1156,7 @@ if (locationDS) {
    → <LineChart data={observations} />
 
 6. Load video for time range
-   → <VideoPlayer 
+   → <VideoPlayer
        datastream={videoDS}
        startTime={event.startTime}
        endTime={event.endTime}
@@ -1152,21 +1238,25 @@ if (locationDS) {
 ### 14.1 Display Patterns Driving Queries
 
 **Real-Time Status Badges:**
+
 - Require continuous updates (MQTT subscriptions)
 - Display latest observation result
 - Color-coded by threshold values
 
 **Event Table (DataGrid):**
+
 - Paginated queries with `order=desc`
 - Fetches on page change
 - Requires total count for pagination UI
 
 **Video Playback:**
+
 - Requires time-range observation queries
 - Binary format for efficiency
 - HLS streaming with segment requests
 
 **Charts (Time Series):**
+
 - Historical observations over time range
 - Aggregated from multiple datastreams
 - Requires bulk pagination
@@ -1174,21 +1264,25 @@ if (locationDS) {
 ### 14.2 User Interactions
 
 **Lane Selection:**
+
 - Filters all queries by system IDs
 - Updates real-time subscriptions
 - Reloads relevant datastreams
 
 **Time Range Picker:**
+
 - Modifies `resultTime` parameter
 - Triggers new observation queries
 - Updates chart data
 
 **Site Selector:**
+
 - Changes active node
 - Switches CSAPI endpoint
 - Re-initializes data
 
 **Status Filters:**
+
 - Uses observation property filters
 - `filter=alarmState='Fault'`
 - Client-side filtering on cached data for speed
@@ -1196,6 +1290,7 @@ if (locationDS) {
 ### 14.3 Performance Requirements
 
 **User Expectations:**
+
 - Initial load: < 10 seconds
 - Status updates: < 1 second (real-time)
 - Video playback: < 3 seconds to start
@@ -1203,6 +1298,7 @@ if (locationDS) {
 - Chart updates: < 1 second
 
 **Drives Design:**
+
 - Pre-fetching on init
 - Large page sizes for bulk data
 - MQTT for real-time (not polling)
@@ -1215,6 +1311,7 @@ if (locationDS) {
 ### 15.1 Observation to Domain Object
 
 **Event Construction:**
+
 ```typescript
 class EventTableData {
   id: number;
@@ -1227,7 +1324,13 @@ class EventTableData {
   neutronAlarm: boolean;
   occupancyCount: number;
 
-  constructor(id: number, laneId: string, result: any, obsId: string, foi: string) {
+  constructor(
+    id: number,
+    laneId: string,
+    result: any,
+    obsId: string,
+    foi: string
+  ) {
     this.id = id;
     this.laneId = laneId;
     this.occupancyObsId = obsId;
@@ -1243,7 +1346,7 @@ class EventTableData {
 function eventFromObservation(obs: any): EventTableData {
   return new EventTableData(
     obs.id,
-    obs.foi,  // Feature of interest = lane ID
+    obs.foi, // Feature of interest = lane ID
     obs.result,
     obs.id,
     obs.properties.foi
@@ -1254,6 +1357,7 @@ function eventFromObservation(obs: any): EventTableData {
 ### 15.2 Redux Serialization
 
 **Map to Object Conversion:**
+
 ```typescript
 // Redux can't serialize Map objects
 const convertToMap = (obj: any): Map<string, any> => {
@@ -1270,6 +1374,7 @@ const serializeMap = (map: Map<string, any>): Record<string, any> => {
 ### 15.3 Property Extraction
 
 **Cross-Reference Resolution:**
+
 ```typescript
 // Extract system ID from datastream
 const systemId = datastream.properties['system@id'];
@@ -1285,6 +1390,7 @@ const propUri = datastream.properties.observedProperties[0].definition;
 ### 15.4 Time Formatting
 
 **Display Formatting:**
+
 ```typescript
 // Epoch to ISO string
 const isoString = new Date(epochMs).toISOString();
@@ -1292,7 +1398,7 @@ const isoString = new Date(epochMs).toISOString();
 // Localized display
 const displayTime = new Date(epochMs).toLocaleString('en-US', {
   dateStyle: 'short',
-  timeStyle: 'medium'
+  timeStyle: 'medium',
 });
 
 // UTC formatted (custom utility)
@@ -1303,6 +1409,7 @@ const utcFormatted = TimePeriod.getUtcFormattedTime(epochMs);
 ### 15.5 Result Type Handling
 
 **Scalar vs Record:**
+
 ```typescript
 // Gamma count: scalar result
 const gammaCount: number = observation.result;
@@ -1324,6 +1431,7 @@ const eventData: {
 ### 16.1 Similarities
 
 **Both Applications:**
+
 - Use osh-js library for CSAPI interaction
 - Pagination pattern: `hasNext()` / `nextPage()` loops
 - Filter construction with dedicated classes
@@ -1335,30 +1443,32 @@ const eventData: {
 
 ### 16.2 Differences
 
-| Aspect | osh-viewer (JavaScript) | oscar-viewer (TypeScript) |
-|--------|------------------------|---------------------------|
-| **Language** | JavaScript (Vue 3) | TypeScript (React) |
-| **State Management** | Pinia stores | Redux Toolkit + persist |
-| **Type Safety** | None | Partial (many `any` types) |
-| **Domain Focus** | General sensor visualization | Radiation detection monitoring |
-| **Multi-Server** | Single server | Multiple federated servers |
-| **Real-time Protocol** | WebSocket | MQTT |
-| **Streaming Format** | SWE+JSON, SWE+Binary | Primarily SWE+JSON |
-| **UI Framework** | Vuetify | Material-UI |
-| **Code Organization** | Component-driven | Service layer + components |
-| **Error Handling** | Try-catch with logging | Try-catch with defaults |
-| **Caching** | Per-format schema caching | Redux state persistence |
-| **Custom Endpoints** | None | `/observations/count` |
+| Aspect                 | osh-viewer (JavaScript)      | oscar-viewer (TypeScript)      |
+| ---------------------- | ---------------------------- | ------------------------------ |
+| **Language**           | JavaScript (Vue 3)           | TypeScript (React)             |
+| **State Management**   | Pinia stores                 | Redux Toolkit + persist        |
+| **Type Safety**        | None                         | Partial (many `any` types)     |
+| **Domain Focus**       | General sensor visualization | Radiation detection monitoring |
+| **Multi-Server**       | Single server                | Multiple federated servers     |
+| **Real-time Protocol** | WebSocket                    | MQTT                           |
+| **Streaming Format**   | SWE+JSON, SWE+Binary         | Primarily SWE+JSON             |
+| **UI Framework**       | Vuetify                      | Material-UI                    |
+| **Code Organization**  | Component-driven             | Service layer + components     |
+| **Error Handling**     | Try-catch with logging       | Try-catch with defaults        |
+| **Caching**            | Per-format schema caching    | Redux state persistence        |
+| **Custom Endpoints**   | None                         | `/observations/count`          |
 
 ### 16.3 Architectural Differences
 
 **osh-viewer:**
+
 - Framework-like with osh-js at core
 - Vue composition API patterns
 - Inline CSAPI calls in components
 - Schema parsers per format
 
 **oscar-viewer:**
+
 - Application-specific
 - Node abstraction layer
 - Domain models (EventTableData, LaneMapEntry)
@@ -1368,17 +1478,20 @@ const eventData: {
 ### 16.4 Lessons from Comparison
 
 **Common Pain Points:**
+
 1. Pagination boilerplate repeated everywhere
 2. Property-based filtering requires manual string matching
 3. Auth headers manually constructed
 4. Format selection logic duplicated
 
 **TypeScript Advantages (When Used Properly):**
+
 - Clearer interfaces for domain models
 - Better IDE autocomplete
 - Compile-time checks for typos
 
 **TypeScript Disadvantages (As Implemented):**
+
 - `typeof` pattern awkward for importing types
 - Extensive `any` usage defeats purpose
 - `@ts-ignore` comments indicate type system fighting
@@ -1418,6 +1531,7 @@ src/
 ### 17.2 Node Abstraction Layer
 
 **Server Wrapper:**
+
 ```typescript
 // Node.ts
 export class Node implements INode {
@@ -1427,12 +1541,12 @@ export class Node implements INode {
   port: number;
   pathRoot: string;
   csAPIEndpoint: string;
-  
+
   private systemsApi: typeof Systems;
   private dataStreamsApi: typeof DataStreams;
   private observationsApi: typeof Observations;
   private controlStreamsApi: typeof ControlStreams;
-  
+
   constructor(config: NodeConfig) {
     this.id = config.id;
     this.name = config.name;
@@ -1441,29 +1555,30 @@ export class Node implements INode {
     this.dataStreamsApi = new DataStreams(this.getEndpoint());
     // ...
   }
-  
+
   getEndpoint(): string {
     return `${this.protocol}://${this.address}:${this.port}${this.pathRoot}${this.csAPIEndpoint}`;
   }
-  
-  async fetchSystems(): Promise<typeof System[]> {
+
+  async fetchSystems(): Promise<(typeof System)[]> {
     const collection = await this.systemsApi.searchSystems(
       new SystemFilter({ searchMembers: true, validTime: 'latest' }),
       500
     );
-    
-    const systems: typeof System[] = [];
+
+    const systems: (typeof System)[] = [];
     while (collection.hasNext()) {
-      systems.push(...await collection.nextPage());
+      systems.push(...(await collection.nextPage()));
     }
     return systems;
   }
-  
+
   // Similar methods for datastreams, observations, etc.
 }
 ```
 
 **Benefits:**
+
 - Multi-server support
 - Encapsulates endpoint construction
 - Consistent API across servers
@@ -1472,6 +1587,7 @@ export class Node implements INode {
 ### 17.3 Domain Models
 
 **Lane Collection:**
+
 ```typescript
 // LaneCollection.ts
 export interface LaneDSColl {
@@ -1488,10 +1604,10 @@ export interface LaneDSColl {
 export class LaneMapEntry {
   laneId: string;
   primarySystem: typeof System;
-  subsystems: typeof System[];
+  subsystems: (typeof System)[];
   datastreams: LaneDSColl;
-  controlStreams: typeof ControlStream[];
-  
+  controlStreams: (typeof ControlStream)[];
+
   constructor(laneId: string, primarySystem: typeof System) {
     this.laneId = laneId;
     this.primarySystem = primarySystem;
@@ -1499,7 +1615,7 @@ export class LaneMapEntry {
     this.datastreams = {};
     this.controlStreams = [];
   }
-  
+
   addDataStream(ds: typeof DataStream): void {
     if (isGammaDataStream(ds)) {
       this.datastreams.gamma = ds;
@@ -1514,6 +1630,7 @@ export class LaneMapEntry {
 ### 17.4 Redux State Management
 
 **State Slices:**
+
 ```typescript
 // nodesSlice.ts
 interface NodesState {
@@ -1530,8 +1647,8 @@ export const nodesSlice = createSlice({
     },
     setSelectedNode: (state, action: PayloadAction<string>) => {
       state.selectedNode = action.payload;
-    }
-  }
+    },
+  },
 });
 
 // datastreamsSlice.ts
@@ -1544,26 +1661,27 @@ interface DatastreamsState {
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['nodes', 'systems'],  // Only persist these
-  blacklist: ['observations']        // Don't persist real-time data
+  whitelist: ['nodes', 'systems'], // Only persist these
+  blacklist: ['observations'], // Don't persist real-time data
 };
 ```
 
 ### 17.5 Context Provider Pattern
 
 **Global Data Context:**
+
 ```typescript
 // DataSourceContext.tsx
 export const DataSourceContext = React.createContext<DataSourceContextType>({
   nodes: [],
   laneMap: new Map(),
-  initialized: false
+  initialized: false,
 });
 
 export function DataSourceProvider({ children }: Props) {
   const [initialized, setInitialized] = useState(false);
   const laneMapRef = useRef(new Map<string, LaneMapEntry>());
-  
+
   useEffect(() => {
     // Initialize on mount
     async function init() {
@@ -1572,16 +1690,18 @@ export function DataSourceProvider({ children }: Props) {
       laneMapRef.current = laneMap;
       setInitialized(true);
     }
-    
+
     init();
   }, []);
-  
+
   return (
-    <DataSourceContext.Provider value={{
-      nodes,
-      laneMap: laneMapRef.current,
-      initialized
-    }}>
+    <DataSourceContext.Provider
+      value={{
+        nodes,
+        laneMap: laneMapRef.current,
+        initialized,
+      }}
+    >
       {children}
     </DataSourceContext.Provider>
   );
@@ -1591,6 +1711,7 @@ export function DataSourceProvider({ children }: Props) {
 ### 17.6 Component Pattern
 
 **Typical Component:**
+
 ```typescript
 // EventTable.tsx
 export function EventTable() {
@@ -1599,30 +1720,29 @@ export function EventTable() {
   const [events, setEvents] = useState<EventTableData[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  
+
   useEffect(() => {
     async function fetchEvents() {
-      const node = nodes.find(n => n.id === selectedNode);
+      const node = nodes.find((n) => n.id === selectedNode);
       if (!node) return;
-      
+
       const dsIds = getOccupancyDatastreamIds(laneMap);
-      const observations = await node.getObservationsApi()
-        .searchObservations(
-          new ObservationFilter({
-            dataStream: dsIds.join(','),
-            resultTime: timeRange,
-            order: 'desc'
-          }),
-          rowsPerPage
-        );
-      
+      const observations = await node.getObservationsApi().searchObservations(
+        new ObservationFilter({
+          dataStream: dsIds.join(','),
+          resultTime: timeRange,
+          order: 'desc',
+        }),
+        rowsPerPage
+      );
+
       const eventData = observations.items.map(eventFromObservation);
       setEvents(eventData);
     }
-    
+
     fetchEvents();
   }, [selectedNode, page, rowsPerPage]);
-  
+
   return (
     <DataGrid
       rows={events}
@@ -1641,6 +1761,7 @@ export function EventTable() {
 ### 18.1 Essential Features (P0) - From oscar-viewer
 
 **1. Multi-Server Support:**
+
 ```typescript
 // Must support multiple endpoints
 const client1 = new CSAPIClient('https://site1.example.org/api');
@@ -1649,7 +1770,7 @@ const client2 = new CSAPIClient('https://site2.example.org/api');
 // Or federated client
 const federatedClient = new FederatedCSAPIClient([
   'https://site1.example.org/api',
-  'https://site2.example.org/api'
+  'https://site2.example.org/api',
 ]);
 
 const allSystems = await federatedClient.getAllSystems();
@@ -1657,6 +1778,7 @@ const allSystems = await federatedClient.getAllSystems();
 ```
 
 **2. Property-Based Discovery:**
+
 ```typescript
 // First-class support
 const gammaStreams = await client.findDataStreamsByProperty(
@@ -1668,12 +1790,13 @@ const gammaStreams = await client.findDataStreamsByProperty(
 const gammaStreams = await client.findDataStreams({
   observedProperty: {
     uri: 'http://www.opengis.net/def/GammaGrossCount',
-    match: 'contains'
-  }
+    match: 'contains',
+  },
 });
 ```
 
 **3. Fetch All Helper:**
+
 ```typescript
 // No more while (hasNext()) loops
 const allDataStreams = await client.fetchAllDataStreams(filter);
@@ -1685,23 +1808,25 @@ for await (const datastream of client.datastreamsIterator(filter)) {
 ```
 
 **4. Observation Count:**
+
 ```typescript
 // Built-in count endpoint support
 const count = await client.getObservationCount({
   dataStreams: ['ds1', 'ds2'],
-  resultTime: '2024-01-01/2024-02-01'
+  resultTime: '2024-01-01/2024-02-01',
 });
 ```
 
 **5. Auth Built-In:**
+
 ```typescript
 const client = new CSAPIClient({
   baseUrl: 'https://api.example.org',
   auth: {
     type: 'basic',
     username: 'user',
-    password: 'pass'
-  }
+    password: 'pass',
+  },
 });
 
 // Auth headers added automatically
@@ -1713,6 +1838,7 @@ const systems = await client.getSystems();
 ### 18.2 TypeScript Type System
 
 **Clean Type Exports:**
+
 ```typescript
 // Library should export types separately
 import { System, DataStream, Observation } from 'csapi-client';
@@ -1722,6 +1848,7 @@ import type { ISystem, IDataStream, IObservation } from 'csapi-client/types';
 ```
 
 **Strong Typing:**
+
 ```typescript
 interface System {
   id: string;
@@ -1740,6 +1867,7 @@ function isSystem(obj: any): obj is System {
 ```
 
 **Generic Collections:**
+
 ```typescript
 interface Collection<T> {
   items: T[];
@@ -1757,6 +1885,7 @@ const systems: Collection<System> = await client.searchSystems(filter);
 ### 18.3 Convenience API Design
 
 **Fluent Builder:**
+
 ```typescript
 const observations = await client
   .observations()
@@ -1768,6 +1897,7 @@ const observations = await client
 ```
 
 **Property Helpers:**
+
 ```typescript
 // Built-in property URI constants
 import { ObservedProperties } from 'csapi-client/properties';
@@ -1778,6 +1908,7 @@ const gammaStreams = await client.findDataStreamsByProperty(
 ```
 
 **Type Guards:**
+
 ```typescript
 // Exported utilities
 import { isGammaDataStream, isTamperDataStream } from 'csapi-client/utils';
@@ -1793,12 +1924,13 @@ if (isGammaDataStream(datastream)) {
 ### 18.4 Error Handling Strategy
 
 **Based on oscar-viewer patterns:**
+
 ```typescript
 interface CSAPIClientOptions {
   // Error handling
-  throwOnError?: boolean;        // Default: false (return defaults)
-  onError?: (error: CSAPIError) => void;  // Optional callback
-  
+  throwOnError?: boolean; // Default: false (return defaults)
+  onError?: (error: CSAPIError) => void; // Optional callback
+
   // Retry
   retry?: {
     retries: number;
@@ -1810,13 +1942,13 @@ interface CSAPIClientOptions {
 // Usage
 const client = new CSAPIClient({
   baseUrl: 'https://api.example.org',
-  throwOnError: false,  // Return empty/null instead of throwing
+  throwOnError: false, // Return empty/null instead of throwing
   onError: (error) => console.error(error),
-  retry: { retries: 3, backoff: 'exponential', maxDelay: 5000 }
+  retry: { retries: 3, backoff: 'exponential', maxDelay: 5000 },
 });
 
 // No try-catch needed
-const systems = await client.getSystems();  // Returns [] on error
+const systems = await client.getSystems(); // Returns [] on error
 ```
 
 ---
@@ -1824,6 +1956,7 @@ const systems = await client.getSystems();  // Returns [] on error
 ### 18.5 Real-time Support
 
 **MQTT and WebSocket:**
+
 ```typescript
 // Both protocols supported
 const stream = await datastream.stream({
@@ -1831,7 +1964,7 @@ const stream = await datastream.stream({
   onMessage: (observation) => updateUI(observation),
   onError: (error) => handleError(error),
   onConnect: () => console.log('Connected'),
-  onDisconnect: () => console.log('Disconnected')
+  onDisconnect: () => console.log('Disconnected'),
 });
 
 // Auto-reconnect
@@ -1848,14 +1981,17 @@ stream.close();
 **Based on oscar-viewer needs:**
 
 1. **Large Page Sizes:**
+
    - Default limits: 100-1000
    - Allow override for specific queries
 
 2. **Batch Queries:**
+
    - Accept array of IDs, auto-convert to comma-separated
    - Parallel requests for independent queries
 
 3. **State Integration:**
+
    - Redux/Zustand/Recoil adapters
    - Reactive wrappers for Vue/React
 
@@ -1871,6 +2007,7 @@ stream.close();
 ### Key Findings
 
 **oscar-viewer Patterns:**
+
 - **TypeScript:** Partial adoption with many type bypasses
 - **Multi-server:** Node abstraction for federated queries
 - **Property-based:** Heavy reliance on observedProperty URIs
@@ -1880,6 +2017,7 @@ stream.close();
 - **Custom endpoints:** `/observations/count` for pagination
 
 **Common with osh-viewer:**
+
 - Same osh-js library and patterns
 - Pagination loops everywhere
 - Filter construction boilerplate
@@ -1888,6 +2026,7 @@ stream.close();
 - Read-focused operations
 
 **Unique to oscar-viewer:**
+
 - Multi-server federation
 - Domain-specific models (lanes, events)
 - Type guards for datastream classification
@@ -1895,6 +2034,7 @@ stream.close();
 - Observation count endpoint
 
 **Convenience Needs:**
+
 1. `fetchAll()` to eliminate pagination loops
 2. Property-based lookup helpers
 3. Multi-datastream observation queries
@@ -1904,6 +2044,7 @@ stream.close();
 7. Observation count helper
 
 **MVP Scope Validation:**
+
 - Confirms osh-viewer findings: read operations dominate
 - Property filtering critical
 - Multi-server support important
@@ -1911,6 +2052,7 @@ stream.close();
 - Spatial queries not needed for many applications
 
 **TypeScript Lessons:**
+
 - Export types separately from classes
 - Avoid `typeof` pattern
 - Minimize `any` usage
@@ -1918,6 +2060,7 @@ stream.close();
 - Generic collection types
 
 This analysis reinforces that client library should prioritize:
+
 1. Clean TypeScript types
 2. Property-based discovery
 3. Pagination abstraction

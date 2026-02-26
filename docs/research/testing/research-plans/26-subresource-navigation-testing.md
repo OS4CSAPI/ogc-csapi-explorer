@@ -64,6 +64,7 @@ Define testing strategy for nested resource navigation patterns (e.g., `/systems
 **Objective:** Create complete inventory of CSAPI sub-resource patterns
 
 **Tasks:**
+
 1. Extract sub-resource patterns from CSAPI Part 1
 2. Extract sub-resource patterns from CSAPI Part 2
 3. Extract sub-resource patterns from CSAPI Part 3
@@ -76,6 +77,7 @@ Define testing strategy for nested resource navigation patterns (e.g., `/systems
 **Objective:** Analyze sub-resource URL patterns
 
 **Tasks:**
+
 1. Document URL structure for each sub-resource
 2. Identify URL parameter patterns ({id} placeholders)
 3. Document query parameter support on nested endpoints
@@ -87,6 +89,7 @@ Define testing strategy for nested resource navigation patterns (e.g., `/systems
 **Objective:** Analyze sub-resource navigation testing in upstream
 
 **Tasks:**
+
 1. Identify sub-resource tests in upstream
 2. Extract navigation test patterns
 3. Document nested endpoint mocking approaches
@@ -98,6 +101,7 @@ Define testing strategy for nested resource navigation patterns (e.g., `/systems
 **Objective:** Design test scenarios for sub-resource navigation
 
 **Tasks:**
+
 1. Design parent-to-child navigation test scenarios
 2. Design child-to-parent navigation test scenarios
 3. Design nested query parameter test scenarios
@@ -111,6 +115,7 @@ Define testing strategy for nested resource navigation patterns (e.g., `/systems
 **Objective:** Analyze bidirectional navigation requirements
 
 **Tasks:**
+
 1. Identify all bidirectional navigation paths
 2. Document link relations for reverse navigation
 3. Design bidirectional test scenarios
@@ -121,6 +126,7 @@ Define testing strategy for nested resource navigation patterns (e.g., `/systems
 **Objective:** Create comprehensive sub-resource navigation testing strategy
 
 **Tasks:**
+
 1. Consolidate navigation scenarios
 2. Create navigation test templates
 3. Document fixture requirements
@@ -149,6 +155,7 @@ This research is complete when:
 **Sub-resource navigation testing strategy covering all nested patterns**
 
 Content includes:
+
 - Complete sub-resource pattern inventory
 - Parent-child relationship matrix
 - URL structure templates for nested endpoints
@@ -164,6 +171,7 @@ Content includes:
 - Implementation estimates
 
 **Example Nested Patterns:**
+
 - `/systems/{id}/datastreams`
 - `/datastreams/{id}/observations`
 - `/systems/{id}/deployments`
@@ -175,12 +183,14 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 8: CSAPI Specification Review (resource relationships)
 - Section 13: Resource Method Testing Patterns (navigation methods)
 - Section 23: Pagination Testing Strategy (pagination on nested endpoints)
 - Section 24: Query Parameter Combination Testing (parameters on nested endpoints)
 
 **Blocks:**
+
 - Sub-resource navigation implementation
 - Nested endpoint implementation
 - ROADMAP Phase 2 implementation
@@ -209,6 +219,7 @@ Content includes:
 **Key Findings from Research:**
 
 **16 Relationship Patterns Identified:**
+
 1. Systems → Subsystems (hierarchical, unlimited depth, recursive)
 2. Deployments → Subdeployments (hierarchical, unlimited depth, recursive)
 3. Systems → SamplingFeatures (compositional, depth 1)
@@ -227,16 +238,19 @@ Content includes:
 16. Deployments → Systems (associative reverse via query parameter)
 
 **3 Relationship Types:**
+
 - **Hierarchical (2):** Subsystems, Subdeployments - unlimited depth with recursive parameter
 - **Compositional (12):** Parent owns child, depth 1, no recursive
 - **Associative (2):** Many-to-many, bidirectional navigation
 
 **URL Pattern Structure:**
+
 - Collection: `/{parent}/{parentId}/{children}`
 - Single resource: `/{parent}/{parentId}/{children}/{childId}`
 - Canonical equivalence: Nested URL = Canonical URL (same resource)
 
 **Query Parameter Inheritance:**
+
 - All nested endpoints support pagination (limit, offset)
 - Spatial endpoints support bbox, datetime
 - Observation endpoints support phenomenonTime, resultTime
@@ -244,16 +258,19 @@ Content includes:
 - Hierarchical endpoints support recursive parameter
 
 **Pagination Patterns:**
+
 - Offset-based for Part 1 (limit 10-100 typical)
 - Offset or cursor-based for Part 2 (limit up to 10000)
 - Cursor-based recommended for large datasets (millions of observations)
 
 **Bidirectional Navigation:**
+
 - Forward: Dedicated nested endpoint (`/systems/{id}/deployments`)
 - Reverse: Query parameter on collection (`/deployments?system={id}`)
 - Both directions return consistent results
 
 **60 Test Scenarios Designed:**
+
 - 10 hierarchical navigation tests (recursive)
 - 25 compositional navigation tests
 - 5 associative navigation tests
@@ -263,6 +280,7 @@ Content includes:
 - 10 invalid path/error handling tests
 
 **50 Fixtures Designed:**
+
 - 16 nested collection responses
 - 5 empty collection responses
 - 10 paginated responses
@@ -272,12 +290,14 @@ Content includes:
 - 2 recursive hierarchy responses
 
 **Implementation Estimates:**
+
 - URL Builder: 13-17 hours
 - Test Implementation: 19-24 hours
 - Fixture Creation: 6-8 hours
 - **Total: 40-52 hours**
 
 **Key Design Decisions:**
+
 - Generic nested URL builder pattern (reusable across all relationships)
 - Parameter validation (reject invalid parameters for resource type)
 - URL equivalence guarantee (nested = canonical)
@@ -287,6 +307,7 @@ Content includes:
 ---
 
 **Next Steps:**
+
 1. Implement generic nested URL builder (~13-17 hours)
 2. Implement hierarchical navigation methods (~2 hours)
 3. Implement compositional navigation methods (~6-7 hours)

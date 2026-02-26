@@ -20,47 +20,48 @@ Same as previous smoke tests: raw HTTP calls (`Invoke-RestMethod` / `Invoke-WebR
 
 ## Server Profile
 
-| Attribute | Value |
-|-----------|-------|
-| Title | `connected-systems-pygeoapi` |
-| Description | `OGC Connected-Systems API` |
-| SSL | Certificate expired — requires `-SkipCertificateCheck` |
+| Attribute   | Value                                                  |
+| ----------- | ------------------------------------------------------ |
+| Title       | `connected-systems-pygeoapi`                           |
+| Description | `OGC Connected-Systems API`                            |
+| SSL         | Certificate expired — requires `-SkipCertificateCheck` |
 
 ### Conformance Classes
 
-| Spec Part | Conformance Classes |
-|-----------|-------------------|
-| OGC API Common | `ogcapi-common-1/1.0/conf/core` |
-| Connected Systems Part 1 | **None advertised** |
-| Connected Systems Part 2 | **None advertised** |
+| Spec Part                | Conformance Classes             |
+| ------------------------ | ------------------------------- |
+| OGC API Common           | `ogcapi-common-1/1.0/conf/core` |
+| Connected Systems Part 1 | **None advertised**             |
+| Connected Systems Part 2 | **None advertised**             |
 
 **Critical observation:** This server advertises ZERO Connected Systems conformance classes, only the generic OGC API Common core class. Our `checkHasConnectedSystems()` conformance-based detection would NOT identify this as a CSAPI server. However, the collections and resource endpoints are fully present.
 
 ### Root Document Links
 
-| rel | href |
-|-----|------|
-| alternate (JSON) | `https://csa.demo.52north.org?f=json` |
-| alternate (JSON-LD) | `https://csa.demo.52north.org?f=jsonld` |
-| alternate (HTML) | `https://csa.demo.52north.org?f=html` |
-| service-desc | `https://csa.demo.52north.org/openapi` |
-| service-doc | `https://csa.demo.52north.org/openapi?f=html` |
-| conformance | `https://csa.demo.52north.org/conformance` |
-| data | `https://csa.demo.52north.org/collections` |
+| rel                 | href                                          |
+| ------------------- | --------------------------------------------- |
+| alternate (JSON)    | `https://csa.demo.52north.org?f=json`         |
+| alternate (JSON-LD) | `https://csa.demo.52north.org?f=jsonld`       |
+| alternate (HTML)    | `https://csa.demo.52north.org?f=html`         |
+| service-desc        | `https://csa.demo.52north.org/openapi`        |
+| service-doc         | `https://csa.demo.52north.org/openapi?f=html` |
+| conformance         | `https://csa.demo.52north.org/conformance`    |
+| data                | `https://csa.demo.52north.org/collections`    |
 
 **No top-level CSAPI resource links** (no `rel: "systems"`, `rel: "deployments"`, etc.). This means Convention 1 and Convention 2 link detection yield zero results for the root document. Resource discovery relies entirely on Convention 3 (collection-level `rel: "items"` links).
 
 ### Collections
 
-| Collection ID | featureType | items href | Notes |
-|--------------|------------|------------|-------|
-| `all_systems` | `system` | `/systems` | Leading slash |
-| `all_datastreams` | `datastreams` | `/datastreams` | Leading slash |
-| `all_fois` | `featureOfInterest` | `/featuresOfInterest` | **Not `samplingFeatures`!** |
-| `all_procedures` | `procedure` | `procedures` | No leading slash |
-| `all_deployments` | `deployment` | `deployments` | No leading slash |
+| Collection ID     | featureType         | items href            | Notes                       |
+| ----------------- | ------------------- | --------------------- | --------------------------- |
+| `all_systems`     | `system`            | `/systems`            | Leading slash               |
+| `all_datastreams` | `datastreams`       | `/datastreams`        | Leading slash               |
+| `all_fois`        | `featureOfInterest` | `/featuresOfInterest` | **Not `samplingFeatures`!** |
+| `all_procedures`  | `procedure`         | `procedures`          | No leading slash            |
+| `all_deployments` | `deployment`        | `deployments`         | No leading slash            |
 
 Each collection has TWO `rel: "items"` links:
+
 - HTML variant: e.g., `href: "/systems"` (`type: "text/html"`)
 - JSON variant: e.g., `href: "/systems?f=application/json"` (`type: "application/json"`)
 
@@ -70,18 +71,18 @@ Each collection has TWO `rel: "items"` links:
 
 ### Server Resource Inventory
 
-| Resource Type | Endpoint | HTTP Status | Data |
-|--------------|----------|-------------|------|
-| systems | `/systems` | 200 | Empty `FeatureCollection` |
-| deployments | `/deployments` | 200 | Empty `FeatureCollection` |
-| procedures | `/procedures` | 200 | Empty `FeatureCollection` |
-| samplingFeatures | `/samplingFeatures` | 200 | Empty `FeatureCollection` |
-| properties | `/properties` | 200 | Empty `FeatureCollection` |
-| datastreams | `/datastreams` | **500** | Internal Server Error |
-| observations | `/observations` | **500** | Internal Server Error |
-| featuresOfInterest | `/featuresOfInterest` | **404** | Not Found |
-| controlStreams | `/controlstreams` | **404** | Not Found |
-| commands | N/A | Not tested | N/A |
+| Resource Type      | Endpoint              | HTTP Status | Data                      |
+| ------------------ | --------------------- | ----------- | ------------------------- |
+| systems            | `/systems`            | 200         | Empty `FeatureCollection` |
+| deployments        | `/deployments`        | 200         | Empty `FeatureCollection` |
+| procedures         | `/procedures`         | 200         | Empty `FeatureCollection` |
+| samplingFeatures   | `/samplingFeatures`   | 200         | Empty `FeatureCollection` |
+| properties         | `/properties`         | 200         | Empty `FeatureCollection` |
+| datastreams        | `/datastreams`        | **500**     | Internal Server Error     |
+| observations       | `/observations`       | **500**     | Internal Server Error     |
+| featuresOfInterest | `/featuresOfInterest` | **404**     | Not Found                 |
+| controlStreams     | `/controlstreams`     | **404**     | Not Found                 |
+| commands           | N/A                   | Not tested  | N/A                       |
 
 ---
 
@@ -89,11 +90,11 @@ Each collection has TWO `rel: "items"` links:
 
 ### Response Envelope Difference
 
-| Aspect | OpenSensorHub | 52North |
-|--------|--------------|---------|
-| Envelope type | `{ items: [...], links: [...] }` | `{ type: "FeatureCollection", features: [...], links: [...] }` |
-| Item array key | `items` | `features` |
-| GeoJSON standard | Non-standard | Standard GeoJSON `FeatureCollection` |
+| Aspect           | OpenSensorHub                    | 52North                                                        |
+| ---------------- | -------------------------------- | -------------------------------------------------------------- |
+| Envelope type    | `{ items: [...], links: [...] }` | `{ type: "FeatureCollection", features: [...], links: [...] }` |
+| Item array key   | `items`                          | `features`                                                     |
+| GeoJSON standard | Non-standard                     | Standard GeoJSON `FeatureCollection`                           |
 
 This is a significant interoperability difference. Our response parsing will need to handle both shapes.
 
@@ -101,27 +102,27 @@ This is a significant interoperability difference. Our response parsing will nee
 
 All Part 1 resource list URLs produce valid responses:
 
-| Method | Generated URL Pattern | HTTP Status | Response Type |
-|--------|----------------------|-------------|---------------|
-| `listSystems()` | `/systems` | 200 ✅ | Empty FeatureCollection |
-| `listDeployments()` | `/deployments` | 200 ✅ | Empty FeatureCollection |
-| `listProcedures()` | `/procedures` | 200 ✅ | Empty FeatureCollection |
-| (future) listSamplingFeatures | `/samplingFeatures` | 200 ✅ | Empty FeatureCollection |
-| (future) listProperties | `/properties` | 200 ✅ | Empty FeatureCollection |
-| (future) listDatastreams | `/datastreams` | **500** ❌ | Server error |
-| (future) listObservations | `/observations` | **500** ❌ | Server error |
+| Method                        | Generated URL Pattern | HTTP Status | Response Type           |
+| ----------------------------- | --------------------- | ----------- | ----------------------- |
+| `listSystems()`               | `/systems`            | 200 ✅      | Empty FeatureCollection |
+| `listDeployments()`           | `/deployments`        | 200 ✅      | Empty FeatureCollection |
+| `listProcedures()`            | `/procedures`         | 200 ✅      | Empty FeatureCollection |
+| (future) listSamplingFeatures | `/samplingFeatures`   | 200 ✅      | Empty FeatureCollection |
+| (future) listProperties       | `/properties`         | 200 ✅      | Empty FeatureCollection |
+| (future) listDatastreams      | `/datastreams`        | **500** ❌  | Server error            |
+| (future) listObservations     | `/observations`       | **500** ❌  | Server error            |
 
 ### Query Parameter Support
 
 All tested on `/systems` endpoint (returns 200 with empty `FeatureCollection` for all):
 
-| Parameter | URL | Status |
-|-----------|-----|--------|
-| `limit=1` | `/systems?limit=1` | 200 ✅ (accepted) |
-| `offset=0` | `/systems?offset=0` | 200 ✅ (accepted) |
-| `q=test` | `/systems?q=test` | 200 ✅ (accepted) |
-| `bbox=-180,-90,180,90` | `/systems?bbox=-180,-90,180,90` | 200 ✅ (accepted) |
-| `datetime=2020-01-01/2024-12-31` | `/systems?datetime=...` | 200 ✅ (accepted) |
+| Parameter                        | URL                             | Status            |
+| -------------------------------- | ------------------------------- | ----------------- |
+| `limit=1`                        | `/systems?limit=1`              | 200 ✅ (accepted) |
+| `offset=0`                       | `/systems?offset=0`             | 200 ✅ (accepted) |
+| `q=test`                         | `/systems?q=test`               | 200 ✅ (accepted) |
+| `bbox=-180,-90,180,90`           | `/systems?bbox=-180,-90,180,90` | 200 ✅ (accepted) |
+| `datetime=2020-01-01/2024-12-31` | `/systems?datetime=...`         | 200 ✅ (accepted) |
 
 Could not validate actual filtering behavior — all responses are empty regardless of parameters.
 
@@ -137,13 +138,13 @@ This is the most significant finding from the 52North test, as this server relie
 
 Each collection has two `rel: "items"` links. Only the FIRST match wins (our loop uses `continue` after Convention 1/2, but Convention 3 doesn't — it just writes the map entry, so last-write-wins for duplicates with the same key).
 
-| Collection | HTML href | Match? | JSON href | Match? |
-|-----------|-----------|--------|-----------|--------|
-| all_systems | `/systems` | ✅ `systems` | `/systems?f=application/json` | ❌ segment = `systems?f=application/json` |
-| all_datastreams | `/datastreams` | ✅ `datastreams` | `/datastreams?f=application/json` | ❌ |
-| all_fois | `/featuresOfInterest` | ❌ not in CSAPIResourceTypes | `/featuresOfInterest?f=application/json` | ❌ |
-| all_procedures | `procedures` | ✅ `procedures` | `procedures?f=application/json` | ❌ segment = `procedures?f=application/json` |
-| all_deployments | `deployments` | ✅ `deployments` | `deployments?f=application/json` | ❌ |
+| Collection      | HTML href             | Match?                       | JSON href                                | Match?                                       |
+| --------------- | --------------------- | ---------------------------- | ---------------------------------------- | -------------------------------------------- |
+| all_systems     | `/systems`            | ✅ `systems`                 | `/systems?f=application/json`            | ❌ segment = `systems?f=application/json`    |
+| all_datastreams | `/datastreams`        | ✅ `datastreams`             | `/datastreams?f=application/json`        | ❌                                           |
+| all_fois        | `/featuresOfInterest` | ❌ not in CSAPIResourceTypes | `/featuresOfInterest?f=application/json` | ❌                                           |
+| all_procedures  | `procedures`          | ✅ `procedures`              | `procedures?f=application/json`          | ❌ segment = `procedures?f=application/json` |
+| all_deployments | `deployments`         | ✅ `deployments`             | `deployments?f=application/json`         | ❌                                           |
 
 **Convention 3 result for 52North collections:** `{ systems, datastreams, procedures, deployments }` — **4 of 5** detected.
 
@@ -152,16 +153,22 @@ Each collection has two `rel: "items"` links. Only the FIRST match wins (our loo
 **Bug 1 (Moderate): Query parameters in href break Convention 3 parser**
 
 Our `scanCsapiLinks` extracts the last path segment via:
+
 ```javascript
 const segment = href.replace(/\/+$/, '').split('/').pop();
 ```
+
 This does NOT strip query parameters. For `"/systems?f=application/json"`, the extracted segment is `"systems?f=application/json"`, which does not match `"systems"` in `knownTypes`.
 
 **Impact:** If the HTML `rel: "items"` link appears first (as it does here), Convention 3 still works because the HTML href has no query params. But if a server only provides the JSON-format link, Convention 3 would fail.
 
 **Fix:** Strip query parameters before extracting the segment:
+
 ```javascript
-const segment = new URL(href, 'http://x').pathname.replace(/\/+$/, '').split('/').pop();
+const segment = new URL(href, 'http://x').pathname
+  .replace(/\/+$/, '')
+  .split('/')
+  .pop();
 // OR simpler:
 const segment = href.split('?')[0].replace(/\/+$/, '').split('/').pop();
 ```
@@ -175,6 +182,7 @@ This means Convention 3 cannot discover the features-of-interest endpoint on ser
 **Impact:** The server's `/samplingFeatures` endpoint DOES return 200, so URL generation works correctly if a user directly invokes the builder method. The issue is only with automatic discovery via `scanCsapiLinks` from collection links. Servers may route both `/samplingFeatures` and `/featuresOfInterest` to the same data — 52North routes `/samplingFeatures` to empty data but returns 404 for `/featuresOfInterest`.
 
 **Fix options:**
+
 1. Add `featuresOfInterest` as an alias in the Convention 3 matcher
 2. Document it as a known server naming variation
 3. Normalize in the matcher: `featuresOfInterest` → `samplingFeatures`
@@ -183,21 +191,21 @@ This means Convention 3 cannot discover the features-of-interest endpoint on ser
 
 ## Comparative Summary: 52North vs OpenSensorHub
 
-| Dimension | OpenSensorHub | 52North |
-|-----------|--------------|---------|
-| **CSAPI conformance classes** | 20+ Part 1/2/3 classes | Zero (only OGC Common) |
-| **Root document resource links** | Convention 2: 6 resources | None |
-| **Collection-level links** | Convention 3: `rel: "items"` | Convention 3: `rel: "items"` (with query params) |
-| **Response envelope** | `{ items: [...] }` | `{ type: "FeatureCollection", features: [...] }` |
-| **SamplingFeatures naming** | `samplingFeatures` (href and endpoint) | `featuresOfInterest` (href) / `samplingFeatures` (endpoint) |
-| **Auth** | Basic auth required | None |
-| **SSL** | HTTP (no SSL) | HTTPS (expired cert) |
-| **Data** | 12 systems, 100+ obs., etc. | All collections empty |
-| **Broken endpoints** | None | datastreams (500), featuresOfInterest (404), controlstreams (404) |
-| **Leading slash in hrefs** | Consistent | Mixed |
-| **Query params in hrefs** | No | Yes (`?f=application/json`) |
-| **`properties` collection** | Not listed | Listed (empty data) |
-| **Localhost leak** | No | Yes (outer collections links) |
+| Dimension                        | OpenSensorHub                          | 52North                                                           |
+| -------------------------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| **CSAPI conformance classes**    | 20+ Part 1/2/3 classes                 | Zero (only OGC Common)                                            |
+| **Root document resource links** | Convention 2: 6 resources              | None                                                              |
+| **Collection-level links**       | Convention 3: `rel: "items"`           | Convention 3: `rel: "items"` (with query params)                  |
+| **Response envelope**            | `{ items: [...] }`                     | `{ type: "FeatureCollection", features: [...] }`                  |
+| **SamplingFeatures naming**      | `samplingFeatures` (href and endpoint) | `featuresOfInterest` (href) / `samplingFeatures` (endpoint)       |
+| **Auth**                         | Basic auth required                    | None                                                              |
+| **SSL**                          | HTTP (no SSL)                          | HTTPS (expired cert)                                              |
+| **Data**                         | 12 systems, 100+ obs., etc.            | All collections empty                                             |
+| **Broken endpoints**             | None                                   | datastreams (500), featuresOfInterest (404), controlstreams (404) |
+| **Leading slash in hrefs**       | Consistent                             | Mixed                                                             |
+| **Query params in hrefs**        | No                                     | Yes (`?f=application/json`)                                       |
+| **`properties` collection**      | Not listed                             | Listed (empty data)                                               |
+| **Localhost leak**               | No                                     | Yes (outer collections links)                                     |
 
 ---
 
@@ -255,16 +263,19 @@ This means Convention 3 cannot discover the features-of-interest endpoint on ser
 ## Impact on Our Code
 
 ### Immediate (should fix)
+
 1. **Strip query params in Convention 3** — 1-line fix in `scanCsapiLinks()`
 2. **`featuresOfInterest` alias** — design decision for resource naming
 
 ### Already handled correctly
+
 - Mixed leading slashes — our segment extraction handles both
 - Empty responses — our URL builder generates correct URLs regardless of data
 - No root resource links — we have fallback to collection-level link scanning
 - Standard GeoJSON `FeatureCollection` — noted for Phase 3 response parsing
 
 ### Deferred to Phase 3
+
 - Response envelope normalization (`items` vs `features` array key)
 - Conformance-only vs. multi-strategy server detection
 

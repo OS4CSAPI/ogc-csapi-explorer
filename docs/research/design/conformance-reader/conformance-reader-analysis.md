@@ -22,14 +22,16 @@ This document provides complete implementation specifications for adding CSAPI c
 ```typescript
 export function checkHasConnectedSystems([conformance]: [
   ConformanceClass[]
-]): boolean
+]): boolean;
 ```
 
 **Parameters:**
+
 - `conformance`: Array of ConformanceClass (which is `type ConformanceClass = string`)
 - Pattern uses destructured array parameter (same as EDR)
 
 **Return Value:**
+
 - `true` if endpoint supports CSAPI (Part 1 OR Part 2 Core detected)
 - `false` otherwise
 
@@ -39,6 +41,7 @@ export function checkHasConnectedSystems([conformance]: [
 Check for **either** Part 1 Core **OR** Part 2 Core conformance class.
 
 **Complete Implementation:**
+
 ```typescript
 export function checkHasConnectedSystems([conformance]: [
   ConformanceClass[]
@@ -55,6 +58,7 @@ export function checkHasConnectedSystems([conformance]: [
 ```
 
 **Rationale for "api-common" Classes:**
+
 - Part 1 api-common: Required for all Part 1 implementations
 - Part 2 api-common: Required for all Part 2 implementations
 - These are the core conformance classes that indicate CSAPI support
@@ -63,6 +67,7 @@ export function checkHasConnectedSystems([conformance]: [
 ### 1.3 Comparison with EDR Pattern
 
 **EDR Implementation (Reference):**
+
 ```typescript
 export function checkHasEnvironmentalDataRetrieval([conformance]: [
   ConformanceClass[]
@@ -76,6 +81,7 @@ export function checkHasEnvironmentalDataRetrieval([conformance]: [
 ```
 
 **Key Differences:**
+
 - **CSAPI**: Checks for **two** conformance classes (Part 1 OR Part 2)
 - **EDR**: Checks for **one** conformance class
 - **CSAPI**: Uses `api-common` (foundational)
@@ -93,6 +99,7 @@ get hasConnectedSystems(): Promise<boolean>
 ```
 
 **Characteristics:**
+
 - Public getter on OgcApiEndpoint class
 - Returns Promise<boolean> (async conformance check)
 - No parameters (reads from internal conformanceClasses)
@@ -103,6 +110,7 @@ get hasConnectedSystems(): Promise<boolean>
 **Location:** `src/ogc-api/endpoint.ts` (~line 275, after `hasEnvironmentalDataRetrieval`)
 
 **Complete Implementation:**
+
 ```typescript
   /**
    * A Promise which resolves to a boolean indicating whether the endpoint offers Connected Systems API support.
@@ -115,6 +123,7 @@ get hasConnectedSystems(): Promise<boolean>
 ```
 
 **Pattern Analysis:**
+
 - Uses `Promise.all()` even though only one promise (consistency with EDR)
 - Destructures array for `checkHasConnectedSystems` function
 - Follows exact pattern of `hasEnvironmentalDataRetrieval`
@@ -122,6 +131,7 @@ get hasConnectedSystems(): Promise<boolean>
 ### 2.3 Comparison with Other Getters
 
 **Simple Pattern (Tiles, Styles, EDR):**
+
 ```typescript
 get hasTiles(): Promise<boolean> {
   return this.conformanceClasses.then(checkTileConformance);
@@ -135,6 +145,7 @@ get hasEnvironmentalDataRetrieval(): Promise<boolean> {
 ```
 
 **Complex Pattern (Features, Records):**
+
 ```typescript
 get hasFeatures(): Promise<boolean> {
   return Promise.all([
@@ -145,6 +156,7 @@ get hasFeatures(): Promise<boolean> {
 ```
 
 **CSAPI Uses Simple Pattern:**
+
 - No need to check collections (unlike Features/Records)
 - No need to check metadata (unlike EDR's per-collection checks)
 - Pure conformance class detection
@@ -156,6 +168,7 @@ get hasFeatures(): Promise<boolean> {
 ### 3.1 Existing Types (No Changes Required)
 
 **ConformanceClass Type:**
+
 ```typescript
 export type ConformanceClass = string;
 ```
@@ -163,6 +176,7 @@ export type ConformanceClass = string;
 **Location:** `src/ogc-api/model.ts` (line 3)
 
 **Usage:**
+
 - Already used by all conformance check functions
 - Array parameter: `ConformanceClass[]`
 - Return value from `parseConformance()`
@@ -172,6 +186,7 @@ export type ConformanceClass = string;
 Unlike EDR which requires metadata types (`DataQueryType`, `EdrParameterInfo`), CSAPI conformance detection requires **no new types**.
 
 **Comparison:**
+
 - **EDR**: Adds 5+ new types for data queries, parameters, metadata
 - **CSAPI**: Uses only existing `ConformanceClass` type
 - **Reason**: Conformance detection is metadata-agnostic
@@ -187,13 +202,15 @@ Unlike EDR which requires metadata types (`DataQueryType`, `EdrParameterInfo`), 
 **Lines Added:** ~7 lines (function + whitespace)
 
 **Import Requirements:**
+
 - None (uses existing `ConformanceClass` type)
 
 **Export Requirements:**
+
 ```typescript
 export function checkHasConnectedSystems([conformance]: [
   ConformanceClass[]
-]): boolean
+]): boolean;
 ```
 
 ### 4.2 endpoint.ts Integration
@@ -203,6 +220,7 @@ export function checkHasConnectedSystems([conformance]: [
 **Lines Added:** ~5 lines (getter + comment)
 
 **Import Requirements:**
+
 ```typescript
 import {
   checkHasConnectedSystems, // ADD THIS
@@ -214,6 +232,7 @@ import {
 ```
 
 **Export Requirements:**
+
 - Getter is automatically exported as public class member
 - No explicit export needed
 
@@ -223,6 +242,7 @@ import {
 **Action:** No changes required
 
 **Reason:**
+
 - Only exports `OgcApiEndpoint` class (which includes getter)
 - Does not export individual conformance check functions
 - Pattern: EDR check function not exported either
@@ -234,11 +254,13 @@ import {
 ### 5.1 CSAPI Conformance Class URIs
 
 **Part 1 Base URI:**
+
 ```
 http://www.opengis.net/spec/ogcapi-connected-systems-1/1.0/conf/
 ```
 
 **Part 2 Base URI:**
+
 ```
 http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/
 ```
@@ -246,6 +268,7 @@ http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/
 **Core Classes Used for Detection:**
 
 1. **Part 1 Common (Primary Detection):**
+
    ```
    http://www.opengis.net/spec/ogcapi-connected-systems-1/1.0/conf/api-common
    ```
@@ -258,11 +281,13 @@ http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/
 ### 5.2 Complete Part 1 Conformance Classes
 
 **Required:**
+
 - `api-common` - Common patterns and requirements
 
 **Resource Types:**
+
 - `system` - System resources
-- `subsystem` - Subsystem resources  
+- `subsystem` - Subsystem resources
 - `deployment` - Deployment resources
 - `subdeployment` - Subdeployment resources
 - `procedure` - Procedure resources
@@ -270,6 +295,7 @@ http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/
 - `property` - Property resources
 
 **Optional Features:**
+
 - `advanced-filtering` - Advanced query capabilities
 - `create-replace-delete` - Write operations
 - `update` - Patch operations
@@ -279,15 +305,18 @@ http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/
 ### 5.3 Complete Part 2 Conformance Classes
 
 **Required:**
+
 - `api-common` - Common patterns and requirements
 
 **Resource Types:**
+
 - `datastream` - Data stream resources
 - `controlstream` - Control stream resources
 - `feasibility` - Feasibility check resources
 - `system-event` - System event resources
 
 **Optional Features:**
+
 - `advanced-filtering` - Advanced query capabilities
 - `create-replace-delete` - Write operations
 - `update` - Patch operations
@@ -299,6 +328,7 @@ http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/
 ### 5.4 Why Use "api-common" for Detection?
 
 **Reasoning:**
+
 1. **Foundational**: All implementations MUST support api-common
 2. **Comprehensive**: Presence indicates full CSAPI support capability
 3. **Unambiguous**: Clear indicator of standard compliance
@@ -306,6 +336,7 @@ http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/
 5. **Consistent**: Mirrors approach used by other OGC APIs
 
 **Alternative Rejected:**
+
 - Checking for specific resource types (system, datastream) - too narrow
 - Checking for multiple classes - unnecessary complexity
 - Pattern matching on URI prefix - not precise enough
@@ -319,17 +350,19 @@ http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/
 **Pattern:** Same as EDR and other conformance checks
 
 **Characteristics:**
+
 - Returns `false` if conformance classes not found
 - No exceptions thrown
 - No validation of conformance array
 
 **Code Behavior:**
+
 ```typescript
 // Empty array
-checkHasConnectedSystems([[]]) // returns false
+checkHasConnectedSystems([[]]); // returns false
 
 // Null safety (handled by caller)
-endpoint.conformanceClasses // handles fetch errors upstream
+endpoint.conformanceClasses; // handles fetch errors upstream
 
 // Malformed URIs
 // No validation - exact string match only
@@ -338,15 +371,18 @@ endpoint.conformanceClasses // handles fetch errors upstream
 ### 6.2 Error Handling Location
 
 **Upstream Handling:**
+
 - `endpoint.conformanceClasses` getter handles fetch errors
 - `parseConformance()` extracts array from response
 - Errors propagate as rejected Promise
 
 **Downstream Handling:**
+
 - `endpoint.hasConnectedSystems` returns rejected Promise if fetch fails
 - Caller must handle Promise rejection
 
 **Pattern Consistency:**
+
 - Identical to EDR, Features, Tiles, Records
 - No special error handling in conformance check function
 
@@ -365,14 +401,14 @@ endpoint.conformanceClasses // handles fetch errors upstream
 describe('checkHasConnectedSystems', () => {
   it('returns true when Part 1 api-common is present', () => {
     const conformance = [
-      'http://www.opengis.net/spec/ogcapi-connected-systems-1/1.0/conf/api-common'
+      'http://www.opengis.net/spec/ogcapi-connected-systems-1/1.0/conf/api-common',
     ];
     expect(checkHasConnectedSystems([conformance])).toBe(true);
   });
 
   it('returns true when Part 2 api-common is present', () => {
     const conformance = [
-      'http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/api-common'
+      'http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/api-common',
     ];
     expect(checkHasConnectedSystems([conformance])).toBe(true);
   });
@@ -380,7 +416,7 @@ describe('checkHasConnectedSystems', () => {
   it('returns true when both Part 1 and Part 2 api-common are present', () => {
     const conformance = [
       'http://www.opengis.net/spec/ogcapi-connected-systems-1/1.0/conf/api-common',
-      'http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/api-common'
+      'http://www.opengis.net/spec/ogcapi-connected-systems-2/1.0/conf/api-common',
     ];
     expect(checkHasConnectedSystems([conformance])).toBe(true);
   });
@@ -388,7 +424,7 @@ describe('checkHasConnectedSystems', () => {
   it('returns false when no CSAPI conformance classes present', () => {
     const conformance = [
       'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
-      'http://www.opengis.net/spec/ogcapi-edr-1/1.0/conf/core'
+      'http://www.opengis.net/spec/ogcapi-edr-1/1.0/conf/core',
     ];
     expect(checkHasConnectedSystems([conformance])).toBe(false);
   });
@@ -400,7 +436,7 @@ describe('checkHasConnectedSystems', () => {
   it('returns true when Part 1 system class is present (but not api-common)', () => {
     // Should return false since we're checking for api-common specifically
     const conformance = [
-      'http://www.opengis.net/spec/ogcapi-connected-systems-1/1.0/conf/system'
+      'http://www.opengis.net/spec/ogcapi-connected-systems-1/1.0/conf/system',
     ];
     expect(checkHasConnectedSystems([conformance])).toBe(false);
   });
@@ -455,6 +491,7 @@ describe('#hasConnectedSystems', () => {
 **File:** `fixtures/ogc-api/csapi-test-endpoint/root.json`
 
 **Minimum Conformance Document:**
+
 ```json
 {
   "title": "Test CSAPI Endpoint",
@@ -479,6 +516,7 @@ describe('#hasConnectedSystems', () => {
 **File:** `fixtures/ogc-api/csapi-test-endpoint/conformance.json`
 
 **Part 1 Support:**
+
 ```json
 {
   "conformsTo": [
@@ -490,6 +528,7 @@ describe('#hasConnectedSystems', () => {
 ```
 
 **Part 2 Support:**
+
 ```json
 {
   "conformsTo": [
@@ -507,11 +546,13 @@ describe('#hasConnectedSystems', () => {
 ### Phase 1: Core Function (Day 1, 30 minutes)
 
 - [ ] **1.1** Add `checkHasConnectedSystems` function to `info.ts`
+
   - Location: After `checkHasEnvironmentalDataRetrieval` (line ~105)
   - Implementation: 7 lines (including whitespace)
   - Pattern: Exact copy of EDR pattern with CSAPI URIs
 
 - [ ] **1.2** Add import to `endpoint.ts`
+
   - Location: Import block (line ~2)
   - Change: Add `checkHasConnectedSystems` to existing import list
   - Lines: 1 line modified
@@ -524,6 +565,7 @@ describe('#hasConnectedSystems', () => {
 ### Phase 2: Unit Tests (Day 1, 1 hour)
 
 - [ ] **2.1** Create `info.spec.ts` test suite
+
   - Test: `checkHasConnectedSystems` function
   - Cases: 6 test cases minimum
   - Coverage: Part 1, Part 2, both, none, empty, edge cases
@@ -536,11 +578,13 @@ describe('#hasConnectedSystems', () => {
 ### Phase 3: Integration Tests (Day 1, 1 hour)
 
 - [ ] **3.1** Create test fixtures
+
   - Files: `fixtures/ogc-api/csapi-test-endpoint/`
   - Documents: root.json, conformance.json
   - Variants: Part 1 only, Part 2 only
 
 - [ ] **3.2** Add `endpoint.spec.ts` test cases
+
   - Test: `#hasConnectedSystems` getter
   - Cases: 3 test cases minimum
   - Setup: Mock OgcApiEndpoint with fixtures
@@ -553,6 +597,7 @@ describe('#hasConnectedSystems', () => {
 ### Phase 4: Validation (Day 2, 30 minutes)
 
 - [ ] **4.1** Manual testing with live endpoint
+
   - Test: Real CSAPI endpoint (if available)
   - Verify: `hasConnectedSystems` returns true
   - Document: Endpoint URL and results
@@ -567,9 +612,11 @@ describe('#hasConnectedSystems', () => {
 ### Phase 5: Documentation (Day 2, 30 minutes)
 
 - [ ] **5.1** Update type documentation
+
   - No changes required (using existing ConformanceClass)
 
 - [ ] **5.2** Update README examples (if applicable)
+
   - Add example: Check CSAPI support
   - Code: `const hasCSAPI = await endpoint.hasConnectedSystems;`
 
@@ -586,6 +633,7 @@ describe('#hasConnectedSystems', () => {
 **None** - This component is fully independent.
 
 **Characteristics:**
+
 - Self-contained conformance detection
 - No dependencies on other CSAPI components
 - No dependencies on collections metadata
@@ -594,11 +642,13 @@ describe('#hasConnectedSystems', () => {
 ### 9.2 Required By (Blocks These Components)
 
 **Component 1: OgcApiEndpoint Integration**
+
 - Needs: `hasConnectedSystems` getter
 - Usage: Factory method validation
 - Code: `if (!this.hasConnectedSystems) throw EndpointError`
 
 **Component 3: Collections Reader**
+
 - Needs: `hasConnectedSystems` getter
 - Usage: Collections list filtering
 - Code: `Promise.all([this.data, this.hasConnectedSystems])`
@@ -619,18 +669,21 @@ Day 2 (Afternoon): Full integration testing
 ### Decision 1: Use "api-common" Classes for Detection
 
 **Options Considered:**
+
 1. Check for `api-common` (CHOSEN)
 2. Check for specific resource types (system, datastream)
 3. Check for URI prefix pattern
 4. Check for multiple classes with AND logic
 
 **Rationale:**
+
 - `api-common` is required by all implementations
 - Most foundational and unambiguous
 - Future-proof (works with new resource types)
 - Consistent with OGC API architecture
 
 **Rejected Alternatives:**
+
 - Resource types: Too narrow, misses valid implementations
 - URI prefix: Not precise, could match invalid URIs
 - Multiple classes: Unnecessary complexity, false negatives
@@ -638,29 +691,34 @@ Day 2 (Afternoon): Full integration testing
 ### Decision 2: OR Logic for Part 1 and Part 2
 
 **Options Considered:**
+
 1. Part 1 OR Part 2 (CHOSEN)
 2. Part 1 AND Part 2
 3. Part 1 only
 4. Part 2 only
 
 **Rationale:**
+
 - Servers may implement only one part
 - Both parts are valid CSAPI implementations
 - Maximizes compatibility
 - Follows principle of least surprise
 
 **Rejected Alternatives:**
+
 - AND logic: Too restrictive, breaks valid servers
 - Single part: Arbitrary limitation, breaks use cases
 
 ### Decision 3: Simple Pattern (No Collection Check)
 
 **Options Considered:**
+
 1. Conformance-only check (CHOSEN)
 2. Conformance + collection metadata check
 3. Conformance + resource discovery
 
 **Rationale:**
+
 - Conformance classes are sufficient
 - Collections metadata not required for detection
 - Simpler implementation (7 lines vs 20+ lines)
@@ -668,40 +726,47 @@ Day 2 (Afternoon): Full integration testing
 - Consistent with Tiles/Styles pattern
 
 **Rejected Alternatives:**
+
 - Collection check: Unnecessary complexity, no benefit
 - Resource discovery: Premature, belongs in Component 3
 
 ### Decision 4: No New Type Definitions
 
 **Options Considered:**
+
 1. Use existing ConformanceClass type (CHOSEN)
 2. Create CSAPIConformanceClass type
 3. Create conformance validation types
 
 **Rationale:**
+
 - Conformance detection doesn't need type safety beyond string
 - Reduces code footprint
 - Consistent with EDR/Tiles/Features approach
 - Type safety handled by upstream parseConformance
 
 **Rejected Alternatives:**
+
 - Custom types: Unnecessary complexity, no benefit
 - Validation types: Out of scope for detection
 
 ### Decision 5: Promise.all Wrapper Pattern
 
 **Options Considered:**
+
 1. Use Promise.all([]) wrapper (CHOSEN)
 2. Direct .then() chaining
 3. Async/await pattern
 
 **Rationale:**
+
 - Consistent with EDR pattern
 - Prepares for future multiple-promise scenarios
 - Uniform pattern across all conformance getters
 - Matches existing codebase style
 
 **Rejected Alternatives:**
+
 - Direct chaining: Inconsistent with established pattern
 - Async/await: Not used in getters throughout codebase
 
@@ -773,35 +838,36 @@ import {
 
 ## Appendix B: Conformance Class Reference Table
 
-| Part | Class | URI | Required? | Purpose |
-|------|-------|-----|-----------|---------|
-| 1 | API Common | `.../ogcapi-connected-systems-1/1.0/conf/api-common` | ✅ Yes | Core patterns |
-| 1 | System | `.../ogcapi-connected-systems-1/1.0/conf/system` | ❌ No | System resources |
-| 1 | Subsystem | `.../ogcapi-connected-systems-1/1.0/conf/subsystem` | ❌ No | Subsystem resources |
-| 1 | Deployment | `.../ogcapi-connected-systems-1/1.0/conf/deployment` | ❌ No | Deployment resources |
-| 1 | Subdeployment | `.../ogcapi-connected-systems-1/1.0/conf/subdeployment` | ❌ No | Subdeployment resources |
-| 1 | Procedure | `.../ogcapi-connected-systems-1/1.0/conf/procedure` | ❌ No | Procedure resources |
-| 1 | Sampling Features | `.../ogcapi-connected-systems-1/1.0/conf/sf` | ❌ No | Sampling features |
-| 1 | Property | `.../ogcapi-connected-systems-1/1.0/conf/property` | ❌ No | Property resources |
-| 1 | Advanced Filtering | `.../ogcapi-connected-systems-1/1.0/conf/advanced-filtering` | ❌ No | Query capabilities |
-| 1 | Create/Replace/Delete | `.../ogcapi-connected-systems-1/1.0/conf/create-replace-delete` | ❌ No | Write operations |
-| 1 | Update | `.../ogcapi-connected-systems-1/1.0/conf/update` | ❌ No | Patch operations |
-| 1 | GeoJSON | `.../ogcapi-connected-systems-1/1.0/conf/geojson` | ❌ No | GeoJSON encoding |
-| 1 | SensorML | `.../ogcapi-connected-systems-1/1.0/conf/sensorml` | ❌ No | SensorML encoding |
-| 2 | API Common | `.../ogcapi-connected-systems-2/1.0/conf/api-common` | ✅ Yes | Core patterns |
-| 2 | DataStream | `.../ogcapi-connected-systems-2/1.0/conf/datastream` | ❌ No | Data streams |
-| 2 | ControlStream | `.../ogcapi-connected-systems-2/1.0/conf/controlstream` | ❌ No | Control streams |
-| 2 | Feasibility | `.../ogcapi-connected-systems-2/1.0/conf/feasibility` | ❌ No | Feasibility checks |
-| 2 | System Events | `.../ogcapi-connected-systems-2/1.0/conf/system-event` | ❌ No | System events |
-| 2 | Advanced Filtering | `.../ogcapi-connected-systems-2/1.0/conf/advanced-filtering` | ❌ No | Query capabilities |
-| 2 | Create/Replace/Delete | `.../ogcapi-connected-systems-2/1.0/conf/create-replace-delete` | ❌ No | Write operations |
-| 2 | Update | `.../ogcapi-connected-systems-2/1.0/conf/update` | ❌ No | Patch operations |
-| 2 | JSON | `.../ogcapi-connected-systems-2/1.0/conf/json` | ❌ No | JSON encoding |
-| 2 | SWE Common JSON | `.../ogcapi-connected-systems-2/1.0/conf/swecommon-json` | ❌ No | SWE JSON |
-| 2 | SWE Common Text | `.../ogcapi-connected-systems-2/1.0/conf/swecommon-text` | ❌ No | SWE text |
-| 2 | SWE Common Binary | `.../ogcapi-connected-systems-2/1.0/conf/swecommon-binary` | ❌ No | SWE binary |
+| Part | Class                 | URI                                                             | Required? | Purpose                 |
+| ---- | --------------------- | --------------------------------------------------------------- | --------- | ----------------------- |
+| 1    | API Common            | `.../ogcapi-connected-systems-1/1.0/conf/api-common`            | ✅ Yes    | Core patterns           |
+| 1    | System                | `.../ogcapi-connected-systems-1/1.0/conf/system`                | ❌ No     | System resources        |
+| 1    | Subsystem             | `.../ogcapi-connected-systems-1/1.0/conf/subsystem`             | ❌ No     | Subsystem resources     |
+| 1    | Deployment            | `.../ogcapi-connected-systems-1/1.0/conf/deployment`            | ❌ No     | Deployment resources    |
+| 1    | Subdeployment         | `.../ogcapi-connected-systems-1/1.0/conf/subdeployment`         | ❌ No     | Subdeployment resources |
+| 1    | Procedure             | `.../ogcapi-connected-systems-1/1.0/conf/procedure`             | ❌ No     | Procedure resources     |
+| 1    | Sampling Features     | `.../ogcapi-connected-systems-1/1.0/conf/sf`                    | ❌ No     | Sampling features       |
+| 1    | Property              | `.../ogcapi-connected-systems-1/1.0/conf/property`              | ❌ No     | Property resources      |
+| 1    | Advanced Filtering    | `.../ogcapi-connected-systems-1/1.0/conf/advanced-filtering`    | ❌ No     | Query capabilities      |
+| 1    | Create/Replace/Delete | `.../ogcapi-connected-systems-1/1.0/conf/create-replace-delete` | ❌ No     | Write operations        |
+| 1    | Update                | `.../ogcapi-connected-systems-1/1.0/conf/update`                | ❌ No     | Patch operations        |
+| 1    | GeoJSON               | `.../ogcapi-connected-systems-1/1.0/conf/geojson`               | ❌ No     | GeoJSON encoding        |
+| 1    | SensorML              | `.../ogcapi-connected-systems-1/1.0/conf/sensorml`              | ❌ No     | SensorML encoding       |
+| 2    | API Common            | `.../ogcapi-connected-systems-2/1.0/conf/api-common`            | ✅ Yes    | Core patterns           |
+| 2    | DataStream            | `.../ogcapi-connected-systems-2/1.0/conf/datastream`            | ❌ No     | Data streams            |
+| 2    | ControlStream         | `.../ogcapi-connected-systems-2/1.0/conf/controlstream`         | ❌ No     | Control streams         |
+| 2    | Feasibility           | `.../ogcapi-connected-systems-2/1.0/conf/feasibility`           | ❌ No     | Feasibility checks      |
+| 2    | System Events         | `.../ogcapi-connected-systems-2/1.0/conf/system-event`          | ❌ No     | System events           |
+| 2    | Advanced Filtering    | `.../ogcapi-connected-systems-2/1.0/conf/advanced-filtering`    | ❌ No     | Query capabilities      |
+| 2    | Create/Replace/Delete | `.../ogcapi-connected-systems-2/1.0/conf/create-replace-delete` | ❌ No     | Write operations        |
+| 2    | Update                | `.../ogcapi-connected-systems-2/1.0/conf/update`                | ❌ No     | Patch operations        |
+| 2    | JSON                  | `.../ogcapi-connected-systems-2/1.0/conf/json`                  | ❌ No     | JSON encoding           |
+| 2    | SWE Common JSON       | `.../ogcapi-connected-systems-2/1.0/conf/swecommon-json`        | ❌ No     | SWE JSON                |
+| 2    | SWE Common Text       | `.../ogcapi-connected-systems-2/1.0/conf/swecommon-text`        | ❌ No     | SWE text                |
+| 2    | SWE Common Binary     | `.../ogcapi-connected-systems-2/1.0/conf/swecommon-binary`      | ❌ No     | SWE binary              |
 
 **Detection Logic:**
+
 - **Minimum Required:** Part 1 api-common **OR** Part 2 api-common
 - **Detection Function:** Checks only required classes (✅ rows)
 - **All Other Classes:** Optional, not checked for detection
@@ -833,6 +899,7 @@ get hasEnvironmentalDataRetrieval(): Promise<boolean> {
 ```
 
 **Characteristics:**
+
 - Single conformance class check
 - Simple indexOf pattern
 - Promise.all wrapper (even though single promise)
@@ -866,6 +933,7 @@ get hasFeatures(): Promise<boolean> {
 ```
 
 **Characteristics:**
+
 - Two-parameter check (conformance + collections)
 - AND logic (must have both conformance + collection data)
 - More complex getter (fetches data)
@@ -897,6 +965,7 @@ get hasConnectedSystems(): Promise<boolean> {
 ```
 
 **Characteristics:**
+
 - Single parameter (conformance only)
 - OR logic (Part 1 OR Part 2)
 - Simple getter (like EDR)
@@ -904,16 +973,17 @@ get hasConnectedSystems(): Promise<boolean> {
 
 ### C.4 Pattern Analysis Summary
 
-| API | Parameters | Logic | Complexity | Line Count |
-|-----|------------|-------|------------|-----------|
-| **Tiles** | Conformance | Single check | Simple | ~5 lines |
-| **Styles** | Conformance | OR (2 versions) | Simple | ~7 lines |
-| **EDR** | Conformance | Single check | Simple | ~7 lines |
-| **Features** | Conformance + Collections | AND + filter | Complex | ~12 lines |
-| **Records** | Conformance + Collections | Multi-check + filter | Complex | ~15 lines |
-| **CSAPI** | Conformance | OR (2 parts) | Simple | ~7 lines |
+| API          | Parameters                | Logic                | Complexity | Line Count |
+| ------------ | ------------------------- | -------------------- | ---------- | ---------- |
+| **Tiles**    | Conformance               | Single check         | Simple     | ~5 lines   |
+| **Styles**   | Conformance               | OR (2 versions)      | Simple     | ~7 lines   |
+| **EDR**      | Conformance               | Single check         | Simple     | ~7 lines   |
+| **Features** | Conformance + Collections | AND + filter         | Complex    | ~12 lines  |
+| **Records**  | Conformance + Collections | Multi-check + filter | Complex    | ~15 lines  |
+| **CSAPI**    | Conformance               | OR (2 parts)         | Simple     | ~7 lines   |
 
 **Pattern Classification:**
+
 - **Simple Pattern:** Tiles, Styles, EDR, **CSAPI**
 - **Complex Pattern:** Features, Records
 
@@ -938,6 +1008,7 @@ All implementation work for Component 2 must adhere to the project's [Developmen
 ### Key Standards for This Component
 
 **Development Workflow:**
+
 1. Write function signatures before implementation (done in this analysis)
 2. Add comprehensive JSDoc comments with parameters, return types, examples
 3. Implement functionality following EDR pattern exactly
@@ -945,14 +1016,16 @@ All implementation work for Component 2 must adhere to the project's [Developmen
 5. Document edge cases and validation rules as discovered
 
 **Code Quality Requirements:**
+
 - TypeScript strict mode enabled
 - 100% public API JSDoc coverage (add JSDoc to `hasConnectedSystems` getter)
-- >80% test coverage (statement and branch)
+- > 80% test coverage (statement and branch)
 - Lint-clean code (ESLint configuration)
 - No magic numbers or strings (use constants for conformance URIs)
 - Consistent error handling patterns (return false, never throw)
 
 **Documentation Requirements:**
+
 - Clear, concise method descriptions
 - Parameter descriptions with types and constraints
 - Return type documentation
@@ -960,6 +1033,7 @@ All implementation work for Component 2 must adhere to the project's [Developmen
 - Error condition documentation
 
 **Testing Requirements:**
+
 - Test positive cases (Part 1, Part 2, both)
 - Test negative cases (empty array, wrong classes)
 - Test edge cases (undefined, null, malformed URIs)

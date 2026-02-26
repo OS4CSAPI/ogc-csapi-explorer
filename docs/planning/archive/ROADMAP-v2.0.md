@@ -12,6 +12,7 @@ This roadmap outlines the complete implementation plan for adding Connected Syst
 > **📋 FULL CONTEXT**
 >
 > This roadmap extracts the implementation phases from the complete [CSAPI Implementation Guide](csapi-implementation-guide.md), which contains:
+>
 > - 13 completed research plans with ⭐⭐⭐⭐⭐ confidence ratings
 > - Complete architectural decisions and rationale
 > - Detailed component specifications
@@ -28,16 +29,19 @@ This roadmap outlines the complete implementation plan for adding Connected Syst
 - **Phase 4: Worker & Tests (12-16 hours)** - Worker extensions, integration tests, documentation completion (4 tasks)
 
 **Total Scope:**
+
 - **Implementation:** ~4,850-6,500 lines across 24 files
 - **Tests:** ~4,400-6,300 lines across 17 test files
 - **Total Code:** ~9,250-12,800 lines
 
 **Key Dependencies:**
+
 - Phase 1 → Phase 2 (types required for QueryBuilder)
 - Phase 2 → Phase 3 (QueryBuilder required for format integration tests)
 - Phases 1-3 → Phase 4 (complete implementation required for full testing)
 
 **Success Factors:**
+
 - Write JSDoc documentation as you code (don't defer)
 - **Write tests immediately after each subtask** (not batched at end of phase)
 - Validate against spec examples throughout
@@ -60,6 +64,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
 **Tasks:**
 
 1. **Create Type System** (~4-5 hours, Low complexity)
+
    - Create `src/ogc-api/csapi/model.ts` (~350-400 lines)
    - Define all Part 1 resource interfaces (System, Deployment, Procedure, SamplingFeature, Property)
    - Define all Part 2 resource interfaces (Datastream, Observation, ControlStream, Command)
@@ -70,6 +75,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** Create `model.spec.ts` for type validation tests (~200-300 lines)
 
 2. **Create Helper Utilities** (~3-4 hours, Low complexity)
+
    - Create `src/ogc-api/csapi/helpers.ts` (~50-80 lines)
    - Implement `buildResourceUrl(resourceType, id?, subPath?, options?)` - core URL construction
    - Implement `buildQueryString(options?)` - parameter serialization with encoding
@@ -78,6 +84,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** Add helper tests (~100-150 lines for helpers)
 
 3. **Create Stub QueryBuilder** (~2-3 hours, Low complexity)
+
    - Create `src/ogc-api/csapi/url_builder.ts` (stub with constructor + 1-2 methods)
    - Implement constructor with collection info parameter
    - Implement `extractAvailableResources()` helper for resource discovery
@@ -105,6 +112,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** Add integration tests for endpoint conformance checking (~100-150 lines)
 
 **Phase 1 Deliverables:**
+
 - ✅ Complete type system (all interfaces)
 - ✅ OgcApiEndpoint integration (64 lines)
 - ✅ Stub QueryBuilder with resource validation
@@ -127,6 +135,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
 **Tasks:**
 
 1. **Systems Methods** (~2-2.5 hours implementation + ~0.5 hour testing, Medium complexity)
+
    - **Implement 12 Systems methods in `url_builder.ts`:**
      - `getSystems(options?)` - Collection query with pagination
      - `getSystem(id, options?)` - Single system by ID
@@ -152,6 +161,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
      - Test query parameter encoding
 
 2. **Deployments Methods** (~1.5-2 hours implementation + ~0.5 hour testing, Medium complexity)
+
    - **Implement 8 Deployments methods in `url_builder.ts`:**
      - `getDeployments(options?)` - Collection query
      - `getDeployment(id, options?)` - Single deployment
@@ -170,6 +180,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
      - Test temporal validity filtering
 
 3. **Procedures Methods** (~1.5-2 hours implementation + ~0.5 hour testing, Medium complexity)
+
    - **Implement 8 Procedures methods in `url_builder.ts`:**
      - `getProcedures(options?)` - Collection query
      - `getProcedure(id, options?)` - Single procedure
@@ -187,6 +198,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
      - Test system and datastream associations
 
 4. **Sampling Features Methods** (~1.5-2 hours implementation + ~0.5 hour testing, Medium complexity)
+
    - **Implement 8 Sampling Features methods in `url_builder.ts`:**
      - `getSamplingFeatures(options?)` - Collection query with spatial filtering
      - `getSamplingFeature(id, options?)` - Single sampling feature
@@ -204,6 +216,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
      - Test system associations
 
 5. **Properties Methods** (~1-1.5 hours implementation + ~0.5 hour testing, Medium complexity)
+
    - **Implement 6 Properties methods in `url_builder.ts`:**
      - `getProperties(options?)` - Collection query
      - `getProperty(id, options?)` - Single property
@@ -218,6 +231,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
      - Test system/datastream/controlstream associations
 
 6. **DataStreams Methods** (~2-2.5 hours implementation + ~0.5 hour testing, Medium-High complexity)
+
    - **Implement 11 DataStreams methods in `url_builder.ts`:**
      - `getDataStreams(options?)` - Collection query with phenomenonTime filtering
      - `getDataStream(id, options?)` - Single datastream
@@ -240,6 +254,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
      - Test cursor-based pagination
 
 7. **Observations Methods** (~1.5-2 hours implementation + ~0.5 hour testing, Medium-High complexity)
+
    - **Implement 9 Observations methods in `url_builder.ts`:**
      - `getObservations(options?)` - Collection query with phenomenonTime
      - `getObservation(id, options?)` - Single observation
@@ -260,6 +275,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
      - Test result format handling
 
 8. **Control Streams Methods** (~1.5-2 hours implementation + ~0.5 hour testing, Medium-High complexity)
+
    - **Implement 8 Control Streams methods in `url_builder.ts`:**
      - `getControlStreams(options?)` - Collection query
      - `getControlStream(id, options?)` - Single control stream
@@ -299,6 +315,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
      - Test cancel operation
 
 **Phase 2 Deliverables:**
+
 - ✅ All 70-80 QueryBuilder methods implemented (9 resource types)
 - ✅ Complete query parameter support (spatial, temporal, pagination)
 - ✅ Resource validation in all methods (~2 lines per method)
@@ -309,6 +326,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
 **Dependencies:** Phase 1 (types, helpers, stub QueryBuilder, integration)
 
 **Why This Structure:**
+
 - **Early bug detection** - Helper function issues discovered with Systems, not Commands
 - **Architecture validation** - Patterns validated incrementally, not all at end
 - **Natural checkpoints** - Each resource type is a commit-able unit
@@ -327,6 +345,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
 **Tasks:**
 
 1. **GeoJSON Handler Extensions** (~2-3 hours, Medium complexity)
+
    - Extend existing GeoJSON parser in library
    - Add recognition for CSAPI `featureType` property (sosa:System, sosa:Deployment, etc.)
    - Extract CSAPI-specific properties (uniqueIdentifier, systemType, assetType, validTime, etc.)
@@ -335,6 +354,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** Add tests for CSAPI GeoJSON parsing (~150-300 lines tests)
 
 2. **Format Detector Extensions** (~1-2 hours, Low complexity)
+
    - Extend existing format detector
    - Register 4 new media types: `application/sml+json`, `application/swe+json`, `application/swe+text`, `application/swe+binary`
    - Add routing logic to format handlers (SensorML → SensorML parser, SWE Common → SWE Common parser)
@@ -343,6 +363,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** Add format detection tests (~50-100 lines tests)
 
 3. **Validator Extensions** (~3-4 hours, Medium complexity)
+
    - Extend existing validation framework
    - Add CSAPI Part 1 validation rules (required properties, URI formats, temporal validity, spatial constraints)
    - Add CSAPI Part 2 validation rules (schema conformance for Observations/Commands, result validation)
@@ -351,6 +372,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** Add validation tests (~200-400 lines tests)
 
 4. **SensorML Parser** (~5-10 hours, High complexity)
+
    - Create `src/ogc-api/csapi/formats/sensorml/` directory
    - Create `types.ts` (~800-1,200 lines)
      - Define PhysicalSystem, PhysicalComponent, SimpleProcess, AggregateProcess interfaces
@@ -369,6 +391,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** Add SensorML parser tests (~600-800 lines tests)
 
 5. **SWE Common Parser** (~5-10 hours, High complexity)
+
    - Create `src/ogc-api/csapi/formats/swecommon/` directory
    - Create `types.ts` (~600-800 lines)
      - Define DataComponent union type and all component interfaces
@@ -387,6 +410,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** Add SWE Common parser tests (~800-1,000 lines tests)
 
 6. **Format Constants** (~1-2 hours, Low complexity)
+
    - Create `src/ogc-api/csapi/formats/constants.ts` (~50-100 lines)
    - Define media type constants
    - Define resource type constants
@@ -402,6 +426,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** Integration tests verify exports
 
 **Phase 3 Deliverables:**
+
 - ✅ GeoJSON CSAPI extensions (~150-300 lines)
 - ✅ Format Detector extensions (~50-100 lines)
 - ✅ Validator extensions (~200-400 lines)
@@ -424,6 +449,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
 **Tasks:**
 
 1. **Worker Extensions** (~3-4 hours, Medium complexity)
+
    - Extend existing Web Worker in `src/worker/`
    - Add 9 new CSAPI message types:
      - `PARSE_SENSORML_3` - SensorML 3.0 parsing
@@ -441,6 +467,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** Add worker tests (~200-300 lines tests)
 
 2. **Integration Tests** (~4-6 hours, Medium complexity)
+
    - Create end-to-end workflow tests (~500-800 lines)
    - Discovery workflow: connect → check conformance → list collections → retrieve resources
    - Observation workflow: systems → datastreams → observations → pagination → parsing
@@ -453,6 +480,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** All integration tests (~500-800 lines)
 
 3. **Unit Tests Completion** (~3-4 hours, Medium complexity)
+
    - Complete coverage for all QueryBuilder methods (~200-300 additional lines)
    - Complete coverage for all helper functions (~100-150 lines)
    - Edge case tests: empty collections, minimal resources, boundary conditions
@@ -473,6 +501,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
    - **Test:** Documentation build validation
 
 **Phase 4 Deliverables:**
+
 - ✅ Worker extensions with 9 CSAPI message types (~50 lines)
 - ✅ Complete integration tests (~500-800 lines tests)
 - ✅ Complete unit test coverage (~300-450 lines tests)
@@ -486,19 +515,20 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
 
 ### Roadmap Summary
 
-| Phase | Time | Complexity | Deliverables | Lines Added |
-|-------|------|------------|--------------|-------------|
-| **Phase 1** | 12-16 hrs | Low | Types, integration, stub builder, helpers (4 tasks) | ~500-600 + ~400-550 tests |
-| **Phase 2** | 20-28 hrs | Medium | Complete QueryBuilder - 9 resource types (9 tasks) | ~700-800 + ~800-1,000 tests |
-| **Phase 3** | 16-28 hrs | High | Format parsers + extensions (7 tasks) | ~3,600-5,050 + ~2,400-3,500 tests |
-| **Phase 4** | 12-16 hrs | Medium-High | Worker, tests, documentation (4 tasks) | ~50 + ~800-1,250 tests |
-| **TOTAL** | **60-88 hrs** | **Mixed** | **Complete CSAPI implementation (24 tasks)** | **~4,850-6,500 + ~4,400-6,300 tests** |
+| Phase       | Time          | Complexity  | Deliverables                                        | Lines Added                           |
+| ----------- | ------------- | ----------- | --------------------------------------------------- | ------------------------------------- |
+| **Phase 1** | 12-16 hrs     | Low         | Types, integration, stub builder, helpers (4 tasks) | ~500-600 + ~400-550 tests             |
+| **Phase 2** | 20-28 hrs     | Medium      | Complete QueryBuilder - 9 resource types (9 tasks)  | ~700-800 + ~800-1,000 tests           |
+| **Phase 3** | 16-28 hrs     | High        | Format parsers + extensions (7 tasks)               | ~3,600-5,050 + ~2,400-3,500 tests     |
+| **Phase 4** | 12-16 hrs     | Medium-High | Worker, tests, documentation (4 tasks)              | ~50 + ~800-1,250 tests                |
+| **TOTAL**   | **60-88 hrs** | **Mixed**   | **Complete CSAPI implementation (24 tasks)**        | **~4,850-6,500 + ~4,400-6,300 tests** |
 
 **Total Development Time:** 60-88 hours (average: 74 hours)  
 **Calendar Time:** 8-12 weeks (assuming 6-8 hours/week development pace)  
 **Total Code:** ~9,250-12,800 lines (implementation + tests)
 
 **Key Success Factors:**
+
 - ✅ Write JSDoc documentation AS YOU CODE (don't defer)
 - ✅ Write method signatures before implementation (design first)
 - ✅ **Write tests IMMEDIATELY after each subtask** (Phase 2: test each resource type before moving to next)
@@ -517,19 +547,21 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
 ## Development Standards
 
 **Recommended Development Workflow:**
+
 1. Write method signatures before implementation
-3. Add comprehensive JSDoc comments with parameters, return types, examples
-4. Implement functionality with inline documentation for complex logic
-5. **Write tests immediately after completing each subtask (not batched)**
-6. Document edge cases and validation rules as discovered
-7. Add usage examples to JSDoc for common scenarios
-8. Validate against spec examples throughout
-9. Update documentation as you go - don't defer
+2. Add comprehensive JSDoc comments with parameters, return types, examples
+3. Implement functionality with inline documentation for complex logic
+4. **Write tests immediately after completing each subtask (not batched)**
+5. Document edge cases and validation rules as discovered
+6. Add usage examples to JSDoc for common scenarios
+7. Validate against spec examples throughout
+8. Update documentation as you go - don't defer
 
 **Code Quality Standards:**
+
 - TypeScript strict mode enabled
 - 100% public API JSDoc coverage
-- >80% test coverage (statement and branch)
+- > 80% test coverage (statement and branch)
 - Lint-clean code (ESLint configuration)
 - No magic numbers or strings (use constants)
 - Consistent error handling patterns
@@ -538,6 +570,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
 - Use helper methods for code reuse (no inheritance)
 
 **Documentation Standards:**
+
 - Clear, concise method descriptions
 - Parameter descriptions with types and constraints
 - Return type documentation
@@ -548,6 +581,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
 - Type system documentation with IntelliSense examples
 
 **Research-Validated Standards:**
+
 - All architectural decisions backed by research (⭐⭐⭐⭐⭐ confidence)
 - Follow upstream patterns (100% consistency)
 - Helper methods for code reuse (0% inheritance)
@@ -567,6 +601,7 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
 **Status:** ✅ **IMPLEMENTATION READY** - Roadmap complete with incremental testing strategy
 
 **Version 2.0 - Phase 2 Restructure (February 5, 2026):**
+
 - Restructured Phase 2 from 2 large tasks into **9 granular subtasks** (one per resource type)
 - Each subtask now includes immediate test writing (implement → test → commit)
 - Prevents test debt accumulation (max 12 methods without tests, not 70)
@@ -578,10 +613,12 @@ This roadmap breaks down the complete CSAPI implementation into four phases, ord
 - Phase 1 task order corrected: Types → Helpers → QueryBuilder → Integration
 
 **Previous Versions:**
+
 - [v1.0 (archived)](archive/ROADMAP-v1.0.md) - Original standalone roadmap with 2-task Phase 2 structure
 
 **Roadmap Source:**
 This roadmap is based on the Implementation Roadmap section from the complete [CSAPI Implementation Guide](csapi-implementation-guide.md), which contains:
+
 - 13 completed research plans with ⭐⭐⭐⭐⭐ confidence (98-100%)
 - Complete architectural decisions and component specifications
 - Detailed implementation guidance for all 24 files

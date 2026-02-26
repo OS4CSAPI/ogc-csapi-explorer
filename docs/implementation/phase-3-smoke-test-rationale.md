@@ -13,18 +13,18 @@ Phase 2 smoke tests (against OpenSensorHub and Gnosis Earth demo servers) were v
 
 ### Why Phase 3 smoke tests matter more
 
-**Phase 2 smoke tests validated outputs we control.** The URL builder constructs URLs from known inputs — the code is deterministic. Smoke testing confirmed the servers *accept* those URLs, which was useful but the risk was relatively low since we followed the spec closely.
+**Phase 2 smoke tests validated outputs we control.** The URL builder constructs URLs from known inputs — the code is deterministic. Smoke testing confirmed the servers _accept_ those URLs, which was useful but the risk was relatively low since we followed the spec closely.
 
-**Phase 3 smoke tests validate handling of inputs we don't control.** Format handlers parse *real server responses* — responses with real-world quirks, vocabulary choices, optional fields that may or may not be present, and encoding decisions that vary by server implementation. This is where surprises live.
+**Phase 3 smoke tests validate handling of inputs we don't control.** Format handlers parse _real server responses_ — responses with real-world quirks, vocabulary choices, optional fields that may or may not be present, and encoding decisions that vary by server implementation. This is where surprises live.
 
 ### Evidence from Phase 2 smoke tests
 
 The Phase 2.8 smoke test already revealed issues that directly shaped the GeoJSON handler:
 
-| Finding | What it taught us |
-|---------|-------------------|
+| Finding        | What it taught us                                                                                                |
+| -------------- | ---------------------------------------------------------------------------------------------------------------- |
 | F4 (validTime) | Server sends `["ISO", "now"]` array, not a `TimeInterval` object — this became `parseValidTime`'s primary format |
-| F10 (review) | OpenSensorHub may use non-SOSA vocabularies for SamplingFeature featureTypes — our handler only recognizes SOSA |
+| F10 (review)   | OpenSensorHub may use non-SOSA vocabularies for SamplingFeature featureTypes — our handler only recognizes SOSA  |
 
 ### What a GeoJSON handler smoke test can validate
 

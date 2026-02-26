@@ -9,36 +9,41 @@
 
 ## Verification Status
 
-| Check | Result |
-|-------|--------|
-| 128 CSAPI unit tests | **PASS** |
-| 6 integration tests (endpoint.spec.ts) | **PASS** |
-| `tsc --noEmit` (full project) | **CLEAN** |
-| VS Code diagnostics (all CSAPI + endpoint files) | **CLEAN** |
-| 82/83 endpoint tests pass | 1 pre-existing failure (EndpointError vs Error class mismatch — not CSAPI-related) |
+| Check                                            | Result                                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| 128 CSAPI unit tests                             | **PASS**                                                                           |
+| 6 integration tests (endpoint.spec.ts)           | **PASS**                                                                           |
+| `tsc --noEmit` (full project)                    | **CLEAN**                                                                          |
+| VS Code diagnostics (all CSAPI + endpoint files) | **CLEAN**                                                                          |
+| 82/83 endpoint tests pass                        | 1 pre-existing failure (EndpointError vs Error class mismatch — not CSAPI-related) |
 
 ---
 
 ## Files Reviewed
 
 ### Phase 2 — Issue #5 (Systems Methods)
+
 - `src/ogc-api/csapi/url_builder.ts` — 12 Systems methods added (from ~211 to ~420 lines)
 - `src/ogc-api/csapi/url_builder.spec.ts` — 23 new Systems tests added
 
 ### Phase 2 — Issue #34 (F1 Fix: Link Relation Discovery)
+
 - `src/ogc-api/csapi/url_builder.ts` — `extractAvailableResources()` expanded (3 conventions)
 - `src/ogc-api/csapi/url_builder.spec.ts` — 5 new constructor tests
 
 ### Phase 2 — Issue #35 (F2 Fix: Top-Level Resource URLs)
+
 - `src/ogc-api/csapi/url_builder.ts` — constructor accepts `resourceUrls`, `buildResourceUrl()` updated
 - `src/ogc-api/endpoint.ts` — `extractRootResourceUrls()` added, `csapi()` factory updated
 - `src/ogc-api/csapi/url_builder.spec.ts` — 7 new top-level URL tests
 
 ### Phase 2 — Issue #6 (Deployments Methods)
+
 - `src/ogc-api/csapi/url_builder.ts` — 8 Deployments methods added (from ~420 to 612 lines)
 - `src/ogc-api/csapi/url_builder.spec.ts` — 16 new Deployments tests (total file: 893 lines)
 
 ### Phase 1 — Reaffirmation (Issues #1–#4)
+
 - `src/ogc-api/csapi/model.ts` (542 lines) — unchanged, still solid
 - `src/ogc-api/csapi/helpers.ts` (145 lines) — unchanged except F5 fix addressed in url_builder.ts
 - `src/ogc-api/csapi/model.spec.ts` (355 lines, 27 tests) — unchanged
@@ -77,14 +82,14 @@
 **File:** `src/index.ts` lines 44–68  
 **Status:** **Still partially open.** The Phase 1 review noted that `CSAPIResourceTypes` (const array), `FeatureCollection<T>`, `ItemCollection<T>`, and all collection type aliases were not exported. The current state:
 
-| Symbol | Kind | Exported? |
-|--------|------|-----------|
-| `CSAPIResourceTypes` | const array (runtime value) | **No** |
-| `CommandStatusCodes` | const array (runtime value) | **No** |
-| `SystemTypeUris` | const array (runtime value) | **No** |
-| `FeatureCollection<T>` | generic interface | **No** |
-| `ItemCollection<T>` | generic interface | **No** |
-| `SystemCollection` … `CommandStatusCollection` | type aliases | **No** |
+| Symbol                                         | Kind                        | Exported? |
+| ---------------------------------------------- | --------------------------- | --------- |
+| `CSAPIResourceTypes`                           | const array (runtime value) | **No**    |
+| `CommandStatusCodes`                           | const array (runtime value) | **No**    |
+| `SystemTypeUris`                               | const array (runtime value) | **No**    |
+| `FeatureCollection<T>`                         | generic interface           | **No**    |
+| `ItemCollection<T>`                            | generic interface           | **No**    |
+| `SystemCollection` … `CommandStatusCollection` | type aliases                | **No**    |
 
 All individual resource types (`System`, `Deployment`, etc.), query options, and discriminator types **are** exported. The gaps are: runtime const arrays and collection wrapper types that consumers will need in Phase 3 when parsing responses.
 
@@ -146,6 +151,7 @@ The Phase 1 test suite (27 model + 30 helper + 6 integration = 63 tests) is unch
 The `encodeArrayParameter()` function was the source of the Phase 1 F5 double-encoding bug. Phase 2 fixed the bug by replacing its usage with `value.join(',')` in `buildQueryString`. However, the function itself was left in `helpers.ts` along with its test coverage in `helpers.spec.ts`.
 
 It is not imported by any production code. It's only referenced by:
+
 - Its own definition in `helpers.ts`
 - Its tests in `helpers.spec.ts`
 - A comment in `url_builder.ts` line 210 explaining why it was replaced
@@ -161,10 +167,10 @@ It is not imported by any production code. It's only referenced by:
 
 The three-convention link scanning loop is implemented in two places:
 
-| Method | File | Returns |
-|--------|------|---------|
-| `extractAvailableResources()` | `url_builder.ts` | `Set<string>` — resource type names only |
-| `extractRootResourceUrls()` | `endpoint.ts` | `Map<string, string>` — resource type → absolute URL |
+| Method                        | File             | Returns                                              |
+| ----------------------------- | ---------------- | ---------------------------------------------------- |
+| `extractAvailableResources()` | `url_builder.ts` | `Set<string>` — resource type names only             |
+| `extractRootResourceUrls()`   | `endpoint.ts`    | `Map<string, string>` — resource type → absolute URL |
 
 Both implementations use the same regex, the same `knownTypes` Set from `CSAPIResourceTypes`, and the same three-step convention matching. The only difference is whether the `href` value is kept (Map) or discarded (Set).
 
@@ -212,9 +218,12 @@ The `getDeployments` datetime test uses a **weak assertion**:
 ```typescript
 it('returns correct URL with datetime parameter', () => {
   const url = makeDepBuilder().getDeployments({
-    datetime: { start: new Date('2025-01-01T00:00:00Z'), end: new Date('2025-12-31T23:59:59Z') },
+    datetime: {
+      start: new Date('2025-01-01T00:00:00Z'),
+      end: new Date('2025-12-31T23:59:59Z'),
+    },
   });
-  expect(url).toContain('datetime=');  // ← only checks key exists
+  expect(url).toContain('datetime='); // ← only checks key exists
 });
 ```
 
@@ -228,7 +237,7 @@ expect(url).toBe(
 
 A bug in interval formatting for deployments would go undetected by the current test.
 
-**Recommendation:** Strengthen to verify the exact URL. This is especially valuable because it tests *interval* formatting (start/end) which is more complex than the single-instant test in getSystems.
+**Recommendation:** Strengthen to verify the exact URL. This is especially valuable because it tests _interval_ formatting (start/end) which is more complex than the single-instant test in getSystems.
 
 ---
 
@@ -257,7 +266,8 @@ Compare with `getSystems` which has individual tests for all six `SystemQueryOpt
 ```typescript
 it('returns correct URL with pagination and filtering', () => {
   const url = makeDepBuilder().getDeploymentSubdeployments('dep-001', {
-    limit: 10, q: 'regional',
+    limit: 10,
+    q: 'regional',
   });
   expect(url).toBe(
     'https://example.com/collections/iot/deployments/dep-001/subdeployments?limit=10&q=regional'
@@ -292,7 +302,7 @@ it('returns correct URL with cursor parameter', () => {
 **File:** `src/ogc-api/csapi/url_builder.spec.ts`  
 **Severity:** Low (untested code path)
 
-`offset` appears only in the "skips undefined option values" test (line 334) where it's `undefined` and thus explicitly *not* serialized. There's no test that passes an actual offset value to verify it appears in the query string.
+`offset` appears only in the "skips undefined option values" test (line 334) where it's `undefined` and thus explicitly _not_ serialized. There's no test that passes an actual offset value to verify it appears in the query string.
 
 **Recommendation:** Add a test:
 
@@ -322,6 +332,7 @@ The Phase 1 double-encoding bug (F5) was fixed cleanly. The `buildQueryString` m
 ### [F11] POSITIVE: Three-convention link discovery is robust
 
 The `extractAvailableResources()` implementation (Issue #34) is well-structured:
+
 - Convention 1 (ogc-cs: prefix) preserves backward compatibility
 - Convention 2 (plain rel) uses `CSAPIResourceTypes` validation to avoid false positives from rels like `self`, `alternate`, `describedby`
 - Convention 3 (items + href path) correctly strips trailing slashes before segment extraction
@@ -345,6 +356,7 @@ The 8 Deployments methods are structurally identical to their Systems counterpar
 ### [F14] POSITIVE: JSDoc quality is excellent
 
 Every public method has:
+
 - A description of what it does
 - `@param` tags for all parameters
 - `@returns` description
@@ -358,7 +370,7 @@ The private helpers (`extractBaseUrl`, `extractAvailableResources`, `buildResour
 
 ### [F15] INFORMATIONAL: `recursive: false` is serialized as `?recursive=false`
 
-Not a bug, but worth noting: if a consumer passes `recursive: false`, it serializes as `?recursive=false` in the URL. Some servers might treat the mere *presence* of `recursive` as "true" regardless of value. The OGC spec requires the value to be interpreted, so this is correct behavior — but in practice, servers vary.
+Not a bug, but worth noting: if a consumer passes `recursive: false`, it serializes as `?recursive=false` in the URL. Some servers might treat the mere _presence_ of `recursive` as "true" regardless of value. The OGC spec requires the value to be interpreted, so this is correct behavior — but in practice, servers vary.
 
 There's no test for `recursive: false`. If the design intent is that `false` should be omitted from the URL entirely (letting the server use its default), a guard would be needed in `buildQueryString`. This is a Phase 3 concern when we start testing against real servers at scale.
 
@@ -366,16 +378,16 @@ There's no test for `recursive: false`. If the design intent is that `false` sho
 
 ## Summary
 
-| Category | Count | Items |
-|----------|-------|-------|
-| Phase 1 findings resolved | **2** | P1-F1 (allCollections type), P1-F5 (double-encoding) |
-| Phase 1 findings still open | **2** | P1-F4 (missing exports), P1-F6 (hardcoded temporal keys) |
-| Phase 1 findings reaffirmed as not-our-concern | **2** | P1-F2 (cast), P1-F3 (EDR await) |
-| New — dead code | **1** | F1 (encodeArrayParameter) |
-| New — design issues | **2** | F2 (DRY violation), F3 (strict-mode latent issue) |
-| New — test gaps | **5** | F4 (weak datetime), F5 (missing parent/recursive), F6 (missing pagination), F7 (no cursor test), F8 (no offset test) |
-| New — positive findings | **6** | F9–F14 (navigation design, F5 fix quality, link discovery robustness, backward compat, consistency, JSDoc quality) |
-| New — informational | **1** | F15 (recursive:false serialization) |
+| Category                                       | Count | Items                                                                                                                |
+| ---------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------- |
+| Phase 1 findings resolved                      | **2** | P1-F1 (allCollections type), P1-F5 (double-encoding)                                                                 |
+| Phase 1 findings still open                    | **2** | P1-F4 (missing exports), P1-F6 (hardcoded temporal keys)                                                             |
+| Phase 1 findings reaffirmed as not-our-concern | **2** | P1-F2 (cast), P1-F3 (EDR await)                                                                                      |
+| New — dead code                                | **1** | F1 (encodeArrayParameter)                                                                                            |
+| New — design issues                            | **2** | F2 (DRY violation), F3 (strict-mode latent issue)                                                                    |
+| New — test gaps                                | **5** | F4 (weak datetime), F5 (missing parent/recursive), F6 (missing pagination), F7 (no cursor test), F8 (no offset test) |
+| New — positive findings                        | **6** | F9–F14 (navigation design, F5 fix quality, link discovery robustness, backward compat, consistency, JSDoc quality)   |
+| New — informational                            | **1** | F15 (recursive:false serialization)                                                                                  |
 
 ---
 
@@ -410,15 +422,15 @@ None of these findings are mysterious bugs. They're process gaps, and tracing ea
 
 ### The dead code (F1 — `encodeArrayParameter`)
 
-When the Phase 1 double-encoding bug (P1-F5) was fixed, the *call site* in `buildQueryString` was changed to use `value.join(',')` instead of calling `encodeArrayParameter()`. But the function itself was never removed from `helpers.ts`. Classic "fix the symptom, leave the artifact" — the full dependency chain wasn't traced after the fix.
+When the Phase 1 double-encoding bug (P1-F5) was fixed, the _call site_ in `buildQueryString` was changed to use `value.join(',')` instead of calling `encodeArrayParameter()`. But the function itself was never removed from `helpers.ts`. Classic "fix the symptom, leave the artifact" — the full dependency chain wasn't traced after the fix.
 
 ### The DRY violation (F2 — duplicated link scanning)
 
-This is the most frustrating one because it happened *within the same session*. Issue #34 implemented the three link conventions in `extractAvailableResources()`. Then Issue #35, implemented immediately after, needed the same link scanning logic for `extractRootResourceUrls()`. Instead of extracting a shared helper from code that was *just written*, it was duplicated with a different return type. Each issue was treated as an isolated unit of work rather than stepping back and refactoring what had just been produced.
+This is the most frustrating one because it happened _within the same session_. Issue #34 implemented the three link conventions in `extractAvailableResources()`. Then Issue #35, implemented immediately after, needed the same link scanning logic for `extractRootResourceUrls()`. Instead of extracting a shared helper from code that was _just written_, it was duplicated with a different return type. Each issue was treated as an isolated unit of work rather than stepping back and refactoring what had just been produced.
 
 ### The test gaps (F4–F8 — weaker Deployments tests)
 
-This is the most telling pattern. When the 12 Systems methods were built (Issue #5), thorough tests were written — every `SystemQueryOptions` field got its own test, datetime used exact assertions, subsystems got a pagination test. Then when the 8 Deployments methods were built (Issue #6), *fewer* tests were written per method. `getDeployments` tests `systemId` but not `parent` or `recursive`. The datetime test uses `toContain` instead of `toBe`. `getDeploymentSubdeployments` skips the pagination test. The *pattern* was copied but not the *thoroughness*. The first resource type got careful attention; the second got "good enough."
+This is the most telling pattern. When the 12 Systems methods were built (Issue #5), thorough tests were written — every `SystemQueryOptions` field got its own test, datetime used exact assertions, subsystems got a pagination test. Then when the 8 Deployments methods were built (Issue #6), _fewer_ tests were written per method. `getDeployments` tests `systemId` but not `parent` or `recursive`. The datetime test uses `toContain` instead of `toBe`. `getDeploymentSubdeployments` skips the pagination test. The _pattern_ was copied but not the _thoroughness_. The first resource type got careful attention; the second got "good enough."
 
 This will compound if not addressed. Issues #7–#9 (Procedures, SamplingFeatures, Properties) will be the third through fifth resources using this pattern, and the temptation to write even thinner tests grows each time.
 
@@ -436,7 +448,7 @@ Three things are happening:
 
 3. **Review findings aren't tracked as work items.** Findings get documented but not converted into issues or blocking tasks. The review becomes a record rather than a forcing function.
 
-This review is specifically designed to catch these gaps *now*, at Phase 2.2, rather than at the end of Phase 2 when the debt would be much larger.
+This review is specifically designed to catch these gaps _now_, at Phase 2.2, rather than at the end of Phase 2 when the debt would be much larger.
 
 ---
 

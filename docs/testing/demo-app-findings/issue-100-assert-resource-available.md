@@ -40,13 +40,13 @@ This report does not expand scope beyond what Issue #100 describes. Per §2.1 (d
 
 **Issue #100 identifies a genuine interoperability concern — the `assertResourceAvailable()` guard conflates "can I list/create resources at a collection endpoint?" with "can I construct a URL for a specific resource by ID?" However, the current behavior is an intentional, documented design choice with a provided workaround, and changing it would be a high-risk modification to a thoroughly tested API contract.**
 
-| Finding | Description | Severity | Recommendation |
-|---------|-------------|----------|----------------|
-| **F-100.1** | Issue's core claim is **technically valid**: `assertResourceAvailable()` blocks 69 per-ID methods when the resource type wasn't discovered as a top-level link | VALID | **DEFER** — legitimate concern, but change is high-risk pre-contribution |
-| **F-100.2** | The assertion behavior is **intentional and documented**: class JSDoc (L23–24) explicitly states "Attempting to build a URL for an unavailable resource throws an EndpointError" | DESIGN CHOICE | **NO ACTION NOW** — this is a documented API contract, not a bug |
-| **F-100.3** | A **workaround already exists**: the constructor's `resourceUrls` parameter (L170) explicitly allows callers to register resource types for servers that don't advertise top-level links | MITIGATED | **NO ACTION** — escape hatch exists and is documented |
-| **F-100.4** | `buildResourceUrl()` (L251–262) **already has graceful fallback logic** — it would construct valid URLs if the assertion were removed | CONFIRMED | Underlying URL construction is sound; the assertion is the only obstacle |
-| **F-100.5** | Removing assertions from 69 methods would require updating **57+ dedicated assertion tests** and potentially re-validating the full 319-test URL builder suite | HIGH RISK | **DEFER** — invasive change best addressed post-contribution |
+| Finding     | Description                                                                                                                                                                              | Severity      | Recommendation                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------ |
+| **F-100.1** | Issue's core claim is **technically valid**: `assertResourceAvailable()` blocks 69 per-ID methods when the resource type wasn't discovered as a top-level link                           | VALID         | **DEFER** — legitimate concern, but change is high-risk pre-contribution |
+| **F-100.2** | The assertion behavior is **intentional and documented**: class JSDoc (L23–24) explicitly states "Attempting to build a URL for an unavailable resource throws an EndpointError"         | DESIGN CHOICE | **NO ACTION NOW** — this is a documented API contract, not a bug         |
+| **F-100.3** | A **workaround already exists**: the constructor's `resourceUrls` parameter (L170) explicitly allows callers to register resource types for servers that don't advertise top-level links | MITIGATED     | **NO ACTION** — escape hatch exists and is documented                    |
+| **F-100.4** | `buildResourceUrl()` (L251–262) **already has graceful fallback logic** — it would construct valid URLs if the assertion were removed                                                    | CONFIRMED     | Underlying URL construction is sound; the assertion is the only obstacle |
+| **F-100.5** | Removing assertions from 69 methods would require updating **57+ dedicated assertion tests** and potentially re-validating the full 319-test URL builder suite                           | HIGH RISK     | **DEFER** — invasive change best addressed post-contribution             |
 
 **Conclusion:** The behavior described in Issue #100 is real and affects interoperability with servers like OpenSensorHub that don't advertise Part 2 resources as top-level links. However, the behavior is intentional, documented, and has a provided workaround (`resourceUrls` constructor parameter). Changing it now — before the upstream contribution is submitted — would be an invasive modification to a thoroughly tested API contract (319 tests, 57+ assertion-specific tests). **Recommend deferring to a post-contribution enhancement**, when the change can be made with full test-suite validation and without risking the integrity of the current submission.
 
@@ -62,12 +62,13 @@ The problem manifests on servers like OpenSensorHub (OSH) that advertise Part 2 
 
 ```typescript
 // Throws EndpointError even though /datastreams/03tbj7mvqg50/schema is a valid URL:
-builder.getDataStreamSchema('03tbj7mvqg50')
+builder.getDataStreamSchema('03tbj7mvqg50');
 // EndpointError: Collection 'csapi-explorer' does not support 'datastreams' resource.
 //   Available resources: systems, deployments, procedures, samplingFeatures, properties
 ```
 
 The issue proposes three options:
+
 - **Option A:** Remove `assertResourceAvailable()` from 69 per-ID methods (69-line deletion)
 - **Option B:** Replace with a `warnIfResourceNotDiscovered()` soft check (69-line substitution)
 - **Option C:** Separate `assertCollectionAvailable()` for list/create methods vs no-op for per-ID methods
@@ -184,26 +185,26 @@ This correctly finds top-level resources. The issue is that Part 2 resources on 
 
 ### 4.5 Scope of Impact: 84 Call Sites, 69 Per-ID
 
-| Category | Count | Assertion Appropriate? |
-|----------|-------|------------------------|
-| Collection/List methods (no `id`) | 15 | **Yes** — listing requires a valid collection endpoint |
-| Per-ID methods (have `id`) | 69 | **Debatable** — URL is deterministic from type + ID |
-| **Total** | **84** | |
+| Category                          | Count  | Assertion Appropriate?                                 |
+| --------------------------------- | ------ | ------------------------------------------------------ |
+| Collection/List methods (no `id`) | 15     | **Yes** — listing requires a valid collection endpoint |
+| Per-ID methods (have `id`)        | 69     | **Debatable** — URL is deterministic from type + ID    |
+| **Total**                         | **84** |                                                        |
 
 By resource type:
 
-| Resource Type | Collection | Per-ID | Total |
-|---------------|-----------|--------|-------|
-| `systems` | 2 | 14 | 16 |
-| `deployments` | 2 | 7 | 9 |
-| `procedures` | 2 | 6 | 8 |
-| `samplingFeatures` | 2 | 6 | 8 |
-| `properties` | 1 | 5 | 6 |
-| `datastreams` | 2 | 9 | 11 |
-| `observations` | 1 | 7 | 8 |
-| `controlStreams` | 2 | 8 | 10 |
-| `commands` | 1 | 7 | 8 |
-| **Totals** | **15** | **69** | **84** |
+| Resource Type      | Collection | Per-ID | Total  |
+| ------------------ | ---------- | ------ | ------ |
+| `systems`          | 2          | 14     | 16     |
+| `deployments`      | 2          | 7      | 9      |
+| `procedures`       | 2          | 6      | 8      |
+| `samplingFeatures` | 2          | 6      | 8      |
+| `properties`       | 1          | 5      | 6      |
+| `datastreams`      | 2          | 9      | 11     |
+| `observations`     | 1          | 7      | 8      |
+| `controlStreams`   | 2          | 8      | 10     |
+| `commands`         | 1          | 7      | 8      |
+| **Totals**         | **15**     | **69** | **84** |
 
 The Part 2 resources (`datastreams`, `observations`, `controlStreams`, `commands`) are most impacted — **31 of the 69** per-ID methods — because these types are commonly only available as nested paths under systems.
 
@@ -228,6 +229,7 @@ The URL builder test suite (`url_builder.spec.ts`) has **dedicated assertion tes
 Issue #100 correctly references the OGC spec:
 
 > The spec defines that Part 2 resources are accessible **both** as:
+>
 > - **Nested paths**: `/systems/{id}/datastreams` (always available)
 > - **Top-level paths**: `/datastreams` (optional — server decides)
 
@@ -235,10 +237,10 @@ This is accurate. The spec does NOT require top-level Part 2 collection endpoint
 
 ### Cross-Server Findings (from Issue #100)
 
-| Server | Top-level `/datastreams`? | `/datastreams/{id}` works? | `/datastreams/{id}/schema` works? |
-|--------|---------------------------|----------------------------|-----------------------------------|
-| OpenSensorHub (OSH) | ❌ No (nested only) | ✅ Yes | ✅ Yes |
-| 52North CSAPI Demo | ✅ Yes | ✅ Yes | ✅ Yes |
+| Server              | Top-level `/datastreams`? | `/datastreams/{id}` works? | `/datastreams/{id}/schema` works? |
+| ------------------- | ------------------------- | -------------------------- | --------------------------------- |
+| OpenSensorHub (OSH) | ❌ No (nested only)       | ✅ Yes                     | ✅ Yes                            |
+| 52North CSAPI Demo  | ✅ Yes                    | ✅ Yes                     | ✅ Yes                            |
 
 OSH does serve Part 2 resources by ID at well-known paths — it simply doesn't advertise them as top-level links.
 
@@ -256,21 +258,21 @@ OSH does serve Part 2 resources by ID at well-known paths — it simply doesn't 
 
 ### Risk of Making Changes Now
 
-| Risk | Severity | Description |
-|------|----------|-------------|
-| **Test suite regression** | **HIGH** | 57+ assertion-specific tests must be updated or removed. Even with mechanical changes, the risk of introducing subtle test gaps is significant. The URL builder suite (319 tests) is the most comprehensive in the CSAPI library. |
-| **API contract change** | **HIGH** | The throw-on-unavailable behavior is documented in class-level JSDoc as the API contract. Consumers may rely on catching `EndpointError` to detect unsupported resources. Silently succeeding changes the contract. |
-| **Non-uniform assertion pattern** | **MEDIUM** | Keeping assertions on 15 list/create methods but removing from 69 per-ID methods creates an inconsistency that must be documented. Future contributors may not understand why the distinction exists. |
-| **Upstream contribution risk** | **HIGH** | The CSAPI library is pending upstream submission to `camptocamp/ogc-client`. The current implementation is internally consistent and thoroughly tested. Introducing a behavioral change at this stage risks complicating the upstream review — reviewers expect a coherent design, not one that was partially relaxed late in development. |
-| **Pre-contribution scope creep** | **MEDIUM** | Making this change now moves the library from "well-tested, internally consistent design" to "design modified to accommodate a specific server's behavior." This is better positioned as a follow-up enhancement. |
+| Risk                              | Severity   | Description                                                                                                                                                                                                                                                                                                                                |
+| --------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Test suite regression**         | **HIGH**   | 57+ assertion-specific tests must be updated or removed. Even with mechanical changes, the risk of introducing subtle test gaps is significant. The URL builder suite (319 tests) is the most comprehensive in the CSAPI library.                                                                                                          |
+| **API contract change**           | **HIGH**   | The throw-on-unavailable behavior is documented in class-level JSDoc as the API contract. Consumers may rely on catching `EndpointError` to detect unsupported resources. Silently succeeding changes the contract.                                                                                                                        |
+| **Non-uniform assertion pattern** | **MEDIUM** | Keeping assertions on 15 list/create methods but removing from 69 per-ID methods creates an inconsistency that must be documented. Future contributors may not understand why the distinction exists.                                                                                                                                      |
+| **Upstream contribution risk**    | **HIGH**   | The CSAPI library is pending upstream submission to `camptocamp/ogc-client`. The current implementation is internally consistent and thoroughly tested. Introducing a behavioral change at this stage risks complicating the upstream review — reviewers expect a coherent design, not one that was partially relaxed late in development. |
+| **Pre-contribution scope creep**  | **MEDIUM** | Making this change now moves the library from "well-tested, internally consistent design" to "design modified to accommodate a specific server's behavior." This is better positioned as a follow-up enhancement.                                                                                                                          |
 
 ### Risk of Doing Nothing
 
-| Risk | Severity | Description |
-|------|----------|-------------|
+| Risk                                                 | Severity   | Description                                                                                                                                                                |
+| ---------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Interoperability gap for Part 2 nested resources** | **MEDIUM** | Callers must use the `resourceUrls` workaround or try/catch to handle servers that only expose Part 2 resources as nested paths. This is a known limitation, not a defect. |
-| **Demo app complexity** | **LOW** | The demo app uses try/catch fallbacks. This is functional and documented. |
-| **Post-contribution work required** | **LOW** | The change can be made after upstream acceptance with full test-suite support. |
+| **Demo app complexity**                              | **LOW**    | The demo app uses try/catch fallbacks. This is functional and documented.                                                                                                  |
+| **Post-contribution work required**                  | **LOW**    | The change can be made after upstream acceptance with full test-suite support.                                                                                             |
 
 ---
 
@@ -297,6 +299,7 @@ However, this report recommends **deferring the change** for the following reaso
 **Option A (from Issue #100) is the correct approach:** Simply remove `assertResourceAvailable()` from the 69 per-ID methods. This is mechanically simple (69 one-line deletions) and `buildResourceUrl()` already handles the fallback. Option B (warn) would add console noise in normal operation. Option C (separate methods) is over-engineering for a guard that should simply be removed from per-ID paths.
 
 The test updates would involve:
+
 - Removing or inverting 57+ `toThrow(EndpointError)` assertions for per-ID methods in the 7 per-resource-type validation blocks
 - Verifying that the 4 core assertion tests still pass for collection/list methods
 - Adding new positive tests confirming per-ID methods succeed without the resource being in `availableResources`
@@ -309,13 +312,13 @@ No code changes are recommended at this time. The `resourceUrls` constructor par
 
 ## Appendix A: Authority Precedence Analysis
 
-| Authority Level | Source | Ruling |
-|-----------------|--------|--------|
-| **1. OGC Specification** | OGC 23-002 — Part 2 resources accessible both as nested and top-level paths; top-level not required | **Supports** the change — spec allows per-ID access without top-level discovery |
-| **2. AI Collaboration Agreement** | §2.2 — preserve structure, prefer minimal diffs | **Opposes** the change now — current pattern is the established architecture |
-| **3. Issue Description** | #100 — remove/soften assertion for 69 per-ID methods | Defines scope; does not mandate timing |
-| **4. Existing Code** | `assertResourceAvailable()` — documented, intentional, tested on all 84 methods | **Opposes** the change now — behavior is the API contract |
-| **5. Conversation Context** | User prioritizes protecting CSAPI contribution integrity | **Strongly opposes** the change now |
+| Authority Level                   | Source                                                                                              | Ruling                                                                          |
+| --------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **1. OGC Specification**          | OGC 23-002 — Part 2 resources accessible both as nested and top-level paths; top-level not required | **Supports** the change — spec allows per-ID access without top-level discovery |
+| **2. AI Collaboration Agreement** | §2.2 — preserve structure, prefer minimal diffs                                                     | **Opposes** the change now — current pattern is the established architecture    |
+| **3. Issue Description**          | #100 — remove/soften assertion for 69 per-ID methods                                                | Defines scope; does not mandate timing                                          |
+| **4. Existing Code**              | `assertResourceAvailable()` — documented, intentional, tested on all 84 methods                     | **Opposes** the change now — behavior is the API contract                       |
+| **5. Conversation Context**       | User prioritizes protecting CSAPI contribution integrity                                            | **Strongly opposes** the change now                                             |
 
 **Conclusion:** Authority levels 1 and 3 support the change in principle. Authority levels 2, 4, and 5 oppose making it now. The balance favors **deferring** to post-contribution.
 
@@ -323,24 +326,24 @@ No code changes are recommended at this time. The `resourceUrls` constructor par
 
 ## Appendix B: Cross-Reference to Related Issues
 
-| Issue | Repository | Relationship | Status |
-|-------|------------|-------------|--------|
-| [#100](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/100) | ogc-client-CSAPI_2 | **This issue** — `assertResourceAvailable()` overly strict for per-ID methods | Open |
-| [#99](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/99) | ogc-client-CSAPI_2 | **Related** — `?f=` support (already exists; Issue #99 closed as not_planned) | Closed |
-| [#28](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/28) | ogc-csapi-explorer | **Discovery source** — DataStream schema display blocked by this assertion | Closed |
-| [#29](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/29) | ogc-csapi-explorer | **Discovery source** — ControlStream schema display blocked by this assertion | Closed |
-| [#27](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/27) | ogc-csapi-explorer | **Adjacent** — SensorML rendering; discovered `?f=` need that led to #99 | Closed |
+| Issue                                                                                                                                            | Repository         | Relationship                                                                           | Status        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | -------------------------------------------------------------------------------------- | ------------- |
+| [#100](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/100)                                                                                | ogc-client-CSAPI_2 | **This issue** — `assertResourceAvailable()` overly strict for per-ID methods          | Open          |
+| [#99](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/99)                                                                                  | ogc-client-CSAPI_2 | **Related** — `?f=` support (already exists; Issue #99 closed as not_planned)          | Closed        |
+| [#28](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/28)                                                                                  | ogc-csapi-explorer | **Discovery source** — DataStream schema display blocked by this assertion             | Closed        |
+| [#29](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/29)                                                                                  | ogc-csapi-explorer | **Discovery source** — ControlStream schema display blocked by this assertion          | Closed        |
+| [#27](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/27)                                                                                  | ogc-csapi-explorer | **Adjacent** — SensorML rendering; discovered `?f=` need that led to #99               | Closed        |
 | [Issue #99 findings](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/testing/demo-app-findings/issue-99-format-query-parameter.md) | ogc-client-CSAPI_2 | **Predecessor** — established that #100 is the real blocker, not missing `?f=` support | Report exists |
 
 ### Linked Reference Documents
 
-| Document | Location | Relevance |
-|----------|----------|-----------|
-| AI Operational Constraints | [docs/governance/AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | §2.1 (no scope expansion), §2.2 (preserve structure/minimal diffs) — supports deferring |
-| OGC API Connected Systems Part 1 | OGC 23-001, §7.2–7.3 | Part 1 resource endpoints (systems, deployments, procedures, samplingFeatures, properties) |
-| OGC API Connected Systems Part 2 | OGC 23-002, §7.1–7.4 | Part 2 resource endpoints (datastreams, observations, controlStreams, commands) — top-level optional |
-| `assertResourceAvailable()` | `src/ogc-api/csapi/url_builder.ts` L320–327 | The guard method under review |
-| `buildResourceUrl()` | `src/ogc-api/csapi/url_builder.ts` L251–262 | Already has graceful fallback; would work without assertion |
-| `resourceUrls` constructor param | `src/ogc-api/csapi/url_builder.ts` L150–175 | Existing workaround for servers that don't advertise links |
-| `scanCsapiLinks()` | `src/ogc-api/csapi/helpers.ts` L115–162 | Resource discovery from collection links |
-| Issue #99 findings report | `docs/testing/demo-app-findings/issue-99-format-query-parameter.md` | Identified #100 as the real blocker |
+| Document                         | Location                                                                                                                                                | Relevance                                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| AI Operational Constraints       | [docs/governance/AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | §2.1 (no scope expansion), §2.2 (preserve structure/minimal diffs) — supports deferring              |
+| OGC API Connected Systems Part 1 | OGC 23-001, §7.2–7.3                                                                                                                                    | Part 1 resource endpoints (systems, deployments, procedures, samplingFeatures, properties)           |
+| OGC API Connected Systems Part 2 | OGC 23-002, §7.1–7.4                                                                                                                                    | Part 2 resource endpoints (datastreams, observations, controlStreams, commands) — top-level optional |
+| `assertResourceAvailable()`      | `src/ogc-api/csapi/url_builder.ts` L320–327                                                                                                             | The guard method under review                                                                        |
+| `buildResourceUrl()`             | `src/ogc-api/csapi/url_builder.ts` L251–262                                                                                                             | Already has graceful fallback; would work without assertion                                          |
+| `resourceUrls` constructor param | `src/ogc-api/csapi/url_builder.ts` L150–175                                                                                                             | Existing workaround for servers that don't advertise links                                           |
+| `scanCsapiLinks()`               | `src/ogc-api/csapi/helpers.ts` L115–162                                                                                                                 | Resource discovery from collection links                                                             |
+| Issue #99 findings report        | `docs/testing/demo-app-findings/issue-99-format-query-parameter.md`                                                                                     | Identified #100 as the real blocker                                                                  |

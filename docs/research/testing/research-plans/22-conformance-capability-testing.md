@@ -61,6 +61,7 @@ Define testing strategy for conformance class detection and capability-based beh
 **Objective:** Understand all CSAPI conformance classes and their implications
 
 **Tasks:**
+
 1. Extract conformance classes from CSAPI Part 1 specification
 2. Extract conformance classes from CSAPI Part 2 specification
 3. Map conformance classes to capabilities/features
@@ -72,6 +73,7 @@ Define testing strategy for conformance class detection and capability-based beh
 **Objective:** Analyze conformance implementations in real servers
 
 **Tasks:**
+
 1. Query OpenSensorHub /conformance endpoint
 2. Query 52°North /conformance endpoint
 3. Document conformance differences between servers
@@ -83,6 +85,7 @@ Define testing strategy for conformance class detection and capability-based beh
 **Objective:** Understand how client must adapt to conformance
 
 **Tasks:**
+
 1. Map conformance classes to client behavior changes
 2. Identify capability detection methods
 3. Document graceful degradation strategies
@@ -94,6 +97,7 @@ Define testing strategy for conformance class detection and capability-based beh
 **Objective:** Design test scenarios for all conformance situations
 
 **Tasks:**
+
 1. Define full conformance test scenarios
 2. Define partial conformance test scenarios
 3. Define missing capability test scenarios
@@ -106,6 +110,7 @@ Define testing strategy for conformance class detection and capability-based beh
 **Objective:** Define how to mock different server capability profiles
 
 **Tasks:**
+
 1. Design mock /conformance responses
 2. Create capability profile fixtures
 3. Define mock server configuration approach
@@ -116,6 +121,7 @@ Define testing strategy for conformance class detection and capability-based beh
 **Objective:** Create comprehensive conformance testing strategy
 
 **Tasks:**
+
 1. Consolidate conformance test scenarios
 2. Create conformance test templates
 3. Document mocking approach
@@ -145,6 +151,7 @@ This research is complete when:
 **Conformance testing strategy with server capability test scenarios**
 
 Content includes:
+
 - CSAPI conformance class catalog (Part 1 & Part 2)
 - Real server conformance profiles (OpenSensorHub, 52°North)
 - Conformance-to-behavior mapping
@@ -161,11 +168,13 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis (conformance patterns)
 - Section 2: Existing Upstream Test Pattern Survey (capability testing)
 - Section 13: Resource Method Testing Patterns (resource availability)
 
 **Blocks:**
+
 - Conformance detection implementation (tests guide implementation)
 - Server capability handling (tests validate adaptive behavior)
 
@@ -189,6 +198,7 @@ Content includes:
 ## 10. Notes and Research Insights
 
 **Completed Research Findings:**
+
 - ✅ 25 conformance classes cataloged (13 Part 1, 12 Part 2)
 - ✅ OpenSensorHub implements full CSAPI conformance (33/33 classes)
 - ✅ 52°North implements partial conformance - confirmed as primary test case
@@ -200,6 +210,7 @@ Content includes:
 - ✅ `/conformance` endpoint is critical path for client initialization
 
 **Key Testing Insights:**
+
 1. **8+ server profiles needed** - from minimal (3 classes) to full (25 classes)
 2. **52°North profile is most important** - tests partial Part 2 implementation
 3. **Capability-based initialization** - client conditionally creates resource clients
@@ -207,6 +218,7 @@ Content includes:
 5. **Fixture-based mocking** - mock /conformance responses for each profile
 
 **Implementation Priorities:**
+
 1. HIGH: Conformance detection (`checkHasConnectedSystems()`, fixtures)
 2. HIGH: Capability detection (`ServerCapabilities`, detection logic)
 3. HIGH: Method availability enforcement (`ConformanceError`, CRUD checks)
@@ -214,12 +226,14 @@ Content includes:
 5. MEDIUM: Integration tests (multi-resource workflows)
 
 **Test Scenarios Defined:**
+
 - S1-S6: Capability profiles (minimal to full)
 - S7-S8: Error handling (missing/malformed conformance)
 - Each scenario maps to real-world server configuration
 
-**Deliverable:** 
+**Deliverable:**
 ✅ Complete testing strategy document created
+
 - Conformance class catalog with hierarchy
 - Real server profiles (OSH, 52°North)
 - Conformance-to-behavior mapping

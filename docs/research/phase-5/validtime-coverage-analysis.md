@@ -18,23 +18,23 @@ Source: [OGC API - Connected Systems Part 1 OpenAPI Specification](../standards/
 
 ### Part 1 Resources
 
-| Resource | Schema Name | `validTime` in Spec? | Required? | Spec Location |
-|----------|-------------|---------------------|-----------|---------------|
-| System | `system` | **Yes** | No (optional) | OGC 23-001 §7, OpenAPI L1928 |
-| Deployment | `deployment` | **Yes** | Spec says yes (Table 10), but §8.7 Req 3B contradicts | OpenAPI L4567–L4571 |
-| Procedure | `procedure` | **No** | — | Procedures describe methodologies; no temporal validity |
-| SamplingFeature | `samplingFeature` | **Yes** | No (optional) | OpenAPI L4767 |
-| Property | `DerivedProperty` | **No** | — | Schema chain: `DerivedProperty` → `AbstractSweIdentifiable` → `AbstractSWE`. No `validTime` at any level. |
+| Resource        | Schema Name       | `validTime` in Spec? | Required?                                             | Spec Location                                                                                             |
+| --------------- | ----------------- | -------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| System          | `system`          | **Yes**              | No (optional)                                         | OGC 23-001 §7, OpenAPI L1928                                                                              |
+| Deployment      | `deployment`      | **Yes**              | Spec says yes (Table 10), but §8.7 Req 3B contradicts | OpenAPI L4567–L4571                                                                                       |
+| Procedure       | `procedure`       | **No**               | —                                                     | Procedures describe methodologies; no temporal validity                                                   |
+| SamplingFeature | `samplingFeature` | **Yes**              | No (optional)                                         | OpenAPI L4767                                                                                             |
+| Property        | `DerivedProperty` | **No**               | —                                                     | Schema chain: `DerivedProperty` → `AbstractSweIdentifiable` → `AbstractSWE`. No `validTime` at any level. |
 
 ### Part 2 Resources
 
-| Resource | `validTime` in Spec? | Required? | Notes |
-|----------|---------------------|-----------|-------|
-| Datastream | **Yes** | No (optional) | Temporal extent of the datastream |
-| Observation | **No** | — | Has `phenomenonTime`, `resultTime` — different concept |
-| ControlStream | **Yes** | No (optional) | Temporal extent of the control stream |
-| Command | **No** | — | Has `issueTime`, `executionTime` — different concept |
-| CommandStatus | **No** | — | Has `executionTime`, `statusCode` — different concept |
+| Resource      | `validTime` in Spec? | Required?     | Notes                                                  |
+| ------------- | -------------------- | ------------- | ------------------------------------------------------ |
+| Datastream    | **Yes**              | No (optional) | Temporal extent of the datastream                      |
+| Observation   | **No**               | —             | Has `phenomenonTime`, `resultTime` — different concept |
+| ControlStream | **Yes**              | No (optional) | Temporal extent of the control stream                  |
+| Command       | **No**               | —             | Has `issueTime`, `executionTime` — different concept   |
+| CommandStatus | **No**               | —             | Has `executionTime`, `statusCode` — different concept  |
 
 ---
 
@@ -51,7 +51,7 @@ The OGC spec defines Property using the `DerivedProperty` schema (OpenAPI L4790�
 - `qualifiers` (array)
 - `links`
 
-No `validTime` appears at any level of the inheritance chain. This is conceptually correct: a Property defines *what can be observed* (e.g., "air temperature") — it's a vocabulary entry, not a temporal resource. It doesn't start or stop being valid; it describes a measurement concept.
+No `validTime` appears at any level of the inheritance chain. This is conceptually correct: a Property defines _what can be observed_ (e.g., "air temperature") — it's a vocabulary entry, not a temporal resource. It doesn't start or stop being valid; it describes a measurement concept.
 
 The Parsing Coverage Audit's Gap #1 description ("parse `validTime` → `TimeInterval`") was incorrect for Property. The `parseProperty()` implementation should validate/normalize the flat JSON fields listed above without any time field parsing.
 
@@ -61,7 +61,7 @@ The Parsing Coverage Audit's Gap #1 description ("parse `validTime` → `TimeInt
 
 Procedures describe methodologies — how a measurement is taken, not when. The `procedure` schema inherits from `AbstractFeature` → `feature`, neither of which defines `validTime`. The existing `extractCSAPIFeature()` function correctly omits `validTime` from its Procedure output path. This is documented in the codebase:
 
-> *"Procedures describe methodologies — they don't have temporal validity periods. `Procedure.properties` correctly omits `validTime`. This is not a modeling error; it reflects the spec."*
+> _"Procedures describe methodologies — they don't have temporal validity periods. `Procedure.properties` correctly omits `validTime`. This is not a modeling error; it reflects the spec."_
 
 ---
 
@@ -69,24 +69,25 @@ Procedures describe methodologies — how a measurement is taken, not when. The 
 
 ### TypeScript Interfaces (model.ts)
 
-| Interface | `validTime` Field | Type | Optional? |
-|-----------|------------------|------|-----------|
-| `System` | `properties.validTime` | `TimeInterval` | Yes (`?`) |
-| `Deployment` | `properties.validTime` | `TimeInterval` | Yes (`?`) |
+| Interface         | `validTime` Field      | Type           | Optional? |
+| ----------------- | ---------------------- | -------------- | --------- |
+| `System`          | `properties.validTime` | `TimeInterval` | Yes (`?`) |
+| `Deployment`      | `properties.validTime` | `TimeInterval` | Yes (`?`) |
 | `SamplingFeature` | `properties.validTime` | `TimeInterval` | Yes (`?`) |
-| `Procedure` | — (absent) | — | N/A |
-| `Property` | — (absent) | — | N/A |
-| `Datastream` | `validTime` | `TimeInterval` | Yes (`?`) |
-| `ControlStream` | `validTime` | `TimeInterval` | Yes (`?`) |
-| `Observation` | — (absent) | — | N/A |
-| `Command` | — (absent) | — | N/A |
-| `CommandStatus` | — (absent) | — | N/A |
+| `Procedure`       | — (absent)             | —              | N/A       |
+| `Property`        | — (absent)             | —              | N/A       |
+| `Datastream`      | `validTime`            | `TimeInterval` | Yes (`?`) |
+| `ControlStream`   | `validTime`            | `TimeInterval` | Yes (`?`) |
+| `Observation`     | — (absent)             | —              | N/A       |
+| `Command`         | — (absent)             | —              | N/A       |
+| `CommandStatus`   | — (absent)             | —              | N/A       |
 
 `TimeInterval` is defined as `{ start: Date; end?: Date }`.
 
 ### `parseValidTime()` Function (geojson.ts L274–L324)
 
 Handles three input shapes:
+
 1. **Null/undefined** → returns `undefined`
 2. **Array format** (spec-canonical): `["2026-01-26T18:32:01.56Z", "now"]` → `{ start: Date, end: undefined }` (open-ended) or `{ start, end: Date }` (closed)
 3. **Object format** (defensive): `{ start: Date|string, end?: Date|string }` → parsed `TimeInterval`
@@ -106,12 +107,14 @@ The `"now"` sentinel string is treated as `end: undefined` (open-ended interval)
 ## Issue #77: Deployment `validTime` Made Optional
 
 **Background:** During Smoke Test #18 (Finding F85), both live servers returned Deployments without valid `validTime` data:
+
 - OpenSensorHub: `validTime` absent from response
 - 52North: `validTime: null`
 
 The original TypeScript interface declared `validTime: TimeInterval` (required). The GeoJSON parser used `validTime: validTime!` (non-null assertion), creating `validTime: undefined` that violated the type contract.
 
 **Fix (Phase 3.17, commit `5161990`, Issue #77):**
+
 1. Changed `Deployment.properties.validTime` from `TimeInterval` to `TimeInterval | undefined` (optional)
 2. Changed GeoJSON parser from non-null assertion to conditional spread
 
@@ -121,31 +124,31 @@ The original TypeScript interface declared `validTime: TimeInterval` (required).
 
 ## Phase 5 Implications: Which New Parsers Need `validTime`?
 
-| New Parser | Needs `validTime` Parsing? | Reason |
-|------------|--------------------------|--------|
-| `parseProperty()` | **No** | Property has no `validTime` in spec or interface |
-| `parseDatastream()` | **Yes** | Interface has `validTime?: TimeInterval` — parse from raw array/string |
-| `parseObservation()` | **No** | Has `phenomenonTime`/`resultTime` instead (different fields, same `TimeInterval` type) |
-| `parseControlStream()` | **Yes** | Interface has `validTime?: TimeInterval` — parse from raw array/string |
-| `parseCommand()` | **No** | Has `executionTime` instead (different field, same pattern) |
-| `parseCommandStatus()` | **No** | Has `executionTime` instead |
-| `parseDatastreamSchemaResponse()` | **No** | Schema wrapper — no temporal fields |
-| `parseControlStreamSchemaResponse()` | **No** | Schema wrapper — no temporal fields |
-| SensorML recursive delegation fix | **No** | `validTime` on SensorML `DescribedObject` is already parsed by existing parsers |
+| New Parser                           | Needs `validTime` Parsing? | Reason                                                                                 |
+| ------------------------------------ | -------------------------- | -------------------------------------------------------------------------------------- |
+| `parseProperty()`                    | **No**                     | Property has no `validTime` in spec or interface                                       |
+| `parseDatastream()`                  | **Yes**                    | Interface has `validTime?: TimeInterval` — parse from raw array/string                 |
+| `parseObservation()`                 | **No**                     | Has `phenomenonTime`/`resultTime` instead (different fields, same `TimeInterval` type) |
+| `parseControlStream()`               | **Yes**                    | Interface has `validTime?: TimeInterval` — parse from raw array/string                 |
+| `parseCommand()`                     | **No**                     | Has `executionTime` instead (different field, same pattern)                            |
+| `parseCommandStatus()`               | **No**                     | Has `executionTime` instead                                                            |
+| `parseDatastreamSchemaResponse()`    | **No**                     | Schema wrapper — no temporal fields                                                    |
+| `parseControlStreamSchemaResponse()` | **No**                     | Schema wrapper — no temporal fields                                                    |
+| SensorML recursive delegation fix    | **No**                     | `validTime` on SensorML `DescribedObject` is already parsed by existing parsers        |
 
-**All time-like fields** (`validTime`, `phenomenonTime`, `resultTime`, `executionTime`, `issueTime`) across all Part 2 resources arrive in the same format (ISO 8601 array or instant) and should be parsed with the same `parseValidTime()` function or an equivalent shared helper. The field *name* varies but the *parsing logic* is identical.
+**All time-like fields** (`validTime`, `phenomenonTime`, `resultTime`, `executionTime`, `issueTime`) across all Part 2 resources arrive in the same format (ISO 8601 array or instant) and should be parsed with the same `parseValidTime()` function or an equivalent shared helper. The field _name_ varies but the _parsing logic_ is identical.
 
 ---
 
 ## Test Data Availability
 
-| Resource | Real `validTime` data from servers? | Source |
-|----------|-------------------------------------|--------|
-| System | Yes — OSH returns `validTime` arrays | ST#1–#19 |
-| Deployment | Partial — servers omit or null | ST#18 (F85), ST#19 |
-| SamplingFeature | Yes — OSH returns `validTime` | ST#5 |
-| Property | **No data exists** — both servers return 0 items | ST#6 (confirmed: N/A) |
-| Datastream | Yes — OSH returns `validTime` on datastreams | ST#7 |
-| ControlStream | Yes — OSH returns `validTime` on controlstreams | ST#9 |
+| Resource        | Real `validTime` data from servers?              | Source                |
+| --------------- | ------------------------------------------------ | --------------------- |
+| System          | Yes — OSH returns `validTime` arrays             | ST#1–#19              |
+| Deployment      | Partial — servers omit or null                   | ST#18 (F85), ST#19    |
+| SamplingFeature | Yes — OSH returns `validTime`                    | ST#5                  |
+| Property        | **No data exists** — both servers return 0 items | ST#6 (confirmed: N/A) |
+| Datastream      | Yes — OSH returns `validTime` on datastreams     | ST#7                  |
+| ControlStream   | Yes — OSH returns `validTime` on controlstreams  | ST#9                  |
 
 Property test fixtures will need to be constructed from the spec definition alone, as no live server has ever returned Property resources.

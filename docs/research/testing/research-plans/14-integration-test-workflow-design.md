@@ -64,6 +64,7 @@ Design the 4 integration test workflows defined in Implementation Guide with con
 **Objective:** Analyze each workflow's component interactions and state transitions
 
 **Tasks:**
+
 1. Map Discovery workflow components and steps
 2. Map Observation workflow components and steps
 3. Map Command workflow components and steps
@@ -76,6 +77,7 @@ Design the 4 integration test workflows defined in Implementation Guide with con
 **Objective:** Design concrete test scenarios for each workflow
 
 **Tasks:**
+
 1. Define Discovery workflow test scenarios
 2. Define Observation workflow test scenarios
 3. Define Command workflow test scenarios
@@ -88,6 +90,7 @@ Design the 4 integration test workflows defined in Implementation Guide with con
 **Objective:** Define HTTP response mocking approach for workflows
 
 **Tasks:**
+
 1. Identify upstream mocking patterns
 2. Select mocking library/approach
 3. Design mock fixtures for multi-step interactions
@@ -99,6 +102,7 @@ Design the 4 integration test workflows defined in Implementation Guide with con
 **Objective:** Define assertions and validation for workflow tests
 
 **Tasks:**
+
 1. Define Discovery workflow assertions
 2. Define Observation workflow assertions
 3. Define Command workflow assertions
@@ -111,6 +115,7 @@ Design the 4 integration test workflows defined in Implementation Guide with con
 **Objective:** Create comprehensive integration test workflow specification
 
 **Tasks:**
+
 1. Consolidate workflow test designs
 2. Create test structure templates
 3. Document fixture requirements
@@ -137,6 +142,7 @@ This research is complete when:
 **Integration test workflow specifications with scenario details and fixtures**
 
 Content includes:
+
 - Test scenario specifications for all 4 workflows
 - HTTP response mocking strategy and patterns
 - Assertion patterns per workflow type
@@ -149,6 +155,7 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis
 - Section 2: Existing Upstream Test Pattern Survey
 - Section 7: End-to-End Testing Scope Definition
@@ -156,6 +163,7 @@ Content includes:
 - Section 13: Resource Method Testing Patterns
 
 **Blocks:**
+
 - Section 19: Test Organization and File Structure (needs workflow test structures)
 
 ---

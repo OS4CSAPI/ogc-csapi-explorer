@@ -9,12 +9,14 @@
 **Research Time:** 3.5 hours (January 31, 2025)
 
 **Primary Source(s):**
+
 - [CSAPI Part 1 Specification](https://docs.ogc.org/is/23-001/23-001.html) (11 examples extracted)
 - [CSAPI Part 2 Specification](https://docs.ogc.org/is/23-002/23-002.html) (14+ examples extracted)
 - [SensorML 3.0 Specification (OGC 23-000)](https://docs.ogc.org/is/23-000/23-000.html) with [JSON Schema Repository](https://schemas.opengis.net/sensorML/3.0/json/)
 - [SWE Common 3.0 Specification (OGC 24-014)](https://docs.ogc.org/is/24-014/24-014.html) with Annex B.1-B.2 examples
 
 **Supporting Resources:**
+
 - Section 8: [CSAPI Specification Test Requirements](08-csapi-specification-test-requirements.md) (25+ fixture requirements)
 - Section 9: [SensorML Testing Requirements](09-sensorml-testing-requirements.md) (~25 fixture requirements)
 - Section 10: [SWE Common Testing Requirements](10-swe-common-testing-requirements.md) (~120 fixture requirements)
@@ -53,9 +55,10 @@
 
 ### 1.1 Fixture Requirements Overview
 
-**Total Fixtures Identified:** **~80-100 fixtures** across all test types *(revised from original ~280)*
+**Total Fixtures Identified:** **~80-100 fixtures** across all test types _(revised from original ~280)_
 
 **Breakdown by Section (revised):**
+
 - Section 8 (CSAPI Spec): 15-20 examples (Part 1 + Part 2)
 - Section 9 (SensorML): 8-12 fixtures (key document types + 2-3 error cases)
 - Section 10 (SWE Common): 15-25 fixtures (JSON primary, text/binary only as needed by parser)
@@ -66,6 +69,7 @@
 - **Additional edge cases:** 5-8 error/edge case fixtures
 
 **Primary Sources Identified:**
+
 1. ✅ **CSAPI Part 1 & 2 Specifications** - Available examples with JSON representations
 2. ✅ **SensorML 3.0 Specification** (https://docs.ogc.org/is/23-000/23-000.html) - Accessible with examples
 3. ✅ **SWE Common 3.0 Specification** (https://docs.ogc.org/is/24-014/24-014.html) - Accessible with examples
@@ -76,12 +80,14 @@
 ### 1.2 Key Findings
 
 **Sourcing Realities:**
+
 - **Specification sources are primary**: All three major specs (CSAPI, SensorML, SWE Common) are accessible and contain JSON examples
 - **Live server data unavailable**: OpenSensorHub demo server returned 404 during research
 - **Hand-crafting required**: Error cases, edge conditions, and validation failures need custom creation
 - **Fixture complexity varies**: Range from simple conformance responses to complex binary-encoded datastreams
 
 **Organization Challenges:**
+
 - **Multiple dimensions**: Resource type, format, variant (valid/invalid), test type, workflow
 - **Reusability needs**: Universal fixtures shared across test types vs. resource-specific fixtures
 - **Encoding variations**: JSON, Text (CSV), Binary (base64) for SWE Common datastreams
@@ -92,18 +98,21 @@
 **Three-Phase Sourcing Plan:**
 
 **Phase 1: Critical Path Fixtures** (Week 1)
+
 - Extract key examples from CSAPI, SensorML, SWE Common specs
 - Create QueryBuilder/Resource Method fixtures
 - Create discovery workflow fixtures
 - **Deliverables:** ~30 critical-path fixtures
 
 **Phase 2: Incremental Expansion** (Weeks 2-3)
+
 - Add fixtures as tests demand them (test-driven fixture creation)
 - Create error/edge case fixtures as error-handling tests are written
 - Expand SWE Common coverage for formats actually parsed by client
 - **Deliverables:** ~40-50 additional fixtures
 
 **Phase 3: Remaining Coverage** (As needed)
+
 - Add SWE text/binary fixtures only when parser supports them
 - Add advanced workflow fixtures when integration tests reach that scope
 - **Deliverables:** ~10-20 remaining fixtures
@@ -116,49 +125,53 @@
 
 ### 2.1 Complete Fixture Matrix
 
-| **Section** | **Category** | **Fixture Count** | **Formats** | **Variants** | **Source** |
-|------------|--------------|------------------|-------------|--------------|------------|
-| **Section 8** | CSAPI Spec Examples | 15-20 | JSON | Valid | CSAPI Specs |
-| **Section 9** | SensorML | 8-12 | JSON | Valid + Error | SensorML 3.0 Spec |
-| | PhysicalSystem | 3 | JSON | 2 valid, 1 error | Spec + Hand-craft |
-| | PhysicalComponent | 2 | JSON | 1 valid, 1 error | Spec + Hand-craft |
-| | Process types | 3 | JSON | Valid | Spec |
-| | Error/composite | 2-4 | JSON | Mixed | Hand-craft |
-| **Section 10** | SWE Common | 15-25 | JSON primary | Valid + Error | SWE 3.0 Spec |
-| | JSON encoding | 10-15 | JSON | Valid + error | Spec + Hand-craft |
-| | Text encoding | 3-5 | Text | Valid | Spec (as needed) |
-| | Binary encoding | 2-5 | Binary | Valid | Hand-craft (as needed) |
-| **Section 11** | GeoJSON CSAPI | 10-15 | JSON | Valid + Invalid | Hand-craft |
-| | 5 resource types | 10-15 | JSON | 2-3 per type | CSAPI Spec + Hand-craft |
-| **Section 12** | QueryBuilder | 5 | JSON | Valid | Hand-craft |
-| **Section 13** | Resource Methods | 15-20 | JSON | Valid | Hand-craft |
-| | Universal fixtures | 5 | JSON | Valid | Same as Section 12 |
-| | Resource-specific | 10-15 | JSON | collection + item | Hand-craft |
-| **Section 14** | Integration Workflows | 10-15 | JSON | Valid + Edge | Hand-craft |
-| | Discovery workflow | 6-8 | JSON | Valid | Hand-craft |
-| | Observation workflow | 4-7 | JSON | Valid | Hand-craft |
-| **Additional** | Error/Edge Cases | 5-8 | Various | Invalid/Edge | Hand-craft |
-| **TOTAL** | | **~80-100** | | | |
+| **Section**    | **Category**          | **Fixture Count** | **Formats**  | **Variants**      | **Source**              |
+| -------------- | --------------------- | ----------------- | ------------ | ----------------- | ----------------------- |
+| **Section 8**  | CSAPI Spec Examples   | 15-20             | JSON         | Valid             | CSAPI Specs             |
+| **Section 9**  | SensorML              | 8-12              | JSON         | Valid + Error     | SensorML 3.0 Spec       |
+|                | PhysicalSystem        | 3                 | JSON         | 2 valid, 1 error  | Spec + Hand-craft       |
+|                | PhysicalComponent     | 2                 | JSON         | 1 valid, 1 error  | Spec + Hand-craft       |
+|                | Process types         | 3                 | JSON         | Valid             | Spec                    |
+|                | Error/composite       | 2-4               | JSON         | Mixed             | Hand-craft              |
+| **Section 10** | SWE Common            | 15-25             | JSON primary | Valid + Error     | SWE 3.0 Spec            |
+|                | JSON encoding         | 10-15             | JSON         | Valid + error     | Spec + Hand-craft       |
+|                | Text encoding         | 3-5               | Text         | Valid             | Spec (as needed)        |
+|                | Binary encoding       | 2-5               | Binary       | Valid             | Hand-craft (as needed)  |
+| **Section 11** | GeoJSON CSAPI         | 10-15             | JSON         | Valid + Invalid   | Hand-craft              |
+|                | 5 resource types      | 10-15             | JSON         | 2-3 per type      | CSAPI Spec + Hand-craft |
+| **Section 12** | QueryBuilder          | 5                 | JSON         | Valid             | Hand-craft              |
+| **Section 13** | Resource Methods      | 15-20             | JSON         | Valid             | Hand-craft              |
+|                | Universal fixtures    | 5                 | JSON         | Valid             | Same as Section 12      |
+|                | Resource-specific     | 10-15             | JSON         | collection + item | Hand-craft              |
+| **Section 14** | Integration Workflows | 10-15             | JSON         | Valid + Edge      | Hand-craft              |
+|                | Discovery workflow    | 6-8               | JSON         | Valid             | Hand-craft              |
+|                | Observation workflow  | 4-7               | JSON         | Valid             | Hand-craft              |
+| **Additional** | Error/Edge Cases      | 5-8               | Various      | Invalid/Edge      | Hand-craft              |
+| **TOTAL**      |                       | **~80-100**       |              |                   |                         |
 
 ### 2.2 Fixture Complexity Analysis
 
 **Simple Fixtures** (~40 fixtures, 15-30 minutes each):
+
 - Conformance responses (single objects)
 - Collection-info responses (simple arrays)
 - Empty collections, error responses
 
 **Medium Fixtures** (~40 fixtures, 30-60 minutes each):
+
 - Single resource GeoJSON features (Systems, Deployments, etc.)
 - SensorML PhysicalSystem/PhysicalComponent
 - SWE Common JSON DataRecords/DataArrays
 - Simple workflow responses
 
 **Complex Fixtures** (~15 fixtures, 1-3 hours each):
+
 - Composite SensorML systems with nested components
 - SWE Common binary-encoded datastreams (only if parser requires)
 - Integration workflow response chains
 
 **Estimated Effort:**
+
 - Simple: 40 × 20 min avg = 800 min = **13 hours**
 - Medium: 40 × 45 min avg = 1,800 min = **30 hours**
 - Complex: 15 × 2 hr avg = **30 hours**
@@ -171,12 +184,14 @@
 ### 3.1 By Test Type
 
 **Unit Test Fixtures:**
+
 - QueryBuilder fixtures (5 universal)
 - Resource method fixtures (23 resource-specific)
 - Format parser fixtures (SensorML ~25, SWE Common ~120, GeoJSON ~20)
 - **Total: ~193 fixtures**
 
 **Integration Test Fixtures:**
+
 - Discovery workflow fixtures (8)
 - Observation workflow fixtures (10)
 - Command workflow fixtures (8)
@@ -184,50 +199,52 @@
 - **Total: 33 fixtures**
 
 **Validation Test Fixtures:**
+
 - Schema validation fixtures (~15)
 - Error condition fixtures (~15)
 - Edge case fixtures (~15)
 - **Total: ~45 fixtures**
 
 **Performance Test Fixtures:**
+
 - Large collection fixtures (~3)
 - Streaming datastream fixtures (~3)
 - **Total: ~6 fixtures**
 
 ### 3.2 By Resource Type (CSAPI Resources)
 
-| Resource Type | Collection Response | Item Response | Feature Valid | Feature Invalid | Total |
-|--------------|---------------------|---------------|---------------|-----------------|-------|
-| Systems | 1 | 1 | 2 | 2 | 6 |
-| Deployments | 1 | 1 | 2 | 2 | 6 |
-| Procedures | 1 | 1 | 2 | 2 | 6 |
-| SamplingFeatures | 1 | 1 | 2 | 2 | 6 |
-| Properties | 1 | 1 | 2 | 2 | 6 |
-| DataStreams | 1 | 1 | - | - | 2 |
-| Observations | 1 | 1 | - | - | 2 |
-| ControlStreams | 1 | 1 | - | - | 2 |
-| Commands | 1 | 1 | - | - | 2 |
-| **TOTAL** | **9** | **9** | **10** | **10** | **38** |
+| Resource Type    | Collection Response | Item Response | Feature Valid | Feature Invalid | Total  |
+| ---------------- | ------------------- | ------------- | ------------- | --------------- | ------ |
+| Systems          | 1                   | 1             | 2             | 2               | 6      |
+| Deployments      | 1                   | 1             | 2             | 2               | 6      |
+| Procedures       | 1                   | 1             | 2             | 2               | 6      |
+| SamplingFeatures | 1                   | 1             | 2             | 2               | 6      |
+| Properties       | 1                   | 1             | 2             | 2               | 6      |
+| DataStreams      | 1                   | 1             | -             | -               | 2      |
+| Observations     | 1                   | 1             | -             | -               | 2      |
+| ControlStreams   | 1                   | 1             | -             | -               | 2      |
+| Commands         | 1                   | 1             | -             | -               | 2      |
+| **TOTAL**        | **9**               | **9**         | **10**        | **10**          | **38** |
 
 ### 3.3 By Format/Encoding
 
-| Format | Description | Fixture Count | Test Type |
-|--------|-------------|---------------|-----------|
-| **JSON** | Standard JSON (CSAPI, GeoJSON, SensorML) | ~160 | Unit, Integration |
-| **JSON (SWE)** | SWE Common JSON encoding | ~40 | Format parser |
-| **Text (CSV)** | SWE Common text encoding | ~40 | Format parser |
-| **Binary (base64)** | SWE Common binary encoding | ~40 | Format parser |
-| **TOTAL** | | **~280** | |
+| Format              | Description                              | Fixture Count | Test Type         |
+| ------------------- | ---------------------------------------- | ------------- | ----------------- |
+| **JSON**            | Standard JSON (CSAPI, GeoJSON, SensorML) | ~160          | Unit, Integration |
+| **JSON (SWE)**      | SWE Common JSON encoding                 | ~40           | Format parser     |
+| **Text (CSV)**      | SWE Common text encoding                 | ~40           | Format parser     |
+| **Binary (base64)** | SWE Common binary encoding               | ~40           | Format parser     |
+| **TOTAL**           |                                          | **~280**      |                   |
 
 ### 3.4 By Variant Type
 
-| Variant | Description | Fixture Count | Purpose |
-|---------|-------------|---------------|---------|
-| **Valid** | Schema-compliant, spec-conformant | ~220 | Positive testing |
-| **Invalid** | Schema violations, invalid properties | ~30 | Error handling |
-| **Edge** | Empty, null, extreme values | ~20 | Edge case testing |
-| **Error** | Server errors, not found, conflicts | ~10 | HTTP error handling |
-| **TOTAL** | | **~280** | |
+| Variant     | Description                           | Fixture Count | Purpose             |
+| ----------- | ------------------------------------- | ------------- | ------------------- |
+| **Valid**   | Schema-compliant, spec-conformant     | ~220          | Positive testing    |
+| **Invalid** | Schema violations, invalid properties | ~30           | Error handling      |
+| **Edge**    | Empty, null, extreme values           | ~20           | Edge case testing   |
+| **Error**   | Server errors, not found, conflicts   | ~10           | HTTP error handling |
+| **TOTAL**   |                                       | **~280**      |                     |
 
 ---
 
@@ -238,16 +255,19 @@
 **Source:** CSAPI Part 1 & Part 2 Specifications
 
 **Extraction Method:**
+
 1. Identify example sections in CSAPI specs (typically Annex B or inline examples)
 2. Extract JSON examples for each resource type
 3. Validate against JSON schemas
 4. Save as standalone fixture files
 
 **Example Locations in CSAPI Spec:**
+
 - Part 1 examples: Systems, Deployments, Procedures, SamplingFeatures, Properties
 - Part 2 examples: DataStreams, Observations, ControlStreams, Commands
 
 **Fixtures to Extract:**
+
 - `system-weather-station.json` - Example weather station system
 - `deployment-argo-float.json` - Example deployment
 - `procedure-temperature-measurement.json` - Example observation procedure
@@ -263,11 +283,13 @@
 ### 4.2 SensorML 3.0 Fixtures (Section 9)
 
 **Source:** SensorML 3.0 Specification (OGC 23-000)
+
 - **URL:** https://docs.ogc.org/is/23-000/23-000.html
 - **JSON Schema Repository:** https://schemas.opengis.net/sensorML/3.0/json/
 - **JSON Example Repository:** https://schemas.opengis.net/sensorML/3.0/json/examples/
 
 **Extraction Method:**
+
 1. Access SensorML 3.0 specification document
 2. Identify example sections (Clause 9, Annex B typically contain JSON examples)
 3. Download examples from schema repository if available
@@ -276,6 +298,7 @@
 6. Supplement with hand-crafted error cases
 
 **Examples Available in Spec:**
+
 - Weather station system (PhysicalSystem with multiple sensor components)
 - Individual sensor descriptions (PhysicalComponent)
 - Deployment descriptions
@@ -283,6 +306,7 @@
 - Datasheet specifications
 
 **Fixtures to Create:**
+
 - `physicalsystem-weather-station.json` (valid, from spec)
 - `physicalsystem-saildrone.json` (valid, from spec deployment example)
 - `physicalsystem-lidar.json` (valid, hand-craft)
@@ -306,10 +330,12 @@
 ### 4.3 SWE Common 3.0 Fixtures (Section 10)
 
 **Source:** SWE Common 3.0 Specification (OGC 24-014)
+
 - **URL:** https://docs.ogc.org/is/24-014/24-014.html
 - **JSON Schema Repository:** https://schemas.opengis.net/sweCommon/3.0/json/
 
 **Extraction Method:**
+
 1. Access SWE Common 3.0 specification (Clause 9: JSON Implementation, Clause 10: Encoding Rules)
 2. Extract JSON encoding examples (Annex B.2: JSON Encoding Rules Examples)
 3. Extract text encoding examples (Annex B.1: Text Encoding Rules Examples)
@@ -317,6 +343,7 @@
 5. Validate against SWE Common JSON schemas
 
 **Example Categories in Spec:**
+
 - **Scalar Components:** Boolean, Text, Category, Count, Quantity, Time
 - **Range Components:** CategoryRange, CountRange, QuantityRange, TimeRange
 - **Record Components:** DataRecord, Vector
@@ -328,6 +355,7 @@
 **Fixtures to Create (120 total = 40 per encoding):**
 
 **JSON Encoding (40 fixtures):**
+
 - `boolean-motion-detected.json` (scalar)
 - `text-manufacturer.json` (scalar)
 - `category-geological-period.json` (scalar)
@@ -359,27 +387,30 @@
 - `geometry-point.json` (Point geometry)
 - `geometry-linestring.json` (LineString geometry)
 - `geometry-polygon.json` (Polygon geometry)
-- *(5 error fixtures: invalid structure, missing required fields, etc.)*
+- _(5 error fixtures: invalid structure, missing required fields, etc.)_
 
 **Text Encoding (40 fixtures):**
-- *(Same logical structure as JSON, but values encoded as CSV-like text)*
+
+- _(Same logical structure as JSON, but values encoded as CSV-like text)_
 - `dataarray-calibration-curve.csv`
 - `datastream-weather.csv`
 - `datastream-navigation-optional.csv`
 - `dataarray-profile-series.csv`
 - `matrix-stress-3x3.csv`
-- *(Plus 35 more covering all component types)*
+- _(Plus 35 more covering all component types)_
 
 **Binary Encoding (40 fixtures):**
-- *(Same logical structure, but values base64-encoded binary)*
+
+- _(Same logical structure, but values base64-encoded binary)_
 - `dataarray-calibration-curve.bin` (base64)
 - `datastream-weather.bin` (base64)
 - `datastream-large-dataset.bin` (base64, for performance testing)
-- *(Plus 37 more covering all component types and data types from Table 2)*
+- _(Plus 37 more covering all component types and data types from Table 2)_
 
 **Sourcing Status:** ✅ Specification accessible with extensive examples in Annexes
 
 **Key Spec References:**
+
 - Clause 9.1-9.7: JSON schema implementations
 - Clause 10.2: JSON encoding rules with examples
 - Clause 10.3: Text encoding rules with examples
@@ -393,6 +424,7 @@
 **Source:** Hand-crafted (based on CSAPI Part 1 property requirements + RFC 7946)
 
 **Creation Method:**
+
 1. Start with CSAPI spec examples (if available)
 2. Ensure RFC 7946 compliance (type, geometry, properties structure)
 3. Add CSAPI-specific properties to `properties` object:
@@ -404,6 +436,7 @@
 5. Validate against GeoJSON schema + CSAPI property requirements
 
 **Fixtures to Create (20 total):**
+
 - `system-weather-station-valid.json` (valid spatial system)
 - `system-lidar-valid.json` (valid spatial system)
 - `system-missing-uid.json` (error: missing required uid)
@@ -432,12 +465,14 @@
 **Source:** Hand-crafted (based on CSAPI conformance and collection-info responses)
 
 **Creation Method:**
+
 1. Create conformance response fixtures (list of conformance classes)
 2. Create collection-info response fixtures (links to resource collections)
 3. Validate structure matches CSAPI API responses
 4. Ensure compatibility with QueryBuilder logic
 
 **Fixtures to Create (5 total):**
+
 - `conformance-all-resources.json` - All 9 CSAPI resource types supported
 - `conformance-part1-only.json` - Only Part 1 resources (Systems, Deployments, Procedures, SamplingFeatures, Properties)
 - `collection-info-all-resources.json` - Links to all 9 resource collections
@@ -451,6 +486,7 @@
 **Source:** Hand-crafted (extends QueryBuilder fixtures)
 
 **Creation Method:**
+
 1. Reuse QueryBuilder universal fixtures (5 fixtures)
 2. Create resource-specific collection and item responses for each of 9 resource types
 3. Ensure realistic data (not minimal/fake)
@@ -459,6 +495,7 @@
 **Fixtures to Create (23 total = 5 universal + 18 resource-specific):**
 
 **Universal (reuse from Section 12):**
+
 - `conformance-all-resources.json`
 - `conformance-part1-only.json`
 - `collection-info-all-resources.json`
@@ -466,6 +503,7 @@
 - `collection-info-no-csapi.json`
 
 **Resource-Specific (9 types × 2 each):**
+
 - `systems-collection-response.json` (GET /systems)
 - `systems-item-response.json` (GET /systems/{id})
 - `deployments-collection-response.json` (GET /deployments)
@@ -492,6 +530,7 @@
 **Source:** Hand-crafted (based on workflow scenarios)
 
 **Creation Method:**
+
 1. Design complete workflow scenarios (discovery, observation, command, navigation)
 2. Create fixture chains (root → step 1 → step 2 → ... → final)
 3. Ensure link consistency across fixtures (href values match)
@@ -500,6 +539,7 @@
 **Fixtures to Create (33 total):**
 
 **Discovery Workflow (8 fixtures):**
+
 - `discovery-root-landing-page.json`
 - `discovery-conformance.json`
 - `discovery-collections.json`
@@ -510,6 +550,7 @@
 - `discovery-temp-datastream.json`
 
 **Observation Workflow (10 fixtures):**
+
 - `observation-property-temperature.json`
 - `observation-datastream-temp-series.json`
 - `observation-observations-collection.json`
@@ -522,6 +563,7 @@
 - `observation-swe-values-binary.bin` (observation values in binary)
 
 **Command Workflow (8 fixtures):**
+
 - `command-controlstream.json`
 - `command-commands-collection.json`
 - `command-command-history.json`
@@ -532,6 +574,7 @@
 - `command-command-status.json` (GET /commands/{id} after submission)
 
 **Cross-Resource Navigation (7 fixtures):**
+
 - `navigation-system-mobile-platform.json`
 - `navigation-deployment-mission.json`
 - `navigation-subsystems-collection.json`
@@ -547,6 +590,7 @@
 **Source:** Hand-crafted
 
 **Creation Method:**
+
 1. Identify common error scenarios (404, 400, 500, invalid data)
 2. Create fixtures for edge cases (empty, null, extreme values)
 3. Validate error response formats match CSAPI/OGC API error structure
@@ -554,6 +598,7 @@
 **Fixtures to Create (~30 total):**
 
 **Empty/Null Edge Cases (9):**
+
 - `empty-collection-systems.json` (empty features array)
 - `empty-collection-observations.json` (no observations for datastream)
 - `null-geometry-procedure.json` (procedure with null geometry, valid)
@@ -563,6 +608,7 @@
 - `empty-datastream-values.json` (datastream with no values)
 
 **Invalid Data Errors (5):**
+
 - `invalid-uri-format-system.json` (uid not a valid URI)
 - `invalid-vocabulary-system-type.json` (systemType not from controlled vocab)
 - `invalid-temporal-period-deployment.json` (validTime not ISO8601)
@@ -570,6 +616,7 @@
 - `invalid-sensorml-missing-identifier.json` (SensorML without unique identifier)
 
 **Schema Violation Errors (5):**
+
 - `schema-violation-missing-required-field.json` (missing uid)
 - `schema-violation-wrong-type.json` (string where number expected)
 - `schema-violation-extra-property.json` (unknown property in strict mode)
@@ -577,6 +624,7 @@
 - `schema-violation-array-instead-of-object.json` (type mismatch)
 
 **HTTP Error Responses (8):**
+
 - `error-404-resource-not-found.json`
 - `error-400-invalid-query-parameter.json`
 - `error-400-invalid-request-body.json`
@@ -587,6 +635,7 @@
 - `error-409-conflict.json` (e.g., command already exists)
 
 **Extreme Value Edge Cases (3):**
+
 - `large-collection-1000-items.json` (test pagination/performance)
 - `large-observation-values-10000-points.json` (large datastream)
 - `deep-nested-system-10-levels.json` (deeply nested subsystems)
@@ -622,6 +671,7 @@ fixtures/
 ```
 
 **Key characteristics:**
+
 - **URL-path-mirroring:** `fixtures/ogc-api/sample-data/conformance.json` serves requests to `/sample-data/conformance`
 - **Landing page pattern:** Top-level JSON file names the mock server (`sample-data.json`), subdirectory holds its resources (`sample-data/`)
 - **Mock fetch integration:** Test code builds file paths directly from URL paths: `path.join(FIXTURES_ROOT, url.pathname) + '.json'`
@@ -681,6 +731,7 @@ fixtures/
 ```
 
 **Design decisions:**
+
 - **`fixtures/csapi/`**: URL-path-mirroring, same pattern as `fixtures/ogc-api/`. Enables the mock fetch loader with zero changes.
 - **`fixtures/sensorml/`**: Flat directory — these are parser input fixtures (imported directly in tests, not served via mock fetch). Same pattern as `fixtures/wfs/` (flat, descriptive filenames).
 - **`fixtures/swe-common/`**: Subdirectories by encoding type (json/text/binary) — necessary because the same data model has three distinct wire formats that exercise different parsers.
@@ -707,6 +758,7 @@ beforeAll(() => {
 ```
 
 SensorML and SWE Common parser tests use direct import instead (no mock fetch needed):
+
 ```typescript
 import weatherStation from '../../fixtures/sensorml/physicalsystem-weather-station.json';
 // ... or readFileSync for non-JSON formats
@@ -715,6 +767,7 @@ import weatherStation from '../../fixtures/sensorml/physicalsystem-weather-stati
 ### 5.4 Alternative Organizations Considered
 
 **By Test Type (Original Section 5 — Rejected):**
+
 ```
 fixtures/
 ├── csapi-querybuilder/
@@ -724,24 +777,29 @@ fixtures/
 ├── integration/
 └── errors/
 ```
+
 **Rejection Reason:** Incompatible with upstream mock fetch mechanism (URL-path-mirroring); creates parallel organization that doesn't match any existing pattern; forces a separate fixture loading mechanism.
 
 **By Resource Type (Rejected):**
+
 ```
 fixtures/
 ├── systems/
 ├── deployments/
 ├── procedures/
 ```
+
 **Rejection Reason:** Doesn't align with URL-path structure; resource types are nested within servers, not top-level
 
 **By Format (Rejected):**
+
 ```
 fixtures/
 ├── json/
 ├── text/
 ├── binary/
 ```
+
 **Rejection Reason:** Conflates different parser concerns; separates related fixtures
 
 ---
@@ -787,19 +845,25 @@ service-exception-report-1-3-0.xml
 **CSAPI endpoint fixtures (`fixtures/csapi/`):** Use Pattern A — filenames are determined by the API path structure. No naming decision needed.
 
 **SensorML parser fixtures (`fixtures/sensorml/`):** Use Pattern B adapted for parser inputs:
+
 ```
 {type}-{description}.json
 ```
+
 Examples:
+
 - `physicalsystem-weather-station.json`
 - `physicalcomponent-thermometer.json`
 - `physicalsystem-missing-identifier.json` (error case)
 
 **SWE Common parser fixtures (`fixtures/swe-common/json/`):** Use Pattern B:
+
 ```
 {component-type}-{description}.json
 ```
+
 Examples:
+
 - `quantity-temperature.json`
 - `datarecord-weather-data.json`
 - `dataarray-trajectory.json`
@@ -807,12 +871,14 @@ Examples:
 ### 6.3 General Naming Rules
 
 **MUST:**
+
 - Use lowercase letters only
 - Use hyphens for word separation (kebab-case)
 - Match extension to content format (`.json`, `.csv`, `.bin`, `.xml`)
 - Use descriptive, self-documenting names
 
 **MUST NOT:**
+
 - Use underscores (upstream uses hyphens throughout)
 - Use spaces
 - Use generic names (`data.json`, `test.json`, `fixture1.json`)
@@ -825,17 +891,18 @@ For parser fixtures (SensorML, SWE Common) where filenames are not dictated by U
 - `-invalid-{aspect}` — malformed content (e.g., `quantity-invalid-uom.json`)
 
 For endpoint fixtures (CSAPI), error scenarios are represented as separate mock servers:
+
 - `fixtures/csapi/no-csapi.json` — server that lacks CSAPI conformance
 - `fixtures/csapi/empty-server/systems.json` — empty systems collection
 
 ### 6.5 Extension Mapping
 
-| Extension | Content Type | Description |
-|-----------|--------------|-------------|
-| `.json` | JSON | CSAPI responses, GeoJSON, SensorML, SWE JSON |
-| `.xml` | XML | WFS/WMS/WMTS capabilities (existing only) |
-| `.csv` | Text (CSV) | SWE Common text encoding |
-| `.bin` | Binary | SWE Common binary encoding |
+| Extension | Content Type | Description                                  |
+| --------- | ------------ | -------------------------------------------- |
+| `.json`   | JSON         | CSAPI responses, GeoJSON, SensorML, SWE JSON |
+| `.xml`    | XML          | WFS/WMS/WMTS capabilities (existing only)    |
+| `.csv`    | Text (CSV)   | SWE Common text encoding                     |
+| `.bin`    | Binary       | SWE Common binary encoding                   |
 
 ---
 
@@ -859,6 +926,7 @@ For endpoint fixtures (CSAPI), error scenarios are represented as separate mock 
 **Each fixture file should include embedded metadata** (where format allows):
 
 **JSON Fixtures:**
+
 ```json
 {
   "$schema": "https://schemas.opengis.net/...",
@@ -884,11 +952,13 @@ For endpoint fixtures (CSAPI), error scenarios are represented as separate mock 
 ```
 
 **CSV/Binary Fixtures:**
+
 - Accompany with sidecar `.meta.json` file:
   - `datastream-weather.csv`
   - `datastream-weather.csv.meta.json` ← sidecar metadata
 
 **Sidecar Metadata Example:**
+
 ```json
 {
   "fixtureFile": "datastream-weather.csv",
@@ -900,10 +970,7 @@ For endpoint fixtures (CSAPI), error scenarios are represented as separate mock 
   "validationStatus": "schema-valid",
   "validatedDate": "2025-01-31",
   "purpose": "Unit test for SWE DataStream text encoding",
-  "relatedFixtures": [
-    "datastream-weather.json",
-    "datastream-weather.bin"
-  ],
+  "relatedFixtures": ["datastream-weather.json", "datastream-weather.bin"],
   "descriptor": "datastream-weather-descriptor.json",
   "notes": "CSV encoding of weather datastream with time, temp, press, windSpeed, windDir fields"
 }
@@ -919,12 +986,14 @@ For endpoint fixtures (CSAPI), error scenarios are represented as separate mock 
 ## Specification Sources
 
 ### CSAPI Part 1 & 2
+
 - **URL:** [CSAPI Specification](link)
 - **Fixtures:** 25+
 - **Extraction Date:** 2025-02-01
 - **Files:** (list of fixture files)
 
 ### SensorML 3.0 (OGC 23-000)
+
 - **URL:** https://docs.ogc.org/is/23-000/23-000.html
 - **Schema Repository:** https://schemas.opengis.net/sensorML/3.0/json/
 - **Example Repository:** https://schemas.opengis.net/sensorML/3.0/json/examples/
@@ -936,6 +1005,7 @@ For endpoint fixtures (CSAPI), error scenarios are represented as separate mock 
   - ...
 
 ### SWE Common 3.0 (OGC 24-014)
+
 - **URL:** https://docs.ogc.org/is/24-014/24-014.html
 - **Schema Repository:** https://schemas.opengis.net/sweCommon/3.0/json/
 - **Fixtures:** ~100 from spec examples, ~20 hand-crafted
@@ -953,18 +1023,21 @@ For endpoint fixtures (CSAPI), error scenarios are represented as separate mock 
 ## Hand-Crafted Fixtures
 
 ### GeoJSON CSAPI Features
+
 - **Basis:** CSAPI Part 1 property requirements + RFC 7946
 - **Fixtures:** ~20
 - **Creation Date:** 2025-02-05
 - **Files:** (list)
 
 ### Integration Workflow Fixtures
+
 - **Basis:** Section 14 workflow scenarios
 - **Fixtures:** 33
 - **Creation Date:** 2025-02-10
 - **Files:** (list)
 
 ### Error and Edge Case Fixtures
+
 - **Basis:** Common error scenarios and edge conditions
 - **Fixtures:** ~30
 - **Creation Date:** 2025-02-12
@@ -973,12 +1046,14 @@ For endpoint fixtures (CSAPI), error scenarios are represented as separate mock 
 ## Unavailable Sources
 
 ### OpenSensorHub Demo Server
+
 - **URL:** http://sensiasoft.net:8181/sensorhub/api/
 - **Status:** ❌ Unavailable (404 error as of 2025-01-31)
 - **Impact:** Cannot source live sensor data examples
 - **Mitigation:** Using specification examples and hand-crafted fixtures
 
 ### 52°North Server
+
 - **Status:** ⏳ Not yet accessed
 - **Planned:** May access as alternative source for live data examples
 ```
@@ -986,6 +1061,7 @@ For endpoint fixtures (CSAPI), error scenarios are represented as separate mock 
 ### 7.3 Validation Status Tracking
 
 **Validation States:**
+
 - `not-validated` - Fixture created but not yet validated
 - `schema-valid` - Passes JSON schema validation
 - `spec-compliant` - Validated against specification requirements
@@ -997,13 +1073,13 @@ For endpoint fixtures (CSAPI), error scenarios are represented as separate mock 
 ```markdown
 # Fixture Validation Log
 
-| Fixture | Validation Status | Last Validated | Validator | Notes |
-|---------|------------------|----------------|-----------|-------|
-| system-weather-station-valid.json | spec-compliant | 2025-02-01 | ajv + custom | CSAPI property validation passed |
-| deployment-argo-valid.json | schema-valid | 2025-02-01 | ajv | Basic schema only |
-| procedure-has-geometry.json | invalid-by-design | 2025-02-02 | - | Error fixture (procedures should have null geometry) |
-| datastream-weather.csv | spec-compliant | 2025-02-03 | custom CSV parser | SWE text encoding validated |
-| ... | ... | ... | ... | ... |
+| Fixture                           | Validation Status | Last Validated | Validator         | Notes                                                |
+| --------------------------------- | ----------------- | -------------- | ----------------- | ---------------------------------------------------- |
+| system-weather-station-valid.json | spec-compliant    | 2025-02-01     | ajv + custom      | CSAPI property validation passed                     |
+| deployment-argo-valid.json        | schema-valid      | 2025-02-01     | ajv               | Basic schema only                                    |
+| procedure-has-geometry.json       | invalid-by-design | 2025-02-02     | -                 | Error fixture (procedures should have null geometry) |
+| datastream-weather.csv            | spec-compliant    | 2025-02-03     | custom CSV parser | SWE text encoding validated                          |
+| ...                               | ...               | ...            | ...               | ...                                                  |
 ```
 
 </details>
@@ -1015,6 +1091,7 @@ For endpoint fixtures (CSAPI), error scenarios are represented as separate mock 
 ### 8.1 Universal Fixtures
 
 **QueryBuilder Universal Fixtures** (Section 12 = Section 13 universal):
+
 - `conformance-all-resources.json` ← shared by QueryBuilder and Resource Method tests
 - `conformance-part1-only.json` ← shared
 - `collection-info-all-resources.json` ← shared
@@ -1022,11 +1099,13 @@ For endpoint fixtures (CSAPI), error scenarios are represented as separate mock 
 - `collection-info-no-csapi.json` ← shared
 
 **Reuse Strategy:**
+
 - Store in single location: `fixtures/csapi-querybuilder/universal/`
 - Reference from both QueryBuilder tests and Resource Method tests
 - Update once, benefits both test suites
 
 **Test Import Example:**
+
 ```typescript
 // In QueryBuilder tests
 import conformanceAll from '../../fixtures/csapi-querybuilder/universal/conformance-all-resources.json';
@@ -1040,32 +1119,38 @@ import conformanceAll from '../../fixtures/csapi-querybuilder/universal/conforma
 **Logical Equivalence:** Same datastream encoded in 3 formats
 
 **Example: Weather Datastream**
+
 - `datastream-weather.json` (JSON encoding)
 - `datastream-weather.csv` (text encoding)
 - `datastream-weather.bin` (binary encoding)
 
 **Reuse Strategy:**
+
 - Create master descriptor in JSON
 - Generate text and binary variants programmatically (if tooling available)
 - OR hand-craft all three with careful cross-validation
 - Use naming convention to indicate equivalence (same base name, different extensions)
 
 **Validation:**
+
 - Tests parse all three encodings and assert decoded values are identical
 - Ensures consistency across encoding formats
 
 ### 8.3 Integration Workflow Fixtures vs Unit Test Fixtures
 
 **Potential Overlap:**
+
 - Integration workflow fixtures (Section 14) include full resource responses
 - Resource method fixtures (Section 13) also include resource responses
 
 **Reuse Strategy:**
+
 - **PREFER:** Create separate fixtures for each use case (avoid tight coupling)
 - **RATIONALE:** Integration fixtures may include additional metadata (e.g., embedded links) that unit tests don't need
 - **EXCEPTION:** If fixtures are identical, use symbolic links or reference integration fixtures from unit tests
 
 **Directory Isolation:**
+
 - `fixtures/csapi-querybuilder/resources/` ← unit test fixtures
 - `fixtures/integration/discovery/` ← integration workflow fixtures
 - May contain similar content but optimized for different test contexts
@@ -1075,15 +1160,18 @@ import conformanceAll from '../../fixtures/csapi-querybuilder/universal/conforma
 **Composite Fixtures:** Build complex fixtures from simpler components
 
 **Example: Composite System**
+
 - Base component: `physicalcomponent-thermometer.json`
 - Base component: `physicalcomponent-camera.json`
 - Composite: `physicalsystem-mobile-platform.json` references components
 
 **Implementation:**
+
 - Composite fixture embeds components inline OR
 - Composite fixture references components by ID (if using href links)
 
 **Benefits:**
+
 - DRY principle (don't repeat component definitions)
 - Easier maintenance (update component once)
 - Realistic (mirrors actual CSAPI resource composition)
@@ -1099,6 +1187,7 @@ import conformanceAll from '../../fixtures/csapi-querybuilder/universal/conforma
 **Trigger:** New version of CSAPI, SensorML, or SWE Common specification released
 
 **Procedure:**
+
 1. **Identify changed examples** in new specification version
 2. **Extract new examples** from updated spec
 3. **Update affected fixtures** to match new schema/requirements
@@ -1112,6 +1201,7 @@ import conformanceAll from '../../fixtures/csapi-querybuilder/universal/conforma
 **Trigger:** JSON schemas updated (CSAPI, SensorML, SWE Common)
 
 **Procedure:**
+
 1. **Update affected fixtures** to match new schema requirements
 2. **Re-run tests** — failing tests reveal which fixtures need updates
 3. **Fix fixture content** where tests expose incompatibilities
@@ -1122,6 +1212,7 @@ import conformanceAll from '../../fixtures/csapi-querybuilder/universal/conforma
 **Trigger:** Test requirements evolve (new test scenarios, coverage gaps identified)
 
 **Procedure:**
+
 1. **Identify new fixture requirements** from test design
 2. **Source or create new fixtures** following sourcing strategy
 3. **Add to appropriate directory** following organization structure
@@ -1133,6 +1224,7 @@ import conformanceAll from '../../fixtures/csapi-querybuilder/universal/conforma
 **Trigger:** Fixture no longer needed (test removed, requirement changed)
 
 **Procedure:**
+
 1. **Verify no tests reference fixture** (`grep -r "fixture-name" src/`)
 2. **Delete fixture file** (git history preserves it if ever needed again)
 3. **Commit with message** explaining why fixture was removed
@@ -1144,6 +1236,7 @@ No embedded deprecation metadata, sidecar files, or staging directories needed �
 **Frequency:** As needed (during major refactors or specification updates)
 
 **Review Checklist:**
+
 - [ ] **No orphaned fixtures** (fixtures not referenced by any test)
 - [ ] **All tests pass** with current fixture set
 - [ ] **No sensitive data** in fixtures (credentials, internal URLs)
@@ -1152,7 +1245,7 @@ No embedded deprecation metadata, sidecar files, or staging directories needed �
 
 ## 10. Fixture Quality Assurance
 
-> **⚠️ REVISED (Phase 2A Review):** This section originally proposed an elaborate fixture validation infrastructure (schema validators, semantic validators, CI/CD pipeline, automated validation scripts) that validates fixture *content* against OGC specifications. This is a server-testing anti-pattern — fixtures are **test inputs**, not test subjects. The upstream repo validates its 120 fixtures through the only mechanism that matters: **tests pass or fail**.
+> **⚠️ REVISED (Phase 2A Review):** This section originally proposed an elaborate fixture validation infrastructure (schema validators, semantic validators, CI/CD pipeline, automated validation scripts) that validates fixture _content_ against OGC specifications. This is a server-testing anti-pattern — fixtures are **test inputs**, not test subjects. The upstream repo validates its 120 fixtures through the only mechanism that matters: **tests pass or fail**.
 >
 > The original content has been replaced with client-oriented guidance aligned with upstream practices and the Phase 0 anti-pattern catalog.
 
@@ -1174,6 +1267,7 @@ it('should throw when system feature lacks UID', () => {
 ```
 
 **What NOT to do:**
+
 ```typescript
 // WRONG: Validates the fixture itself, not client code (Anti-Pattern 1 & 4)
 it('should have valid URI in uid field', () => {
@@ -1184,6 +1278,7 @@ it('should have valid URI in uid field', () => {
 ### 10.2 Fixture Review During PRs
 
 When adding new fixtures, PR review should verify:
+
 - **Filename is descriptive** — follows naming convention (Section 6)
 - **Placed in correct directory** — follows organization (Section 5)
 - **Associated test exists** — fixture is used by at least one test
@@ -1193,6 +1288,7 @@ When adding new fixtures, PR review should verify:
 ### 10.3 Detecting Orphaned Fixtures
 
 Periodically verify all fixtures are referenced by tests:
+
 ```bash
 # Find fixtures not referenced in any source file
 for f in $(find fixtures/ -type f -name '*.json' -o -name '*.xml'); do
@@ -1214,6 +1310,7 @@ No automated CI/CD pipeline for fixture validation is needed — the existing te
 > **⚠️ REVISED (Phase 2A Review):** Execution plan revised to align with ~80-100 fixture target (down from ~280). References to hallucinated metadata, sidecar files, `SOURCES.md`, `VALIDATION.md`, and `CHANGELOG.md` removed. Adopt test-driven fixture creation: create fixtures alongside the tests that need them.
 
 **Day 1-2: CSAPI & QueryBuilder Core**
+
 - [ ] Download/access CSAPI Part 1 & 2 specifications
 - [ ] Extract 10-15 key JSON examples from spec
 - [ ] Create 5 universal QueryBuilder fixtures (conformance, collection-info)
@@ -1221,11 +1318,13 @@ No automated CI/CD pipeline for fixture validation is needed — the existing te
 - [ ] Commit each fixture with descriptive message noting source spec section
 
 **Day 3-4: Discovery Workflow + GeoJSON Features**
+
 - [ ] Create 6-8 discovery workflow fixtures (root → collections → system → datastream)
 - [ ] Create 5-10 GeoJSON CSAPI feature fixtures (1-2 per key resource type)
 - [ ] Create 2-3 basic error fixtures (404, 400, empty collection)
 
 **Day 5: Write Tests Using Fixtures**
+
 - [ ] Write tests for QueryBuilder using new fixtures
 - [ ] Write discovery workflow integration test
 - [ ] Verify all tests pass — this validates the fixtures
@@ -1235,12 +1334,14 @@ No automated CI/CD pipeline for fixture validation is needed — the existing te
 ### 11.2 Phase 2: Parser Coverage (Week 2)
 
 **Day 1-2: SensorML Fixtures**
+
 - [ ] Access SensorML 3.0 spec at https://docs.ogc.org/is/23-000/23-000.html
 - [ ] Check JSON example repository: https://schemas.opengis.net/sensorML/3.0/json/examples/
 - [ ] Create 8-12 fixtures (PhysicalSystem, PhysicalComponent, Process types + error cases)
 - [ ] Write SensorML parser tests using fixtures
 
 **Day 3-5: SWE Common JSON Fixtures**
+
 - [ ] Access SWE Common 3.0 spec at https://docs.ogc.org/is/24-014/24-014.html
 - [ ] Extract key JSON examples from Annex B.2
 - [ ] Create 10-15 JSON fixtures covering component types our parser handles
@@ -1274,16 +1375,19 @@ Create fixtures as tests demand them — no artificial front-loading:
 **Must Have for MVP Testing:**
 
 **QueryBuilder and Resource Methods (~15 fixtures):**
+
 - 5 universal fixtures (conformance, collection-info)
 - 8-10 resource-specific fixtures (key resource types)
 - 2-3 basic error fixtures (404, 400, empty collection)
 - **Rationale:** Core CSAPI functionality depends on these; blocks unit tests
 
 **GeoJSON CSAPI Valid Features (5-10 fixtures):**
+
 - 1-2 valid fixtures per key resource type
 - **Rationale:** Property extraction tests require valid examples
 
 **Integration Discovery Workflow (6-8 fixtures):**
+
 - Discovery workflow chain (root → collections → system → datastream)
 - **Rationale:** Most common user workflow; demonstrates full API navigation
 
@@ -1294,17 +1398,20 @@ Create fixtures as tests demand them — no artificial front-loading:
 **Needed for Comprehensive Testing:**
 
 **SensorML Core Fixtures (~8 fixtures):**
+
 - PhysicalSystem (2 valid, 1 error)
 - PhysicalComponent (1 valid, 1 error)
 - Process types (2-3 valid)
 - **Rationale:** SensorML parser testing requires representative examples
 
 **SWE Common JSON Encoding (~12 fixtures):**
+
 - Key component types (scalars, records, arrays, streams)
 - 2-3 error cases
 - **Rationale:** SWE parser testing — cover types our client actually parses
 
 **Integration Observation Workflow (5-7 fixtures):**
+
 - Observation retrieval workflow
 - **Rationale:** Second most common workflow; demonstrates datastream access
 
@@ -1325,14 +1432,17 @@ Create fixtures as tests demand them — no artificial front-loading:
 ### 12.4 Phased Implementation Timeline
 
 **Phase 1 (MVP):** Critical Path = **~30 fixtures (~20 hours / 3 days)**
+
 - Supports core unit tests
 - Supports discovery workflow integration test
 
 **Phase 2 (Solid Coverage):** High Priority = **~25 fixtures (~25 hours / 4 days)**
+
 - SensorML and SWE JSON parser testing
 - Observation workflow integration test
 
 **Phase 3 (Incremental):** Deferred = **~25-45 fixtures (~25 hours, as needed)**
+
 - Test-driven: create fixtures when tests demand them
 - No artificial target — let test coverage drive fixture count
 
@@ -1345,6 +1455,7 @@ Create fixtures as tests demand them — no artificial front-loading:
 ### 13.1 Sourcing Risks
 
 **Risk 1: Specification Examples Insufficient**
+
 - **Likelihood:** Medium
 - **Impact:** High (delay in fixture creation)
 - **Mitigation:**
@@ -1353,6 +1464,7 @@ Create fixtures as tests demand them — no artificial front-loading:
   - Consult OGC community resources (GitHub repositories, forums)
 
 **Risk 2: Live Servers Unavailable**
+
 - **Likelihood:** High (OpenSensorHub already 404)
 - **Impact:** Medium (lose access to realistic live data)
 - **Mitigation:**
@@ -1361,6 +1473,7 @@ Create fixtures as tests demand them — no artificial front-loading:
   - Document unavailability in git commit messages
 
 **Risk 3: Specification URLs Change**
+
 - **Likelihood:** Low
 - **Impact:** Low (source links in git history only)
 - **Mitigation:**
@@ -1371,6 +1484,7 @@ Create fixtures as tests demand them — no artificial front-loading:
 ### 13.2 Maintenance Risks
 
 **Risk 4: Schema Updates Break Fixtures**
+
 - **Likelihood:** Medium (schemas evolve with spec versions)
 - **Impact:** High (tests fail with outdated fixtures)
 - **Mitigation:**
@@ -1379,6 +1493,7 @@ Create fixtures as tests demand them — no artificial front-loading:
   - Budget time for fixture updates (annually)
 
 **Risk 5: Fixture Drift from Tests**
+
 - **Likelihood:** Medium (tests evolve independently of fixtures)
 - **Impact:** Medium (tests fail or use outdated fixtures)
 - **Mitigation:**
@@ -1387,6 +1502,7 @@ Create fixtures as tests demand them — no artificial front-loading:
   - Document fixture usage in test files
 
 **Risk 6: Fixture Proliferation**
+
 - **Likelihood:** High (natural growth over time)
 - **Impact:** Medium (fixture library becomes unwieldy)
 - **Mitigation:**
@@ -1398,6 +1514,7 @@ Create fixtures as tests demand them — no artificial front-loading:
 ### 13.3 Validation Risks
 
 **Risk 7: Invalid Fixtures Used in Tests**
+
 - **Likelihood:** Medium (fixtures not validated before use)
 - **Impact:** High (tests pass with invalid data)
 - **Mitigation:**
@@ -1406,6 +1523,7 @@ Create fixtures as tests demand them — no artificial front-loading:
   - No separate validation infrastructure needed (upstream approach)
 
 **Risk 8: ~~Semantic Validation Gaps~~ Fixture Adequacy**
+
 - **Likelihood:** Low (tests catch inadequate fixtures immediately)
 - **Impact:** Low (fix fixture when test fails)
 - **Mitigation:**
@@ -1416,6 +1534,7 @@ Create fixtures as tests demand them — no artificial front-loading:
 ### 13.4 Effort Estimation Risks
 
 **Risk 9: Effort Underestimated**
+
 - **Likelihood:** High (fixture creation time varies)
 - **Impact:** Medium (delays in test implementation)
 - **Mitigation:**
@@ -1425,6 +1544,7 @@ Create fixtures as tests demand them — no artificial front-loading:
   - Buffer time for complex fixtures (SWE binary encoding)
 
 **Risk 10: Complexity Underestimated**
+
 - **Likelihood:** Medium (especially for SWE binary encoding)
 - **Impact:** Medium (fixtures take longer to create)
 - **Mitigation:**
@@ -1442,13 +1562,15 @@ Create fixtures as tests demand them — no artificial front-loading:
 ### 14.1 Completeness Criteria
 
 **Fixture Count Targets:**
-- [ ] **~80-100 fixtures** created across all categories *(revised from 280)*
+
+- [ ] **~80-100 fixtures** created across all categories _(revised from 280)_
 - [ ] **Key CSAPI resource types** represented (Systems, Deployments, Procedures, Datastreams, Observations at minimum)
 - [ ] **SWE JSON encoding** covered (text/binary added only when parser needs them)
 - [ ] **Key SensorML document types** represented
 - [ ] **Discovery + observation workflows** have fixture chains
 
 **Coverage Criteria:**
+
 - [ ] **100% critical path fixtures** (Section 12.1) created
 - [ ] **High priority fixtures** (Section 12.2) created
 - [ ] **Valid + invalid variants** for key resource types
@@ -1457,6 +1579,7 @@ Create fixtures as tests demand them — no artificial front-loading:
 ### 14.2 Quality Criteria
 
 **Quality is validated through tests, not separate infrastructure:**
+
 - [ ] **All fixtures** used by at least one test
 - [ ] **All tests pass** with their fixture inputs
 - [ ] **Filenames** follow naming conventions (Section 6)
@@ -1466,6 +1589,7 @@ Create fixtures as tests demand them — no artificial front-loading:
 ### 14.3 Integration Criteria
 
 **Test Integration:**
+
 - [ ] **Fixtures imported** into unit tests (QueryBuilder, Resource Methods, Format Parsers)
 - [ ] **Fixtures imported** into integration tests (discovery, observation workflows)
 - [ ] **All tests passing** with fixture library
@@ -1479,6 +1603,7 @@ Create fixtures as tests demand them — no artificial front-loading:
 
 **Acceptance Criteria:**
 ✅ Section 15 research complete when:
+
 1. All fixture categories identified and sourced
 2. Directory structure designed and documented
 3. Sourcing execution plan defined
@@ -1492,10 +1617,12 @@ Create fixtures as tests demand them — no artificial front-loading:
 ### 15.1 Primary Sources
 
 **CSAPI Specifications:**
+
 - CSAPI Part 1: [URL to specification]
 - CSAPI Part 2: [URL to specification]
 
 **OGC Specifications:**
+
 - SensorML 3.0 (OGC 23-000): https://docs.ogc.org/is/23-000/23-000.html
   - JSON Schema Repository: https://schemas.opengis.net/sensorML/3.0/json/
   - JSON Example Repository: https://schemas.opengis.net/sensorML/3.0/json/examples/
@@ -1504,11 +1631,13 @@ Create fixtures as tests demand them — no artificial front-loading:
 - RFC 7946 (GeoJSON): https://www.rfc-editor.org/rfc/rfc7946
 
 **W3C Standards:**
+
 - SOSA/SSN Ontology: https://www.w3.org/TR/vocab-ssn/
 
 ### 15.2 Research Dependencies
 
 **Internal Documents:**
+
 - Section 8: CSAPI Specification Test Requirements
   - File: `08-csapi-specification-test-requirements.md`
   - Fixture count: 25+ examples from CSAPI Parts 1 & 2
@@ -1534,34 +1663,41 @@ Create fixtures as tests demand them — no artificial front-loading:
 ### 15.3 External Servers (Attempted)
 
 **OpenSensorHub Demo Server:**
+
 - **URL:** http://sensiasoft.net:8181/sensorhub/api/
 - **Status:** ❌ Unavailable (404 error as of 2025-01-31)
 - **Impact:** Cannot source live sensor data examples; using spec examples instead
 
 **52°North Server:**
+
 - **Status:** ⏳ Not yet accessed
 - **Planned:** May attempt as alternative source for live data examples
 
 ### 15.4 Tools and Validators
 
 **JSON Schema Validation:**
+
 - Ajv (Another JSON Schema Validator): https://ajv.js.org/
 - TypeScript JSON Schema: https://www.npmjs.com/package/typescript-json-schema
 
 **GeoJSON Validation:**
+
 - @types/geojson: https://www.npmjs.com/package/@types/geojson
 - geojson-validation: https://www.npmjs.com/package/geojson-validation
 
 **Binary Encoding:**
+
 - base64-js: https://www.npmjs.com/package/base64-js (for SWE binary encoding)
 
 ### 15.5 Related Documentation
 
 **OGC Standards Resources:**
+
 - OGC Schema Repository: https://schemas.opengis.net/
 - OGC Definition Server: https://www.opengis.net/def/
 
 **SOSA/SSN Vocabularies:**
+
 - SOSA Core Ontology: https://www.w3.org/ns/sosa/
 - SSN Extensions: https://www.w3.org/ns/ssn/
 
@@ -1569,21 +1705,22 @@ Create fixtures as tests demand them — no artificial front-loading:
 
 ## Document History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2025-01-31 | Research Agent | Initial complete deliverable for Section 15 |
+| Version | Date       | Author         | Changes                                     |
+| ------- | ---------- | -------------- | ------------------------------------------- |
+| 1.0     | 2025-01-31 | Research Agent | Initial complete deliverable for Section 15 |
 
 ---
 
 **Section 15 Status:** ✅ **COMPLETE**
 
 **Next Steps:**
+
 1. Begin fixture sourcing execution (Phase 1: Specification Extraction)
 2. Update research plan with completion status
 3. Commit deliverable to repository
 4. Proceed to Section 16 or next research priority
 
-**Total Fixture Target:** ~80-100 fixtures *(revised from ~280)*
-**Estimated Effort:** ~70 hours (~2 weeks at 40 hrs/week) *(revised from ~240-290 hours)*
+**Total Fixture Target:** ~80-100 fixtures _(revised from ~280)_
+**Estimated Effort:** ~70 hours (~2 weeks at 40 hrs/week) _(revised from ~240-290 hours)_
 **Implementation Phases:** 3 phases (MVP, Solid Coverage, Incremental)
 **Success Criteria:** Documented in Section 14

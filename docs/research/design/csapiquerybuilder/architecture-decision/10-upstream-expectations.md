@@ -11,11 +11,13 @@
 ## Research Objectives
 
 1. **Expectation Analysis:**
+
    - What patterns do WFS, WMS, WMTS, EDR follow?
    - Are these patterns mandated or suggested?
    - What breaks acceptance criteria?
 
 2. **API Design Expectations:**
+
    - Endpoint-oriented API structure
    - QueryBuilder vs client vs navigator terminology
    - Integration point requirements
@@ -49,11 +51,13 @@
 ## Expected Findings
 
 **If single-class is mandatory:**
+
 - Clear requirement for CSAPIQueryBuilder consolidation
 - No room for separate-client pattern
 - Must follow EDR example
 
 **If flexibility exists:**
+
 - May accommodate separate classes
 - Could use facade pattern
 - More architectural options

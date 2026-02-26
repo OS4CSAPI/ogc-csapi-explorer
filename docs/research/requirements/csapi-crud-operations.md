@@ -5,6 +5,7 @@
 This section documents all Create, Read, Update, and Delete (CRUD) operations defined in CSAPI Part 1 and Part 2, their HTTP method mappings, request/response requirements, and client library implementation needs. Understanding CRUD operations is essential for building a complete client library that supports both read-only and transactional use cases.
 
 **Key Objectives:**
+
 - Document which resources support full CRUD vs read-only
 - Map HTTP methods (GET, POST, PUT, PATCH, DELETE) to CRUD operations
 - Define request body requirements for write operations
@@ -19,16 +20,17 @@ This section documents all Create, Read, Update, and Delete (CRUD) operations de
 
 ### Part 1: Core Resources
 
-| Resource | Create (POST) | Read (GET) | Update (PATCH) | Replace (PUT) | Delete (DELETE) | Conformance Class |
-|----------|---------------|------------|----------------|---------------|-----------------|-------------------|
-| Systems | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| Deployments | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| Procedures | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| SamplingFeatures | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| Properties | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| Collections | - | ✓ | - | - | - | API-Common (read-only) |
+| Resource         | Create (POST) | Read (GET) | Update (PATCH) | Replace (PUT) | Delete (DELETE) | Conformance Class             |
+| ---------------- | ------------- | ---------- | -------------- | ------------- | --------------- | ----------------------------- |
+| Systems          | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| Deployments      | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| Procedures       | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| SamplingFeatures | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| Properties       | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| Collections      | -             | ✓          | -              | -             | -               | API-Common (read-only)        |
 
 **Notes:**
+
 - Collections are read-only (server-managed, no CRUD operations)
 - All Part 1 resources support full CRUD when conformance classes implemented
 - Create/Replace/Delete conformance class: POST, PUT, DELETE
@@ -36,18 +38,19 @@ This section documents all Create, Read, Update, and Delete (CRUD) operations de
 
 ### Part 2: Dynamic Data
 
-| Resource | Create (POST) | Read (GET) | Update (PATCH) | Replace (PUT) | Delete (DELETE) | Conformance Class |
-|----------|---------------|------------|----------------|---------------|-----------------|-------------------|
-| DataStreams | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| Observations | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| ControlStreams | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| Commands | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| CommandStatus | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| CommandResult | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| Feasibility | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
-| SystemEvents | ✓ | ✓ | ✓ | ✓ | ✓ | Create/Replace/Delete, Update |
+| Resource       | Create (POST) | Read (GET) | Update (PATCH) | Replace (PUT) | Delete (DELETE) | Conformance Class             |
+| -------------- | ------------- | ---------- | -------------- | ------------- | --------------- | ----------------------------- |
+| DataStreams    | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| Observations   | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| ControlStreams | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| Commands       | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| CommandStatus  | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| CommandResult  | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| Feasibility    | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
+| SystemEvents   | ✓             | ✓          | ✓              | ✓             | ✓               | Create/Replace/Delete, Update |
 
 **Notes:**
+
 - All Part 2 resources support full CRUD when conformance classes implemented
 - Observations/Commands have schema validation requirements
 - DataStreams/ControlStreams have schema evolution constraints
@@ -64,11 +67,13 @@ This section documents all Create, Read, Update, and Delete (CRUD) operations de
 **Request Body:** Not used
 
 **Endpoints:**
+
 - **Collection endpoints:** `GET /{resourceType}` (list resources)
 - **Single resource endpoints:** `GET /{resourceType}/{id}` (retrieve one resource)
 - **Nested endpoints:** `GET /{parentType}/{parentId}/{childType}` (list child resources)
 
 **Query Parameters:**
+
 - Filtering: bbox, datetime, id, uid, q, {propertyName}
 - Pagination: limit, offset (Part 1), cursor (Part 2)
 - Relationship: parent, procedure, foi, observedProperty, controlledProperty, system, baseProperty, objectType
@@ -77,6 +82,7 @@ This section documents all Create, Read, Update, and Delete (CRUD) operations de
 - Temporal (Part 2): phenomenonTime, resultTime, executionTime, issueTime
 
 **Response Codes:**
+
 - 200 OK - Success, resource(s) returned
 - 400 Bad Request - Invalid query parameters
 - 401 Unauthorized - Authentication required
@@ -86,10 +92,12 @@ This section documents all Create, Read, Update, and Delete (CRUD) operations de
 - 500 Internal Server Error - Server error
 
 **Response Headers:**
+
 - Content-Type - Media type of response (application/json, application/geo+json, application/sml+json, etc.)
 - Link - Pagination links (rel=next, rel=prev), canonical links
 
 **Response Body:**
+
 - Collection endpoints: FeatureCollection (GeoJSON) or Collection (JSON)
 - Single resource: Feature (GeoJSON) or Resource (JSON)
 
@@ -105,21 +113,25 @@ This section documents all Create, Read, Update, and Delete (CRUD) operations de
 **Endpoints:**
 
 **Part 1 Canonical Endpoints:**
+
 - `POST /systems` - Create system at root level
 - `POST /deployments` - Create deployment
 - `POST /procedures` - Create procedure
 - `POST /properties` - Create property
 
 **Part 1 Nested Endpoints:**
+
 - `POST /systems/{parentId}/subsystems` - Create subsystem under parent
 - `POST /deployments/{parentId}/subdeployments` - Create subdeployment under parent
 - `POST /systems/{systemId}/samplingFeatures` - Create sampling feature for system
 - `POST /collections/{collectionId}/items` - Add resource to collection
 
 **Part 2 Canonical Endpoints:**
+
 - POST not typically used at canonical level (resources created via nested endpoints)
 
 **Part 2 Nested Endpoints:**
+
 - `POST /systems/{sysId}/datastreams` - Create datastream for system
 - `POST /datastreams/{dsId}/observations` - Create observation in datastream
 - `POST /systems/{sysId}/controlstreams` - Create control stream for system
@@ -130,17 +142,20 @@ This section documents all Create, Read, Update, and Delete (CRUD) operations de
 - `POST /systems/{sysId}/events` - Create system event
 
 **Request Headers:**
+
 - Content-Type (required) - Media type of request body
   - Part 1: application/geo+json, application/sml+json, application/json
   - Part 2: application/json, application/swe+json, application/swe+text, application/swe+binary
 
 **Request Body:**
+
 - MUST conform to resource schema
 - MUST include required properties
 - MAY include optional properties
 - MUST NOT include server-generated properties (id, generated timestamps)
 
 **Response Codes:**
+
 - 201 Created - Resource created successfully
 - 400 Bad Request - Invalid request body, missing required properties, schema violation
 - 401 Unauthorized - Authentication required
@@ -149,10 +164,12 @@ This section documents all Create, Read, Update, and Delete (CRUD) operations de
 - 500 Internal Server Error - Server error
 
 **Response Headers:**
+
 - Location (required) - URL of created resource (canonical URL)
 - Content-Type - Media type of response body (if body returned)
 
 **Response Body:**
+
 - Typically empty (201 with Location header)
 - MAY return created resource representation
 - If returned, MUST be same as subsequent GET on Location URL
@@ -213,6 +230,7 @@ Location: https://api.example.org/observations/obs456
 **Endpoints:**
 
 **Part 1 Single Resource Endpoints:**
+
 - `PUT /systems/{id}` - Replace system
 - `PUT /deployments/{id}` - Replace deployment
 - `PUT /procedures/{id}` - Replace procedure
@@ -221,6 +239,7 @@ Location: https://api.example.org/observations/obs456
 - `PUT /collections/{collectionId}/items/{id}` - Replace resource in collection
 
 **Part 2 Single Resource Endpoints:**
+
 - `PUT /datastreams/{id}` - Replace datastream
 - `PUT /systems/{sysId}/datastreams/{id}` - Replace datastream (nested)
 - `PUT /observations/{id}` - Replace observation
@@ -235,15 +254,18 @@ Location: https://api.example.org/observations/obs456
 - `PUT /systemEvents/{id}` - Replace system event
 
 **Request Headers:**
+
 - Content-Type (required) - Media type of request body
 
 **Request Body:**
+
 - MUST be complete resource representation
 - MUST include all required properties
 - MUST include resource id (matches path parameter)
 - Replaces entire resource (not partial update)
 
 **Response Codes:**
+
 - 204 No Content - Resource replaced successfully
 - 200 OK - Resource replaced, representation returned
 - 400 Bad Request - Invalid request body
@@ -254,25 +276,30 @@ Location: https://api.example.org/observations/obs456
 - 500 Internal Server Error - Server error
 
 **Response Headers:**
+
 - Content-Type (if response body returned)
 
 **Response Body:**
+
 - Typically empty (204 No Content)
 - MAY return updated resource representation (200 OK)
 
 **Special Constraints (Part 2):**
 
 **DataStream Schema Evolution:**
+
 - Server MUST reject PUT on DataStream if observation schema modified AND datastream has observations
 - Returns 409 Conflict with error message
 - Rationale: Existing observations may become invalid with new schema
 
 **ControlStream Schema Evolution:**
+
 - Server MUST reject PUT on ControlStream if command schema modified AND control stream has commands
 - Returns 409 Conflict with error message
 - Rationale: Existing commands may become invalid with new schema
 
 **Workaround for Schema Changes:**
+
 1. Delete all observations/commands (or use cascade delete)
 2. Replace datastream/control stream with new schema
 3. Re-create observations/commands if needed
@@ -314,26 +341,32 @@ HTTP/1.1 204 No Content
 **Conformance Class:** Update (OGC API - Features Part 4)
 
 **Endpoints:**
+
 - Same as PUT endpoints (all single resource endpoints)
 
 **Request Headers:**
+
 - Content-Type (required) - MUST be `application/merge-patch+json` or `application/json` (JSON Merge Patch)
 
 **Request Body Format:**
+
 - JSON Merge Patch (RFC 7396)
 - Only properties to update included
 - Null value removes property
 - Nested objects merged recursively
 
 **Response Codes:**
+
 - Same as PUT
 
 **Special Constraints:**
+
 - Same schema evolution constraints as PUT (Part 2 DataStreams/ControlStreams)
 
 **JSON Merge Patch Examples:**
 
 **Update single property:**
+
 ```json
 {
   "description": "Updated description"
@@ -341,6 +374,7 @@ HTTP/1.1 204 No Content
 ```
 
 **Update nested property (GeoJSON):**
+
 ```json
 {
   "properties": {
@@ -350,6 +384,7 @@ HTTP/1.1 204 No Content
 ```
 
 **Remove property:**
+
 ```json
 {
   "description": null
@@ -357,6 +392,7 @@ HTTP/1.1 204 No Content
 ```
 
 **Update multiple properties:**
+
 ```json
 {
   "name": "New Name",
@@ -394,6 +430,7 @@ HTTP/1.1 204 No Content
 **Endpoints:**
 
 **Part 1 Single Resource Endpoints:**
+
 - `DELETE /systems/{id}` - Delete system
 - `DELETE /deployments/{id}` - Delete deployment
 - `DELETE /procedures/{id}` - Delete procedure
@@ -402,6 +439,7 @@ HTTP/1.1 204 No Content
 - `DELETE /collections/{collectionId}/items/{id}` - Remove from collection
 
 **Part 2 Single Resource Endpoints:**
+
 - `DELETE /datastreams/{id}` - Delete datastream
 - `DELETE /observations/{id}` - Delete observation
 - `DELETE /controlstreams/{id}` - Delete control stream
@@ -414,6 +452,7 @@ HTTP/1.1 204 No Content
 **Query Parameters:**
 
 **cascade (Part 1 and Part 2):**
+
 - Type: boolean
 - Default: false
 - Purpose: Delete dependent resources recursively
@@ -421,12 +460,14 @@ HTTP/1.1 204 No Content
 **Cascade Behavior:**
 
 **Without cascade (default):**
+
 - Server MUST reject DELETE if resource has dependent resources
 - Returns 409 Conflict
 - Part 1 examples: System with subsystems, Deployment with subdeployments
 - Part 2 examples: DataStream with observations, ControlStream with commands
 
 **With cascade=true:**
+
 - Deletes resource AND all dependent resources recursively
 - Part 1: System → subsystems → subsystem's subsystems, etc.
 - Part 2: DataStream → all observations
@@ -435,15 +476,18 @@ HTTP/1.1 204 No Content
 **Nested Resources Deleted by Cascade:**
 
 **Part 1:**
+
 - System cascade: All subsystems (recursively), all sampling features, all datastreams (Part 2), all control streams (Part 2)
 - Deployment cascade: All subdeployments (recursively)
 
 **Part 2:**
+
 - DataStream cascade: All observations
 - ControlStream cascade: All commands, all command status reports, all command results
 - Command cascade: All command status reports, all command results
 
 **Response Codes:**
+
 - 204 No Content - Resource deleted successfully
 - 404 Not Found - Resource doesn't exist (may also return 204 for idempotency)
 - 401 Unauthorized - Authentication required
@@ -452,14 +496,17 @@ HTTP/1.1 204 No Content
 - 500 Internal Server Error - Server error
 
 **Response Headers:**
+
 - None (empty response)
 
 **Response Body:**
+
 - Empty (204 No Content)
 
 **Examples:**
 
 **Simple delete:**
+
 ```http
 DELETE /observations/obs456 HTTP/1.1
 ```
@@ -469,6 +516,7 @@ HTTP/1.1 204 No Content
 ```
 
 **Cascade delete (Part 1):**
+
 ```http
 DELETE /systems/sys123?cascade=true HTTP/1.1
 ```
@@ -478,6 +526,7 @@ HTTP/1.1 204 No Content
 ```
 
 **Cascade delete (Part 2):**
+
 ```http
 DELETE /datastreams/ds123?cascade=true HTTP/1.1
 ```
@@ -487,6 +536,7 @@ HTTP/1.1 204 No Content
 ```
 
 **Error without cascade:**
+
 ```http
 DELETE /datastreams/ds123 HTTP/1.1
 ```
@@ -512,17 +562,20 @@ Content-Type: application/json
 #### Systems
 
 **Formats Supported:**
+
 - application/geo+json (GeoJSON Feature)
 - application/sml+json (SensorML 3.0 JSON)
 - application/json (plain JSON)
 
 **Required Properties (GeoJSON):**
+
 - `type: "Feature"`
 - `properties.uid` (string, URI format)
 - `properties.name` (string, minLength: 1)
 - `properties.featureType` (SystemTypeURI enum)
 
 **Optional Properties (GeoJSON):**
+
 - `geometry` (Point, Polygon, LineString, etc.)
 - `properties.description` (string)
 - `properties.assetType` (enum: Equipment, Human, LivingThing, Simulation, Process, Group, Other)
@@ -531,6 +584,7 @@ Content-Type: application/json
 - `properties.*@link` (relationship links)
 
 **SystemTypeURI Values:**
+
 - `http://www.w3.org/ns/sosa/Sensor`
 - `http://www.w3.org/ns/sosa/Actuator`
 - `http://www.w3.org/ns/sosa/Platform`
@@ -539,6 +593,7 @@ Content-Type: application/json
 - Short forms: `sosa:Sensor`, `sosa:Actuator`, `sosa:Platform`, `sosa:Sampler`, `sosa:System`
 
 **Example (GeoJSON):**
+
 ```json
 {
   "type": "Feature",
@@ -558,11 +613,13 @@ Content-Type: application/json
 ```
 
 **Required Properties (SensorML):**
+
 - `type` (component type: PhysicalSystem, PhysicalComponent, SimpleProcess, AggregateProcess)
 - `uniqueId` (string, URI format)
 - `label` (string)
 
 **Optional Properties (SensorML):**
+
 - `definition` (URI, system type)
 - `description` (string)
 - `position` (GeoJSON geometry)
@@ -577,6 +634,7 @@ Content-Type: application/json
 - `components` (array of nested components)
 
 **Example (SensorML):**
+
 ```json
 {
   "type": "PhysicalSystem",
@@ -595,11 +653,13 @@ Content-Type: application/json
 #### Deployments
 
 **Formats Supported:**
+
 - application/geo+json (GeoJSON Feature)
 - application/sml+json (SensorML Deployment)
 - application/json (plain JSON)
 
 **Required Properties (GeoJSON):**
+
 - `type: "Feature"`
 - `properties.uid` (string, URI format)
 - `properties.name` (string, minLength: 1)
@@ -607,12 +667,14 @@ Content-Type: application/json
 - `properties.validTime` (array of 2 ISO 8601 strings, required for deployments)
 
 **Optional Properties:**
+
 - `geometry` (spatial extent of deployment)
 - `properties.description` (string)
 - `properties.deployedSystems@link` (array of link objects)
 - `properties.platform@link` (link object)
 
 **Example:**
+
 ```json
 {
   "type": "Feature",
@@ -637,22 +699,26 @@ Content-Type: application/json
 #### Procedures
 
 **Formats Supported:**
+
 - application/geo+json (GeoJSON Feature, geometry typically null)
 - application/sml+json (SensorML SimpleProcess or other process types)
 - application/json (plain JSON)
 
 **Required Properties (GeoJSON):**
+
 - `type: "Feature"`
 - `properties.uid` (string, URI format)
 - `properties.name` (string, minLength: 1)
 - `properties.featureType` (URI, procedure type)
 
 **Optional Properties:**
+
 - `geometry` (typically null for procedures)
 - `properties.description` (string)
 - `properties.procedureType` (URI)
 
 **Example:**
+
 ```json
 {
   "type": "Feature",
@@ -670,22 +736,26 @@ Content-Type: application/json
 #### Sampling Features
 
 **Formats Supported:**
+
 - application/geo+json (GeoJSON Feature)
 - application/json (plain JSON)
 
 **Required Properties (GeoJSON):**
+
 - `type: "Feature"`
 - `properties.uid` (string, URI format)
 - `properties.name` (string, minLength: 1)
 - `properties.featureType` (URI, sampling feature type)
 
 **Optional Properties:**
+
 - `geometry` (Point, LineString, Polygon, etc.)
 - `properties.description` (string)
 - `properties.sampledFeature@link` (link object, ultimate FOI)
 - `properties.sampleOf@link` (array of link objects, sub-sampling hierarchy)
 
 **Sampling Feature Types:**
+
 - `http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint`
 - `http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingCurve`
 - `http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingSurface`
@@ -693,6 +763,7 @@ Content-Type: application/json
 - Other types from OGC O&M specification
 
 **Example:**
+
 ```json
 {
   "type": "Feature",
@@ -716,19 +787,23 @@ Content-Type: application/json
 #### Properties
 
 **Formats Supported:**
+
 - application/json (plain JSON)
 
 **Required Properties:**
+
 - `uid` (string, URI format)
 - `name` (string, minLength: 1)
 - `definition` (URI, property definition)
 
 **Optional Properties:**
+
 - `description` (string)
 - `baseProperty@link` (link object, base property URI)
 - `objectType@link` (link object, object type URI)
 
 **Example:**
+
 ```json
 {
   "uid": "urn:x-property:air-temperature",
@@ -751,15 +826,18 @@ Content-Type: application/json
 #### DataStreams
 
 **Formats Supported:**
+
 - application/json (plain JSON, required)
 - application/geo+json (optional, for spatial discovery)
 
 **Required Properties:**
+
 - `name` (string)
 - `observedProperties` (array of URI strings, observed property definitions)
 - `resultType` (string: measure, record, array, other types from SWE Common)
 
 **Optional Properties:**
+
 - `description` (string)
 - `validTime` (ISO 8601 interval)
 - `phenomenonTime` (ISO 8601 interval, auto-generated by server)
@@ -773,6 +851,7 @@ Content-Type: application/json
 - `foi@link` (link to ultimate feature of interest)
 
 **Example:**
+
 ```json
 {
   "name": "Temperature Sensor Data",
@@ -780,11 +859,15 @@ Content-Type: application/json
   "observedProperties": ["http://qudt.org/vocab/quantitykind/Temperature"],
   "resultType": "measure",
   "live": true,
-  "formats": ["application/json", "application/swe+json", "application/swe+binary"],
+  "formats": [
+    "application/json",
+    "application/swe+json",
+    "application/swe+binary"
+  ],
   "resultSchema": {
     "type": "Quantity",
     "definition": "http://qudt.org/vocab/quantitykind/Temperature",
-    "uom": {"code": "Cel"}
+    "uom": { "code": "Cel" }
   }
 }
 ```
@@ -792,26 +875,31 @@ Content-Type: application/json
 #### Observations
 
 **Formats Supported:**
+
 - application/json (plain JSON)
 - application/swe+json (SWE Common JSON)
 - application/swe+text (SWE Common CSV/DSV)
 - application/swe+binary (SWE Common binary)
 
 **Required Properties:**
+
 - `phenomenonTime` (ISO 8601 datetime)
 - `resultTime` (ISO 8601 datetime)
 - `result` (any type, MUST conform to DataStream resultSchema)
 
 **Optional Properties:**
+
 - `parameters` (object, MUST conform to DataStream parametersSchema if provided)
 - `foi@link` (link to feature of interest)
 - `sampling@link` (link to sampling feature)
 
 **Validation:**
+
 - Server MUST validate result against DataStream resultSchema
 - Server MUST reject CREATE/REPLACE if result invalid per schema (400 error)
 
 **Example (plain JSON):**
+
 ```json
 {
   "phenomenonTime": "2024-01-15T12:00:00Z",
@@ -821,6 +909,7 @@ Content-Type: application/json
 ```
 
 **Example (SWE Common JSON):**
+
 ```json
 {
   "phenomenonTime": "2024-01-15T12:00:00Z",
@@ -831,13 +920,16 @@ Content-Type: application/json
 #### ControlStreams
 
 **Formats Supported:**
+
 - application/json (plain JSON, required)
 
 **Required Properties:**
+
 - `name` (string)
 - `controlledProperties` (array of URI strings, controlled property definitions)
 
 **Optional Properties:**
+
 - `description` (string)
 - `validTime` (ISO 8601 interval)
 - `executionTime` (ISO 8601 interval, auto-generated by server)
@@ -849,6 +941,7 @@ Content-Type: application/json
 - `encoding` (SWE Common encoding specification)
 
 **Example:**
+
 ```json
 {
   "name": "UAV Flight Control",
@@ -863,22 +956,27 @@ Content-Type: application/json
 #### Commands
 
 **Formats Supported:**
+
 - application/json (plain JSON)
 - application/swe+json (SWE Common JSON)
 
 **Required Properties:**
+
 - `issueTime` (ISO 8601 datetime)
 - `executionTime` (ISO 8601 datetime, when command should execute)
 - `parameters` (object, MUST conform to ControlStream commandSchema)
 
 **Optional Properties:**
+
 - `foi@link` (link to feature of interest)
 
 **Validation:**
+
 - Server MUST validate parameters against ControlStream commandSchema
 - Server MUST reject CREATE/REPLACE if parameters invalid per schema (400 error)
 
 **Example:**
+
 ```json
 {
   "issueTime": "2024-01-15T12:00:00Z",
@@ -887,8 +985,8 @@ Content-Type: application/json
     "altitude": 100,
     "speed": 15,
     "waypoints": [
-      {"lat": 37.42, "lon": -122.08},
-      {"lat": 37.43, "lon": -122.09}
+      { "lat": 37.42, "lon": -122.08 },
+      { "lat": 37.43, "lon": -122.09 }
     ]
   }
 }
@@ -897,17 +995,21 @@ Content-Type: application/json
 #### CommandStatus
 
 **Formats Supported:**
+
 - application/json (plain JSON)
 
 **Required Properties:**
+
 - `reportTime` (ISO 8601 datetime)
 - `executionStatus` (enum: PENDING, ACCEPTED, EXECUTING, COMPLETED, FAILED, REJECTED, CANCELLED)
 
 **Optional Properties:**
+
 - `statusMessage` (string, human-readable status description)
 - `percentCompletion` (integer, 0-100)
 
 **Example:**
+
 ```json
 {
   "reportTime": "2024-01-15T12:05:30Z",
@@ -920,14 +1022,17 @@ Content-Type: application/json
 #### CommandResult
 
 **Formats Supported:**
+
 - application/json (plain JSON)
 
 **Properties:**
+
 - One of: `datastream@link`, `observation@link`, `inline`, `external@link`
 
 **Result Types:**
 
 **Datastream Reference:**
+
 ```json
 {
   "datastream@link": {
@@ -939,6 +1044,7 @@ Content-Type: application/json
 ```
 
 **Observation Reference:**
+
 ```json
 {
   "observation@link": {
@@ -950,6 +1056,7 @@ Content-Type: application/json
 ```
 
 **Inline Result:**
+
 ```json
 {
   "inline": {
@@ -961,6 +1068,7 @@ Content-Type: application/json
 ```
 
 **External Resource:**
+
 ```json
 {
   "external@link": {
@@ -978,17 +1086,20 @@ Content-Type: application/json
 ### Success Response Codes
 
 **200 OK:**
+
 - Operation: GET (read), PUT (replace with body), PATCH (update with body)
 - Response Body: Resource representation
 - When: Resource successfully retrieved or updated
 
 **201 Created:**
+
 - Operation: POST (create)
 - Response Headers: Location (required, canonical URL of created resource)
 - Response Body: Empty or created resource representation
 - When: Resource successfully created
 
 **204 No Content:**
+
 - Operation: PUT (replace), PATCH (update), DELETE (delete)
 - Response Body: Empty
 - When: Resource successfully updated or deleted
@@ -996,29 +1107,35 @@ Content-Type: application/json
 ### Client Error Response Codes
 
 **400 Bad Request:**
+
 - Causes: Invalid query parameters, invalid request body, missing required properties, schema validation failure, malformed JSON
 - Response Body: Error object with details
 
 **401 Unauthorized:**
+
 - Causes: Missing or invalid authentication credentials
 - Response Headers: WWW-Authenticate
 - Response Body: Error object
 
 **403 Forbidden:**
+
 - Causes: Authenticated but not authorized to perform operation
 - Response Body: Error object
 
 **404 Not Found:**
+
 - Causes: Resource doesn't exist (single resource endpoints)
 - Response Body: Error object
 - Note: Collection endpoints return 200 with empty collection, not 404
 
 **406 Not Acceptable:**
+
 - Causes: Requested format not supported by server
 - Response Body: Error object with supported formats
 
 **409 Conflict:**
-- Causes: 
+
+- Causes:
   - Resource already exists (POST)
   - Constraint violation (DELETE without cascade)
   - Schema evolution with existing data (PUT/PATCH on DataStream/ControlStream)
@@ -1027,10 +1144,12 @@ Content-Type: application/json
 ### Server Error Response Codes
 
 **500 Internal Server Error:**
+
 - Causes: Unexpected server error
 - Response Body: Error object
 
 **503 Service Unavailable:**
+
 - Causes: Server temporarily unavailable
 - Response Headers: Retry-After
 - Response Body: Error object
@@ -1038,6 +1157,7 @@ Content-Type: application/json
 ### Error Response Format
 
 **OGC API Error Format (RFC 7807 Problem Details):**
+
 ```json
 {
   "type": "https://api.example.org/errors/constraint-violation",
@@ -1049,6 +1169,7 @@ Content-Type: application/json
 ```
 
 **Properties:**
+
 - `type` (URI) - Error type identifier
 - `title` (string) - Short error summary
 - `status` (integer) - HTTP status code
@@ -1062,15 +1183,18 @@ Content-Type: application/json
 ### Schema Validation (Part 2)
 
 **Observation CREATE/REPLACE:**
+
 - Result MUST conform to DataStream resultSchema
 - Parameters (if present) MUST conform to DataStream parametersSchema
 - Validation failure → 400 Bad Request
 
 **Command CREATE/REPLACE:**
+
 - Parameters MUST conform to ControlStream commandSchema
 - Validation failure → 400 Bad Request
 
 **DataStream/ControlStream Schema Evolution:**
+
 - Cannot modify resultSchema/commandSchema if observations/commands exist
 - Attempted modification → 409 Conflict
 - Workaround: Delete all observations/commands (cascade), then modify schema
@@ -1078,48 +1202,58 @@ Content-Type: application/json
 ### Cascade Delete Requirements
 
 **Part 1 Systems:**
+
 - Without cascade: Reject if has subsystems, sampling features, datastreams, or control streams
 - With cascade: Delete system + all subsystems (recursive) + sampling features + datastreams + control streams
 
 **Part 1 Deployments:**
+
 - Without cascade: Reject if has subdeployments
 - With cascade: Delete deployment + all subdeployments (recursive)
 
 **Part 2 DataStreams:**
+
 - Without cascade: Reject if has observations
 - With cascade: Delete datastream + all observations
 
 **Part 2 ControlStreams:**
+
 - Without cascade: Reject if has commands
 - With cascade: Delete control stream + all commands + command status + command results
 
 **Part 2 Commands:**
+
 - Without cascade: Reject if has status reports or results (implementation-dependent)
 - With cascade: Delete command + all status reports + all results
 
 ### Idempotency Requirements
 
 **GET (Read):**
+
 - Idempotent: Yes
 - Safe: Yes
 - Multiple identical requests return same result
 
 **POST (Create):**
+
 - Idempotent: No
 - Safe: No
 - Multiple identical requests create multiple resources
 
 **PUT (Replace):**
+
 - Idempotent: Yes
 - Safe: No
 - Multiple identical requests produce same final state
 
 **PATCH (Update):**
+
 - Idempotent: Yes (with same patch)
 - Safe: No
 - Multiple identical patches produce same final state
 
 **DELETE:**
+
 - Idempotent: Yes
 - Safe: No
 - Multiple identical requests produce same final state (resource deleted)
@@ -1133,6 +1267,7 @@ Content-Type: application/json
 ### CRUD Method Naming
 
 **Read Operations:**
+
 ```typescript
 // Single resource
 client.systems.get(id: string): Promise<System>
@@ -1145,6 +1280,7 @@ client.systems.listAll(options?: QueryOptions): AsyncGenerator<System>
 ```
 
 **Create Operations:**
+
 ```typescript
 // Canonical endpoint
 client.systems.create(data: SystemInput, options?: CreateOptions): Promise<System>
@@ -1161,6 +1297,7 @@ client.commands.create(controlstreamId: string, data: CommandInput): Promise<Com
 ```
 
 **Update Operations:**
+
 ```typescript
 // Replace (PUT)
 client.systems.replace(id: string, data: SystemInput): Promise<void>
@@ -1170,6 +1307,7 @@ client.systems.update(id: string, patch: Partial<SystemInput>): Promise<void>
 ```
 
 **Delete Operations:**
+
 ```typescript
 // Simple delete
 client.systems.delete(id: string): Promise<void>
@@ -1183,7 +1321,7 @@ client.datastreams.delete(id: string, { cascade: true }): Promise<void>
 
 ```typescript
 interface SystemInput {
-  uid: string;  // URI format
+  uid: string; // URI format
   name: string;
   description?: string;
   featureType: SystemTypeURI;
@@ -1195,14 +1333,14 @@ interface SystemInput {
 interface ObservationInput {
   phenomenonTime: string | Date;
   resultTime: string | Date;
-  result: any;  // Type depends on DataStream resultSchema
-  parameters?: any;  // Type depends on DataStream parametersSchema
+  result: any; // Type depends on DataStream resultSchema
+  parameters?: any; // Type depends on DataStream parametersSchema
 }
 
 interface CommandInput {
   issueTime: string | Date;
   executionTime: string | Date;
-  parameters: any;  // Type depends on ControlStream commandSchema
+  parameters: any; // Type depends on ControlStream commandSchema
 }
 ```
 
@@ -1211,7 +1349,7 @@ interface CommandInput {
 ```typescript
 interface CreateResponse<T> {
   resource: T;
-  location: string;  // Canonical URL
+  location: string; // Canonical URL
 }
 
 interface ErrorResponse {
@@ -1279,10 +1417,10 @@ async function updateWithOptimism<T>(
 ) {
   const id = getId();
   const original = await getResource(id);
-  
+
   // Apply optimistically
   onSuccess({ ...original, ...patch });
-  
+
   try {
     await updateResource(id, patch);
   } catch (error) {
@@ -1300,11 +1438,13 @@ async function updateWithOptimism<T>(
 This section documents CRUD operations for CSAPI client library:
 
 **CRUD Support:**
+
 - Part 1: All 5 resources support full CRUD (when conformance classes implemented)
 - Part 2: All 8 resources support full CRUD (when conformance classes implemented)
 - Collections are read-only (no CRUD)
 
 **HTTP Method Mappings:**
+
 - GET (read) - All endpoints
 - POST (create) - Canonical and nested collection endpoints
 - PUT (replace) - Single resource endpoints only
@@ -1312,20 +1452,24 @@ This section documents CRUD operations for CSAPI client library:
 - DELETE (delete) - Single resource endpoints only
 
 **Request Body Requirements:**
+
 - Part 1: GeoJSON, SensorML, or plain JSON
 - Part 2: JSON, SWE Common (JSON/CSV/Binary)
 - Schema validation for Observations/Commands
 
 **Response Codes:**
+
 - 200 OK, 201 Created, 204 No Content (success)
 - 400 Bad Request, 404 Not Found, 409 Conflict (client errors)
 - 500 Internal Server Error (server errors)
 
 **Special Constraints:**
+
 - Schema evolution restrictions (Part 2 DataStreams/ControlStreams)
 - Cascade delete requirements (Part 1 Systems/Deployments, Part 2 DataStreams/ControlStreams)
 
 **Client API Design:**
+
 - Type-safe request bodies
 - CRUD method naming (get, list, create, replace, update, delete)
 - Format-specific convenience methods

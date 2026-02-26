@@ -66,6 +66,7 @@ Define testing strategy for 30+ query parameter combinations and precedence rule
 **Objective:** Create complete inventory of CSAPI query parameters
 
 **Tasks:**
+
 1. Extract query parameters from CSAPI Part 1
 2. Extract query parameters from CSAPI Part 2
 3. Extract query parameters from CSAPI Part 3
@@ -78,6 +79,7 @@ Define testing strategy for 30+ query parameter combinations and precedence rule
 **Objective:** Analyze valid and invalid parameter combinations
 
 **Tasks:**
+
 1. Identify mutually exclusive parameters
 2. Identify complementary parameters
 3. Document parameter precedence rules
@@ -91,6 +93,7 @@ Define testing strategy for 30+ query parameter combinations and precedence rule
 **Objective:** Analyze parameter testing in upstream implementations
 
 **Tasks:**
+
 1. Identify parameter combination tests in upstream
 2. Extract parameter validation test patterns
 3. Document parameter mocking approaches
@@ -102,6 +105,7 @@ Define testing strategy for 30+ query parameter combinations and precedence rule
 **Objective:** Design test scenarios for parameter combinations
 
 **Tasks:**
+
 1. Design valid combination test scenarios
 2. Design invalid combination test scenarios
 3. Design precedence test scenarios
@@ -115,6 +119,7 @@ Define testing strategy for 30+ query parameter combinations and precedence rule
 **Objective:** Design fixtures for parameter combination testing
 
 **Tasks:**
+
 1. Design query string fixtures
 2. Design response fixtures for different parameter combinations
 3. Design error response fixtures for invalid combinations
@@ -126,6 +131,7 @@ Define testing strategy for 30+ query parameter combinations and precedence rule
 **Objective:** Create comprehensive query parameter combination testing strategy
 
 **Tasks:**
+
 1. Consolidate parameter combinations
 2. Create parameter test templates
 3. Document fixture requirements
@@ -154,6 +160,7 @@ This research is complete when:
 **Query parameter combination testing strategy covering 30+ parameters**
 
 Content includes:
+
 - Complete query parameter inventory (30+ parameters)
 - Parameter categorization (spatial, temporal, relationship, pagination, format)
 - Valid combination matrix
@@ -173,11 +180,13 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 8: CSAPI Specification Review (parameter definitions)
 - Section 13: Resource Method Testing Patterns (parameter handling)
 - Section 23: Pagination Testing Strategy (pagination parameters)
 
 **Blocks:**
+
 - Query parameter implementation
 - Parameter validation implementation
 - Section 19: Test Organization and File Structure (parameter test organization)
@@ -223,6 +232,7 @@ Content includes:
 ## 10. Key Findings Summary
 
 **Parameter Inventory:**
+
 - **32 total parameters** across 7 categories
 - **5 Standard OGC API parameters**: bbox, datetime, limit, offset, f
 - **4 CSAPI Common parameters**: id, uid, q, {propertyName}
@@ -233,12 +243,14 @@ Content includes:
 - **1 Part 2 Pagination parameter**: cursor
 
 **Combination Rules:**
+
 - **Logical AND** between different parameters (all must match)
 - **Logical OR** within single parameter (comma-separated values)
 - **No mutually exclusive parameters** (precedence rules handle conflicts)
 - **Precedence rules**: f > Accept header, phenomenonTime > datetime, cursor > offset
 
 **Test Scenarios:**
+
 - **60 valid combination scenarios** (2-4+ parameter combinations)
 - **30 invalid combination scenarios** (wrong parameter for resource, invalid values)
 - **20 validation scenarios** (type, range, format, encoding)
@@ -246,12 +258,14 @@ Content includes:
 - **Total: 120 test scenarios**
 
 **Implementation:**
+
 - **Estimated ~3,200 lines of test code**
 - **~120 fixtures** for query strings, responses, and errors
 - **Estimated 34-49 hours** total implementation effort
 - **Utilities needed**: ParameterValidator, ParameterEncoder, ParameterValidationError
 
 **Key Recommendations:**
+
 1. Prioritize validation tests and 2-parameter combinations (HIGH)
 2. Use parameterized tests for pattern reuse
 3. Focus on common use cases, not exhaustive combinations

@@ -34,7 +34,7 @@ Per the [AI Operational Constraints](https://github.com/OS4CSAPI/ogc-client-CSAP
 
 This report does not propose behavioral modifications to the library without approval. All recommendations distinguish between **fact** (verified), **inference** (reasoned), and **proposal** (requires approval), per Section 3 of the constraints.
 
-**Key constraint assessment for this issue:** Section 2.2 of the AI Operational Constraints states: *"Do not introduce new abstractions, layers, or dependencies without approval."* Issue #13 proposes adding 4 new exported type guard functions to the library's public API. These are **new public API surface** — not a type annotation tweak or a refactor. They introduce new functions that consumers would depend on, that must be maintained, and that upstream reviewers must accept. **Section 2.2 is directly relevant here.** Unlike Issue #12's `Pick<>` (a built-in utility type applied to an existing parameter), type guards are new hand-written functions with runtime behavior that become part of the library's contract.
+**Key constraint assessment for this issue:** Section 2.2 of the AI Operational Constraints states: _"Do not introduce new abstractions, layers, or dependencies without approval."_ Issue #13 proposes adding 4 new exported type guard functions to the library's public API. These are **new public API surface** — not a type annotation tweak or a refactor. They introduce new functions that consumers would depend on, that must be maintained, and that upstream reviewers must accept. **Section 2.2 is directly relevant here.** Unlike Issue #12's `Pick<>` (a built-in utility type applied to an existing parameter), type guards are new hand-written functions with runtime behavior that become part of the library's contract.
 
 ---
 
@@ -42,23 +42,24 @@ This report does not propose behavioral modifications to the library without app
 
 **Issue #13 proposes adding 4 type guard functions (`isSystem()`, `isDeployment()`, `isProcedure()`, `isSamplingFeature()`) to enable TypeScript consumers to narrow the `System | Deployment | Procedure | SamplingFeature` union type returned by `extractCSAPIFeature()` without `as any` casts. After thorough review, this report recommends AGAINST including these type guards in the CSAPI upstream contribution. The change is valid in isolation but carries more risk than benefit given the contribution's current scope, upstream acceptance concerns, and the availability of simpler alternatives that consumers can implement themselves.**
 
-| Aspect | Assessment |
-|--------|------------|
-| **Change type** | New public API functions — 4 exported type guards with runtime behavior |
-| **Scope** | ~40-60 new lines in `geojson.ts` (or new `type-guards.ts`), ~4 new exports in `index.ts`, ~100-200 lines of new tests |
-| **Production behavior modified** | **No** — purely additive; no existing code paths change |
-| **Existing tests affected** | **None** — additive functions don't break existing tests |
-| **Risk to library integrity** | **Low-Medium** — new API surface increases maintenance burden and upstream reviewer scrutiny |
-| **New abstraction introduced** | **Yes** — 4 new exported functions that become part of the library's public contract |
-| **Upstream pattern precedent** | **None** — the upstream `ogc-client` library does not export type guard functions anywhere |
-| **AI Constraints trigger** | **Yes** — Section 2.2 ("no new abstractions... without approval") is triggered |
-| **Priority ranking** | #9 in upstream-findings.md (Medium severity, Low effort) — "Should Address" category, lowest priority tier |
+| Aspect                           | Assessment                                                                                                            |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Change type**                  | New public API functions — 4 exported type guards with runtime behavior                                               |
+| **Scope**                        | ~40-60 new lines in `geojson.ts` (or new `type-guards.ts`), ~4 new exports in `index.ts`, ~100-200 lines of new tests |
+| **Production behavior modified** | **No** — purely additive; no existing code paths change                                                               |
+| **Existing tests affected**      | **None** — additive functions don't break existing tests                                                              |
+| **Risk to library integrity**    | **Low-Medium** — new API surface increases maintenance burden and upstream reviewer scrutiny                          |
+| **New abstraction introduced**   | **Yes** — 4 new exported functions that become part of the library's public contract                                  |
+| **Upstream pattern precedent**   | **None** — the upstream `ogc-client` library does not export type guard functions anywhere                            |
+| **AI Constraints trigger**       | **Yes** — Section 2.2 ("no new abstractions... without approval") is triggered                                        |
+| **Priority ranking**             | #9 in upstream-findings.md (Medium severity, Low effort) — "Should Address" category, lowest priority tier            |
 
 **Key findings from this review:**
 
 1. **Fact:** `extractCSAPIFeature()` returns `System | Deployment | Procedure | SamplingFeature`. Accessing `validTime` on the union requires narrowing because `Procedure` does not have a `validTime` property. This is correct TypeScript behavior — the compiler is protecting consumers from runtime errors.
 
 2. **Fact:** The `getCSAPIResourceType()` function (already exported, L189 of geojson.ts) ALREADY provides the runtime discriminator needed for consumers to narrow the union. It returns `'System' | 'Deployment' | 'Procedure' | 'SamplingFeature' | null`. A consumer can write:
+
    ```typescript
    const resource = extractCSAPIFeature(feature);
    if (getCSAPIResourceType(feature) === 'System') {
@@ -92,19 +93,19 @@ Issue #13 corresponds to **Finding F-9** from the [upstream findings document](h
 ```typescript
 export function extractCSAPIFeature(
   feature: unknown
-): System | Deployment | Procedure | SamplingFeature
+): System | Deployment | Procedure | SamplingFeature;
 ```
 
 Several properties exist on some union members but not others:
 
-| Property | System | Deployment | Procedure | SamplingFeature |
-|----------|--------|------------|-----------|-----------------|
-| `properties.validTime` | ✅ optional | ✅ required | ❌ absent | ✅ optional |
-| `properties.systemType` | ✅ | ❌ | ❌ | ❌ |
-| `properties.assetType` | ✅ | ❌ | ❌ | ❌ |
-| `properties.featureType` | ✅ | ✅ | ✅ | ✅ |
-| `properties.uid` | ✅ | ✅ | ✅ | ✅ |
-| `properties.name` | ✅ | ✅ | ✅ | ✅ |
+| Property                 | System      | Deployment  | Procedure | SamplingFeature |
+| ------------------------ | ----------- | ----------- | --------- | --------------- |
+| `properties.validTime`   | ✅ optional | ✅ required | ❌ absent | ✅ optional     |
+| `properties.systemType`  | ✅          | ❌          | ❌        | ❌              |
+| `properties.assetType`   | ✅          | ❌          | ❌        | ❌              |
+| `properties.featureType` | ✅          | ✅          | ✅        | ✅              |
+| `properties.uid`         | ✅          | ✅          | ✅        | ✅              |
+| `properties.name`        | ✅          | ✅          | ✅        | ✅              |
 
 TypeScript correctly prevents accessing `resource.properties.validTime` without narrowing because the type could be `Procedure`, which has no `validTime`. Consumers must use `as any` casts:
 
@@ -176,18 +177,19 @@ export function getCSAPIResourceType(
 
 Reviewed all 4 Part 1 resource interfaces:
 
-| Interface | `validTime` field | Other unique fields |
-|-----------|-------------------|---------------------|
-| `System` (L261) | `validTime?: TimeInterval` (optional) | `assetType?`, `systemType?` (via `featureType` discriminator) |
-| `Deployment` (L293) | `validTime: TimeInterval` (required) | — |
-| `Procedure` (L323) | **absent** | `geometry: null` |
-| `SamplingFeature` (L353) | `validTime?: TimeInterval` (optional) | — |
+| Interface                | `validTime` field                     | Other unique fields                                           |
+| ------------------------ | ------------------------------------- | ------------------------------------------------------------- |
+| `System` (L261)          | `validTime?: TimeInterval` (optional) | `assetType?`, `systemType?` (via `featureType` discriminator) |
+| `Deployment` (L293)      | `validTime: TimeInterval` (required)  | —                                                             |
+| `Procedure` (L323)       | **absent**                            | `geometry: null`                                              |
+| `SamplingFeature` (L353) | `validTime?: TimeInterval` (optional) | —                                                             |
 
 **Assessment:** The `validTime` asymmetry is correct per the OGC spec. Procedures describe methodologies — they don't have temporal validity periods. `Procedure.properties` correctly omits `validTime`. This is not a modeling error; it reflects the spec.
 
 ### 4.4 `index.ts` — Current Exports (L92-L98)
 
 The library currently exports from `geojson.ts`:
+
 - `SOSA_NS`
 - `SENSORML_NS`
 - `isCSAPIFeature`
@@ -214,13 +216,13 @@ Searched the entire codebase for type guard patterns (`is` predicate functions):
 
 Finding **F-9** is defined here:
 
-> *"`extractCSAPIFeature()` returns `System | Deployment | Procedure | SamplingFeature`. The `validTime` property exists on `System`, `Deployment`, and `SamplingFeature` but NOT on `Procedure`. TypeScript correctly prevents accessing `typedResource.properties.validTime` because the type could be `Procedure`."*
+> _"`extractCSAPIFeature()` returns `System | Deployment | Procedure | SamplingFeature`. The `validTime` property exists on `System`, `Deployment`, and `SamplingFeature` but NOT on `Procedure`. TypeScript correctly prevents accessing `typedResource.properties.validTime` because the type could be `Procedure`."_
 >
 > Priority rank: **#9** (Medium severity, Low effort)
 
 F-9 is ranked **last** in the "Should Address" category — priority #9 out of 11 findings. It is below F-8 (constructor narrowing), F-7 (generic CRUD), and F-10 (Content-Type helper), all of which are simpler and lower-risk changes.
 
-The recommended solution: *"Add type-narrowing guards: `isSystem(r): r is System`, `isDeployment(r): r is Deployment`, etc."*
+The recommended solution: _"Add type-narrowing guards: `isSystem(r): r is System`, `isDeployment(r): r is Deployment`, etc."_
 
 **Assessment:** The upstream findings document correctly identifies the friction but places it at the bottom of the priority list. The fix is characterized as "Low effort" but has non-trivial implications for upstream acceptance.
 
@@ -228,13 +230,14 @@ The recommended solution: *"Add type-narrowing guards: `isSystem(r): r is System
 
 **Library Finding #10** is where F-9 was first identified:
 
-> *"The function returns `System | Deployment | Procedure | SamplingFeature`. The `validTime` property exists on `System.properties.validTime` (optional), `Deployment.properties.validTime` (required), `SamplingFeature.properties.validTime` (optional), and `Procedure.properties` — no `validTime` field at all."*
+> _"The function returns `System | Deployment | Procedure | SamplingFeature`. The `validTime` property exists on `System.properties.validTime` (optional), `Deployment.properties.validTime` (required), `SamplingFeature.properties.validTime` (optional), and `Procedure.properties` — no `validTime` field at all."_
 
 The report suggests two potential fixes:
+
 1. Add `validTime?: TimeInterval` to `Procedure.properties` (phantom property)
 2. Provide type-narrowing helpers: `isSystemResource(r): r is System`
 
-The report notes: *"The second approach is more correct. The first adds a phantom property to satisfy a different use case."*
+The report notes: _"The second approach is more correct. The first adds a phantom property to satisfy a different use case."_
 
 **Assessment:** Option 1 (phantom `validTime` on Procedure) would be incorrect — it would claim `Procedure` has a property it doesn't have per the OGC spec. Option 2 (type guards) is technically correct but adds new API surface. There is a third option the report doesn't consider: **do nothing, and let consumers use the existing `getCSAPIResourceType()` function to check the type and cast accordingly.**
 
@@ -242,11 +245,11 @@ The report notes: *"The second approach is more correct. The first adds a phanto
 
 F-9 actionability assessment:
 
-| Finding | Actionable? | Effort | Priority |
-|---------|------------|--------|----------|
-| F-9 | Yes — type guards | Low | 5 (Medium) |
+| Finding | Actionable?       | Effort | Priority   |
+| ------- | ----------------- | ------ | ---------- |
+| F-9     | Yes — type guards | Low    | 5 (Medium) |
 
-The document notes: *"Would eliminate `as any` casts in the ResourceDetail component. Cleaner code, no visible UI change."*
+The document notes: _"Would eliminate `as any` casts in the ResourceDetail component. Cleaner code, no visible UI change."_
 
 **Assessment:** The benefit is described in terms of the demo app, not the library consumers broadly. The "Low effort" assessment is accurate for writing the code but does not account for upstream reviewer friction or the precedent it sets.
 
@@ -254,7 +257,7 @@ The document notes: *"Would eliminate `as any` casts in the ResourceDetail compo
 
 This document assesses the CSAPI library contribution's accuracy against its planning document. It confirms:
 
-> *"The library is a URL builder, not an HTTP client — it does not perform fetch operations, manage authentication, or handle response deserialization end-to-end."*
+> _"The library is a URL builder, not an HTTP client — it does not perform fetch operations, manage authentication, or handle response deserialization end-to-end."_
 
 **Assessment:** The library's core identity is as a URL builder with format parsing. Type guards are a consumer convenience feature that sits at the edge of this scope. They don't build URLs, parse formats, or interact with OGC specifications — they provide TypeScript DX on top of the existing format parser's output.
 
@@ -262,21 +265,21 @@ This document assesses the CSAPI library contribution's accuracy against its pla
 
 **Finding #5** references the same area:
 
-> *"Part 2 resources (datastreams, observations, controlStreams, commands) are not GeoJSON Features and don't have a `featureType` property. The `extractCSAPIFeature()` and `getCSAPIResourceType()` functions only work for Part 1 resources."*
+> _"Part 2 resources (datastreams, observations, controlStreams, commands) are not GeoJSON Features and don't have a `featureType` property. The `extractCSAPIFeature()` and `getCSAPIResourceType()` functions only work for Part 1 resources."_
 
 **Assessment:** The type guards would only apply to Part 1 resources (the 4-type union). Part 2 resources are already excluded from `extractCSAPIFeature()`. This is consistent — the guards would narrow within the Part 1 resource set only.
 
 ### 5.6 AI Operational Constraints (`AI_OPERATIONAL_CONSTRAINTS.md`)
 
-**Section 2.2** — *"Do not introduce new abstractions, layers, or dependencies without approval."*
+**Section 2.2** — _"Do not introduce new abstractions, layers, or dependencies without approval."_
 
 Type guards are new exported functions — they are new abstractions in the library's public API. Unlike `Pick<>` (a built-in TypeScript utility applied to an existing type annotation), type guards are hand-written functions with runtime behavior that consumers would import and depend on.
 
-**Section 2.2** also states: *"Preserve upstream structure, naming, and patterns unless explicitly instructed otherwise."*
+**Section 2.2** also states: _"Preserve upstream structure, naming, and patterns unless explicitly instructed otherwise."_
 
 The upstream library has zero type guard exports. Adding 4 would introduce a pattern not present anywhere in the existing codebase.
 
-**Section 2.2** further states: *"Prefer minimal diffs over idealized rewrites."*
+**Section 2.2** further states: _"Prefer minimal diffs over idealized rewrites."_
 
 The current code is correct. The issue describes a convenience improvement, not a correctness fix. "Minimal diffs" would mean leaving the correct return type as-is.
 
@@ -284,32 +287,32 @@ The current code is correct. The issue describes a convenience improvement, not 
 
 ### 5.7 Other Documents Reviewed
 
-| Document | Location | Relevance to Issue #13 |
-|----------|----------|----------------------|
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | ogc-csapi-explorer | Context — confirms only 1 non-CSAPI commit exists (EndpointError extraction); adding type guards would increase the PR surface |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app architecture |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | ogc-csapi-explorer | Not relevant — covers CRUD smoke testing |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | ogc-csapi-explorer | Not relevant — covers cross-server interoperability |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | ogc-csapi-explorer | Not relevant — covers SWE Common schema display |
+| Document                                                                                                                                                       | Location           | Relevance to Issue #13                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring                                                                                |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | ogc-csapi-explorer | Context — confirms only 1 non-CSAPI commit exists (EndpointError extraction); adding type guards would increase the PR surface |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app architecture                                                                                    |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | ogc-csapi-explorer | Not relevant — covers CRUD smoke testing                                                                                       |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | ogc-csapi-explorer | Not relevant — covers cross-server interoperability                                                                            |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | ogc-csapi-explorer | Not relevant — covers SWE Common schema display                                                                                |
 
 ---
 
 ## 6. Risk Assessment
 
-| Risk Category | Level | Rationale |
-|---------------|-------|-----------|
-| **Regression risk** | **None** | Purely additive — no existing code paths are modified |
-| **Backward compatibility** | **Full** | New exports don't break existing consumers |
-| **Runtime impact** | **Negligible** | Guards would call existing `getCSAPIResourceType()` — no new classification logic |
-| **Test impact** | **Additive** | New tests required for 4 new functions (~100-200 lines) |
-| **Type safety impact** | **Positive** | Eliminates `as any` casts for consumers who adopt the guards |
-| **Scope creep risk** | **Medium** | Adds 4 new exports to a contribution already under review; increases PR reviewer burden |
-| **Upstream acceptance risk** | **Medium-High** | No upstream precedent for type guard exports; may invite reviewer questions about why CSAPI needs helpers other modules don't |
-| **Maintenance burden** | **Low-Medium** | 4 simple functions with stable semantics, but each is a public API commitment in perpetuity |
-| **AI Constraints compliance** | **Triggered** | Section 2.2 applies — new exported functions are new abstractions; no upstream pattern precedent |
-| **Diff size impact** | **Medium** | ~40-60 lines in geojson.ts + ~4 lines in index.ts + ~100-200 lines of tests = ~150-270 total new lines |
-| **CSAPI contribution coherence** | **Questionable** | The contribution is primarily a URL builder with format parsers. Type guards are a consumer DX layer on top. |
+| Risk Category                    | Level            | Rationale                                                                                                                     |
+| -------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Regression risk**              | **None**         | Purely additive — no existing code paths are modified                                                                         |
+| **Backward compatibility**       | **Full**         | New exports don't break existing consumers                                                                                    |
+| **Runtime impact**               | **Negligible**   | Guards would call existing `getCSAPIResourceType()` — no new classification logic                                             |
+| **Test impact**                  | **Additive**     | New tests required for 4 new functions (~100-200 lines)                                                                       |
+| **Type safety impact**           | **Positive**     | Eliminates `as any` casts for consumers who adopt the guards                                                                  |
+| **Scope creep risk**             | **Medium**       | Adds 4 new exports to a contribution already under review; increases PR reviewer burden                                       |
+| **Upstream acceptance risk**     | **Medium-High**  | No upstream precedent for type guard exports; may invite reviewer questions about why CSAPI needs helpers other modules don't |
+| **Maintenance burden**           | **Low-Medium**   | 4 simple functions with stable semantics, but each is a public API commitment in perpetuity                                   |
+| **AI Constraints compliance**    | **Triggered**    | Section 2.2 applies — new exported functions are new abstractions; no upstream pattern precedent                              |
+| **Diff size impact**             | **Medium**       | ~40-60 lines in geojson.ts + ~4 lines in index.ts + ~100-200 lines of tests = ~150-270 total new lines                        |
+| **CSAPI contribution coherence** | **Questionable** | The contribution is primarily a URL builder with format parsers. Type guards are a consumer DX layer on top.                  |
 
 ---
 
@@ -321,8 +324,10 @@ The issue proposes 4 type guard functions:
 
 ```typescript
 export function isSystem(resource: CSAPIFeature): resource is System {
-  return resource.featureType !== undefined &&
-    getCSAPIResourceType({ properties: resource } as unknown) === 'System';
+  return (
+    resource.featureType !== undefined &&
+    getCSAPIResourceType({ properties: resource } as unknown) === 'System'
+  );
 }
 ```
 
@@ -365,6 +370,7 @@ The strongest argument against this change is the **absence of precedent**. Cons
 None of these modules export `isFoo()` type predicates. Consumers of these modules narrow types using standard TypeScript patterns (property checks, string comparisons, explicit casts). The library has consistently left type narrowing as a consumer responsibility.
 
 Adding type guards only to the CSAPI module would:
+
 1. Create an asymmetry in the library's API surface
 2. Invite reviewer questions: "Why does CSAPI need these when no other module does?"
 3. Set a precedent that may pressure other modules to add similar helpers
@@ -376,18 +382,22 @@ The issue's proposed implementation wraps `getCSAPIResourceType()`:
 
 ```typescript
 export function isSystem(resource: CSAPIFeature): resource is System {
-  return resource.featureType !== undefined &&
-    getCSAPIResourceType({ properties: resource } as unknown) === 'System';
+  return (
+    resource.featureType !== undefined &&
+    getCSAPIResourceType({ properties: resource } as unknown) === 'System'
+  );
 }
 ```
 
 This creates an awkward layering: the type guard takes a `CSAPIFeature` (an unwrapped properties object?) but `getCSAPIResourceType()` expects a full GeoJSON Feature (with `properties` wrapper). The issue's code reconstructs the wrapping: `{ properties: resource } as unknown`. This is fragile and suggests the abstraction doesn't map cleanly onto the existing API.
 
-A cleaner implementation would operate on the full GeoJSON Feature (the same input to `extractCSAPIFeature()`), but then the guard's input type would be `System | Deployment | Procedure | SamplingFeature` — *which is the output of `extractCSAPIFeature()`*, meaning the Feature has already been parsed. At that point, the `featureType` string in `properties.featureType` is the discriminator, and a simple string comparison suffices:
+A cleaner implementation would operate on the full GeoJSON Feature (the same input to `extractCSAPIFeature()`), but then the guard's input type would be `System | Deployment | Procedure | SamplingFeature` — _which is the output of `extractCSAPIFeature()`_, meaning the Feature has already been parsed. At that point, the `featureType` string in `properties.featureType` is the discriminator, and a simple string comparison suffices:
 
 ```typescript
 // Consumer can already do this — no library helper needed:
-if (resource.properties.featureType.startsWith('http://www.w3.org/ns/sosa/Sensor')) {
+if (
+  resource.properties.featureType.startsWith('http://www.w3.org/ns/sosa/Sensor')
+) {
   const system = resource as System;
 }
 ```
@@ -418,7 +428,12 @@ Consider: a React consumer using `typedResource.properties.validTime` would face
 Any consumer can define their own type guards in 4 lines:
 
 ```typescript
-import type { System, Deployment, Procedure, SamplingFeature } from 'ogc-client';
+import type {
+  System,
+  Deployment,
+  Procedure,
+  SamplingFeature,
+} from 'ogc-client';
 import { getCSAPIResourceType } from 'ogc-client';
 
 type CSAPIFeature = System | Deployment | Procedure | SamplingFeature;
@@ -455,18 +470,19 @@ Issue #13 describes a **real TypeScript friction point** that affects consumers 
 
 ### 8.2 Options
 
-| Option | Pros | Cons |
-|--------|------|------|
-| **A. Do NOT add type guards** | Maintains upstream convention; minimal PR surface; no new API commitment; AI Constraints compliant | Consumer friction persists (mitigated by existing `getCSAPIResourceType()`) |
-| **B. Add type guards now** | Eliminates `as any` casts; improves consumer DX; straightforward implementation | No upstream precedent; increases PR scope; new API surface; Section 2.2 triggered |
-| **C. Defer to follow-up PR** | Separates core contribution from DX enhancements; can await upstream feedback | Delays the convenience improvement |
-| **D. Add as internal JSDoc example** | Documents the consumer-side pattern without adding API surface | No auto-narrowing benefit |
+| Option                               | Pros                                                                                               | Cons                                                                              |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **A. Do NOT add type guards**        | Maintains upstream convention; minimal PR surface; no new API commitment; AI Constraints compliant | Consumer friction persists (mitigated by existing `getCSAPIResourceType()`)       |
+| **B. Add type guards now**           | Eliminates `as any` casts; improves consumer DX; straightforward implementation                    | No upstream precedent; increases PR scope; new API surface; Section 2.2 triggered |
+| **C. Defer to follow-up PR**         | Separates core contribution from DX enhancements; can await upstream feedback                      | Delays the convenience improvement                                                |
+| **D. Add as internal JSDoc example** | Documents the consumer-side pattern without adding API surface                                     | No auto-narrowing benefit                                                         |
 
 ### 8.3 Recommended Path: Option A (Do NOT Add Type Guards)
 
 **Do not include type guard functions in the CSAPI upstream contribution at this time.**
 
 Rationale:
+
 1. **The library's type system is correct.** The union return type accurately reflects what `extractCSAPIFeature()` can produce. The TypeScript compiler is doing its job.
 2. **The existing API already provides the building blocks.** `getCSAPIResourceType()` returns a discriminator string that consumers can use for narrowing. The library does not need to provide the narrowing wrapper.
 3. **Zero upstream precedent.** No other module in the library exports type guards. Adding them only to CSAPI creates an asymmetry that upstream reviewers will notice and question.
@@ -479,7 +495,7 @@ Rationale:
 
 If any improvement is desired, consider adding a **JSDoc `@example`** to `extractCSAPIFeature()` that demonstrates the consumer-side narrowing pattern:
 
-```typescript
+````typescript
 /**
  * @example Type narrowing with getCSAPIResourceType()
  * ```typescript
@@ -491,7 +507,7 @@ If any improvement is desired, consider adding a **JSDoc `@example`** to `extrac
  * }
  * ```
  */
-```
+````
 
 This is zero-risk (documentation only), requires no new exports, and directly addresses the consumer friction by showing the recommended narrowing pattern. It is within scope as documentation improvement (Issue #8 on the explorer repo already covers JSDoc for `extractCSAPIFeature()`).
 
@@ -505,13 +521,13 @@ This is zero-risk (documentation only), requires no new exports, and directly ad
 
 ## Appendix A: Authority Precedence Analysis
 
-| Authority Level | Source | Says About This Change | Weight |
-|----------------|--------|----------------------|--------|
-| 1 (Highest) | OGC specifications | Silent — specs define resource semantics, not TypeScript type guards | N/A |
-| 2 | AI Operational Constraints | Section 2.2: "Do not introduce new abstractions... without approval" — **triggered** (4 new exported functions). "Preserve upstream structure, naming, and patterns" — **no upstream pattern exists** for type guards. "Prefer minimal diffs" — **150-270 new lines is not minimal**. | **Against** |
-| 3 | Issue description | Clearly defines the problem and proposes type guards | Scoping |
-| 4 | Existing code patterns | Zero type guard exports anywhere in the upstream library. `getCSAPIResourceType()` already provides the classification logic. | **Against** (the library pattern is to let consumers narrow) |
-| 5 | Reference documents | F-9 priority #9 "Should Address" (Low effort, Medium severity) — lowest priority in that tier | Supportive but low priority |
+| Authority Level | Source                     | Says About This Change                                                                                                                                                                                                                                                                | Weight                                                       |
+| --------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 1 (Highest)     | OGC specifications         | Silent — specs define resource semantics, not TypeScript type guards                                                                                                                                                                                                                  | N/A                                                          |
+| 2               | AI Operational Constraints | Section 2.2: "Do not introduce new abstractions... without approval" — **triggered** (4 new exported functions). "Preserve upstream structure, naming, and patterns" — **no upstream pattern exists** for type guards. "Prefer minimal diffs" — **150-270 new lines is not minimal**. | **Against**                                                  |
+| 3               | Issue description          | Clearly defines the problem and proposes type guards                                                                                                                                                                                                                                  | Scoping                                                      |
+| 4               | Existing code patterns     | Zero type guard exports anywhere in the upstream library. `getCSAPIResourceType()` already provides the classification logic.                                                                                                                                                         | **Against** (the library pattern is to let consumers narrow) |
+| 5               | Reference documents        | F-9 priority #9 "Should Address" (Low effort, Medium severity) — lowest priority in that tier                                                                                                                                                                                         | Supportive but low priority                                  |
 
 **Precedence conclusion:** Authority levels 2 and 4 both weigh against adding type guards. The AI Operational Constraints (level 2) explicitly flag this as requiring approval. The existing codebase patterns (level 4) have no precedent for type guard exports. Only the issue description (level 3) and reference documents (level 5) support the change, and even the references rank it at the lowest priority.
 
@@ -519,20 +535,20 @@ This is zero-risk (documentation only), requires no new exports, and directly ad
 
 ## Appendix B: Cross-Reference Matrix
 
-| Document | Location | Relevance to Issue #13 |
-|----------|----------|-----------------------|
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | ogc-csapi-explorer | F-9 definition; priority #9; Category 2 "Library Design Improvements (Should Address)" — lowest ranked in tier |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | ogc-csapi-explorer | Library Finding #10 — where F-9 was first identified; documents `as any` friction in ResourceDetail; suggests 2 fix options |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | ogc-csapi-explorer | F-9 actionability: "type guards", Low effort, priority 5 (Medium) |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Confirms the library is a URL builder; type guards extend beyond core scope |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | ogc-csapi-explorer | Finding #5 — confirms `extractCSAPIFeature()` is Part 1 only; aligns with type guard scope |
-| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | ogc-client-CSAPI_2 | Section 2.2 triggered on 3 criteria: new abstractions, no upstream pattern, minimal diffs preference |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | ogc-csapi-explorer | Context — confirms minimal non-CSAPI changes; adding type guards increases upstream diff |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app conformance architecture |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | ogc-csapi-explorer | Not relevant — covers CRUD smoke testing |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | ogc-csapi-explorer | Not relevant — covers cross-server interoperability |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | ogc-csapi-explorer | Not relevant — covers SWE Common schema display |
+| Document                                                                                                                                                       | Location           | Relevance to Issue #13                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | ogc-csapi-explorer | F-9 definition; priority #9; Category 2 "Library Design Improvements (Should Address)" — lowest ranked in tier              |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                       | ogc-csapi-explorer | Library Finding #10 — where F-9 was first identified; documents `as any` friction in ResourceDetail; suggests 2 fix options |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | ogc-csapi-explorer | F-9 actionability: "type guards", Low effort, priority 5 (Medium)                                                           |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Confirms the library is a URL builder; type guards extend beyond core scope                                                 |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | ogc-csapi-explorer | Finding #5 — confirms `extractCSAPIFeature()` is Part 1 only; aligns with type guard scope                                  |
+| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)                        | ogc-client-CSAPI_2 | Section 2.2 triggered on 3 criteria: new abstractions, no upstream pattern, minimal diffs preference                        |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring                                                                             |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | ogc-csapi-explorer | Context — confirms minimal non-CSAPI changes; adding type guards increases upstream diff                                    |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app conformance architecture                                                                     |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | ogc-csapi-explorer | Not relevant — covers CRUD smoke testing                                                                                    |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | ogc-csapi-explorer | Not relevant — covers cross-server interoperability                                                                         |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | ogc-csapi-explorer | Not relevant — covers SWE Common schema display                                                                             |
 
 ---
 

@@ -14,8 +14,9 @@
 **FIRM RULE:** Performance testing will **NOT** be implemented for this project.
 
 **Rationale:**
+
 - Upstream `ogc-client` has **ZERO** performance tests
-- We are matching upstream's testing approach  
+- We are matching upstream's testing approach
 - Performance testing is out of scope
 - Functional correctness is the priority
 
@@ -82,6 +83,7 @@ Define strategy for testing performance characteristics and efficiency (especial
 **Objective:** Define performance requirements and targets
 
 **Tasks:**
+
 1. ✅ Identified critical performance paths (parsing, API calls, navigation)
 2. ✅ Defined acceptable response time targets
 3. ✅ Defined acceptable throughput targets
@@ -94,6 +96,7 @@ Define strategy for testing performance characteristics and efficiency (especial
 **Objective:** Design performance benchmark scenarios
 
 **Tasks:**
+
 1. ✅ Designed parser performance benchmarks (JSON vs Binary)
 2. ✅ Designed large dataset benchmarks (100, 1000, 10000 items)
 3. ✅ Designed complex schema parsing benchmarks
@@ -107,6 +110,7 @@ Define strategy for testing performance characteristics and efficiency (especial
 **Objective:** Analyze performance testing in upstream implementations
 
 **Tasks:**
+
 1. ✅ Identified performance tests in upstream (none found)
 2. ✅ Searched for benchmark patterns (none found)
 3. ✅ Searched for profiling approaches (none found)
@@ -118,6 +122,7 @@ Define strategy for testing performance characteristics and efficiency (especial
 **Objective:** Design performance measurement and analysis strategy
 
 **Tasks:**
+
 1. ✅ Selected performance testing tools (Performance API, Benchmark.js, Memory API)
 2. ✅ Defined performance metrics (response time, throughput, memory, latency)
 3. ✅ Designed statistical analysis approach (p50/p95/p99 percentiles)
@@ -130,6 +135,7 @@ Define strategy for testing performance characteristics and efficiency (especial
 **Objective:** Design test infrastructure for performance testing
 
 **Tasks:**
+
 1. ✅ Designed test data generation strategy (programmatic fixtures, multiple sizes)
 2. ✅ Designed test execution environment (single-worker, warmup, GC)
 3. ✅ Designed result collection approach (statistical analysis, reporting)
@@ -142,6 +148,7 @@ Define strategy for testing performance characteristics and efficiency (especial
 **Objective:** Create comprehensive deliverable document
 
 **Tasks:**
+
 1. ✅ Created comprehensive deliverable document
 2. ✅ Documented performance requirements matrix
 3. ✅ Documented all benchmark scenarios (53 tests)
@@ -171,6 +178,7 @@ This research is complete when:
 **Performance testing strategy with benchmark specifications**
 
 Content includes:
+
 - ✅ Performance requirements by component
 - ✅ Response time targets
 - ✅ Throughput targets
@@ -193,21 +201,25 @@ Content includes:
 **Example Performance Benchmarks:**
 
 **Parser Performance:**
+
 - Parse 100 observations (JSON): < 10ms
 - Parse 100 observations (Binary): < 5ms
 - Parse 1000 observations (JSON): < 100ms
 - Parse 1000 observations (Binary): < 50ms
 
 **Memory Usage:**
+
 - Parse 1000 observations: < 10MB memory increase
 - Parse 10000 observations: < 100MB memory increase
 
 **API Call Performance:**
+
 - Get collection list: < 200ms
 - Get single resource: < 100ms
 - Get paginated resources (50 items): < 300ms
 
 **Worker Performance:**
+
 - Background parsing overhead: < 5ms
 - Worker thread communication: < 2ms
 
@@ -216,12 +228,14 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 16: Worker Extensions Testing (Worker performance context)
 - Section 10: SWE Common Testing Requirements (parser testing)
 - Section 30: Bulk Operations Testing (large batch context)
 - Section 23: Pagination Testing (large collection context)
 
 **Blocks:**
+
 - Performance optimization
 - Production deployment validation
 - Performance regression detection in CI/CD
@@ -252,6 +266,7 @@ Content includes:
 2. **Binary Encoding Performance Critical**: Binary SWE Common expected 2x faster than JSON, critical for high-frequency sensors (>10 Hz). Represents ~50% of parser testing effort due to complexity.
 
 3. **Performance Targets Defined**:
+
    - **Parser (JSON):** 100 obs <10ms, 1000 obs <100ms, 10000 obs <1000ms (p95)
    - **Parser (Binary):** 100 obs <5ms, 1000 obs <50ms, 10000 obs <500ms (p95)
    - **Worker Overhead:** <5ms message round-trip (p95)
@@ -268,6 +283,7 @@ Content includes:
 8. **CI/CD Integration**: Performance tests run nightly (not on every PR) due to environment variability. Alerting only, not blocking.
 
 **Test Implementation Estimates:**
+
 - **Total:** 53 tests, 2,540-3,375 lines
 - **Parser Performance:** 16 tests, 520-680 lines (CRITICAL)
 - **Worker Performance:** 9 tests, 320-410 lines (HIGH)
@@ -279,11 +295,13 @@ Content includes:
 **Implementation Effort:** 46-64 hours (2-3 weeks, 1 developer)
 
 **Priorities:**
+
 1. **Priority 1 (CRITICAL):** Parser performance (JSON/Binary), memory usage, statistical utilities
 2. **Priority 2 (HIGH):** Worker performance, API performance, baseline management
 3. **Priority 3 (MEDIUM):** Complex schemas, offset pagination, profiling utilities
 
 **Key Challenges:**
+
 - Environment variability (browser, CPU, memory)
 - Statistical significance (need 50-100 iterations)
 - Large fixture generation (10,000+ observations)
@@ -291,6 +309,7 @@ Content includes:
 - Memory measurement (Chrome-only, requires `--expose-gc` flag)
 
 **Performance Testing Tools:**
+
 - **Browser Performance API:** High-resolution timing (`performance.now()`)
 - **performance.mark/measure:** Custom measurement points
 - **Memory API (Chrome):** Heap size tracking (`performance.memory.usedJSHeapSize`)

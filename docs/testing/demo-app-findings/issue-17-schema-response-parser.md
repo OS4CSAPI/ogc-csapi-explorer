@@ -1,8 +1,7 @@
 # Findings Report: Issue #17 — Schema Response Parser Utility (F-14)
 
 > **Date**: 2025-02-17
-> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#17](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/17)
-> **Finding ID**: F-14 (from [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/main/docs/webapp-demo/schema-display-findings.md))
+> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#17](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/17) > **Finding ID**: F-14 (from [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/main/docs/webapp-demo/schema-display-findings.md))
 > **Upstream Finding ID**: F-14 in [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/main/docs/webapp-demo/schema-display-findings.md) — Priority #3 (Medium)
 
 ---
@@ -32,6 +31,7 @@ Issue #17 proposes adding new `parseDatastreamSchemaResponse()` and `parseContro
 Schema endpoints defined in OGC 23-002 Part 2 do not return raw SWE Common components. They return a wrapper object containing metadata alongside the SWE component:
 
 **Datastream schema** (`GET /datastreams/{id}/schema`):
+
 ```json
 {
   "obsFormat": "application/om+json",
@@ -44,6 +44,7 @@ Schema endpoints defined in OGC 23-002 Part 2 do not return raw SWE Common compo
 ```
 
 **Control stream schema** (`GET /controlstreams/{id}/schema`):
+
 ```json
 {
   "cmdFormat": "application/swe+json",
@@ -113,7 +114,9 @@ export function parseSWEComponent(json: unknown): AnyComponent {
 ### Existing response pattern: `parseCollectionResponse()` (`response.ts` L87–131)
 
 ```typescript
-export function parseCollectionResponse<T>(body: unknown): CollectionResponse<T> {
+export function parseCollectionResponse<T>(
+  body: unknown
+): CollectionResponse<T> {
   if (typeof body !== 'object' || body === null) {
     throw new Error('Invalid collection response: expected an object');
   }
@@ -124,7 +127,9 @@ export function parseCollectionResponse<T>(body: unknown): CollectionResponse<T>
   } else if (Array.isArray(obj.items)) {
     items = obj.items as T[];
   } else {
-    throw new Error('Invalid collection response: missing both "features" and "items" arrays');
+    throw new Error(
+      'Invalid collection response: missing both "features" and "items" arrays'
+    );
   }
   // ... extract links, pagination metadata
 }
@@ -132,12 +137,12 @@ export function parseCollectionResponse<T>(body: unknown): CollectionResponse<T>
 
 The issue cites this as the pattern to follow. However, there is a key difference:
 
-| Factor | `parseCollectionResponse()` | Proposed `parseSchemaResponse()` |
-|---|---|---|
-| **Complexity** | Non-trivial — normalizes two envelope formats (FeatureCollection vs items), extracts links, pagination metadata, timestamps | Trivial — extracts one field (`resultSchema` or `commandSchema`) from a flat wrapper |
-| **Consumer alternatives** | Consumers would need to duplicate the dual-format detection and metadata extraction logic | Consumers need exactly one line: `data.resultSchema ?? data` |
-| **Abstraction benefit** | High — encapsulates a genuinely complex normalization | Low — wraps a trivial property access |
-| **Used by the library internally** | Yes — called throughout the library's CSAPI module | No — only useful for external consumers making raw `fetch` calls |
+| Factor                             | `parseCollectionResponse()`                                                                                                 | Proposed `parseSchemaResponse()`                                                     |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **Complexity**                     | Non-trivial — normalizes two envelope formats (FeatureCollection vs items), extracts links, pagination metadata, timestamps | Trivial — extracts one field (`resultSchema` or `commandSchema`) from a flat wrapper |
+| **Consumer alternatives**          | Consumers would need to duplicate the dual-format detection and metadata extraction logic                                   | Consumers need exactly one line: `data.resultSchema ?? data`                         |
+| **Abstraction benefit**            | High — encapsulates a genuinely complex normalization                                                                       | Low — wraps a trivial property access                                                |
+| **Used by the library internally** | Yes — called throughout the library's CSAPI module                                                                          | No — only useful for external consumers making raw `fetch` calls                     |
 
 ### Current barrel exports: `swecommon/index.ts`
 
@@ -172,6 +177,7 @@ The proposed `DatastreamSchemaResponse` and `ControlStreamSchemaResponse` interf
 ### 2. Schema Display Findings (`schema-display-findings.md`)
 
 F-14 is classified as:
+
 - **Severity**: Medium
 - **Type**: Enhancement (not bug)
 - **Priority**: #3 (Medium) in the actionability summary
@@ -185,6 +191,7 @@ F-14 is not listed as a standalone finding in the original upstream-findings.md 
 ### 4. Library Source Changes Audit (`library-source-changes-audit.md`)
 
 Confirms the conservation record:
+
 - **Exactly one commit** (`e73cff8`) has modified library source during the entire demo development lifecycle
 - That commit was a zero-behavioral-impact structural refactor (EndpointError isolation)
 - Every other workaround was implemented in the demo app layer without touching `src/`
@@ -199,6 +206,7 @@ F-14 is not included in this document (it predates the schema display work). The
 ### 6. Contribution Goal Accuracy Assessment (`contribution-goal-accuracy-assessment.md`)
 
 The assessment confirms the library is a URL builder with parser support:
+
 - "The library is a URL builder, not an HTTP client — it does not perform fetch operations, manage authentication, or handle response deserialization end-to-end"
 - Response parsing exists for SWE Common components (data-level parsing) and collection response normalization (complex multi-format envelope handling)
 - Schema endpoint response wrapper parsing is neither of these — it is a trivial property extraction from a two-field object
@@ -209,24 +217,24 @@ The assessment confirms the library is a URL builder with parser support:
 
 ### Risk of implementing the enhancement
 
-| Risk Factor | Assessment | Rating |
-|---|---|---|
-| Introduces new abstractions | **Yes** — 2 new type interfaces + 2 new functions | **Moderate** |
-| Modifies barrel exports | **Yes** — `swecommon/index.ts` and potentially `src/index.ts` | **Low-Moderate** |
-| Breaks conservation record | **Yes** — would be the 2nd library source commit and the 1st to add new functionality | **Moderate** |
-| Requires new tests | **Yes** — happy path, error cases, edge cases as described in Issue #17 | **Low** |
-| Diff size for upstream PR | ~100+ new lines across 4–5 files for a convenience wrapper | **Moderate** |
-| Mixes abstraction levels | **Yes** — OGC 23-002 endpoint types in SWE Common (OGC 24-014) module | **Low-Moderate** |
-| Runtime correctness risk | Low — the proposed implementation is straightforward | **Low** |
+| Risk Factor                 | Assessment                                                                            | Rating           |
+| --------------------------- | ------------------------------------------------------------------------------------- | ---------------- |
+| Introduces new abstractions | **Yes** — 2 new type interfaces + 2 new functions                                     | **Moderate**     |
+| Modifies barrel exports     | **Yes** — `swecommon/index.ts` and potentially `src/index.ts`                         | **Low-Moderate** |
+| Breaks conservation record  | **Yes** — would be the 2nd library source commit and the 1st to add new functionality | **Moderate**     |
+| Requires new tests          | **Yes** — happy path, error cases, edge cases as described in Issue #17               | **Low**          |
+| Diff size for upstream PR   | ~100+ new lines across 4–5 files for a convenience wrapper                            | **Moderate**     |
+| Mixes abstraction levels    | **Yes** — OGC 23-002 endpoint types in SWE Common (OGC 24-014) module                 | **Low-Moderate** |
+| Runtime correctness risk    | Low — the proposed implementation is straightforward                                  | **Low**          |
 
 ### Risk of NOT implementing the enhancement
 
-| Risk Factor | Assessment | Rating |
-|---|---|---|
-| Consumer inconvenience | **Minimal** — one-line workaround: `data.resultSchema ?? data` | **Low** |
-| Missing type safety | **Minimal** — consumers still get full `AnyComponent` type safety after extraction | **Low** |
-| Documentation gap | **Real but addressable** — a JSDoc note on `getDataStreamSchema()` could document the wrapper structure | **Low** |
-| Demo app impact | **None** — workaround is already in place and working | **None** |
+| Risk Factor            | Assessment                                                                                              | Rating   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- | -------- |
+| Consumer inconvenience | **Minimal** — one-line workaround: `data.resultSchema ?? data`                                          | **Low**  |
+| Missing type safety    | **Minimal** — consumers still get full `AnyComponent` type safety after extraction                      | **Low**  |
+| Documentation gap      | **Real but addressable** — a JSDoc note on `getDataStreamSchema()` could document the wrapper structure | **Low**  |
+| Demo app impact        | **None** — workaround is already in place and working                                                   | **None** |
 
 ### Overall risk assessment
 
@@ -250,6 +258,7 @@ const parsed = parseSWEComponent(sweJson);
 ```
 
 For control streams:
+
 ```typescript
 const sweJson = data.commandSchema ?? data;
 const parsed = parseSWEComponent(sweJson);
@@ -305,23 +314,23 @@ Issue [#67](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/67) was create
 
 ### What to do instead
 
-| Action | Description | When |
-|---|---|---|
+| Action                             | Description                                                                                                                                                                                                                                                                 | When                                                             |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | **Document the wrapper structure** | A JSDoc note on `getDataStreamSchema()` and `getControlStreamSchema()` could mention that the response contains `{ obsFormat, resultSchema }` / `{ cmdFormat, commandSchema }` and that consumers should extract the nested schema before passing to `parseSWEComponent()`. | Could be included with the Issue #16 JSDoc fix (F-13) if desired |
-| **Propose upstream** | After the core contribution is accepted, file an upstream issue proposing `parseSchemaResponse()` utilities with architectural guidance from maintainers. | Post-acceptance |
-| **Track in Issue #67** | The existing GitHub issue [#67](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/67) documents the enhancement proposal and can be referenced in upstream discussions. | Already exists |
+| **Propose upstream**               | After the core contribution is accepted, file an upstream issue proposing `parseSchemaResponse()` utilities with architectural guidance from maintainers.                                                                                                                   | Post-acceptance                                                  |
+| **Track in Issue #67**             | The existing GitHub issue [#67](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/67) documents the enhancement proposal and can be referenced in upstream discussions.                                                                                                 | Already exists                                                   |
 
 ### Priority assessment
 
-| Factor | Assessment |
-|---|---|
-| **Finding ID** | F-14 |
-| **Priority in schema-display-findings.md** | #3 (Medium) |
-| **Type** | Enhancement — new functionality, not a bug fix |
-| **Effort** | Low-Medium — ~100+ new lines across 4–5 files plus tests |
-| **Impact** | Low — one-line consumer workaround exists |
-| **Risk of implementing** | Moderate — breaks conservation record, introduces new abstractions, mixes specification modules |
-| **Risk of deferring** | Low — trivial workaround, no functional impact |
+| Factor                                     | Assessment                                                                                      |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| **Finding ID**                             | F-14                                                                                            |
+| **Priority in schema-display-findings.md** | #3 (Medium)                                                                                     |
+| **Type**                                   | Enhancement — new functionality, not a bug fix                                                  |
+| **Effort**                                 | Low-Medium — ~100+ new lines across 4–5 files plus tests                                        |
+| **Impact**                                 | Low — one-line consumer workaround exists                                                       |
+| **Risk of implementing**                   | Moderate — breaks conservation record, introduces new abstractions, mixes specification modules |
+| **Risk of deferring**                      | Low — trivial workaround, no functional impact                                                  |
 
 ---
 
@@ -330,6 +339,7 @@ Issue [#67](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/67) was create
 ### OGC 23-002 §Req 11 — Datastream Schema Response
 
 The datastream schema endpoint (`/datastreams/{id}/schema`) returns a response containing:
+
 - `obsFormat` — the observation format the schema describes
 - `resultSchema` — the SWE Common component describing the observation result structure
 
@@ -340,6 +350,7 @@ The wrapper is defined by the Connected Systems API (OGC 23-002), not by SWE Com
 ### OGC 23-002 §Req 25 — Control Stream Schema Response
 
 The control stream schema endpoint (`/controlstreams/{id}/schema`) returns a response containing:
+
 - `cmdFormat` — the command format the schema describes
 - `commandSchema` — the SWE Common component describing the command parameter structure
 
@@ -355,25 +366,25 @@ SWE Common defines data components (DataRecord, Vector, Quantity, etc.) discrimi
 
 ## Appendix B: Reference Documents Consulted
 
-| # | Document | Key Relevance |
-|---|---|---|
-| 1 | [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | Behavioral rules — no new abstractions without approval, minimal diffs, no scope expansion |
-| 2 | [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | Detailed F-14 breakdown — severity Medium, type Enhancement |
-| 3 | [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | Consolidated findings (F-1 through F-12); F-14 not in original set |
-| 4 | [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | Conservation record — exactly 1 commit modifying source, zero behavioral impact |
-| 5 | [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | Actionability analysis for F-1 through F-12 and F-83 through F-85; F-14 not included |
-| 6 | [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Library scope — URL builder with parser support, not full HTTP response handler |
-| 7 | [OGC 23-002 §Req 11](https://docs.ogc.org/is/23-002/23-002.html#req_datastream_schema) | Normative: datastream schema response structure |
-| 8 | [OGC 23-002 §Req 25](https://docs.ogc.org/is/23-002/23-002.html#req_controlstream_schema) | Normative: control stream schema response structure |
-| 9 | [OGC 24-014](https://docs.ogc.org/is/24-014/24-014.html) | Normative: SWE Common 3.0 — defines the component types that `parseSWEComponent()` handles |
+| #   | Document                                                                                                                                                       | Key Relevance                                                                              |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 1   | [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)                        | Behavioral rules — no new abstractions without approval, minimal diffs, no scope expansion |
+| 2   | [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | Detailed F-14 breakdown — severity Medium, type Enhancement                                |
+| 3   | [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | Consolidated findings (F-1 through F-12); F-14 not in original set                         |
+| 4   | [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | Conservation record — exactly 1 commit modifying source, zero behavioral impact            |
+| 5   | [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | Actionability analysis for F-1 through F-12 and F-83 through F-85; F-14 not included       |
+| 6   | [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Library scope — URL builder with parser support, not full HTTP response handler            |
+| 7   | [OGC 23-002 §Req 11](https://docs.ogc.org/is/23-002/23-002.html#req_datastream_schema)                                                                         | Normative: datastream schema response structure                                            |
+| 8   | [OGC 23-002 §Req 25](https://docs.ogc.org/is/23-002/23-002.html#req_controlstream_schema)                                                                      | Normative: control stream schema response structure                                        |
+| 9   | [OGC 24-014](https://docs.ogc.org/is/24-014/24-014.html)                                                                                                       | Normative: SWE Common 3.0 — defines the component types that `parseSWEComponent()` handles |
 
 ---
 
 ## Appendix C: Relationship to Other Findings Reports
 
-| Report | Finding | Relationship |
-|---|---|---|
-| [issue-16-schema-jsdoc-parameter-confusion.md](./issue-16-schema-jsdoc-parameter-confusion.md) | F-13 (JSDoc) | Sister finding — F-13 and F-14 were both discovered during schema display implementation. F-13 is a JSDoc bug (FIX); F-14 is a missing convenience feature (DEFER). The optional JSDoc note documenting the wrapper structure could be included with the F-13 fix. |
-| [issue-15-parse-location-header.md](./issue-15-parse-location-header.md) | F-12 (Location header) | Same pattern — F-12 proposed a `parseLocationHeader()` utility for trivial string extraction (splitting a URL by `/`). That report also recommended DEFER because the consumer workaround is trivial and adding a utility would expand scope. |
-| [issue-6-content-type-helper.md](./issue-6-content-type-helper.md) | F-10 (Content-Type) | Related concept — both involve response-level metadata that the library does not currently handle automatically. |
-| [issue-5-nested-create-methods.md](./issue-5-nested-create-methods.md) | F-1/F-2 (URL bugs) | Contrast — F-1/F-2 are genuine URL generation bugs producing incorrect URLs. F-14 is a missing convenience feature where the existing functionality works correctly. |
+| Report                                                                                         | Finding                | Relationship                                                                                                                                                                                                                                                       |
+| ---------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [issue-16-schema-jsdoc-parameter-confusion.md](./issue-16-schema-jsdoc-parameter-confusion.md) | F-13 (JSDoc)           | Sister finding — F-13 and F-14 were both discovered during schema display implementation. F-13 is a JSDoc bug (FIX); F-14 is a missing convenience feature (DEFER). The optional JSDoc note documenting the wrapper structure could be included with the F-13 fix. |
+| [issue-15-parse-location-header.md](./issue-15-parse-location-header.md)                       | F-12 (Location header) | Same pattern — F-12 proposed a `parseLocationHeader()` utility for trivial string extraction (splitting a URL by `/`). That report also recommended DEFER because the consumer workaround is trivial and adding a utility would expand scope.                      |
+| [issue-6-content-type-helper.md](./issue-6-content-type-helper.md)                             | F-10 (Content-Type)    | Related concept — both involve response-level metadata that the library does not currently handle automatically.                                                                                                                                                   |
+| [issue-5-nested-create-methods.md](./issue-5-nested-create-methods.md)                         | F-1/F-2 (URL bugs)     | Contrast — F-1/F-2 are genuine URL generation bugs producing incorrect URLs. F-14 is a missing convenience feature where the existing functionality works correctly.                                                                                               |

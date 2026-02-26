@@ -43,15 +43,15 @@ This report does not expand scope beyond what Issue #7 describes. No production 
 
 Issue #7 proposes writing unit tests for the changes described in Issue #5 (nested create methods) and Issue #6 (Content-Type helper map). This is the **lowest possible risk category** of library change: tests are purely additive, they do not modify production code, and they cannot affect runtime behavior.
 
-| Aspect | Assessment |
-|--------|------------|
-| **Change type** | Test-only — new `describe`/`it` blocks appended to existing test file |
-| **Production code modified** | None |
-| **Existing tests affected** | None — purely additive |
-| **Risk to library integrity** | **Zero** |
-| **Estimated scope** | ~50–60 new lines in `url_builder.spec.ts`, ~15 new test cases |
-| **Dependency** | Cannot be implemented until Issue #5 and Issue #6 are completed first |
-| **Discrepancy found** | Issue #7 misclassifies `properties` as Part 2 (`application/json`); correct classification is Part 1 (`application/geo+json`) per OGC 23-001r1 §11 — see [Section 7](#7-discrepancy-properties-content-type-classification) |
+| Aspect                        | Assessment                                                                                                                                                                                                                  |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Change type**               | Test-only — new `describe`/`it` blocks appended to existing test file                                                                                                                                                       |
+| **Production code modified**  | None                                                                                                                                                                                                                        |
+| **Existing tests affected**   | None — purely additive                                                                                                                                                                                                      |
+| **Risk to library integrity** | **Zero**                                                                                                                                                                                                                    |
+| **Estimated scope**           | ~50–60 new lines in `url_builder.spec.ts`, ~15 new test cases                                                                                                                                                               |
+| **Dependency**                | Cannot be implemented until Issue #5 and Issue #6 are completed first                                                                                                                                                       |
+| **Discrepancy found**         | Issue #7 misclassifies `properties` as Part 2 (`application/json`); correct classification is Part 1 (`application/geo+json`) per OGC 23-001r1 §11 — see [Section 7](#7-discrepancy-properties-content-type-classification) |
 
 **Key finding:** Issue #7 inherits a `properties` Content-Type misclassification from its Issue #6 dependency. The Issue #6 findings report already identified and corrected this discrepancy. The test plan in Issue #7 must be adjusted to place `properties` under the Part 1 (`application/geo+json`) tests, not Part 2 (`application/json`).
 
@@ -63,13 +63,14 @@ Issue #7 proposes writing unit tests for the changes described in Issue #5 (nest
 
 Issue #7 proposes ~9 tests for the 3 new nested create methods:
 
-| Method Under Test | Test Categories | Expected URL Pattern |
-|-------------------|----------------|---------------------|
-| `createDataStreamForSystem(systemId)` | URL generation, special character encoding, resource availability | `/systems/{id}/datastreams` |
-| `createControlStreamForSystem(systemId)` | URL generation, special character encoding, resource availability | `/systems/{id}/controlstreams` |
+| Method Under Test                          | Test Categories                                                   | Expected URL Pattern             |
+| ------------------------------------------ | ----------------------------------------------------------------- | -------------------------------- |
+| `createDataStreamForSystem(systemId)`      | URL generation, special character encoding, resource availability | `/systems/{id}/datastreams`      |
+| `createControlStreamForSystem(systemId)`   | URL generation, special character encoding, resource availability | `/systems/{id}/controlstreams`   |
 | `createSamplingFeatureForSystem(systemId)` | URL generation, special character encoding, resource availability | `/systems/{id}/samplingFeatures` |
 
 Each method gets 3 test cases:
+
 1. **Basic URL generation** — Correct path with a simple system ID
 2. **Special character encoding** — URN-style IDs (e.g., `urn:example:sys:001`) are properly encoded
 3. **Resource availability assertion** — Throws `EndpointError` when systems resource is not available
@@ -78,13 +79,13 @@ Each method gets 3 test cases:
 
 Issue #7 proposes ~6 tests for the `CSAPI_CONTENT_TYPES` constant and `getContentTypeForResource()` helper:
 
-| Test Category | Description |
-|---------------|-------------|
-| Part 1 mapping | All Part 1 resources (systems, deployments, procedures, samplingFeatures, **properties**) map to `application/geo+json` |
-| Part 2 mapping | All Part 2 resources (datastreams, observations, controlStreams, commands) map to `application/json` |
-| Completeness | All 9 `CSAPIResourceTypes` have an entry in `CSAPI_CONTENT_TYPES` |
-| Helper function | `getContentTypeForResource()` returns correct type for known resources |
-| Fallback behavior | `getContentTypeForResource()` returns `application/json` for unknown resource types |
+| Test Category     | Description                                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Part 1 mapping    | All Part 1 resources (systems, deployments, procedures, samplingFeatures, **properties**) map to `application/geo+json` |
+| Part 2 mapping    | All Part 2 resources (datastreams, observations, controlStreams, commands) map to `application/json`                    |
+| Completeness      | All 9 `CSAPIResourceTypes` have an entry in `CSAPI_CONTENT_TYPES`                                                       |
+| Helper function   | `getContentTypeForResource()` returns correct type for known resources                                                  |
+| Fallback behavior | `getContentTypeForResource()` returns `application/json` for unknown resource types                                     |
 
 ### 3.3 Dependencies
 
@@ -94,6 +95,7 @@ Issue #7 **cannot** be implemented until both dependency issues are completed:
 - **Issue #6** ([ogc-csapi-explorer#6](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/6)) — Adds the `CSAPI_CONTENT_TYPES` constant and helper function being tested
 
 Neither Issue #5 nor Issue #6 has been implemented yet. Only findings reports exist for both (committed as `24de2ac` and `f7fc7bd` respectively). Corresponding upstream GitHub issues have been created:
+
 - [OS4CSAPI/ogc-client-CSAPI_2#57](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/57) — Nested create methods
 - [OS4CSAPI/ogc-client-CSAPI_2#58](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/58) — Content-Type helper
 
@@ -121,8 +123,18 @@ describe('createObservation', () => {
     return new CSAPIQueryBuilder(
       makeCollection({
         links: [
-          { rel: 'self', type: '', title: '', href: 'https://example.com/collections/iot' },
-          { rel: 'ogc-cs:datastreams', type: '', title: '', href: '/datastreams' },
+          {
+            rel: 'self',
+            type: '',
+            title: '',
+            href: 'https://example.com/collections/iot',
+          },
+          {
+            rel: 'ogc-cs:datastreams',
+            type: '',
+            title: '',
+            href: '/datastreams',
+          },
         ],
       })
     );
@@ -130,17 +142,22 @@ describe('createObservation', () => {
 
   it('returns correct URL for observation creation', () => {
     const url = makeDsBuilder().createObservation('ds-001');
-    expect(url).toBe('https://example.com/collections/iot/datastreams/ds-001/observations');
+    expect(url).toBe(
+      'https://example.com/collections/iot/datastreams/ds-001/observations'
+    );
   });
 
   it('encodes special characters in datastream ID', () => {
     const url = makeDsBuilder().createObservation('urn:example:ds:001');
-    expect(url).toBe('https://example.com/collections/iot/datastreams/urn%3Aexample%3Ads%3A001/observations');
+    expect(url).toBe(
+      'https://example.com/collections/iot/datastreams/urn%3Aexample%3Ads%3A001/observations'
+    );
   });
 });
 ```
 
 The new tests for `createDataStreamForSystem()`, `createControlStreamForSystem()`, and `createSamplingFeatureForSystem()` would follow this exact pattern, substituting:
+
 - Parent resource: `systems` (via `ogc-cs:systems` link rel)
 - Child sub-path: `datastreams`, `controlstreams`, or `samplingFeatures`
 
@@ -163,8 +180,15 @@ The existing `CSAPIResourceTypes` array in `model.ts` (L31–41) lists all 9 res
 
 ```typescript
 export const CSAPIResourceTypes = [
-  'systems', 'deployments', 'samplingFeatures', 'procedures', 'properties',
-  'datastreams', 'observations', 'controlStreams', 'commands',
+  'systems',
+  'deployments',
+  'samplingFeatures',
+  'procedures',
+  'properties',
+  'datastreams',
+  'observations',
+  'controlStreams',
+  'commands',
 ] as const;
 ```
 
@@ -257,19 +281,20 @@ All 12 linked reference documents from the ogc-csapi-explorer repository were re
 
 ### 6.1 What could go wrong?
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| New tests break existing tests | **None** | N/A | Tests are appended in new `describe()` blocks — no existing code touched |
-| New tests fail on first run | **Possible** | None (expected) | Tests cannot pass until Issues #5 and #6 are implemented — this is by design |
-| Test assertions have wrong expected values | **Very low** | Low | Assertions follow the exact URL patterns already validated by existing tests |
-| Import path errors | **Very low** | Low | Follow existing import patterns (`EndpointError` from `endpoint-error.ts`, `CSAPIQueryBuilder` already imported) |
-| Tests accidentally modify production behavior | **Impossible** | N/A | Tests are in `*.spec.ts` files — Jest only reads them, never ships them |
+| Risk                                          | Likelihood     | Impact          | Mitigation                                                                                                       |
+| --------------------------------------------- | -------------- | --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| New tests break existing tests                | **None**       | N/A             | Tests are appended in new `describe()` blocks — no existing code touched                                         |
+| New tests fail on first run                   | **Possible**   | None (expected) | Tests cannot pass until Issues #5 and #6 are implemented — this is by design                                     |
+| Test assertions have wrong expected values    | **Very low**   | Low             | Assertions follow the exact URL patterns already validated by existing tests                                     |
+| Import path errors                            | **Very low**   | Low             | Follow existing import patterns (`EndpointError` from `endpoint-error.ts`, `CSAPIQueryBuilder` already imported) |
+| Tests accidentally modify production behavior | **Impossible** | N/A             | Tests are in `*.spec.ts` files — Jest only reads them, never ships them                                          |
 
 ### 6.2 Risk classification
 
 **This is a ZERO RISK change to library integrity.**
 
 Tests are the safest category of code change:
+
 - They **do not** modify any production source file
 - They **do not** change the public API surface
 - They **do not** affect runtime behavior
@@ -282,6 +307,7 @@ The only "risk" is that the tests won't pass until their dependency issues (#5 a
 ### 6.3 Integrity assessment
 
 The library's integrity is **completely unaffected** by this change. Adding tests:
+
 - Strengthens confidence in future implementations
 - Documents expected behavior in executable form
 - Provides regression protection
@@ -312,10 +338,10 @@ This places `properties` under Part 2 with Content-Type `application/json`.
 
 The Content-Type tests should use this classification:
 
-| Category | Resources | Expected Content-Type |
-|----------|-----------|-----------------------|
+| Category   | Resources                                                          | Expected Content-Type  |
+| ---------- | ------------------------------------------------------------------ | ---------------------- |
 | **Part 1** | systems, deployments, procedures, samplingFeatures, **properties** | `application/geo+json` |
-| **Part 2** | datastreams, observations, controlStreams, commands | `application/json` |
+| **Part 2** | datastreams, observations, controlStreams, commands                | `application/json`     |
 
 This gives **5 Part 1 resources** and **4 Part 2 resources** (not 4 and 5 as Issue #7 states).
 
@@ -404,33 +430,33 @@ describe('getContentTypeForResource', () => {
 
 ## Appendix A: Authority Precedence Analysis
 
-| Authority Level | Source | Says About These Tests | Weight |
-|----------------|--------|------------------------|--------|
-| 1 (Highest) | OGC 23-001r1 §11 | `properties` is Part 1 (geo+json) — corrects Issue #7 | Definitive |
-| 2 | OGC 23-002r1 §7.2 | Nested creation is spec-required — tests validate compliance | Definitive |
-| 3 | AI Collaboration Agreement | Tests strengthen contribution quality | Supportive |
-| 4 | Issue #7 | Proposes test plan with correct scope but incorrect `properties` grouping | Scoping (with correction) |
-| 5 | Existing test patterns | `createObservation()` tests at L1724–1733 provide exact template | Precedent |
-| 6 | E2E test evidence | 14/15 CRUD tests pass, Content-Type critical for POST | Evidence |
+| Authority Level | Source                     | Says About These Tests                                                    | Weight                    |
+| --------------- | -------------------------- | ------------------------------------------------------------------------- | ------------------------- |
+| 1 (Highest)     | OGC 23-001r1 §11           | `properties` is Part 1 (geo+json) — corrects Issue #7                     | Definitive                |
+| 2               | OGC 23-002r1 §7.2          | Nested creation is spec-required — tests validate compliance              | Definitive                |
+| 3               | AI Collaboration Agreement | Tests strengthen contribution quality                                     | Supportive                |
+| 4               | Issue #7                   | Proposes test plan with correct scope but incorrect `properties` grouping | Scoping (with correction) |
+| 5               | Existing test patterns     | `createObservation()` tests at L1724–1733 provide exact template          | Precedent                 |
+| 6               | E2E test evidence          | 14/15 CRUD tests pass, Content-Type critical for POST                     | Evidence                  |
 
 ---
 
 ## Appendix B: Cross-Reference Matrix
 
-| Document | Location | Relevance to Issue #7 |
-|----------|----------|-----------------------|
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | ogc-csapi-explorer | F-1, F-2, F-10 — the findings that Issues #5/#6 address and Issue #7 tests |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | ogc-csapi-explorer | Severity/priority ratings for F-1, F-2, F-10; actionability assessment |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | ogc-csapi-explorer | Live server evidence: 405 error on `createDataStream()`, Content-Type mapping recommendation |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | ogc-csapi-explorer | Cross-server validation confirms Content-Type criticality |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | ogc-csapi-explorer | Findings #12 (CRUD symmetry), #13 (nested creation works), #14 (no Content-Type guidance) |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Validates library spec-scoped, confirms F-1 bug, V-6/V-7 positive |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | ogc-csapi-explorer | Confirms clean test suite (298 + 19 all passing), safe to extend |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Explains why direct `CSAPIQueryBuilder` testing exposed these gaps |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | ogc-csapi-explorer | S-8 confirms Content-Type handling is critical for write operations |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | ogc-csapi-explorer | 298 tests pass post-refactor; `EndpointError` import path confirmed |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | ogc-csapi-explorer | F-13/F-14 are separate concerns; no overlap with Issue #7 |
-| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | ogc-client-CSAPI_2 | Authority precedence, no scope expansion, minimal diffs |
+| Document                                                                                                                                                       | Location           | Relevance to Issue #7                                                                        |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------- |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | ogc-csapi-explorer | F-1, F-2, F-10 — the findings that Issues #5/#6 address and Issue #7 tests                   |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | ogc-csapi-explorer | Severity/priority ratings for F-1, F-2, F-10; actionability assessment                       |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | ogc-csapi-explorer | Live server evidence: 405 error on `createDataStream()`, Content-Type mapping recommendation |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | ogc-csapi-explorer | Cross-server validation confirms Content-Type criticality                                    |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                       | ogc-csapi-explorer | Findings #12 (CRUD symmetry), #13 (nested creation works), #14 (no Content-Type guidance)    |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Validates library spec-scoped, confirms F-1 bug, V-6/V-7 positive                            |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | ogc-csapi-explorer | Confirms clean test suite (298 + 19 all passing), safe to extend                             |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Explains why direct `CSAPIQueryBuilder` testing exposed these gaps                           |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | ogc-csapi-explorer | S-8 confirms Content-Type handling is critical for write operations                          |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | ogc-csapi-explorer | 298 tests pass post-refactor; `EndpointError` import path confirmed                          |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | ogc-csapi-explorer | F-13/F-14 are separate concerns; no overlap with Issue #7                                    |
+| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)                        | ogc-client-CSAPI_2 | Authority precedence, no scope expansion, minimal diffs                                      |
 
 ---
 

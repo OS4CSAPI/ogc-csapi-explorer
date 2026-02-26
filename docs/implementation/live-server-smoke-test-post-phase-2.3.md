@@ -7,6 +7,7 @@
 **Purpose:** Validate all 28 implemented builder methods against a real CSAPI server, with particular focus on the 8 new Procedures methods from Phase 2.3.
 
 > This is the third live server smoke test. See also:
+>
 > - [Post Phase 2.1](live-server-smoke-test-post-phase-2.1.md) — identified critical F1/F2 link+URL findings
 > - [Post Phase 2.2](live-server-smoke-test-post-phase-2.2.md) — confirmed F1/F2 fixes, validated Systems + Deployments
 
@@ -20,37 +21,37 @@ No code changes were made. All tests were run from the terminal using raw HTTP c
 
 ## Server Profile
 
-| Spec Part | Conformance Classes |
-|-----------|-------------------|
-| Part 1 (Resources) | core, system, subsystem, deployment, subdeployment, procedure, sf, property, create-replace-delete, geojson, sensorml |
+| Spec Part             | Conformance Classes                                                                                                                    |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Part 1 (Resources)    | core, system, subsystem, deployment, subdeployment, procedure, sf, property, create-replace-delete, geojson, sensorml                  |
 | Part 2 (Dynamic Data) | datastream, controlstream, system-history, system-event, create-replace-delete, json, swecommon-json, swecommon-text, swecommon-binary |
-| Part 3 (Pub/Sub) | websocket, mqtt |
+| Part 3 (Pub/Sub)      | websocket, mqtt                                                                                                                        |
 
 **Collections:** `all_systems`, `all_datastreams`, `all_fois`, `all_procedures`
 
 **Top-level resource links in root document:**
 
-| Resource Type | URL |
-|--------------|-----|
-| systems | `.../sensorhub/api/systems` |
-| deployments | `.../sensorhub/api/deployments` |
-| procedures | `.../sensorhub/api/procedures` |
+| Resource Type    | URL                                  |
+| ---------------- | ------------------------------------ |
+| systems          | `.../sensorhub/api/systems`          |
+| deployments      | `.../sensorhub/api/deployments`      |
+| procedures       | `.../sensorhub/api/procedures`       |
 | samplingFeatures | `.../sensorhub/api/samplingFeatures` |
-| datastreams | `.../sensorhub/api/datastreams` |
-| observations | `.../sensorhub/api/observations` |
+| datastreams      | `.../sensorhub/api/datastreams`      |
+| observations     | `.../sensorhub/api/observations`     |
 
 **Server resource inventory** (at time of test):
 
-| Resource Type | Count |
-|--------------|-------|
-| Systems | 12 |
-| Deployments | 0 (endpoint functional, no data) |
-| Procedures | 0 (endpoint functional, no data) |
-| SamplingFeatures | 51+ |
-| Datastreams | 100+ |
-| Observations | 100+ |
-| ControlStreams | 8 |
-| Properties | 0 (endpoint functional, no data) |
+| Resource Type    | Count                            |
+| ---------------- | -------------------------------- |
+| Systems          | 12                               |
+| Deployments      | 0 (endpoint functional, no data) |
+| Procedures       | 0 (endpoint functional, no data) |
+| SamplingFeatures | 51+                              |
+| Datastreams      | 100+                             |
+| Observations     | 100+                             |
+| ControlStreams   | 8                                |
+| Properties       | 0 (endpoint functional, no data) |
 
 ---
 
@@ -58,13 +59,13 @@ No code changes were made. All tests were run from the terminal using raw HTTP c
 
 ### Phase 2.1/2.2 Findings — Regression Check
 
-| Original Finding | Status | Notes |
-|-----------------|--------|-------|
-| **F1: Link relation prefix mismatch** (Critical) | **Still Fixed** ✅ | `scanCsapiLinks` detects 6 resource types from root document via Convention 2. Collection-level detection works via Convention 3. |
-| **F2: Top-level vs. collection-scoped URLs** (Critical) | **Still Fixed** ✅ | `extractRootResourceUrls` returns 6 resource type → absolute URL mappings. Builder uses these. |
-| **F3: Response envelope uses `items`** (Moderate) | **Still deferred** | Confirmed — server returns `{ items: [...], links: [...] }`. Phase 3 concern. |
-| **F4: `validTime` is an array** (Moderate) | **Still deferred** | Confirmed — `validTime: ["2026-01-26T18:32:01.56Z", "now"]`. Phase 3 concern. |
-| **F5: Missing pagination metadata** (Low) | **Still deferred** | No `numberMatched`/`numberReturned`. Link-based pagination (`next`/`prev`) works. |
+| Original Finding                                        | Status             | Notes                                                                                                                             |
+| ------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| **F1: Link relation prefix mismatch** (Critical)        | **Still Fixed** ✅ | `scanCsapiLinks` detects 6 resource types from root document via Convention 2. Collection-level detection works via Convention 3. |
+| **F2: Top-level vs. collection-scoped URLs** (Critical) | **Still Fixed** ✅ | `extractRootResourceUrls` returns 6 resource type → absolute URL mappings. Builder uses these.                                    |
+| **F3: Response envelope uses `items`** (Moderate)       | **Still deferred** | Confirmed — server returns `{ items: [...], links: [...] }`. Phase 3 concern.                                                     |
+| **F4: `validTime` is an array** (Moderate)              | **Still deferred** | Confirmed — `validTime: ["2026-01-26T18:32:01.56Z", "now"]`. Phase 3 concern.                                                     |
+| **F5: Missing pagination metadata** (Low)               | **Still deferred** | No `numberMatched`/`numberReturned`. Link-based pagination (`next`/`prev`) works.                                                 |
 
 No regressions. All prior fixes remain working.
 
@@ -76,50 +77,50 @@ Tested using system ID `03bc5ofvvstg` ("LIVE - Field Drone") as the base resourc
 
 #### Systems Methods (12 methods)
 
-| Method | Generated URL | Server Response |
-|--------|--------------|----------------|
-| `getSystems({ limit: 2 })` | `.../systems?limit=2` | ✅ 200 — 2 items returned |
-| `getSystem('03bc5ofvvstg')` | `.../systems/03bc5ofvvstg` | ✅ 200 — Feature with id, geometry, properties |
-| `createSystem()` | `.../systems` | ✅ URL valid (POST target) |
-| `updateSystem(id)` | `.../systems/03bc5ofvvstg` | ✅ URL valid (PUT target) |
-| `deleteSystem(id)` | `.../systems/03bc5ofvvstg` | ✅ URL valid (DELETE target) |
-| `getSystemHistory(id)` | `.../systems/03bc5ofvvstg/history` | ✅ 200 — 1 history entry |
-| `getSystemSubsystems(id)` | `.../systems/03bc5ofvvstg/subsystems` | ✅ 200 — empty items |
-| `getSystemDataStreams(id)` | `.../systems/03bc5ofvvstg/datastreams` | ✅ 200 — 2 datastreams |
-| `getSystemControlStreams(id)` | `.../systems/03bc5ofvvstg/controlstreams` | ✅ 200 — empty items |
-| `getSystemSamplingFeatures(id)` | `.../systems/03bc5ofvvstg/samplingFeatures` | ✅ 200 — empty items |
-| `getSystemDeployments(id)` | `.../systems/03bc5ofvvstg/deployments` | ❌ 400 — see F1 below |
-| `getSystemProcedures(id)` | `.../systems/03bc5ofvvstg/procedures` | ❌ 400 — see F1 below |
+| Method                          | Generated URL                               | Server Response                                |
+| ------------------------------- | ------------------------------------------- | ---------------------------------------------- |
+| `getSystems({ limit: 2 })`      | `.../systems?limit=2`                       | ✅ 200 — 2 items returned                      |
+| `getSystem('03bc5ofvvstg')`     | `.../systems/03bc5ofvvstg`                  | ✅ 200 — Feature with id, geometry, properties |
+| `createSystem()`                | `.../systems`                               | ✅ URL valid (POST target)                     |
+| `updateSystem(id)`              | `.../systems/03bc5ofvvstg`                  | ✅ URL valid (PUT target)                      |
+| `deleteSystem(id)`              | `.../systems/03bc5ofvvstg`                  | ✅ URL valid (DELETE target)                   |
+| `getSystemHistory(id)`          | `.../systems/03bc5ofvvstg/history`          | ✅ 200 — 1 history entry                       |
+| `getSystemSubsystems(id)`       | `.../systems/03bc5ofvvstg/subsystems`       | ✅ 200 — empty items                           |
+| `getSystemDataStreams(id)`      | `.../systems/03bc5ofvvstg/datastreams`      | ✅ 200 — 2 datastreams                         |
+| `getSystemControlStreams(id)`   | `.../systems/03bc5ofvvstg/controlstreams`   | ✅ 200 — empty items                           |
+| `getSystemSamplingFeatures(id)` | `.../systems/03bc5ofvvstg/samplingFeatures` | ✅ 200 — empty items                           |
+| `getSystemDeployments(id)`      | `.../systems/03bc5ofvvstg/deployments`      | ❌ 400 — see F1 below                          |
+| `getSystemProcedures(id)`       | `.../systems/03bc5ofvvstg/procedures`       | ❌ 400 — see F1 below                          |
 
 #### Deployments Methods (8 methods)
 
-| Method | Generated URL | Server Response |
-|--------|--------------|----------------|
-| `getDeployments({ limit: 5 })` | `.../deployments?limit=5` | ✅ 200 — empty items (no data) |
-| `getDeployment(id)` | `.../deployments/{id}` | N/A (no deployment IDs available) |
-| `createDeployment()` | `.../deployments` | ✅ URL valid (POST target) |
-| `updateDeployment(id)` | `.../deployments/{id}` | N/A |
-| `deleteDeployment(id)` | `.../deployments/{id}` | N/A |
-| `getDeploymentSubdeployments(id)` | `.../deployments/{id}/subdeployments` | N/A |
-| `getDeploymentSystems(id)` | `.../deployments/{id}/systems` | N/A |
-| `getDeploymentHistory(id)` | `.../deployments/{id}/history` | N/A |
+| Method                            | Generated URL                         | Server Response                   |
+| --------------------------------- | ------------------------------------- | --------------------------------- |
+| `getDeployments({ limit: 5 })`    | `.../deployments?limit=5`             | ✅ 200 — empty items (no data)    |
+| `getDeployment(id)`               | `.../deployments/{id}`                | N/A (no deployment IDs available) |
+| `createDeployment()`              | `.../deployments`                     | ✅ URL valid (POST target)        |
+| `updateDeployment(id)`            | `.../deployments/{id}`                | N/A                               |
+| `deleteDeployment(id)`            | `.../deployments/{id}`                | N/A                               |
+| `getDeploymentSubdeployments(id)` | `.../deployments/{id}/subdeployments` | N/A                               |
+| `getDeploymentSystems(id)`        | `.../deployments/{id}/systems`        | N/A                               |
+| `getDeploymentHistory(id)`        | `.../deployments/{id}/history`        | N/A                               |
 
 Deployment-specific nested endpoints could not be tested because the server has zero deployments. The top-level list endpoint was confirmed functional.
 
 #### Procedures Methods (8 methods) — NEW in Phase 2.3
 
-| Method | Generated URL | Server Response |
-|--------|--------------|----------------|
-| `getProcedures({ limit: 5 })` | `.../procedures?limit=5` | ✅ 200 — empty items (no data) |
-| `getProcedures({ q: 'sensor' })` | `.../procedures?q=sensor&limit=5` | ✅ 200 — empty items |
-| `getProcedures({ offset: 0 })` | `.../procedures?limit=5&offset=0` | ✅ 200 — empty items |
-| `getProcedure(id)` | `.../procedures/{id}` | N/A (no procedure IDs available) |
-| `createProcedure()` | `.../procedures` | ✅ URL valid (POST target) |
-| `updateProcedure(id)` | `.../procedures/{id}` | N/A |
-| `deleteProcedure(id)` | `.../procedures/{id}` | N/A |
-| `getProcedureSystems(id)` | `.../procedures/{id}/systems` | N/A |
-| `getProcedureDataStreams(id)` | `.../procedures/{id}/datastreams` | N/A |
-| `getProcedureHistory(id)` | `.../procedures/{id}/history` | N/A |
+| Method                           | Generated URL                     | Server Response                  |
+| -------------------------------- | --------------------------------- | -------------------------------- |
+| `getProcedures({ limit: 5 })`    | `.../procedures?limit=5`          | ✅ 200 — empty items (no data)   |
+| `getProcedures({ q: 'sensor' })` | `.../procedures?q=sensor&limit=5` | ✅ 200 — empty items             |
+| `getProcedures({ offset: 0 })`   | `.../procedures?limit=5&offset=0` | ✅ 200 — empty items             |
+| `getProcedure(id)`               | `.../procedures/{id}`             | N/A (no procedure IDs available) |
+| `createProcedure()`              | `.../procedures`                  | ✅ URL valid (POST target)       |
+| `updateProcedure(id)`            | `.../procedures/{id}`             | N/A                              |
+| `deleteProcedure(id)`            | `.../procedures/{id}`             | N/A                              |
+| `getProcedureSystems(id)`        | `.../procedures/{id}/systems`     | N/A                              |
+| `getProcedureDataStreams(id)`    | `.../procedures/{id}/datastreams` | N/A                              |
+| `getProcedureHistory(id)`        | `.../procedures/{id}/history`     | N/A                              |
 
 Procedure-specific nested endpoints could not be tested because the server has zero procedures. The top-level list + query parameter endpoints were confirmed functional.
 
@@ -127,18 +128,18 @@ Procedure-specific nested endpoints could not be tested because the server has z
 
 ### Query Parameter Acceptance
 
-| Parameter | Method Tested | URL | Result |
-|-----------|--------------|-----|--------|
-| `limit` | `getSystems` | `.../systems?limit=2` | ✅ Accepted, returns exactly 2 |
-| `offset` | `getSystems` | `.../systems?limit=2&offset=2` | ✅ Accepted, returns next page with `prev`/`next` links |
-| `q` | `getSystems` | `.../systems?q=Drone&limit=3` | ✅ Accepted, returns 2 matching systems |
-| `bbox` | `getSystems` | `.../systems?bbox=-180,-90,180,90&limit=2` | ✅ Accepted, returns 0 items (no systems have geometry) |
-| `datetime` | `getSystems` | `.../systems?datetime=2025-01-01T00:00:00Z/2026-12-31T23:59:59Z&limit=2` | ✅ Accepted, returns 2 items |
-| `id` | `getSystems` | `.../systems?id=03bc5ofvvstg` | ✅ Accepted, returns 1 matching system |
-| `recursive` | `getSystems` | `.../systems?recursive=true&limit=2` | ✅ Accepted, returns 2 items |
-| `f` (format) | `getSystem` | `.../systems/03bc5ofvvstg?f=sml3` | ✅ Accepted, returns `application/sml+json` |
-| `q` | `getProcedures` | `.../procedures?q=sensor&limit=5` | ✅ Accepted, returns empty (no data) |
-| `offset` | `getProcedures` | `.../procedures?limit=5&offset=0` | ✅ Accepted |
+| Parameter    | Method Tested   | URL                                                                      | Result                                                  |
+| ------------ | --------------- | ------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `limit`      | `getSystems`    | `.../systems?limit=2`                                                    | ✅ Accepted, returns exactly 2                          |
+| `offset`     | `getSystems`    | `.../systems?limit=2&offset=2`                                           | ✅ Accepted, returns next page with `prev`/`next` links |
+| `q`          | `getSystems`    | `.../systems?q=Drone&limit=3`                                            | ✅ Accepted, returns 2 matching systems                 |
+| `bbox`       | `getSystems`    | `.../systems?bbox=-180,-90,180,90&limit=2`                               | ✅ Accepted, returns 0 items (no systems have geometry) |
+| `datetime`   | `getSystems`    | `.../systems?datetime=2025-01-01T00:00:00Z/2026-12-31T23:59:59Z&limit=2` | ✅ Accepted, returns 2 items                            |
+| `id`         | `getSystems`    | `.../systems?id=03bc5ofvvstg`                                            | ✅ Accepted, returns 1 matching system                  |
+| `recursive`  | `getSystems`    | `.../systems?recursive=true&limit=2`                                     | ✅ Accepted, returns 2 items                            |
+| `f` (format) | `getSystem`     | `.../systems/03bc5ofvvstg?f=sml3`                                        | ✅ Accepted, returns `application/sml+json`             |
+| `q`          | `getProcedures` | `.../procedures?q=sensor&limit=5`                                        | ✅ Accepted, returns empty (no data)                    |
+| `offset`     | `getProcedures` | `.../procedures?limit=5&offset=0`                                        | ✅ Accepted                                             |
 
 All query parameters generated by our `buildQueryString` method are accepted by the server.
 
@@ -161,6 +162,7 @@ GET /sensorhub/api/systems/03bc5ofvvstg/procedures
 ```
 
 **What works:** The server accepts all other nested paths under `/systems/{id}/`:
+
 - `/subsystems` ✅
 - `/history` ✅
 - `/datastreams` ✅
@@ -180,6 +182,7 @@ This is a server implementation gap, not a bug in our code. Our `getSystemDeploy
 **Severity:** Informational (testing limitation)
 
 The server has zero procedures and zero deployments registered. This means:
+
 - `getProcedures()`, `getDeployments()` return `{ items: [] }` — URL confirmed correct
 - Individual resource GET/PUT/DELETE and all nested endpoints cannot be end-to-end validated
 - Only list + query parameter endpoints can be confirmed
@@ -197,6 +200,7 @@ The server advertises `property` conformance (`ogcapi-connectedsystems-1/1.0/con
 This means `scanCsapiLinks` on the root document would not detect `properties` as an available resource type. It would only be detected if a collection has a link pointing to it (Convention 3), or if we add an explicit `properties` link convention.
 
 **Impact on our code:** When we implement Issue #9 (Properties methods), we'll need to verify that resource discovery works for this type. Currently, our code would not detect properties from this server's root document. This may require either:
+
 1. The collection document has a `rel: "items"` link with `href` containing `properties` (not checked yet)
 2. Or we add a conformance-based discovery fallback (Phase 3 concern)
 
@@ -218,50 +222,50 @@ Observations from this session relevant to future parsing work:
 
 ## Comparison: Phase 2.1 → Phase 2.2 → Phase 2.3
 
-| Aspect | Phase 2.1 | Phase 2.2 | Phase 2.3 |
-|--------|-----------|-----------|-----------|
-| Resource discovery | ❌ Empty Set | ✅ 6 types detected | ✅ 6 types (unchanged) |
-| URL generation | ❌ Wrong paths | ✅ Correct | ✅ Correct |
-| Systems endpoints | ❌ Would throw | ✅ 6 patterns tested | ✅ 10 of 12 return 200 |
-| Deployments endpoints | N/A | ✅ 1 pattern (empty data) | ✅ 1 pattern (still empty) |
-| Procedures endpoints | N/A | Probed only | ✅ 3 patterns tested (list + query) |
-| Query parameters | `limit` only | `limit`, `offset`, `q` | + `bbox`, `datetime`, `id`, `recursive`, `f` |
-| Methods implemented | 12 | 20 | **28** |
-| New critical findings | 2 | 0 | 0 |
-| New moderate findings | 0 | 0 | 1 (server gap, not our bug) |
+| Aspect                | Phase 2.1      | Phase 2.2                 | Phase 2.3                                    |
+| --------------------- | -------------- | ------------------------- | -------------------------------------------- |
+| Resource discovery    | ❌ Empty Set   | ✅ 6 types detected       | ✅ 6 types (unchanged)                       |
+| URL generation        | ❌ Wrong paths | ✅ Correct                | ✅ Correct                                   |
+| Systems endpoints     | ❌ Would throw | ✅ 6 patterns tested      | ✅ 10 of 12 return 200                       |
+| Deployments endpoints | N/A            | ✅ 1 pattern (empty data) | ✅ 1 pattern (still empty)                   |
+| Procedures endpoints  | N/A            | Probed only               | ✅ 3 patterns tested (list + query)          |
+| Query parameters      | `limit` only   | `limit`, `offset`, `q`    | + `bbox`, `datetime`, `id`, `recursive`, `f` |
+| Methods implemented   | 12             | 20                        | **28**                                       |
+| New critical findings | 2              | 0                         | 0                                            |
+| New moderate findings | 0              | 0                         | 1 (server gap, not our bug)                  |
 
 ---
 
 ## What WORKS (Verified)
 
-| Feature | Status |
-|---------|--------|
-| Conformance detection (`checkHasConnectedSystems`) | ✅ |
-| `scanCsapiLinks` — Convention 2 (root) + Convention 3 (collection) | ✅ |
-| `extractRootResourceUrls` — 6 absolute URLs from root document | ✅ |
-| Top-level Systems list + all query parameters | ✅ |
-| Individual system retrieval by ID | ✅ |
-| System nested endpoints (subsystems, history, datastreams, controlstreams, samplingFeatures) | ✅ |
-| Top-level Deployments list | ✅ |
-| Top-level Procedures list + `q` + `offset` query params | ✅ |
-| Top-level SamplingFeatures list + individual by ID | ✅ |
-| Top-level Datastreams, Observations, ControlStreams, Properties lists | ✅ |
-| Format parameter (`f=sml3`) on individual resources | ✅ |
-| Offset-based pagination with `prev`/`next` links | ✅ |
+| Feature                                                                                      | Status |
+| -------------------------------------------------------------------------------------------- | ------ |
+| Conformance detection (`checkHasConnectedSystems`)                                           | ✅     |
+| `scanCsapiLinks` — Convention 2 (root) + Convention 3 (collection)                           | ✅     |
+| `extractRootResourceUrls` — 6 absolute URLs from root document                               | ✅     |
+| Top-level Systems list + all query parameters                                                | ✅     |
+| Individual system retrieval by ID                                                            | ✅     |
+| System nested endpoints (subsystems, history, datastreams, controlstreams, samplingFeatures) | ✅     |
+| Top-level Deployments list                                                                   | ✅     |
+| Top-level Procedures list + `q` + `offset` query params                                      | ✅     |
+| Top-level SamplingFeatures list + individual by ID                                           | ✅     |
+| Top-level Datastreams, Observations, ControlStreams, Properties lists                        | ✅     |
+| Format parameter (`f=sml3`) on individual resources                                          | ✅     |
+| Offset-based pagination with `prev`/`next` links                                             | ✅     |
 
 ---
 
 ## What Remains (Phase 3 Concerns)
 
-| Finding | Severity | Owner | When to Address |
-|---------|----------|-------|----------------|
-| Response envelope uses `items` not `features` | Moderate | Response parser | Phase 3 (Issue #36) |
-| `validTime` is `[string, string]` not `{ start, end }` | Moderate | Model/parser | Phase 3 (Issue #37) |
-| Missing `numberMatched`/`numberReturned` | Low | Collection types | Phase 3 |
-| `/systems/{id}/deployments` and `/systems/{id}/procedures` rejected | Moderate | Fetch layer | Phase 3 (graceful 400 handling) |
-| `properties` not in root document links | Informational | Discovery | Phase 3 or Issue #9 |
-| Observations/Datastreams/ControlStreams are not GeoJSON Features | Informational | Parser design | Phase 3 |
-| Offset-only pagination (no cursor observed) | Informational | Pagination design | Phase 3 |
+| Finding                                                             | Severity      | Owner             | When to Address                 |
+| ------------------------------------------------------------------- | ------------- | ----------------- | ------------------------------- |
+| Response envelope uses `items` not `features`                       | Moderate      | Response parser   | Phase 3 (Issue #36)             |
+| `validTime` is `[string, string]` not `{ start, end }`              | Moderate      | Model/parser      | Phase 3 (Issue #37)             |
+| Missing `numberMatched`/`numberReturned`                            | Low           | Collection types  | Phase 3                         |
+| `/systems/{id}/deployments` and `/systems/{id}/procedures` rejected | Moderate      | Fetch layer       | Phase 3 (graceful 400 handling) |
+| `properties` not in root document links                             | Informational | Discovery         | Phase 3 or Issue #9             |
+| Observations/Datastreams/ControlStreams are not GeoJSON Features    | Informational | Parser design     | Phase 3                         |
+| Offset-only pagination (no cursor observed)                         | Informational | Pagination design | Phase 3                         |
 
 ---
 

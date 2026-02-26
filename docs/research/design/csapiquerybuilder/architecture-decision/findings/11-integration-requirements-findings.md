@@ -13,6 +13,7 @@
 **Finding:** Single-class integration is **dramatically simpler** than multi-class approach.
 
 **Key Metrics:**
+
 - **Single-class (CSAPI):** 64 lines added to existing files
 - **Multi-class estimate:** 150-200+ lines (2.3-3.1x more)
 - **Files modified:** 3 files (same for both approaches)
@@ -28,27 +29,30 @@
 
 **From EDR integration (exact measurements):**
 
-| File | Lines Added | Purpose |
-|------|-------------|---------|
-| `endpoint.ts` | 35 | Import, cache, getter, conformance check, factory method |
-| `info.ts` | 12 | Conformance check function |
-| `index.ts` | 17 | Type exports |
-| **TOTAL** | **64 lines** | **Complete integration** |
+| File          | Lines Added  | Purpose                                                  |
+| ------------- | ------------ | -------------------------------------------------------- |
+| `endpoint.ts` | 35           | Import, cache, getter, conformance check, factory method |
+| `info.ts`     | 12           | Conformance check function                               |
+| `index.ts`    | 17           | Type exports                                             |
+| **TOTAL**     | **64 lines** | **Complete integration**                                 |
 
 ### Detailed Breakdown - endpoint.ts (35 lines)
 
 **1. Import statement (1 line):**
+
 ```typescript
 import CSAPIQueryBuilder from './csapi/url_builder.js';
 ```
 
 **2. Cache field (2 lines):**
+
 ```typescript
 private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> =
   new Map();
 ```
 
 **3. Collections getter (6 lines):**
+
 ```typescript
 get csapiCollections(): Promise<string[]> {
   return Promise.all([this.data, this.hasConnectedSystems])
@@ -59,6 +63,7 @@ get csapiCollections(): Promise<string[]> {
 ```
 
 **4. Conformance getter (6 lines):**
+
 ```typescript
 get hasConnectedSystems(): Promise<boolean> {
   return Promise.all([this.conformanceClasses]).then(
@@ -68,6 +73,7 @@ get hasConnectedSystems(): Promise<boolean> {
 ```
 
 **5. Factory method (17 lines):**
+
 ```typescript
 public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
   if (!this.hasConnectedSystems) {
@@ -85,6 +91,7 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
 ```
 
 **6. Import update (3 lines) - included in count:**
+
 ```typescript
 import {
   checkHasConnectedSystems,  // Add this line
@@ -95,17 +102,15 @@ import {
 ### Detailed Breakdown - info.ts (12 lines)
 
 **Conformance check function:**
+
 ```typescript
-export function checkHasConnectedSystems([conformance]: [
-  ConformanceClass[]
-]) {
+export function checkHasConnectedSystems([conformance]: [ConformanceClass[]]) {
   return (
     conformance.indexOf(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
     ) > -1 ||
-    conformance.indexOf(
-      'http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core'
-    ) > -1
+    conformance.indexOf('http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core') >
+      -1
   );
 }
 ```
@@ -115,6 +120,7 @@ export function checkHasConnectedSystems([conformance]: [
 ### Detailed Breakdown - index.ts (17 lines)
 
 **Type exports:**
+
 ```typescript
 export type {
   System,
@@ -145,27 +151,28 @@ export type {
 
 **If CSAPI used separate Part1Builder and Part2Builder:**
 
-| File | Lines Added | Reason for Increase |
-|------|-------------|---------------------|
-| `endpoint.ts` | 65-70 | Double cache fields, getters, factory methods |
-| `info.ts` | 24-30 | Two conformance checks (Part 1 & Part 2) |
-| `index.ts` | 35-40 | Export two builder classes + types |
-| **TOTAL** | **124-140 lines** | **2x single-class** |
+| File          | Lines Added       | Reason for Increase                           |
+| ------------- | ----------------- | --------------------------------------------- |
+| `endpoint.ts` | 65-70             | Double cache fields, getters, factory methods |
+| `info.ts`     | 24-30             | Two conformance checks (Part 1 & Part 2)      |
+| `index.ts`    | 35-40             | Export two builder classes + types            |
+| **TOTAL**     | **124-140 lines** | **2x single-class**                           |
 
 **If CSAPI used 9 separate resource builders:**
 
-| File | Lines Added | Reason for Increase |
-|------|-------------|---------------------|
-| `endpoint.ts` | 150-180 | 9 imports, 9 caches, 9 getters, 9 factory methods |
-| `info.ts` | 12-15 | Still 1-2 conformance checks |
-| `index.ts` | 60-80 | Export 9 builders + types |
-| **TOTAL** | **222-275 lines** | **3.5-4.3x single-class** |
+| File          | Lines Added       | Reason for Increase                               |
+| ------------- | ----------------- | ------------------------------------------------- |
+| `endpoint.ts` | 150-180           | 9 imports, 9 caches, 9 getters, 9 factory methods |
+| `info.ts`     | 12-15             | Still 1-2 conformance checks                      |
+| `index.ts`    | 60-80             | Export 9 builders + types                         |
+| **TOTAL**     | **222-275 lines** | **3.5-4.3x single-class**                         |
 
 ### Multi-Class Complexity Analysis
 
 **Two-Builder Approach (Part1Builder + Part2Builder):**
 
 **endpoint.ts changes:**
+
 ```typescript
 // Imports (2 lines)
 import CSAPIPart1Builder from './csapi/part1_builder.js';
@@ -198,13 +205,14 @@ import {
 **Total:** ~65-70 lines (vs 35 for single-class)
 
 **User confusion:**
+
 ```typescript
 // Users have to know which builder to use
-const part1 = await endpoint.csapiPart1('sensors');  // For systems?
-const part2 = await endpoint.csapiPart2('sensors');  // For datastreams?
+const part1 = await endpoint.csapiPart1('sensors'); // For systems?
+const part2 = await endpoint.csapiPart2('sensors'); // For datastreams?
 
 // vs single-class
-const builder = await endpoint.csapi('sensors');     // Everything
+const builder = await endpoint.csapi('sensors'); // Everything
 ```
 
 ---
@@ -213,35 +221,38 @@ const builder = await endpoint.csapi('sensors');     // Everything
 
 ### Code Volume
 
-| Approach | endpoint.ts | info.ts | index.ts | **Total** | **Ratio** |
-|----------|-------------|---------|----------|-----------|-----------|
-| **Single-class** | 35 | 12 | 17 | **64** | **1.0x** |
-| **Two-class (Part 1+2)** | 65-70 | 24-30 | 35-40 | **124-140** | **1.9-2.2x** |
-| **Nine-class (per resource)** | 150-180 | 12-15 | 60-80 | **222-275** | **3.5-4.3x** |
+| Approach                      | endpoint.ts | info.ts | index.ts | **Total**   | **Ratio**    |
+| ----------------------------- | ----------- | ------- | -------- | ----------- | ------------ |
+| **Single-class**              | 35          | 12      | 17       | **64**      | **1.0x**     |
+| **Two-class (Part 1+2)**      | 65-70       | 24-30   | 35-40    | **124-140** | **1.9-2.2x** |
+| **Nine-class (per resource)** | 150-180     | 12-15   | 60-80    | **222-275** | **3.5-4.3x** |
 
 ### Maintenance Burden
 
-| Aspect | Single-Class | Two-Class | Nine-Class |
-|--------|--------------|-----------|------------|
-| **Cache management** | 1 map | 2 maps | 9 maps |
-| **Factory methods** | 1 method | 2 methods | 9 methods |
-| **Conformance checks** | 1 function | 2 functions | 1-2 functions |
-| **Import statements** | 1 import | 2 imports | 9 imports |
-| **User API surface** | Simple | Moderate | Complex |
+| Aspect                 | Single-Class | Two-Class   | Nine-Class    |
+| ---------------------- | ------------ | ----------- | ------------- |
+| **Cache management**   | 1 map        | 2 maps      | 9 maps        |
+| **Factory methods**    | 1 method     | 2 methods   | 9 methods     |
+| **Conformance checks** | 1 function   | 2 functions | 1-2 functions |
+| **Import statements**  | 1 import     | 2 imports   | 9 imports     |
+| **User API surface**   | Simple       | Moderate    | Complex       |
 
 ### User Experience
 
 **Single-class:**
+
 ```typescript
 const builder = await endpoint.csapi('sensors');
 const systems = await builder.getSystems();
 const datastreams = await builder.getDatastreams();
 const observations = await builder.getObservations();
 ```
+
 **Pros:** Simple, intuitive, all resources from one object  
 **Cons:** None
 
 **Two-class:**
+
 ```typescript
 const part1 = await endpoint.csapiPart1('sensors');
 const systems = await part1.getSystems();
@@ -250,10 +261,12 @@ const part2 = await endpoint.csapiPart2('sensors');
 const datastreams = await part2.getDatastreams();
 const observations = await part2.getObservations();
 ```
+
 **Pros:** Logical separation (maybe?)  
 **Cons:** Confusing which builder to use, two objects to manage, duplicate collection access
 
 **Nine-class:**
+
 ```typescript
 const systemBuilder = await endpoint.csapiSystems('sensors');
 const systems = await systemBuilder.get();
@@ -264,6 +277,7 @@ const datastreams = await datastreamBuilder.get();
 const observationBuilder = await endpoint.csapiObservations('sensors');
 const observations = await observationBuilder.get();
 ```
+
 **Pros:** Maximum separation (questionable benefit)  
 **Cons:** Extremely verbose, 9 objects to manage, terrible UX
 
@@ -274,16 +288,19 @@ const observations = await observationBuilder.get();
 ### Test Code Volume
 
 **Single-class tests:**
+
 - Conformance check: 30 lines (3 test cases)
 - Endpoint integration: 60 lines (4 test cases)
 - **Total:** 90 lines
 
 **Two-class tests:**
+
 - Conformance checks: 60 lines (6 test cases - 3 per builder)
 - Endpoint integration: 120 lines (8 test cases - 4 per builder)
 - **Total:** 180 lines (2x single-class)
 
 **Nine-class tests:**
+
 - Conformance checks: 30 lines (shared conformance)
 - Endpoint integration: 270 lines (30 test cases - 4 per builder × 9)
 - **Total:** 300 lines (3.3x single-class)
@@ -291,13 +308,14 @@ const observations = await observationBuilder.get();
 ### Test Complexity
 
 **Single-class:**
+
 ```typescript
 describe('OgcApiEndpoint CSAPI integration', () => {
   it('returns csapi builder for collection', async () => {
     const builder = await endpoint.csapi('test-collection');
     expect(builder).toBeInstanceOf(CSAPIQueryBuilder);
   });
-  
+
   it('caches csapi builder per collection', async () => {
     const builder1 = await endpoint.csapi('test-collection');
     const builder2 = await endpoint.csapi('test-collection');
@@ -307,6 +325,7 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 ```
 
 **Two-class:**
+
 ```typescript
 describe('OgcApiEndpoint CSAPI Part 1 integration', () => {
   it('returns part1 builder for collection', async () => { ... });
@@ -328,6 +347,7 @@ describe('OgcApiEndpoint CSAPI Part 2 integration', () => {
 ### Single-Class Exports
 
 **Clean, minimal:**
+
 ```typescript
 // From src/index.ts
 export { default as OgcApiEndpoint } from './ogc-api/endpoint.js';
@@ -350,6 +370,7 @@ const builder = await endpoint.csapi('sensors');
 ### Two-Class Exports
 
 **More complex:**
+
 ```typescript
 // From src/index.ts
 export { default as OgcApiEndpoint } from './ogc-api/endpoint.js';
@@ -363,12 +384,12 @@ export type {
 } from './ogc-api/csapi/model.js';
 
 // User code
-import { 
-  OgcApiEndpoint, 
-  CSAPIPart1Builder, 
-  CSAPIPart2Builder, 
-  System, 
-  Datastream 
+import {
+  OgcApiEndpoint,
+  CSAPIPart1Builder,
+  CSAPIPart2Builder,
+  System,
+  Datastream,
 } from 'ogc-client';
 
 const endpoint = new OgcApiEndpoint('https://api.example.com');
@@ -381,6 +402,7 @@ const part2 = await endpoint.csapiPart2('sensors');
 ### Nine-Class Exports
 
 **Explosion:**
+
 ```typescript
 // From src/index.ts
 export { default as OgcApiEndpoint } from './ogc-api/endpoint.js';
@@ -393,9 +415,8 @@ export { default as CSAPIDatastreamsBuilder } from './ogc-api/csapi/datastreams_
 export { default as CSAPIObservationsBuilder } from './ogc-api/csapi/observations_builder.js';
 export { default as CSAPIControlStreamsBuilder } from './ogc-api/csapi/controlstreams_builder.js';
 export { default as CSAPICommandsBuilder } from './ogc-api/csapi/commands_builder.js';
-export type {
-  // ... types
-} from './ogc-api/csapi/model.js';
+export type {} from // ... types
+'./ogc-api/csapi/model.js';
 ```
 
 **60-80 lines of exports, terrible user experience.**
@@ -408,13 +429,14 @@ export type {
 
 **Surprising finding:** File count doesn't change!
 
-| Approach | Files Modified | Reason |
-|----------|----------------|--------|
-| Single-class | 3 files | endpoint.ts, info.ts, index.ts |
-| Two-class | 3 files | endpoint.ts, info.ts, index.ts (same files!) |
-| Nine-class | 3 files | endpoint.ts, info.ts, index.ts (same files!) |
+| Approach     | Files Modified | Reason                                       |
+| ------------ | -------------- | -------------------------------------------- |
+| Single-class | 3 files        | endpoint.ts, info.ts, index.ts               |
+| Two-class    | 3 files        | endpoint.ts, info.ts, index.ts (same files!) |
+| Nine-class   | 3 files        | endpoint.ts, info.ts, index.ts (same files!) |
 
 **Explanation:** Integration always requires:
+
 1. endpoint.ts - Add factory methods
 2. info.ts - Add conformance checks
 3. index.ts - Export types
@@ -435,17 +457,18 @@ index abc123..def456 100644
 @@ -49,6 +49,7 @@ import { getBaseUrl, getChildPath } from '../shared/url-utils.js';
  import EDRQueryBuilder from './edr/url_builder.js';
 +import CSAPIQueryBuilder from './csapi/url_builder.js';
- 
+
 @@ -63,6 +64,8 @@ export default class OgcApiEndpoint {
    private collection_id_to_edr_builder_: Map<string, EDRQueryBuilder> =
      new Map();
 +  private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> =
 +    new Map();
- 
+
 ... (continues for 35 lines)
 ```
 
 **Diff stats:**
+
 - Insertions: 35 lines
 - Deletions: 0 lines
 - Modified: 1 line (import statement)
@@ -462,7 +485,7 @@ index abc123..def456 100644
  import EDRQueryBuilder from './edr/url_builder.js';
 +import CSAPIPart1Builder from './csapi/part1_builder.js';
 +import CSAPIPart2Builder from './csapi/part2_builder.js';
- 
+
 @@ -63,6 +65,10 @@ export default class OgcApiEndpoint {
    private collection_id_to_edr_builder_: Map<string, EDRQueryBuilder> =
      new Map();
@@ -470,11 +493,12 @@ index abc123..def456 100644
 +    new Map();
 +  private collection_id_to_csapi_part2_builder_: Map<string, CSAPIPart2Builder> =
 +    new Map();
- 
+
 ... (continues for 65-70 lines)
 ```
 
 **Diff stats:**
+
 - Insertions: 65-70 lines
 - Deletions: 0 lines
 - Modified: 1 line (import statement)
@@ -491,6 +515,7 @@ index abc123..def456 100644
 **Hypothetical:** CSAPI adds a 10th resource type (e.g., "Actuators")
 
 **Single-class approach:**
+
 ```typescript
 // In CSAPIQueryBuilder
 async getActuators(options?: QueryOptions): Promise<string> {
@@ -511,6 +536,7 @@ async getActuator(actuatorId: string): Promise<string> {
 **Integration changes:** 0 lines (no endpoint.ts changes!)
 
 **Two-class approach (if Actuators are Part 1):**
+
 ```typescript
 // Potentially 0 lines if adding to existing builder
 // BUT if it requires new builder:
@@ -523,6 +549,7 @@ async getActuator(actuatorId: string): Promise<string> {
 **Integration changes:** 0-35 lines depending on design
 
 **Nine-class approach:**
+
 ```typescript
 // New CSAPIActuatorsBuilder class required
 // MUST modify endpoint.ts:
@@ -538,16 +565,19 @@ async getActuator(actuatorId: string): Promise<string> {
 ### Code Clarity
 
 **Single-class:**
+
 - All integration in one section
 - Pattern clear from EDR
 - Easy to review in PR
 
 **Two-class:**
+
 - Integration split across two sections
 - Reviewer must understand Part 1 vs Part 2
 - More complex PR review
 
 **Nine-class:**
+
 - Integration scattered across 9 sections
 - Extremely difficult to review
 - High chance of inconsistencies
@@ -611,6 +641,7 @@ async getActuator(actuatorId: string): Promise<string> {
 **Trade-offs:**
 
 The **only potential benefit** of multi-class is "logical separation" of Part 1 vs Part 2, but:
+
 - This adds 60-76 lines of integration code
 - Confuses users (which builder to use?)
 - Breaks the upstream pattern
@@ -629,6 +660,7 @@ The **only potential benefit** of multi-class is "logical separation" of Part 1 
 **Revised assessment:** "HIGH - Integration complexity is 2-4x different"
 
 **Rationale:**
+
 - 64 vs 124-275 lines is NOT a minor difference
 - PR review complexity significantly affected
 - Maintenance burden dramatically different
@@ -639,6 +671,7 @@ The **only potential benefit** of multi-class is "logical separation" of Part 1 
 **Single-class pattern:** ⭐⭐⭐⭐⭐ (5/5)
 
 **Evidence:**
+
 - Quantitative: 64 vs 124-275 lines (objective measurement)
 - Qualitative: Simpler UX, easier maintenance
 - Precedent: EDR uses single-class (proven pattern)
@@ -651,15 +684,15 @@ The **only potential benefit** of multi-class is "logical separation" of Part 1 
 
 ### Key Metrics
 
-| Metric | Single-Class | Two-Class | Nine-Class |
-|--------|--------------|-----------|------------|
-| **Integration LOC** | 64 | 124-140 | 222-275 |
-| **Ratio to single-class** | 1.0x | 1.9-2.2x | 3.5-4.3x |
-| **Files modified** | 3 | 3 | 3 |
-| **Test LOC** | 90 | 180 | 300 |
-| **New resource cost** | 0 lines | 0-35 lines | 20-25 lines |
-| **User API calls** | 1 | 2 | 9 |
-| **Export lines** | 17 | 35-40 | 60-80 |
+| Metric                    | Single-Class | Two-Class  | Nine-Class  |
+| ------------------------- | ------------ | ---------- | ----------- |
+| **Integration LOC**       | 64           | 124-140    | 222-275     |
+| **Ratio to single-class** | 1.0x         | 1.9-2.2x   | 3.5-4.3x    |
+| **Files modified**        | 3            | 3          | 3           |
+| **Test LOC**              | 90           | 180        | 300         |
+| **New resource cost**     | 0 lines      | 0-35 lines | 20-25 lines |
+| **User API calls**        | 1            | 2          | 9           |
+| **Export lines**          | 17           | 35-40      | 60-80       |
 
 ### Complexity Difference
 
@@ -678,6 +711,7 @@ The **only potential benefit** of multi-class is "logical separation" of Part 1 
 ### Final Recommendation
 
 **Use single-class CSAPIQueryBuilder:**
+
 - Minimal integration code (64 lines)
 - Simple user API
 - Future-proof for new resources
@@ -685,6 +719,7 @@ The **only potential benefit** of multi-class is "logical separation" of Part 1 
 - Easy to review and maintain
 
 **Do NOT split into multiple classes:**
+
 - Doubles (or triples) integration code
 - Confuses users
 - No benefits
@@ -697,6 +732,7 @@ The **only potential benefit** of multi-class is "logical separation" of Part 1 
 ### Example 1: Single-Class Integration (Complete)
 
 **endpoint.ts:**
+
 ```typescript
 // Import
 import CSAPIQueryBuilder from './csapi/url_builder.js';
@@ -738,17 +774,15 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
 **Total:** 35 lines
 
 **info.ts:**
+
 ```typescript
-export function checkHasConnectedSystems([conformance]: [
-  ConformanceClass[]
-]) {
+export function checkHasConnectedSystems([conformance]: [ConformanceClass[]]) {
   return (
     conformance.indexOf(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
     ) > -1 ||
-    conformance.indexOf(
-      'http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core'
-    ) > -1
+    conformance.indexOf('http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core') >
+      -1
   );
 }
 ```
@@ -756,6 +790,7 @@ export function checkHasConnectedSystems([conformance]: [
 **Total:** 12 lines
 
 **index.ts:**
+
 ```typescript
 export type {
   System,
@@ -783,6 +818,7 @@ export type {
 ### Example 2: Two-Class Integration (Estimated)
 
 **endpoint.ts:**
+
 ```typescript
 // Imports (2 lines)
 import CSAPIPart1Builder from './csapi/part1_builder.js';
@@ -853,6 +889,7 @@ public async csapiPart2(collection_id: string): Promise<CSAPIPart2Builder> {
 **Total:** 65-70 lines (vs 35 for single-class)
 
 **info.ts:**
+
 ```typescript
 export function checkHasConnectedSystemsPart1([conformance]: [
   ConformanceClass[]
@@ -878,6 +915,7 @@ export function checkHasConnectedSystemsPart2([conformance]: [
 **Total:** 24-30 lines (vs 12 for single-class)
 
 **index.ts:**
+
 ```typescript
 export { default as CSAPIPart1Builder } from './ogc-api/csapi/part1_builder.js';
 export { default as CSAPIPart2Builder } from './ogc-api/csapi/part2_builder.js';

@@ -25,6 +25,7 @@
 ### Part 1 Decisions (COMPLETE ✅)
 
 **Structural Questions Answered:**
+
 - ✅ Single CSAPIQueryBuilder class (not split Part 1/Part 2)
 - ✅ Helper methods for code reuse (no inheritance)
 - ✅ Full format parsing (GeoJSON, SensorML 3.0, SWE Common 3.0)
@@ -34,6 +35,7 @@
 ### Part 2 Decisions (COMPLETE ✅)
 
 **Implementation Questions Answered:**
+
 - ✅ EDR integration pattern (64 lines total)
 - ✅ Flat file structure with formats/ subfolder (21 files)
 - ✅ Complete TypeScript types (1,750-2,400 lines)
@@ -42,6 +44,7 @@
 ### Part 3 Validation (THIS DOCUMENT - COMPLETE ✅)
 
 **Validation Questions Answered:**
+
 - ✅ Do real-world scenarios favor single-class? → YES (100% multi-resource)
 - ✅ Does parameter complexity favor single-class? → YES (85% code reuse)
 - ✅ Does navigation complexity favor single-class? → YES (seamless chaining)
@@ -60,12 +63,14 @@ Do real-world CSAPI usage scenarios favor single-class or multi-class organizati
 ### Research Evidence
 
 **From Plan 14 (Usage Scenarios):**
+
 - **15 scenarios analyzed:** 15/15 require multiple resource types (100%)
 - **0 single-resource scenarios** found in real-world usage
 - **Average resources per scenario:** 3.4 (range: 2-9)
 - **Cross-resource navigation:** Required in 100% of scenarios
 
 **Scenario breakdown:**
+
 ```
 P0 (Critical): 6 scenarios
   - Discover systems: 2-3 resources (Systems → Datastreams → Properties)
@@ -106,20 +111,20 @@ const client = await endpoint.csapi('weather-sensors');
 // Discover temperature sensors
 const systems = await client.getSystems({
   bbox: [-122, 37, -121, 38],
-  observedProperty: 'temperature'
+  observedProperty: 'temperature',
 });
 
 // For each system, get its temperature datastreams
 for (const system of systems) {
   const datastreams = await client.getSystemDataStreams(system.id, {
-    observedProperty: 'temperature'
+    observedProperty: 'temperature',
   });
-  
+
   // For each datastream, get latest observations
   for (const ds of datastreams) {
     const observations = await client.getDataStreamObservations(ds.id, {
       resultTime: 'latest',
-      limit: 100
+      limit: 100,
     });
     displayTemperature(system.name, observations);
   }
@@ -141,27 +146,27 @@ const systemsClient = await endpoint.systems('weather-sensors');
 // Discover temperature sensors
 const systems = await systemsClient.list({
   bbox: [-122, 37, -121, 38],
-  observedProperty: 'temperature'
+  observedProperty: 'temperature',
 });
 
 // For each system, need to switch to DatastreamsBuilder
 for (const system of systems) {
   // Problem: How to get DatastreamsBuilder?
-  const datastreamsClient = await endpoint.datastreams('weather-sensors');  // ❌ Wrong collection
+  const datastreamsClient = await endpoint.datastreams('weather-sensors'); // ❌ Wrong collection
   // OR
-  const datastreamsClient = systemsClient.datastreams;  // ❌ Circular dependency
+  const datastreamsClient = systemsClient.datastreams; // ❌ Circular dependency
   // OR
-  const datastreamsClient = system.datastreams();  // ❌ Requires lazy loading
-  
+  const datastreamsClient = system.datastreams(); // ❌ Requires lazy loading
+
   const datastreams = await datastreamsClient.list({
-    system: system.id,  // ❌ Filter by system (inefficient)
-    observedProperty: 'temperature'
+    system: system.id, // ❌ Filter by system (inefficient)
+    observedProperty: 'temperature',
   });
-  
+
   // For each datastream, need to switch to ObservationsBuilder
   for (const ds of datastreams) {
     // Problem: How to get ObservationsBuilder?
-    const observationsClient = await endpoint.observations('weather-sensors');  // ❌ Wrong again
+    const observationsClient = await endpoint.observations('weather-sensors'); // ❌ Wrong again
     // Multiple builder switches required
     // Context lost at each boundary
     // Type safety breaks
@@ -207,12 +212,14 @@ Does query parameter complexity favor single-class or multi-class organization?
 ### Research Evidence
 
 **From Plan 15 (Query Parameters):**
+
 - **30+ total parameters** across all CSAPI resources
 - **47% shared parameters** (14 parameters used by multiple resources)
 - **53% resource-specific parameters** (16 parameters, but cluster by TYPE)
 - **0% resource-specific validation** - All validation is parameter-type specific
 
 **Parameter distribution:**
+
 ```
 Universal (9 resources): limit, offset, f, id, uid, q (6 parameters)
 Spatial (4 resources): bbox (4 parameters)
@@ -224,6 +231,7 @@ Pagination: cursor (1 parameter)
 ```
 
 **Key findings:**
+
 - ✅ Parameters cluster by TYPE (spatial, temporal, relationship), not by resource
 - ✅ Same validation logic applies across multiple resources
 - ✅ Same encoding logic applies across multiple resources
@@ -240,63 +248,70 @@ export default class CSAPIQueryBuilder {
   // ========================================
   // SHARED PARAMETER HELPERS (150-200 lines)
   // ========================================
-  
+
   private buildQueryString(options?: QueryOptions): string {
     if (!options) return '';
-    
+
     const params = new URLSearchParams();
-    
+
     // Standard OGC API parameters (universal)
     if (options.bbox) params.set('bbox', this.encodeBBox(options.bbox));
-    if (options.datetime) params.set('datetime', this.encodeDateTime(options.datetime));
+    if (options.datetime)
+      params.set('datetime', this.encodeDateTime(options.datetime));
     if (options.limit) params.set('limit', String(options.limit));
     if (options.offset) params.set('offset', String(options.offset));
     if (options.f) params.set('f', encodeURIComponent(options.f));
-    
+
     // CSAPI common parameters (universal)
     if (options.id) params.set('id', this.encodeArray(options.id));
     if (options.uid) params.set('uid', this.encodeArray(options.uid));
     if (options.q) params.set('q', encodeURIComponent(options.q));
-    
+
     // Relationship parameters (resource-specific applicability, shared logic)
-    if (options.observedProperty) params.set('observedProperty', this.encodeArray(options.observedProperty));
+    if (options.observedProperty)
+      params.set(
+        'observedProperty',
+        this.encodeArray(options.observedProperty)
+      );
     if (options.foi) params.set('foi', this.encodeArray(options.foi));
-    
+
     // Temporal parameters (resource-specific applicability, shared logic)
-    if (options.phenomenonTime) params.set('phenomenonTime', this.encodeDateTime(options.phenomenonTime));
-    if (options.resultTime) params.set('resultTime', this.encodeResultTime(options.resultTime));
-    
+    if (options.phenomenonTime)
+      params.set('phenomenonTime', this.encodeDateTime(options.phenomenonTime));
+    if (options.resultTime)
+      params.set('resultTime', this.encodeResultTime(options.resultTime));
+
     return params.toString() ? `?${params.toString()}` : '';
   }
-  
+
   private encodeBBox(bbox: BBoxFilter): string {
-    this.validateBBox(bbox);  // ✅ Shared validation
+    this.validateBBox(bbox); // ✅ Shared validation
     return [bbox.minLon, bbox.minLat, bbox.maxLon, bbox.maxLat].join(',');
   }
-  
+
   private encodeDateTime(datetime: DateTimeFilter): string {
-    this.validateDateTime(datetime);  // ✅ Shared validation
+    this.validateDateTime(datetime); // ✅ Shared validation
     // ... encoding logic used by 5+ resources
   }
-  
+
   private validateBBox(bbox: BBoxFilter): void {
     // ✅ Same validation for Systems, Deployments, Procedures, SamplingFeatures
   }
-  
+
   private validateDateTime(datetime: DateTimeFilter): void {
     // ✅ Same validation for all temporal resources
   }
-  
+
   // ========================================
   // PUBLIC METHODS (70-80 methods)
   // All methods use shared parameter helpers
   // ========================================
-  
+
   async getSystems(options?: SystemQueryOptions): Promise<string> {
     return `${this.baseUrl}/systems` + this.buildQueryString(options);
     // ✅ Uses shared helpers
   }
-  
+
   async getObservations(options?: ObservationQueryOptions): Promise<string> {
     return `${this.baseUrl}/observations` + this.buildQueryString(options);
     // ✅ Uses same shared helpers
@@ -305,6 +320,7 @@ export default class CSAPIQueryBuilder {
 ```
 
 **Code metrics:**
+
 - Parameter helpers: 150-200 lines (ONE implementation)
 - Reuse efficiency: 85% (helpers used by 60+ methods)
 - Duplication: 0 lines
@@ -319,9 +335,15 @@ class SystemsBuilder {
   private buildQueryString(options?: SystemQueryOptions): string {
     // ... same 150-200 lines as single-class
   }
-  private encodeBBox(bbox: BBoxFilter): string { /* duplicate */ }
-  private encodeDateTime(datetime: DateTimeFilter): string { /* duplicate */ }
-  private validateBBox(bbox: BBoxFilter): void { /* duplicate */ }
+  private encodeBBox(bbox: BBoxFilter): string {
+    /* duplicate */
+  }
+  private encodeDateTime(datetime: DateTimeFilter): string {
+    /* duplicate */
+  }
+  private validateBBox(bbox: BBoxFilter): void {
+    /* duplicate */
+  }
   // ... 10+ more duplicate helper methods
 }
 
@@ -330,8 +352,12 @@ class DatastreamsBuilder {
   private buildQueryString(options?: DatastreamQueryOptions): string {
     // ... same 150-200 lines again
   }
-  private encodeDateTime(datetime: DateTimeFilter): string { /* duplicate */ }
-  private validateDateTime(datetime: DateTimeFilter): void { /* duplicate */ }
+  private encodeDateTime(datetime: DateTimeFilter): string {
+    /* duplicate */
+  }
+  private validateDateTime(datetime: DateTimeFilter): void {
+    /* duplicate */
+  }
   // ... 8+ more duplicate helper methods
 }
 
@@ -347,11 +373,13 @@ class ObservationsBuilder {
 ```
 
 **Code metrics:**
+
 - Parameter helpers: 150-200 lines × 9 classes = **1,350-1,800 lines of duplication**
 - Reuse efficiency: 0% (each class implements own helpers)
 - Duplication: 1,200-1,600 lines (726% overhead)
 
 **Maintenance penalty:**
+
 - Bug fix in `encodeBBox()` → Must fix in 4 classes
 - Bug fix in `encodeDateTime()` → Must fix in 5+ classes
 - Bug fix in `validatePagination()` → Must fix in 9 classes
@@ -387,12 +415,14 @@ Do subresource navigation patterns favor single-class or multi-class organizatio
 ### Research Evidence
 
 **From Plan 16 (Subresource Navigation):**
+
 - **16 navigation patterns** across all resources
 - **100% cross resource boundaries** - NOT A SINGLE pattern stays within one resource type
 - **Maximum depth: 6+ levels** (System → Subsystem → ... → DataStream → Observation)
 - **Fluent API requirement:** Industry standard (AWS, Google, Stripe)
 
 **Navigation pattern distribution:**
+
 ```
 System navigates to:
   - Subsystems (hierarchical, unlimited depth)
@@ -430,57 +460,60 @@ Deployment navigates to:
 export default class CSAPIQueryBuilder {
   private baseUrl: string;
   private parentContext: ParentContext | null;
-  
+
   // ========================================
   // FLUENT NAVIGATION API
   // ========================================
-  
+
   // Seamless 6-level navigation
   systems(systemId: string): CSAPIQueryBuilder {
     const builder = this.clone();
     builder.parentContext = { type: 'system', id: systemId };
-    return builder;  // ✅ Returns same class type
+    return builder; // ✅ Returns same class type
   }
-  
+
   subsystems(subsystemId: string): CSAPIQueryBuilder {
     if (this.parentContext?.type !== 'system') {
       throw new Error('subsystems requires system context');
     }
     const builder = this.clone();
     builder.parentContext = { type: 'system', id: subsystemId };
-    return builder;  // ✅ Returns same class type
+    return builder; // ✅ Returns same class type
   }
-  
+
   datastreams(datastreamId: string): CSAPIQueryBuilder {
     if (this.parentContext?.type !== 'system') {
       throw new Error('datastreams requires system context');
     }
     const builder = this.clone();
     builder.parentContext = { type: 'datastream', id: datastreamId };
-    return builder;  // ✅ Returns same class type
+    return builder; // ✅ Returns same class type
   }
-  
+
   async getObservations(options?: ObservationQueryOptions): Promise<string> {
     if (this.parentContext?.type !== 'datastream') {
       throw new Error('getObservations requires datastream context');
     }
-    return `${this.baseUrl}/datastreams/${this.parentContext.id}/observations` +
-      this.buildQueryString(options);
+    return (
+      `${this.baseUrl}/datastreams/${this.parentContext.id}/observations` +
+      this.buildQueryString(options)
+    );
   }
 }
 
 // Usage: Natural fluent API with no breaks
 const observations = await client
-  .systems('wx-001')              // ✅ Returns CSAPIQueryBuilder
-  .subsystems('temp-module')      // ✅ Returns CSAPIQueryBuilder
-  .subsystems('sensor-array')     // ✅ Returns CSAPIQueryBuilder
-  .datastreams('ds-123')          // ✅ Returns CSAPIQueryBuilder
+  .systems('wx-001') // ✅ Returns CSAPIQueryBuilder
+  .subsystems('temp-module') // ✅ Returns CSAPIQueryBuilder
+  .subsystems('sensor-array') // ✅ Returns CSAPIQueryBuilder
+  .datastreams('ds-123') // ✅ Returns CSAPIQueryBuilder
   .getObservations({ limit: 100 }); // ✅ Returns Promise<string>
 
 // Type-safe, no breaks, no class switching
 ```
 
 **Code metrics:**
+
 - Navigation code: 500-600 lines in 1 file
 - Circular dependencies: 0
 - Method chain breaks: 0
@@ -494,17 +527,17 @@ const observations = await client
 class SystemsBuilder {
   // ❌ Must return different class types for navigation
   subsystems(subsystemId: string): SystemsBuilder {
-    return new SystemsBuilder(this.baseUrl, subsystemId);  // ✅ Same class (works)
+    return new SystemsBuilder(this.baseUrl, subsystemId); // ✅ Same class (works)
   }
-  
+
   datastreams(datastreamId: string): DatastreamsBuilder {
-    return new DatastreamsBuilder(this.baseUrl, datastreamId);  // ❌ Different class (breaks)
+    return new DatastreamsBuilder(this.baseUrl, datastreamId); // ❌ Different class (breaks)
   }
 }
 
 class DatastreamsBuilder {
   observations(): ObservationsBuilder {
-    return new ObservationsBuilder(this.baseUrl, this.datastreamId);  // ❌ Another class (breaks again)
+    return new ObservationsBuilder(this.baseUrl, this.datastreamId); // ❌ Another class (breaks again)
   }
 }
 
@@ -515,10 +548,10 @@ class ObservationsBuilder {
 }
 
 // Usage: Awkward, broken at every class boundary
-const systemsBuilder = client.systems('wx-001');           // SystemsBuilder
-const subsystem1 = systemsBuilder.subsystems('temp-module');  // SystemsBuilder (OK)
-const subsystem2 = subsystem1.subsystems('sensor-array');     // SystemsBuilder (OK)
-const datastreamBuilder = subsystem2.datastreams('ds-123');   // ❌ DatastreamsBuilder (type change)
+const systemsBuilder = client.systems('wx-001'); // SystemsBuilder
+const subsystem1 = systemsBuilder.subsystems('temp-module'); // SystemsBuilder (OK)
+const subsystem2 = subsystem1.subsystems('sensor-array'); // SystemsBuilder (OK)
+const datastreamBuilder = subsystem2.datastreams('ds-123'); // ❌ DatastreamsBuilder (type change)
 const observationsBuilder = datastreamBuilder.observations(); // ❌ ObservationsBuilder (type change)
 const observations = await observationsBuilder.list({ limit: 100 });
 
@@ -530,6 +563,7 @@ const observations = await observationsBuilder.list({ limit: 100 });
 ```
 
 **Code metrics:**
+
 - Navigation code: 790-1,070 lines in 11 files (+60% code, +733% files)
 - Circular dependencies: 9 classes (all-to-all references)
 - Method chain breaks: 2+ per navigation path
@@ -561,28 +595,39 @@ const observations = await observationsBuilder.list({ limit: 100 });
 // Example: Temperature monitoring across subsystems
 
 // Single-class: Elegant
-for await (const subsystem of client.systems('wx-001').subsystems.iterate({ recursive: true })) {
+for await (const subsystem of client
+  .systems('wx-001')
+  .subsystems.iterate({ recursive: true })) {
   const observations = await client
     .systems(subsystem.id)
     .datastreams.list({ observedProperty: 'temperature' })
-    .then(streams => Promise.all(
-      streams.map(ds => 
-        client.datastreams(ds.id).getObservations({ resultTime: 'latest', limit: 1 })
+    .then((streams) =>
+      Promise.all(
+        streams.map((ds) =>
+          client
+            .datastreams(ds.id)
+            .getObservations({ resultTime: 'latest', limit: 1 })
+        )
       )
-    ));
+    );
   displayTemperatures(subsystem.name, observations);
 }
 
 // Multi-class: Fragmented
 const systemsBuilder = client.systems('wx-001');
-for await (const subsystem of systemsBuilder.subsystems.iterate({ recursive: true })) {
-  const subBuilder = client.systems(subsystem.id);  // ❌ New builder
-  const dsBuilder = subBuilder.datastreams;         // ❌ Class switch
+for await (const subsystem of systemsBuilder.subsystems.iterate({
+  recursive: true,
+})) {
+  const subBuilder = client.systems(subsystem.id); // ❌ New builder
+  const dsBuilder = subBuilder.datastreams; // ❌ Class switch
   const streams = await dsBuilder.list({ observedProperty: 'temperature' });
-  
+
   for (const ds of streams) {
-    const obsBuilder = dsBuilder.get(ds.id).observations;  // ❌ Another class switch
-    const observations = await obsBuilder.list({ resultTime: 'latest', limit: 1 });
+    const obsBuilder = dsBuilder.get(ds.id).observations; // ❌ Another class switch
+    const observations = await obsBuilder.list({
+      resultTime: 'latest',
+      limit: 1,
+    });
     displayTemperatures(subsystem.name, [observations]);
   }
 }
@@ -603,16 +648,16 @@ Given the validation evidence, would multi-class architecture be justified for a
 
 **Evidence review:**
 
-| Validation Aspect | Single-Class | Multi-Class | Conclusion |
-|------------------|--------------|-------------|------------|
-| **Usage scenarios** | Natural fit (100%) | Fragments workflows | Single ✅ |
-| **Parameter handling** | 150-200 lines, 85% reuse | 1,350-1,800 lines, 0% reuse | Single ✅ |
-| **Navigation patterns** | Seamless chaining | Broken chains, circular deps | Single ✅ |
-| **Code complexity** | 500-600 lines | 790-1,070 lines (+60%) | Single ✅ |
-| **File organization** | 1 file | 9 files + base + registry | Single ✅ |
-| **Type safety** | Full | Partial (casting required) | Single ✅ |
-| **Developer experience** | Excellent | Poor | Single ✅ |
-| **Maintenance** | Simple (1 location) | Complex (9 locations) | Single ✅ |
+| Validation Aspect        | Single-Class             | Multi-Class                  | Conclusion |
+| ------------------------ | ------------------------ | ---------------------------- | ---------- |
+| **Usage scenarios**      | Natural fit (100%)       | Fragments workflows          | Single ✅  |
+| **Parameter handling**   | 150-200 lines, 85% reuse | 1,350-1,800 lines, 0% reuse  | Single ✅  |
+| **Navigation patterns**  | Seamless chaining        | Broken chains, circular deps | Single ✅  |
+| **Code complexity**      | 500-600 lines            | 790-1,070 lines (+60%)       | Single ✅  |
+| **File organization**    | 1 file                   | 9 files + base + registry    | Single ✅  |
+| **Type safety**          | Full                     | Partial (casting required)   | Single ✅  |
+| **Developer experience** | Excellent                | Poor                         | Single ✅  |
+| **Maintenance**          | Simple (1 location)      | Complex (9 locations)        | Single ✅  |
 
 **Hypothetical multi-class benefits:**
 
@@ -638,6 +683,7 @@ Given the validation evidence, would multi-class architecture be justified for a
 **✅ Multi-class architecture NOT justified for any reason**
 
 **Verdict:**
+
 - ❌ **No benefits** - Every hypothetical benefit is invalid
 - ❌ **Severe problems** - Circular dependencies, broken navigation, massive duplication
 - ❌ **User experience** - Fragments natural workflows, breaks fluent API
@@ -657,6 +703,7 @@ Given the validation evidence, would multi-class architecture be justified for a
 **All three validation studies independently confirm single-class superiority:**
 
 #### Plan 14: Usage Scenarios
+
 - ✅ 100% of scenarios require multi-resource workflows
 - ✅ Average 3.4 resources per scenario (range 2-9)
 - ✅ Single-class provides natural workflow API
@@ -664,6 +711,7 @@ Given the validation evidence, would multi-class architecture be justified for a
 - **Confidence: ⭐⭐⭐⭐⭐ (5/5)**
 
 #### Plan 15: Query Parameters
+
 - ✅ 47% parameters shared (type-based clustering)
 - ✅ Single-class enables 85% code reuse (150-200 lines)
 - ❌ Multi-class creates 1,200-1,600 lines duplication
@@ -671,6 +719,7 @@ Given the validation evidence, would multi-class architecture be justified for a
 - **Confidence: ⭐⭐⭐⭐⭐ (5/5)**
 
 #### Plan 16: Subresource Navigation
+
 - ✅ 100% of navigation patterns cross resource boundaries
 - ✅ Single-class enables seamless fluent API
 - ❌ Multi-class creates 9 circular dependencies
@@ -679,24 +728,25 @@ Given the validation evidence, would multi-class architecture be justified for a
 
 ### Quantitative Comparison
 
-| Metric | Single-Class | Multi-Class | Winner |
-|--------|--------------|-------------|---------|
-| **Scenarios naturally supported** | 15/15 (100%) | 0/15 (0%) | Single ✅ |
-| **Parameter code lines** | 150-200 | 1,350-1,800 | Single ✅ (-89%) |
-| **Navigation code lines** | 500-600 | 790-1,070 | Single ✅ (-37%) |
-| **Implementation files** | 1 | 11 | Single ✅ (-91%) |
-| **Circular dependencies** | 0 | 9 | Single ✅ |
-| **Method chain breaks** | 0 | 2+ per path | Single ✅ |
-| **Type safety** | Full | Partial | Single ✅ |
-| **Code reuse efficiency** | 85% | 0% | Single ✅ |
-| **Bug fix locations** | 1 | Up to 9 | Single ✅ (-89%) |
-| **Developer experience** | Excellent | Poor | Single ✅ |
+| Metric                            | Single-Class | Multi-Class | Winner           |
+| --------------------------------- | ------------ | ----------- | ---------------- |
+| **Scenarios naturally supported** | 15/15 (100%) | 0/15 (0%)   | Single ✅        |
+| **Parameter code lines**          | 150-200      | 1,350-1,800 | Single ✅ (-89%) |
+| **Navigation code lines**         | 500-600      | 790-1,070   | Single ✅ (-37%) |
+| **Implementation files**          | 1            | 11          | Single ✅ (-91%) |
+| **Circular dependencies**         | 0            | 9           | Single ✅        |
+| **Method chain breaks**           | 0            | 2+ per path | Single ✅        |
+| **Type safety**                   | Full         | Partial     | Single ✅        |
+| **Code reuse efficiency**         | 85%          | 0%          | Single ✅        |
+| **Bug fix locations**             | 1            | Up to 9     | Single ✅ (-89%) |
+| **Developer experience**          | Excellent    | Poor        | Single ✅        |
 
 **Overall:** Single-class wins **100%** of metrics. Multi-class wins **0%** of metrics.
 
 ### Qualitative Assessment
 
 **Single-class strengths:**
+
 - ✅ Natural alignment with real-world workflows
 - ✅ Massive code reuse (85% efficiency)
 - ✅ Seamless fluent API (industry standard)
@@ -706,6 +756,7 @@ Given the validation evidence, would multi-class architecture be justified for a
 - ✅ Excellent developer experience
 
 **Multi-class weaknesses:**
+
 - ❌ Fragments natural workflows
 - ❌ Massive code duplication (1,200-1,600 lines wasted)
 - ❌ Broken fluent API (chains break at boundaries)
@@ -719,6 +770,7 @@ Given the validation evidence, would multi-class architecture be justified for a
 **Combined confidence:** ⭐⭐⭐⭐⭐ (5/5)
 
 **Rationale:**
+
 1. **Three independent studies** all converge on same conclusion
 2. **Quantitative evidence** overwhelmingly favors single-class (10:0 metrics)
 3. **Qualitative evidence** shows clear superiority (user experience, maintenance)
@@ -734,6 +786,7 @@ Given the validation evidence, would multi-class architecture be justified for a
 ### Architecture Status
 
 **Part 1: Structural Design** ✅ COMPLETE
+
 - Single CSAPIQueryBuilder class
 - Helper methods for code reuse
 - Full format parsing
@@ -741,12 +794,14 @@ Given the validation evidence, would multi-class architecture be justified for a
 - ~70-80 public methods
 
 **Part 2: Implementation Details** ✅ COMPLETE
+
 - EDR integration pattern (64 lines)
 - Flat file structure with formats/ subfolder
 - Complete TypeScript type system
 - Single model.ts with three-tier hierarchy
 
 **Part 3: Architecture Validation** ✅ COMPLETE (THIS DOCUMENT)
+
 - Usage scenarios validate single-class
 - Query parameters validate single-class
 - Navigation patterns validate single-class
@@ -755,6 +810,7 @@ Given the validation evidence, would multi-class architecture be justified for a
 ### Ready for Implementation
 
 **All architectural decisions finalized:**
+
 - ✅ Class structure (single builder)
 - ✅ Code organization (helper methods)
 - ✅ File structure (flat + formats/)
@@ -767,6 +823,7 @@ Given the validation evidence, would multi-class architecture be justified for a
 **Implementation can begin immediately.**
 
 **Remaining work:**
+
 1. Implement CSAPIQueryBuilder class (~800-900 lines)
 2. Implement format parsers (~3,300-4,650 lines)
 3. Define TypeScript types (~1,750-2,400 lines)
@@ -784,6 +841,7 @@ Given the validation evidence, would multi-class architecture be justified for a
 **FINAL DECISION: Single CSAPIQueryBuilder class architecture with helper methods, flat file structure, and complete type system.**
 
 **This decision is:**
+
 - ✅ **Validated** by three independent research studies
 - ✅ **Supported** by overwhelming quantitative evidence
 - ✅ **Aligned** with all upstream patterns (EDR, WFS, STAC)
@@ -796,23 +854,27 @@ Given the validation evidence, would multi-class architecture be justified for a
 **Follow this implementation order:**
 
 1. **Start with model.ts** (~350-400 lines)
+
    - Define GeoJSON types (System, Deployment, etc.)
    - Three-tier hierarchy (base → feature → resource-specific)
    - Query option interfaces
 
 2. **Implement url_builder.ts** (~800-900 lines)
+
    - Constructor and initialization
    - Helper methods (parameter handling, URL building)
    - Public methods organized by resource type
    - Parent context tracking for fluent navigation
 
 3. **Implement format parsers** (~3,300-4,650 lines)
+
    - formats/sensorml/parser.ts
    - formats/swecommon/parser.ts
    - formats/swecommon/types.ts
    - Complete type definitions
 
 4. **Add integration code** (64 lines)
+
    - endpoint.ts (+35 lines)
    - info.ts (+12 lines)
    - index.ts (+17 lines)
@@ -825,6 +887,7 @@ Given the validation evidence, would multi-class architecture be justified for a
 ### Success Criteria
 
 **Implementation complete when:**
+
 - ✅ All 70-80 public methods implemented
 - ✅ All three format parsers working
 - ✅ Full TypeScript type coverage
@@ -836,9 +899,9 @@ Given the validation evidence, would multi-class architecture be justified for a
 
 ## Document History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2026-02-04 | Initial validation document based on Plans 14-16 |
+| Version | Date       | Changes                                          |
+| ------- | ---------- | ------------------------------------------------ |
+| 1.0     | 2026-02-04 | Initial validation document based on Plans 14-16 |
 
 **Status:** ✅ COMPLETE - Architecture fully validated and ready for implementation
 

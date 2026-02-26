@@ -34,7 +34,7 @@ Per the [AI Operational Constraints](https://github.com/OS4CSAPI/ogc-client-CSAP
 
 This report does not propose behavioral modifications to the library without approval. All recommendations distinguish between **fact** (verified), **inference** (reasoned), and **proposal** (requires approval), per Section 3 of the constraints.
 
-**Key constraint assessment for this issue:** Section 2.2 of the AI Operational Constraints states: *"Do not introduce new abstractions, layers, or dependencies without approval"* and *"Preserve upstream structure, naming, and patterns unless explicitly instructed otherwise"* and *"Prefer minimal diffs over idealized rewrites."* Issue #14 proposes four separate solutions with varying degrees of architectural impact — ranging from documentation-only changes to multi-strategy HTTP-based discovery chains. **Section 2.2 is heavily triggered by three of the four proposals.** Multi-strategy discovery (Solution 1) would introduce a fundamentally new layer of HTTP-based resource probing. Lenient mode `tryGet` methods (Solution 3B) would approximately double the library's public API surface. Even the simpler flag-based options (Solutions 3A/3C) change the behavioral contract of `assertResourceAvailable()`, a method deliberately present as the first call in every public method.
+**Key constraint assessment for this issue:** Section 2.2 of the AI Operational Constraints states: _"Do not introduce new abstractions, layers, or dependencies without approval"_ and _"Preserve upstream structure, naming, and patterns unless explicitly instructed otherwise"_ and _"Prefer minimal diffs over idealized rewrites."_ Issue #14 proposes four separate solutions with varying degrees of architectural impact — ranging from documentation-only changes to multi-strategy HTTP-based discovery chains. **Section 2.2 is heavily triggered by three of the four proposals.** Multi-strategy discovery (Solution 1) would introduce a fundamentally new layer of HTTP-based resource probing. Lenient mode `tryGet` methods (Solution 3B) would approximately double the library's public API surface. Even the simpler flag-based options (Solutions 3A/3C) change the behavioral contract of `assertResourceAvailable()`, a method deliberately present as the first call in every public method.
 
 ---
 
@@ -42,17 +42,17 @@ This report does not propose behavioral modifications to the library without app
 
 **Issue #14 proposes improving resource discovery in `CSAPIQueryBuilder` to handle servers whose link structures don't match the three conventions recognized by `scanCsapiLinks()`. After thorough review of the source code, 12 reference documents, and test coverage, this report recommends a CONSERVATIVE approach: improve JSDoc documentation (Solution 2) as the only change for the upstream contribution, and defer all behavioral changes. The existing `resourceUrls` constructor parameter already provides a complete consumer-side workaround, F-11 is actually a symptom of the much larger `OgcApiEndpoint` conformance gating problem, and the risk of introducing architectural changes to a deliberately designed validation system outweighs the benefit for a finding ranked #5 in priority.**
 
-| Aspect | Assessment |
-|--------|------------|
-| **Change type** | Ranges from documentation-only to new HTTP-based discovery layer, depending on which solution is adopted |
-| **Finding priority** | #5 in upstream-findings.md — Medium severity, Medium effort, "Should Address" category |
-| **Production behavior modified** | **None** for documentation; **Yes** for all other proposals |
-| **Existing tests affected** | **None** for documentation; behavioral changes would require test modifications to `assertResourceAvailable()` tests |
-| **Risk to library integrity** | **None** (documentation) to **High** (multi-strategy discovery) |
-| **New abstraction introduced** | **No** (documentation/flag) to **Yes** (discovery chain, tryGet methods) |
-| **Upstream pattern precedent** | **None** — upstream `ogc-client` has no analogous "lenient mode" or multi-strategy discovery |
-| **AI Constraints trigger** | **Section 2.2 heavily triggered** by Solutions 1, 3B, and 4; Section 2.1 triggered by Solution 1 (infers unstated requirement for HTTP-based probing) |
-| **Existing workaround** | **Yes** — `resourceUrls` constructor parameter already provides a complete bypass; demo app demonstrates this pattern |
+| Aspect                           | Assessment                                                                                                                                            |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Change type**                  | Ranges from documentation-only to new HTTP-based discovery layer, depending on which solution is adopted                                              |
+| **Finding priority**             | #5 in upstream-findings.md — Medium severity, Medium effort, "Should Address" category                                                                |
+| **Production behavior modified** | **None** for documentation; **Yes** for all other proposals                                                                                           |
+| **Existing tests affected**      | **None** for documentation; behavioral changes would require test modifications to `assertResourceAvailable()` tests                                  |
+| **Risk to library integrity**    | **None** (documentation) to **High** (multi-strategy discovery)                                                                                       |
+| **New abstraction introduced**   | **No** (documentation/flag) to **Yes** (discovery chain, tryGet methods)                                                                              |
+| **Upstream pattern precedent**   | **None** — upstream `ogc-client` has no analogous "lenient mode" or multi-strategy discovery                                                          |
+| **AI Constraints trigger**       | **Section 2.2 heavily triggered** by Solutions 1, 3B, and 4; Section 2.1 triggered by Solution 1 (infers unstated requirement for HTTP-based probing) |
+| **Existing workaround**          | **Yes** — `resourceUrls` constructor parameter already provides a complete bypass; demo app demonstrates this pattern                                 |
 
 **Key findings from this review:**
 
@@ -232,10 +232,11 @@ Documents F-13 (JSDoc conflates `f` with `obsFormat`/`cmdFormat`) and F-14 (no s
 ### 5.12 AI Operational Constraints (`AI_OPERATIONAL_CONSTRAINTS.md`)
 
 Directly relevant clauses:
-- Section 2.1: *"Do not infer unstated requirements"* — The OGC spec does not define a required discovery mechanism; Solution 1 infers that HTTP probing is expected.
-- Section 2.2: *"Do not introduce new abstractions, layers, or dependencies without approval"* — Multi-strategy discovery, tryGet methods, and lenient mode flags are all new abstractions.
-- Section 2.2: *"Prefer minimal diffs over idealized rewrites"* — Documentation improvement is the minimal diff.
-- Section 2.3: *"Do not refactor for style, clarity, or 'best practice' unless explicitly requested"* — The current `assertResourceAvailable()` behavior is correct; "improving" it is a design preference, not a bug fix.
+
+- Section 2.1: _"Do not infer unstated requirements"_ — The OGC spec does not define a required discovery mechanism; Solution 1 infers that HTTP probing is expected.
+- Section 2.2: _"Do not introduce new abstractions, layers, or dependencies without approval"_ — Multi-strategy discovery, tryGet methods, and lenient mode flags are all new abstractions.
+- Section 2.2: _"Prefer minimal diffs over idealized rewrites"_ — Documentation improvement is the minimal diff.
+- Section 2.3: _"Do not refactor for style, clarity, or 'best practice' unless explicitly requested"_ — The current `assertResourceAvailable()` behavior is correct; "improving" it is a design preference, not a bug fix.
 
 ---
 
@@ -243,65 +244,65 @@ Directly relevant clauses:
 
 ### 6.1 Risk of NOT making changes
 
-| Impact | Severity |
-|--------|----------|
-| Consumers using root-level data without `resourceUrls` see `EndpointError` for servers with non-standard links | Medium — but `resourceUrls` workaround exists |
-| JSDoc doesn't clearly explain that `availableResources` reflects links, not capability | Low — fixable with documentation |
-| Developer experience for new library consumers is degraded | Low–Medium — the error message already lists available resources and the collection ID |
+| Impact                                                                                                         | Severity                                                                               |
+| -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Consumers using root-level data without `resourceUrls` see `EndpointError` for servers with non-standard links | Medium — but `resourceUrls` workaround exists                                          |
+| JSDoc doesn't clearly explain that `availableResources` reflects links, not capability                         | Low — fixable with documentation                                                       |
+| Developer experience for new library consumers is degraded                                                     | Low–Medium — the error message already lists available resources and the collection ID |
 
 ### 6.2 Risk of Solution 1 — Multi-strategy discovery
 
-| Risk | Severity |
-|------|----------|
-| **Architectural role change:** URL builder becomes HTTP client | **High** — violates separation of concerns documented in contribution-goal-accuracy-assessment.md |
-| **Async constructor or init method:** HTTP probing cannot be synchronous | **High** — changes the entire API contract; current constructor is synchronous |
-| **Network dependency in unit tests:** Tests would need HTTP mocking | **Medium** — increases test complexity and fragility |
-| **Performance impact:** Additional HTTP round-trips on every instantiation | **Medium** — probing `/systems`, `/conformance`, etc. adds latency |
-| **AI Constraints Section 2.1:** Infers unstated requirement for HTTP probing | **High** — the OGC spec does not define a discovery protocol |
-| **AI Constraints Section 2.2:** Introduces major new abstraction | **High** — a multi-strategy discovery chain is a new layer |
-| **Upstream rejection risk:** Fundamentally changes the module's purpose | **High** — upstream reviewers may reject this scope change |
+| Risk                                                                         | Severity                                                                                          |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Architectural role change:** URL builder becomes HTTP client               | **High** — violates separation of concerns documented in contribution-goal-accuracy-assessment.md |
+| **Async constructor or init method:** HTTP probing cannot be synchronous     | **High** — changes the entire API contract; current constructor is synchronous                    |
+| **Network dependency in unit tests:** Tests would need HTTP mocking          | **Medium** — increases test complexity and fragility                                              |
+| **Performance impact:** Additional HTTP round-trips on every instantiation   | **Medium** — probing `/systems`, `/conformance`, etc. adds latency                                |
+| **AI Constraints Section 2.1:** Infers unstated requirement for HTTP probing | **High** — the OGC spec does not define a discovery protocol                                      |
+| **AI Constraints Section 2.2:** Introduces major new abstraction             | **High** — a multi-strategy discovery chain is a new layer                                        |
+| **Upstream rejection risk:** Fundamentally changes the module's purpose      | **High** — upstream reviewers may reject this scope change                                        |
 
 ### 6.3 Risk of Solution 2 — JSDoc documentation
 
-| Risk | Severity |
-|------|----------|
-| No behavioral change | **None** |
+| Risk                                                   | Severity                                          |
+| ------------------------------------------------------ | ------------------------------------------------- |
+| No behavioral change                                   | **None**                                          |
 | Documentation may not be sufficient for all developers | **Low** — but it's the convention in `ogc-client` |
 
 ### 6.4 Risk of Solution 3A — `assumeAllAvailable` flag
 
-| Risk | Severity |
-|------|----------|
-| New constructor parameter or method changes public API | **Low–Medium** |
+| Risk                                                           | Severity                                               |
+| -------------------------------------------------------------- | ------------------------------------------------------ |
+| New constructor parameter or method changes public API         | **Low–Medium**                                         |
 | Silences errors that protect consumers from server-side issues | **Medium** — `EndpointError` catches real problems too |
-| No upstream precedent for "assume" flags | **Medium** — introduces a new pattern |
-| AI Constraints Section 2.2: New abstraction | **Medium** |
+| No upstream precedent for "assume" flags                       | **Medium** — introduces a new pattern                  |
+| AI Constraints Section 2.2: New abstraction                    | **Medium**                                             |
 
 ### 6.5 Risk of Solution 3B — `tryGet` methods
 
-| Risk | Severity |
-|------|----------|
-| Approximately doubles public API surface (~77+ methods × 2) | **High** — massive maintenance burden |
-| No upstream precedent | **High** — introduces an entirely new pattern |
-| Consumers must choose between `getSystems()` and `tryGetSystems()` for every call | **Medium** — confusing DX |
-| AI Constraints Section 2.2: Major new abstraction | **High** |
+| Risk                                                                              | Severity                                      |
+| --------------------------------------------------------------------------------- | --------------------------------------------- |
+| Approximately doubles public API surface (~77+ methods × 2)                       | **High** — massive maintenance burden         |
+| No upstream precedent                                                             | **High** — introduces an entirely new pattern |
+| Consumers must choose between `getSystems()` and `tryGetSystems()` for every call | **Medium** — confusing DX                     |
+| AI Constraints Section 2.2: Major new abstraction                                 | **High**                                      |
 
 ### 6.6 Risk of Solution 3C — Constructor option `{ skipAvailabilityChecks: true }`
 
-| Risk | Severity |
-|------|----------|
-| New constructor option type changes public API | **Low–Medium** |
-| Silences all availability errors, not just discovery gaps | **Medium** — consumers lose protection from real server issues |
-| AI Constraints Section 2.2: New abstraction | **Medium** |
+| Risk                                                            | Severity                                                                               |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| New constructor option type changes public API                  | **Low–Medium**                                                                         |
+| Silences all availability errors, not just discovery gaps       | **Medium** — consumers lose protection from real server issues                         |
+| AI Constraints Section 2.2: New abstraction                     | **Medium**                                                                             |
 | Functionally equivalent to what `resourceUrls` already provides | **Low** — consumers can achieve the same result by passing all types to `resourceUrls` |
 
 ### 6.7 Risk of Solution 4 — Enhanced link scanning
 
-| Risk | Severity |
-|------|----------|
-| New pattern recognition may produce false positives | **Medium** — broader matching means more ambiguity |
-| What patterns to add is not spec-defined | **Medium** — we'd be guessing at server conventions |
-| AI Constraints Section 2.1: Infers unstated conventions | **Medium** |
+| Risk                                                                             | Severity                                                          |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| New pattern recognition may produce false positives                              | **Medium** — broader matching means more ambiguity                |
+| What patterns to add is not spec-defined                                         | **Medium** — we'd be guessing at server conventions               |
+| AI Constraints Section 2.1: Infers unstated conventions                          | **Medium**                                                        |
 | Limited benefit: 52North doesn't use ANY recognizable CSAPI link pattern at root | **Low benefit** — the server simply doesn't advertise CSAPI links |
 
 ---
@@ -320,7 +321,7 @@ The `CSAPIQueryBuilder` is documented and verified as a **URL builder**, not an 
 4. Introduce new error handling paths for network failures, timeouts, and auth requirements
 5. Require extensive HTTP mocking in unit tests (currently the 298 tests are purely synchronous)
 
-The [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) explicitly confirms the builder's role: *"URL builder, not an HTTP client."* The [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) confirms that the demo successfully works by doing this probing **in the consumer layer** — exactly where it belongs.
+The [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) explicitly confirms the builder's role: _"URL builder, not an HTTP client."_ The [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) confirms that the demo successfully works by doing this probing **in the consumer layer** — exactly where it belongs.
 
 AI Constraints Section 2.1 prohibits inferring unstated requirements. The OGC spec does not define a discovery protocol; adding one is a design decision, not a spec requirement.
 
@@ -329,6 +330,7 @@ AI Constraints Section 2.1 prohibits inferring unstated requirements. The OGC sp
 **Assessment: Zero risk, genuine value, addresses the real problem.**
 
 The current JSDoc for the constructor (lines 110–121 of `url_builder.ts`) documents `resourceUrls` but does not explicitly explain:
+
 - That `availableResources` reflects what `scanCsapiLinks()` found in the collection's link array
 - That some servers don't advertise CSAPI resources via link relations, resulting in an empty `availableResources` set
 - That `resourceUrls` is the recommended workaround for servers with non-standard link structures
@@ -343,9 +345,7 @@ Improving this documentation is purely additive, zero-risk, and addresses the DX
 A consumer who wants to assume all resources are available can already achieve this by constructing a `resourceUrls` map with all 9 types:
 
 ```typescript
-const allTypes = new Map(
-  CSAPIResourceTypes.map(t => [t, `${baseUrl}/${t}`])
-);
+const allTypes = new Map(CSAPIResourceTypes.map((t) => [t, `${baseUrl}/${t}`]));
 const builder = new CSAPIQueryBuilder(collection, allTypes);
 ```
 
@@ -360,6 +360,7 @@ While the sugar is convenient, it introduces a new constructor parameter or prop
 **Assessment: High risk, massive API surface expansion, no upstream precedent.**
 
 `CSAPIQueryBuilder` has 77+ public methods. Adding `tryGet` variants for each would approximately double the public API surface to 150+ methods. This is:
+
 - A maintenance burden for upstream maintainers
 - Confusing for consumers (when to use `getSystems()` vs `tryGetSystems()`?)
 - Architecturally unprecedented in the entire `ogc-client` library
@@ -393,6 +394,7 @@ Functionally equivalent to Solution 3A. The constructor option pattern is slight
 52North's root landing page doesn't use ANY recognizable CSAPI-specific link pattern at the root level. The links it provides are generic OGC API Common links (`self`, `conformance`, `service-desc`, etc.). There is no CSAPI-specific link relation to recognize — the server simply doesn't advertise CSAPI resources in the landing page.
 
 For servers that DO advertise resources but use a convention not yet recognized (e.g., a hypothetical `rel: "http://www.opengis.net/def/rel/ogc-csapi/1.0/systems"` full IRI pattern), adding recognition would be reasonable. However:
+
 - No such server has been encountered in testing
 - The OGC spec does not define a required link relation pattern for CSAPI resources
 - Adding speculative pattern recognition risks false positives
@@ -408,6 +410,7 @@ For servers that DO advertise resources but use a convention not yet recognized 
 **ACCEPT Solution 2 — Improve JSDoc documentation for `CSAPIQueryBuilder` constructor, `availableResources`, and `scanCsapiLinks()`.**
 
 Specific documentation improvements:
+
 1. Add a JSDoc note to `availableResources` explaining it reflects link scanning results, not actual server capability
 2. Add a `@remarks` or `@example` block to the constructor showing the `resourceUrls` workaround pattern for servers with non-standard links
 3. Add a JSDoc note to `scanCsapiLinks()` listing the three conventions it recognizes and noting that servers not using these conventions will return an empty map
@@ -436,26 +439,26 @@ These are upstream architectural decisions that are **far beyond the CSAPI contr
 
 ### 8.5 Summary of disposition
 
-| Solution | Disposition | Rationale |
-|----------|-------------|-----------|
-| 1. Multi-strategy discovery | **REJECT** | Changes library from URL builder to HTTP client; no spec basis; violates AI Constraints 2.1, 2.2 |
-| 2. JSDoc documentation | **ACCEPT** | Zero risk; genuine value; addresses DX gap; AI Constraints compliant |
-| 3A. `assumeAllAvailable` flag | **DEFER** | Redundant with `resourceUrls`; no upstream precedent; consider post-contribution |
-| 3B. `tryGet` methods | **REJECT** | Doubles API surface; massive maintenance burden; achievable via `try/catch` |
-| 3C. Constructor option | **DEFER** | Same as 3A; slightly different syntax |
-| 4. Enhanced scanning | **DEFER** | No concrete new convention to target; would add if specific pattern encountered |
+| Solution                      | Disposition | Rationale                                                                                        |
+| ----------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| 1. Multi-strategy discovery   | **REJECT**  | Changes library from URL builder to HTTP client; no spec basis; violates AI Constraints 2.1, 2.2 |
+| 2. JSDoc documentation        | **ACCEPT**  | Zero risk; genuine value; addresses DX gap; AI Constraints compliant                             |
+| 3A. `assumeAllAvailable` flag | **DEFER**   | Redundant with `resourceUrls`; no upstream precedent; consider post-contribution                 |
+| 3B. `tryGet` methods          | **REJECT**  | Doubles API surface; massive maintenance burden; achievable via `try/catch`                      |
+| 3C. Constructor option        | **DEFER**   | Same as 3A; slightly different syntax                                                            |
+| 4. Enhanced scanning          | **DEFER**   | No concrete new convention to target; would add if specific pattern encountered                  |
 
 ---
 
 ## Appendix A: Authority Precedence Analysis
 
-| Authority Level | Source | Guidance for F-11 |
-|----------------|--------|-------------------|
-| 1. OGC specifications | [OGC 23-001](https://docs.ogc.org/is/23-001/23-001.html), [OGC 23-002](https://docs.ogc.org/is/23-002/23-002.html) | Spec does NOT require servers to advertise CSAPI resources via link relations; resources exist at well-known paths. No discovery protocol is defined. |
+| Authority Level               | Source                                                                                                                                  | Guidance for F-11                                                                                                                                                         |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. OGC specifications         | [OGC 23-001](https://docs.ogc.org/is/23-001/23-001.html), [OGC 23-002](https://docs.ogc.org/is/23-002/23-002.html)                      | Spec does NOT require servers to advertise CSAPI resources via link relations; resources exist at well-known paths. No discovery protocol is defined.                     |
 | 2. AI Collaboration Agreement | [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | Section 2.1: Don't infer unstated requirements. Section 2.2: No new abstractions without approval; prefer minimal diffs. Section 2.3: Don't refactor for "best practice." |
-| 3. Issue description | [#14](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/14) | Proposes 4 solutions; acknowledges `resourceUrls` exists; notes this is a "design consideration" |
-| 4. Existing code patterns | `url_builder.ts`, `helpers.ts` | `assertResourceAvailable()` is deliberate; `resourceUrls` is the existing escape hatch; `CSAPIQueryBuilder` is synchronous and has no HTTP dependencies |
-| 5. Conversation context | Prior findings reports, demo app experience | Team is extremely conservative about library changes; all server accommodations are in demo layer |
+| 3. Issue description          | [#14](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/14)                                                                         | Proposes 4 solutions; acknowledges `resourceUrls` exists; notes this is a "design consideration"                                                                          |
+| 4. Existing code patterns     | `url_builder.ts`, `helpers.ts`                                                                                                          | `assertResourceAvailable()` is deliberate; `resourceUrls` is the existing escape hatch; `CSAPIQueryBuilder` is synchronous and has no HTTP dependencies                   |
+| 5. Conversation context       | Prior findings reports, demo app experience                                                                                             | Team is extremely conservative about library changes; all server accommodations are in demo layer                                                                         |
 
 **Conclusion:** All authority levels point toward documentation-only changes for the upstream contribution, with optional behavioral changes deferred to post-contribution.
 
@@ -463,17 +466,17 @@ These are upstream architectural decisions that are **far beyond the CSAPI contr
 
 ## Appendix B: Cross-Reference Matrix
 
-| Reference Document | Relevance to F-11 | Key Finding |
-|-------------------|-------------------|-------------|
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | Priority ranking | F-11 is #5, Medium severity, "Should Address" — not critical |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | Discovery gap | Finding #5: Recommends documentation + optional flag — aligns with our recommendation |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | Actionability | "Partially actionable — design challenge" — confirms this is not straightforward |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | Root cause | F-11 is a symptom of the larger OgcApiEndpoint problem; both servers fail at a higher level |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Architecture | Library is a URL builder, not HTTP client; assertResourceAvailable is deliberate |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | Change history | Only 1 library commit in entire development lifecycle — team is very conservative |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | Scope narrowing | Collection-level discovery works for both servers; gap is root-level only |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | Validation | Builder URLs are correct when properly configured; CRUD succeeds |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | Error handling | EndpointError isolation was the single library change; 298 tests pass |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | Pattern confirmation | F-15, F-16 both resolved as demo-layer workarounds, not library changes |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | Pattern confirmation | JSDoc improvements (F-13) are lower-risk and higher-value than API surface changes |
-| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | Governance | Sections 2.1, 2.2, 2.3 all support conservative approach |
+| Reference Document                                                                                                                                             | Relevance to F-11    | Key Finding                                                                                 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------- |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | Priority ranking     | F-11 is #5, Medium severity, "Should Address" — not critical                                |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                       | Discovery gap        | Finding #5: Recommends documentation + optional flag — aligns with our recommendation       |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | Actionability        | "Partially actionable — design challenge" — confirms this is not straightforward            |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | Root cause           | F-11 is a symptom of the larger OgcApiEndpoint problem; both servers fail at a higher level |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Architecture         | Library is a URL builder, not HTTP client; assertResourceAvailable is deliberate            |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | Change history       | Only 1 library commit in entire development lifecycle — team is very conservative           |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | Scope narrowing      | Collection-level discovery works for both servers; gap is root-level only                   |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | Validation           | Builder URLs are correct when properly configured; CRUD succeeds                            |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | Error handling       | EndpointError isolation was the single library change; 298 tests pass                       |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | Pattern confirmation | F-15, F-16 both resolved as demo-layer workarounds, not library changes                     |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | Pattern confirmation | JSDoc improvements (F-13) are lower-risk and higher-value than API surface changes          |
+| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)                        | Governance           | Sections 2.1, 2.2, 2.3 all support conservative approach                                    |

@@ -15,8 +15,8 @@ Phase 2.1 (Issue #5) took that stub and turned it into a **complete Systems API 
 The query builder had exactly **2 methods**:
 
 ```typescript
-builder.getSystems()          // list systems
-builder.getSystem('sys-001')  // get one system
+builder.getSystems(); // list systems
+builder.getSystem('sys-001'); // get one system
 ```
 
 That was enough to prove the architecture worked: the builder could discover available resources from a collection document, construct URLs with query parameters, and validate everything along the way.
@@ -27,26 +27,26 @@ The query builder now has **12 methods** — the full Systems surface:
 
 ```typescript
 // ── Reading ──
-builder.getSystems({ limit: 10, bbox: [-180,-90,180,90] })
-builder.getSystem('sys-001')
+builder.getSystems({ limit: 10, bbox: [-180, -90, 180, 90] });
+builder.getSystem('sys-001');
 
 // ── Writing ──
-builder.createSystem()            // URL for POST
-builder.updateSystem('sys-001')   // URL for PUT
-builder.deleteSystem('sys-001')   // URL for DELETE
+builder.createSystem(); // URL for POST
+builder.updateSystem('sys-001'); // URL for PUT
+builder.deleteSystem('sys-001'); // URL for DELETE
 
 // ── History ──
-builder.getSystemHistory('sys-001', { limit: 5 })
+builder.getSystemHistory('sys-001', { limit: 5 });
 
 // ── Hierarchy ──
-builder.getSystemSubsystems('sys-001', { recursive: true })
+builder.getSystemSubsystems('sys-001', { recursive: true });
 
 // ── Cross-resource navigation ──
-builder.getSystemDataStreams('sys-001')
-builder.getSystemControlStreams('sys-001')
-builder.getSystemSamplingFeatures('sys-001')
-builder.getSystemDeployments('sys-001')
-builder.getSystemProcedures('sys-001')
+builder.getSystemDataStreams('sys-001');
+builder.getSystemControlStreams('sys-001');
+builder.getSystemSamplingFeatures('sys-001');
+builder.getSystemDeployments('sys-001');
+builder.getSystemProcedures('sys-001');
 ```
 
 ---
@@ -65,7 +65,7 @@ These produce the **target URLs** for write operations. They don't perform the H
 - `updateSystem('sys-001')` → returns `https://server.com/…/systems/sys-001` (you'd PUT a replacement body here)
 - `deleteSystem('sys-001')` → returns `https://server.com/…/systems/sys-001` (you'd send a DELETE here)
 
-Note that `updateSystem` and `deleteSystem` produce the *same* URL — the HTTP verb is what distinguishes them. Having separate methods keeps the intent clear in consuming code and allows us to attach different validation or query parameters to each one later if the spec evolves.
+Note that `updateSystem` and `deleteSystem` produce the _same_ URL — the HTTP verb is what distinguishes them. Having separate methods keeps the intent clear in consuming code and allows us to attach different validation or query parameters to each one later if the spec evolves.
 
 ### History — `getSystemHistory`
 
@@ -81,14 +81,14 @@ The `recursive` parameter is unique to Systems — it's defined on `SystemQueryO
 
 A system doesn't exist in isolation. It produces data (DataStreams), can be controlled (ControlStreams), monitors locations (SamplingFeatures), follows procedures (Procedures), and is deployed at sites (Deployments). These six navigation methods build URLs for those **nested sub-resources**:
 
-| Method | URL Pattern | What It Returns |
-|--------|------------|-----------------|
-| `getSystemDataStreams` | `/systems/{id}/datastreams` | Observation data channels from this system |
-| `getSystemControlStreams` | `/systems/{id}/controlstreams` | Command/control channels to this system |
-| `getSystemSamplingFeatures` | `/systems/{id}/samplingFeatures` | Physical locations this system monitors |
-| `getSystemDeployments` | `/systems/{id}/deployments` | Where/when this system has been deployed |
-| `getSystemProcedures` | `/systems/{id}/procedures` | Methodologies this system follows |
-| `getSystemSubsystems` | `/systems/{id}/subsystems` | Child systems (hierarchy) |
+| Method                      | URL Pattern                      | What It Returns                            |
+| --------------------------- | -------------------------------- | ------------------------------------------ |
+| `getSystemDataStreams`      | `/systems/{id}/datastreams`      | Observation data channels from this system |
+| `getSystemControlStreams`   | `/systems/{id}/controlstreams`   | Command/control channels to this system    |
+| `getSystemSamplingFeatures` | `/systems/{id}/samplingFeatures` | Physical locations this system monitors    |
+| `getSystemDeployments`      | `/systems/{id}/deployments`      | Where/when this system has been deployed   |
+| `getSystemProcedures`       | `/systems/{id}/procedures`       | Methodologies this system follows          |
+| `getSystemSubsystems`       | `/systems/{id}/subsystems`       | Child systems (hierarchy)                  |
 
 All of these accept optional `QueryOptions` for filtering and pagination.
 
@@ -150,21 +150,21 @@ Here's everything in the CSAPI module as it stands after Phase 2.1:
 
 ### Source Files
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `src/ogc-api/csapi/model.ts` | 582 | Type system — 9 resource types, 10 query options interfaces, collection types, constants |
-| `src/ogc-api/csapi/helpers.ts` | 164 | 6 pure utility functions — temporal formatting, encoding, validation |
-| `src/ogc-api/csapi/url_builder.ts` | 420 | `CSAPIQueryBuilder` class — 12 Systems methods + private infrastructure |
-| `src/ogc-api/endpoint.ts` | (modified) | Integration — `hasConnectedSystems`, `csapiCollections`, `csapi()` factory on `OgcApiEndpoint` |
+| File                               | Lines      | Purpose                                                                                        |
+| ---------------------------------- | ---------- | ---------------------------------------------------------------------------------------------- |
+| `src/ogc-api/csapi/model.ts`       | 582        | Type system — 9 resource types, 10 query options interfaces, collection types, constants       |
+| `src/ogc-api/csapi/helpers.ts`     | 164        | 6 pure utility functions — temporal formatting, encoding, validation                           |
+| `src/ogc-api/csapi/url_builder.ts` | 420        | `CSAPIQueryBuilder` class — 12 Systems methods + private infrastructure                        |
+| `src/ogc-api/endpoint.ts`          | (modified) | Integration — `hasConnectedSystems`, `csapiCollections`, `csapi()` factory on `OgcApiEndpoint` |
 
 ### Test Files
 
-| File | Tests | Coverage |
-|------|-------|----------|
-| `src/ogc-api/csapi/model.spec.ts` | 27 | Every resource interface, constant correctness, type compatibility |
-| `src/ogc-api/csapi/helpers.spec.ts` | 30 | All 6 helpers with edge cases, error paths, encoding correctness |
-| `src/ogc-api/csapi/url_builder.spec.ts` | 43 | Constructor, resource validation, all 12 Systems methods, query param handling |
-| `src/ogc-api/endpoint.spec.ts` (CSAPI block) | 6 | End-to-end with fixture data: detection, collection filtering, builder creation, caching, error handling |
+| File                                         | Tests | Coverage                                                                                                 |
+| -------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------- |
+| `src/ogc-api/csapi/model.spec.ts`            | 27    | Every resource interface, constant correctness, type compatibility                                       |
+| `src/ogc-api/csapi/helpers.spec.ts`          | 30    | All 6 helpers with edge cases, error paths, encoding correctness                                         |
+| `src/ogc-api/csapi/url_builder.spec.ts`      | 43    | Constructor, resource validation, all 12 Systems methods, query param handling                           |
+| `src/ogc-api/endpoint.spec.ts` (CSAPI block) | 6     | End-to-end with fixture data: detection, collection filtering, builder creation, caching, error handling |
 
 **Total: 100 CSAPI unit tests + 6 integration tests = 106 tests, all passing.**
 
@@ -181,6 +181,7 @@ These construct objects matching each interface and verify TypeScript is happy. 
 ### Layer 2 — Utility Correctness (`helpers.spec.ts`, 30 tests)
 
 Pure function tests with known inputs and expected outputs. Covers:
+
 - Date formatting: single dates, open-start ranges, open-end ranges, full intervals, invalid inputs
 - Resource type validation: all 9 valid types, invalid strings
 - ID encoding: simple text, spaces, slashes, colons, hash/query characters
@@ -192,22 +193,22 @@ Pure function tests with known inputs and expected outputs. Covers:
 
 Tests the complete query builder, organized into describe blocks that match the API surface:
 
-| Block | Tests | What It Verifies |
-|-------|-------|-----------------|
-| Constructor | 4 | Base URL extraction, resource discovery, empty/missing links |
-| Resource validation | 4 | Throws on unsupported resources, lists alternatives in error |
-| `getSystems` | 15 | No options, limit, bbox, q, multiple options, undefined skipping, datetime, array IDs, double-encoding safety, and all 6 SystemQueryOptions-specific params (parent, procedureId, foiId, observedPropertyId, controlledPropertyId, recursive) |
-| `getSystem` | 3 | Basic URL, special-char encoding in IDs, error on unavailable resource |
-| `createSystem` | 2 | Correct POST target URL, error on unavailable resource |
-| `updateSystem` | 2 | Correct PUT target URL, special-char encoding |
-| `deleteSystem` | 1 | Correct DELETE target URL |
-| `getSystemHistory` | 2 | Basic URL, URL with limit |
-| `getSystemSubsystems` | 3 | Basic URL, recursive=true, pagination + filtering |
-| `getSystemDataStreams` | 2 | Basic URL, URL with options |
-| `getSystemControlStreams` | 1 | Basic URL |
-| `getSystemSamplingFeatures` | 1 | Basic URL |
-| `getSystemDeployments` | 2 | Basic URL, URL with options |
-| `getSystemProcedures` | 1 | Basic URL |
+| Block                       | Tests | What It Verifies                                                                                                                                                                                                                              |
+| --------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Constructor                 | 4     | Base URL extraction, resource discovery, empty/missing links                                                                                                                                                                                  |
+| Resource validation         | 4     | Throws on unsupported resources, lists alternatives in error                                                                                                                                                                                  |
+| `getSystems`                | 15    | No options, limit, bbox, q, multiple options, undefined skipping, datetime, array IDs, double-encoding safety, and all 6 SystemQueryOptions-specific params (parent, procedureId, foiId, observedPropertyId, controlledPropertyId, recursive) |
+| `getSystem`                 | 3     | Basic URL, special-char encoding in IDs, error on unavailable resource                                                                                                                                                                        |
+| `createSystem`              | 2     | Correct POST target URL, error on unavailable resource                                                                                                                                                                                        |
+| `updateSystem`              | 2     | Correct PUT target URL, special-char encoding                                                                                                                                                                                                 |
+| `deleteSystem`              | 1     | Correct DELETE target URL                                                                                                                                                                                                                     |
+| `getSystemHistory`          | 2     | Basic URL, URL with limit                                                                                                                                                                                                                     |
+| `getSystemSubsystems`       | 3     | Basic URL, recursive=true, pagination + filtering                                                                                                                                                                                             |
+| `getSystemDataStreams`      | 2     | Basic URL, URL with options                                                                                                                                                                                                                   |
+| `getSystemControlStreams`   | 1     | Basic URL                                                                                                                                                                                                                                     |
+| `getSystemSamplingFeatures` | 1     | Basic URL                                                                                                                                                                                                                                     |
+| `getSystemDeployments`      | 2     | Basic URL, URL with options                                                                                                                                                                                                                   |
+| `getSystemProcedures`       | 1     | Basic URL                                                                                                                                                                                                                                     |
 
 ### Layer 4 — Integration (`endpoint.spec.ts`, 6 tests)
 
@@ -247,17 +248,20 @@ if (await endpoint.hasConnectedSystems) {
 
   // Phase 2.1: navigate to related resources
   const dataStreamsUrl = builder.getSystemDataStreams('station-42');
-  const subsystemsUrl = builder.getSystemSubsystems('station-42', { recursive: true });
+  const subsystemsUrl = builder.getSystemSubsystems('station-42', {
+    recursive: true,
+  });
   const historyUrl = builder.getSystemHistory('station-42', { limit: 10 });
 
   // Phase 2.1: write operation targets
-  const createUrl = builder.createSystem();    // for POST
-  const updateUrl = builder.updateSystem('station-42');  // for PUT
-  const deleteUrl = builder.deleteSystem('station-42');  // for DELETE
+  const createUrl = builder.createSystem(); // for POST
+  const updateUrl = builder.updateSystem('station-42'); // for PUT
+  const deleteUrl = builder.deleteSystem('station-42'); // for DELETE
 }
 ```
 
 Each of those URL strings is ready to be used with `fetch()`. The builder guarantees that:
+
 - The base URL comes from the server's own collection document (not hardcoded)
 - Special characters in IDs are properly percent-encoded
 - Query parameters are validated before serialization
@@ -269,12 +273,12 @@ Each of those URL strings is ready to be used with `fetch()`. The builder guaran
 
 Phase 2.1 completed the Systems surface. The remaining Phase 2 issues will repeat the same pattern for other resource types:
 
-| Issue | Resource Types | Methods |
-|-------|---------------|---------|
-| #6 | Deployments | Same CRUD + history + navigation pattern |
-| #7 | Procedures, SamplingFeatures, Properties | Part 1 remaining resources |
-| #8 | DataStreams, Observations | Part 2 observation pipeline |
-| #9 | ControlStreams, Commands | Part 2 tasking pipeline |
+| Issue | Resource Types                           | Methods                                  |
+| ----- | ---------------------------------------- | ---------------------------------------- |
+| #6    | Deployments                              | Same CRUD + history + navigation pattern |
+| #7    | Procedures, SamplingFeatures, Properties | Part 1 remaining resources               |
+| #8    | DataStreams, Observations                | Part 2 observation pipeline              |
+| #9    | ControlStreams, Commands                 | Part 2 tasking pipeline                  |
 
 Because the private infrastructure (`buildResourceUrl`, `buildQueryString`, `assertResourceAvailable`) is already built and tested, each new resource type is mostly new public methods — the plumbing is done. The query options interfaces (`DeploymentQueryOptions`, `DatastreamQueryOptions`, etc.) are also already defined in `model.ts`, waiting to be used.
 
@@ -284,13 +288,13 @@ Phase 3 will add **response fetching and parsing** — actually calling those UR
 
 ## Summary
 
-| Metric | Phase 1 (before) | Phase 2.1 (now) |
-|--------|------------------|-----------------|
-| Public methods on CSAPIQueryBuilder | 2 | 12 |
-| Systems operations covered | List, Get | List, Get, Create, Update, Delete, History, Subsystems, DataStreams, ControlStreams, SamplingFeatures, Deployments, Procedures |
-| CSAPI unit tests | 76 | 100 |
-| Total tests (incl. integration) | 82 | 106 |
-| url_builder.ts lines | ~213 | ~420 |
-| url_builder.spec.ts tests | 20 | 43 |
+| Metric                              | Phase 1 (before) | Phase 2.1 (now)                                                                                                                |
+| ----------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Public methods on CSAPIQueryBuilder | 2                | 12                                                                                                                             |
+| Systems operations covered          | List, Get        | List, Get, Create, Update, Delete, History, Subsystems, DataStreams, ControlStreams, SamplingFeatures, Deployments, Procedures |
+| CSAPI unit tests                    | 76               | 100                                                                                                                            |
+| Total tests (incl. integration)     | 82               | 106                                                                                                                            |
+| url_builder.ts lines                | ~213             | ~420                                                                                                                           |
+| url_builder.spec.ts tests           | 20               | 43                                                                                                                             |
 
 The foundation (types, helpers, endpoint integration) from Phase 1 is unchanged — Phase 2.1 was purely additive, building on top without modifying any existing behavior.

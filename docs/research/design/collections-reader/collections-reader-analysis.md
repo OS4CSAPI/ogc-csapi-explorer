@@ -14,6 +14,7 @@ This document provides complete implementation specifications for adding CSAPI c
 **Key Finding:** CSAPI collection detection requires checking either `itemType` OR `featureType` properties on collection metadata, as CSAPI uses both properties depending on whether resources are Feature-based (Part 1) or non-Feature resources (Part 2).
 
 **Implementation Scope:**
+
 - **Filter Function:** ~9 lines in info.ts (extend `parseCollections()` function)
 - **Getter:** ~6 lines in endpoint.ts (add `csapiCollections` getter)
 - **Total:** ~15 lines following EDR pattern exactly
@@ -58,11 +59,13 @@ export interface OgcApiCollectionInfo {
 ### 1.2 CSAPI Collection Metadata
 
 **CSAPI collections include:**
+
 - `itemType` property (for Part 2 non-Feature resources)
 - `featureType` property (for Part 1 Feature resources)
 - Both may be URI strings (not limited to 'feature' | 'record')
 
 **Example CSAPI Collection:**
+
 ```json
 {
   "id": "weather-systems",
@@ -87,12 +90,14 @@ export interface OgcApiCollectionInfo {
 ### 2.1 Part 1 Feature Resources (use `featureType`)
 
 **Valid featureType URIs:**
+
 - `http://www.w3.org/ns/sosa/System`
 - `http://www.w3.org/ns/sosa/Deployment`
 - `http://www.w3.org/ns/sosa/Procedure`
 - `http://www.w3.org/ns/sosa/Sample` (Sampling Features)
 
 **Spec Requirements:**
+
 - Collections containing Systems MUST set `featureType=sosa:System` (Requirement 8)
 - Collections containing Deployments MUST set `featureType=sosa:Deployment` (Requirement 18)
 - Collections containing Procedures MUST set `featureType=sosa:Procedure` (Requirement 28)
@@ -101,14 +106,17 @@ export interface OgcApiCollectionInfo {
 ### 2.2 Part 1 Non-Feature Resources (use `itemType`)
 
 **Valid itemType URIs:**
+
 - `http://www.w3.org/ns/sosa/Property`
 
 **Spec Requirements:**
+
 - Collections containing Properties MUST set `itemType=sosa:Property` (Requirement 37)
 
 ### 2.3 Part 2 Resources (use `itemType`)
 
 **Valid itemType values:**
+
 - `DataStream` (or full URI format)
 - `Observation` (or full URI format)
 - `ControlStream` (or full URI format)
@@ -121,23 +129,24 @@ export interface OgcApiCollectionInfo {
 ### 2.4 Detection Strategy
 
 **Check BOTH `itemType` AND `featureType` properties:**
+
 - Part 1 Feature resources use `featureType` (System, Deployment, Procedure, Sample)
 - Part 1 non-Feature resources use `itemType` (Property)
 - Part 2 resources use `itemType` (DataStream, Observation, etc.)
 
 **Detection Logic:**
+
 ```typescript
-const hasCSAPIType = 
+const hasCSAPIType =
   (collection.featureType && collection.featureType.includes('sosa')) ||
-  (collection.itemType && (
-    collection.itemType.includes('sosa') || 
-    collection.itemType === 'DataStream' ||
-    collection.itemType === 'Observation' ||
-    collection.itemType === 'ControlStream' ||
-    collection.itemType === 'Command' ||
-    collection.itemType === 'Feasibility' ||
-    collection.itemType === 'SystemEvent'
-  ));
+  (collection.itemType &&
+    (collection.itemType.includes('sosa') ||
+      collection.itemType === 'DataStream' ||
+      collection.itemType === 'Observation' ||
+      collection.itemType === 'ControlStream' ||
+      collection.itemType === 'Command' ||
+      collection.itemType === 'Feasibility' ||
+      collection.itemType === 'SystemEvent'));
 ```
 
 ---
@@ -149,6 +158,7 @@ const hasCSAPIType =
 **Location:** `src/ogc-api/info.ts` line 229
 
 **Current Implementation:**
+
 ```typescript
 export function parseCollections(doc: OgcApiDocument): Array<{
   name: string;
@@ -162,7 +172,7 @@ export function parseCollections(doc: OgcApiDocument): Array<{
     const result: {...} = {
       name: collection.id as string,
     };
-    
+
     // Existing checks for Records, Features, Tiles, EDR
     if (collection.itemType === 'record') {
       result.hasRecords = true;
@@ -171,7 +181,7 @@ export function parseCollections(doc: OgcApiDocument): Array<{
       result.hasFeatures = true;
     }
     // ... tile and EDR checks
-    
+
     if (collection.data_queries) {
       result.hasDataQueries = true;
     }
@@ -184,6 +194,7 @@ export function parseCollections(doc: OgcApiDocument): Array<{
 ### 3.2 Add CSAPI Detection
 
 **Add to Return Type:**
+
 ```typescript
 {
   name: string;
@@ -197,6 +208,7 @@ export function parseCollections(doc: OgcApiDocument): Array<{
 ```
 
 **Add Detection Logic (~9 lines):**
+
 ```typescript
 export function parseCollections(doc: OgcApiDocument): Array<{
   name: string;
@@ -211,9 +223,9 @@ export function parseCollections(doc: OgcApiDocument): Array<{
     const result: {...} = {
       name: collection.id as string,
     };
-    
+
     // ... existing checks ...
-    
+
     // CSAPI check - Part 1 Feature resources (featureType)
     if (
       collection.featureType &&
@@ -222,7 +234,7 @@ export function parseCollections(doc: OgcApiDocument): Array<{
     ) {
       result.hasConnectedSystems = true;
     }
-    
+
     // CSAPI check - Part 1 non-Feature + Part 2 resources (itemType)
     if (
       collection.itemType &&
@@ -246,17 +258,20 @@ export function parseCollections(doc: OgcApiDocument): Array<{
 ### 3.3 Rationale for Detection Logic
 
 **Why check BOTH `featureType` AND `itemType`:**
+
 - Part 1 uses `featureType` for GeoJSON Feature resources (System, Deployment, Procedure, Sample)
 - Part 1 uses `itemType` for non-Feature resources (Property)
 - Part 2 uses `itemType` for all resources (DataStream, Observation, etc.)
 - Must check both to catch all CSAPI collections
 
 **Why `.includes('sosa')`:**
+
 - Handles both short form (`sosa:System`) and full URI (`http://www.w3.org/ns/sosa/System`)
 - Future-proof for variations in URI format
 - All Part 1 resources use SOSA namespace
 
 **Why explicit Part 2 checks:**
+
 - Part 2 may use shorter names without full URIs
 - More specific matching prevents false positives
 - Matches spec requirements exactly
@@ -272,6 +287,7 @@ get csapiCollections(): Promise<string[]>
 ```
 
 **Characteristics:**
+
 - Public getter on OgcApiEndpoint class
 - Returns Promise<string[]> (array of collection IDs)
 - No parameters (reads from internal data and conformance)
@@ -297,25 +313,31 @@ get csapiCollections(): Promise<string[]> {
 ### 4.3 Implementation Breakdown
 
 **Line 1:** Promise.all combines collection data with conformance check
+
 - `this.data` - Promise resolving to OgcApiDocument with collections
 - `this.hasConnectedSystems` - Promise resolving to boolean (from Component 2)
 
 **Line 2:** Return empty collections if no CSAPI conformance
+
 - If `hasCSAPI` is false, return empty document to skip processing
 - If `hasCSAPI` is true, proceed with actual data
 
 **Line 3:** Parse collections to extract metadata
+
 - Calls `parseCollections()` which adds `hasConnectedSystems` flag
 
 **Line 4:** Filter to only collections with CSAPI resources
+
 - Keep only collections where `hasConnectedSystems === true`
 
 **Line 5:** Map to array of collection IDs
+
 - Extract just the `name` property (collection ID string)
 
 ### 4.4 Comparison with EDR Getter
 
 **EDR Implementation (Reference):**
+
 ```typescript
 get edrCollections(): Promise<string[]> {
   return Promise.all([this.data, this.hasEnvironmentalDataRetrieval])
@@ -327,6 +349,7 @@ get edrCollections(): Promise<string[]> {
 ```
 
 **Differences:**
+
 - **CSAPI**: Checks `hasConnectedSystems`, filters by `c.hasConnectedSystems`
 - **EDR**: Checks `hasEnvironmentalDataRetrieval`, filters by `c.hasDataQueries`
 - **Pattern**: Identical - just different property names
@@ -342,6 +365,7 @@ get edrCollections(): Promise<string[]> {
 **Lines Added:** ~9 lines (two if-blocks for featureType and itemType)
 
 **Integration Steps:**
+
 1. Add `hasConnectedSystems?: boolean` to return type annotation
 2. Add featureType check after existing itemType checks
 3. Add itemType CSAPI check after featureType check
@@ -354,6 +378,7 @@ get edrCollections(): Promise<string[]> {
 **Lines Added:** ~6 lines (getter with JSDoc)
 
 **Integration Steps:**
+
 1. Add `csapiCollections` getter after `edrCollections`
 2. Add JSDoc comment following existing pattern
 3. Use Promise.all pattern with `hasConnectedSystems` from Component 2
@@ -364,6 +389,7 @@ get edrCollections(): Promise<string[]> {
 **Important:** No changes to `OgcApiCollectionInfo` type definition required.
 
 **Why:**
+
 - `itemType` is already optional (`itemType?: 'feature' | 'record'`)
 - TypeScript union types don't prevent additional string values at runtime
 - Collections API may return any string in `itemType`/`featureType` fields
@@ -379,6 +405,7 @@ get edrCollections(): Promise<string[]> {
 **Scenario:** `/collections` endpoint returns no collections
 
 **Handling:**
+
 - `parseCollections()` receives empty array from `doc.collections`
 - Returns empty array `[]`
 - Getter filters empty array → returns `[]`
@@ -389,6 +416,7 @@ get edrCollections(): Promise<string[]> {
 **Scenario:** `hasConnectedSystems` resolves to `false`
 
 **Handling:**
+
 - Getter line 2: `hasCSAPI ? data : { collections: [] }`
 - Returns empty collections document
 - `parseCollections()` processes empty array
@@ -399,6 +427,7 @@ get edrCollections(): Promise<string[]> {
 **Scenario:** Collection has no `itemType` or `featureType` property
 
 **Handling:**
+
 - Detection checks: `if (collection.featureType && ...)`
 - Undefined values skip the check (no error)
 - `hasConnectedSystems` not set on result object
@@ -410,6 +439,7 @@ get edrCollections(): Promise<string[]> {
 **Scenario:** `itemType` or `featureType` is not a string
 
 **Handling:**
+
 - Type guard: `typeof collection.featureType === 'string'`
 - Non-string values skip the check
 - **Result:** Collection not included in results
@@ -419,6 +449,7 @@ get edrCollections(): Promise<string[]> {
 **Scenario:** `/collections` endpoint returns 404 or error
 
 **Handling:**
+
 - Handled upstream by `this.data` Promise
 - `OgcApiEndpoint` class manages HTTP errors
 - Getter receives rejected Promise, error propagates
@@ -427,6 +458,7 @@ get edrCollections(): Promise<string[]> {
 ### 6.6 Conservative Approach
 
 **Philosophy:**
+
 - Never assume CSAPI support - require explicit indicators
 - Empty array is safer than false positives
 - Let upstream HTTP handling deal with network errors
@@ -444,6 +476,7 @@ get edrCollections(): Promise<string[]> {
 **Test Cases:**
 
 **Test 1: Part 1 System Collection (featureType)**
+
 ```typescript
 test('parseCollections identifies Part 1 System collections', () => {
   const doc = {
@@ -453,10 +486,10 @@ test('parseCollections identifies Part 1 System collections', () => {
         featureType: 'http://www.w3.org/ns/sosa/System',
         links: [],
         // ... other required properties
-      }
-    ]
+      },
+    ],
   };
-  
+
   const result = parseCollections(doc);
   expect(result[0].hasConnectedSystems).toBe(true);
   expect(result[0].name).toBe('weather-systems');
@@ -464,6 +497,7 @@ test('parseCollections identifies Part 1 System collections', () => {
 ```
 
 **Test 2: Part 1 Property Collection (itemType)**
+
 ```typescript
 test('parseCollections identifies Part 1 Property collections', () => {
   const doc = {
@@ -472,16 +506,17 @@ test('parseCollections identifies Part 1 Property collections', () => {
         id: 'observableproperties',
         itemType: 'http://www.w3.org/ns/sosa/Property',
         links: [],
-      }
-    ]
+      },
+    ],
   };
-  
+
   const result = parseCollections(doc);
   expect(result[0].hasConnectedSystems).toBe(true);
 });
 ```
 
 **Test 3: Part 2 DataStream Collection**
+
 ```typescript
 test('parseCollections identifies Part 2 DataStream collections', () => {
   const doc = {
@@ -490,16 +525,17 @@ test('parseCollections identifies Part 2 DataStream collections', () => {
         id: 'sensor-datastreams',
         itemType: 'DataStream',
         links: [],
-      }
-    ]
+      },
+    ],
   };
-  
+
   const result = parseCollections(doc);
   expect(result[0].hasConnectedSystems).toBe(true);
 });
 ```
 
 **Test 4: Non-CSAPI Collection**
+
 ```typescript
 test('parseCollections does not mark non-CSAPI collections', () => {
   const doc = {
@@ -508,10 +544,10 @@ test('parseCollections does not mark non-CSAPI collections', () => {
         id: 'buildings',
         itemType: 'feature',
         links: [],
-      }
-    ]
+      },
+    ],
   };
-  
+
   const result = parseCollections(doc);
   expect(result[0].hasConnectedSystems).toBeUndefined();
   expect(result[0].hasFeatures).toBe(true);
@@ -519,6 +555,7 @@ test('parseCollections does not mark non-CSAPI collections', () => {
 ```
 
 **Test 5: Empty Collections**
+
 ```typescript
 test('parseCollections handles empty collections array', () => {
   const doc = { collections: [] };
@@ -528,6 +565,7 @@ test('parseCollections handles empty collections array', () => {
 ```
 
 **Test 6: Missing Properties**
+
 ```typescript
 test('parseCollections handles missing itemType/featureType', () => {
   const doc = {
@@ -536,10 +574,10 @@ test('parseCollections handles missing itemType/featureType', () => {
         id: 'unknown',
         links: [],
         // no itemType or featureType
-      }
-    ]
+      },
+    ],
   };
-  
+
   const result = parseCollections(doc);
   expect(result[0].hasConnectedSystems).toBeUndefined();
 });
@@ -551,40 +589,43 @@ test('parseCollections handles missing itemType/featureType', () => {
 **Property Under Test:** `csapiCollections` getter
 
 **Test 1: Returns CSAPI Collections When Conformance True**
+
 ```typescript
 describe('#csapiCollections', () => {
   test('returns CSAPI collection IDs when server supports CSAPI', async () => {
     const endpoint = new OgcApiEndpoint('https://api.example.org');
     // Mock hasConnectedSystems = true
     // Mock collections with CSAPI types
-    
+
     await expect(endpoint.csapiCollections).resolves.toEqual([
       'weather-systems',
-      'sensor-datastreams'
+      'sensor-datastreams',
     ]);
   });
 });
 ```
 
 **Test 2: Returns Empty Array When No Conformance**
+
 ```typescript
 test('returns empty array when server lacks CSAPI conformance', async () => {
   const endpoint = new OgcApiEndpoint('https://api.example.org');
   // Mock hasConnectedSystems = false
-  
+
   await expect(endpoint.csapiCollections).resolves.toEqual([]);
 });
 ```
 
 **Test 3: Filters Non-CSAPI Collections**
+
 ```typescript
 test('filters out non-CSAPI collections', async () => {
   const endpoint = new OgcApiEndpoint('https://api.example.org');
   // Mock hasConnectedSystems = true
   // Mock mixed collections (CSAPI + non-CSAPI)
-  
+
   await expect(endpoint.csapiCollections).resolves.toEqual([
-    'weather-systems' // only CSAPI collection
+    'weather-systems', // only CSAPI collection
   ]);
 });
 ```
@@ -592,12 +633,14 @@ test('filters out non-CSAPI collections', async () => {
 ### 7.3 Fixture Requirements
 
 **Create Test Fixtures:**
+
 - `fixtures/ogc-api/csapi-collections.json` - Sample collections with CSAPI types
 - Include Part 1 System, Deployment examples
 - Include Part 2 DataStream, Observation examples
 - Include mixed CSAPI + non-CSAPI collections
 
 **Example Fixture Structure:**
+
 ```json
 {
   "collections": [
@@ -632,23 +675,27 @@ test('filters out non-CSAPI collections', async () => {
 **File:** `src/ogc-api/info.ts`
 
 1. **Add Return Type Property** (5 min)
+
    - [ ] Locate return type annotation (~line 229)
    - [ ] Add `hasConnectedSystems?: boolean` to return type object
    - [ ] Verify TypeScript compiles
 
 2. **Add featureType Check** (30 min)
+
    - [ ] Locate insertion point (~line 260, after itemType checks)
    - [ ] Add featureType detection if-block (~4 lines)
    - [ ] Verify logic: check exists, is string, includes 'sosa'
    - [ ] Set `result.hasConnectedSystems = true`
 
 3. **Add itemType CSAPI Check** (30 min)
+
    - [ ] Add second if-block after featureType check (~5 lines)
    - [ ] Verify logic: check exists, is string
    - [ ] Check for sosa OR Part 2 type names
    - [ ] Set `result.hasConnectedSystems = true`
 
 4. **Run Linting** (5 min)
+
    - [ ] Run `npm run lint`
    - [ ] Fix any formatting issues
    - [ ] Verify no TypeScript errors
@@ -664,18 +711,21 @@ test('filters out non-CSAPI collections', async () => {
 **File:** `src/ogc-api/endpoint.ts`
 
 1. **Add Getter** (20 min)
+
    - [ ] Locate insertion point (~line 210, after `edrCollections`)
    - [ ] Add JSDoc comment
    - [ ] Add getter signature
    - [ ] Implement Promise.all pattern (copy from EDR, modify names)
 
 2. **Verify Integration** (20 min)
+
    - [ ] Confirm `hasConnectedSystems` imported/accessible (from Component 2)
    - [ ] Confirm `parseCollections` imported (already should be)
    - [ ] Run TypeScript compiler
    - [ ] Fix any type errors
 
 3. **Run Linting** (5 min)
+
    - [ ] Run `npm run lint`
    - [ ] Fix formatting
 
@@ -690,6 +740,7 @@ test('filters out non-CSAPI collections', async () => {
 **File:** `src/ogc-api/info.spec.ts`
 
 1. **Write Test Cases** (1.5 hours)
+
    - [ ] Test 1: Part 1 System collection (featureType)
    - [ ] Test 2: Part 1 Property collection (itemType with sosa)
    - [ ] Test 3: Part 2 DataStream collection (itemType without sosa)
@@ -707,11 +758,13 @@ test('filters out non-CSAPI collections', async () => {
 **File:** `src/ogc-api/endpoint.spec.ts`
 
 1. **Create Test Fixtures** (30 min)
+
    - [ ] Create `fixtures/ogc-api/csapi-collections.json`
    - [ ] Add CSAPI collections (Part 1 and Part 2)
    - [ ] Add non-CSAPI collections (for filtering tests)
 
 2. **Write Test Cases** (1 hour)
+
    - [ ] Test 1: Returns CSAPI collections when conformance true
    - [ ] Test 2: Returns empty array when no conformance
    - [ ] Test 3: Filters out non-CSAPI collections
@@ -725,11 +778,13 @@ test('filters out non-CSAPI collections', async () => {
 ### Phase 5: Validation & Documentation (1 hour)
 
 1. **Run Full Test Suite** (20 min)
+
    - [ ] Run `npm test`
    - [ ] Verify no regressions in existing tests
    - [ ] Check code coverage (should be >80%)
 
 2. **Verify Integration** (20 min)
+
    - [ ] Test Component 2 integration (conformance check)
    - [ ] Test with real CSAPI endpoint (if available)
    - [ ] Verify getter works end-to-end
@@ -756,11 +811,13 @@ test('filters out non-CSAPI collections', async () => {
 ### 9.1 Depends On
 
 **Component 2 (Conformance Reader):**
+
 - Provides `hasConnectedSystems` getter
 - Used in `csapiCollections` getter to check CSAPI support
 - Without conformance check, would return all collections
 
 **Existing Infrastructure:**
+
 - `parseCollections()` function exists - we extend it
 - `this.data` property exists - provides collections data
 - Pattern established by EDR (`edrCollections` getter)
@@ -768,10 +825,12 @@ test('filters out non-CSAPI collections', async () => {
 ### 9.2 Required By
 
 **Component 1 (OgcApiEndpoint Integration):**
+
 - Factory method may use `csapiCollections` to validate collection ID
 - Optional: Check if collection ID is in `csapiCollections` before creating QueryBuilder
 
 **Component 4 (CSAPIQueryBuilder):**
+
 - Developers use `csapiCollections` to discover available collections
 - Essential for user experience - shows what's available
 
@@ -801,67 +860,79 @@ const url = csapi.getSystems();
 ### Decision 1: Check Both itemType AND featureType
 
 **Rationale:**
+
 - Part 1 Feature resources use `featureType` (System, Deployment, Procedure, Sample)
 - Part 1 non-Feature resources use `itemType` (Property)
 - Part 2 resources use `itemType` (DataStream, Observation, etc.)
 - Must check both properties to catch all CSAPI collections
 
 **Alternative Considered:** Only check `itemType`
+
 - **Rejected:** Would miss Part 1 Feature resources (System, Deployment, etc.)
 
 ### Decision 2: Use .includes('sosa') for featureType
 
 **Rationale:**
+
 - Handles both short form (`sosa:System`) and full URI (`http://www.w3.org/ns/sosa/System`)
 - Future-proof for URI format variations
 - All Part 1 Feature resources use SOSA namespace
 - Simple and reliable
 
 **Alternative Considered:** Exact string matching
+
 - **Rejected:** Too fragile, requires knowing exact URI format
 
 ### Decision 3: Explicit Part 2 Type Names
 
 **Rationale:**
+
 - Part 2 uses short names without full URIs
 - `DataStream`, `Observation`, `ControlStream`, etc.
 - More specific prevents false positives
 - Matches spec requirements exactly
 
 **Alternative Considered:** Pattern matching or includes()
+
 - **Rejected:** Could match unintended strings
 
 ### Decision 4: Extend parseCollections Instead of New Function
 
 **Rationale:**
+
 - Follows established pattern (Records, Features, Tiles, EDR all use same function)
 - Single pass through collections array (efficient)
 - Consistent with library architecture
 - No new function exports needed
 
 **Alternative Considered:** Create separate `parseCSAPICollections()` function
+
 - **Rejected:** Violates library patterns, less efficient
 
 ### Decision 5: Return Empty Array on No Conformance
 
 **Rationale:**
+
 - Conservative approach - don't process collections if no CSAPI support
 - Matches EDR pattern exactly
 - Prevents wasted work parsing non-CSAPI collections
 - Clear signal to caller (empty = none available)
 
 **Alternative Considered:** Process all collections anyway
+
 - **Rejected:** Wastes resources, could return false positives
 
 ### Decision 6: No Type Changes to OgcApiCollectionInfo
 
 **Rationale:**
+
 - `itemType` already optional, accepts any string at runtime
 - Changing type would affect existing code
 - Detection logic works with runtime values
 - TypeScript types don't prevent additional string values
 
 **Alternative Considered:** Add `itemType?: string` or union type
+
 - **Rejected:** Breaking change, unnecessary complexity
 
 ---
@@ -873,6 +944,7 @@ All implementation work for Component 3 must adhere to the project's [Developmen
 ### Key Standards for This Component
 
 **Development Workflow:**
+
 1. Write function signatures before implementation (done in this analysis)
 2. Add comprehensive JSDoc comments with parameters, return types
 3. Implement functionality following EDR pattern exactly
@@ -880,14 +952,16 @@ All implementation work for Component 3 must adhere to the project's [Developmen
 5. Document edge cases and validation rules as discovered
 
 **Code Quality Requirements:**
+
 - TypeScript strict mode enabled
 - 100% public API JSDoc coverage (add JSDoc to `csapiCollections` getter)
-- >80% test coverage (statement and branch)
+- > 80% test coverage (statement and branch)
 - Lint-clean code (ESLint configuration)
 - No magic strings (CSAPI type names should be constants if reused)
 - Consistent error handling patterns (return empty array, never throw from filter logic)
 
 **Documentation Requirements:**
+
 - Clear, concise method descriptions
 - Parameter descriptions with types and constraints
 - Return type documentation
@@ -895,6 +969,7 @@ All implementation work for Component 3 must adhere to the project's [Developmen
 - Links to relevant CSAPI specification sections
 
 **Testing Requirements:**
+
 - Test positive cases (Part 1 System, Part 2 DataStream, etc.)
 - Test negative cases (non-CSAPI collections, empty arrays)
 - Test edge cases (undefined, null, malformed properties)

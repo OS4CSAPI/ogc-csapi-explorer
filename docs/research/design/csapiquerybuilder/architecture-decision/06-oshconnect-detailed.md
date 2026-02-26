@@ -11,11 +11,13 @@
 ## Research Objectives
 
 1. **Pattern Understanding:**
+
    - Document builder pattern implementation
    - Understand stateful vs stateless approach
    - Analyze query construction methods
 
 2. **Comparison Analysis:**
+
    - How does builder pattern differ from QueryBuilder?
    - Stateful vs stateless trade-offs
    - Applicability to ogc-client patterns
@@ -42,11 +44,13 @@
 ## Expected Findings
 
 **If uses multiple builders:**
+
 - Precedent for separate-class approach
 - Shows how to organize 9 resource types
 - May inform CSAPI structure
 
 **If uses single builder:**
+
 - Another example of consolidation
 - Validates single-class approach
 - Less relevant for decision

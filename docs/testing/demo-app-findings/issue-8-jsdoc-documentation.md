@@ -44,17 +44,17 @@ This report does not expand scope beyond what Issue #8 describes. No behavioral 
 
 Issue #8 proposes enhancing the JSDoc documentation on `extractCSAPIFeature()` (L307) and `getCSAPIResourceType()` (L176) to make their Part 1 / GeoJSON-only limitations more explicit. Both functions **already have JSDoc** that partially documents these constraints, but the existing documentation does not explicitly state the Part 1 limitation, the GeoJSON format requirement, or the SensorML incompatibility in terms that would prevent consumer confusion.
 
-| Aspect | Assessment |
-|--------|------------|
-| **Change type** | Documentation-only — JSDoc comment modifications |
-| **Production behavior modified** | None — zero runtime impact |
-| **Existing tests affected** | None — JSDoc changes cannot affect test outcomes |
-| **Risk to library integrity** | **Zero** |
-| **Estimated scope** | ~30–40 lines of JSDoc replacement in `geojson.ts` |
-| **Dependencies** | None — can be implemented independently |
-| **Rename proposal** | **Rejected** — renaming `extractCSAPIFeature()` would be a breaking change (see [Section 8](#8-rename-proposal-assessment)) |
+| Aspect                           | Assessment                                                                                                                  |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Change type**                  | Documentation-only — JSDoc comment modifications                                                                            |
+| **Production behavior modified** | None — zero runtime impact                                                                                                  |
+| **Existing tests affected**      | None — JSDoc changes cannot affect test outcomes                                                                            |
+| **Risk to library integrity**    | **Zero**                                                                                                                    |
+| **Estimated scope**              | ~30–40 lines of JSDoc replacement in `geojson.ts`                                                                           |
+| **Dependencies**                 | None — can be implemented independently                                                                                     |
+| **Rename proposal**              | **Rejected** — renaming `extractCSAPIFeature()` would be a breaking change (see [Section 8](#8-rename-proposal-assessment)) |
 
-**Key finding:** The existing JSDoc already communicates the core constraints through its return type signature (`System | Deployment | Procedure | SamplingFeature`), its `@throws` annotation, and its module-level documentation stating "Supported resource types: System, Deployment, Procedure, SamplingFeature." Issue #8's enhancement makes these implicit constraints explicit — a meaningful improvement for consumer discoverability, but the current documentation is not *incorrect*, only *incomplete*.
+**Key finding:** The existing JSDoc already communicates the core constraints through its return type signature (`System | Deployment | Procedure | SamplingFeature`), its `@throws` annotation, and its module-level documentation stating "Supported resource types: System, Deployment, Procedure, SamplingFeature." Issue #8's enhancement makes these implicit constraints explicit — a meaningful improvement for consumer discoverability, but the current documentation is not _incorrect_, only _incomplete_.
 
 ---
 
@@ -64,15 +64,16 @@ Issue #8 proposes enhancing the JSDoc documentation on `extractCSAPIFeature()` (
 
 Issue #8 corresponds to **Finding F-3** from the [upstream findings document](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md), which identified three scenarios where `extractCSAPIFeature()` limitations cause consumer confusion:
 
-| Scenario | What Happens | Root Cause |
-|----------|-------------|------------|
-| **A. SensorML responses** | Throws "unrecognized or missing featureType" | 52North returns SML format when no `Accept: application/geo+json` header is sent; SML responses lack `properties.featureType` |
-| **B. Part 2 resources** | Throws "unrecognized or missing featureType" | DataStreams, Observations, Control Streams, Commands are flat JSON objects, not GeoJSON Features |
-| **C. Function name ambiguity** | Consumer expects it to handle all CSAPI resources | Name `extractCSAPIFeature` does not indicate Part-1-only scope |
+| Scenario                       | What Happens                                      | Root Cause                                                                                                                    |
+| ------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **A. SensorML responses**      | Throws "unrecognized or missing featureType"      | 52North returns SML format when no `Accept: application/geo+json` header is sent; SML responses lack `properties.featureType` |
+| **B. Part 2 resources**        | Throws "unrecognized or missing featureType"      | DataStreams, Observations, Control Streams, Commands are flat JSON objects, not GeoJSON Features                              |
+| **C. Function name ambiguity** | Consumer expects it to handle all CSAPI resources | Name `extractCSAPIFeature` does not indicate Part-1-only scope                                                                |
 
 ### 3.2 What Issue #8 Proposes
 
 1. **Replace the existing JSDoc on `extractCSAPIFeature()`** with a comprehensive version explicitly documenting:
+
    - Part 1 resource limitation
    - GeoJSON Feature format requirement
    - SensorML response incompatibility
@@ -127,6 +128,7 @@ The file header already states the supported resource types:
 ```
 
 **Assessment:** This JSDoc already:
+
 - ✅ States "GeoJSON Feature" in both the description and `@param`
 - ✅ Explains the SOSA/SensorML vocabulary precedence
 - ✅ Documents the return behavior for unrecognized input (`null`)
@@ -153,6 +155,7 @@ The file header already states the supported resource types:
 ```
 
 **Assessment:** This JSDoc already:
+
 - ✅ States "GeoJSON Feature" explicitly in both description and `@param`
 - ✅ References `getCSAPIResourceType` via `{@link}`
 - ✅ Documents the Postel's Law approach
@@ -165,7 +168,7 @@ The file header already states the supported resource types:
 
 ### 4.4 Key observation: The existing code is already well-documented
 
-The existing JSDoc is **not incorrect** — it accurately describes what the functions do. However, it communicates constraints *implicitly* through type signatures and terminology ("GeoJSON Feature") rather than *explicitly* through warnings and limitation callouts. Issue #8's proposed enhancement converts implicit documentation into explicit documentation, which improves discoverability for consumers who may not be familiar with the Part 1 / Part 2 distinction in the Connected Systems API.
+The existing JSDoc is **not incorrect** — it accurately describes what the functions do. However, it communicates constraints _implicitly_ through type signatures and terminology ("GeoJSON Feature") rather than _explicitly_ through warnings and limitation callouts. Issue #8's proposed enhancement converts implicit documentation into explicit documentation, which improves discoverability for consumers who may not be familiar with the Part 1 / Part 2 distinction in the Connected Systems API.
 
 ---
 
@@ -248,19 +251,20 @@ All 12 linked reference documents from the ogc-csapi-explorer repository were re
 
 ### 6.1 What could go wrong?
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| JSDoc changes affect runtime behavior | **Impossible** | N/A | JSDoc comments are stripped at compile time — they cannot affect execution |
-| JSDoc changes break existing tests | **Impossible** | N/A | Test assertions match function behavior, not comments |
-| New JSDoc is factually incorrect | **Very low** | Low | Proposed JSDoc is consistent with 12 reference documents and verified source code |
-| JSDoc becomes outdated if functions are later extended | **Possible** | Low | Standard documentation maintenance concern — not specific to this change |
-| Consumers misread new warnings as deprecation | **Very low** | Low | Proposed JSDoc uses "Important limitations" framing, not deprecation language |
+| Risk                                                   | Likelihood     | Impact | Mitigation                                                                        |
+| ------------------------------------------------------ | -------------- | ------ | --------------------------------------------------------------------------------- |
+| JSDoc changes affect runtime behavior                  | **Impossible** | N/A    | JSDoc comments are stripped at compile time — they cannot affect execution        |
+| JSDoc changes break existing tests                     | **Impossible** | N/A    | Test assertions match function behavior, not comments                             |
+| New JSDoc is factually incorrect                       | **Very low**   | Low    | Proposed JSDoc is consistent with 12 reference documents and verified source code |
+| JSDoc becomes outdated if functions are later extended | **Possible**   | Low    | Standard documentation maintenance concern — not specific to this change          |
+| Consumers misread new warnings as deprecation          | **Very low**   | Low    | Proposed JSDoc uses "Important limitations" framing, not deprecation language     |
 
 ### 6.2 Risk classification
 
 **This is a ZERO RISK change to library integrity.**
 
 JSDoc documentation modifications are the absolute safest category of code change:
+
 - They **do not** modify any runtime behavior
 - They **do not** change the public API surface
 - They **do not** affect TypeScript compilation
@@ -271,6 +275,7 @@ JSDoc documentation modifications are the absolute safest category of code chang
 ### 6.3 Integrity assessment
 
 The library's integrity is **completely unaffected** by this change. Enhancing JSDoc:
+
 - Improves consumer experience for direct library users
 - Reduces debugging time when consumers encounter the documented limitations
 - Aligns documentation with the 12 reference documents' findings
@@ -282,23 +287,23 @@ The library's integrity is **completely unaffected** by this change. Enhancing J
 
 ### 7.1 What the existing JSDoc already communicates
 
-| Constraint | How Currently Communicated | Sufficient? |
-|-----------|---------------------------|-------------|
-| GeoJSON format required | "raw GeoJSON Feature" (description), "A raw GeoJSON Feature from the server" (`@param`) | Partially — implies GeoJSON but doesn't warn about other formats |
-| Part 1 only | Return type `System \| Deployment \| Procedure \| SamplingFeature` | Partially — TypeScript-literate consumers can infer this; others cannot |
-| Throws on unrecognized input | `@throws {Error} If the feature has an unrecognized or missing featureType` | Yes — this is clearly stated |
-| SensorML incompatibility | Not mentioned | No |
-| Part 2 resources unsupported | Not mentioned | No |
+| Constraint                   | How Currently Communicated                                                              | Sufficient?                                                             |
+| ---------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| GeoJSON format required      | "raw GeoJSON Feature" (description), "A raw GeoJSON Feature from the server" (`@param`) | Partially — implies GeoJSON but doesn't warn about other formats        |
+| Part 1 only                  | Return type `System \| Deployment \| Procedure \| SamplingFeature`                      | Partially — TypeScript-literate consumers can infer this; others cannot |
+| Throws on unrecognized input | `@throws {Error} If the feature has an unrecognized or missing featureType`             | Yes — this is clearly stated                                            |
+| SensorML incompatibility     | Not mentioned                                                                           | No                                                                      |
+| Part 2 resources unsupported | Not mentioned                                                                           | No                                                                      |
 
 ### 7.2 What Issue #8's proposed JSDoc adds
 
-| New Element | Value to Consumers |
-|------------|-------------------|
-| Explicit "Only supports Part 1 resources" warning | High — prevents confusion when Part 2 resources throw |
-| "Requires GeoJSON Feature format" callout | High — prevents SensorML/XML submission attempts |
-| "Throws on unrecognized input" expansion | Medium — explains the "missing featureType" scenario in more detail |
-| `@example` blocks with success/failure cases | High — provides copy-pasteable patterns and anti-patterns |
-| `@see` reference to OGC 23-002r1 Part 1 | Low — useful for spec-aware consumers |
+| New Element                                       | Value to Consumers                                                  |
+| ------------------------------------------------- | ------------------------------------------------------------------- |
+| Explicit "Only supports Part 1 resources" warning | High — prevents confusion when Part 2 resources throw               |
+| "Requires GeoJSON Feature format" callout         | High — prevents SensorML/XML submission attempts                    |
+| "Throws on unrecognized input" expansion          | Medium — explains the "missing featureType" scenario in more detail |
+| `@example` blocks with success/failure cases      | High — provides copy-pasteable patterns and anti-patterns           |
+| `@see` reference to OGC 23-002r1 Part 1           | Low — useful for spec-aware consumers                               |
 
 ### 7.3 Assessment
 
@@ -316,13 +321,13 @@ Issue #8 includes an optional suggestion:
 
 ### 8.1 Assessment: **Reject the rename**
 
-| Concern | Analysis |
-|---------|----------|
-| **Breaking change** | Renaming a public exported function is a breaking change for all consumers. Any code calling `extractCSAPIFeature()` would need to be updated. |
+| Concern                        | Analysis                                                                                                                                                                                                                         |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Breaking change**            | Renaming a public exported function is a breaking change for all consumers. Any code calling `extractCSAPIFeature()` would need to be updated.                                                                                   |
 | **AI Operational Constraints** | "Do not refactor for style, clarity, or 'best practice' unless explicitly requested" — renaming for clarity is a style refactor. The issue marks it as "optional, non-breaking alternative" but it is in fact a breaking change. |
-| **Scope expansion** | Issue #8 is labeled `documentation` only. A rename would be a code change that modifies the public API surface. |
-| **Minimal diffs** | A rename would touch import statements across multiple files and potentially affect downstream consumers. JSDoc enhancement achieves the same clarity goal with zero code impact. |
-| **Existing precedent** | The function lives in a file named `geojson.ts` within a `formats/` directory — the file path already communicates the GeoJSON context. |
+| **Scope expansion**            | Issue #8 is labeled `documentation` only. A rename would be a code change that modifies the public API surface.                                                                                                                  |
+| **Minimal diffs**              | A rename would touch import statements across multiple files and potentially affect downstream consumers. JSDoc enhancement achieves the same clarity goal with zero code impact.                                                |
+| **Existing precedent**         | The function lives in a file named `geojson.ts` within a `formats/` directory — the file path already communicates the GeoJSON context.                                                                                          |
 
 ### 8.2 Recommendation
 
@@ -372,34 +377,34 @@ Enhance the current JSDoc at L165–L175 with:
 
 ## Appendix A: Authority Precedence Analysis
 
-| Authority Level | Source | Says About This Documentation | Weight |
-|----------------|--------|------------------------------|--------|
-| 1 (Highest) | OGC 23-001r1 Part 1 | Defines Part 1 resources as GeoJSON Features (Systems, Deployments, Procedures, SamplingFeatures) — supports the limitation being documented | Definitive |
-| 2 | OGC 23-002r1 Part 2 | Defines Part 2 resources as non-GeoJSON (DataStreams, Observations, etc.) — confirms why `extractCSAPIFeature` does not support them | Definitive |
-| 3 | AI Collaboration Agreement | Documentation changes strengthen contribution quality | Supportive |
-| 4 | AI Operational Constraints | "Prefer minimal diffs" — JSDoc replacement is minimal; "Do not refactor unless requested" — Issue #8 explicitly requests this | Authorizing |
-| 5 | Issue #8 | Proposes specific JSDoc text that is factually correct | Scoping |
-| 6 | Existing source code | Functions already work correctly; only documentation needs enhancement | Precedent |
-| 7 | 12 reference documents | 6+ documents independently confirm the Part 1 / GeoJSON limitation | Evidence |
+| Authority Level | Source                     | Says About This Documentation                                                                                                                | Weight      |
+| --------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| 1 (Highest)     | OGC 23-001r1 Part 1        | Defines Part 1 resources as GeoJSON Features (Systems, Deployments, Procedures, SamplingFeatures) — supports the limitation being documented | Definitive  |
+| 2               | OGC 23-002r1 Part 2        | Defines Part 2 resources as non-GeoJSON (DataStreams, Observations, etc.) — confirms why `extractCSAPIFeature` does not support them         | Definitive  |
+| 3               | AI Collaboration Agreement | Documentation changes strengthen contribution quality                                                                                        | Supportive  |
+| 4               | AI Operational Constraints | "Prefer minimal diffs" — JSDoc replacement is minimal; "Do not refactor unless requested" — Issue #8 explicitly requests this                | Authorizing |
+| 5               | Issue #8                   | Proposes specific JSDoc text that is factually correct                                                                                       | Scoping     |
+| 6               | Existing source code       | Functions already work correctly; only documentation needs enhancement                                                                       | Precedent   |
+| 7               | 12 reference documents     | 6+ documents independently confirm the Part 1 / GeoJSON limitation                                                                           | Evidence    |
 
 ---
 
 ## Appendix B: Cross-Reference Matrix
 
-| Document | Location | Relevance to Issue #8 |
-|----------|----------|-----------------------|
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | ogc-csapi-explorer | F-3 — the finding that Issue #8 addresses; 3 failure scenarios documented |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | ogc-csapi-explorer | Maps F-3 → Issue #8; Severity High, Risk Low, Priority 4 (Medium) |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | ogc-csapi-explorer | Finding #9: extractCSAPIFeature GeoJSON-only; Finding #10: union return type friction |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | ogc-csapi-explorer | Finding #6: extractCSAPIFeature fails on SensorML; recommends geo+json Accept header |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | ogc-csapi-explorer | Finding #5: Part 1 only; Priority 4: document parser limitations |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Validates "specification-scoped" design; Part 1 limitation is intentional |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Direct function usage exposed the documentation gap |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | ogc-csapi-explorer | S-8 Content-Type context; not directly related to Issue #8 |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | ogc-csapi-explorer | Import graph confirms geojson.ts has type-only imports; documentation changes safe |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | ogc-csapi-explorer | Lists extractCSAPIFeature among source imports; confirms clean source state |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | ogc-csapi-explorer | F-13 JSDoc accuracy precedent; separate concern from Issue #8 |
-| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | ogc-client-CSAPI_2 | Authority precedence, no scope expansion, minimal diffs, explicitly requested change |
+| Document                                                                                                                                                       | Location           | Relevance to Issue #8                                                                 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------- |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | ogc-csapi-explorer | F-3 — the finding that Issue #8 addresses; 3 failure scenarios documented             |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | ogc-csapi-explorer | Maps F-3 → Issue #8; Severity High, Risk Low, Priority 4 (Medium)                     |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                       | ogc-csapi-explorer | Finding #9: extractCSAPIFeature GeoJSON-only; Finding #10: union return type friction |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | ogc-csapi-explorer | Finding #6: extractCSAPIFeature fails on SensorML; recommends geo+json Accept header  |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | ogc-csapi-explorer | Finding #5: Part 1 only; Priority 4: document parser limitations                      |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Validates "specification-scoped" design; Part 1 limitation is intentional             |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Direct function usage exposed the documentation gap                                   |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | ogc-csapi-explorer | S-8 Content-Type context; not directly related to Issue #8                            |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | ogc-csapi-explorer | Import graph confirms geojson.ts has type-only imports; documentation changes safe    |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | ogc-csapi-explorer | Lists extractCSAPIFeature among source imports; confirms clean source state           |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | ogc-csapi-explorer | F-13 JSDoc accuracy precedent; separate concern from Issue #8                         |
+| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)                        | ogc-client-CSAPI_2 | Authority precedence, no scope expansion, minimal diffs, explicitly requested change  |
 
 ---
 

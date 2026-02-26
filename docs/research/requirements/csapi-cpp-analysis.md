@@ -9,6 +9,7 @@
 ## Executive Summary
 
 **CRITICAL FINDING:** The ConnectedSystemsAPI-CPP repository is effectively a **skeleton project with no meaningful implementation**. The repository contains only:
+
 - Mozilla Public License 2.0 (LICENSE file)
 - 2-line README: "ConnectedSystemsAPI-CPP / Connected Systems API for C++"
 - Single header file (framework.h) with only Windows boilerplate (`#pragma once` and `WIN32_LEAN_AND_MEAN`)
@@ -20,6 +21,7 @@
 **Relevance to TypeScript Design:** Minimal - Serves only as negative example
 
 This analysis instead provides:
+
 1. Documentation of repository limitations
 2. Theoretical C++ vs TypeScript comparison for CSAPI clients
 3. Recommendations based on what C++ **should** avoid
@@ -47,12 +49,15 @@ This analysis instead provides:
 The repository contains exactly **3 files**:
 
 **File 1: README.md**
+
 ```markdown
 # ConnectedSystemsAPI-CPP
+
 Connected Systems API for C++
 ```
 
 **File 2: framework.h**
+
 ```cpp
 // header.h : include file for standard system include files,
 // or project specific include files
@@ -64,11 +69,13 @@ Connected Systems API for C++
 ```
 
 **File 3: LICENSE**
+
 - 373 lines of Mozilla Public License 2.0 (standard boilerplate)
 
 ### 1.2 What's Missing
 
 **No CSAPI Implementation:**
+
 - ❌ No class definitions for resources (System, DataStream, Observation, etc.)
 - ❌ No HTTP client code
 - ❌ No URL builders
@@ -96,10 +103,12 @@ Connected Systems API for C++
 **Finding:** **N/A** - No architecture exists.
 
 **Observation:** The repository contains no implementation code to analyze architectural patterns. The single header file (framework.h) contains only preprocessor directives:
+
 - `#pragma once` - Header guard
 - `#define WIN32_LEAN_AND_MEAN` - Windows optimization macro
 
 **Expected C++ Patterns (Not Present):**
+
 - Class hierarchies for CSAPI resources
 - Factory patterns for resource creation
 - Builder patterns for query construction
@@ -115,6 +124,7 @@ Connected Systems API for C++
 **Finding:** **N/A** - No memory management code present.
 
 **Observation:** No evidence of:
+
 - RAII implementations
 - Smart pointers (`std::unique_ptr`, `std::shared_ptr`, `std::weak_ptr`)
 - Manual allocation/deallocation (`new`/`delete`)
@@ -129,22 +139,23 @@ class System {
 private:
     std::string id_;
     std::unique_ptr<DataStreamCollection> datastreams_;  // Ownership
-    
+
 public:
     System(std::string id) : id_(std::move(id)) {}  // Move semantics
-    
+
     // RAII: Destructor automatically cleans up
     ~System() = default;
 };
 ```
 
 **TypeScript Equivalent:**
+
 ```typescript
 class System {
-  private datastreams?: DataStreamCollection;  // Garbage collected
-  
+  private datastreams?: DataStreamCollection; // Garbage collected
+
   constructor(public readonly id: string) {}
-  
+
   // No explicit destructor needed - GC handles cleanup
 }
 ```
@@ -159,21 +170,22 @@ class System {
 
 **Resource Implementation Status:**
 
-| Resource | Status | Code Present |
-|----------|--------|--------------|
-| Systems | ❌ Not implemented | No |
-| Procedures | ❌ Not implemented | No |
-| Deployments | ❌ Not implemented | No |
-| SamplingFeatures | ❌ Not implemented | No |
-| Properties | ❌ Not implemented | No |
-| DataStreams | ❌ Not implemented | No |
-| Observations | ❌ Not implemented | No |
-| ControlStreams | ❌ Not implemented | No |
-| Commands | ❌ Not implemented | No |
-| SystemEvents | ❌ Not implemented | No |
-| SystemHistory | ❌ Not implemented | No |
+| Resource         | Status             | Code Present |
+| ---------------- | ------------------ | ------------ |
+| Systems          | ❌ Not implemented | No           |
+| Procedures       | ❌ Not implemented | No           |
+| Deployments      | ❌ Not implemented | No           |
+| SamplingFeatures | ❌ Not implemented | No           |
+| Properties       | ❌ Not implemented | No           |
+| DataStreams      | ❌ Not implemented | No           |
+| Observations     | ❌ Not implemented | No           |
+| ControlStreams   | ❌ Not implemented | No           |
+| Commands         | ❌ Not implemented | No           |
+| SystemEvents     | ❌ Not implemented | No           |
+| SystemHistory    | ❌ Not implemented | No           |
 
 **CSAPI Specification Coverage:**
+
 - Part 1 (Core): 0% implemented
 - Part 2 (Control): 0% implemented
 
@@ -206,44 +218,42 @@ class CSAPIClient {
 private:
     std::unique_ptr<HTTPClient> http_;
     URLBuilder url_builder_;
-    
+
 public:
     System getSystem(std::string_view id);
 };
 ```
 
 **TypeScript Equivalent (Recommended):**
+
 ```typescript
 class URLBuilder {
   constructor(private baseUrl: string) {}
-  
+
   addPath(path: string): this {
     // Implementation
     return this;
   }
-  
+
   addQuery(key: string, value: string): this {
     // Implementation
     return this;
   }
-  
+
   build(): URL {
     return new URL(/* ... */);
   }
 }
 
 class CSAPIClient {
-  constructor(
-    private baseUrl: string,
-    private http: HttpClient
-  ) {}
-  
+  constructor(private baseUrl: string, private http: HttpClient) {}
+
   async getSystem(id: string): Promise<System> {
     const url = new URLBuilder(this.baseUrl)
       .addPath('systems')
       .addPath(id)
       .build();
-    
+
     return this.http.get<System>(url);
   }
 }
@@ -258,6 +268,7 @@ class CSAPIClient {
 **Finding:** **N/A** - No format handling code.
 
 **Missing Components:**
+
 - JSON parsing library integration (e.g., nlohmann/json, RapidJSON, simdjson)
 - GeoJSON support
 - SensorML/SWE Common parsing
@@ -279,7 +290,7 @@ class System {
             j.value("description", std::string{})
         };
     }
-    
+
     json to_json() const {
         return json{
             {"id", id_},
@@ -291,13 +302,14 @@ class System {
 ```
 
 **TypeScript Equivalent:**
+
 ```typescript
 import { z } from 'zod';
 
 const SystemSchema = z.object({
   id: z.string(),
   name: z.string(),
-  description: z.string().optional()
+  description: z.string().optional(),
 });
 
 type System = z.infer<typeof SystemSchema>;
@@ -326,7 +338,7 @@ class Resource {
 private:
     std::string id_;
     std::optional<T> data_;
-    
+
 public:
     const T& data() const {
         if (!data_.has_value()) {
@@ -347,12 +359,13 @@ DataStreamData ds_data = sys.data();  // ✅ Type-safe
 ```
 
 **TypeScript Equivalent:**
+
 ```typescript
 class Resource<T> {
   private data?: T;
-  
+
   constructor(private id: string) {}
-  
+
   getData(): T {
     if (!this.data) {
       throw new Error('Resource not loaded');
@@ -363,7 +376,7 @@ class Resource<T> {
 
 // Type-safe usage
 const sys: Resource<System> = await client.getSystem('sys123');
-const sysData: System = sys.getData();  // ✅ Type-safe
+const sysData: System = sys.getData(); // ✅ Type-safe
 ```
 
 **Key Insight:** Both C++ and TypeScript provide compile-time type safety, but TypeScript's syntax is more concise and doesn't require manual template instantiation.
@@ -377,12 +390,14 @@ const sysData: System = sys.getData();  // ✅ Type-safe
 **Common C++ Naming Conventions (Not Observed):**
 
 1. **snake_case** (Standard Library style):
+
    ```cpp
    system.get_name();
    client.fetch_datastreams();
    ```
 
 2. **camelCase** (Modern C++ style):
+
    ```cpp
    system.getName();
    client.fetchDatastreams();
@@ -395,14 +410,15 @@ const sysData: System = sys.getData();  // ✅ Type-safe
    ```
 
 **TypeScript Convention (Recommended):**
+
 ```typescript
 // camelCase for methods (JavaScript standard)
 system.getName();
 client.fetchDatastreams();
 
 // PascalCase for classes/interfaces
-class System { }
-interface DataStream { }
+class System {}
+interface DataStream {}
 ```
 
 ### 2.8 Resource Coverage
@@ -426,7 +442,7 @@ See Section 2.3 for complete resource list.
 class ObservationStream {
 public:
     using CallbackFn = std::function<void(const Observation&)>;
-    
+
     void subscribe(CallbackFn callback) {
         // WebSocket connection
         // Call callback(obs) for each observation
@@ -451,11 +467,16 @@ public:
 ```
 
 **TypeScript Equivalent (Recommended):**
+
 ```typescript
 // Async iterator pattern
-async function* streamObservations(datastreamId: string): AsyncIterable<Observation> {
-  const ws = new WebSocket(`wss://api.example.org/datastreams/${datastreamId}/observations`);
-  
+async function* streamObservations(
+  datastreamId: string
+): AsyncIterable<Observation> {
+  const ws = new WebSocket(
+    `wss://api.example.org/datastreams/${datastreamId}/observations`
+  );
+
   for await (const message of websocketAsyncIterable(ws)) {
     yield JSON.parse(message);
   }
@@ -463,13 +484,13 @@ async function* streamObservations(datastreamId: string): AsyncIterable<Observat
 
 // RxJS Observable pattern
 function streamObservations$(datastreamId: string): Observable<Observation> {
-  return new Observable(subscriber => {
+  return new Observable((subscriber) => {
     const ws = new WebSocket(/* ... */);
     ws.onmessage = (event) => subscriber.next(JSON.parse(event.data));
     ws.onerror = (error) => subscriber.error(error);
     ws.onclose = () => subscriber.complete();
-    
-    return () => ws.close();  // Cleanup
+
+    return () => ws.close(); // Cleanup
   });
 }
 ```
@@ -517,6 +538,7 @@ if (system.has_value()) {
 ```
 
 **TypeScript Equivalent (Recommended):**
+
 ```typescript
 // Exception-based (standard approach)
 try {
@@ -530,9 +552,7 @@ try {
 }
 
 // Result type (discriminated union)
-type Result<T, E> = 
-  | { success: true; data: T }
-  | { success: false; error: E };
+type Result<T, E> = { success: true; data: T } | { success: false; error: E };
 
 const result: Result<System, Error> = await client.tryGetSystem('sys123');
 if (result.success) {
@@ -557,6 +577,7 @@ if (system) {
 **Finding:** **N/A** - No performance code.
 
 **C++ Performance Techniques (Not Present):**
+
 - Move semantics (`std::move`)
 - Object pooling
 - Zero-copy parsing
@@ -566,6 +587,7 @@ if (system) {
 
 **Relevance to TypeScript:**
 Most C++ performance optimizations are **not applicable** to TypeScript:
+
 - ❌ Move semantics - JavaScript uses reference copying
 - ❌ Manual memory pooling - GC handles allocation
 - ❌ Custom allocators - Not available in JS
@@ -573,6 +595,7 @@ Most C++ performance optimizations are **not applicable** to TypeScript:
 - ⚠️ Zero-copy - Possible with `SharedArrayBuffer` but niche
 
 **TypeScript Performance Best Practices:**
+
 - ✅ Minimize object creation in hot loops
 - ✅ Use appropriate data structures (Map vs Object)
 - ✅ Avoid synchronous blocking operations
@@ -587,16 +610,16 @@ Most C++ performance optimizations are **not applicable** to TypeScript:
 
 **Theoretical Comparison:**
 
-| Aspect | C++ (Hypothetical) | Python (OWSLib/OSHConnect) | TypeScript (Recommended) |
-|--------|-------------------|---------------------------|-------------------------|
-| **Type Safety** | Compile-time (strong) | Runtime (Pydantic) | Compile-time + runtime (Zod) |
-| **Memory Management** | Manual (RAII) | Automatic (GC) | Automatic (GC) |
-| **Async I/O** | Callbacks/futures | asyncio generators | Promises/async-await |
-| **JSON Parsing** | External lib required | Native `json` module | Native `JSON.parse()` |
-| **HTTP Client** | libcurl, Boost.Beast | `requests` library | `fetch`, `axios` |
-| **Deployment** | Compile per platform | Interpreter required | Universal (Node/Browser) |
-| **Development Speed** | Slow (compile-link-run) | Fast (interpreted) | Fast (JIT) |
-| **Performance** | Fastest | Moderate | Fast (JIT optimization) |
+| Aspect                | C++ (Hypothetical)      | Python (OWSLib/OSHConnect) | TypeScript (Recommended)     |
+| --------------------- | ----------------------- | -------------------------- | ---------------------------- |
+| **Type Safety**       | Compile-time (strong)   | Runtime (Pydantic)         | Compile-time + runtime (Zod) |
+| **Memory Management** | Manual (RAII)           | Automatic (GC)             | Automatic (GC)               |
+| **Async I/O**         | Callbacks/futures       | asyncio generators         | Promises/async-await         |
+| **JSON Parsing**      | External lib required   | Native `json` module       | Native `JSON.parse()`        |
+| **HTTP Client**       | libcurl, Boost.Beast    | `requests` library         | `fetch`, `axios`             |
+| **Deployment**        | Compile per platform    | Interpreter required       | Universal (Node/Browser)     |
+| **Development Speed** | Slow (compile-link-run) | Fast (interpreted)         | Fast (JIT)                   |
+| **Performance**       | Fastest                 | Moderate                   | Fast (JIT optimization)      |
 
 **Key Insight:** For CSAPI clients, Python and TypeScript are more suitable than C++ due to better HTTP/JSON support and faster development cycles.
 
@@ -608,18 +631,18 @@ Most C++ performance optimizations are **not applicable** to TypeScript:
 
 **General C++ → TypeScript Pattern Mapping:**
 
-| C++ Pattern | TypeScript Equivalent | Notes |
-|-------------|----------------------|-------|
-| `std::string` | `string` | Native type |
-| `std::vector<T>` | `T[]` or `Array<T>` | Native arrays |
-| `std::map<K, V>` | `Map<K, V>` | ES6 Map |
-| `std::optional<T>` | `T \| undefined` | Native union |
-| `std::variant<T, U>` | `T \| U` | Discriminated union |
-| `template<typename T>` | `<T>` | Generics |
-| `class Base { virtual }` | `interface` or `abstract class` | Structural typing |
-| RAII | `try/finally` or `using` (TC39 proposal) | Different paradigm |
-| Move semantics | N/A | GC handles |
-| Header/source split | Single `.ts` file | No separation needed |
+| C++ Pattern              | TypeScript Equivalent                    | Notes                |
+| ------------------------ | ---------------------------------------- | -------------------- |
+| `std::string`            | `string`                                 | Native type          |
+| `std::vector<T>`         | `T[]` or `Array<T>`                      | Native arrays        |
+| `std::map<K, V>`         | `Map<K, V>`                              | ES6 Map              |
+| `std::optional<T>`       | `T \| undefined`                         | Native union         |
+| `std::variant<T, U>`     | `T \| U`                                 | Discriminated union  |
+| `template<typename T>`   | `<T>`                                    | Generics             |
+| `class Base { virtual }` | `interface` or `abstract class`          | Structural typing    |
+| RAII                     | `try/finally` or `using` (TC39 proposal) | Different paradigm   |
+| Move semantics           | N/A                                      | GC handles           |
+| Header/source split      | Single `.ts` file                        | No separation needed |
 
 ### 2.14 Pain Points to Avoid
 
@@ -630,26 +653,32 @@ Most C++ performance optimizations are **not applicable** to TypeScript:
 **C++ Pain Points (Theoretical):**
 
 1. **Manual Memory Management**
+
    - C++ requires explicit `new`/`delete` or smart pointers
    - TypeScript: ✅ Automatic garbage collection
 
 2. **Platform Dependencies**
+
    - `WIN32_LEAN_AND_MEAN` indicates Windows-only intent
    - TypeScript: ✅ Cross-platform by default (Node/Browser/Deno)
 
 3. **Header/Implementation Split**
+
    - C++ requires `.h` and `.cpp` files
    - TypeScript: ✅ Single `.ts` file with `export`
 
 4. **Compilation Complexity**
+
    - C++ build systems (CMake, Make, MSBuild) are complex
    - TypeScript: ✅ Simple `tsc` compiler
 
 5. **Verbose Template Errors**
+
    - C++ template errors are notoriously difficult to read
    - TypeScript: ✅ Clearer generic error messages
 
 6. **String Handling**
+
    - C++ `std::string` vs `const char*` vs `std::string_view` complexity
    - TypeScript: ✅ Simple `string` type
 
@@ -658,6 +687,7 @@ Most C++ performance optimizations are **not applicable** to TypeScript:
    - TypeScript: ✅ Native Promise/async-await
 
 **Recommendations for TypeScript:**
+
 - ✅ **Embrace garbage collection** - Don't manually manage resources
 - ✅ **Write cross-platform code** - Avoid platform-specific APIs
 - ✅ **Keep types simple** - Use interfaces, not complex class hierarchies
@@ -671,26 +701,30 @@ Most C++ performance optimizations are **not applicable** to TypeScript:
 **Finding:** **No test directory or test files exist.**
 
 **Expected C++ Testing (Not Present):**
+
 - Google Test (gtest)
 - Catch2
 - Boost.Test
 - CppUnit
 
 **TypeScript Testing (Recommended):**
+
 ```typescript
 import { describe, it, expect } from 'vitest';
 
 describe('CSAPIClient', () => {
   it('should fetch system by ID', async () => {
     const mockHttp = {
-      get: vi.fn().mockResolvedValue({ id: 'sys123', name: 'Test' })
+      get: vi.fn().mockResolvedValue({ id: 'sys123', name: 'Test' }),
     };
-    
+
     const client = new CSAPIClient('http://api.example.org', mockHttp);
     const system = await client.getSystem('sys123');
-    
+
     expect(system.id).toBe('sys123');
-    expect(mockHttp.get).toHaveBeenCalledWith(expect.stringContaining('systems/sys123'));
+    expect(mockHttp.get).toHaveBeenCalledWith(
+      expect.stringContaining('systems/sys123')
+    );
   });
 });
 ```
@@ -701,31 +735,31 @@ describe('CSAPIClient', () => {
 
 ### 3.1 Language Feature Comparison
 
-| Feature | C++ | TypeScript | Winner for CSAPI Client |
-|---------|-----|------------|------------------------|
-| **Type System** | Nominal, compile-time | Structural, compile-time | Tie (both strong) |
-| **Type Inference** | `auto`, template deduction | Full inference | TS ✅ (better inference) |
-| **Null Safety** | Manual (`std::optional`) | `strictNullChecks` | TS ✅ (enforced) |
-| **Memory Safety** | Manual | Automatic | TS ✅ |
-| **Async Support** | Callbacks/coroutines | Native async/await | TS ✅ |
-| **JSON Parsing** | External library | Native | TS ✅ |
-| **HTTP Client** | External library | Native/mature libs | TS ✅ |
-| **Compilation** | AOT (slow) | JIT (fast) | TS ✅ (development) |
-| **Runtime Speed** | Fastest | Fast enough | C++ (but irrelevant) |
-| **Cross-Platform** | Compile per OS | Universal binary | TS ✅ |
-| **Package Manager** | Conan, vcpkg | npm | TS ✅ (richer) |
-| **Ecosystem** | Limited web libs | Rich web ecosystem | TS ✅ |
+| Feature             | C++                        | TypeScript               | Winner for CSAPI Client  |
+| ------------------- | -------------------------- | ------------------------ | ------------------------ |
+| **Type System**     | Nominal, compile-time      | Structural, compile-time | Tie (both strong)        |
+| **Type Inference**  | `auto`, template deduction | Full inference           | TS ✅ (better inference) |
+| **Null Safety**     | Manual (`std::optional`)   | `strictNullChecks`       | TS ✅ (enforced)         |
+| **Memory Safety**   | Manual                     | Automatic                | TS ✅                    |
+| **Async Support**   | Callbacks/coroutines       | Native async/await       | TS ✅                    |
+| **JSON Parsing**    | External library           | Native                   | TS ✅                    |
+| **HTTP Client**     | External library           | Native/mature libs       | TS ✅                    |
+| **Compilation**     | AOT (slow)                 | JIT (fast)               | TS ✅ (development)      |
+| **Runtime Speed**   | Fastest                    | Fast enough              | C++ (but irrelevant)     |
+| **Cross-Platform**  | Compile per OS             | Universal binary         | TS ✅                    |
+| **Package Manager** | Conan, vcpkg               | npm                      | TS ✅ (richer)           |
+| **Ecosystem**       | Limited web libs           | Rich web ecosystem       | TS ✅                    |
 
 ### 3.2 Development Experience
 
-| Aspect | C++ | TypeScript |
-|--------|-----|------------|
-| **Setup Time** | Hours (toolchain) | Minutes (`npm init`) |
-| **Build Time** | Seconds to minutes | Sub-second (incremental) |
-| **Debugging** | gdb, Visual Studio | Chrome DevTools, VS Code |
-| **REPL** | Limited (cling) | Native Node.js REPL |
-| **Hot Reload** | Not standard | Common (webpack, Vite) |
-| **Learning Curve** | Steep | Moderate |
+| Aspect             | C++                | TypeScript               |
+| ------------------ | ------------------ | ------------------------ |
+| **Setup Time**     | Hours (toolchain)  | Minutes (`npm init`)     |
+| **Build Time**     | Seconds to minutes | Sub-second (incremental) |
+| **Debugging**      | gdb, Visual Studio | Chrome DevTools, VS Code |
+| **REPL**           | Limited (cling)    | Native Node.js REPL      |
+| **Hot Reload**     | Not standard       | Common (webpack, Vite)   |
+| **Learning Curve** | Steep              | Moderate                 |
 
 **Verdict:** TypeScript provides significantly better development experience for HTTP-based API clients.
 
@@ -740,6 +774,7 @@ The absence of implementation in ConnectedSystemsAPI-CPP reveals important insig
 **1. C++ May Not Be Ideal for CSAPI Clients**
 
 The abandoned state suggests:
+
 - High implementation complexity in C++
 - Lack of ecosystem support for OGC APIs in C++
 - Python/TypeScript more suitable for web APIs
@@ -759,6 +794,7 @@ Lack of even a prototype suggests C++'s complexity hindered progress.
 **4. Maintenance Burden**
 
 C++ CSAPI client would require:
+
 - Continuous compiler compatibility testing
 - Platform-specific build configurations
 - Memory leak hunting
@@ -783,6 +819,7 @@ Even negative examples provide value:
 ### 5.1 Memory Management
 
 **C++ Pain Point:**
+
 ```cpp
 // Manual memory management
 System* system = new System("sys123");
@@ -794,6 +831,7 @@ std::unique_ptr<System> system = std::make_unique<System>("sys123");
 ```
 
 **TypeScript Solution:**
+
 ```typescript
 // Automatic garbage collection
 const system = new System('sys123');
@@ -804,6 +842,7 @@ const system = new System('sys123');
 ### 5.2 Header/Implementation Split
 
 **C++ Pain Point:**
+
 ```cpp
 // System.h
 class System {
@@ -822,14 +861,12 @@ std::string System::getName() const { return name_; }
 ```
 
 **TypeScript Solution:**
+
 ```typescript
 // System.ts (single file)
 export class System {
-  constructor(
-    private id: string,
-    private name: string
-  ) {}
-  
+  constructor(private id: string, private name: string) {}
+
   getName(): string {
     return this.name;
   }
@@ -839,6 +876,7 @@ export class System {
 ### 5.3 Template Complexity
 
 **C++ Pain Point:**
+
 ```cpp
 template<typename T, typename U, typename Allocator = std::allocator<T>>
 class Repository {
@@ -848,6 +886,7 @@ class Repository {
 ```
 
 **TypeScript Solution:**
+
 ```typescript
 class Repository<T> {
   // Simple, clean generics
@@ -858,6 +897,7 @@ class Repository<T> {
 ### 5.4 Async Programming
 
 **C++ Pain Point:**
+
 ```cpp
 // Callback hell
 client.fetchSystem("sys123", [](const System& sys) {
@@ -874,6 +914,7 @@ auto sys = future_sys.get();  // Blocks
 ```
 
 **TypeScript Solution:**
+
 ```typescript
 // Clean async/await
 const sys = await client.fetchSystem('sys123');
@@ -884,6 +925,7 @@ const obs = await ds.fetchObservations();
 ### 5.5 String Handling
 
 **C++ Pain Point:**
+
 ```cpp
 void processSystem(const char* id);           // C-string
 void processSystem(const std::string& id);    // std::string
@@ -892,6 +934,7 @@ void processSystem(std::string_view id);      // View (C++17)
 ```
 
 **TypeScript Solution:**
+
 ```typescript
 function processSystem(id: string): void {
   // Single string type, no confusion
@@ -907,50 +950,54 @@ function processSystem(id: string): void {
 **Based on lessons from C++ avoidance:**
 
 1. **Simple Over Clever**
+
    ```typescript
    // ✅ Clear, straightforward
    class SystemsClient {
      async list(): Promise<System[]> { }
      async get(id: string): Promise<System> { }
    }
-   
+
    // ❌ Over-engineered (C++-style)
    template<ResourceType extends BaseResource<T>, T>
    class GenericResourceRepository<ResourceType, T> { }
    ```
 
 2. **Composition Over Inheritance**
+
    ```typescript
    // ✅ Composition (flexible)
    class CSAPIClient {
      systems = new SystemsClient(this.http);
      datastreams = new DataStreamsClient(this.http);
    }
-   
+
    // ❌ Deep inheritance (rigid)
-   class SystemsClient extends ResourceClient extends BaseClient { }
+   class SystemsClient extends ResourceClient {}
    ```
 
 3. **Interfaces Over Classes**
+
    ```typescript
    // ✅ Lightweight interfaces
    interface System {
      id: string;
      name: string;
    }
-   
+
    // ❌ Heavy classes (C++-style)
    class System {
-     constructor(id: string, name: string) { }
+     constructor(id: string, name: string) {}
      // Many methods...
    }
    ```
 
 4. **Async by Default**
+
    ```typescript
    // ✅ All API methods async
    async getSystem(id: string): Promise<System>
-   
+
    // ❌ Sync methods (blocking)
    getSystemSync(id: string): System  // Bad for I/O
    ```
@@ -958,8 +1005,10 @@ function processSystem(id: string): void {
 ### 6.2 Specific API Design
 
 **Recommendation 1: Fluent Builders**
+
 ```typescript
-const systems = await client.systems()
+const systems = await client
+  .systems()
   .withBbox(-122, 37, -121, 38)
   .withKeyword('weather')
   .limit(50)
@@ -967,6 +1016,7 @@ const systems = await client.systems()
 ```
 
 **Recommendation 2: Type-Safe Queries**
+
 ```typescript
 interface SystemQueryParams {
   bbox?: [number, number, number, number];
@@ -978,6 +1028,7 @@ const systems = await client.systems({ bbox: [-122, 37, -121, 38], limit: 50 });
 ```
 
 **Recommendation 3: Streaming with AsyncIterables**
+
 ```typescript
 for await (const observation of datastream.streamObservations()) {
   console.log(observation.result);
@@ -985,10 +1036,9 @@ for await (const observation of datastream.streamObservations()) {
 ```
 
 **Recommendation 4: Error Handling with Discriminated Unions**
+
 ```typescript
-type Result<T, E = Error> =
-  | { ok: true; value: T }
-  | { ok: false; error: E };
+type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
 
 const result = await client.tryGetSystem('sys123');
 if (result.ok) {
@@ -1005,16 +1055,19 @@ if (result.ok) {
 ### 7.1 vs OWSLib (Section 12)
 
 **OWSLib Strengths:**
+
 - ✅ Comprehensive coverage (11/11 resources)
 - ✅ Production-ready, well-tested
 - ✅ Consistent naming conventions
 
 **C++ Comparison:**
+
 - ❌ C++ would require more boilerplate
 - ❌ Manual memory management overhead
 - ❌ Platform-specific builds
 
 **TypeScript Should:**
+
 - ✅ Match OWSLib's completeness
 - ✅ Use similar consistent naming
 - ✅ Exceed with better async support
@@ -1022,16 +1075,19 @@ if (result.ok) {
 ### 7.2 vs OSHConnect-Python (Section 13)
 
 **OSHConnect Strengths:**
+
 - ✅ Fluent builder pattern
 - ✅ Streaming-first design
 - ✅ Pydantic validation (runtime type safety)
 
 **C++ Comparison:**
+
 - ❌ C++ callbacks more complex than Python generators
 - ❌ JSON parsing requires external libs
 - ❌ Platform dependencies
 
 **TypeScript Should:**
+
 - ✅ Adopt fluent builders
 - ✅ Use RxJS Observables for streaming
 - ✅ Use Zod for runtime validation (like Pydantic)
@@ -1043,6 +1099,7 @@ if (result.ok) {
 ### 8.1 Repository Assessment
 
 **ConnectedSystemsAPI-CPP Status:**
+
 - **Implementation:** 0% complete (stub repository)
 - **Maturity:** Abandoned/inactive
 - **Usability:** Not usable
@@ -1052,10 +1109,12 @@ if (result.ok) {
 ### 8.2 Key Findings
 
 1. **C++ Not Ideal for CSAPI Clients**
+
    - High complexity, poor ecosystem support
    - Python/TypeScript better suited
 
 2. **TypeScript Advantages**
+
    - Native JSON/HTTP support
    - Automatic memory management
    - Better async patterns

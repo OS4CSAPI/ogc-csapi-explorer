@@ -66,6 +66,7 @@ Define testing strategy for schema validation (DataStream schemas for Observatio
 **Objective:** Understand DataStream and ControlStream schema requirements
 
 **Tasks:**
+
 1. Extract DataStream schema specification from Part 2
 2. Extract ControlStream schema specification from Part 2
 3. Document schema structure (SWE Common components)
@@ -78,6 +79,7 @@ Define testing strategy for schema validation (DataStream schemas for Observatio
 **Objective:** Understand SWE Common schema definitions
 
 **Tasks:**
+
 1. Review SWE Common component schemas
 2. Document schema composition rules
 3. Identify constraint types (allowedValues, intervals, etc.)
@@ -89,6 +91,7 @@ Define testing strategy for schema validation (DataStream schemas for Observatio
 **Objective:** Analyze schema validation testing in upstream
 
 **Tasks:**
+
 1. Identify schema validation tests in upstream
 2. Extract schema validation test patterns
 3. Document schema mocking approaches
@@ -100,6 +103,7 @@ Define testing strategy for schema validation (DataStream schemas for Observatio
 **Objective:** Design test scenarios for schema validation
 
 **Tasks:**
+
 1. Design observation result validation scenarios
 2. Design command parameter validation scenarios
 3. Design schema mismatch scenarios (type, missing, extra fields)
@@ -112,6 +116,7 @@ Define testing strategy for schema validation (DataStream schemas for Observatio
 **Objective:** Design fixtures for schema validation testing
 
 **Tasks:**
+
 1. Design valid observation result fixtures
 2. Design invalid observation result fixtures
 3. Design valid command parameter fixtures
@@ -125,6 +130,7 @@ Define testing strategy for schema validation (DataStream schemas for Observatio
 **Objective:** Create comprehensive schema-driven validation testing strategy
 
 **Tasks:**
+
 1. Consolidate validation scenarios
 2. Create schema validation test templates
 3. Document fixture requirements
@@ -152,6 +158,7 @@ This research is complete when:
 **Schema-driven validation testing strategy with mismatch scenarios**
 
 Content includes:
+
 - DataStream schema structure and validation rules
 - ControlStream schema structure and validation rules
 - Observation result validation test patterns
@@ -165,6 +172,7 @@ Content includes:
 - Implementation estimates
 
 **Example Validation Scenarios:**
+
 - Observation result with wrong data type (e.g., string instead of number)
 - Observation result missing required field
 - Command parameter with value out of allowed range
@@ -176,11 +184,13 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 10: SWE Common Testing Requirements (schema component testing)
 - Section 8: CSAPI Specification Review (schema definitions)
 - Section 1-2: Upstream Analysis (schema validation patterns)
 
 **Blocks:**
+
 - DataStream schema validation implementation
 - ControlStream schema validation implementation
 - Schema-based error reporting
@@ -201,21 +211,25 @@ Content includes:
 **Phase Completion Summary:**
 
 **Phase 1 (Schema Specification Analysis):** ~45 minutes
+
 - Extracted DataStream/ControlStream schema specifications from Part 2
 - Documented validation rules (400 for invalid, 409 for schema change)
 - Identified schema endpoints and lifecycle constraints
 
 **Phase 2 (SWE Common Schema Analysis):** ~30 minutes
+
 - Documented 12+ component types (Quantity, Count, Boolean, Text, Time, Category, DataRecord, DataArray, etc.)
 - Identified constraint types (interval, allowedTokens, pattern, significantFigures, allowedValues)
 - Documented validation rules per component type
 
 **Phase 3 (Upstream Schema Validation Analysis):** ~20 minutes
+
 - Found VALIDATE_OBSERVATIONS and VALIDATE_COMMANDS in Worker Extensions (Section 16)
 - Extracted validation patterns from Section 8 (CSAPI Specification)
 - Documented error message structure patterns
 
 **Phase 4 (Validation Scenario Design):** ~60 minutes
+
 - Designed 66 test scenarios across 8 categories
 - Observation validation: 36 tests (type mismatch, missing fields, extra fields, constraints, nesting, array count)
 - Command validation: 18 tests (type mismatch, missing fields, constraints, nesting)
@@ -223,6 +237,7 @@ Content includes:
 - Error messages: 4 tests (message structure validation)
 
 **Phase 5 (Fixture Design):** ~45 minutes
+
 - Designed 60 fixtures total
 - DataStream schemas: 10 fixtures (simple, nested, arrays, all constraint types)
 - ControlStream schemas: 5 fixtures (heater, motor, valve, nested, complex)
@@ -232,6 +247,7 @@ Content includes:
 - Invalid commands: 10 fixtures
 
 **Phase 6 (Synthesis):** ~70 minutes
+
 - Created comprehensive deliverable document (27-schema-driven-validation-testing.md)
 - Documented all validation scenarios with test templates
 - Estimated 990-1,200 lines of test code (66 tests)
@@ -250,11 +266,13 @@ Content includes:
 ### Key Findings
 
 **Dual Schema System:**
+
 - DataStream resultSchema - Defines observation result structure (SWE Common DataRecord/DataArray)
 - ControlStream parametersSchema - Defines command parameter structure (SWE Common DataRecord)
 - Both use SWE Common 3.0 DataComponent structure with 12+ component types
 
 **Validation Points:**
+
 - Observation CREATE (POST) - result must match DataStream resultSchema
 - Observation UPDATE (PUT/PATCH) - result must match DataStream resultSchema
 - Command CREATE (POST) - parameters must match ControlStream parametersSchema
@@ -262,11 +280,13 @@ Content includes:
 - Schema Evolution - Schema changes rejected if observations/commands exist (409 Conflict)
 
 **Component Types Identified:**
+
 - **Simple:** Quantity, Count, Boolean, Text, Time, Category
 - **Range:** QuantityRange, CategoryRange, TimeRange
 - **Complex:** DataRecord, DataArray, Vector, Matrix, DataChoice, GeometryData
 
 **Constraint Types:**
+
 - **interval** - Min/max range (Quantity, Count, Time)
 - **allowedTokens** - Enumerated values (Category, Text)
 - **pattern** - Regex pattern (Text)
@@ -274,11 +294,13 @@ Content includes:
 - **allowedValues** - Discrete values (Count)
 
 **Testing Priorities:**
+
 - **CRITICAL (46 tests):** Type mismatch, missing fields, constraint violations, schema evolution with data
 - **HIGH (16 tests):** Extra fields, nesting, array count, schema evolution without data, error messages
 - **MEDIUM (4 tests):** Complex nesting (3+ levels), advanced constraints
 
 **Implementation Estimates:**
+
 - **Test Code:** 990-1,200 lines (66 tests)
 - **Fixtures:** 60 total (10 DataStream schemas, 5 ControlStream schemas, 15 valid obs, 15 invalid obs, 5 valid cmd, 10 invalid cmd)
 - **Development Time:** 28-41 hours
@@ -287,6 +309,7 @@ Content includes:
 ### Validation Workflow
 
 **Client-Side Validation:**
+
 1. Fetch DataStream/ControlStream schema
 2. Validate result/parameters against schema before submission
 3. Check type matching, required fields, constraints
@@ -294,6 +317,7 @@ Content includes:
 5. Submit to server if valid
 
 **Server-Side Validation:**
+
 1. Receive observation/command
 2. Fetch parent DataStream/ControlStream schema
 3. Validate result/parameters
@@ -301,6 +325,7 @@ Content includes:
 5. Return 201 Created if valid
 
 **Error Response Structure:**
+
 ```json
 {
   "code": "InvalidParameterValue",
@@ -325,21 +350,27 @@ Content includes:
 ### Questions Resolved
 
 ✅ How to test observation result validation against DataStream schema?
+
 - Answer: Type matching, required field validation, constraint enforcement, nested structure validation. 36 tests identified.
 
 ✅ How to test command parameter validation against ControlStream schema?
+
 - Answer: Similar to observations but with command-specific parameters (setpoint, mode, duration). 18 tests identified.
 
 ✅ What schema mismatch scenarios must be tested?
+
 - Answer: Type mismatch (8 obs + 5 cmd), missing fields (5 obs + 3 cmd), extra fields (3 obs), wrong structure. Total: ~25 tests.
 
 ✅ How to test schema parsing (SWE Common schemas)?
+
 - Answer: Covered in Section 10 (SWE Common Testing Requirements). This section focuses on validation against parsed schemas.
 
 ✅ What fixtures needed for schema validation scenarios?
+
 - Answer: 60 fixtures total - 10 DataStream schemas, 5 ControlStream schemas, 15 valid/15 invalid observations, 5 valid/10 invalid commands.
 
 ✅ How to test error messages for schema violations?
+
 - Answer: 4 tests validating error message structure (field name, expected/actual types, constraint details). Error messages must be detailed and actionable.
 
 ### Open Questions

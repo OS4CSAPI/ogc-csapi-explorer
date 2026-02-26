@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This document presents research findings on **actual industry practices** for test fixture documentation, conducted to validate the fixture metadata system proposed in Section 15 Part 1. 
+This document presents research findings on **actual industry practices** for test fixture documentation, conducted to validate the fixture metadata system proposed in Section 15 Part 1.
 
 **Key Finding:** The elaborate fixture metadata system proposed in Part 1 (embedded `_metadata` fields, sidecar `.meta.json` files, README.md files per directory) has **zero basis** in actual open-source practices. This system was an AI hallucination—invented without researching actual practices or checking upstream conventions.
 
@@ -19,6 +19,7 @@ This document presents research findings on **actual industry practices** for te
 ### 1.1 Initial Problem
 
 While reviewing Section 38 (Testing Playbook), Section 1.3 "Fixture Metadata Format" was found to contain:
+
 - Incorrect OGC specification references
 - Unclear purpose and justification
 - No examples in actual upstream fixtures
@@ -33,8 +34,9 @@ While reviewing Section 38 (Testing Playbook), Section 1.3 "Fixture Metadata For
 ### 1.3 Confirmation
 
 The fixture metadata system (embedded `$metadata`, `_fixture_metadata`, sidecar `.meta.json`, README.md per directory, SOURCES.md provenance tracking) was invented during Section 15 research without:
+
 - Checking what upstream projects do
-- Researching industry best practices  
+- Researching industry best practices
 - Citing any external sources
 - Considering simpler alternatives
 
@@ -49,15 +51,18 @@ To establish actual best practices, research was conducted across multiple categ
 ### 2.1 Projects Examined
 
 **JavaScript Testing Projects:**
+
 - `jest-community/jest-junit` - JUnit XML reporter with mock fixtures
 - Testing Library ecosystem - Widespread test fixture usage
 - Pytest documentation - Python fixture patterns
 
 **OGC/Geospatial Projects:**
+
 - `openlayers/openlayers` - Large test suite with WMS, WMTS, WFS fixtures
 - React (Facebook) - Thousands of compiler test fixtures
 
 **Research Methods:**
+
 - GitHub repository code search
 - Direct examination of `/fixtures/`, `/__mocks__/`, `/test/` directories
 - Documentation review
@@ -82,6 +87,7 @@ fixtures/
 ```
 
 **Characteristics:**
+
 - ✅ **Descriptive filenames** (kebab-case with version/type information)
 - ✅ **Directory organization** by service type or test category
 - ✅ **Git history** for provenance tracking
@@ -94,8 +100,10 @@ fixtures/
 ### 3.2 Detailed Examples
 
 #### jest-junit Project
+
 **Location:** `__mocks__/`  
 **Pattern:** Plain JSON files with descriptive names
+
 ```
 __mocks__/
 ├── no-failing-tests.json
@@ -103,24 +111,30 @@ __mocks__/
 ├── multi-project-no-failing-tests.json
 └── test-with-console-output.json
 ```
+
 **Metadata:** ZERO embedded metadata, ZERO README files
 
 #### OpenLayers Project
+
 **Location:** `test/browser/spec/ol/format/`  
 **Pattern:** Inline XML/JSON in test files OR separate fixture files
+
 ```javascript
-const text = 
+const text =
   '<gpx xmlns="http://www.topografix.com/GPX/1/1">' +
   '  <wpt lat="1" lon="2"/>' +
   '</gpx>';
 const features = format.readFeatures(text);
 ```
+
 **Metadata:** ZERO embedded metadata, purpose clear from test context
 
 #### React Compiler Fixtures
+
 **Location:** `compiler/packages/babel-plugin-react-compiler/src/__tests__/fixtures/`  
 **Count:** ~1000+ test fixtures  
-**Pattern:** 
+**Pattern:**
+
 ```
 fixtures/compiler/
 ├── fbt-template-string-same-scope.js
@@ -130,6 +144,7 @@ fixtures/compiler/
 ```
 
 **Each fixture contains:**
+
 ```javascript
 function Component(props) {
   // Test case code
@@ -137,11 +152,12 @@ function Component(props) {
 
 export const FIXTURE_ENTRYPOINT = {
   fn: Component,
-  params: [{items: [{id: 1, name: 'one'}]}],
+  params: [{ items: [{ id: 1, name: 'one' }] }],
 };
 ```
 
 **Metadata:** ZERO embedded metadata beyond test harness requirements. Purpose clear from:
+
 - Descriptive filename
 - Test code itself
 - Associated `.expect.md` snapshot file
@@ -151,12 +167,15 @@ export const FIXTURE_ENTRYPOINT = {
 **How Real Projects Track Fixture Sources:**
 
 1. **Git Commit Messages**
+
    ```
    git log fixtures/wfs/capabilities-pigma-2-0-0.xml
    ```
+
    Shows when fixture was added, why, and by whom
 
 2. **Test File Documentation**
+
    ```javascript
    it('should parse WFS 2.0.0 capabilities from Pigma service', () => {
      // Fixture from https://...
@@ -197,6 +216,7 @@ fixtures/
 ```
 
 **Analysis:**
+
 - ✅ Descriptive filenames with version information
 - ✅ Organized by service type
 - ✅ Tracked in git with commit history
@@ -221,6 +241,7 @@ describe('OGC API Features', () => {
 ```
 
 **Purpose is clear from:**
+
 - Test description
 - Fixture filename
 - Test assertions
@@ -232,6 +253,7 @@ describe('OGC API Features', () => {
 ### 5.1 Problems with Embedded Metadata
 
 **Proposed (Hallucinated):**
+
 ```json
 {
   "_fixture_metadata": {
@@ -247,6 +269,7 @@ describe('OGC API Features', () => {
 ```
 
 **Problems:**
+
 1. **Pollutes fixtures** - Not valid according to specs
 2. **Maintenance burden** - Must update metadata manually
 3. **No tooling support** - Would need custom validation
@@ -256,17 +279,20 @@ describe('OGC API Features', () => {
 ### 5.2 Problems with README Files
 
 **Proposed (Hallucinated):**
+
 ```markdown
 # fixtures/ogc-api/README.md
 
 This directory contains OGC API fixtures.
 
 ## Files
+
 - sample-data.json - Valid root response
 - ...
 ```
 
 **Problems:**
+
 1. **Duplicates information** - Filenames already descriptive
 2. **Stale immediately** - Must update when adding fixtures
 3. **No real value** - Test files already document purpose
@@ -275,6 +301,7 @@ This directory contains OGC API fixtures.
 ### 5.3 The Simplicity Principle
 
 **What Actually Works:**
+
 ```
 Descriptive filename = capability-pigma-2-0-0.xml
                        ↓         ↓      ↓
@@ -282,6 +309,7 @@ Descriptive filename = capability-pigma-2-0-0.xml
 ```
 
 One filename tells you:
+
 - What service type (WFS capabilities)
 - Where it came from (Pigma)
 - What version (2.0.0)
@@ -297,6 +325,7 @@ One filename tells you:
 **For New Fixtures:**
 
 1. **Use descriptive filenames:**
+
    ```
    {service}-{source}-{version}.{ext}
    capabilities-pigma-2-0-0.xml
@@ -305,11 +334,13 @@ One filename tells you:
    ```
 
 2. **Organize by directory:**
+
    ```
    fixtures/{service-type}/{descriptive-name}.{ext}
    ```
 
 3. **Document in test files:**
+
    ```typescript
    it('parses WFS 2.0.0 capabilities from Pigma service', () => {
      // Fixture source: https://www.pigma.org/geoserver/wfs?service=WFS&version=2.0.0&request=GetCapabilities
@@ -328,6 +359,7 @@ One filename tells you:
 **Section 15 Part 1 sections to revise/remove:**
 
 - **Section 7: "Fixture Metadata and Provenance"** (lines 960-1150)
+
   - Remove embedded metadata format specifications
   - Remove sidecar `.meta.json` format
   - Remove README.md format
@@ -346,11 +378,13 @@ One filename tells you:
 
 ### Directory Structure
 ```
+
 fixtures/
-├── ogc-api/      # OGC API - Features fixtures
-├── wfs/          # WFS service fixtures  
-├── wms/          # WMS service fixtures
-└── wmts/         # WMTS service fixtures
+├── ogc-api/ # OGC API - Features fixtures
+├── wfs/ # WFS service fixtures  
+├── wms/ # WMS service fixtures
+└── wmts/ # WMTS service fixtures
+
 ```
 
 ### Naming Convention
@@ -375,6 +409,7 @@ No embedded metadata or README files are used.
 **Problem:** AI research can invent practices that sound plausible but have zero real-world basis.
 
 **Solution:** Always verify AI-generated research against:
+
 - Actual upstream code
 - Other open-source projects
 - Published documentation
@@ -385,6 +420,7 @@ No embedded metadata or README files are used.
 **Problem:** Elaborate systems (metadata, sidecar files, README generation) seem thorough but add complexity.
 
 **Solution:** Prefer simple, proven patterns:
+
 - Descriptive names > metadata systems
 - Git history > custom provenance tracking
 - Test documentation > fixture documentation
@@ -392,6 +428,7 @@ No embedded metadata or README files are used.
 ### 7.3 Check for Citations
 
 **Red Flags in Part 1:**
+
 - No external references
 - No "inspired by" mentions
 - No links to other projects
@@ -406,7 +443,7 @@ No embedded metadata or README files are used.
 ### 8.1 Immediate
 
 - [x] Document research findings (this document)
-- [x] Update Section 15 Part 1 to remove hallucinated content *(supersession banner + details collapse added, June 2025)*
+- [x] Update Section 15 Part 1 to remove hallucinated content _(supersession banner + details collapse added, June 2025)_
 - [ ] Update Section 38 Section 1.3 with correct guidance
 - [ ] Review Sections 9, 10, 37 for fixture metadata references
 
@@ -438,11 +475,9 @@ Our existing fixture structure already follows this pattern. No changes to fixtu
 - **jest-junit:** https://github.com/jest-community/jest-junit
   - Mock fixtures: `__mocks__/*.json`
   - Zero embedded metadata
-  
 - **OpenLayers:** https://github.com/openlayers/openlayers
   - Test fixtures: `test/browser/spec/`
   - Inline and file-based fixtures, zero metadata systems
-  
 - **React:** https://github.com/facebook/react
   - Compiler test fixtures: `compiler/packages/babel-plugin-react-compiler/src/__tests__/fixtures/`
   - ~1000+ fixtures with descriptive names, zero embedded metadata
@@ -450,7 +485,8 @@ Our existing fixture structure already follows this pattern. No changes to fixtu
 ### Documentation
 
 - **Pytest Fixtures:** https://docs.pytest.org/en/stable/fixture.html
-  - Describes *test fixtures* (functions), not test data files
+
+  - Describes _test fixtures_ (functions), not test data files
   - No guidance on data fixture documentation
 
 - **Testing Library:** https://testing-library.com/docs/queries/about/
@@ -470,20 +506,20 @@ Our existing fixture structure already follows this pattern. No changes to fixtu
 
 ## Appendix: Comparison Table
 
-| Aspect | Hallucinated System (Part 1) | Actual Industry Practice |
-|--------|------------------------------|--------------------------|
-| Metadata location | Embedded in fixture JSON | None |
-| Provenance tracking | `_fixture_metadata.source` | Git commit messages |
-| Purpose documentation | `_fixture_metadata.purpose` | Test file descriptions |
-| Created date | `_fixture_metadata.created` | `git log` |
-| Validation status | `_fixture_metadata.validationStatus` | Test assertions |
-| Related fixtures | `_fixture_metadata.relatedFixtures` | Test file organization |
-| Source URL | `_fixture_metadata.sourceURL` | Test file comments |
-| Sidecar files | `.meta.json` for CSV/binary | None used |
-| Directory docs | `README.md` per directory | None used |
-| Tooling required | Custom metadata validators | None (git + tests) |
-| Maintenance burden | High (manual updates) | Low (automated) |
-| Precedent | Zero projects found | Universal pattern |
+| Aspect                | Hallucinated System (Part 1)         | Actual Industry Practice |
+| --------------------- | ------------------------------------ | ------------------------ |
+| Metadata location     | Embedded in fixture JSON             | None                     |
+| Provenance tracking   | `_fixture_metadata.source`           | Git commit messages      |
+| Purpose documentation | `_fixture_metadata.purpose`          | Test file descriptions   |
+| Created date          | `_fixture_metadata.created`          | `git log`                |
+| Validation status     | `_fixture_metadata.validationStatus` | Test assertions          |
+| Related fixtures      | `_fixture_metadata.relatedFixtures`  | Test file organization   |
+| Source URL            | `_fixture_metadata.sourceURL`        | Test file comments       |
+| Sidecar files         | `.meta.json` for CSV/binary          | None used                |
+| Directory docs        | `README.md` per directory            | None used                |
+| Tooling required      | Custom metadata validators           | None (git + tests)       |
+| Maintenance burden    | High (manual updates)                | Low (automated)          |
+| Precedent             | Zero projects found                  | Universal pattern        |
 
 **Conclusion:** Hallucinated system has zero basis in actual practice.
 

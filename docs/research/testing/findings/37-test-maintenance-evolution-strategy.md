@@ -9,12 +9,14 @@
 **Research Time:** 50 minutes – February 6, 2026
 
 **Primary Source(s):**
+
 - [Lessons Learned Analysis](../../requirements/lessons-learned-analysis.md)
 - Section 15 deliverable: Fixture maintenance strategy
 - [Implementation Guide](../../../planning/csapi-implementation-guide.md)
 - [ROADMAP](../../../planning/ROADMAP.md)
 
 **Supporting Resources:**
+
 - Section 35: [JSDoc Testing Documentation Standards](35-jsdoc-testing-documentation-standards.md) (maintenance documentation)
 - Section 36: [Test Quality Checklist and Review Process](36-test-quality-checklist-review-process.md) (quality maintenance)
 - Section 15: [Fixture Sourcing and Organization](15-fixture-sourcing-organization.md) (fixture maintenance)
@@ -34,9 +36,11 @@ This document defines a strategy for maintaining and evolving CSAPI tests as the
 ### Key Maintenance Challenges
 
 **From Lessons Learned:**
+
 > "Test maintenance burden" - Previous iteration had unclear ownership and update processes
 
 **Four Primary Challenge Categories:**
+
 1. **Spec Evolution** - CSAPI specification updates with new features, changed requirements
 2. **Dependency Changes** - Upstream library API changes, breaking changes
 3. **Implementation Refactoring** - Code changes that invalidate test assumptions
@@ -71,12 +75,12 @@ it('parses required system properties from response', () => {
 
 ### Maintenance Triggers
 
-| Trigger | Frequency | Response Time | Priority |
-|---------|-----------|---------------|----------|
-| **Spec Update** | Per spec release (~yearly) | Within 2 weeks | HIGH |
-| **Dependency Update** | Per upstream release (~quarterly) | Within 1 week | MEDIUM |
-| **Implementation Change** | Per refactoring (ad-hoc) | Immediate | HIGH |
-| **Test Failure** | When detected (continuous) | Immediate | CRITICAL |
+| Trigger                   | Frequency                         | Response Time  | Priority |
+| ------------------------- | --------------------------------- | -------------- | -------- |
+| **Spec Update**           | Per spec release (~yearly)        | Within 2 weeks | HIGH     |
+| **Dependency Update**     | Per upstream release (~quarterly) | Within 1 week  | MEDIUM   |
+| **Implementation Change** | Per refactoring (ad-hoc)          | Immediate      | HIGH     |
+| **Test Failure**          | When detected (continuous)        | Immediate      | CRITICAL |
 
 ---
 
@@ -89,6 +93,7 @@ it('parses required system properties from response', () => {
 **Example:** CSAPI v1.1.0 adds new resource type "Procedures"
 
 **Impact:**
+
 - **QueryBuilder:** Add getProcedures(), getProcedure(), etc. (new methods)
 - **Tests:** Add new test file procedures.spec.ts (~400-600 lines)
 - **Fixtures:** Create procedure fixtures (~10-15 files)
@@ -97,6 +102,7 @@ it('parses required system properties from response', () => {
 **Effort:** 8-12 hours
 
 **Workflow:**
+
 1. Review spec changes (identify new Procedures resource)
 2. Implement QueryBuilder methods (8-10 new methods)
 3. Write tests (40-50 tests)
@@ -109,6 +115,7 @@ it('parses required system properties from response', () => {
 **Example:** CSAPI v1.1.0 changes System.properties schema (new required field "status")
 
 **Impact:**
+
 - **QueryBuilder:** No changes (URL building unaffected)
 - **Tests:** Update assertions to check "status" field
 - **Fixtures:** Add "status" field to all system fixtures (~20 fixtures)
@@ -117,6 +124,7 @@ it('parses required system properties from response', () => {
 **Effort:** 3-5 hours
 
 **Workflow:**
+
 1. Review spec changes (identify schema change)
 2. Update fixtures (add "status" field)
 3. Validate fixtures (schema validation)
@@ -129,6 +137,7 @@ it('parses required system properties from response', () => {
 **Example:** CSAPI v2.0.0 deprecates SamplingFeature.sampledFeature field
 
 **Impact:**
+
 - **QueryBuilder:** Mark field as deprecated in comments
 - **Tests:** Add deprecation warning tests
 - **Fixtures:** Keep existing but mark as deprecated
@@ -137,6 +146,7 @@ it('parses required system properties from response', () => {
 **Effort:** 1-2 hours
 
 **Workflow:**
+
 1. Review spec deprecation notice
 2. Add @deprecated JSDoc tags
 3. Update tests to expect deprecation warnings (if applicable)
@@ -149,6 +159,7 @@ it('parses required system properties from response', () => {
 **Example:** CSAPI v3.0.0 removes deprecated SamplingFeature.sampledFeature field
 
 **Impact:**
+
 - **QueryBuilder:** Remove deprecated field support
 - **Tests:** Remove or update tests for removed field
 - **Fixtures:** Remove field from all fixtures
@@ -157,6 +168,7 @@ it('parses required system properties from response', () => {
 **Effort:** 2-4 hours
 
 **Workflow:**
+
 1. Review spec removal notice
 2. Remove field from QueryBuilder (if supported)
 3. Remove or update tests
@@ -169,6 +181,7 @@ it('parses required system properties from response', () => {
 **Example:** CSAPI v1.2.0 adds new conformance class "Advanced Filtering"
 
 **Impact:**
+
 - **QueryBuilder:** Add advanced filter methods
 - **Tests:** Add conformance class detection tests
 - **Tests:** Add advanced filtering tests (~200-400 lines)
@@ -178,6 +191,7 @@ it('parses required system properties from response', () => {
 **Effort:** 10-16 hours
 
 **Workflow:**
+
 1. Review conformance class spec
 2. Implement conformance detection
 3. Implement advanced filter methods
@@ -193,6 +207,7 @@ it('parses required system properties from response', () => {
 **Example:** ogc-client v4.2.0 → v4.3.0 (minor version, no breaking changes)
 
 **Impact:**
+
 - **Code:** None (compatible update)
 - **Tests:** None (still pass)
 - **Fixtures:** None
@@ -201,6 +216,7 @@ it('parses required system properties from response', () => {
 **Effort:** 0.5-1 hour
 
 **Workflow:**
+
 1. Review upstream release notes
 2. Update package.json version
 3. Run npm update
@@ -213,6 +229,7 @@ it('parses required system properties from response', () => {
 **Example:** ogc-client v5.0.0 renames `OgcApiEndpoint.getFeatures()` → `OgcApiEndpoint.fetchFeatures()`
 
 **Impact:**
+
 - **Code:** Update all calls to getFeatures() → fetchFeatures()
 - **Tests:** Update test assertions and mocks
 - **Fixtures:** None (API change, not data format)
@@ -221,6 +238,7 @@ it('parses required system properties from response', () => {
 **Effort:** 4-8 hours
 
 **Workflow:**
+
 1. Review upstream breaking changes
 2. Update package.json to v5.0.0
 3. Find all getFeatures() calls (grep search)
@@ -234,6 +252,7 @@ it('parses required system properties from response', () => {
 **Example:** ogc-client v4.5.0 deprecates `endpoint.getUrl()` (use `endpoint.url` property)
 
 **Impact:**
+
 - **Code:** Update to new API (proactive or wait for removal)
 - **Tests:** Update test code
 - **Fixtures:** None
@@ -242,6 +261,7 @@ it('parses required system properties from response', () => {
 **Effort:** 2-4 hours
 
 **Workflow:**
+
 1. Review deprecation notice
 2. Decide: migrate now or wait for removal
 3. If migrating: find all getUrl() calls, replace with .url
@@ -253,6 +273,7 @@ it('parses required system properties from response', () => {
 **Example:** ogc-client v4.4.0 adds `endpoint.validateConformance()` method
 
 **Impact:**
+
 - **Code:** Optionally use new feature
 - **Tests:** Add tests for new feature usage (if adopted)
 - **Fixtures:** None
@@ -261,6 +282,7 @@ it('parses required system properties from response', () => {
 **Effort:** 2-6 hours (if adopted), 0 hours (if not used)
 
 **Workflow:**
+
 1. Review new feature documentation
 2. Decide: adopt feature or ignore
 3. If adopting: implement usage
@@ -275,6 +297,7 @@ it('parses required system properties from response', () => {
 **Example:** Refactor CSAPIQueryBuilder internal URL building to use helper functions
 
 **Impact:**
+
 - **Code:** Refactored internals
 - **Tests:** None (tests only validate public API)
 - **Fixtures:** None
@@ -283,6 +306,7 @@ it('parses required system properties from response', () => {
 **Effort:** 0 hours (tests should still pass)
 
 **Validation:**
+
 - Run full test suite
 - All tests should pass without changes
 - If tests fail → tests were testing implementation, not behavior (fix tests)
@@ -292,6 +316,7 @@ it('parses required system properties from response', () => {
 **Example:** Rename `builder.getSystems()` → `builder.systems().list()` (better structure)
 
 **Impact:**
+
 - **Code:** Renamed methods
 - **Tests:** Update all test calls
 - **Fixtures:** None
@@ -300,6 +325,7 @@ it('parses required system properties from response', () => {
 **Effort:** 8-12 hours
 
 **Workflow:**
+
 1. Implement new API structure
 2. Deprecate old API (keep compatibility temporarily)
 3. Update all internal uses
@@ -313,6 +339,7 @@ it('parses required system properties from response', () => {
 **Example:** Refactor `parseAndValidateUrl()` to accept options differently
 
 **Impact:**
+
 - **Code:** Test utility changed
 - **Tests:** Update all calls to parseAndValidateUrl() (~100+ locations)
 - **Fixtures:** None
@@ -321,6 +348,7 @@ it('parses required system properties from response', () => {
 **Effort:** 4-6 hours
 
 **Workflow:**
+
 1. Update parseAndValidateUrl() signature
 2. Find all calls (grep search)
 3. Update each call with new syntax
@@ -335,6 +363,7 @@ it('parses required system properties from response', () => {
 **Example:** Spec v1.2 adds new required fields to System resources
 
 **Impact:**
+
 - **Code:** Update type definitions
 - **Tests:** Update assertions for new fields
 - **Fixtures:** Update affected fixtures (resource-type scoped, not all)
@@ -343,6 +372,7 @@ it('parses required system properties from response', () => {
 **Effort:** 1-4 hours (depends on scope of schema change)
 
 **Workflow:**
+
 1. Identify affected resource types from spec changelog
 2. Update fixtures for affected resource types
 3. Update type definitions and tests
@@ -357,10 +387,12 @@ it('parses required system properties from response', () => {
 **Example:** Test only checks `expect(url).toBeTruthy()` without validating structure
 
 **Detection:**
+
 - Quality checklist review finds trivial test
 - Test passes even when code is broken
 
 **Remediation:**
+
 1. Identify trivial tests (manual review or automated analysis)
 2. Enhance test with proper validation (use parseAndValidateUrl())
 3. Validate bug detection (intentionally break code, test should fail)
@@ -373,10 +405,12 @@ it('parses required system properties from response', () => {
 **Example:** Test mocks entire API, validates mock returns expected data
 
 **Detection:**
+
 - Test always passes regardless of implementation
 - Mock setup more complex than actual code
 
 **Remediation:**
+
 1. Identify over-mocked tests
 2. Replace with integration tests using real fixtures
 3. Validate tests catch real bugs
@@ -389,11 +423,13 @@ it('parses required system properties from response', () => {
 **Example:** Fixture from CSAPI v1.0 spec, now v1.2 with schema changes
 
 **Detection:**
+
 - Fixture fails schema validation
 - Fixture missing new required fields
 - Fixture uses deprecated fields
 
 **Remediation:**
+
 1. Run fixture validation against current schema
 2. Update fixtures to match current spec
 3. Update README spec version
@@ -406,10 +442,12 @@ it('parses required system properties from response', () => {
 **Example:** Spec context comment references old spec version, test actually validates v1.2 behavior
 
 **Detection:**
+
 - Code review finds version mismatch in comments
 - Spec section reference is outdated
 
 **Remediation:**
+
 1. Review spec context comments in affected test files
 2. Update comments to reference current spec version
 3. Verify test still validates correct client behavior
@@ -433,6 +471,7 @@ it('parses required system properties from response', () => {
 ## Specification Compliance
 
 This implementation supports:
+
 - **OGC 23-001** Connected Systems API - Part 1: Feature Resources (v1.0.0)
 - **OGC 23-002** Connected Systems API - Part 2: Observation Data (v1.0.0)
 - **OGC 23-003** Connected Systems API - Part 3: Command & Control (v1.0.0)
@@ -461,28 +500,31 @@ This implementation supports:
 **2. Automated Dependency Updates**
 
 **Tools:**
+
 - **Dependabot:** GitHub automated dependency PR creation
 - **Renovate:** Alternative with more configuration options
 
 **Configuration (.github/dependabot.yml):**
+
 ```yaml
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     open-pull-requests-limit: 5
     reviewers:
-      - "maintainer-username"
+      - 'maintainer-username'
     labels:
-      - "dependencies"
-      - "automated"
+      - 'dependencies'
+      - 'automated'
 ```
 
 **3. Breaking Change Detection**
 
 **Process:**
+
 1. Dependabot creates PR for dependency update
 2. CI runs full test suite
 3. If tests fail → breaking change detected
@@ -498,6 +540,7 @@ updates:
 **Approach:** Use spec awareness as context for maintenance decisions, not as structural infrastructure.
 
 **When a spec updates:**
+
 1. Review spec changelog for changed sections
 2. Identify which client behaviors the changes affect (URL patterns, response structures, error conditions)
 3. Search test files for comments referencing those spec sections: `grep -r "Spec context:.*§7.2" src/`
@@ -506,7 +549,7 @@ updates:
 6. Run test suite
 7. Review and merge
 
-**Key principle:** Spec changes trigger test updates because they change what *correct client behavior* looks like — not because we need to maintain spec-coverage metrics.
+**Key principle:** Spec changes trigger test updates because they change what _correct client behavior_ looks like — not because we need to maintain spec-coverage metrics.
 
 ### 2.4 Automated Change Detection
 
@@ -544,7 +587,7 @@ jobs:
 name: Monthly Test Health Check
 on:
   schedule:
-    - cron: '0 0 1 * *'  # First day of each month
+    - cron: '0 0 1 * *' # First day of each month
 jobs:
   health-check:
     runs-on: ubuntu-latest
@@ -581,6 +624,7 @@ function validateFixtures() {
 ```
 
 **Usage:**
+
 ```bash
 # Validate all fixtures
 npm run fixtures:validate
@@ -597,6 +641,7 @@ npm run fixtures:update-metadata
 > **⚠️ H3 fix:** The original monthly review checklist template (30+ checkbox items covering spec compliance, dependency health, test quality, fixture health, documentation, and technical debt) has been replaced with a brief checklist appropriate for an open-source contribution. Monthly formal reviews with named reviewers and dated reports are not appropriate — simply review tests when they break or when upstream changes.
 
 **When to review tests:**
+
 - A dependency update breaks something
 - A new spec version is published
 - Tests start failing after an upstream merge
@@ -632,6 +677,7 @@ npm run fixtures:update-metadata
 ### 3.4 When Retiring Tests
 
 Remove tests when:
+
 - The feature they test has been removed from the codebase
 - They duplicate other tests without adding value
 - They test implementation details that no longer exist
@@ -659,20 +705,21 @@ Remove tests when:
 
 **Indicators:**
 
-| Indicator | Description | Detection Method | Severity |
-|-----------|-------------|-----------------|----------|
-| **Always Passes** | Test passes even when code is broken | Intentional breakage validation | HIGH |
-| **Tests Mocks** | Test validates mock behavior, not real code | Code review, mock complexity > code | HIGH |
-| **No Assertions** | Test has setup but minimal/no validation | Grep for tests with no `expect()` | CRITICAL |
-| **Trivial Checks** | Only checks `.toBeTruthy()` without depth | Grep for shallow assertions | HIGH |
-| **Outdated Fixtures** | Fixtures from old spec version | Fixture metadata check | MEDIUM |
-| **Outdated Spec Context** | Spec context comments reference old version | Manual review | LOW |
-| **Coverage Drop** | Coverage decreases over time | Coverage trend monitoring | MEDIUM |
-| **Flaky Tests** | Tests fail intermittently | CI failure tracking | HIGH |
-| **Slow Tests** | Test execution time increases | Performance monitoring | LOW |
-| **Documentation Drift** | Test docs don't match behavior | Manual review | LOW |
+| Indicator                 | Description                                 | Detection Method                    | Severity |
+| ------------------------- | ------------------------------------------- | ----------------------------------- | -------- |
+| **Always Passes**         | Test passes even when code is broken        | Intentional breakage validation     | HIGH     |
+| **Tests Mocks**           | Test validates mock behavior, not real code | Code review, mock complexity > code | HIGH     |
+| **No Assertions**         | Test has setup but minimal/no validation    | Grep for tests with no `expect()`   | CRITICAL |
+| **Trivial Checks**        | Only checks `.toBeTruthy()` without depth   | Grep for shallow assertions         | HIGH     |
+| **Outdated Fixtures**     | Fixtures from old spec version              | Fixture metadata check              | MEDIUM   |
+| **Outdated Spec Context** | Spec context comments reference old version | Manual review                       | LOW      |
+| **Coverage Drop**         | Coverage decreases over time                | Coverage trend monitoring           | MEDIUM   |
+| **Flaky Tests**           | Tests fail intermittently                   | CI failure tracking                 | HIGH     |
+| **Slow Tests**            | Test execution time increases               | Performance monitoring              | LOW      |
+| **Documentation Drift**   | Test docs don't match behavior              | Manual review                       | LOW      |
 
 **How to detect test rot (no custom tooling required):**
+
 - Search for tests with no `expect()` calls
 - Search for tests that only use `toBeTruthy()` or `toBeDefined()`
 - Intentionally break code and verify tests fail
@@ -683,6 +730,7 @@ Remove tests when:
 > **⚠️ H3 fix:** The original §5.2–5.6 included a monthly health check procedure (automated + manual, 1.5–2.5 hours/month), a custom `scripts/detect-test-rot.js` tool, a quality metrics dashboard auto-generated by CI, a deprecation warning system with 3-6 month timelines, a technical debt tracking system with GitHub issue labels/templates/prioritization tiers, and separate Pre-Commit/PR Review/Post-Merge checklists. This infrastructure is disproportionate for a contribution to an upstream library. Simplified to a brief prevention checklist.
 
 **Keep tests valuable by:**
+
 1. Writing meaningful assertions from the start (not `toBeTruthy()`)
 2. Testing behavior, not implementation details
 3. Using real fixtures, not invented data
@@ -704,6 +752,7 @@ Remove tests when:
 > **⚠️ H3 fix:** The original §7 proposed 7+ custom tools (rot detection tool, fixture validation tool, health report generator, spec version updater, fixture migration tool, test metrics web dashboard) with 33.5–46.5 hours of development effort, plus GitHub Actions workflows (monthly health check cron job, Dependabot/Renovate configuration). The contributor does not control upstream CI/CD configuration. These tools have been removed. Use standard tooling that already exists in the project.
 
 **Available tooling (no custom scripts needed):**
+
 - `npm test` — run the test suite
 - `npm run test:coverage` — generate coverage report
 - `grep` — find tests referencing specific spec sections or patterns
@@ -716,6 +765,7 @@ Remove tests when:
 > **⚠️ H3 fix:** The original §8 (Implementation Estimates) with 33.5–46.5 hours of tooling development and 84–184 hours/year annual maintenance burden has been removed. The original §9 (Key Recommendations) recommended implementing a traceability tool, monthly health checks, component maintainer assignments, Dependabot configuration, and tracking 8 success metrics with monthly/quarterly/annual reviews. These have been simplified to practical guidance.
 
 **Essential practices:**
+
 1. Keep tests passing — fix failures immediately
 2. Update fixtures when spec or API changes
 3. Follow upstream conventions — match their testing style
@@ -723,17 +773,18 @@ Remove tests when:
 5. Remove obsolete tests — don't maintain dead code
 
 **Avoid over-engineering:**
+
 - No custom maintenance tools for a library contribution
 - No monthly formal health checks — just fix issues when you see them
 - No RACI matrices or invented roles — standard PR review is sufficient
 - No multi-week update workflows — just update, test, and submit a PR
+
 2. ✅ Set up monthly health checks (prevent rot)
 3. ✅ Assign component maintainers (clear ownership)
 4. ✅ Track spec version in tests and fixtures (enable updates)
 5. ✅ Configure Dependabot (automate dependency PRs)
 
-**SHOULD (Highly Recommended):**
----
+## **SHOULD (Highly Recommended):**
 
 ## 9. Summary
 
@@ -748,6 +799,7 @@ Remove tests when:
 5. **Use spec as input** — spec informs what correct client behavior looks like
 
 **What this unblocks:**
+
 - Tests remain valuable as the project evolves
 - Clear path to update tests when spec or upstream changes
 - Low maintenance overhead appropriate for a library contribution
@@ -784,4 +836,3 @@ Remove tests when:
 **Document Status:** ✅ COMPLETE  
 **Review Status:** H3 fix applied — enterprise infrastructure simplified  
 **Next Steps:** Follow the three core maintenance guidelines when contributing tests
-

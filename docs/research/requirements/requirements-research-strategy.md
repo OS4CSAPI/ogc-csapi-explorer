@@ -37,6 +37,7 @@
 **Analysis:** [docs/research/requirements/csapi-part1-requirements.md](csapi-part1-requirements.md) Section 1.1
 
 **Answers:**
+
 - [x] What are ALL operations for each resource type according to the standard? → **70+ operations across 5 resource types: Systems (12 methods), Deployments (8 methods), Procedures (8 methods), Sampling Features (8 methods), Properties (6 methods) covering CRUD + nested endpoints** (Analysis Section 1)
 - [x] What HTTP methods are specified in the standard text? → **GET (retrieve), POST (create), PUT (replace), PATCH (update), DELETE (delete) with cascade option** (Section 2)
 - [x] What query parameters are defined in the standard? → **30+ parameters: spatial (bbox, geom), temporal (datetime), identifiers (id, uid), text (q), relationships (parent, procedure, foi, observedProperty, controlledProperty, system, baseProperty, objectType), hierarchical (recursive), pagination (limit, offset)** (Section 3)
@@ -59,6 +60,7 @@
 **Analysis:** [docs/research/requirements/csapi-part1-requirements.md](csapi-part1-requirements.md) Section 1.2
 
 **Answers:**
+
 - [x] What paths are defined in the OpenAPI schema? → **20 path templates: 2 capabilities paths (/, /conformance), 4 collections paths, 14 resource paths covering Systems (3 paths), Deployments (4 paths), Procedures (2 paths), Sampling Features (3 paths), Properties (2 paths)** (Analysis Section 1)
 - [x] What HTTP methods are specified for each path? → **40 total operations: 20 GET, 10 POST, 5 PUT, 5 DELETE. PATCH method absent from schema despite being mentioned in standard** (Section 2)
 - [x] What parameters are defined (path, query, header)? → **28 parameters total: 7 path parameters (collectionId, resourceId, systemId, deploymentId, procedureId, featureId, propId), 15 query parameters (bbox, datetime, geom, q, id, parent, procedure, foi, observedProperty, controlledProperty, system, baseProperty, objectType, limit, recursive, cascade), 0 header parameters** (Section 3)
@@ -79,6 +81,7 @@
 **Analysis:** [docs/research/requirements/csapi-part1-requirements.md](csapi-part1-requirements.md) Section 1.3
 
 **Answers:**
+
 - [x] Where do the standard and OpenAPI schema align perfectly? → **95%+ alignment on core functionality: path structure (20 paths match canonical patterns), resource types (all 5 types with identical naming), query parameters (all 15 OpenAPI params match standard), HTTP methods (GET/POST/PUT/DELETE all present), dual format support (both GeoJSON + SensorML fully specified), status codes (200/201/204/4XX/5XX match HTTP semantics), required properties (featureType/uid/name align perfectly)** (Section 1)
 - [x] Where does the OpenAPI schema provide more specific details than the standard? → **Precise parameter types/constraints (bbox array 4-6 numbers, limit 1-10000, datetime RFC 3339), enumerated SystemTypeUris (5 SOSA URIs with CURIE forms), complete SWE Common 3.0 schemas (20+ data components), concrete examples (8 complete request/response examples), property naming (uid not uniqueIdentifier, featureType not systemType), link suffix convention ({association}@link), path parameter constraints (minLength:1), exact default values (limit:10, recursive:false, cascade:false)** (Section 2)
 - [x] Where does the standard describe things not captured in OpenAPI? → **Conformance classes (11 classes with 103 requirements, dependencies, test suite), link relation semantics (11 ogc-rel: definitions), PATCH method (references Part 4 Update, completely absent from OpenAPI), history/versioning (mentions /systems/{id}/history endpoints, not in OpenAPI paths), recursive query details (traversal semantics, filter interactions), cascade delete semantics (exact list of nested resources deleted), transitive relationships (Recommendation 4 on baseProperty/foi), conformance detection guidance (minimum vs full implementation)** (Section 3)
@@ -108,6 +111,7 @@
 **Analysis:** [docs/research/requirements/csapi-part2-requirements.md](csapi-part2-requirements.md) Section 2.1
 
 **Answers:**
+
 - [x] What are ALL operations for dynamic data resources according to the standard? (Datastreams, Observations, Control Streams, Commands) → **Canonical endpoints: /datastreams, /observations, /controlstreams, /commands, /feasibility, /systemEvents with GET operations. Nested endpoints: /systems/{id}/datastreams, /datastreams/{id}/observations, /systems/{id}/controlstreams, /controlstreams/{id}/commands, /commands/{id}/status, /commands/{id}/result plus schema endpoints /datastreams/{id}/schema?obsFormat={format} and /controlstreams/{id}/schema?cmdFormat={format}** (Section 3, Section 4)
 - [x] What HTTP methods are specified for dynamic data resources? → **GET (retrieve with params), POST (create with schema validation), PUT (replace entire resource with 409 if schema conflict), PATCH (update partial via JSON Merge Patch RFC 7396), DELETE (delete with cascade parameter, 409 without cascade if nested resources exist). All methods inherit OGC API - Features Part 1 and Part 4 behaviors** (Section 3)
 - [x] How does the standard describe differences from Part 1 patterns? → **Observations/Commands NOT modeled as Features (purposeful separation of static metadata from dynamic data containers). DataStreams/ControlStreams are homogeneous collections (all from same system, same schema). Auto-generated properties (DataStream phenomenonTime/resultTime/observedProperties generated from observations). Schema operations unique to Part 2 (format-specific schemas per datastream/controlstream). Status/result tracking unique to Part 2. async/sync distinction for commands. live indicators for real-time availability** (Section 2, Section 9, Section 10)
@@ -129,6 +133,7 @@
 **Source:** docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml
 
 **Questions to answer:**
+
 - [x] What paths are defined for Datastreams, Observations, Control Streams, and Commands? **48 endpoints: Datastreams (8), Observations (6), ControlStreams (8), Commands (15), SystemEvents (6), SystemHistory (5)**
 - [x] What HTTP methods are specified for each dynamic data path? **GET (all 48), POST (15), PUT (19), DELETE (14); PATCH absent**
 - [x] What parameters are defined for dynamic data endpoints? **23 parameters: id/q/system/dataStream/controlStream/foi/observedProperty/controlledProperty/phenomenonTime/resultTime/issueTime/executionTime/reportTime/validTime/datetime/statusCode/sender/eventType/limit/obsFormat/cmdFormat/cascade + path params (systemId/dataStreamId/obsId/controlStreamId/cmdId/statusId/resultId/eventId/revId)**
@@ -147,6 +152,7 @@
 #### Section 2.3: Comparison and Insights
 
 **Questions to answer:**
+
 - [x] Where do the Part 2 standard and OpenAPI schema align perfectly? **Resource paths, core data models, temporal parameters (phenomenonTime/resultTime/issueTime/executionTime), CommandStatus state machine (9 codes with identical transitions), HTTP status codes (200/201/204/400/404/409), schema operation semantics (GET/PUT with 409 on conflict)**
 - [x] Where does the OpenAPI schema provide more specifics than the standard? **Exact parameter constraints (limit 1-10000 default 10, q maxLength 50, minLength 1 for path params), required/optional property arrays (DataStream 9 required, Observation 3+oneOf required), read-only markers (id, datastream@id, issueTime, observedProperties, phenomenonTime, resultTime extents), write-only markers (schema), Link validation patterns (hreflang pattern, format:uri), encoding schemas (TextEncoding with minLength constraints, BinaryEncoding with enum byteOrder/byteEncoding), CommandResult oneOf constraint (exactly one of data/observation@link/observationSet@link/datastream@link/external@link)**
 - [x] Where does the standard describe concepts not captured in OpenAPI? **Architecture rationale (why DataStream-Observation separation), use cases (environmental monitoring, UAV control), content negotiation rules (Accept header vs f parameter, precedence), pagination cursor semantics (opaque, expiring, not client-constructed), schema validation workflow (timing, pre-existing data not revalidated), cascade delete semantics (order, atomicity), live data stream semantics (polling recommendations), temporal extent auto-update (server responsibility)**
@@ -175,15 +181,18 @@
 **Resources:**
 
 ##### Standards & Specifications:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - Sections on content negotiation
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html) - Sections on format support
 - [HTTP Content Negotiation (RFC 9110)](https://www.rfc-editor.org/rfc/rfc9110.html#name-content-negotiation)
 
 ##### Schemas:
+
 - docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml
 - docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml
 
 **Questions to answer:**
+
 - [x] What formats are REQUIRED by the standard for all implementations?
   - **Part 1:** application/json (all), application/geo+json (spatial), application/sml+json (systems/procedures)
   - **Part 2:** application/json (all), application/swe+json/text/binary (observations/commands - optional)
@@ -231,15 +240,18 @@
 **Resources:**
 
 ##### Standards & Specifications:
+
 - [GeoJSON RFC 7946](https://datatracker.ietf.org/doc/html/rfc7946)
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - System/SamplingFeature GeoJSON representation
 - [OGC API – Features GeoJSON guidance](https://docs.ogc.org/is/17-069r4/17-069r4.html)
 
 ##### Schemas:
+
 - [GeoJSON Schema](https://geojson.org/schema/GeoJSON.json)
 - docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml (System, SamplingFeature schemas)
 
 **Questions to answer:**
+
 - [x] Which CSAPI resources support GeoJSON format? → Part 1: Systems, Deployments, Procedures (geometry:null), SamplingFeatures; Part 2: DataStreams, ControlStreams (optional)
 - [x] What GeoJSON geometry types are used in CSAPI? (Point, LineString, Polygon, GeometryCollection) → All 7 RFC 7946 types required: Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon, GeometryCollection
 - [x] What is the structure of CSAPI GeoJSON Feature representations? → Standard RFC 7946 Feature with type/id/geometry/properties/links; properties contain CSAPI-specific fields
@@ -261,14 +273,17 @@
 **Resources:**
 
 ##### Standards & Specifications:
+
 - [SensorML 3.0 Specification](https://docs.ogc.org/is/20-010r3/20-010r3.html)
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - System/Procedure SensorML representation
 
 ##### Schemas:
+
 - [SensorML 3.0 JSON Schema](https://schemas.opengis.net/sensorml/3.0/sensorml.json)
 - docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml (System, Procedure schemas)
 
 **Questions to answer:**
+
 - [x] Which CSAPI resources support SensorML format? (System, Procedure) → Part 1: Systems (PhysicalSystem, PhysicalComponent, SimpleProcess, AggregateProcess), Procedures (SimpleProcess, AggregateProcess), Deployments, Properties
 - [x] What SensorML component types are used? (SimpleProcess, AggregateProcess, PhysicalSystem, PhysicalComponent) → 4 main types: PhysicalSystem/PhysicalComponent (hardware), SimpleProcess/AggregateProcess (software/procedures); all extend DescribedObject → AbstractProcess → AbstractPhysicalProcess
 - [x] What is the minimal SensorML subset needed for CSAPI compatibility? → Required: type, label, uniqueId; Recommended: id, definition, validTime, links; Optional: identifiers, classifiers, inputs, outputs, parameters, characteristics, capabilities
@@ -290,14 +305,17 @@
 **Resources:**
 
 ##### Standards & Specifications:
+
 - [SWE Common Data Model 3.0 Specification](https://docs.ogc.org/is/18-003r2/18-003r2.html)
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html) - Observation/Command schema and encoding
 
 ##### Schemas:
+
 - [SWE Common 3.0 JSON Schema](https://schemas.opengis.net/sweCommon/3.0/sweCommon.json)
 - docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml (SWE Common component schemas)
 
 **Questions to answer:**
+
 - [x] Which CSAPI resources use SWE Common? (Observation schemas, Command schemas) → Part 2: Observations (result field), Commands (parameters/result fields); DataStreams/ControlStreams define schemas/encodings
 - [x] What SWE Common data components are required? (Boolean, Count, Quantity, Time, Category, Text, DataRecord, DataArray, Vector, Matrix) → All 10 component types required: Quantity, Count, Boolean, Text, Category, Time, DataRecord, DataArray, Vector, Matrix
 - [x] What SWE Common encoding formats must be supported? (JSON, Text/CSV, Binary) → All 3 formats: JSON (application/swe+json), CSV (application/swe+csv), Binary (application/swe+binary) with configurable parameters
@@ -324,16 +342,19 @@
 **Resources:**
 
 #### Standards & Specifications:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html)
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html)
 - [OGC API - Common - Part 1: Core](https://docs.ogc.org/is/19-072/19-072.html)
 - [OGC API - Common - Part 2: Geospatial Data](https://docs.ogc.org/DRAFTS/20-024.html)
 
 #### Schemas:
+
 - docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml
 - docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml
 
 **Questions to answer:**
+
 - [x] What are ALL standard OGC API query parameters? (bbox, datetime, limit, offset, f)
   - **Standard:** bbox, datetime, limit, offset, f (from OGC API - Common/Features)
 - [x] What are CSAPI-specific query parameters?
@@ -386,15 +407,18 @@
 **Resources:**
 
 #### Standards & Specifications:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html)
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html)
 - [HTTP/1.1 Method Definitions (RFC 9110)](https://www.rfc-editor.org/rfc/rfc9110.html#name-methods)
 
 #### Schemas:
+
 - docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml
 - docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml
 
 **Questions to answer:**
+
 - [x] Which resources support full CRUD? (Create, Read, Update, Delete)
   - **Part 1:** Systems, Deployments, Procedures, SamplingFeatures, Properties (all support full CRUD)
   - **Part 2:** DataStreams, Observations, ControlStreams, Commands, CommandStatus, CommandResult, Feasibility, SystemEvents (all support full CRUD)
@@ -445,16 +469,19 @@
 **Resources:**
 
 #### Standards & Specifications:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - especially sections on relationships
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html) - especially sections on relationships
 - [Web Linking (RFC 8288)](https://www.rfc-editor.org/rfc/rfc8288.html)
 - [Link Relation Types (IANA Registry)](https://www.iana.org/assignments/link-relations/link-relations.xhtml)
 
 #### Schemas:
+
 - docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml
 - docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml
 
 **Questions to answer:**
+
 - [x] What are ALL sub-resource relationships? (systems/{id}/datastreams, etc.)
   - **Part 1:** subsystems, subdeployments, samplingFeatures, deployments (reverse), datastreams, controlstreams, events, collection items (9 total)
   - **Part 2:** observations, commands, status, result, feasibility (7 total)
@@ -520,15 +547,18 @@
 **Resources:**
 
 #### Standards & Specifications:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - especially Annex A (Conformance Classes)
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html) - especially Annex A (Conformance Classes)
 - [OGC API - Common - Part 1: Core](https://docs.ogc.org/is/19-072/19-072.html) - conformance framework
 
 #### Schemas:
+
 - docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml
 - docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml
 
 **Questions to answer:**
+
 - [x] What conformance classes exist?
   - **Part 1:** 13 classes (Common, System, Subsystem, Deployment, Subdeployment, Procedure, SamplingFeature, Property, AdvancedFiltering, Create/Replace/Delete, Update, GeoJSON, SensorML)
   - **Part 2:** 12 classes (Common, DataStream, ControlStream, Feasibility, SystemEvent, AdvancedFiltering, Create/Replace/Delete, Update, JSON, SWE JSON/Text/Binary)
@@ -591,21 +621,25 @@
 **Resources:**
 
 #### Standards & Specifications:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - data models
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html) - data models
 - [SWE Common Data Model 3.0](https://docs.ogc.org/is/18-003r2/18-003r2.html)
 - [GeoJSON RFC 7946](https://datatracker.ietf.org/doc/html/rfc7946)
 
 #### Schemas:
+
 - docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml
 - docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml
 - [SWE Common 3.0 JSON Schema](https://schemas.opengis.net/sweCommon/3.0/sweCommon.json)
 - [GeoJSON Schema](https://geojson.org/schema/GeoJSON.json)
 
 #### Code References:
+
 - TypeScript type patterns in ogc-client (for consistency)
 
 **Questions to answer:**
+
 - [x] What TypeScript interfaces does library export?
   - **Public API (25 types):** 10 core resources, 3 collections, 5 query params, 7 utilities
   - **Advanced API (100+ types):** Full SWE Common hierarchy, SensorML processes, encodings, constraints
@@ -668,18 +702,22 @@
 **Resources:**
 
 #### Reference Implementations:
+
 - [osh-js Repository](https://github.com/opensensorhub/osh-js) - JavaScript client implementation
 - [OpenSensorHub OSH-Core](https://github.com/opensensorhub/osh-core) - Java server with examples
 - [OGC Connected Systems API Implementations](https://github.com/opengeospatial/connected-systems) - official examples
 
 #### Use Case Documentation:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - use cases and examples
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html) - use cases and examples
 
 #### Related Client Libraries:
+
 - [camptocamp/ogc-client](https://github.com/camptocamp/ogc-client) - upstream patterns for WFS, WMS, etc.
 
 **Questions to answer:**
+
 - [x] What are the top 10 most common usage scenarios? → 15 scenarios identified: system discovery, real-time monitoring, historical retrieval, commanding, streaming, deployment tracking, hierarchy navigation, system history, sampling features, feasibility checks, event monitoring, mapping integration, dashboards, UAV tasking, procedure management
 - [x] What API calls do real applications make most often? → Documented for all 15 scenarios with complete API operation sequences
 - [x] What functionality do existing CSAPI clients use? → 6 essential workflows: discovery/connection, real-time monitoring, historical retrieval, async commanding, deployment tracking, feasibility checking
@@ -700,13 +738,16 @@
 **Resources:**
 
 #### Repository:
+
 - [osh-viewer Repository](https://github.com/Botts-Innovative-Research/osh-viewer) - JavaScript webapp CSAPI client
 
 #### Related Documentation:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html)
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html)
 
 **Questions to answer:**
+
 - [x] What CSAPI operations does osh-viewer actually use in practice? → Primary: GET systems/datastreams/observations/controlstreams, POST commands, WebSocket streaming; Unused: POST/PUT/DELETE for resource management
 - [x] What resources does it query most frequently? (Systems, Datastreams, Observations, etc.) → System → DataStreams → Observations (primary hierarchy), ControlStreams for commanding, SamplingFeatures for mapping
 - [x] What query parameters does it use? (bbox, datetime, limit patterns) → Frequent: bbox, phenomenonTime (often 'now'/'latest'), observedProperty, format/obsFormat; Rare: select, validTime, location (WKT)
@@ -731,13 +772,16 @@
 **Resources:**
 
 #### Repository:
+
 - [oscar-viewer Repository](https://github.com/Botts-Innovative-Research/oscar-viewer) - TypeScript webapp CSAPI client
 
 #### Related Documentation:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html)
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html)
 
 **Questions to answer:**
+
 - [x] How does oscar-viewer's TypeScript implementation differ from osh-viewer's JavaScript approach? → TypeScript with partial adoption (extensive `any` usage), React+Redux vs Vue+Pinia, Node abstraction for multi-server, domain models (LaneMapEntry, EventTableData), MQTT vs WebSocket, Redux persistence vs schema caching
 - [x] What CSAPI operations does oscar-viewer prioritize? → GET systems/datastreams/observations (same as osh-viewer), POST commands, custom `/observations/count` endpoint, searchMembers=true for hierarchies, validTime=latest queries
 - [x] What type safety patterns does it employ? → `typeof` imports (awkward pattern), custom interfaces (INode, IEventTableData, LaneDSColl), type guard utilities (isGammaDataStream, isTamperDataStream), but extensive `any` usage and `@ts-ignore` comments undermine benefits
@@ -762,18 +806,22 @@
 **Resources:**
 
 #### Repository:
+
 - [OWSLib Repository](https://github.com/geopython/OWSLib) - Python library for OGC web services including CSAPI
 
 #### Code References:
+
 - OWSLib CSAPI implementation modules
 - API patterns and method signatures
 - Usage examples and tests
 
 #### Related Documentation:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html)
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html)
 
 **Questions to answer:**
+
 - [x] What architectural pattern does OWSLib use for CSAPI? → Inheritance hierarchy (API → Collections → ConnectedSystems → 11 resource classes), class-per-resource model, centralized HTTP execution via `_request()` method, stateless design
 - [x] What operations does OWSLib expose to users? → Complete CRUD operations across all resources: `resources()`, `resource(id)`, `resource_create()`, `resource_create_in_parent()`, `resource_update()`, `resource_update_{aspect}()`, `resource_delete()`, parent-child navigation methods
 - [x] What scope decisions did OWSLib make? → All 11 core resources implemented, comprehensive query parameters (spatial/temporal/property filtering), full CRUD support, resource navigation, authentication, multiple formats; excluded: advanced pagination (offset/cursor), batching, streaming, OpenAPI integration
@@ -799,18 +847,22 @@
 **Resources:**
 
 #### Repository:
+
 - [OSHConnect-Python Repository](https://github.com/Botts-Innovative-Research/OSHConnect-Python) - Python client for CSAPI
 
 #### Code References:
+
 - Client implementation structure
 - Method signatures and patterns
 - Usage examples and documentation
 
 #### Related Documentation:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html)
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html)
 
 **Questions to answer:**
+
 - [x] How does OSHConnect-Python differ from OWSLib's CSAPI support? → Stateful vs stateless (resource objects maintain context), streaming-first vs request/response, builder pattern vs kwargs, Pydantic validation vs plain dicts, focused coverage (3/11 resources) vs complete (11/11), object navigation vs explicit methods
 - [x] What design philosophy does OSHConnect-Python follow? → Stateful resource objects (like ORM), builder pattern for queries, dependency injection (testable), streaming-first design (WebSocket/MQTT primary), Pydantic validation (runtime type safety), domain-driven (IoT/sensor focused)
 - [x] What operations are prioritized in OSHConnect-Python? → High priority: Systems/DataStreams/Observations read, real-time streaming; Medium: Systems/DataStreams create, Deployments read; Low: Updates, deletes, other resources (Procedures, SamplingFeatures, ControlStreams, Commands, Properties, SystemEvents, SystemHistory) not implemented
@@ -836,18 +888,22 @@
 **Resources:**
 
 #### Repository:
+
 - [ConnectedSystemsAPI-CPP Repository](https://github.com/Botts-Innovative-Research/ConnectedSystemsAPI-CPP) - C++ CSAPI library
 
 #### Code References:
+
 - C++ client implementation structure
 - Header files and method definitions
 - Usage examples
 
 #### Related Documentation:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html)
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html)
 
 **Questions to answer:**
+
 - [x] What architectural patterns does the C++ library use? → **N/A - Repository is stub with no implementation (only LICENSE, 2-line README, Windows boilerplate header)**
 - [x] How does memory management affect design decisions? (insights for resource handling) → **N/A - No code present; TypeScript uses GC (avoid C++ manual memory management)**
 - [x] What scope does the C++ library cover? (Part 1 only, both parts?) → **0/11 resources implemented (neither Part 1 nor Part 2)**
@@ -874,21 +930,25 @@
 **Resources:**
 
 #### Repository:
+
 - [OpenSensorHub GitHub Organization](https://github.com/opensensorhub)
 - [osh-core Repository](https://github.com/opensensorhub/osh-core) - Core server implementation
 
 #### Code References:
+
 - CSAPI endpoint implementations
 - Resource handler patterns
 - OpenAPI schema definitions
 - Example data and fixtures
 
 #### Related Documentation:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html)
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html)
 - OpenSensorHub documentation
 
 **Questions to answer:**
+
 - [x] What CSAPI operations does OpenSensorHub actually implement? → **Full CRUD for 11/11 resources: Systems, Deployments, Procedures, Properties, FOIs, DataStreams, Observations (no PUT), ControlStreams, Commands (no PUT/DELETE)**
 - [x] What conformance classes does it support? → **OGC API Common 1&2, Features 1&4, CSAPI Parts 1,2,3 - complete conformance with all resource types, formats (JSON, GeoJSON, SensorML, SWE)**
 - [x] What are the common query patterns servers expect from clients? → **bbox (spatial), phenomenonTime/resultTime (temporal), parent (hierarchy), q (keyword), validTime, system/foi/observedProperty (relationships), limit/offset (pagination)**
@@ -917,6 +977,7 @@
 **Server Characteristics:**
 
 **Conformance (Full CSAPI Coverage):**
+
 - ✅ OGC API Common Parts 1 & 2 (Core, HTML, JSON, OpenAPI)
 - ✅ OGC API Features Part 1 (Core, GeoJSON, HTML)
 - ✅ OGC API Features Part 4 (Create-Replace-Delete)
@@ -925,7 +986,9 @@
 - ✅ CSAPI Part 3: WebSocket, MQTT (real-time streaming)
 
 **Live Data Inventory:**
+
 - **6 Active Systems:**
+
   - LIVE - Field Drone (FCU CubePilot UAV with 10+ datastreams)
   - LIVE - Android Phone [Blue 1] (looped replay, ~4 min cycle)
   - LIVE - Android Phone [Blue 2] (looped replay, ~4 min cycle)
@@ -934,6 +997,7 @@
   - FCU Field Drone CubePilot (flight controller unit)
 
 - **28 Datastreams** including:
+
   - **Drone telemetry:** Location (lat/lon/alt), Velocity, Acceleration, Attitude (Euler angles), Angular Velocity, Magnetic Field, Temperature, GPS Health, Health Status
   - **Android sensors:** GPS location, accelerometer, gyroscope, magnetometer, orientation
   - **Multiple formats:** O&M JSON, SWE JSON/CSV/XML/Binary
@@ -943,16 +1007,19 @@
 **Value for Client Development:**
 
 1. **Real-Time Integration Testing:**
+
    - Test against live server (no local deployment needed initially)
    - Validate actual network behavior (latency, timeouts, errors)
    - Test with real-world data patterns (not just fixtures)
 
 2. **Conformance Validation:**
+
    - Verify client against all 33 conformance classes
    - Test Part 3 WebSocket/MQTT features (not in local test fixtures)
    - Validate format negotiation (5 SWE formats: JSON/CSV/XML/Binary/Text)
 
 3. **Real-World Data Patterns:**
+
    - **Location tracking:** Drone at Taiwan coordinates (24.18°N, 120.64°E, ~112m alt)
    - **Vector quantities:** 3D acceleration, velocity, magnetic field
    - **Complex records:** Health status with 7 boolean fields
@@ -960,22 +1027,26 @@
    - **High-frequency data:** IMU sensors (gyro, accel) at high rates
 
 4. **Edge Case Testing:**
+
    - Open-ended time intervals: `validTime: [..., "now"]`
    - Base32 IDs: `03bc5ofvvstg`, `02sv18sqotc0` (not UUIDs)
    - Multiple result types: `measure`, `record`, `vector`
    - Format negotiation: Test Accept header vs `?f=` parameter
 
 5. **Authentication Testing:**
+
    - HTTP Basic Auth validation
    - 401/403 error handling
    - Secure connection patterns
 
 6. **Pagination Testing:**
+
    - 28 datastreams across 6 systems
    - Test with various limit sizes (5, 10, 100)
    - Validate link-following (`next` relations)
 
 7. **Sub-Resource Navigation:**
+
    - `/systems/{id}/datastreams` endpoints
    - Link relations in responses
    - System-to-datastream associations
@@ -988,21 +1059,22 @@
 **Testing Recommendations:**
 
 1. **Use for CI/CD Integration Tests:**
+
    ```typescript
    const LIVE_SERVER = 'http://45.55.99.236:8080/sensorhub/api';
-   
+
    describe('Live OSH Integration Tests', () => {
      it('should connect and authenticate', async () => {
-       const client = new CSAPIClient(LIVE_SERVER, { 
+       const client = new CSAPIClient(LIVE_SERVER, {
          type: 'basic',
-         credentials: { username: 'ogc', password: 'ogc' }
+         credentials: { username: 'ogc', password: 'ogc' },
        });
        const conformance = await client.getConformance();
        expect(conformance.conformsTo).toContain(
          'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
        );
      });
-     
+
      it('should paginate through live systems', async () => {
        const systems = [];
        for await (const sys of client.systems.paginate({ limit: 3 })) {
@@ -1010,13 +1082,13 @@
        }
        expect(systems.length).toBe(6);
      });
-     
+
      it('should query live drone observations', async () => {
        // Drone location datastream: 02v937ubpscg
        const obs = await client.observations.list({
          datastream: '02v937ubpscg',
          phenomenonTime: '2026-02-01T00:00:00Z/..',
-         limit: 10
+         limit: 10,
        });
        expect(obs.length).toBeGreaterThan(0);
        expect(obs[0].result).toHaveProperty('Location');
@@ -1025,11 +1097,13 @@
    ```
 
 2. **Real-Time Stream Testing (Part 3):**
+
    - WebSocket endpoint: `ws://45.55.99.236:8080/sensorhub/api/...`
    - MQTT endpoint available
    - Test live data streaming
 
 3. **Format Negotiation Testing:**
+
    ```typescript
    // Test multiple format support
    const formats = [
@@ -1037,9 +1111,9 @@
      'application/swe+json',
      'application/swe+csv',
      'application/swe+xml',
-     'application/swe+binary'
+     'application/swe+binary',
    ];
-   
+
    for (const format of formats) {
      const obs = await fetch(
        `${LIVE_SERVER}/datastreams/03tbj7mvqg50/observations?limit=1`,
@@ -1080,6 +1154,7 @@
 4. **Phase 4:** Add to documentation as public demo endpoint
 
 **Live Server Data Summary:**
+
 - **Server URL:** http://45.55.99.236:8080/sensorhub/api
 - **Total Systems:** 6 (3 LIVE, 3 archived)
 - **Total DataStreams:** 28
@@ -1098,12 +1173,14 @@ Based on the comprehensive OpenSensorHub server analysis, the following insights
 ##### Query Parameter Implementation
 
 **Must-Have Validation:**
+
 - `limit`: 1-10,000 range, default 100
 - `bbox`: Exactly 4 values [minLon, minLat, maxLon, maxLat]
 - Time parameters: ISO 8601 format (validate before sending)
 - Client-side validation prevents server errors and improves UX
 
 **Supported Query Patterns:**
+
 - Spatial: `bbox`, `geom` (GeoJSON geometry)
 - Temporal: `phenomenonTime`, `resultTime`, `validTime` (ISO 8601 intervals)
 - Hierarchical: `parent`, `system`, `foi`, `observedProperty`, `controlledProperty`
@@ -1115,6 +1192,7 @@ Based on the comprehensive OpenSensorHub server analysis, the following insights
 ##### Pagination Strategy
 
 **Implementation Pattern:**
+
 - OSH uses **limit+1 detection algorithm**
 - Follow `next` link relations from response
 - Provide AsyncGenerator for streaming results: `for await (const item of client.systems.paginate())`
@@ -1122,6 +1200,7 @@ Based on the comprehensive OpenSensorHub server analysis, the following insights
 - Default limit: 100, max: 10,000
 
 **TypeScript Pattern:**
+
 ```typescript
 async *paginateAll<T>(baseUrl: string, params?: Record<string, string>): AsyncGenerator<T> {
   let nextUrl: string | undefined = baseUrl;
@@ -1137,6 +1216,7 @@ async *paginateAll<T>(baseUrl: string, params?: Record<string, string>): AsyncGe
 ##### Error Handling
 
 **OSH Error Response Format:**
+
 ```json
 {
   "status": 400,
@@ -1146,6 +1226,7 @@ async *paginateAll<T>(baseUrl: string, params?: Record<string, string>): AsyncGe
 ```
 
 **Required Client Capabilities:**
+
 - Parse JSON error bodies
 - Type guards: `isNotFound()`, `isValidationError()`, `isAuthError()`
 - Include original response for debugging
@@ -1154,6 +1235,7 @@ async *paginateAll<T>(baseUrl: string, params?: Record<string, string>): AsyncGe
 ##### Format Negotiation
 
 **Resource-Appropriate Formats:**
+
 - Systems/Deployments/FOIs: `application/geo+json` (spatial features)
 - Procedures: `application/sml+json` (SensorML)
 - DataStreams: `application/json` (default)
@@ -1161,17 +1243,20 @@ async *paginateAll<T>(baseUrl: string, params?: Record<string, string>): AsyncGe
 - Always accept JSON as fallback: `Accept: application/geo+json, application/json;q=0.9`
 
 **Negotiation Methods:**
+
 1. Accept header (preferred)
 2. `f` query parameter (alternative)
 
 ##### Sub-Resource Navigation
 
 **Dual Access Patterns:**
+
 - Sub-resource paths: `/systems/{id}/datastreams`
 - Query parameters: `/datastreams?system={id}`
 - **Prefer link relations** from responses over URL construction
 
 **Link Following:**
+
 ```typescript
 async followLink<T>(resource: { links?: Link[] }, rel: string): Promise<T[]> {
   const link = resource.links?.find(l => l.rel === rel);
@@ -1184,14 +1269,16 @@ async followLink<T>(resource: { links?: Link[] }, rel: string): Promise<T[]> {
 ##### Conformance-Based Feature Detection
 
 **Check Capabilities on Initialization:**
+
 ```typescript
-const conformance = await fetch('/conformance').then(r => r.json());
+const conformance = await fetch('/conformance').then((r) => r.json());
 const supportsControlStreams = conformance.conformsTo.includes(
   'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/conf/control-stream'
 );
 ```
 
 **Adaptive Behavior:**
+
 - Gracefully handle optional features (history, events)
 - Don't assume all servers support all conformance classes
 - Query `/conformance` endpoint to determine available features
@@ -1199,12 +1286,14 @@ const supportsControlStreams = conformance.conformsTo.includes(
 ##### Bulk Operations
 
 **Observations Support Batch Insert:**
+
 - OSH accepts observation arrays in POST
 - Recommended batch size: 100-1,000
 - Maximum: 10,000
 - Add small delays (100ms) between batches
 
 **Fallback Strategy:**
+
 ```typescript
 try {
   await bulkInsert(observations); // Try array POST
@@ -1219,6 +1308,7 @@ try {
 ##### Caching Strategy
 
 **Resource-Specific TTLs:**
+
 - Metadata (systems, datastreams, procedures): 5 minutes
 - Static (conformance, collections): 1 hour
 - Dynamic (observations, commands): Never cache
@@ -1227,12 +1317,14 @@ try {
 ##### Authentication Patterns
 
 **Multi-Strategy Support:**
+
 1. HTTP Basic: `Authorization: Basic base64(user:pass)`
 2. Bearer Token: `Authorization: Bearer {token}`
 3. API Key: `X-API-Key: {key}`
 4. OAuth 2.0 (server-dependent)
 
 **Strategy Pattern:**
+
 ```typescript
 interface AuthStrategy {
   applyAuth(request: RequestInit): void;
@@ -1242,6 +1334,7 @@ interface AuthStrategy {
 ##### Edge Cases from OSH
 
 **Important Behaviors:**
+
 - IDs are opaque (Base32 in OSH, may be UUIDs elsewhere) - treat as strings
 - Open-ended time intervals: `../..` (all time), `2024-01-01T00:00:00Z/..` (from date to now)
 - Observations are immutable (no PUT support)
@@ -1252,12 +1345,14 @@ interface AuthStrategy {
 ##### Performance Characteristics
 
 **Expected Response Times (OSH benchmarks):**
+
 - GET single resource: 20-100ms
 - List 100 items: 50-200ms
 - POST create: 100-500ms
 - Query 1000 observations: 200-1000ms
 
 **Optimization Strategies:**
+
 - Reuse HTTP connections (keep-alive)
 - Parallel requests for independent resources
 - Optimal batch sizes: 100-1000 observations
@@ -1266,6 +1361,7 @@ interface AuthStrategy {
 ##### Testing with OSH
 
 **Integration Test Strategy:**
+
 - Deploy OSH locally via Docker
 - Use fixtures from `sensorhub-service-consys/src/test/resources/`
 - Test against real server behaviors (not just mocks)
@@ -1275,6 +1371,7 @@ interface AuthStrategy {
 - Verify format negotiation
 
 **Example Test Patterns:**
+
 ```typescript
 describe('Systems Client', () => {
   it('should paginate through all systems', async () => {
@@ -1285,7 +1382,7 @@ describe('Systems Client', () => {
     }
     expect(systems.length).toBeGreaterThan(0);
   });
-  
+
   it('should handle 404 errors gracefully', async () => {
     await expect(client.systems.get('nonexistent')).rejects.toThrow(CSAPIError);
   });
@@ -1295,6 +1392,7 @@ describe('Systems Client', () => {
 ##### Critical Implementation Checklist
 
 **Must-Have Features:**
+
 - ✅ Query parameter validation (client-side)
 - ✅ Link-following pagination with AsyncGenerator
 - ✅ JSON error body parsing with type guards
@@ -1305,12 +1403,14 @@ describe('Systems Client', () => {
 - ✅ Smart caching with TTLs
 
 **Performance Features:**
+
 - ✅ Bulk observation insert (with fallback)
 - ✅ Connection reuse
 - ✅ Parallel independent requests
 - ✅ Metadata caching
 
 **Testing Requirements:**
+
 - ✅ Integration tests against OSH
 - ✅ Use real server fixtures
 - ✅ Test all CRUD operations
@@ -1318,6 +1418,7 @@ describe('Systems Client', () => {
 - ✅ Test pagination edge cases
 
 **Reference Implementation:**
+
 - OpenSensorHub is production-ready, use as reference
 - Test fixtures available in OSH repository
 - 100% CSAPI resource coverage (Parts 1, 2, 3)
@@ -1330,10 +1431,12 @@ describe('Systems Client', () => {
 **Resources:**
 
 #### Documentation:
+
 - [52°North OGC API Connected Systems](https://52north.org/software/software-components/ogc-api-connected-systems/)
 - [52°North GitHub Repository](https://github.com/52North/connected-systems-pygeoapi)
 
 #### Code References:
+
 - Python implementation on pygeoapi framework
 - Elasticsearch (Part 1) + TimescaleDB (Part 2) storage
 - Quart async framework
@@ -1341,6 +1444,7 @@ describe('Systems Client', () => {
 **Analysis:** [docs/research/requirements/csapi-52north-analysis.md](csapi-52north-analysis.md)
 
 **Answers:**
+
 - [x] How does 52°North's implementation differ from OpenSensorHub? → **Python/pygeoapi vs Java/Spring Boot, Elasticsearch+TimescaleDB vs embedded DB, Part 1 production + Part 2 development vs full Parts 1-3 production, ~15-18 conformance classes vs 33, focus on sensing vs full command/control** (Sections 1, 9)
 - [x] What conformance classes does 52°North support? → **Part 1 fully implemented (Core, all 5 resources, Create/Delete, GeoJSON, SensorML), Part 2 in active development (DataStreams/Observations), Part 2 Control Streams not planned, Part 3 not planned** (Section 2)
 - [x] What operations are prioritized in 52°North? → **Full Part 1 CRUD operations (Systems, Deployments, Procedures, Sampling Features, Properties), Part 2 DataStreams/Observations in development, no control or streaming features** (Section 3)
@@ -1369,29 +1473,28 @@ describe('Systems Client', () => {
 **Server Characteristics:**
 
 **Conformance (Minimal Declaration):**
+
 - ✅ OGC API - Common Part 1 (Core)
 - ⚠️ **Only 1 conformance class declared** (vs OSH's 33 classes)
 - ⚠️ Conformance response incomplete - does not list Part 1 resource classes despite endpoints being available
 - **Implication:** Client must probe endpoints directly, cannot rely solely on conformance
 
 **Live Data Inventory:**
+
 - **3 Active Systems:**
   - Doppler Current Profiler Sensor (DCPS #526) - Aanderaa 5400 model
   - EXO3 Sonde #1 (YSI599503-00-1) - Water quality sensor
   - SMARTGUARD Platform (5300-909) - Oceanographic buoy
-  
 - **1 Deployment:**
   - Messtonne 1 - 2025 Test deployment
   - Location: Baltic Sea (12.08°E, 54.13°N - near Rostock, Germany)
   - Platform: SMARTGUARD buoy with 2 deployed sensors (EXO3 + DCPS)
   - Operator: BfN (German Federal Agency for Nature Conservation)
   - Deployment type: Manufacturing hangar testing
-  
 - **1 Procedure:**
   - Aanderaa DCPS TD304 sensor type definition
   - Includes manufacturer info, model number, sensor type classification
   - Links to external documentation (operating manual PDF)
-  
 - **0 Sampling Features:** No sampling features defined
 - **0 Properties:** No custom properties defined
 - **DataStreams/Observations:** ⚠️ Part 2 endpoints return 500 Internal Server Error (not yet functional on demo server)
@@ -1399,26 +1502,31 @@ describe('Systems Client', () => {
 **Value for Client Development:**
 
 1. **Minimal Conformance Testing:**
+
    - Tests client behavior with incomplete conformance declaration
    - Validates endpoint probing/discovery mechanisms
    - Demonstrates need for robust fallback strategies
 
 2. **Small Dataset Validation:**
+
    - Tests with minimal data (3 systems, 1 deployment, 1 procedure)
    - Validates empty collection handling (0 sampling features, 0 properties)
    - Useful for edge case testing (small-scale deployments)
 
 3. **Real-World Deployment Patterns:**
+
    - Oceanographic buoy deployment example
    - Multi-sensor platform configuration
    - System-to-procedure relationships via `typeOf` property
 
 4. **Format Support Testing:**
+
    - SensorML JSON format for systems/procedures
    - System identifiers (serial numbers, product numbers)
    - Classifier and document link patterns
 
 5. **Error Condition Testing:**
+
    - Part 2 endpoints return 500 errors (implementation incomplete)
    - SSL certificate validation issues
    - Tests client error handling for unavailable features
@@ -1431,45 +1539,50 @@ describe('Systems Client', () => {
 **Testing Recommendations:**
 
 1. **Use for Conformance Detection Testing:**
+
    ```typescript
    describe('Incomplete Conformance Handling', () => {
      const server = 'https://csa.demo.52north.org/';
-     
+
      it('should detect available resources despite incomplete conformance', async () => {
        const client = new CSAPIClient(server, { skipCertCheck: true });
        await client.initialize();
-       
+
        // Conformance says only "Common Core", but systems endpoint works
        expect(client.conformance.size).toBe(1);
-       
+
        // Client should probe endpoints
        const systems = await client.systems.list();
        expect(systems.length).toBeGreaterThan(0);
      });
-     
+
      it('should handle 500 errors for unavailable Part 2 features', async () => {
        const client = new CSAPIClient(server, { skipCertCheck: true });
-       
-       await expect(
-         client.datastreams.list()
-       ).rejects.toThrow(/500|Internal Server Error/);
+
+       await expect(client.datastreams.list()).rejects.toThrow(
+         /500|Internal Server Error/
+       );
      });
    });
    ```
 
 2. **Small-Scale Deployment Testing:**
+
    - Test with 3 systems (validates minimal deployments)
    - Test empty collections (0 sampling features)
    - Test single deployment scenarios
 
 3. **System-Procedure Relationships:**
+
    - Validate `typeOf` link following
    - Test procedure datasheet links (external PDF)
    - Verify classifier and identifier parsing
 
 4. **Error Recovery Testing:**
    ```typescript
-   async function queryDatastreamsWithFallback(client: CSAPIClient): Promise<any[]> {
+   async function queryDatastreamsWithFallback(
+     client: CSAPIClient
+   ): Promise<any[]> {
      try {
        return await client.datastreams.list();
      } catch (error) {
@@ -1501,20 +1614,20 @@ describe('Systems Client', () => {
 
 **Comparison to OSH Live Server:**
 
-| Aspect | 52°North Demo | OSH Live Server |
-|--------|---------------|-----------------|
-| **URL** | https://csa.demo.52north.org/ | http://45.55.99.236:8080/sensorhub/api |
-| **SSL** | ⚠️ Invalid cert | ✅ HTTP (no SSL issues) |
-| **Auth** | None | HTTP Basic (ogc:ogc) |
-| **Conformance** | 1 class | 33 classes |
-| **Systems** | 3 | 6 |
-| **Deployments** | 1 | 0 (not demonstrated) |
-| **DataStreams** | ❌ 500 error | ✅ 28 active |
-| **Observations** | ❌ 500 error | ✅ Thousands (live) |
-| **Use Case** | Oceanographic buoy | Drone + Android sensors |
-| **Part 1** | ✅ Functional | ✅ Functional |
-| **Part 2** | ❌ Non-functional | ✅ Functional |
-| **Part 3** | ❌ N/A | ✅ Functional |
+| Aspect           | 52°North Demo                 | OSH Live Server                        |
+| ---------------- | ----------------------------- | -------------------------------------- |
+| **URL**          | https://csa.demo.52north.org/ | http://45.55.99.236:8080/sensorhub/api |
+| **SSL**          | ⚠️ Invalid cert               | ✅ HTTP (no SSL issues)                |
+| **Auth**         | None                          | HTTP Basic (ogc:ogc)                   |
+| **Conformance**  | 1 class                       | 33 classes                             |
+| **Systems**      | 3                             | 6                                      |
+| **Deployments**  | 1                             | 0 (not demonstrated)                   |
+| **DataStreams**  | ❌ 500 error                  | ✅ 28 active                           |
+| **Observations** | ❌ 500 error                  | ✅ Thousands (live)                    |
+| **Use Case**     | Oceanographic buoy            | Drone + Android sensors                |
+| **Part 1**       | ✅ Functional                 | ✅ Functional                          |
+| **Part 2**       | ❌ Non-functional             | ✅ Functional                          |
+| **Part 3**       | ❌ N/A                        | ✅ Functional                          |
 
 **Recommended Testing Strategy:**
 
@@ -1524,6 +1637,7 @@ describe('Systems Client', () => {
 4. **Phase 4:** Deploy both servers locally for comprehensive integration testing
 
 **Live Server Data Summary:**
+
 - **Server URL:** https://csa.demo.52north.org/
 - **Conformance:** 1 class declared (incomplete)
 - **Total Systems:** 3 (oceanographic sensors + platform)
@@ -1544,17 +1658,20 @@ describe('Systems Client', () => {
 **Resources:**
 
 #### Previous Implementation:
+
 - [OS4CSAPI/ogc-client-CSAPI Repository](https://github.com/OS4CSAPI/ogc-client-CSAPI) - first iteration
 - [Draft PR #131](https://github.com/camptocamp/ogc-client/pull/131) - review feedback
 - Design research documents (Sections 1-12 from design-strategy-research.md) for lessons learned analysis
 
 #### Standards Reference:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html)
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html)
 
 **Analysis:** [docs/research/requirements/csapi-gap-analysis.md](csapi-gap-analysis.md)
 
 **Answers:**
+
 - [x] What did previous iteration implement that shouldn't have been? → **Nothing - all format handling (SensorML, SWE Common, validation, detection) IS appropriate library scope. Format abstraction is core value proposition per CSAPI spec requirements** (Section 4.3)
 - [x] What did previous iteration implement incompletely? → **SensorML parsing (~1,500 lines) lacked comprehensive coverage (missing AggregateProcess traversal, connection resolution, configuration modes, history, SensorML 3.0 elements, TypedProcess extensions), SWE Common parsing (~800 lines) incomplete component support (only DataRecord/DataArray, missing 30+ types, no encoding support for Text/Binary), validation (~400 lines) missing semantic rules (UoM validation, CRS validation, URI format checking, detailed error paths), format detection (~200 lines) missing version detection and fallback strategies** (Sections 2.1-2.4)
 - [x] What did previous iteration miss that should have been included? → **HTTP operation focus (robust URL building, comprehensive format negotiation, link following with cursors, OGC exception parsing, conformance-based feature detection), convenience methods (fluent API, bulk operations, async iterators, spatial query helpers), comprehensive validation system (pre-request validation with actionable errors, JSON Schema + semantic validation, format-specific rules), extensible architecture (plugin system for format parsers, version-specific parsing, format registry), complete SWE Common support (all 30+ component types, Text/CSV/Binary encodings, schema-based observation decoding)** (Section 3.1-3.3)
@@ -1568,6 +1685,7 @@ describe('Systems Client', () => {
 - [x] What requirements are implied but not explicit in specs? → **Format abstraction as unified API (users never write format-specific code), validation as developer experience improvement (immediate feedback vs server round-trip), extensible architecture for future formats (plugin system), performance optimization (minimize parsing overhead while maintaining completeness), comprehensive error handling (detailed, actionable error messages)** (Sections 4.3, 5)
 
 **Key Findings:**
+
 - **PRIMARY ISSUE:** First iteration incompletely implemented format parsing without comprehensive coverage, proper extensibility, and robust error handling
 - **CORRECT SCOPE:** Format abstraction (detection, parsing, validation, serialization) IS core library responsibility per CSAPI spec requirements
 - **V2 STRATEGY:** Comprehensive format abstraction (~6,000 lines) with complete parsers for all formats/versions, robust validation, automatic detection, extensible architecture
@@ -1583,20 +1701,24 @@ describe('Systems Client', () => {
 **Resources:**
 
 #### Upstream Repository:
+
 - [camptocamp/ogc-client](https://github.com/camptocamp/ogc-client) - main repository
 - [camptocamp/ogc-client Contributing Guide](https://github.com/camptocamp/ogc-client/blob/main/CONTRIBUTING.md) (if exists)
 - [Draft PR #131 Review Comments](https://github.com/camptocamp/ogc-client/pull/131) - maintainer feedback
 
 #### Reference Implementations:
+
 - [ogc-client WFS implementation](https://github.com/camptocamp/ogc-client/tree/main/src/wfs)
 - [ogc-client WMS implementation](https://github.com/camptocamp/ogc-client/tree/main/src/wms)
 - [ogc-client EDR implementation](https://github.com/camptocamp/ogc-client/tree/main/src/ogc-api)
 
 #### Documentation Patterns:
+
 - [ogc-client README](https://github.com/camptocamp/ogc-client/blob/main/README.md)
 - [ogc-client API Documentation](https://camptocamp.github.io/ogc-client/)
 
 **Questions to answer:**
+
 - [ ] What does upstream expect a client library to do vs not do?
 - [ ] Where's the line between library responsibility and user responsibility?
 - [ ] What level of validation is expected?
@@ -1617,22 +1739,26 @@ describe('Systems Client', () => {
 **Resources:**
 
 #### Analysis Synthesis:
+
 - All previous requirement sections (1-18)
 - Design research documents (docs/research/upstream/)
 
 #### Standards Reference:
+
 - [OGC API – Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - conformance requirements
 - [OGC API – Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html) - conformance requirements
 - docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml
 - docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml
 
 #### Priority References:
+
 - Real-world usage patterns (Section 9 findings)
 - Ecosystem implementation patterns (Sections 10-16 findings)
 - Previous iteration gaps (Section 17 findings)
 - Upstream expectations (Section 18 findings)
 
 **Questions to answer:**
+
 - [ ] What's the absolute minimum for a valid CSAPI client?
 - [ ] What's the core feature set (must-have)?
 - [ ] What's the extended feature set (nice-to-have)?
@@ -1714,18 +1840,21 @@ Requirements research is complete when we can answer:
 ## Next Steps
 
 **Phase 1: Requirements Discovery**
+
 1. Start with Section 1 (CSAPI Part 1) - most foundational
 2. Progress through sections sequentially
 3. Each section produces detailed analysis document
 4. Update this checklist as sections complete
 
 **Phase 2: Requirements Synthesis**
+
 1. Review all analysis documents
 2. Identify conflicts or ambiguities
 3. Make scope decisions
 4. Write functional specification
 
 **Phase 3: Validation**
+
 1. Compare functional spec to CSAPI OpenAPI schemas
 2. Validate against real-world usage patterns
 3. Verify nothing critical is missing
@@ -1736,6 +1865,7 @@ Requirements research is complete when we can answer:
 ## Critical Constraints
 
 **Must maintain from design research:**
+
 - ✅ URL building only (no data fetching in library)
 - ✅ Minimal validation (trust TypeScript + server)
 - ✅ Single QueryBuilder class
@@ -1743,6 +1873,7 @@ Requirements research is complete when we can answer:
 - ✅ Follow EDR pattern exactly
 
 **Requirements must respect:**
+
 - Design decisions are fixed (architecture is decided)
 - Requirements define "what" not "how"
 - Scope must fit within code volume constraints

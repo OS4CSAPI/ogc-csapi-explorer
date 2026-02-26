@@ -39,6 +39,7 @@ src/ogc-api/{api}/model.ts    # API-specific types
 ```
 
 **Key principles:**
+
 1. **Reuse shared primitives** (BoundingBox, CrsCode, etc.)
 2. **Define API-agnostic OGC types** at ogc-api level
 3. **Keep API-specific types isolated** in subfolders
@@ -48,6 +49,7 @@ src/ogc-api/{api}/model.ts    # API-specific types
 ### TypeScript Features Used
 
 **Observed patterns:**
+
 - Union types for variants (`DateTimeParameter = Date | { start: Date, end?: Date }`)
 - Const assertions for enums (`as const` arrays)
 - Mapped types for optional fields (`Partial<T>`)
@@ -114,6 +116,7 @@ export type GenericEndpointInfo = {
 ```
 
 **Characteristics:**
+
 - Simple types and interfaces
 - No OGC API-specific logic
 - Used by WFS, WMS, WMTS, OGC API, etc.
@@ -158,7 +161,7 @@ export interface OgcApiCollectionInfo {
   mapTileFormats: MimeType[];
   vectorTileFormats: MimeType[];
   supportedTileMatrixSets: string[];
-  
+
   // API-specific extensions
   data_queries?: {...};  // EDR
   parameter_names?: Record<string, EdrParameterInfo>;  // EDR
@@ -195,6 +198,7 @@ export interface CollectionParameter {
 ```
 
 **Characteristics:**
+
 - OGC API standard types
 - Shared by EDR, Features, Records, Tiles, CSAPI
 - Can be extended per-API (see `OgcApiCollectionInfo`)
@@ -231,10 +235,14 @@ export type ZParameter =
 // Helper functions for complex types
 export function zParameterToString(z: ZParameter): string {
   switch (z.type) {
-    case 'single': return `${z.level}`;
-    case 'interval': return `${z.minLevel}/${z.maxLevel}`;
-    case 'list': return z.levels.join(',');
-    case 'repeating': return `R${z.repeat}/${z.minLevel}/${z.step}`;
+    case 'single':
+      return `${z.level}`;
+    case 'interval':
+      return `${z.minLevel}/${z.maxLevel}`;
+    case 'list':
+      return z.levels.join(',');
+    case 'repeating':
+      return `R${z.repeat}/${z.minLevel}/${z.step}`;
   }
 }
 
@@ -259,6 +267,7 @@ export type optionalPositionParams = {
 ```
 
 **Characteristics:**
+
 - Highly specific to EDR
 - Not used by other APIs
 - Can change without affecting other code
@@ -297,6 +306,7 @@ export type optionalPositionParams = {
 ```
 
 **Usage:**
+
 ```typescript
 buildPositionDownloadUrl(
   coords: { lon: number; lat: number },
@@ -305,6 +315,7 @@ buildPositionDownloadUrl(
 ```
 
 **Benefits:**
+
 - Type-safe optional parameters
 - IDE autocomplete
 - Clear documentation of what's optional
@@ -335,11 +346,13 @@ getCollectionItemsUrl(
 ```
 
 **Benefits:**
+
 - All parameters in one place
 - No need for separate type definition
 - Good for one-off methods
 
 **Drawbacks:**
+
 - Not reusable
 - Verbose if same options used multiple times
 
@@ -363,6 +376,7 @@ async getObservations(datastreamId: string, options?: QueryOptions): Promise<Obs
 ```
 
 **Benefits:**
+
 - DRY - defined once
 - Consistent across all resources
 - Easy to extend (add one property, all methods get it)
@@ -412,7 +426,7 @@ export interface System {
     documentation?: DocumentLink[];
     history?: HistoryEvent[];
   };
-  geometry?: Geometry;  // From @types/geojson
+  geometry?: Geometry; // From @types/geojson
   links: OgcApiDocumentLink[];
 }
 
@@ -439,15 +453,16 @@ export interface Deployment {
 ```typescript
 // GeoJSON-like structure
 interface CSAPIResource {
-  id: string;                    // Required
-  type: string;                  // Resource type name
-  properties: {                  // Resource-specific properties
+  id: string; // Required
+  type: string; // Resource type name
+  properties: {
+    // Resource-specific properties
     name: string;
     description?: string;
     // ... more
   };
-  geometry?: Geometry;           // Optional spatial data
-  links: OgcApiDocumentLink[];   // HATEOAS links
+  geometry?: Geometry; // Optional spatial data
+  links: OgcApiDocumentLink[]; // HATEOAS links
 }
 ```
 
@@ -593,8 +608,14 @@ function handleZ(z: ZParameter) {
 
 ```typescript
 export const CollectionParameterTypes = [
-  'string', 'number', 'integer', 'date',
-  'point', 'linestring', 'polygon', 'geometry',
+  'string',
+  'number',
+  'integer',
+  'date',
+  'point',
+  'linestring',
+  'polygon',
+  'geometry',
 ] as const;
 
 // Creates: 'string' | 'number' | 'integer' | ...
@@ -602,6 +623,7 @@ export type CollectionParameterType = (typeof CollectionParameterTypes)[number];
 ```
 
 **Benefits:**
+
 - Single source of truth
 - Can iterate array at runtime
 - Type safety at compile time
@@ -610,8 +632,15 @@ export type CollectionParameterType = (typeof CollectionParameterTypes)[number];
 
 ```typescript
 export const CSAPIResourceTypes = [
-  'System', 'Deployment', 'SamplingFeature', 'Procedure',
-  'Datastream', 'Observation', 'Control', 'ControlStream', 'Command'
+  'System',
+  'Deployment',
+  'SamplingFeature',
+  'Procedure',
+  'Datastream',
+  'Observation',
+  'Control',
+  'ControlStream',
+  'Command',
 ] as const;
 
 export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
@@ -624,15 +653,15 @@ export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
 ```typescript
 // Optional properties use ? or undefined
 export interface System {
-  id: string;              // Required - never undefined
-  name?: string;           // Optional - string | undefined
-  description?: string;    // Optional - string | undefined
+  id: string; // Required - never undefined
+  name?: string; // Optional - string | undefined
+  description?: string; // Optional - string | undefined
 }
 
 // vs nullable (less common)
 export interface System {
   id: string;
-  name: string | null;     // Can be null
+  name: string | null; // Can be null
 }
 ```
 
@@ -684,12 +713,14 @@ if (isSystem(resource)) {
 ### Granularity Levels Observed
 
 **Level 1: Coarse** (primitive type aliases)
+
 ```typescript
 export type CrsCode = string;
 export type MimeType = string;
 ```
 
 **Level 2: Medium** (simple interfaces)
+
 ```typescript
 export interface Contact {
   name?: string;
@@ -699,6 +730,7 @@ export interface Contact {
 ```
 
 **Level 3: Fine** (detailed interfaces)
+
 ```typescript
 export interface OgcApiCollectionInfo {
   // 20+ properties with specific types
@@ -712,6 +744,7 @@ export interface OgcApiCollectionInfo {
 ```
 
 **Level 4: Very Fine** (discriminated unions)
+
 ```typescript
 export type ZParameter =
   | { type: 'single'; level: number }
@@ -723,21 +756,25 @@ export type ZParameter =
 ### When to Use Each Level
 
 **Coarse:**
+
 - When type is fundamentally a primitive
 - When validation happens at runtime
 - When structure is too variable to type precisely
 
 **Medium:**
+
 - Standard data structures (contacts, addresses, metadata)
 - Simple resource representations
 - When users need to construct objects
 
 **Fine:**
+
 - Core domain objects (collections, endpoints, resources)
 - When many optional properties exist
 - When documentation value is high
 
 **Very Fine:**
+
 - Complex parameters with multiple valid forms
 - When compile-time validation prevents errors
 - When discriminant enables type narrowing
@@ -745,15 +782,18 @@ export type ZParameter =
 ### CSAPI Granularity Strategy
 
 **Use fine granularity for:**
+
 - System, Deployment, SamplingFeature, Procedure (core resources)
 - Datastream, Observation (frequently used)
 - Collection metadata
 
 **Use medium granularity for:**
+
 - ControlStream, Control, Command (less common)
 - Nested objects (contacts, links, etc.)
 
 **Use coarse granularity for:**
+
 - String identifiers
 - Format types
 - Timestamps (use Date or string)
@@ -793,16 +833,16 @@ export interface QueryOptions { ... }
 
 ### What Goes Where?
 
-| Type | Location | Reason |
-|------|----------|--------|
-| `System`, `Deployment`, etc. | `csapi/model.ts` | CSAPI resources |
-| `QueryOptions` | `csapi/model.ts` | CSAPI query parameters |
-| `CSAPIResourceType` | `csapi/model.ts` | CSAPI enum |
-| `TimeInterval` (if new) | `csapi/model.ts` | CSAPI-specific temporal type |
-| `BoundingBox` | `shared/models.ts` | Already exists, reuse |
-| `DateTimeParameter` | `shared/models.ts` | Already exists, reuse |
-| `OgcApiDocumentLink` | `ogc-api/model.ts` | Already exists, reuse |
-| `Geometry` | `@types/geojson` | External package |
+| Type                         | Location           | Reason                       |
+| ---------------------------- | ------------------ | ---------------------------- |
+| `System`, `Deployment`, etc. | `csapi/model.ts`   | CSAPI resources              |
+| `QueryOptions`               | `csapi/model.ts`   | CSAPI query parameters       |
+| `CSAPIResourceType`          | `csapi/model.ts`   | CSAPI enum                   |
+| `TimeInterval` (if new)      | `csapi/model.ts`   | CSAPI-specific temporal type |
+| `BoundingBox`                | `shared/models.ts` | Already exists, reuse        |
+| `DateTimeParameter`          | `shared/models.ts` | Already exists, reuse        |
+| `OgcApiDocumentLink`         | `ogc-api/model.ts` | Already exists, reuse        |
+| `Geometry`                   | `@types/geojson`   | External package             |
 
 ### File Organization
 
@@ -852,6 +892,7 @@ export interface Link { ... }
 ### Challenge: Multiple Representations
 
 CSAPI resources can be returned in different formats:
+
 - GeoJSON / JSON-FG
 - SensorML (XML)
 - JSON-LD
@@ -868,6 +909,7 @@ async getPosition(...): Promise<EdrData>  // Generic
 ```
 
 **Why?**
+
 - Formats have different structures
 - TypeScript types for XML are impractical
 - Response parsing is format-dependent anyway
@@ -930,16 +972,16 @@ const xml = await response.text();
 
 ```typescript
 export interface System {
-  id: string;              // Required
-  type: 'System';          // Required
+  id: string; // Required
+  type: 'System'; // Required
   properties: {
-    name: string;          // Required
-    description?: string;  // Optional - property may not exist
-    keywords?: string[];   // Optional
-    contacts?: Contact[];  // Optional
+    name: string; // Required
+    description?: string; // Optional - property may not exist
+    keywords?: string[]; // Optional
+    contacts?: Contact[]; // Optional
   };
-  geometry?: Geometry;     // Optional
-  links: OgcApiDocumentLink[];  // Required (but array can be empty)
+  geometry?: Geometry; // Optional
+  links: OgcApiDocumentLink[]; // Required (but array can be empty)
 }
 ```
 
@@ -949,8 +991,8 @@ export interface System {
 // ❌ Don't do this
 export interface System {
   id: string;
-  description: string | undefined;  // Use ? instead
-  contacts: Contact[] | null;       // Use ? instead
+  description: string | undefined; // Use ? instead
+  contacts: Contact[] | null; // Use ? instead
 }
 ```
 
@@ -1013,7 +1055,11 @@ const endTime = system.properties.validTime?.end;
 // File: src/ogc-api/csapi/model.ts
 
 import { Geometry, Point } from 'geojson';
-import { BoundingBox, DateTimeParameter, Contact } from '../../shared/models.js';
+import {
+  BoundingBox,
+  DateTimeParameter,
+  Contact,
+} from '../../shared/models.js';
 import { OgcApiDocumentLink } from '../model.js';
 
 //═══════════════════════════════════════════════════════════
@@ -1044,19 +1090,19 @@ export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
 export interface QueryOptions {
   /** Maximum number of items to return */
   limit?: number;
-  
+
   /** Starting index for pagination */
   offset?: number;
-  
+
   /** Bounding box filter [minX, minY, maxX, maxY] */
   bbox?: BoundingBox;
-  
+
   /** Temporal filter */
   datetime?: DateTimeParameter;
-  
+
   /** Property selection (return only specified properties) */
   properties?: string[];
-  
+
   /** Sort order (e.g., ['name', '-updated']) */
   sortby?: string[];
 }
@@ -1306,6 +1352,7 @@ export type CommandCollection = Collection<Command>;
 **Size estimate:** ~350-400 lines
 
 **Structure:**
+
 1. Resource type enum (10 lines)
 2. Query options (30 lines)
 3. Helper types (40 lines)
@@ -1313,6 +1360,7 @@ export type CommandCollection = Collection<Command>;
 5. Collection types (30 lines)
 
 **Dependencies:**
+
 - `geojson` package for Geometry types
 - `shared/models.ts` for primitives
 - `ogc-api/model.ts` for link types
@@ -1337,6 +1385,7 @@ export type CommandCollection = Collection<Command>;
 ### CSAPI Type System Checklist
 
 ✅ **Defined:**
+
 - [x] 9 resource interfaces (System, Deployment, etc.)
 - [x] Query options (base + extended)
 - [x] Helper types (TimeInterval, ResourceLink, etc.)
@@ -1344,6 +1393,7 @@ export type CommandCollection = Collection<Command>;
 - [x] Resource type enum
 
 ✅ **Reused from upstream:**
+
 - [x] BoundingBox
 - [x] DateTimeParameter
 - [x] CrsCode
@@ -1353,6 +1403,7 @@ export type CommandCollection = Collection<Command>;
 - [x] Geometry (from geojson)
 
 ✅ **Pattern followed:**
+
 - [x] Three-tier hierarchy
 - [x] Optional with `?`
 - [x] GeoJSON structure

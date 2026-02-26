@@ -12,7 +12,7 @@ Phase 1 is the **foundation layer**. It doesn't fetch live data from servers yet
 
 ### 1. Type System (`src/ogc-api/csapi/model.ts`)
 
-This defines the *shape* of every data object the Connected Systems API can return. Think of it as a dictionary that tells TypeScript: "A `System` looks like this, a `Deployment` looks like this, an `Observation` looks like this."
+This defines the _shape_ of every data object the Connected Systems API can return. Think of it as a dictionary that tells TypeScript: "A `System` looks like this, a `Deployment` looks like this, an `Observation` looks like this."
 
 There are **9 resource types**: System, Deployment, Procedure, SamplingFeature, Property, Datastream, Observation, Command, ControlStream, and CommandStatus. Each is a TypeScript interface with required and optional fields matching the OGC spec.
 
@@ -44,10 +44,11 @@ This is the core class: `CSAPIQueryBuilder`. You give it a collection document (
 - **Which resource types are available** (does this server have systems? datastreams? observations?)
 
 Then you can call methods like:
+
 ```typescript
-builder.getSystems()           // → "https://server.com/api/collections/iot/systems"
-builder.getSystem("sys-001")   // → "https://server.com/api/collections/iot/systems/sys-001"
-builder.getSystems({ limit: 10, bbox: [-180,-90,180,90] })  // → URL with query params
+builder.getSystems(); // → "https://server.com/api/collections/iot/systems"
+builder.getSystem('sys-001'); // → "https://server.com/api/collections/iot/systems/sys-001"
+builder.getSystems({ limit: 10, bbox: [-180, -90, 180, 90] }); // → URL with query params
 ```
 
 Right now it only has `getSystems()` and `getSystem(id)` as proof-of-concept. Phase 2 will add the remaining resource types (deployments, datastreams, observations, etc.) using the same pattern.
@@ -72,6 +73,7 @@ if (await endpoint.hasConnectedSystems) {
 ```
 
 Under the hood, this:
+
 1. Fetches the server's **conformance classes** and checks for the CSAPI URIs
 2. Scans all **collections** for ones that have `ogc-cs:*` link relations
 3. Exposes `hasConnectedSystems` (boolean) and `csapiCollections` (list of collection names)
@@ -83,12 +85,12 @@ Under the hood, this:
 
 **76 unit tests** across 3 test files, plus **6 integration tests**:
 
-| Test File | Tests | What It Verifies |
-|-----------|-------|-----------------|
-| `model.spec.ts` | 27 | Every resource type can be constructed with required fields, optional fields work, type constraints are enforced |
-| `helpers.spec.ts` | 30 | Date formatting (single dates, ranges, open-ended), validation (valid/invalid types, limit bounds, bbox length), encoding (special chars, empty arrays) |
-| `url_builder.spec.ts` | 19 | Builder extracts base URL and available resources from a collection doc, generates correct URLs with/without query params, rejects invalid inputs |
-| `endpoint.spec.ts` (CSAPI block) | 6 | Full round-trip: mock HTTP responses → endpoint detects CSAPI support → lists CSAPI collections → produces a working builder → caches it → rejects non-CSAPI endpoints with a clear error |
+| Test File                        | Tests | What It Verifies                                                                                                                                                                          |
+| -------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model.spec.ts`                  | 27    | Every resource type can be constructed with required fields, optional fields work, type constraints are enforced                                                                          |
+| `helpers.spec.ts`                | 30    | Date formatting (single dates, ranges, open-ended), validation (valid/invalid types, limit bounds, bbox length), encoding (special chars, empty arrays)                                   |
+| `url_builder.spec.ts`            | 19    | Builder extracts base URL and available resources from a collection doc, generates correct URLs with/without query params, rejects invalid inputs                                         |
+| `endpoint.spec.ts` (CSAPI block) | 6     | Full round-trip: mock HTTP responses → endpoint detects CSAPI support → lists CSAPI collections → produces a working builder → caches it → rejects non-CSAPI endpoints with a clear error |
 
 The integration tests use **fixture files** — static JSON files in `fixtures/ogc-api/csapi/` that mimic real server responses. The test setup intercepts HTTP calls (via `globalThis.fetch` mock) and returns these fixtures, so tests run fast with no network.
 

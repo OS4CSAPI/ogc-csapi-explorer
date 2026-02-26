@@ -3,8 +3,7 @@
 > **Date:** 2026-02-21
 > **Issue:** [OS4CSAPI/ogc-client-CSAPI_2#109](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/109) — "Part 1 `extractCSAPIFeature()` silently drops all `@link` properties during parsing"
 > **Repository under review:** `OS4CSAPI/ogc-client-CSAPI_2` (`src/ogc-api/csapi/formats/geojson.ts`, `src/ogc-api/csapi/formats/geojson.spec.ts`)
-> **Discovered by:** [ogc-csapi-explorer `tryLinkFallback()` workaround](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/ad06b52), [Gap Analysis Report](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/csapi-link-property-gap-analysis.md)
-> **Labels:** enhancement, parser
+> **Discovered by:** [ogc-csapi-explorer `tryLinkFallback()` workaround](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/ad06b52), [Gap Analysis Report](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/csapi-link-property-gap-analysis.md) > **Labels:** enhancement, parser
 > **Dependency:** This issue depends on #108 (interface fields) — **already resolved** as of commit `f8026ea`.
 
 ---
@@ -43,15 +42,15 @@ This report does not expand scope beyond what Issue #109 describes. Per §2.1 (d
 
 **Critically, the prerequisite is already satisfied:** Issue #108 (adding `CSAPIResourceRef` and `@link`-derived fields to the interfaces) was resolved in commit `f8026ea`. The interfaces now define the target fields — the parser just needs to populate them.
 
-| Finding | Description | Severity | Recommendation |
-|---------|-------------|----------|----------------|
-| **F-109.1** | `extractCSAPIFeature()` uses a property-name allowlist that discards all `@link` data from raw JSON | **SPEC GAP** | **FIX** — add `@link` extraction to each `switch` case |
-| **F-109.2** | The stripping is **implicit** (allowlist), not explicit (no JSDoc saying "intentionally ignored") | **UNINTENTIONAL OMISSION** | Was a scope boundary during initial development, not a deliberate design choice |
-| **F-109.3** | Existing tests include `@link` data in test inputs but never assert it survives extraction | **TEST GAP** | FIX — add assertions that `@link` fields are preserved when present |
-| **F-109.4** | Proposed fix follows the identical pattern already proven in Part 2 parsers (`part2.ts` L163–164, L256–257) | **ESTABLISHED PATTERN** | Same `typeof`/conditional-spread approach — zero new abstractions |
-| **F-109.5** | Two small private helper functions (`isCSAPIResourceRef()` and `parseResourceRef()`) encapsulate validation logic | **MINIMAL NEW CODE** | Localized, testable, no architectural changes |
-| **F-109.6** | All new fields are optional (`?`) — existing tests pass unchanged | **ZERO BREAKAGE RISK** | Additive extraction only |
-| **F-109.7** | `deployedSystems@link` requires array handling (unlike all other scalar `@link` fields) | **ARRAY CASE** | Use `.filter(isCSAPIResourceRef).map(parseResourceRef)` — same defensive pattern |
+| Finding     | Description                                                                                                       | Severity                   | Recommendation                                                                   |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------- |
+| **F-109.1** | `extractCSAPIFeature()` uses a property-name allowlist that discards all `@link` data from raw JSON               | **SPEC GAP**               | **FIX** — add `@link` extraction to each `switch` case                           |
+| **F-109.2** | The stripping is **implicit** (allowlist), not explicit (no JSDoc saying "intentionally ignored")                 | **UNINTENTIONAL OMISSION** | Was a scope boundary during initial development, not a deliberate design choice  |
+| **F-109.3** | Existing tests include `@link` data in test inputs but never assert it survives extraction                        | **TEST GAP**               | FIX — add assertions that `@link` fields are preserved when present              |
+| **F-109.4** | Proposed fix follows the identical pattern already proven in Part 2 parsers (`part2.ts` L163–164, L256–257)       | **ESTABLISHED PATTERN**    | Same `typeof`/conditional-spread approach — zero new abstractions                |
+| **F-109.5** | Two small private helper functions (`isCSAPIResourceRef()` and `parseResourceRef()`) encapsulate validation logic | **MINIMAL NEW CODE**       | Localized, testable, no architectural changes                                    |
+| **F-109.6** | All new fields are optional (`?`) — existing tests pass unchanged                                                 | **ZERO BREAKAGE RISK**     | Additive extraction only                                                         |
+| **F-109.7** | `deployedSystems@link` requires array handling (unlike all other scalar `@link` fields)                           | **ARRAY CASE**             | Use `.filter(isCSAPIResourceRef).map(parseResourceRef)` — same defensive pattern |
 
 **Conclusion:** This is the parser half of the gap identified in #108 (interfaces). The fix is minimal, follows established precedent, and carries effectively zero risk. The contribution goal explicitly calls for "GeoJSON extensions recognizing all CSAPI-specific resource types **and properties**." Recommend fixing with careful implementation.
 
@@ -63,12 +62,12 @@ Issue #109 reports that `extractCSAPIFeature()` (the sole parser for Part 1 GeoJ
 
 ### `@link` Properties Being Dropped
 
-| Resource Type | Dropped Property | Server JSON Key | Interface Field (from #108) |
-|--------------|-----------------|-----------------|---------------------------|
-| System | Procedure link | `systemKind@link` | `systemKindLink?: CSAPIResourceRef` |
-| Deployment | Platform link | `platform@link` | `platformLink?: CSAPIResourceRef` |
-| Deployment | Deployed systems | `deployedSystems@link` | `deployedSystemsLink?: CSAPIResourceRef[]` |
-| SamplingFeature | Sampled feature | `sampledFeature@link` | `sampledFeatureLink?: CSAPIResourceRef` |
+| Resource Type   | Dropped Property | Server JSON Key        | Interface Field (from #108)                |
+| --------------- | ---------------- | ---------------------- | ------------------------------------------ |
+| System          | Procedure link   | `systemKind@link`      | `systemKindLink?: CSAPIResourceRef`        |
+| Deployment      | Platform link    | `platform@link`        | `platformLink?: CSAPIResourceRef`          |
+| Deployment      | Deployed systems | `deployedSystems@link` | `deployedSystemsLink?: CSAPIResourceRef[]` |
+| SamplingFeature | Sampled feature  | `sampledFeature@link`  | `sampledFeatureLink?: CSAPIResourceRef`    |
 
 ### Real-World Discovery
 
@@ -83,6 +82,7 @@ The [ogc-csapi-explorer](https://github.com/OS4CSAPI/ogc-csapi-explorer) demo ap
 The `extractCSAPIFeature()` function ([geojson.ts L393–472](src/ogc-api/csapi/formats/geojson.ts#L393-L472)) builds return objects in a `switch` statement with four cases. Each case constructs the return object via explicit field listings — only named properties survive. The `satisfies Type` keyword enforces that the returned object conforms to the interface.
 
 **System case (L429–440):**
+
 ```typescript
 case 'System':
   return {
@@ -104,6 +104,7 @@ The raw properties object `p` has all the `@link` data from the server, but the 
 ### 4.2 Current Imports — `CSAPIResourceRef` Not Yet Imported
 
 The `geojson.ts` import block ([L13–21](src/ogc-api/csapi/formats/geojson.ts#L13-L21)) currently imports:
+
 ```typescript
 import type {
   System,
@@ -122,6 +123,7 @@ import type {
 Two test cases in [geojson.spec.ts](src/ogc-api/csapi/formats/geojson.spec.ts) provide raw input with `sampledFeature@link`:
 
 **Test 1 — "extracts a SamplingFeature" (L431–440):**
+
 ```typescript
 it('extracts a SamplingFeature', () => {
   const raw = makeFeature('sosa:SamplingFeature', {
@@ -139,7 +141,7 @@ it('extracts a SamplingFeature', () => {
 ```
 
 **Test 2 — "extracts SamplingFeature without sampledFeature@link (tolerant extraction)" (L499–505):**
-This test verifies the parser tolerates *missing* `@link` data — but doesn't test that *present* `@link` data survives.
+This test verifies the parser tolerates _missing_ `@link` data — but doesn't test that _present_ `@link` data survives.
 
 The test infrastructure (`makeFeature()`) already supports passing `@link` data via `extraProps` spread — the raw input includes it in `properties`, mirrors real server JSON. No test infrastructure changes needed.
 
@@ -152,6 +154,7 @@ Each parser case uses `satisfies Type` (e.g., `satisfies System`). Since `system
 The fix adds conditional extraction lines to three of the four `switch` cases (Procedure has no `@link` fields). Each line follows the established tolerant-extraction pattern:
 
 **For scalar `@link` fields:**
+
 ```typescript
 ...(isCSAPIResourceRef(p['systemKind@link'])
   ? { systemKindLink: parseResourceRef(p['systemKind@link']) }
@@ -159,6 +162,7 @@ The fix adds conditional extraction lines to three of the four `switch` cases (P
 ```
 
 **For array `@link` fields (`deployedSystems@link`):**
+
 ```typescript
 ...(Array.isArray(p['deployedSystems@link'])
   ? { deployedSystemsLink: (p['deployedSystems@link'] as unknown[]).filter(isCSAPIResourceRef).map(parseResourceRef) }
@@ -166,10 +170,15 @@ The fix adds conditional extraction lines to three of the four `switch` cases (P
 ```
 
 **Two private helper functions (~10 lines total):**
+
 ```typescript
 /** Type guard for @link objects — validates href is a string. */
 function isCSAPIResourceRef(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && typeof (value as any).href === 'string';
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as any).href === 'string'
+  );
 }
 
 /** Parse a raw @link object into a typed CSAPIResourceRef. */
@@ -192,6 +201,7 @@ Issue #103 (resolved, commit `23126d4`) added `@id` cross-reference field extrac
 ### Part 2 Pattern (already in production)
 
 **`parseDatastream()` in `part2.ts` (L163–164):**
+
 ```typescript
 ...(typeof obj['system@id'] === 'string'
   ? { systemId: obj['system@id'] as string }
@@ -199,6 +209,7 @@ Issue #103 (resolved, commit `23126d4`) added `@id` cross-reference field extrac
 ```
 
 **`parseControlStream()` in `part2.ts` (L256–257):**
+
 ```typescript
 ...(typeof obj['system@id'] === 'string'
   ? { systemId: obj['system@id'] as string }
@@ -207,15 +218,15 @@ Issue #103 (resolved, commit `23126d4`) added `@id` cross-reference field extrac
 
 ### Comparison: Part 2 `@id` vs Part 1 `@link`
 
-| Dimension | Part 2 `@id` (Issue #103) | Part 1 `@link` (Issue #109) |
-|-----------|--------------------------|---------------------------|
-| Value type | Scalar string | Structured object `{href, uid?, title?, rt?}` |
-| Validation | `typeof === 'string'` | `typeof === 'object' && href is string` |
-| Extraction | Direct string assignment | Object construction with field validation |
-| Array case | None | `deployedSystems@link` only |
-| Tolerant extraction | Yes — `undefined` if absent | Yes — `undefined` if absent |
-| Pattern | Conditional spread | Same conditional spread |
-| Helper functions | None needed (scalar) | `isCSAPIResourceRef()` + `parseResourceRef()` |
+| Dimension           | Part 2 `@id` (Issue #103)   | Part 1 `@link` (Issue #109)                   |
+| ------------------- | --------------------------- | --------------------------------------------- |
+| Value type          | Scalar string               | Structured object `{href, uid?, title?, rt?}` |
+| Validation          | `typeof === 'string'`       | `typeof === 'object' && href is string`       |
+| Extraction          | Direct string assignment    | Object construction with field validation     |
+| Array case          | None                        | `deployedSystems@link` only                   |
+| Tolerant extraction | Yes — `undefined` if absent | Yes — `undefined` if absent                   |
+| Pattern             | Conditional spread          | Same conditional spread                       |
+| Helper functions    | None needed (scalar)        | `isCSAPIResourceRef()` + `parseResourceRef()` |
 
 The Part 1 fix is slightly more involved because `@link` values are objects (not scalars), requiring a type guard and parser function. But the overall approach — conditional spread with tolerant extraction — is identical.
 
@@ -225,16 +236,16 @@ The Part 1 fix is slightly more involved because `@link` values are objects (not
 
 ### 6.1 Change Inventory
 
-| Change | File | Lines Changed | Risk |
-|--------|------|--------------|------|
-| Add `CSAPIResourceRef` to import statement | `geojson.ts` L13–21 | +1 line | **NONE** — additive import |
-| Add `isCSAPIResourceRef()` helper | `geojson.ts` (new private function) | ~3 lines | **NONE** — private, used only internally |
-| Add `parseResourceRef()` helper | `geojson.ts` (new private function) | ~7 lines | **NONE** — private, used only internally |
-| Extract `systemKind@link` in System case | `geojson.ts` L435 area | +3 lines | **NONE** — conditional spread, optional field |
-| Extract `platform@link` in Deployment case | `geojson.ts` L448 area | +3 lines | **NONE** — conditional spread, optional field |
-| Extract `deployedSystems@link` in Deployment case | `geojson.ts` L448 area | +3 lines | **LOW** — array case needs `.filter().map()` |
-| Extract `sampledFeature@link` in SamplingFeature case | `geojson.ts` L465 area | +3 lines | **NONE** — conditional spread, optional field |
-| Add test assertions | `geojson.spec.ts` | ~30–50 lines | **NONE** — new test cases, no changes to existing |
+| Change                                                | File                                | Lines Changed | Risk                                              |
+| ----------------------------------------------------- | ----------------------------------- | ------------- | ------------------------------------------------- |
+| Add `CSAPIResourceRef` to import statement            | `geojson.ts` L13–21                 | +1 line       | **NONE** — additive import                        |
+| Add `isCSAPIResourceRef()` helper                     | `geojson.ts` (new private function) | ~3 lines      | **NONE** — private, used only internally          |
+| Add `parseResourceRef()` helper                       | `geojson.ts` (new private function) | ~7 lines      | **NONE** — private, used only internally          |
+| Extract `systemKind@link` in System case              | `geojson.ts` L435 area              | +3 lines      | **NONE** — conditional spread, optional field     |
+| Extract `platform@link` in Deployment case            | `geojson.ts` L448 area              | +3 lines      | **NONE** — conditional spread, optional field     |
+| Extract `deployedSystems@link` in Deployment case     | `geojson.ts` L448 area              | +3 lines      | **LOW** — array case needs `.filter().map()`      |
+| Extract `sampledFeature@link` in SamplingFeature case | `geojson.ts` L465 area              | +3 lines      | **NONE** — conditional spread, optional field     |
+| Add test assertions                                   | `geojson.spec.ts`                   | ~30–50 lines  | **NONE** — new test cases, no changes to existing |
 
 ### 6.2 What Does NOT Change
 
@@ -261,7 +272,7 @@ The Part 1 fix is slightly more involved because `@link` values are objects (not
 
 The [Contribution Goal and Definition](docs/planning/contribution-goal-and-definition.md) states:
 
-> *"GeoJSON extensions recognizing all CSAPI-specific resource types **and properties**"*
+> _"GeoJSON extensions recognizing all CSAPI-specific resource types **and properties**"_
 
 `@link` properties are spec-defined properties on Part 1 GeoJSON resources. The parser currently recognizes the resource types correctly but does not recognize all properties.
 
@@ -282,19 +293,20 @@ This is the parser half of the gap identified in #108 (interfaces, now resolved)
 
 ### Implementation Scope
 
-| Component | What to Change |
-|-----------|---------------|
-| `geojson.ts` import | Add `CSAPIResourceRef` to the import from `../model.js` |
-| `geojson.ts` helpers | Add `isCSAPIResourceRef()` type guard and `parseResourceRef()` parser (private) |
-| System case | Add `systemKind@link` → `systemKindLink` extraction |
-| Deployment case | Add `platform@link` → `platformLink` and `deployedSystems@link` → `deployedSystemsLink` extraction |
-| SamplingFeature case | Add `sampledFeature@link` → `sampledFeatureLink` extraction |
-| Procedure case | **No change** — Procedure has no spec-defined `@link` properties |
-| `geojson.spec.ts` | Add test assertions that `@link` fields survive extraction when present and are `undefined` when absent |
+| Component            | What to Change                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| `geojson.ts` import  | Add `CSAPIResourceRef` to the import from `../model.js`                                                 |
+| `geojson.ts` helpers | Add `isCSAPIResourceRef()` type guard and `parseResourceRef()` parser (private)                         |
+| System case          | Add `systemKind@link` → `systemKindLink` extraction                                                     |
+| Deployment case      | Add `platform@link` → `platformLink` and `deployedSystems@link` → `deployedSystemsLink` extraction      |
+| SamplingFeature case | Add `sampledFeature@link` → `sampledFeatureLink` extraction                                             |
+| Procedure case       | **No change** — Procedure has no spec-defined `@link` properties                                        |
+| `geojson.spec.ts`    | Add test assertions that `@link` fields survive extraction when present and are `undefined` when absent |
 
 ### Testing Expectations
 
 New test assertions should cover:
+
 1. **System with `systemKind@link`** — extracted to `systemKindLink`
 2. **System without `systemKind@link`** — `systemKindLink` is `undefined`
 3. **Deployment with `platform@link`** — extracted to `platformLink`
@@ -307,13 +319,13 @@ New test assertions should cover:
 
 ## Appendix A: Authority Precedence Analysis
 
-| Level | Source | Says | Supports Fix? |
-|-------|--------|------|---------------|
-| 1 (highest) | OGC 23-001 §8.3, §8.5, §8.9, §16 | `@link` properties are spec-defined fields on Part 1 GeoJSON resources | **YES** |
-| 2 | AI Operational Constraints | §2.2: Preserve patterns, prefer minimal diffs | **YES** — follows established Part 2 pattern |
-| 3 | Issue #109 description | Extract `@link` properties in `extractCSAPIFeature()` | **YES** — clear scope |
-| 4 | Existing code (`part2.ts` L163–164, L256–257) | Part 2 parsers already extract cross-reference fields using same pattern | **YES** — proven precedent |
-| 5 | Explorer workaround (ad06b52) | Consumers must bypass typed models to access `@link` data | **YES** — real-world impact confirmed |
+| Level       | Source                                        | Says                                                                     | Supports Fix?                                |
+| ----------- | --------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------- |
+| 1 (highest) | OGC 23-001 §8.3, §8.5, §8.9, §16              | `@link` properties are spec-defined fields on Part 1 GeoJSON resources   | **YES**                                      |
+| 2           | AI Operational Constraints                    | §2.2: Preserve patterns, prefer minimal diffs                            | **YES** — follows established Part 2 pattern |
+| 3           | Issue #109 description                        | Extract `@link` properties in `extractCSAPIFeature()`                    | **YES** — clear scope                        |
+| 4           | Existing code (`part2.ts` L163–164, L256–257) | Part 2 parsers already extract cross-reference fields using same pattern | **YES** — proven precedent                   |
+| 5           | Explorer workaround (ad06b52)                 | Consumers must bypass typed models to access `@link` data                | **YES** — real-world impact confirmed        |
 
 No authority level contradicts the fix. All five levels support it.
 
@@ -323,15 +335,15 @@ No authority level contradicts the fix. All five levels support it.
 
 Per AI Operational Constraints §2.1 (do not expand scope beyond the issue description), the following items are explicitly **out of scope** for Issue #109:
 
-| Out-of-Scope Item | Why | Tracked In |
-|--------------------|-----|------------|
-| Interface changes to `model.ts` | Already resolved in #108 (commit `f8026ea`) | [#108](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/108) (closed) |
-| `@link` resolution utility functions | Higher-level consumer API — depends on both #108 and #109 | [#110](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/110) |
-| Part 2 `@link` fields | Part 2 resources have `@link` variants — tracked separately | Future issue |
-| Changes to `ResourceLink` / HATEOAS links | Different type, different purpose | N/A |
-| Changes to `Procedure` parser case | No spec-defined `@link` properties for Procedure | N/A |
-| Refactoring `baseProperties` extraction | §2.3 — no refactoring for style | N/A |
-| Adding `parent@link` to System | Issue #109 lists `parent@link` but #108 did not add a `parentLink` interface field for it — out of scope unless interface is extended | Needs discussion |
+| Out-of-Scope Item                         | Why                                                                                                                                   | Tracked In                                                                 |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Interface changes to `model.ts`           | Already resolved in #108 (commit `f8026ea`)                                                                                           | [#108](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/108) (closed) |
+| `@link` resolution utility functions      | Higher-level consumer API — depends on both #108 and #109                                                                             | [#110](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/110)          |
+| Part 2 `@link` fields                     | Part 2 resources have `@link` variants — tracked separately                                                                           | Future issue                                                               |
+| Changes to `ResourceLink` / HATEOAS links | Different type, different purpose                                                                                                     | N/A                                                                        |
+| Changes to `Procedure` parser case        | No spec-defined `@link` properties for Procedure                                                                                      | N/A                                                                        |
+| Refactoring `baseProperties` extraction   | §2.3 — no refactoring for style                                                                                                       | N/A                                                                        |
+| Adding `parent@link` to System            | Issue #109 lists `parent@link` but #108 did not add a `parentLink` interface field for it — out of scope unless interface is extended | Needs discussion                                                           |
 
 ### Note on `parent@link`
 

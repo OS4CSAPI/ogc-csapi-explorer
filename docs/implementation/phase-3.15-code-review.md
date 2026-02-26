@@ -4,6 +4,7 @@
 **Reviewer:** GitHub Copilot (Claude Opus 4.6)
 **Scope:** Issue #75 — eliminate the last `as unknown as DataRecord` cast in `data-record.ts` and extract `parseAssociationAttributeGroup` shared helper into `_helpers.ts`, replacing 7 inline construction sites across `data-array.ts` and `parser.ts`
 **Commits:**
+
 - `a9c1287` — `refactor: eliminate last data-record.ts cast, extract parseAssociationAttributeGroup helper (#75)`
 
 **Last review:** `docs/implementation/phase-3.14-code-review.md` (commits `0bb1aab` through `5e91241`)
@@ -12,11 +13,11 @@
 
 ## Verification Status
 
-| Check | Result |
-|-------|--------|
-| tsc --noEmit | ✅ Clean (zero errors) |
-| CSAPI unit tests (all) | ✅ 1159 passing, 25 suites |
-| CSAPI format tests | ✅ 637 passing, 17 suites |
+| Check                      | Result                                                          |
+| -------------------------- | --------------------------------------------------------------- |
+| tsc --noEmit               | ✅ Clean (zero errors)                                          |
+| CSAPI unit tests (all)     | ✅ 1159 passing, 25 suites                                      |
+| CSAPI format tests         | ✅ 637 passing, 17 suites                                       |
 | Endpoint integration tests | ⚠️ 82/83 passing (1 pre-existing upstream failure at line 1789) |
 
 **Test delta from Phase 3.14:** +0 tests (1159 → 1159). Pure refactor — zero behavioral change, zero test modifications.
@@ -27,12 +28,12 @@
 
 ### Issue #75 — Eliminate `data-record.ts` cast & extract `parseAssociationAttributeGroup` helper
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `csapi/formats/swecommon/_helpers.ts` | +23/−1 (55 → 81 lines) | Added `AssociationAttributeGroup` type import; added `parseAssociationAttributeGroup()` function with JSDoc |
-| `csapi/formats/swecommon/data-record.ts` | +3/−3 (216 → 215 lines) | Typed `result` directly as `DataRecord`, removed `as unknown as DataRecord` cast |
-| `csapi/formats/swecommon/data-array.ts` | +3/−17 (573 → 559 lines) | Replaced 3 inline `AssociationAttributeGroup` constructions with `parseAssociationAttributeGroup()` calls |
-| `csapi/formats/swecommon/parser.ts` | +4/−17 (1453 → 1439 lines) | Replaced 4 inline `AssociationAttributeGroup` constructions with `parseAssociationAttributeGroup()` calls |
+| File                                     | Lines Changed              | Scope                                                                                                       |
+| ---------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `csapi/formats/swecommon/_helpers.ts`    | +23/−1 (55 → 81 lines)     | Added `AssociationAttributeGroup` type import; added `parseAssociationAttributeGroup()` function with JSDoc |
+| `csapi/formats/swecommon/data-record.ts` | +3/−3 (216 → 215 lines)    | Typed `result` directly as `DataRecord`, removed `as unknown as DataRecord` cast                            |
+| `csapi/formats/swecommon/data-array.ts`  | +3/−17 (573 → 559 lines)   | Replaced 3 inline `AssociationAttributeGroup` constructions with `parseAssociationAttributeGroup()` calls   |
+| `csapi/formats/swecommon/parser.ts`      | +4/−17 (1453 → 1439 lines) | Replaced 4 inline `AssociationAttributeGroup` constructions with `parseAssociationAttributeGroup()` calls   |
 
 **Net change:** 33 insertions, 38 deletions (−5 lines). Pure refactor — DRY consolidation removes more boilerplate than the helper adds.
 
@@ -42,96 +43,96 @@
 
 ### Production Files
 
-| File | Lines | Purpose |
-|------|------:|---------|
-| `csapi/url_builder.ts` | 2,474 | URL builder core |
-| `csapi/formats/swecommon/parser.ts` | 1,439 | SWE Common main parser + validator |
-| `csapi/formats/sensorml/physical-system.ts` | 736 | PhysicalSystem sub-parser |
-| `csapi/formats/geojson.ts` | 609 | GeoJSON handler extensions |
-| `csapi/formats/swecommon/data-array.ts` | 559 | DataArray / encoding parser |
-| `csapi/formats/swecommon/types.ts` | 735 | SWE Common type definitions |
-| `csapi/formats/swecommon/components.ts` | 716 | Simple component parsers |
-| `csapi/formats/sensorml/types.ts` | 626 | SensorML type definitions |
-| `csapi/formats/sensorml/parser.ts` | 422 | SensorML main parser |
-| `csapi/model.ts` | 418 | CSAPI model definitions |
-| `csapi/formats/constants.ts` | 292 | Media types, resource URIs, Content-Type map |
-| `csapi/formats/sensorml/aggregate-process.ts` | 286 | AggregateProcess sub-parser |
-| `csapi/formats/index.ts` | 276 | Top-level format barrel file |
-| `csapi/formats/sensorml/_helpers.ts` | 207 | SensorML shared helpers |
-| `csapi/helpers.ts` | 200 | CSAPI shared extraction helpers |
-| `csapi/formats/swecommon/data-record.ts` | 215 | DataRecord parser |
-| `csapi/command-routing.ts` | 144 | Command fallback routing |
-| `csapi/formats/swecommon/index.ts` | 135 | SWE Common barrel file |
-| `csapi/formats/sensorml/simple-process.ts` | 135 | SimpleProcess sub-parser |
-| `csapi/formats/sensorml/index.ts` | 122 | SensorML barrel file |
-| `csapi/formats/classification.ts` | 118 | Endpoint-context classification fallback |
-| `csapi/formats/response.ts` | 115 | Collection response envelope normalization |
-| `csapi/formats/swecommon/_helpers.ts` | 81 | SWE Common shared helpers (`isRecord`, `parseBaseProperties`, `parseAssociationAttributeGroup`) |
-| `csapi/formats/sensorml/errors.ts` | 40 | SensorMLParseError class |
-| **Production Total** | **10,566** | **24 files** |
+| File                                          |      Lines | Purpose                                                                                         |
+| --------------------------------------------- | ---------: | ----------------------------------------------------------------------------------------------- |
+| `csapi/url_builder.ts`                        |      2,474 | URL builder core                                                                                |
+| `csapi/formats/swecommon/parser.ts`           |      1,439 | SWE Common main parser + validator                                                              |
+| `csapi/formats/sensorml/physical-system.ts`   |        736 | PhysicalSystem sub-parser                                                                       |
+| `csapi/formats/geojson.ts`                    |        609 | GeoJSON handler extensions                                                                      |
+| `csapi/formats/swecommon/data-array.ts`       |        559 | DataArray / encoding parser                                                                     |
+| `csapi/formats/swecommon/types.ts`            |        735 | SWE Common type definitions                                                                     |
+| `csapi/formats/swecommon/components.ts`       |        716 | Simple component parsers                                                                        |
+| `csapi/formats/sensorml/types.ts`             |        626 | SensorML type definitions                                                                       |
+| `csapi/formats/sensorml/parser.ts`            |        422 | SensorML main parser                                                                            |
+| `csapi/model.ts`                              |        418 | CSAPI model definitions                                                                         |
+| `csapi/formats/constants.ts`                  |        292 | Media types, resource URIs, Content-Type map                                                    |
+| `csapi/formats/sensorml/aggregate-process.ts` |        286 | AggregateProcess sub-parser                                                                     |
+| `csapi/formats/index.ts`                      |        276 | Top-level format barrel file                                                                    |
+| `csapi/formats/sensorml/_helpers.ts`          |        207 | SensorML shared helpers                                                                         |
+| `csapi/helpers.ts`                            |        200 | CSAPI shared extraction helpers                                                                 |
+| `csapi/formats/swecommon/data-record.ts`      |        215 | DataRecord parser                                                                               |
+| `csapi/command-routing.ts`                    |        144 | Command fallback routing                                                                        |
+| `csapi/formats/swecommon/index.ts`            |        135 | SWE Common barrel file                                                                          |
+| `csapi/formats/sensorml/simple-process.ts`    |        135 | SimpleProcess sub-parser                                                                        |
+| `csapi/formats/sensorml/index.ts`             |        122 | SensorML barrel file                                                                            |
+| `csapi/formats/classification.ts`             |        118 | Endpoint-context classification fallback                                                        |
+| `csapi/formats/response.ts`                   |        115 | Collection response envelope normalization                                                      |
+| `csapi/formats/swecommon/_helpers.ts`         |         81 | SWE Common shared helpers (`isRecord`, `parseBaseProperties`, `parseAssociationAttributeGroup`) |
+| `csapi/formats/sensorml/errors.ts`            |         40 | SensorMLParseError class                                                                        |
+| **Production Total**                          | **10,566** | **24 files**                                                                                    |
 
 ### Test Files
 
-| File | Lines | Tests | Purpose |
-|------|------:|------:|---------|
-| `csapi/url_builder.spec.ts` | 2,755 | ~560 | URL builder tests (incl. edge cases) |
-| `csapi/formats/sensorml/physical-system.spec.ts` | 1,070 | 100 | PhysicalSystem tests |
-| `csapi/formats/sensorml/aggregate-process.spec.ts` | 646 | 67 | AggregateProcess tests |
-| `csapi/formats/swecommon/parser.spec.ts` | 621 | 60 | SWE Common parser tests |
-| `csapi/formats/swecommon/components.spec.ts` | 600 | 73 | SWE Common component tests |
-| `csapi/formats/swecommon/data-array.spec.ts` | 507 | 49 | DataArray tests |
-| `csapi/helpers.spec.ts` | 463 | ~65 | Helper tests (incl. edge cases) |
-| `csapi/formats/sensorml/simple-process.spec.ts` | 438 | 41 | SimpleProcess tests |
-| `csapi/formats/geojson.spec.ts` | 431 | 19 | GeoJSON tests |
-| `csapi/integration/navigation.spec.ts` | 428 | 30 | Integration: cross-resource navigation |
-| `csapi/model.spec.ts` | 377 | 44 | Model tests |
-| `csapi/formats/swecommon/types.spec.ts` | 375 | 17 | SWE Common type tests |
-| `csapi/formats/sensorml/types.spec.ts` | 369 | 20 | SensorML type tests |
-| `csapi/integration/command.spec.ts` | 359 | 20 | Integration: command workflows |
-| `csapi/formats/sensorml/parser.spec.ts` | 343 | 46 | SensorML parser tests |
-| `csapi/integration/discovery.spec.ts` | 339 | 14 | Integration: discovery lifecycle |
-| `csapi/integration/observation.spec.ts` | 322 | 17 | Integration: observation workflows |
-| `csapi/formats/index.spec.ts` | 242 | 22 | Format barrel file tests |
-| `csapi/formats/swecommon/data-record.spec.ts` | 237 | 20 | DataRecord tests |
-| `csapi/command-routing.spec.ts` | 230 | 21 | Command routing tests |
-| `csapi/formats/response.spec.ts` | 193 | 18 | Response parser tests |
-| `csapi/formats/classification.spec.ts` | 168 | 22 | Classification fallback tests |
-| `csapi/formats/swecommon/index.spec.ts` | 167 | 21 | SWE Common barrel tests |
-| `csapi/formats/constants.spec.ts` | 166 | 28 | Content-Type + media type + URI + namespace constant tests |
-| `csapi/formats/sensorml/index.spec.ts` | 82 | 9 | SensorML barrel tests |
-| **Test Total** | **11,928** | **1,159** | **25 suites** |
+| File                                               |      Lines |     Tests | Purpose                                                    |
+| -------------------------------------------------- | ---------: | --------: | ---------------------------------------------------------- |
+| `csapi/url_builder.spec.ts`                        |      2,755 |      ~560 | URL builder tests (incl. edge cases)                       |
+| `csapi/formats/sensorml/physical-system.spec.ts`   |      1,070 |       100 | PhysicalSystem tests                                       |
+| `csapi/formats/sensorml/aggregate-process.spec.ts` |        646 |        67 | AggregateProcess tests                                     |
+| `csapi/formats/swecommon/parser.spec.ts`           |        621 |        60 | SWE Common parser tests                                    |
+| `csapi/formats/swecommon/components.spec.ts`       |        600 |        73 | SWE Common component tests                                 |
+| `csapi/formats/swecommon/data-array.spec.ts`       |        507 |        49 | DataArray tests                                            |
+| `csapi/helpers.spec.ts`                            |        463 |       ~65 | Helper tests (incl. edge cases)                            |
+| `csapi/formats/sensorml/simple-process.spec.ts`    |        438 |        41 | SimpleProcess tests                                        |
+| `csapi/formats/geojson.spec.ts`                    |        431 |        19 | GeoJSON tests                                              |
+| `csapi/integration/navigation.spec.ts`             |        428 |        30 | Integration: cross-resource navigation                     |
+| `csapi/model.spec.ts`                              |        377 |        44 | Model tests                                                |
+| `csapi/formats/swecommon/types.spec.ts`            |        375 |        17 | SWE Common type tests                                      |
+| `csapi/formats/sensorml/types.spec.ts`             |        369 |        20 | SensorML type tests                                        |
+| `csapi/integration/command.spec.ts`                |        359 |        20 | Integration: command workflows                             |
+| `csapi/formats/sensorml/parser.spec.ts`            |        343 |        46 | SensorML parser tests                                      |
+| `csapi/integration/discovery.spec.ts`              |        339 |        14 | Integration: discovery lifecycle                           |
+| `csapi/integration/observation.spec.ts`            |        322 |        17 | Integration: observation workflows                         |
+| `csapi/formats/index.spec.ts`                      |        242 |        22 | Format barrel file tests                                   |
+| `csapi/formats/swecommon/data-record.spec.ts`      |        237 |        20 | DataRecord tests                                           |
+| `csapi/command-routing.spec.ts`                    |        230 |        21 | Command routing tests                                      |
+| `csapi/formats/response.spec.ts`                   |        193 |        18 | Response parser tests                                      |
+| `csapi/formats/classification.spec.ts`             |        168 |        22 | Classification fallback tests                              |
+| `csapi/formats/swecommon/index.spec.ts`            |        167 |        21 | SWE Common barrel tests                                    |
+| `csapi/formats/constants.spec.ts`                  |        166 |        28 | Content-Type + media type + URI + namespace constant tests |
+| `csapi/formats/sensorml/index.spec.ts`             |         82 |         9 | SensorML barrel tests                                      |
+| **Test Total**                                     | **11,928** | **1,159** | **25 suites**                                              |
 
 ### Aggregate
 
-| Metric | Phase 3.14 | Phase 3.15 | Delta |
-|--------|----------:|----------:|------:|
-| Production lines | 10,571 | 10,566 | −5 |
-| Test lines | 11,928 | 11,928 | 0 |
-| Total lines | 22,499 | 22,494 | −5 |
-| Production files | 24 | 24 | 0 |
-| Test files (suites) | 25 | 25 | 0 |
-| Test count | 1,159 | 1,159 | 0 |
-| Test-to-production ratio | 1.13:1 | 1.13:1 | 0 |
+| Metric                   | Phase 3.14 | Phase 3.15 | Delta |
+| ------------------------ | ---------: | ---------: | ----: |
+| Production lines         |     10,571 |     10,566 |    −5 |
+| Test lines               |     11,928 |     11,928 |     0 |
+| Total lines              |     22,499 |     22,494 |    −5 |
+| Production files         |         24 |         24 |     0 |
+| Test files (suites)      |         25 |         25 |     0 |
+| Test count               |      1,159 |      1,159 |     0 |
+| Test-to-production ratio |     1.13:1 |     1.13:1 |     0 |
 
 ---
 
 ## Phase 3 Lessons Learned Check
 
-| # | Lesson | Status | Evidence |
-|---|--------|--------|----------|
-| **L1** | Audit upstream before building new layers | ✅ PASS | No new architectural layers introduced. `parseAssociationAttributeGroup` is a private consolidation within the existing `_helpers.ts` module — same pattern as `parseBaseProperties`. |
-| **L2** | Postel's Law governs client libraries | ✅ PASS | No extraction changes. The helper preserves the same tolerant behavior: `role`, `title`, `arcrole` are all optional, extracted only if present as strings. |
-| **L3** | Don't couple validation to extraction | ✅ PASS | No validation added. The helper purely extracts properties — it does not reject or throw on missing optional fields. |
-| **L4** | Don't build parallel systems | ✅ PASS | The opposite — this change *eliminates* 7 parallel inline implementations and consolidates them into one shared helper. |
-| **L5** | Verify upstream claims by reading source | ✅ N/A | No upstream claims made. |
-| **L6** | Real-world server data diverges from spec | ✅ N/A | Pure refactor — no data handling changes. |
-| **L7** | Phase 3 smoke tests are essential | ✅ N/A | No new parser features requiring smoke tests. |
-| **L8** | Layered architecture enables clean extension | ✅ PASS | Demonstrates layered benefit: a single new helper in the shared layer replaces 7 inline implementations in 2 consuming files. |
-| **L9** | Content negotiation cannot be assumed | ✅ N/A | No content negotiation changes. |
-| **L10** | Type naming must avoid built-in collisions | ✅ PASS | `parseAssociationAttributeGroup` follows the `parse` + TypeName convention used by all other helpers (`parseBaseProperties`, `parseSimpleComponent`, `parseDataRecord`, etc.). |
-| **L11** | Document architectural decisions formally | ✅ PASS | The helper has JSDoc with `@see` spec link. Commit message documents all 7 replaced sites. |
-| **L12** | "Build it right, but should we build it at all?" | ✅ PASS | All changes address Phase 3.14 code review findings F7 and F9. No new scope. |
-| **L13** | AI drift can fabricate findings | ✅ PASS | Phase 3.14 findings were verified against actual code before implementation. The issue (#75) documented exact file locations and line numbers. |
+| #       | Lesson                                           | Status  | Evidence                                                                                                                                                                              |
+| ------- | ------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **L1**  | Audit upstream before building new layers        | ✅ PASS | No new architectural layers introduced. `parseAssociationAttributeGroup` is a private consolidation within the existing `_helpers.ts` module — same pattern as `parseBaseProperties`. |
+| **L2**  | Postel's Law governs client libraries            | ✅ PASS | No extraction changes. The helper preserves the same tolerant behavior: `role`, `title`, `arcrole` are all optional, extracted only if present as strings.                            |
+| **L3**  | Don't couple validation to extraction            | ✅ PASS | No validation added. The helper purely extracts properties — it does not reject or throw on missing optional fields.                                                                  |
+| **L4**  | Don't build parallel systems                     | ✅ PASS | The opposite — this change _eliminates_ 7 parallel inline implementations and consolidates them into one shared helper.                                                               |
+| **L5**  | Verify upstream claims by reading source         | ✅ N/A  | No upstream claims made.                                                                                                                                                              |
+| **L6**  | Real-world server data diverges from spec        | ✅ N/A  | Pure refactor — no data handling changes.                                                                                                                                             |
+| **L7**  | Phase 3 smoke tests are essential                | ✅ N/A  | No new parser features requiring smoke tests.                                                                                                                                         |
+| **L8**  | Layered architecture enables clean extension     | ✅ PASS | Demonstrates layered benefit: a single new helper in the shared layer replaces 7 inline implementations in 2 consuming files.                                                         |
+| **L9**  | Content negotiation cannot be assumed            | ✅ N/A  | No content negotiation changes.                                                                                                                                                       |
+| **L10** | Type naming must avoid built-in collisions       | ✅ PASS | `parseAssociationAttributeGroup` follows the `parse` + TypeName convention used by all other helpers (`parseBaseProperties`, `parseSimpleComponent`, `parseDataRecord`, etc.).        |
+| **L11** | Document architectural decisions formally        | ✅ PASS | The helper has JSDoc with `@see` spec link. Commit message documents all 7 replaced sites.                                                                                            |
+| **L12** | "Build it right, but should we build it at all?" | ✅ PASS | All changes address Phase 3.14 code review findings F7 and F9. No new scope.                                                                                                          |
+| **L13** | AI drift can fabricate findings                  | ✅ PASS | Phase 3.14 findings were verified against actual code before implementation. The issue (#75) documented exact file locations and line numbers.                                        |
 
 **Result:** 8/13 applicable lessons PASS, 5 N/A, 0 WORSENED
 
@@ -150,9 +151,11 @@
 **Status:** ✅ **FULLY RESOLVED.** Issues #72, #73, #74 eliminated 37 casts from `components.ts`, `data-array.ts`, `parser.ts`. Issue #75 eliminated the final cast from `data-record.ts` (line 214).
 
 **Verification:**
+
 ```
 Select-String -Path "src/ogc-api/csapi/formats/swecommon/*.ts" -Pattern "as unknown as" | Where-Object { $_.Path -notmatch "\.spec\.ts$" }
 ```
+
 → **0 results.** Zero production `as unknown as` casts remain in the entire SWE Common module.
 
 This finding is now permanently closed. The resolution chain: Phase 3.9 identified → Phase 3.14 resolved 37/38 → Phase 3.15 resolved the final 1.
@@ -208,6 +211,7 @@ This finding is now permanently closed. The resolution chain: Phase 3.9 identifi
 **Current status:** ✅ **RESOLVED.** Issue #75 typed the `result` variable directly as `DataRecord` and removed the cast. The fix is exactly what Phase 3.14 recommended:
 
 Before:
+
 ```typescript
 const result: Record<string, unknown> = {
   ...parseBaseProperties(json),
@@ -218,6 +222,7 @@ return result as unknown as DataRecord;
 ```
 
 After:
+
 ```typescript
 const result: DataRecord = {
   ...parseBaseProperties(json),
@@ -252,12 +257,14 @@ The `as const` on `'DataRecord'` was also removed — it was only needed when th
 ### [F1] POSITIVE: `parseAssociationAttributeGroup` helper is well-designed
 
 The new helper follows the exact same structure as `parseBaseProperties()`:
+
 - Accepts `Record<string, unknown>` (consistent with all SWE Common helper signatures)
 - Returns a typed interface (`AssociationAttributeGroup`)
 - Uses `typeof x === 'string'` guards for each optional property
 - Has JSDoc with `@see` spec link
 
 It also correctly handles both call-site variants identified in Issue #75:
+
 1. **Full pattern (5 sites):** `href`, `role`, `title`, `arcrole` — all checked
 2. **Simple pattern (2 sites in `parseElementCount`):** previously only checked `href`, `role`, `title` — now also checks `arcrole`, which is correct per the `AssociationAttributeGroup` interface (arcrole is simply absent in those inputs, so the check is a no-op)
 
@@ -271,15 +278,16 @@ This uniform treatment is an improvement over the original code, where 2 of 7 si
 
 With this commit, the SWE Common parser module achieves complete elimination of all production `as unknown as T` double-casts:
 
-| File | Before Issues #72–#75 | After |
-|------|----------------------:|------:|
-| `components.ts` | 10 | 0 |
-| `data-array.ts` | 13 | 0 |
-| `parser.ts` | 14 | 0 |
-| `data-record.ts` | 1 | 0 |
-| **Total** | **38** | **0** |
+| File             | Before Issues #72–#75 | After |
+| ---------------- | --------------------: | ----: |
+| `components.ts`  |                    10 |     0 |
+| `data-array.ts`  |                    13 |     0 |
+| `parser.ts`      |                    14 |     0 |
+| `data-record.ts` |                     1 |     0 |
+| **Total**        |                **38** | **0** |
 
 The full elimination chain:
+
 - **Issue #72** (`bdd77f1`): components.ts — 10 casts
 - **Issue #74** (`ab1c7cb`): data-array.ts — 13 casts
 - **Issue #73** (`5e91241`): parser.ts — 14 casts
@@ -295,11 +303,11 @@ All 38 casts were eliminated using the same three techniques: (1) typing result 
 
 The `_helpers.ts` module now hosts 3 shared helpers, each following the same pattern:
 
-| Helper | Added | Purpose | Consumers |
-|--------|-------|---------|-----------|
-| `isRecord()` | Issue #56 | Type guard for `Record<string, unknown>` | 4 files |
-| `parseBaseProperties()` | Issue #56 | Extract `AbstractDataComponent` base properties | 4 files |
-| `parseAssociationAttributeGroup()` | Issue #75 | Extract `AssociationAttributeGroup` (XLink reference) | 2 files |
+| Helper                             | Added     | Purpose                                               | Consumers |
+| ---------------------------------- | --------- | ----------------------------------------------------- | --------- |
+| `isRecord()`                       | Issue #56 | Type guard for `Record<string, unknown>`              | 4 files   |
+| `parseBaseProperties()`            | Issue #56 | Extract `AbstractDataComponent` base properties       | 4 files   |
+| `parseAssociationAttributeGroup()` | Issue #75 | Extract `AssociationAttributeGroup` (XLink reference) | 2 files   |
 
 Each helper: (a) accepts `Record<string, unknown>`, (b) returns a typed interface, (c) uses `typeof` guards, (d) has JSDoc. The consolidation pattern established in Issue #56 (Phase 3.12 F3) scales naturally.
 
@@ -321,67 +329,67 @@ This is a minor inconsistency, not a bug. The helper's contract (per its JSDoc: 
 
 ### Phase 2 (URL Builder) — Carried Forward
 
-| Dimension | Systems | Deployments | Procedures | SF | Properties | DataStreams | Observations | ControlStreams | Commands |
-|-----------|:-------:|:-----------:|:----------:|:--:|:----------:|:-----------:|:------------:|:--------------:|:--------:|
-| Exact URL assertion | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Per-field query params | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| CRUD URLs | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Nested methods | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Nested create methods | ✅ | ✅ | N/A | N/A | N/A | ✅ | N/A | ✅ | N/A |
-| Pagination | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Resource validation | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Temporal params | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Content-Type mapping | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Command fallback routing | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ✅ | ✅ |
-| Edge cases | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Dimension                | Systems | Deployments | Procedures | SF  | Properties | DataStreams | Observations | ControlStreams | Commands |
+| ------------------------ | :-----: | :---------: | :--------: | :-: | :--------: | :---------: | :----------: | :------------: | :------: |
+| Exact URL assertion      |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Per-field query params   |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| CRUD URLs                |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Nested methods           |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Nested create methods    |   ✅    |     ✅      |    N/A     | N/A |    N/A     |     ✅      |     N/A      |       ✅       |   N/A    |
+| Pagination               |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Resource validation      |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Temporal params          |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Content-Type mapping     |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Command fallback routing |   N/A   |     N/A     |    N/A     | N/A |    N/A     |     N/A     |     N/A      |       ✅       |    ✅    |
+| Edge cases               |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
 
 ### Phase 3 (Format Handlers) — Current
 
-| Dimension | GeoJSON | Constants | Response | Classification | SML Types | SML Errors | SML Helpers | SimpleProcess | AggProcess | PhysSys | SML Parser | SML Barrel | SWE Types | SWE Comps | SWE DataRec | SWE DataArr | SWE Parser | SWE Barrel | SWE Helpers | Formats Barrel |
-|-----------|:-------:|:---------:|:--------:|:--------------:|:---------:|:----------:|:-----------:|:-------------:|:----------:|:-------:|:----------:|:----------:|:---------:|:---------:|:-----------:|:-----------:|:----------:|:----------:|:-----------:|:--------------:|
-| Valid input → output | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Invalid input → rejection | ✅ | N/A | ✅ | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | ✅ | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| All spec variants | ✅ | ✅ | ✅ | N/A | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | ✅ | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| All branches/types | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Error specificity | ✅ | N/A | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| Edge cases | ✅ | ✅ | ✅ | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | ✅ | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| Nested structures | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ✅ | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| Type discrimination | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| Encoding variants | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ✅ | N/A | N/A | N/A | N/A |
-| Constraint validation | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ✅ | N/A | N/A | N/A |
+| Dimension                 | GeoJSON | Constants | Response | Classification | SML Types | SML Errors | SML Helpers | SimpleProcess | AggProcess | PhysSys | SML Parser | SML Barrel | SWE Types | SWE Comps | SWE DataRec | SWE DataArr | SWE Parser | SWE Barrel | SWE Helpers | Formats Barrel |
+| ------------------------- | :-----: | :-------: | :------: | :------------: | :-------: | :--------: | :---------: | :-----------: | :--------: | :-----: | :--------: | :--------: | :-------: | :-------: | :---------: | :---------: | :--------: | :--------: | :---------: | :------------: |
+| Valid input → output      |   ✅    |    ✅     |    ✅    |       ✅       |    ✅     |     ✅     |     ✅      |      ✅       |     ✅     |   ✅    |     ✅     |     ✅     |    ✅     |    ✅     |     ✅      |     ✅      |     ✅     |     ✅     |     ✅      |       ✅       |
+| Invalid input → rejection |   ✅    |    N/A    |    ✅    |       ✅       |    ✅     |    N/A     |     N/A     |      ✅       |     ✅     |   ✅    |     ✅     |    N/A     |    ✅     |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| All spec variants         |   ✅    |    ✅     |    ✅    |      N/A       |    ✅     |    N/A     |     N/A     |      ✅       |     ✅     |   ✅    |     ✅     |    N/A     |    ✅     |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| All branches/types        |   ✅    |    ✅     |    ✅    |       ✅       |    ✅     |     ✅     |     ✅      |      ✅       |     ✅     |   ✅    |     ✅     |     ✅     |    ✅     |    ✅     |     ✅      |     ✅      |     ✅     |     ✅     |     ✅      |       ✅       |
+| Error specificity         |   ✅    |    N/A    |    ✅    |      N/A       |    N/A    |     ✅     |     ✅      |      ✅       |     ✅     |   ✅    |     ✅     |    N/A     |    N/A    |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| Edge cases                |   ✅    |    ✅     |    ✅    |       ✅       |    ✅     |    N/A     |     N/A     |      ✅       |     ✅     |   ✅    |     ✅     |    N/A     |    ✅     |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| Nested structures         |   N/A   |    N/A    |   N/A    |      N/A       |    N/A    |    N/A     |     N/A     |      N/A      |     ✅     |   ✅    |     ✅     |    N/A     |    N/A    |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| Type discrimination       |   N/A   |    N/A    |   N/A    |      N/A       |    N/A    |    N/A     |     N/A     |      N/A      |    N/A     |   ✅    |     ✅     |    N/A     |    N/A    |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| Encoding variants         |   N/A   |    N/A    |   N/A    |      N/A       |    N/A    |    N/A     |     N/A     |      N/A      |    N/A     |   N/A   |    N/A     |    N/A     |    N/A    |    N/A    |     N/A     |     ✅      |    N/A     |    N/A     |     N/A     |      N/A       |
+| Constraint validation     |   N/A   |    N/A    |   N/A    |      N/A       |    N/A    |    N/A     |     N/A     |      N/A      |    N/A     |   N/A   |    N/A     |    N/A     |    N/A    |    N/A    |     N/A     |     N/A     |     ✅     |    N/A     |     N/A     |      N/A       |
 
 **Heatmap change from Phase 3.14:** No changes. Pure refactor — no new coverage dimensions or regressions.
 
 ### Integration Tests — Carried Forward
 
-| Dimension | Discovery | Observation | Command | Navigation |
-|-----------|:---------:|:-----------:|:-------:|:----------:|
-| End-to-end workflow | ✅ | ✅ | ✅ | ✅ |
-| Cross-module composition | ✅ | ✅ | ✅ | ✅ |
-| Temporal queries | N/A | ✅ | ✅ | N/A |
-| Pagination | N/A | ✅ | N/A | ✅ |
-| Fallback routing | N/A | N/A | ✅ | N/A |
-| Error scenarios | ✅ | ✅ | ✅ | ✅ |
-| Format negotiation | ✅ | N/A | N/A | ✅ |
-| GeoJSON round-trip | ✅ | N/A | N/A | ✅ |
+| Dimension                | Discovery | Observation | Command | Navigation |
+| ------------------------ | :-------: | :---------: | :-----: | :--------: |
+| End-to-end workflow      |    ✅     |     ✅      |   ✅    |     ✅     |
+| Cross-module composition |    ✅     |     ✅      |   ✅    |     ✅     |
+| Temporal queries         |    N/A    |     ✅      |   ✅    |    N/A     |
+| Pagination               |    N/A    |     ✅      |   N/A   |     ✅     |
+| Fallback routing         |    N/A    |     N/A     |   ✅    |    N/A     |
+| Error scenarios          |    ✅     |     ✅      |   ✅    |     ✅     |
+| Format negotiation       |    ✅     |     N/A     |   N/A   |     ✅     |
+| GeoJSON round-trip       |    ✅     |     N/A     |   N/A   |     ✅     |
 
 ---
 
 ## Smoke Test Findings Integration
 
-| Finding | Status | Evidence |
-|---------|--------|----------|
-| F1 (nested create methods) | ✅ Previously addressed | Issue #57 — Phase 3.13 |
-| F2 (nested create methods) | ✅ Previously addressed | Issue #57 — Phase 3.13 |
-| F3 (items envelope) | ✅ Previously addressed | `parseCollectionResponse` — Phase 3.12 |
-| F4 (validTime array format) | ✅ Previously addressed | `parseValidTime` — prior phase |
-| F5 (EndpointError consistency) | ✅ Previously addressed | Issue #63 — Phase 3.13 |
-| F10 (Content-Type guidance) | ✅ Previously addressed | Issue #58 — Phase 3.13 |
-| F17 (controlstreams path casing) | ✅ Previously addressed | Issue #68 — Phase 3.13 |
-| F33 (commandFormat vs observationFormat) | ⏳ Deferred | Schema-level variant handling deferred |
-| F34 (Commands fallback routing) | ✅ Previously addressed | Issue #47 — Phase 3.13 |
-| F41 (featureType: null on 52North) | ✅ Previously addressed | `classifyFeature` — Phase 3.12 |
-| F83 (nested create methods) | ✅ Previously addressed | Issue #57 — Phase 3.13 |
+| Finding                                  | Status                  | Evidence                               |
+| ---------------------------------------- | ----------------------- | -------------------------------------- |
+| F1 (nested create methods)               | ✅ Previously addressed | Issue #57 — Phase 3.13                 |
+| F2 (nested create methods)               | ✅ Previously addressed | Issue #57 — Phase 3.13                 |
+| F3 (items envelope)                      | ✅ Previously addressed | `parseCollectionResponse` — Phase 3.12 |
+| F4 (validTime array format)              | ✅ Previously addressed | `parseValidTime` — prior phase         |
+| F5 (EndpointError consistency)           | ✅ Previously addressed | Issue #63 — Phase 3.13                 |
+| F10 (Content-Type guidance)              | ✅ Previously addressed | Issue #58 — Phase 3.13                 |
+| F17 (controlstreams path casing)         | ✅ Previously addressed | Issue #68 — Phase 3.13                 |
+| F33 (commandFormat vs observationFormat) | ⏳ Deferred             | Schema-level variant handling deferred |
+| F34 (Commands fallback routing)          | ✅ Previously addressed | Issue #47 — Phase 3.13                 |
+| F41 (featureType: null on 52North)       | ✅ Previously addressed | `classifyFeature` — Phase 3.12         |
+| F83 (nested create methods)              | ✅ Previously addressed | Issue #57 — Phase 3.13                 |
 
 No smoke test findings were addressed in this cycle. All smoke test findings addressed to date remain resolved.
 
@@ -389,14 +397,14 @@ No smoke test findings were addressed in this cycle. All smoke test findings add
 
 ## Summary
 
-| Category | Count | Details |
-|----------|------:|---------|
-| POSITIVE | 3 | F1 (well-designed helper), F2 (zero production casts achieved), F3 (DRY consolidation scales) |
-| INFORMATIONAL | 1 | F4 (`href` assumed string — safe by contract, minor inconsistency) |
-| BUG | 0 | — |
-| GAP | 0 | — |
-| DESIGN | 0 | — |
-| CONSISTENCY | 0 | — |
+| Category      | Count | Details                                                                                       |
+| ------------- | ----: | --------------------------------------------------------------------------------------------- |
+| POSITIVE      |     3 | F1 (well-designed helper), F2 (zero production casts achieved), F3 (DRY consolidation scales) |
+| INFORMATIONAL |     1 | F4 (`href` assumed string — safe by contract, minor inconsistency)                            |
+| BUG           |     0 | —                                                                                             |
+| GAP           |     0 | —                                                                                             |
+| DESIGN        |     0 | —                                                                                             |
+| CONSISTENCY   |     0 | —                                                                                             |
 
 ---
 

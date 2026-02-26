@@ -5,8 +5,9 @@
 **Scope:** All code changes since the Phase 2.8 smoke test — Issue #13 (Commands, already reviewed in Phase 2.9), Issue #46 (Commands backfill), and Issue #14 (GeoJSON Handler Extensions — first Phase 3 deliverable).  
 **Prior review:** `docs/implementation/phase-2.9-code-review.md`  
 **Commits:**
+
 - `0d94317` — docs: update lessons learned to v1.2 — add Phase 2.3–2.8 source documents
-- `b1c08d4` — feat(csapi): implement Commands methods (Issue #13) *(reviewed in Phase 2.9)*
+- `b1c08d4` — feat(csapi): implement Commands methods (Issue #13) _(reviewed in Phase 2.9)_
 - `950e694` — docs: Phase 2.9 code review — Commands methods
 - `dc4a988` — test: backfill Commands test gaps — offset, create validation (Issue #46)
 - `c26491b` — docs: Phase 2.9 live server smoke test — Commands validation (F34-F39)
@@ -15,17 +16,17 @@
 - `a30f5bf` — feat: GeoJSON handler extensions — featureType recognition, property extraction, validation (Issue #14)
 - `5bcbb5a` — docs: add Phase 3 code review prompt template
 
-**Note:** Issue #13 (Commands) was already reviewed in Phase 2.9. This review focuses its *new analysis* on Issue #46 (backfill) and Issue #14 (GeoJSON). All prior findings from Phase 2.9 are reaffirmed below.
+**Note:** Issue #13 (Commands) was already reviewed in Phase 2.9. This review focuses its _new analysis_ on Issue #46 (backfill) and Issue #14 (GeoJSON). All prior findings from Phase 2.9 are reaffirmed below.
 
 ---
 
 ## Verification Status
 
-| Check | Result |
-|-------|--------|
-| `tsc --noEmit` | ✅ Clean — no type errors |
-| CSAPI unit tests (all) | ✅ **379 passing**, 4 suites, 0 failures |
-| CSAPI format tests | ✅ **65 passing**, 1 suite |
+| Check                      | Result                                                                                   |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| `tsc --noEmit`             | ✅ Clean — no type errors                                                                |
+| CSAPI unit tests (all)     | ✅ **379 passing**, 4 suites, 0 failures                                                 |
+| CSAPI format tests         | ✅ **65 passing**, 1 suite                                                               |
 | Endpoint integration tests | ✅ **82/83 passing** (1 pre-existing: non-JSON parse test at endpoint.spec.ts line 1789) |
 
 Test delta from Phase 2.9: 379 − 311 = **+68 tests** (65 new GeoJSON handler tests + 3 backfill tests from Issue #46).
@@ -36,23 +37,23 @@ Test delta from Phase 2.9: 379 − 311 = **+68 tests** (65 new GeoJSON handler t
 
 ### Issue #46 — Commands Test Backfill
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `src/ogc-api/csapi/url_builder.spec.ts` | +24 lines | 3 new tests: offset standalone, multiple options with offset, create validation |
+| File                                    | Lines Changed | Scope                                                                           |
+| --------------------------------------- | ------------- | ------------------------------------------------------------------------------- |
+| `src/ogc-api/csapi/url_builder.spec.ts` | +24 lines     | 3 new tests: offset standalone, multiple options with offset, create validation |
 
 ### Issue #14 — GeoJSON Handler Extensions
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `src/ogc-api/csapi/formats/geojson.ts` | +419 lines (new) | 6 public functions, 2 exported constants, 2 internal helpers |
-| `src/ogc-api/csapi/formats/geojson.spec.ts` | +529 lines (new) | 65 tests across 6 describe blocks |
+| File                                        | Lines Changed    | Scope                                                        |
+| ------------------------------------------- | ---------------- | ------------------------------------------------------------ |
+| `src/ogc-api/csapi/formats/geojson.ts`      | +419 lines (new) | 6 public functions, 2 exported constants, 2 internal helpers |
+| `src/ogc-api/csapi/formats/geojson.spec.ts` | +529 lines (new) | 65 tests across 6 describe blocks                            |
 
 ### Already Reviewed in Phase 2.9 (included in diff for completeness)
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `src/ogc-api/csapi/url_builder.ts` | +227 lines | 10 Commands methods — **no new analysis** (see Phase 2.9 review) |
-| `src/ogc-api/csapi/url_builder.spec.ts` | +194 lines | Commands tests — **no new analysis** (see Phase 2.9 review) |
+| File                                    | Lines Changed | Scope                                                            |
+| --------------------------------------- | ------------- | ---------------------------------------------------------------- |
+| `src/ogc-api/csapi/url_builder.ts`      | +227 lines    | 10 Commands methods — **no new analysis** (see Phase 2.9 review) |
+| `src/ogc-api/csapi/url_builder.spec.ts` | +194 lines    | Commands tests — **no new analysis** (see Phase 2.9 review)      |
 
 **Total new code under review:** 948 lines (419 + 529) from Issue #14, plus 24 lines from Issue #46.
 
@@ -62,34 +63,34 @@ Test delta from Phase 2.9: 379 − 311 = **+68 tests** (65 new GeoJSON handler t
 
 ### Phase 2 — URL Builder (Carried Forward)
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `model.ts` | 560 | Type definitions, constants, 9 resource interfaces |
-| `model.spec.ts` | 377 | Type compatibility + constant validation tests |
-| `helpers.ts` | 191 | 7 utility functions (encoding, validation, link scanning) |
-| `helpers.spec.ts` | 268 | Helper function tests |
-| `url_builder.ts` | 1,968 | CSAPIQueryBuilder — 79 public methods + 4 private helpers |
-| `url_builder.spec.ts` | 2,445 | url_builder tests (2,421 + 24 from Issue #46 backfill) |
-| **Phase 2 Total** | **5,809** | **314 tests** (311 + 3 from Issue #46 backfill) |
+| File                  | Lines     | Purpose                                                   |
+| --------------------- | --------- | --------------------------------------------------------- |
+| `model.ts`            | 560       | Type definitions, constants, 9 resource interfaces        |
+| `model.spec.ts`       | 377       | Type compatibility + constant validation tests            |
+| `helpers.ts`          | 191       | 7 utility functions (encoding, validation, link scanning) |
+| `helpers.spec.ts`     | 268       | Helper function tests                                     |
+| `url_builder.ts`      | 1,968     | CSAPIQueryBuilder — 79 public methods + 4 private helpers |
+| `url_builder.spec.ts` | 2,445     | url_builder tests (2,421 + 24 from Issue #46 backfill)    |
+| **Phase 2 Total**     | **5,809** | **314 tests** (311 + 3 from Issue #46 backfill)           |
 
 ### Phase 3 — Format Handlers (New)
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `formats/geojson.ts` | 419 | GeoJSON handler — recognition, parsing, validation, extraction |
-| `formats/geojson.spec.ts` | 529 | GeoJSON handler tests |
-| **Phase 3 Total** | **948** | **65 tests** |
+| File                      | Lines   | Purpose                                                        |
+| ------------------------- | ------- | -------------------------------------------------------------- |
+| `formats/geojson.ts`      | 419     | GeoJSON handler — recognition, parsing, validation, extraction |
+| `formats/geojson.spec.ts` | 529     | GeoJSON handler tests                                          |
+| **Phase 3 Total**         | **948** | **65 tests**                                                   |
 
 ### Combined
 
-| Metric | Value |
-|--------|-------|
-| Total lines (prod + test) | **6,757** |
-| Total tests | **379** (41 model + 43 helpers + 230 url_builder + 65 geojson) |
-| Public methods (url_builder) | **79** |
-| Public functions (geojson) | **6** |
-| Resource types (Phase 2) | **9** |
-| Format handlers (Phase 3) | **1** (GeoJSON) |
+| Metric                       | Value                                                          |
+| ---------------------------- | -------------------------------------------------------------- |
+| Total lines (prod + test)    | **6,757**                                                      |
+| Total tests                  | **379** (41 model + 43 helpers + 230 url_builder + 65 geojson) |
+| Public methods (url_builder) | **79**                                                         |
+| Public functions (geojson)   | **6**                                                          |
+| Resource types (Phase 2)     | **9**                                                          |
+| Format handlers (Phase 3)    | **1** (GeoJSON)                                                |
 
 ---
 
@@ -98,12 +99,15 @@ Test delta from Phase 2.9: 379 − 311 = **+68 tests** (65 new GeoJSON handler t
 ### Phase 2.2 Findings (all resolved — no change)
 
 #### [P2-F1] RESOLVED: Dead `encodeArrayParameter` function
+
 No change. Fixed in Issue #38.
 
 #### [P2-F2] RESOLVED: DRY violation in link-scanning logic
+
 No change. Fixed in Issue #38.
 
 #### [P2-F3] RESOLVED: Strict-mode type safety in `buildResourceUrl`
+
 No change. Fixed in Issue #38.
 
 ---
@@ -111,18 +115,23 @@ No change. Fixed in Issue #38.
 ### Phase 2.2→2.4 Findings (all resolved — no change)
 
 #### [P2-F4] RESOLVED: Weak datetime test for `getDeployments`
+
 No change.
 
 #### [P2-F5] RESOLVED: Missing `parent` and `recursive` tests for `getDeployments`
+
 No change.
 
 #### [P2-F6] RESOLVED: Missing pagination test for `getDeploymentSubdeployments`
+
 No change.
 
 #### [P2-F7] RESOLVED: No test for cursor-based pagination
+
 No change.
 
 #### [P2-F8] RESOLVED: No test for `offset` with actual value
+
 No change. Resolved by Issue #41.
 
 ---
@@ -130,9 +139,11 @@ No change. Resolved by Issue #41.
 ### Phase 1 Findings (resolved — no change)
 
 #### [P1-F4] RESOLVED: Missing exports from `index.ts`
+
 No change. All Command types exported from `src/index.ts`.
 
 #### [P1-F6] RESOLVED: Hardcoded temporal parameter keys
+
 No change. `TEMPORAL_KEYS` Set covers all temporal keys.
 
 ---
@@ -140,27 +151,35 @@ No change. `TEMPORAL_KEYS` Set covers all temporal keys.
 ### Phase 2.4 Findings (status check)
 
 #### [F1] UNCHANGED: SamplingFeatures tests are the most thorough yet
+
 Still the gold standard alongside Properties.
 
 #### [F2] UNCHANGED: Convention 3 link detection is robust
+
 No changes to `helpers.ts`.
 
 #### [F3] RESOLVED: JSDoc documents `uid` but type system didn't include it
+
 No change. Fixed by Issue #40.
 
 #### [F4] UNCHANGED: Spec links correctly differentiated
+
 No change.
 
 #### [F5] UNCHANGED: Correct method set — no sub-resource nesting
+
 No change.
 
 #### [F6] UNCHANGED: SamplingFeatures datetime uses exact interval assertion
+
 No change.
 
 #### [F7] UNCHANGED: Factory pattern consistency
+
 No change.
 
 #### [F8] UNCHANGED: Test count distribution across resource types
+
 No change. Phase 2.9 provided the last update.
 
 ---
@@ -168,14 +187,23 @@ No change. Phase 2.9 provided the last update.
 ### Phase 2.5 Findings (no change)
 
 #### [F1] UNCHANGED: Issue #40 resolves all 8 open findings systematically
+
 #### [F2] UNCHANGED: Properties correctly models read-only semantics
+
 #### [F3] UNCHANGED: Properties documents non-Feature response format
+
 #### [F4] UNCHANGED: Spec links correctly differentiated in Properties
+
 #### [F5] RESOLVED: Properties test coverage below gold standard (resolved by Issue #41)
+
 #### [F6] RESOLVED: `PropertyQueryOptions` missing parameters (resolved by Issue #41)
+
 #### [F7] RESOLVED: Systems still missing standalone offset test (resolved by Issue #41)
+
 #### [F8] UNCHANGED: TEMPORAL_KEYS extraction is clean and well-documented
+
 #### [F9] UNCHANGED: Index.ts exports are comprehensive
+
 #### [F10] UNCHANGED: Deployment validation covers all 8 methods
 
 ---
@@ -183,13 +211,21 @@ No change. Phase 2.9 provided the last update.
 ### Phase 2.6 Findings (no change)
 
 #### [F1] UNCHANGED: Issue #41 resolves all 3 Phase 2.5 gap findings
+
 #### [F2] UNCHANGED: DataStreams spec links correctly reference Part 2
+
 #### [F3] UNCHANGED: DataStreams resource validation — 11/11 methods
+
 #### [F4] RESOLVED: DataStreams test coverage gaps (resolved by Issues #42, #43)
+
 #### [F6] RESOLVED: `resultTime: 'latest'` not representable (resolved by Issue #43)
+
 #### [F7] UNCHANGED: DataStreams observation-specific patterns clean
+
 #### [F8] UNCHANGED: Temporal filtering tested with exact `toBe()` assertions
+
 #### [F9] UNCHANGED: DataStreams JSDoc quality matches or exceeds prior types
+
 #### [F10] UNCHANGED: DataStreams method count is correct per spec
 
 ---
@@ -197,14 +233,23 @@ No change. Phase 2.9 provided the last update.
 ### Phase 2.7 Findings (no change)
 
 #### [F1] UNCHANGED: Issue #43 resolves Phase 2.6 [F6] cleanly
+
 #### [F2] UNCHANGED: Observations JSDoc documents singular association semantics
+
 #### [F3] UNCHANGED: Observations resource validation 8/8
+
 #### [F4] UNCHANGED: DataStreams 100% heatmap
+
 #### [F5] RESOLVED: Observations heatmap gaps (resolved by Issue #44)
+
 #### [F6] UNCHANGED: Observation singular association paths — informational
+
 #### [F7] UNCHANGED: All 8 Observations spec links correct
+
 #### [F8] UNCHANGED: Observations temporal tests include `resultTime='latest'`
+
 #### [F9] UNCHANGED: Observations correctly excludes `createObservation`
+
 #### [F10] UNCHANGED: `getObservations` tests format with MIME-type encoding
 
 ---
@@ -212,14 +257,23 @@ No change. Phase 2.9 provided the last update.
 ### Phase 2.8 Findings (no change)
 
 #### [F1] UNCHANGED: ControlStreams mirrors DataStreams architecture
+
 #### [F2] UNCHANGED: ControlStreams resource validation 8/8
+
 #### [F3] UNCHANGED: ControlStreams documents cmdFormat requirement
+
 #### [F4] UNCHANGED: All 8 ControlStreams spec links correct
+
 #### [F5] UNCHANGED: Temporal tests exercise `issueTime` and `executionTime`
+
 #### [F6] UNCHANGED: `checkCommandFeasibility` tests special character encoding
+
 #### [F7] NOW RESOLVED: ControlStreams heatmap gaps
+
 Resolved by Issue #45 (5 standalone tests, 85% compliance). Already noted in Phase 2.9 review.
+
 #### [F8] UNCHANGED: JSDoc examples show lowercase `controlstreams` but builder produces camelCase
+
 #### [F9] UNCHANGED: `getControlStreamCommands` uses `CommandQueryOptions`
 
 ---
@@ -227,27 +281,35 @@ Resolved by Issue #45 (5 standalone tests, 85% compliance). Already noted in Pha
 ### Phase 2.9 Findings (status check — first reaffirmation)
 
 #### [F1] UNCHANGED: Commands completes all 80 Phase 2 QueryBuilder methods
+
 79 public `get|create|update|delete|check|cancel` methods confirmed. No regressions.
 
 #### [F2] UNCHANGED: Commands mirrors Observations architecture with lifecycle extensions
+
 10 Commands methods with 5 new patterns (bulk creation, status, result, cancel). No changes.
 
 #### [F3] UNCHANGED: `createCommand`/`createCommands` correctly validate `controlStreams`
+
 Still validates `controlStreams` (not `commands`), with proper `@throws` JSDoc.
 
 #### [F4] UNCHANGED: All 10 Commands spec links correctly reference Part 2
+
 All link to `23-002/23-002.html#_command_resources`.
 
 #### [F5] UNCHANGED: Commands JSDoc documents lifecycle semantics beyond URL construction
+
 Status state machine, async cancellation semantics, bulk vs single docs all unchanged.
 
 #### [F6] UNCHANGED: Temporal tests exercise `issueTime` and `executionTime` directly
+
 Both closed interval and open-end interval patterns verified.
 
 #### [F7] UNCHANGED: `cancelCommand` tests special character encoding
+
 Mirrors `checkCommandFeasibility` encoding test.
 
 #### [F8] NOW RESOLVED: Commands resource validation covers 8/10 — `createCommand`/`createCommands` missing
+
 **Resolved by:** Issue #46 (commit `dc4a988`).
 
 Issue #46 added a test that verifies both `createCommand` and `createCommands` throw `EndpointError` when `controlStreams` is unavailable:
@@ -263,15 +325,18 @@ it('throws EndpointError for createCommand/createCommands when controlStreams un
 Commands resource validation is now **10/10 methods covered**.
 
 #### [F9] NOW RESOLVED: Commands test coverage has initial heatmap gaps
+
 **Resolved by:** Issue #46 (commit `dc4a988`).
 
 Issue #46 added 2 standalone tests:
+
 1. `getCommands({ offset: 20 })` → exact `toBe()` assertion
 2. `getCommands({ limit: 10, offset: 5, currentStatus: 'PENDING' })` → multiple options with offset
 
 Commands heatmap compliance rises from **83% → 92%**. The only remaining theoretical gap is `cursor` as a standalone test (tested in combo only), which is the same pattern as several other resource types.
 
 #### [F10] UNCHANGED: `createCommand`/`createCommands` produce identical URLs
+
 Informational finding — no change. Both route through `POST /controlstreams/{controlStreamId}/commands`.
 
 ---
@@ -297,14 +362,14 @@ This layered architecture makes each function independently testable and follows
 
 Evaluating against the Phase 3 Category A (Utility/Extension) test checklist:
 
-| Checklist Item | Status | Evidence |
-|---------------|--------|----------|
-| Every public function tested with valid input | ✅ | All 6 functions have happy-path tests |
-| Every public function tested with invalid/malformed input | ✅ | null, undefined, wrong type, missing fields, empty strings |
-| Edge cases: null, undefined, empty string, wrong type | ✅ | `isCSAPIFeature(null)`, `isCSAPIFeature(42)`, `isValidUri('')`, `parseValidTime(123)`, etc. |
-| All spec-defined variants covered | ✅ | Both compact CURIE (`sosa:Sensor`) and full URI (`http://www.w3.org/ns/sosa/Sensor`) tested for all 12 SOSA local names |
-| All classification branches tested | ✅ | System (5), Deployment (1), Procedure (4), SamplingFeature (2) + unrecognized → null |
-| Validation error specificity | ✅ | Each constraint produces identifiable message; multiple simultaneous errors test confirms no short-circuiting |
+| Checklist Item                                            | Status | Evidence                                                                                                                |
+| --------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Every public function tested with valid input             | ✅     | All 6 functions have happy-path tests                                                                                   |
+| Every public function tested with invalid/malformed input | ✅     | null, undefined, wrong type, missing fields, empty strings                                                              |
+| Edge cases: null, undefined, empty string, wrong type     | ✅     | `isCSAPIFeature(null)`, `isCSAPIFeature(42)`, `isValidUri('')`, `parseValidTime(123)`, etc.                             |
+| All spec-defined variants covered                         | ✅     | Both compact CURIE (`sosa:Sensor`) and full URI (`http://www.w3.org/ns/sosa/Sensor`) tested for all 12 SOSA local names |
+| All classification branches tested                        | ✅     | System (5), Deployment (1), Procedure (4), SamplingFeature (2) + unrecognized → null                                    |
+| Validation error specificity                              | ✅     | Each constraint produces identifiable message; multiple simultaneous errors test confirms no short-circuiting           |
 
 **All 6 checklist items pass.** This is the strongest initial test coverage for any new component in the project.
 
@@ -328,7 +393,10 @@ The Phase 2.8 smoke test discovered that the OGC specification encodes `validTim
 
 ```typescript
 it('reports multiple errors at once', () => {
-  const feature = { type: 'Feature', properties: { featureType: '', uid: '', name: '' } };
+  const feature = {
+    type: 'Feature',
+    properties: { featureType: '', uid: '', name: '' },
+  };
   const errors = validateCSAPIFeature(feature);
   expect(errors.length).toBeGreaterThanOrEqual(3);
 });
@@ -354,12 +422,12 @@ Both constraints are guarded by checking `resourceType` after classification, en
 
 Each branch of the `switch (resourceType)` statement builds the output using the validated base properties plus type-specific additions:
 
-| Branch | `validTime` | `geometry` | Extra Properties | Test |
-|--------|-------------|-----------|-----------------|------|
-| System | Optional (if present) | Optional (passthrough) | `assetType` | geojson.spec.ts line 450 |
-| Deployment | Required (`validTime!`) | Optional | — | geojson.spec.ts line 466 |
-| Procedure | — | Always `null` | — | geojson.spec.ts line 475 |
-| SamplingFeature | Optional | Optional | — | geojson.spec.ts line 483 |
+| Branch          | `validTime`             | `geometry`             | Extra Properties | Test                     |
+| --------------- | ----------------------- | ---------------------- | ---------------- | ------------------------ |
+| System          | Optional (if present)   | Optional (passthrough) | `assetType`      | geojson.spec.ts line 450 |
+| Deployment      | Required (`validTime!`) | Optional               | —                | geojson.spec.ts line 466 |
+| Procedure       | —                       | Always `null`          | —                | geojson.spec.ts line 475 |
+| SamplingFeature | Optional                | Optional               | —                | geojson.spec.ts line 483 |
 
 All 4 branches tested with specific assertions on output properties.
 
@@ -379,11 +447,13 @@ return {
 ```
 
 **Why this is acceptable (not a bug):**
+
 - The `validateCSAPIFeature` call at line 361 ensures all required properties exist before the switch statement executes
 - The object literal constructs every required field from validated data
 - `tsc --noEmit` passes cleanly, confirming no structural type mismatch
 
 **Why it's worth noting (design concern):**
+
 - `as` casts bypass TypeScript's structural type checking at the cast point
 - If a future change adds a required property to `System` (e.g., in model.ts), this code would silently produce an incomplete object — the `as` cast would suppress the compiler error that would otherwise catch the omission
 - A typed builder function or `satisfies` operator (TypeScript 4.9+) would provide compile-time safety without `as` casts
@@ -411,6 +481,7 @@ Additionally, none of the geojson.ts exports (`isCSAPIFeature`, `getCSAPIResourc
 ### [F9] POSITIVE: `makeFeature` test helper is well-designed
 
 The `makeFeature()` factory function at geojson.spec.ts line 17 provides:
+
 - Sensible defaults (`uid: 'urn:x-test:feature:1'`, `name: 'Test Feature'`)
 - Override capability via spread (`overrides: Record<string, unknown>`)
 - Proper GeoJSON structure (`type: 'Feature'`, `id`, `geometry`, `properties`, `links`)
@@ -426,13 +497,17 @@ This is comparable to the `makeBuilder()` / `makeCmdBuilder()` pattern establish
 
 ```typescript
 it('returns false for non-SOSA URIs', () => {
-  expect(isCSAPIFeature(makeFeature(
-    'http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint'
-  ))).toBe(false);
+  expect(
+    isCSAPIFeature(
+      makeFeature(
+        'http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint'
+      )
+    )
+  ).toBe(false);
 });
 ```
 
-Real CSAPI servers (notably OpenSensorHub) may use OGC-OM or SensorML vocabularies for `featureType`. The `SAMPLING_FEATURE_LOCAL_NAMES` JSDoc (geojson.ts line 77) correctly documents this limitation: *"This recognition covers the SOSA vocabulary only."*
+Real CSAPI servers (notably OpenSensorHub) may use OGC-OM or SensorML vocabularies for `featureType`. The `SAMPLING_FEATURE_LOCAL_NAMES` JSDoc (geojson.ts line 77) correctly documents this limitation: _"This recognition covers the SOSA vocabulary only."_
 
 **Severity:** INFORMATIONAL  
 **Impact:** None currently. The roadmap tracks vocabulary expansion as a future enhancement.  
@@ -444,14 +519,14 @@ Real CSAPI servers (notably OpenSensorHub) may use OGC-OM or SensorML vocabulari
 
 Every public function in geojson.ts handles defensive input:
 
-| Function | Guard | Behavior |
-|----------|-------|----------|
-| `isCSAPIFeature(feature)` | Delegates to `getCSAPIResourceType`, which calls `getFeatureType` with null/non-object guard | Returns `false` |
-| `getCSAPIResourceType(feature)` | `getFeatureType` checks `typeof !== 'object'`, `=== null`, missing `properties` | Returns `null` |
-| `parseValidTime(value)` | Explicit `null`/`undefined` check, `Array.isArray` + length, `typeof` checks | Returns `undefined` |
-| `isValidUri(value)` | `typeof !== 'string'` + length check | Returns `false` |
-| `validateCSAPIFeature(feature)` | `typeof !== 'object'` + `=== null` → early return with error | Returns `['Feature must be a non-null object']` |
-| `extractCSAPIFeature(feature)` | Delegates to `validateCSAPIFeature` → throws on error | Throws `Error` |
+| Function                        | Guard                                                                                        | Behavior                                        |
+| ------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `isCSAPIFeature(feature)`       | Delegates to `getCSAPIResourceType`, which calls `getFeatureType` with null/non-object guard | Returns `false`                                 |
+| `getCSAPIResourceType(feature)` | `getFeatureType` checks `typeof !== 'object'`, `=== null`, missing `properties`              | Returns `null`                                  |
+| `parseValidTime(value)`         | Explicit `null`/`undefined` check, `Array.isArray` + length, `typeof` checks                 | Returns `undefined`                             |
+| `isValidUri(value)`             | `typeof !== 'string'` + length check                                                         | Returns `false`                                 |
+| `validateCSAPIFeature(feature)` | `typeof !== 'object'` + `=== null` → early return with error                                 | Returns `['Feature must be a non-null object']` |
+| `extractCSAPIFeature(feature)`  | Delegates to `validateCSAPIFeature` → throws on error                                        | Throws `Error`                                  |
 
 All 6 functions are safe against null, undefined, wrong-type, and missing-property inputs. Tests confirm all guard paths.
 
@@ -463,29 +538,31 @@ All 6 functions are safe against null, undefined, wrong-type, and missing-proper
 
 Updated to reflect Issue #46 (Commands backfill) changes:
 
-| Dimension | Systems | Deployments | Procedures | SF | Properties | DataStreams | Observations | ControlStreams | Commands |
-|-----------|---------|-------------|------------|----|------------|-------------|--------------|----------------|----------|
-| No options (base URL) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `limit` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (combo) | ✅ (combo) | ✅ (combo) |
-| `offset` (standalone) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | **✅** |
-| `q` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | N/A |
-| `id` (single) | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `id` (array) | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `bbox` | ✅ | ✅ | N/A | ✅ | N/A | N/A | N/A | N/A | N/A |
-| `datetime` / temporal (exact) | ✅ | ✅ | N/A | ✅ | N/A | ✅ | ✅ | ✅ | ✅ |
-| `f` (format) | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `cursor` | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ✅ |
-| Multiple options (incl. offset) | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | **✅** |
-| Type-specific params | ✅ (6/6) | ✅ (3/3) | N/A | N/A | ✅ (2/2) | ✅ (4/4) | ✅ (2/2) | ✅ (2/2) | ✅ (1/1) |
-| Resource validation (all methods) | ❌ (scattered) | ✅ (8/8) | ✅ (8/8) | ✅ (8/8) | ✅ (6/6) | ✅ (11/11) | ✅ (8/8) | ✅ (8/8) | **✅ (10/10)** |
-| Association/sub-resource pagination | Partial | ✅ | ✅ | ✅ | ✅ | ✅ | N/A | ✅ | N/A |
+| Dimension                           | Systems        | Deployments | Procedures | SF       | Properties | DataStreams | Observations | ControlStreams | Commands       |
+| ----------------------------------- | -------------- | ----------- | ---------- | -------- | ---------- | ----------- | ------------ | -------------- | -------------- |
+| No options (base URL)               | ✅             | ✅          | ✅         | ✅       | ✅         | ✅          | ✅           | ✅             | ✅             |
+| `limit`                             | ✅             | ✅          | ✅         | ✅       | ✅         | ✅          | ✅ (combo)   | ✅ (combo)     | ✅ (combo)     |
+| `offset` (standalone)               | ✅             | ✅          | ✅         | ✅       | ✅         | ✅          | ✅           | ✅             | **✅**         |
+| `q`                                 | ✅             | ✅          | ✅         | ✅       | ✅         | ✅          | ✅           | ✅             | N/A            |
+| `id` (single)                       | ❌             | ❌          | ✅         | ✅       | ✅         | ✅          | ✅           | ✅             | ✅             |
+| `id` (array)                        | ✅             | ❌          | ✅         | ✅       | ✅         | ✅          | ✅           | ✅             | ✅             |
+| `bbox`                              | ✅             | ✅          | N/A        | ✅       | N/A        | N/A         | N/A          | N/A            | N/A            |
+| `datetime` / temporal (exact)       | ✅             | ✅          | N/A        | ✅       | N/A        | ✅          | ✅           | ✅             | ✅             |
+| `f` (format)                        | ❌             | ✅          | ✅         | ✅       | ✅         | ✅          | ✅           | ✅             | ✅             |
+| `cursor`                            | ✅             | ❌          | ❌         | ❌       | ❌         | ✅          | ✅           | ❌             | ✅             |
+| Multiple options (incl. offset)     | ✅             | ❌          | ✅         | ✅       | ✅         | ✅          | ✅           | ✅             | **✅**         |
+| Type-specific params                | ✅ (6/6)       | ✅ (3/3)    | N/A        | N/A      | ✅ (2/2)   | ✅ (4/4)    | ✅ (2/2)     | ✅ (2/2)       | ✅ (1/1)       |
+| Resource validation (all methods)   | ❌ (scattered) | ✅ (8/8)    | ✅ (8/8)   | ✅ (8/8) | ✅ (6/6)   | ✅ (11/11)  | ✅ (8/8)     | ✅ (8/8)       | **✅ (10/10)** |
+| Association/sub-resource pagination | Partial        | ✅          | ✅         | ✅       | ✅         | ✅          | N/A          | ✅             | N/A            |
 
 **Changes from Phase 2.9 heatmap (bold cells above):**
+
 - Commands `offset` (standalone): ❌ → **✅** (Issue #46)
 - Commands multiple options (incl. offset): ✅ → **✅** (now includes offset combo — Issue #46)
 - Commands resource validation: ⚠️ (8/10) → **✅ (10/10)** (Issue #46)
 
 **Updated checklist compliance:**
+
 - Commands: **12/12 (100%)** — up from 83%. All applicable dimensions covered.
 - All other resource types: unchanged from Phase 2.9.
 
@@ -493,14 +570,14 @@ Updated to reflect Issue #46 (Commands backfill) changes:
 
 ### Phase 3 (Format Handlers) — Current
 
-| Dimension | GeoJSON Handler |
-|-----------|-----------------|
-| Valid input → correct output | ✅ All 6 public functions have happy-path tests |
-| Invalid input → rejection | ✅ null, undefined, wrong type, empty string, missing fields |
-| All spec variants | ✅ 12 SOSA local names × 2 forms (CURIE + full URI) |
-| All classification branches | ✅ System (5) + Deployment (1) + Procedure (4) + SamplingFeature (2) + unrecognized → null |
-| Validation error specificity | ✅ Each constraint → named error message; multiple-errors-at-once test |
-| Edge cases | ✅ Array wrong length, non-string array start, non-Date object start, "now" sentinel, missing properties object |
+| Dimension                    | GeoJSON Handler                                                                                                 |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Valid input → correct output | ✅ All 6 public functions have happy-path tests                                                                 |
+| Invalid input → rejection    | ✅ null, undefined, wrong type, empty string, missing fields                                                    |
+| All spec variants            | ✅ 12 SOSA local names × 2 forms (CURIE + full URI)                                                             |
+| All classification branches  | ✅ System (5) + Deployment (1) + Procedure (4) + SamplingFeature (2) + unrecognized → null                      |
+| Validation error specificity | ✅ Each constraint → named error message; multiple-errors-at-once test                                          |
+| Edge cases                   | ✅ Array wrong length, non-string array start, non-Date object start, "now" sentinel, missing properties object |
 
 **GeoJSON Handler: 6/6 dimensions (100%)**
 
@@ -508,16 +585,16 @@ Updated to reflect Issue #46 (Commands backfill) changes:
 
 ## Smoke Test Findings Integration
 
-| Finding | Status | Evidence |
-|---------|--------|----------|
-| F4 (validTime array format) | ✅ **Addressed** | `parseValidTime` handles `["ISO", "now"]` spec-canonical format. 13 tests covering all branches. |
-| F33 (commandFormat vs observationFormat schema variants) | N/A | SWE Common parser scope — not addressed by GeoJSON handler |
-| F34 (Commands fallback routing) | N/A | Validator scope — documented in roadmap v3.3 (Issue #47) |
-| F35 (Cancel rejected by OSH) | N/A | Validator scope — 400 on cancel to be handled by error handler |
-| F36 (id filter ignored on nested commands) | N/A | JSDoc limitation to be documented in validator |
-| F37 (result 404 for fire-and-forget) | N/A | Validator scope — 404 → null to be handled by response handler |
-| F38 (command@id cross-reference) | N/A | GeoJSON handler could eventually register this; not in Issue #14 scope |
-| F39 (commands use standard envelope) | N/A | Parser scope — single `parseCollectionResponse` is a later Phase 3 task |
+| Finding                                                  | Status           | Evidence                                                                                         |
+| -------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------ |
+| F4 (validTime array format)                              | ✅ **Addressed** | `parseValidTime` handles `["ISO", "now"]` spec-canonical format. 13 tests covering all branches. |
+| F33 (commandFormat vs observationFormat schema variants) | N/A              | SWE Common parser scope — not addressed by GeoJSON handler                                       |
+| F34 (Commands fallback routing)                          | N/A              | Validator scope — documented in roadmap v3.3 (Issue #47)                                         |
+| F35 (Cancel rejected by OSH)                             | N/A              | Validator scope — 400 on cancel to be handled by error handler                                   |
+| F36 (id filter ignored on nested commands)               | N/A              | JSDoc limitation to be documented in validator                                                   |
+| F37 (result 404 for fire-and-forget)                     | N/A              | Validator scope — 404 → null to be handled by response handler                                   |
+| F38 (command@id cross-reference)                         | N/A              | GeoJSON handler could eventually register this; not in Issue #14 scope                           |
+| F39 (commands use standard envelope)                     | N/A              | Parser scope — single `parseCollectionResponse` is a later Phase 3 task                          |
 
 **1 of 8 findings addressed by this Phase 3 deliverable.** The remaining 7 are correctly scoped to later Phase 3 tasks (validator, parser, error handler).
 
@@ -525,15 +602,15 @@ Updated to reflect Issue #46 (Commands backfill) changes:
 
 ## Summary
 
-| Category | Count | Items |
-|----------|-------|-------|
-| Prior findings reaffirmed (unchanged) | **52** | All accumulated Phase 1–2.9 findings |
-| Prior findings now resolved | **2** | Phase 2.9 F8 (create validation → Issue #46), F9 (heatmap gaps → Issue #46) |
-| **New — positive findings** | **7** | F1 (utility module structure), F2 (Category A checklist 6/6), F3 (F4 smoke test bridge), F4 (no short-circuit validation), F5 (type-specific constraints), F6 (all 4 types extracted), F9 (test helper quality), F11 (input guards) |
-| **New — design findings** | **1** | F7 (`as` type assertions in extraction) |
-| **New — gap findings** | **1** | F8 (no barrel file for `formats/`) |
-| **New — informational findings** | **1** | F10 (non-SOSA vocabularies not yet supported) |
-| **New bugs** | **0** | — |
+| Category                              | Count  | Items                                                                                                                                                                                                                               |
+| ------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prior findings reaffirmed (unchanged) | **52** | All accumulated Phase 1–2.9 findings                                                                                                                                                                                                |
+| Prior findings now resolved           | **2**  | Phase 2.9 F8 (create validation → Issue #46), F9 (heatmap gaps → Issue #46)                                                                                                                                                         |
+| **New — positive findings**           | **7**  | F1 (utility module structure), F2 (Category A checklist 6/6), F3 (F4 smoke test bridge), F4 (no short-circuit validation), F5 (type-specific constraints), F6 (all 4 types extracted), F9 (test helper quality), F11 (input guards) |
+| **New — design findings**             | **1**  | F7 (`as` type assertions in extraction)                                                                                                                                                                                             |
+| **New — gap findings**                | **1**  | F8 (no barrel file for `formats/`)                                                                                                                                                                                                  |
+| **New — informational findings**      | **1**  | F10 (non-SOSA vocabularies not yet supported)                                                                                                                                                                                       |
+| **New bugs**                          | **0**  | —                                                                                                                                                                                                                                   |
 
 ---
 
@@ -592,6 +669,7 @@ Phase 3.1 is the **eighth consecutive phase** with zero new defects. The streak 
 3. **One actionable gap identified** — The missing `formats/index.ts` barrel file (F8) is the sole gap finding. It has no current functional impact since the module is importable via direct path, but establishing the barrel file convention now — while the export surface is small — will prevent export sprawl as more format handlers are added. This is a 5-minute fix that should be done before the next coding issue.
 
 **Cumulative project quality:**
+
 - **8 consecutive phases** with zero defects (Phase 2.3 → Phase 3.1)
 - **0 open gap findings** across all prior reviews (first time in project history)
 - **379 tests** across 4 suites, all passing

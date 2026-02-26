@@ -7,6 +7,7 @@
 **Purpose:** Validate the 8 new standalone ControlStreams methods (third Part 2 resource type), confirm ControlStreams query parameter acceptance, and verify no regressions across all 69 methods.
 
 > This is smoke test #8 in the series. See also:
+>
 > - [Post Phase 2.7](live-server-smoke-test-post-phase-2.7.md) — validated 61 methods, Observations focus
 > - [Post Phase 2.6](live-server-smoke-test-post-phase-2.6.md) — validated 53 methods, DataStreams focus
 > - [Post Phase 2.5](live-server-smoke-test-post-phase-2.5.md) — validated 42 methods, Properties focus
@@ -37,63 +38,63 @@ No code changes were made during testing. All tests were run from the terminal u
 
 ### OpenSensorHub (OSH)
 
-| Property | Value |
-|----------|-------|
-| URL | `http://45.55.99.236:8080/sensorhub/api` |
-| Auth | Basic (credentials not stored in repo) |
-| Root status | ✅ 200 — 10 links in root document |
-| Conformance classes | 33 (unchanged) |
+| Property            | Value                                    |
+| ------------------- | ---------------------------------------- |
+| URL                 | `http://45.55.99.236:8080/sensorhub/api` |
+| Auth                | Basic (credentials not stored in repo)   |
+| Root status         | ✅ 200 — 10 links in root document       |
+| Conformance classes | 33 (unchanged)                           |
 
 **Top-level resource links in root document (Convention 2) — unchanged:**
 
-| Resource Type | Present | Link |
-|--------------|---------|------|
-| systems | ✅ | `.../systems` |
-| deployments | ✅ | `.../deployments` |
-| procedures | ✅ | `.../procedures` |
-| samplingFeatures | ✅ | `.../samplingFeatures` |
-| datastreams | ✅ | `.../datastreams` |
-| observations | ✅ | `.../observations` |
-| properties | ❌ | Not in root document |
-| controlstreams | ❌ | Not in root document |
+| Resource Type    | Present | Link                   |
+| ---------------- | ------- | ---------------------- |
+| systems          | ✅      | `.../systems`          |
+| deployments      | ✅      | `.../deployments`      |
+| procedures       | ✅      | `.../procedures`       |
+| samplingFeatures | ✅      | `.../samplingFeatures` |
+| datastreams      | ✅      | `.../datastreams`      |
+| observations     | ✅      | `.../observations`     |
+| properties       | ❌      | Not in root document   |
+| controlstreams   | ❌      | Not in root document   |
 
 **Note:** ControlStreams is NOT advertised in the OSH root document via Convention 2 links. However, the `controlstreams` endpoint IS functional at the top level and via `systems/{id}/controlstreams`. Discovery would rely on Convention 3 (collection-level `rel: "items"` links) or direct URL construction.
 
 **Server resource inventory:**
 
-| Resource Type | Count | Status | Change from Phase 2.7 |
-|--------------|-------|--------|----------------------|
-| Systems | 12 | ✅ Has data | Unchanged |
-| Deployments | 0 | ✅ Endpoint functional | Unchanged |
-| Procedures | 0 | ✅ Endpoint functional | Unchanged |
-| SamplingFeatures | 51+ | ✅ Has data | Unchanged |
-| DataStreams | 100+ | ✅ Has data | Unchanged |
-| Observations | 100+ | ✅ Has data | Unchanged |
-| **ControlStreams** | **8+** | **✅ Has data** | **Primary focus of this test — now tested as standalone** |
-| Properties | 0 | ✅ Endpoint functional | Unchanged |
+| Resource Type      | Count  | Status                 | Change from Phase 2.7                                     |
+| ------------------ | ------ | ---------------------- | --------------------------------------------------------- |
+| Systems            | 12     | ✅ Has data            | Unchanged                                                 |
+| Deployments        | 0      | ✅ Endpoint functional | Unchanged                                                 |
+| Procedures         | 0      | ✅ Endpoint functional | Unchanged                                                 |
+| SamplingFeatures   | 51+    | ✅ Has data            | Unchanged                                                 |
+| DataStreams        | 100+   | ✅ Has data            | Unchanged                                                 |
+| Observations       | 100+   | ✅ Has data            | Unchanged                                                 |
+| **ControlStreams** | **8+** | **✅ Has data**        | **Primary focus of this test — now tested as standalone** |
+| Properties         | 0      | ✅ Endpoint functional | Unchanged                                                 |
 
 ### 52North CSA Demo
 
-| Property | Value |
-|----------|-------|
-| URL | `https://csa.demo.52north.org` |
-| Auth | None required |
-| SSL | Expired certificate — requires `-SkipCertificateCheck` |
-| Root status | ✅ 200 — 7 links in root document |
-| Conformance classes | 1 (`ogcapi-common-1/1.0/conf/core`) — unchanged |
+| Property            | Value                                                  |
+| ------------------- | ------------------------------------------------------ |
+| URL                 | `https://csa.demo.52north.org`                         |
+| Auth                | None required                                          |
+| SSL                 | Expired certificate — requires `-SkipCertificateCheck` |
+| Root status         | ✅ 200 — 7 links in root document                      |
+| Conformance classes | 1 (`ogcapi-common-1/1.0/conf/core`) — unchanged        |
 
 **Server resource inventory:**
 
-| Resource Type | Count | Status | Change from Phase 2.7 |
-|--------------|-------|--------|----------------------|
-| Systems | 3 | ✅ Has data | Unchanged |
-| Deployments | 1 | ✅ Has data | Unchanged |
-| Procedures | 1 | ✅ Has data | Unchanged |
-| SamplingFeatures | 0 | ✅ Endpoint functional | Unchanged |
-| DataStreams | — | ❌ 500 Server Error | Unchanged |
-| Observations | — | ❌ 500 Server Error | Unchanged |
-| **ControlStreams** | **—** | **❌ 404 Not Found** | **Cannot test (endpoint not implemented)** |
-| Properties | 0 | ✅ Endpoint functional | Unchanged |
+| Resource Type      | Count | Status                 | Change from Phase 2.7                      |
+| ------------------ | ----- | ---------------------- | ------------------------------------------ |
+| Systems            | 3     | ✅ Has data            | Unchanged                                  |
+| Deployments        | 1     | ✅ Has data            | Unchanged                                  |
+| Procedures         | 1     | ✅ Has data            | Unchanged                                  |
+| SamplingFeatures   | 0     | ✅ Endpoint functional | Unchanged                                  |
+| DataStreams        | —     | ❌ 500 Server Error    | Unchanged                                  |
+| Observations       | —     | ❌ 500 Server Error    | Unchanged                                  |
+| **ControlStreams** | **—** | **❌ 404 Not Found**   | **Cannot test (endpoint not implemented)** |
+| Properties         | 0     | ✅ Endpoint functional | Unchanged                                  |
 
 ---
 
@@ -101,35 +102,35 @@ No code changes were made during testing. All tests were run from the terminal u
 
 ### Prior Findings — Regression Check
 
-| Finding | Status | Evidence |
-|---------|--------|----------|
-| **F1: Link relation prefix mismatch** (Critical) | **Still Fixed** ✅ | `scanCsapiLinks` detects 6 resource types from OSH root via Convention 2 |
-| **F2: Top-level vs. collection-scoped URLs** (Critical) | **Still Fixed** ✅ | `extractRootResourceUrls` returns correct mappings |
-| **F3: Response envelope uses `items`** (Moderate) | **Still deferred** | OSH ControlStreams list: `{ items: [...], links: [...] }`. Phase 3 concern. |
-| **F4: `validTime` is an array** (Moderate) | **Still deferred** | ControlStream validTime: `["2026-01-14T04:49:19.134Z", "now"]`. Phase 3 concern. |
-| **F5: Missing pagination metadata** (Low) | **Still deferred** | ControlStreams use link-based pagination: `rel: "next"` with offset. Phase 3 concern. |
-| **F6: OSH rejects `systems/{id}/deployments`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F7: OSH rejects `systems/{id}/procedures`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F8: OSH rejects `samplingFeatures/{id}/systems`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F9: OSH rejects `samplingFeatures/{id}/history`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F10: 52North now has real data** | **Still true** ✅ | 3 systems, 1 deployment, 1 procedure |
-| **F11: 52North uses SensorML format** | **Still true** ✅ | Unchanged |
-| **F12: 52North `systems/{id}/deployments` works** | **Still true** ✅ | Unchanged |
-| **F13: Both servers use `items` envelope** | **Still true** ✅ | Confirmed for ControlStreams on OSH |
-| **F14: Properties not discoverable via links** | **Still true** ✅ | Both servers still lack properties in link structures |
-| **F15: 52North adds third system** | **Still true** ✅ | 3 systems present |
-| **F16: OSH rejects `datastreams/{id}/systems`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F17: OSH rejects `datastreams/{id}/procedures`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F18: OSH rejects `datastreams/{id}/history`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F19: `resultTime=latest` accepted by OSH** | **Still validated** ✅ | 200 — 2 items returned with latest result times |
-| **F20: 52North DataStreams still broken (500)** | **Still present** ✅ | 52North DataStreams and Observations both return 500 |
-| **F21: OSH rejects `observations/{id}/datastream`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F22: OSH rejects `observations/{id}/samplingFeature`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F23: OSH rejects `observations/{id}/system`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F24: OSH rejects `observations/{id}/history`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F25: `resultTime=latest` returns real data (standalone)** | **Still true** ✅ | 2 items with most recent result times |
-| **F26: 52North Observations broken (500)** | **Still present** ✅ | 500 unchanged |
-| **F27: Observation `foi@id` naming variation** | **Still true** ✅ | Phase 3 concern unchanged |
+| Finding                                                     | Status                 | Evidence                                                                              |
+| ----------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
+| **F1: Link relation prefix mismatch** (Critical)            | **Still Fixed** ✅     | `scanCsapiLinks` detects 6 resource types from OSH root via Convention 2              |
+| **F2: Top-level vs. collection-scoped URLs** (Critical)     | **Still Fixed** ✅     | `extractRootResourceUrls` returns correct mappings                                    |
+| **F3: Response envelope uses `items`** (Moderate)           | **Still deferred**     | OSH ControlStreams list: `{ items: [...], links: [...] }`. Phase 3 concern.           |
+| **F4: `validTime` is an array** (Moderate)                  | **Still deferred**     | ControlStream validTime: `["2026-01-14T04:49:19.134Z", "now"]`. Phase 3 concern.      |
+| **F5: Missing pagination metadata** (Low)                   | **Still deferred**     | ControlStreams use link-based pagination: `rel: "next"` with offset. Phase 3 concern. |
+| **F6: OSH rejects `systems/{id}/deployments`**              | **Still present** ✅   | 400 — server limitation unchanged                                                     |
+| **F7: OSH rejects `systems/{id}/procedures`**               | **Still present** ✅   | 400 — server limitation unchanged                                                     |
+| **F8: OSH rejects `samplingFeatures/{id}/systems`**         | **Still present** ✅   | 400 — server limitation unchanged                                                     |
+| **F9: OSH rejects `samplingFeatures/{id}/history`**         | **Still present** ✅   | 400 — server limitation unchanged                                                     |
+| **F10: 52North now has real data**                          | **Still true** ✅      | 3 systems, 1 deployment, 1 procedure                                                  |
+| **F11: 52North uses SensorML format**                       | **Still true** ✅      | Unchanged                                                                             |
+| **F12: 52North `systems/{id}/deployments` works**           | **Still true** ✅      | Unchanged                                                                             |
+| **F13: Both servers use `items` envelope**                  | **Still true** ✅      | Confirmed for ControlStreams on OSH                                                   |
+| **F14: Properties not discoverable via links**              | **Still true** ✅      | Both servers still lack properties in link structures                                 |
+| **F15: 52North adds third system**                          | **Still true** ✅      | 3 systems present                                                                     |
+| **F16: OSH rejects `datastreams/{id}/systems`**             | **Still present** ✅   | 400 — server limitation unchanged                                                     |
+| **F17: OSH rejects `datastreams/{id}/procedures`**          | **Still present** ✅   | 400 — server limitation unchanged                                                     |
+| **F18: OSH rejects `datastreams/{id}/history`**             | **Still present** ✅   | 400 — server limitation unchanged                                                     |
+| **F19: `resultTime=latest` accepted by OSH**                | **Still validated** ✅ | 200 — 2 items returned with latest result times                                       |
+| **F20: 52North DataStreams still broken (500)**             | **Still present** ✅   | 52North DataStreams and Observations both return 500                                  |
+| **F21: OSH rejects `observations/{id}/datastream`**         | **Still present** ✅   | 400 — server limitation unchanged                                                     |
+| **F22: OSH rejects `observations/{id}/samplingFeature`**    | **Still present** ✅   | 400 — server limitation unchanged                                                     |
+| **F23: OSH rejects `observations/{id}/system`**             | **Still present** ✅   | 400 — server limitation unchanged                                                     |
+| **F24: OSH rejects `observations/{id}/history`**            | **Still present** ✅   | 400 — server limitation unchanged                                                     |
+| **F25: `resultTime=latest` returns real data (standalone)** | **Still true** ✅      | 2 items with most recent result times                                                 |
+| **F26: 52North Observations broken (500)**                  | **Still present** ✅   | 500 unchanged                                                                         |
+| **F27: Observation `foi@id` naming variation**              | **Still true** ✅      | Phase 3 concern unchanged                                                             |
 
 **No regressions.** All prior fixes remain working. All prior server limitations remain unchanged.
 
@@ -141,20 +142,20 @@ No code changes were made during testing. All tests were run from the terminal u
 
 **OSH** (System ID: `03bc5ofvvstg`):
 
-| Method | Result |
-|--------|--------|
-| `getSystems({ limit: 1 })` | ✅ 200 |
-| `getSystem('03bc5ofvvstg')` | ✅ 200 |
-| `createSystem()` | ✅ URL valid |
-| `updateSystem(id)` | ✅ URL valid |
-| `deleteSystem(id)` | ✅ URL valid |
-| `getSystemHistory(id)` | ✅ 200 |
-| `getSubsystems(id)` | ✅ 200 — 0 items |
-| `getSystemDatastreams(id)` | ✅ 200 |
-| `getSystemControlstreams(id)` | ✅ 200 — 2 items |
-| `getSystemSamplingFeatures(id)` | ✅ 200 |
-| `getSystemDeployments(id)` | ❌ 400 (known F6) |
-| `getSystemProcedures(id)` | ❌ 400 (known F7) |
+| Method                          | Result            |
+| ------------------------------- | ----------------- |
+| `getSystems({ limit: 1 })`      | ✅ 200            |
+| `getSystem('03bc5ofvvstg')`     | ✅ 200            |
+| `createSystem()`                | ✅ URL valid      |
+| `updateSystem(id)`              | ✅ URL valid      |
+| `deleteSystem(id)`              | ✅ URL valid      |
+| `getSystemHistory(id)`          | ✅ 200            |
+| `getSubsystems(id)`             | ✅ 200 — 0 items  |
+| `getSystemDatastreams(id)`      | ✅ 200            |
+| `getSystemControlstreams(id)`   | ✅ 200 — 2 items  |
+| `getSystemSamplingFeatures(id)` | ✅ 200            |
+| `getSystemDeployments(id)`      | ❌ 400 (known F6) |
+| `getSystemProcedures(id)`       | ❌ 400 (known F7) |
 
 **52North** (System ID: `5400-526`): `getSystems` ✅, `getSystem` ✅, `getSystemDeployments` ✅ (F12).
 
@@ -192,24 +193,24 @@ No code changes were made during testing. All tests were run from the terminal u
 
 **OSH** (ControlStream ID: `0o10`, System ID: `0o30`):
 
-| Method | URL Pattern | Result |
-|--------|------------|--------|
-| `getControlStreams()` | `.../controlstreams?limit=3` | ✅ 200 — 3 items (8+ total) |
-| `getControlStream('0o10')` | `.../controlstreams/0o10` | ✅ 200 — "FCU Field Drone CubePilot - Location Control" |
-| `createControlStream()` | `.../controlstreams` (POST target) | ✅ URL valid |
-| `updateControlStream(id)` | `.../controlstreams/0o10` (PUT target) | ✅ URL valid |
-| `deleteControlStream(id)` | `.../controlstreams/0o10` (DELETE target) | ✅ URL valid |
-| `getControlStreamSchema('0o10', {f: 'application/swe+json'})` | `.../controlstreams/0o10/schema?cmdFormat=application/swe%2Bjson` | ✅ 200 — returns SWE DataRecord schema |
-| `getControlStreamSchema('0o10')` | `.../controlstreams/0o10/schema` | ✅ 200 — server returns default format |
-| `getControlStreamCommands('0o10', {limit: 2})` | `.../controlstreams/0o10/commands?limit=2` | ✅ 200 — 2 commands |
-| `checkCommandFeasibility('0o10')` | `.../controlstreams/0o10/feasibility` (POST) | ❌ 400 — **NEW: Server limitation** |
+| Method                                                        | URL Pattern                                                       | Result                                                  |
+| ------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------- |
+| `getControlStreams()`                                         | `.../controlstreams?limit=3`                                      | ✅ 200 — 3 items (8+ total)                             |
+| `getControlStream('0o10')`                                    | `.../controlstreams/0o10`                                         | ✅ 200 — "FCU Field Drone CubePilot - Location Control" |
+| `createControlStream()`                                       | `.../controlstreams` (POST target)                                | ✅ URL valid                                            |
+| `updateControlStream(id)`                                     | `.../controlstreams/0o10` (PUT target)                            | ✅ URL valid                                            |
+| `deleteControlStream(id)`                                     | `.../controlstreams/0o10` (DELETE target)                         | ✅ URL valid                                            |
+| `getControlStreamSchema('0o10', {f: 'application/swe+json'})` | `.../controlstreams/0o10/schema?cmdFormat=application/swe%2Bjson` | ✅ 200 — returns SWE DataRecord schema                  |
+| `getControlStreamSchema('0o10')`                              | `.../controlstreams/0o10/schema`                                  | ✅ 200 — server returns default format                  |
+| `getControlStreamCommands('0o10', {limit: 2})`                | `.../controlstreams/0o10/commands?limit=2`                        | ✅ 200 — 2 commands                                     |
+| `checkCommandFeasibility('0o10')`                             | `.../controlstreams/0o10/feasibility` (POST)                      | ❌ 400 — **NEW: Server limitation**                     |
 
 **52North:**
 
-| Method | URL Pattern | Result |
-|--------|------------|--------|
-| `getControlStreams()` | `.../controlstreams` | ❌ 404 — Endpoint not implemented |
-| All other ControlStream methods | N/A | ❌ 404 — Cannot test |
+| Method                          | URL Pattern          | Result                            |
+| ------------------------------- | -------------------- | --------------------------------- |
+| `getControlStreams()`           | `.../controlstreams` | ❌ 404 — Endpoint not implemented |
+| All other ControlStream methods | N/A                  | ❌ 404 — Cannot test              |
 
 ---
 
@@ -217,17 +218,17 @@ No code changes were made during testing. All tests were run from the terminal u
 
 Tested on OSH (52North ControlStreams endpoint returns 404 for all requests):
 
-| Parameter | Method | URL | OSH | 52North |
-|-----------|--------|-----|-----|---------|
-| No params | `getControlStreams()` | `.../controlstreams` | ✅ 200 | ❌ 404 |
-| `limit=3` | `getControlStreams({ limit: 3 })` | `.../controlstreams?limit=3` | ✅ 200 (3 items) | ❌ 404 |
-| `offset=2` | `getControlStreams({ offset: 2, limit: 2 })` | `.../controlstreams?offset=2&limit=2` | ✅ 200 (2 items) | ❌ 404 |
-| `q=drone` | `getControlStreams({ q: 'drone' })` | `.../controlstreams?q=drone&limit=2` | ✅ 200 (2 items) | ❌ 404 |
-| `id` (single) | `getControlStreams({ id: '0o10' })` | `.../controlstreams?id=0o10` | ✅ 200 (1 item) | ❌ 404 |
-| `systemId=0o30` | `getControlStreams({ systemId: '0o30' })` | `.../controlstreams?systemId=0o30&limit=2` | ✅ 200 (2 items) | ❌ 404 |
-| `f=application/json` | `getControlStreams({ f: ... })` | `.../controlstreams?f=application%2Fjson` | ✅ 200 | ❌ 404 |
-| `issueTime` (interval) | `getControlStreamCommands(id, {...})` | `.../controlstreams/0o10/commands?issueTime=2024-01-01T...%2F..` | ✅ 200 (100 items) | ❌ 404 |
-| `executionTime` (interval) | `getControlStreamCommands(id, {...})` | `.../controlstreams/0o10/commands?executionTime=2024...%2F2027...` | ✅ 200 (100 items) | ❌ 404 |
+| Parameter                  | Method                                       | URL                                                                | OSH                | 52North |
+| -------------------------- | -------------------------------------------- | ------------------------------------------------------------------ | ------------------ | ------- |
+| No params                  | `getControlStreams()`                        | `.../controlstreams`                                               | ✅ 200             | ❌ 404  |
+| `limit=3`                  | `getControlStreams({ limit: 3 })`            | `.../controlstreams?limit=3`                                       | ✅ 200 (3 items)   | ❌ 404  |
+| `offset=2`                 | `getControlStreams({ offset: 2, limit: 2 })` | `.../controlstreams?offset=2&limit=2`                              | ✅ 200 (2 items)   | ❌ 404  |
+| `q=drone`                  | `getControlStreams({ q: 'drone' })`          | `.../controlstreams?q=drone&limit=2`                               | ✅ 200 (2 items)   | ❌ 404  |
+| `id` (single)              | `getControlStreams({ id: '0o10' })`          | `.../controlstreams?id=0o10`                                       | ✅ 200 (1 item)    | ❌ 404  |
+| `systemId=0o30`            | `getControlStreams({ systemId: '0o30' })`    | `.../controlstreams?systemId=0o30&limit=2`                         | ✅ 200 (2 items)   | ❌ 404  |
+| `f=application/json`       | `getControlStreams({ f: ... })`              | `.../controlstreams?f=application%2Fjson`                          | ✅ 200             | ❌ 404  |
+| `issueTime` (interval)     | `getControlStreamCommands(id, {...})`        | `.../controlstreams/0o10/commands?issueTime=2024-01-01T...%2F..`   | ✅ 200 (100 items) | ❌ 404  |
+| `executionTime` (interval) | `getControlStreamCommands(id, {...})`        | `.../controlstreams/0o10/commands?executionTime=2024...%2F2027...` | ✅ 200 (100 items) | ❌ 404  |
 
 **All query parameters accepted by OSH.** Both type-specific parameters (`systemId`, `controlledPropertyId`) and all shared parameters (`limit`, `offset`, `q`, `id`, `f`) work correctly. Temporal parameters on commands sub-resource (`issueTime`, `executionTime`) are accepted and return meaningful filtered results.
 
@@ -243,6 +244,7 @@ Tested on OSH (52North ControlStreams endpoint returns 404 for all requests):
 **Ownership:** Upstream (server-side)
 
 **Evidence:**
+
 ```
 POST .../controlstreams/0o10/feasibility (Content-Type: application/json, Body: {}) → 400
 POST .../controlstreams/0o10/feasibility (Content-Type: application/json, Body: {valid command params}) → 400
@@ -264,6 +266,7 @@ This is consistent with OSH's pattern of not implementing all optional spec endp
 **Ownership:** N/A (server behavior observation)
 
 **Evidence:**
+
 ```
 GET .../controlstreams/0o10/schema → 200 (returns default format: application/json)
 GET .../controlstreams/0o10/schema?cmdFormat=application/swe%2Bjson → 200 (returns SWE JSON format)
@@ -287,6 +290,7 @@ Our JSDoc correctly documents that `cmdFormat` is required per spec and recommen
 **Ownership:** Client (Phase 3)
 
 **Evidence:**
+
 ```json
 {
   "id": "0o10",
@@ -301,13 +305,20 @@ Our JSDoc correctly documents that `cmdFormat` is required per spec and recommen
   "validTime": ["2026-01-14T04:49:19.134Z", "now"],
   "issueTime": ["2026-01-14T12:42:21.910351Z", "2026-01-14T13:11:31.196096Z"],
   "controlledProperties": [],
-  "formats": ["application/json", "application/swe+json", "application/swe+csv", "application/swe+xml", "application/swe+binary"]
+  "formats": [
+    "application/json",
+    "application/swe+json",
+    "application/swe+csv",
+    "application/swe+xml",
+    "application/swe+binary"
+  ]
 }
 ```
 
 ControlStreams use the `@` notation like other resources: `system@id` for the parent system cross-reference and `system@link` for a full link object (with `href`, `uid`, `type`). The `@link` suffix is new — not seen in DataStreams or Observations. This extends the Phase 3 `@` notation handling requirement (see F27 for `foi@id`).
 
 Additional data shape observations:
+
 - `inputName`: Maps to the system's input interface name — unique to ControlStreams
 - `issueTime`: An **array** of two ISO 8601 timestamps (the time range of issued commands), **not** a single value
 - `controlledProperties`: Empty array in this instance but typed as an array of property references
@@ -325,6 +336,7 @@ Additional data shape observations:
 **Ownership:** Client (Phase 3)
 
 **Evidence:**
+
 ```json
 {
   "id": "0o1qr7kupc33cgmqj0",
@@ -345,6 +357,7 @@ Additional data shape observations:
 ```
 
 Key Phase 3 parser observations:
+
 - `controlstream@id`: Cross-reference to parent control stream using `@` notation (matches `datastream@id`, `foi@id` pattern)
 - `issueTime`: Single ISO 8601 timestamp (unlike the ControlStream's `issueTime` which is an array of two timestamps)
 - `sender`: URN identifying the command source — new field type for Phase 3
@@ -363,6 +376,7 @@ Key Phase 3 parser observations:
 **Ownership:** Upstream
 
 **Evidence:**
+
 ```
 GET https://csa.demo.52north.org/controlstreams → 404
 GET https://csa.demo.52north.org/controlstreams?limit=2 → 404
@@ -382,6 +396,7 @@ GET https://csa.demo.52north.org/controlstreams?limit=2 → 404
 **Ownership:** Client (Phase 3)
 
 **Evidence:**
+
 ```json
 {
   "commandFormat": "application/json",
@@ -410,6 +425,7 @@ The schema response structure mirrors `getDataStreamSchema()` (SWE Common DataRe
 1. **ControlStream list envelope:** `{ items: [...], links: [...] }` — same `items` pattern as all other resource types (F3/F13). Pagination via `rel: "next"` link with offset parameter.
 
 2. **Single ControlStream shape:**
+
    ```json
    {
      "id": "0o10",
@@ -425,6 +441,7 @@ The schema response structure mirrors `getDataStreamSchema()` (SWE Common DataRe
      "links": [...]
    }
    ```
+
    Key fields: `id`, `name`, `description`, `system@id`, `system@link`, `inputName`, `validTime`, `issueTime`, `controlledProperties`, `formats`, `links`.
 
 3. **`system@link` is a new cross-reference style:** Unlike `system@id` (just a string ID), `system@link` provides a full link object with `href`, `uid`, and `type`. Phase 3 must handle both `@id` (string) and `@link` (object) cross-reference patterns.
@@ -432,6 +449,7 @@ The schema response structure mirrors `getDataStreamSchema()` (SWE Common DataRe
 4. **`issueTime` on ControlStream is an array (time range)**, not a single timestamp. This differs from `issueTime` on Command entities (single timestamp). Phase 3 must disambiguate based on entity type.
 
 5. **Command entity shape:**
+
    ```json
    {
      "id": "0o1qr7kupc33cgmqj0",
@@ -442,6 +460,7 @@ The schema response structure mirrors `getDataStreamSchema()` (SWE Common DataRe
      "parameters": { "locationVectorLLA": {...}, "returnToStart": false, "hoverSeconds": 0 }
    }
    ```
+
    Key fields: `id`, `controlstream@id`, `issueTime`, `sender`, `currentStatus`, `parameters`.
 
 6. **`parameters` is schema-dependent JSON:** Just like Observation `result` (F27), Command `parameters` has a structure defined by the parent ControlStream's schema. Phase 3 must handle this as arbitrary JSON.
@@ -454,21 +473,21 @@ The schema response structure mirrors `getDataStreamSchema()` (SWE Common DataRe
 
 ## Cross-Server Comparison
 
-| Dimension | OpenSensorHub | 52North | Match? |
-|-----------|--------------|---------|--------|
-| Root API status | ✅ 200 | ✅ 200 | ✅ |
-| Conformance classes | 33 | 1 | ❌ |
-| ControlStreams list | ✅ 200 (8+ items) | ❌ 404 | ❌ |
-| ControlStreams single | ✅ 200 | ❌ 404 | ❌ |
-| ControlStream schema | ✅ 200 | ❌ 404 | ❌ |
-| ControlStream commands | ✅ 200 | ❌ 404 | ❌ |
-| ControlStream feasibility | ❌ 400 | ❌ 404 | ❌ (both fail, different reasons) |
-| `systemId` filter | ✅ 200 | ❌ 404 | ❌ |
-| `issueTime` temporal filter (commands) | ✅ 200 (100 items) | ❌ 404 | ❌ |
-| `executionTime` temporal filter (commands) | ✅ 200 (100 items) | ❌ 404 | ❌ |
-| All ControlStreams query params | ✅ All accepted | ❌ All 404 | ❌ |
-| Part 1 methods | ✅ All working | ✅ All working | ✅ |
-| DataStreams/Observations | ✅ Working | ❌ Still broken | ❌ |
+| Dimension                                  | OpenSensorHub      | 52North         | Match?                            |
+| ------------------------------------------ | ------------------ | --------------- | --------------------------------- |
+| Root API status                            | ✅ 200             | ✅ 200          | ✅                                |
+| Conformance classes                        | 33                 | 1               | ❌                                |
+| ControlStreams list                        | ✅ 200 (8+ items)  | ❌ 404          | ❌                                |
+| ControlStreams single                      | ✅ 200             | ❌ 404          | ❌                                |
+| ControlStream schema                       | ✅ 200             | ❌ 404          | ❌                                |
+| ControlStream commands                     | ✅ 200             | ❌ 404          | ❌                                |
+| ControlStream feasibility                  | ❌ 400             | ❌ 404          | ❌ (both fail, different reasons) |
+| `systemId` filter                          | ✅ 200             | ❌ 404          | ❌                                |
+| `issueTime` temporal filter (commands)     | ✅ 200 (100 items) | ❌ 404          | ❌                                |
+| `executionTime` temporal filter (commands) | ✅ 200 (100 items) | ❌ 404          | ❌                                |
+| All ControlStreams query params            | ✅ All accepted    | ❌ All 404      | ❌                                |
+| Part 1 methods                             | ✅ All working     | ✅ All working  | ✅                                |
+| DataStreams/Observations                   | ✅ Working         | ❌ Still broken | ❌                                |
 
 **Key insight:** ControlStreams (Part 2) follow the same interoperability pattern as DataStreams and Observations — can only be validated against OSH. 52North returns 404 for ControlStreams (compared to 500 for DataStreams/Observations), suggesting the ControlStreams endpoint is not deployed at all rather than being broken. OSH accepts all ControlStreams query parameters and sub-resource requests except the feasibility POST endpoint (F28).
 
@@ -476,58 +495,58 @@ The schema response structure mirrors `getDataStreamSchema()` (SWE Common DataRe
 
 ## What WORKS (Verified)
 
-| Capability | Status |
-|------------|--------|
-| All 69 builder methods generate valid URLs | ✅ |
-| ControlStreams list endpoint (OSH) | ✅ |
-| ControlStreams single resource retrieval (OSH) | ✅ |
-| ControlStream CRUD URL patterns | ✅ (verified as valid paths) |
-| ControlStream schema with `cmdFormat` (OSH) | ✅ — returns SWE DataRecord |
-| ControlStream schema without format (OSH) | ✅ — server returns default format |
-| ControlStream commands sub-resource (OSH) | ✅ — returns real command data |
-| `systemId` filter on ControlStreams (OSH) | ✅ — filters correctly |
-| `issueTime` temporal filter on commands (OSH) | ✅ — 100 matching commands |
-| `executionTime` temporal filter on commands (OSH) | ✅ — 100 matching commands |
-| `q`, `offset`, `id`, `f`, `limit` on ControlStreams (OSH) | ✅ |
-| `getSystemControlstreams(id)` (existing Systems method) | ✅ — 2 control streams for system 0o30 |
-| All Part 1 methods — no regressions | ✅ |
-| All DataStreams methods — no regressions | ✅ |
-| All Observations methods — no regressions | ✅ |
-| `resultTime=latest` still returns real data | ✅ |
-| Prior F1/F2 fixes still working | ✅ |
-| Convention 2/3 discovery still working | ✅ |
+| Capability                                                | Status                                 |
+| --------------------------------------------------------- | -------------------------------------- |
+| All 69 builder methods generate valid URLs                | ✅                                     |
+| ControlStreams list endpoint (OSH)                        | ✅                                     |
+| ControlStreams single resource retrieval (OSH)            | ✅                                     |
+| ControlStream CRUD URL patterns                           | ✅ (verified as valid paths)           |
+| ControlStream schema with `cmdFormat` (OSH)               | ✅ — returns SWE DataRecord            |
+| ControlStream schema without format (OSH)                 | ✅ — server returns default format     |
+| ControlStream commands sub-resource (OSH)                 | ✅ — returns real command data         |
+| `systemId` filter on ControlStreams (OSH)                 | ✅ — filters correctly                 |
+| `issueTime` temporal filter on commands (OSH)             | ✅ — 100 matching commands             |
+| `executionTime` temporal filter on commands (OSH)         | ✅ — 100 matching commands             |
+| `q`, `offset`, `id`, `f`, `limit` on ControlStreams (OSH) | ✅                                     |
+| `getSystemControlstreams(id)` (existing Systems method)   | ✅ — 2 control streams for system 0o30 |
+| All Part 1 methods — no regressions                       | ✅                                     |
+| All DataStreams methods — no regressions                  | ✅                                     |
+| All Observations methods — no regressions                 | ✅                                     |
+| `resultTime=latest` still returns real data               | ✅                                     |
+| Prior F1/F2 fixes still working                           | ✅                                     |
+| Convention 2/3 discovery still working                    | ✅                                     |
 
 ## What Remains (Phase 3 Concerns)
 
-| Issue | Severity | Component | Target Phase |
-|-------|----------|-----------|-------------|
-| Response envelope parsing (`items` vs `features`) | Moderate | Response parser | Phase 3 |
-| Dual format handling (GeoJSON vs SensorML) | Moderate | Response parser | Phase 3 |
-| `validTime` array format (including `"now"` string) | Moderate | Type mapping | Phase 3 |
-| Link-based pagination | Low | Pagination helper | Phase 3 |
-| Properties not discoverable via links | Moderate | Fallback/probing strategy | Phase 3 |
-| Nested endpoint graceful degradation | Moderate | Error handling | Phase 3 |
-| `@` notation cross-references (`system@id`, `system@link`, `datastream@id`, `controlstream@id`, `foi@id`) | Moderate | Response parser | Phase 3 |
-| `@link` object notation (href + uid + type) | Moderate | Response parser | Phase 3 |
-| Observation `result` / Command `parameters` — arbitrary JSON per schema | Moderate | Response parser | Phase 3 |
-| Schema response (`commandFormat`/`parametersSchema` vs `observationFormat`/`resultSchema`) | Moderate | Schema parser | Phase 3 |
-| `issueTime` array vs single value disambiguation | Low | Type mapping | Phase 3 |
-| 52North Part 2 endpoints broken/missing — no cross-validation | Moderate | Testing strategy | Ongoing |
+| Issue                                                                                                     | Severity | Component                 | Target Phase |
+| --------------------------------------------------------------------------------------------------------- | -------- | ------------------------- | ------------ |
+| Response envelope parsing (`items` vs `features`)                                                         | Moderate | Response parser           | Phase 3      |
+| Dual format handling (GeoJSON vs SensorML)                                                                | Moderate | Response parser           | Phase 3      |
+| `validTime` array format (including `"now"` string)                                                       | Moderate | Type mapping              | Phase 3      |
+| Link-based pagination                                                                                     | Low      | Pagination helper         | Phase 3      |
+| Properties not discoverable via links                                                                     | Moderate | Fallback/probing strategy | Phase 3      |
+| Nested endpoint graceful degradation                                                                      | Moderate | Error handling            | Phase 3      |
+| `@` notation cross-references (`system@id`, `system@link`, `datastream@id`, `controlstream@id`, `foi@id`) | Moderate | Response parser           | Phase 3      |
+| `@link` object notation (href + uid + type)                                                               | Moderate | Response parser           | Phase 3      |
+| Observation `result` / Command `parameters` — arbitrary JSON per schema                                   | Moderate | Response parser           | Phase 3      |
+| Schema response (`commandFormat`/`parametersSchema` vs `observationFormat`/`resultSchema`)                | Moderate | Schema parser             | Phase 3      |
+| `issueTime` array vs single value disambiguation                                                          | Low      | Type mapping              | Phase 3      |
+| 52North Part 2 endpoints broken/missing — no cross-validation                                             | Moderate | Testing strategy          | Ongoing      |
 
 ---
 
 ## Comparison: Phase 2.7 → Phase 2.8
 
-| Dimension | Phase 2.7 | Phase 2.8 |
-|-----------|----------|----------|
-| Methods implemented | 61 | **69** (+8 ControlStreams) |
-| CSAPI unit tests | 267 | **290** (+23 from Issues #12, #45) |
-| Endpoint tests verified (OSH) | 66 | **75** (+9: 8 ControlStreams + 1 schema bare) |
-| Server limitations found | 11 (F6–F9, F16–F18, F21–F24) | **12** (+F28 feasibility) |
-| New code bugs found | 0 | **0** |
-| New interop findings | 3 (F25–F27) | **6** (F28–F33: feasibility limitation, schema tolerance, 4 data shapes) |
-| Resource types tested | 7 (5 Part 1 + 2 Part 2) | **8** (5 Part 1 + 3 Part 2) |
-| Temporal param types tested | 4 (datetime, phenomenonTime, resultTime, executionTime via commands) | **5** (+issueTime validated live) |
+| Dimension                     | Phase 2.7                                                            | Phase 2.8                                                                |
+| ----------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Methods implemented           | 61                                                                   | **69** (+8 ControlStreams)                                               |
+| CSAPI unit tests              | 267                                                                  | **290** (+23 from Issues #12, #45)                                       |
+| Endpoint tests verified (OSH) | 66                                                                   | **75** (+9: 8 ControlStreams + 1 schema bare)                            |
+| Server limitations found      | 11 (F6–F9, F16–F18, F21–F24)                                         | **12** (+F28 feasibility)                                                |
+| New code bugs found           | 0                                                                    | **0**                                                                    |
+| New interop findings          | 3 (F25–F27)                                                          | **6** (F28–F33: feasibility limitation, schema tolerance, 4 data shapes) |
+| Resource types tested         | 7 (5 Part 1 + 2 Part 2)                                              | **8** (5 Part 1 + 3 Part 2)                                              |
+| Temporal param types tested   | 4 (datetime, phenomenonTime, resultTime, executionTime via commands) | **5** (+issueTime validated live)                                        |
 
 ---
 
@@ -535,64 +554,64 @@ The schema response structure mirrors `getDataStreamSchema()` (SWE Common DataRe
 
 ### Test Coverage
 
-| Category | Tested | Passed | Failed | N/A |
-|----------|--------|--------|--------|-----|
-| **OSH — Systems (12)** | 12 | 10 | 2 (F6/F7) | 0 |
-| **OSH — Deployments (8)** | 1 | 1 | 0 | 7 (no data) |
-| **OSH — Procedures (8)** | 1 | 1 | 0 | 7 (no data) |
-| **OSH — SamplingFeatures (8)** | 8 | 6 | 2 (F8/F9) | 0 |
-| **OSH — Properties (6)** | 1 | 1 | 0 | 5 (no data) |
-| **OSH — DataStreams (11)** | 11 | 8 | 3 (F16/F17/F18) | 0 |
-| **OSH — Observations (8)** | 8 | 4 | 4 (F21/F22/F23/F24) | 0 |
-| **OSH — ControlStreams (8)** | **8** | **7** | **1 (F28)** | **0** |
-| **52N — Systems (12)** | 4 | 3 | 1 (server limit) | 8 |
-| **52N — Deployments (8)** | 2 | 2 | 0 | 6 |
-| **52N — Procedures (8)** | 2 | 2 | 0 | 6 |
-| **52N — SamplingFeatures (8)** | 1 | 1 | 0 | 7 (no data) |
-| **52N — Properties (6)** | 1 | 1 | 0 | 5 (no data) |
-| **52N — DataStreams (11)** | 6 | 0 | 6 (all 500) | 5 |
-| **52N — Observations (8)** | 2 | 0 | 2 (all 500) | 6 |
-| **52N — ControlStreams (8)** | **1** | **0** | **1 (all 404)** | **7** |
-| **Query params (ControlStreams)** | **9** | **9** | **0** | **0** |
-| **Total** | **79** | **56** | **22** | **62** |
+| Category                          | Tested | Passed | Failed              | N/A         |
+| --------------------------------- | ------ | ------ | ------------------- | ----------- |
+| **OSH — Systems (12)**            | 12     | 10     | 2 (F6/F7)           | 0           |
+| **OSH — Deployments (8)**         | 1      | 1      | 0                   | 7 (no data) |
+| **OSH — Procedures (8)**          | 1      | 1      | 0                   | 7 (no data) |
+| **OSH — SamplingFeatures (8)**    | 8      | 6      | 2 (F8/F9)           | 0           |
+| **OSH — Properties (6)**          | 1      | 1      | 0                   | 5 (no data) |
+| **OSH — DataStreams (11)**        | 11     | 8      | 3 (F16/F17/F18)     | 0           |
+| **OSH — Observations (8)**        | 8      | 4      | 4 (F21/F22/F23/F24) | 0           |
+| **OSH — ControlStreams (8)**      | **8**  | **7**  | **1 (F28)**         | **0**       |
+| **52N — Systems (12)**            | 4      | 3      | 1 (server limit)    | 8           |
+| **52N — Deployments (8)**         | 2      | 2      | 0                   | 6           |
+| **52N — Procedures (8)**          | 2      | 2      | 0                   | 6           |
+| **52N — SamplingFeatures (8)**    | 1      | 1      | 0                   | 7 (no data) |
+| **52N — Properties (6)**          | 1      | 1      | 0                   | 5 (no data) |
+| **52N — DataStreams (11)**        | 6      | 0      | 6 (all 500)         | 5           |
+| **52N — Observations (8)**        | 2      | 0      | 2 (all 500)         | 6           |
+| **52N — ControlStreams (8)**      | **1**  | **0**  | **1 (all 404)**     | **7**       |
+| **Query params (ControlStreams)** | **9**  | **9**  | **0**               | **0**       |
+| **Total**                         | **79** | **56** | **22**              | **62**      |
 
 ### Findings Ledger (Cumulative)
 
-| ID | Description | Severity | Status | Owner |
-|----|-------------|----------|--------|-------|
-| F1 | Link relation prefix mismatch | Critical | **Fixed** (Issue #34) | Client |
-| F2 | Top-level vs. collection-scoped URLs | Critical | **Fixed** (Issue #35) | Client |
-| F3 | Response envelope uses `items` | Moderate | Deferred to Phase 3 | Client |
-| F4 | `validTime` is an array | Moderate | Deferred to Phase 3 | Client |
-| F5 | Missing pagination metadata | Low | Deferred to Phase 3 | Client |
-| F6 | OSH rejects `systems/{id}/deployments` | Moderate | Server limitation | Server |
-| F7 | OSH rejects `systems/{id}/procedures` | Moderate | Server limitation | Server |
-| F8 | OSH rejects `samplingFeatures/{id}/systems` | Moderate | Server limitation | Server |
-| F9 | OSH rejects `samplingFeatures/{id}/history` | Moderate | Server limitation | Server |
-| F10 | 52North now has real data | Informational | Positive change | — |
-| F11 | 52North uses SensorML format | Moderate | Phase 3 concern | Client |
-| F12 | 52North `systems/{id}/deployments` works | Informational | Positive finding | — |
-| F13 | Both servers use `items` envelope | Informational | Confirms F3 | — |
-| F14 | Properties not discoverable via links | Moderate | Phase 3 concern | Shared |
-| F15 | 52North adds third system | Informational | Positive change | — |
-| F16 | OSH rejects `datastreams/{id}/systems` | Moderate | Server limitation | Server |
-| F17 | OSH rejects `datastreams/{id}/procedures` | Moderate | Server limitation | Server |
-| F18 | OSH rejects `datastreams/{id}/history` | Moderate | Server limitation | Server |
-| F19 | `resultTime=latest` accepted by OSH | Informational | **Validated** ✅ (Issue #43) | **Resolved** |
-| F20 | 52North DataStreams still broken (500) | Informational | Unchanged | Server |
-| F21 | OSH rejects `observations/{id}/datastream` | Moderate | Server limitation | Server |
-| F22 | OSH rejects `observations/{id}/samplingFeature` | Moderate | Server limitation | Server |
-| F23 | OSH rejects `observations/{id}/system` | Moderate | Server limitation | Server |
-| F24 | OSH rejects `observations/{id}/history` | Moderate | Server limitation | Server |
-| F25 | `resultTime=latest` returns real data (standalone) | Informational | Positive validation | — |
-| F26 | 52North Observations broken (500) | Informational | Server limitation | Server |
-| F27 | Observation `foi@id` naming variation | Informational | Phase 3 concern | Client |
-| **F28** | **OSH rejects `controlstreams/{id}/feasibility` (POST)** | **Moderate** | **Server limitation** | **Server** |
-| **F29** | **ControlStream schema works without `cmdFormat`** | **Informational** | **Positive finding** | **—** |
-| **F30** | **ControlStream `system@link` cross-reference** | **Informational** | **Phase 3 concern** | **Client** |
-| **F31** | **Command entity data shape (`controlstream@id`, `currentStatus`)** | **Informational** | **Phase 3 concern** | **Client** |
-| **F32** | **52North ControlStreams not implemented (404)** | **Informational** | **Server limitation** | **Server** |
-| **F33** | **ControlStream schema returns SWE DataRecord with `commandFormat`** | **Informational** | **Phase 3 concern** | **Client** |
+| ID      | Description                                                          | Severity          | Status                       | Owner        |
+| ------- | -------------------------------------------------------------------- | ----------------- | ---------------------------- | ------------ |
+| F1      | Link relation prefix mismatch                                        | Critical          | **Fixed** (Issue #34)        | Client       |
+| F2      | Top-level vs. collection-scoped URLs                                 | Critical          | **Fixed** (Issue #35)        | Client       |
+| F3      | Response envelope uses `items`                                       | Moderate          | Deferred to Phase 3          | Client       |
+| F4      | `validTime` is an array                                              | Moderate          | Deferred to Phase 3          | Client       |
+| F5      | Missing pagination metadata                                          | Low               | Deferred to Phase 3          | Client       |
+| F6      | OSH rejects `systems/{id}/deployments`                               | Moderate          | Server limitation            | Server       |
+| F7      | OSH rejects `systems/{id}/procedures`                                | Moderate          | Server limitation            | Server       |
+| F8      | OSH rejects `samplingFeatures/{id}/systems`                          | Moderate          | Server limitation            | Server       |
+| F9      | OSH rejects `samplingFeatures/{id}/history`                          | Moderate          | Server limitation            | Server       |
+| F10     | 52North now has real data                                            | Informational     | Positive change              | —            |
+| F11     | 52North uses SensorML format                                         | Moderate          | Phase 3 concern              | Client       |
+| F12     | 52North `systems/{id}/deployments` works                             | Informational     | Positive finding             | —            |
+| F13     | Both servers use `items` envelope                                    | Informational     | Confirms F3                  | —            |
+| F14     | Properties not discoverable via links                                | Moderate          | Phase 3 concern              | Shared       |
+| F15     | 52North adds third system                                            | Informational     | Positive change              | —            |
+| F16     | OSH rejects `datastreams/{id}/systems`                               | Moderate          | Server limitation            | Server       |
+| F17     | OSH rejects `datastreams/{id}/procedures`                            | Moderate          | Server limitation            | Server       |
+| F18     | OSH rejects `datastreams/{id}/history`                               | Moderate          | Server limitation            | Server       |
+| F19     | `resultTime=latest` accepted by OSH                                  | Informational     | **Validated** ✅ (Issue #43) | **Resolved** |
+| F20     | 52North DataStreams still broken (500)                               | Informational     | Unchanged                    | Server       |
+| F21     | OSH rejects `observations/{id}/datastream`                           | Moderate          | Server limitation            | Server       |
+| F22     | OSH rejects `observations/{id}/samplingFeature`                      | Moderate          | Server limitation            | Server       |
+| F23     | OSH rejects `observations/{id}/system`                               | Moderate          | Server limitation            | Server       |
+| F24     | OSH rejects `observations/{id}/history`                              | Moderate          | Server limitation            | Server       |
+| F25     | `resultTime=latest` returns real data (standalone)                   | Informational     | Positive validation          | —            |
+| F26     | 52North Observations broken (500)                                    | Informational     | Server limitation            | Server       |
+| F27     | Observation `foi@id` naming variation                                | Informational     | Phase 3 concern              | Client       |
+| **F28** | **OSH rejects `controlstreams/{id}/feasibility` (POST)**             | **Moderate**      | **Server limitation**        | **Server**   |
+| **F29** | **ControlStream schema works without `cmdFormat`**                   | **Informational** | **Positive finding**         | **—**        |
+| **F30** | **ControlStream `system@link` cross-reference**                      | **Informational** | **Phase 3 concern**          | **Client**   |
+| **F31** | **Command entity data shape (`controlstream@id`, `currentStatus`)**  | **Informational** | **Phase 3 concern**          | **Client**   |
+| **F32** | **52North ControlStreams not implemented (404)**                     | **Informational** | **Server limitation**        | **Server**   |
+| **F33** | **ControlStream schema returns SWE DataRecord with `commandFormat`** | **Informational** | **Phase 3 concern**          | **Client**   |
 
 ---
 
@@ -603,12 +622,14 @@ The schema response structure mirrors `getDataStreamSchema()` (SWE Common DataRe
 The ControlStreams implementation (Issue #12) is validated against OSH. 7 of 8 methods produce successful 200 responses with real data. The single failure (F28 — `controlstreams/{id}/feasibility`) is a server-side 400 rejection for the optional feasibility-checking endpoint, continuing the established pattern of OSH not implementing all optional spec endpoints. Our URL generation is spec-correct; the feasibility endpoint is simply not supported by this server.
 
 **ControlStreams is the most successful Part 2 resource type tested so far:**
+
 - **7/8 methods pass** (vs 8/11 DataStreams, 4/8 Observations) — only 1 server limitation
 - **All 9 query parameters accepted** — including both type-specific (`systemId`) and shared (`limit`, `offset`, `q`, `id`, `f`) parameters, plus both temporal filters (`issueTime`, `executionTime`) on the commands sub-resource
 - **Schema endpoint works with and without `cmdFormat`** — the server gracefully falls back to the default format when `cmdFormat` is omitted (F29)
 - **Real command data available** — 100+ commands with status tracking (`COMPLETED`), spatial parameters, and temporal metadata
 
 **Data shape findings for Phase 3** reveal two important new patterns beyond what DataStreams and Observations established:
+
 1. The `@link` suffix (F30) — `system@link` provides a full link object (href + uid + type) alongside the `system@id` string. Phase 3 must handle both cross-reference styles.
 2. Schema duality (F33) — ControlStream schemas use `commandFormat`/`parametersSchema` where DataStream schemas use `observationFormat`/`resultSchema`. The SWE Common parser needs to handle both variants.
 

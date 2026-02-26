@@ -13,6 +13,7 @@
 **Finding:** File organization conventions in ogc-client are **strict and consistent** across all APIs. Single-class pattern fits perfectly within established conventions.
 
 **Key Metrics:**
+
 - **EDR (single-class):** 5 files (3 implementation + 2 test)
 - **CSAPI (single-class):** 5-6 files (same pattern)
 - **CSAPI (multi-class estimate):** 20-30+ files (breaks convention)
@@ -29,32 +30,35 @@
 
 **EDR implementation (5 files, 675 total lines):**
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `model.ts` | 126 | Type definitions, parameter interfaces |
-| `url_builder.ts` | 380 | EDRQueryBuilder class with query methods |
-| `helpers.ts` | 26 | Utility functions (date formatting, etc.) |
-| `model.spec.ts` | 97 | Tests for types and helpers |
-| `helpers.spec.ts` | 45 | Tests for utility functions |
-| **TOTAL** | **674** | **5 files, flat structure** |
+| File              | Lines   | Purpose                                   |
+| ----------------- | ------- | ----------------------------------------- |
+| `model.ts`        | 126     | Type definitions, parameter interfaces    |
+| `url_builder.ts`  | 380     | EDRQueryBuilder class with query methods  |
+| `helpers.ts`      | 26      | Utility functions (date formatting, etc.) |
+| `model.spec.ts`   | 97      | Tests for types and helpers               |
+| `helpers.spec.ts` | 45      | Tests for utility functions               |
+| **TOTAL**         | **674** | **5 files, flat structure**               |
 
 **Note:** EDR has NO `url_builder.spec.ts` (surprising omission, but pattern is established)
 
 ### File Purposes
 
 **model.ts (126 lines):**
+
 - Type aliases: `WellKnownTextString`, `bboxWithoutVerticalAxis`
 - Query parameter interfaces: `optionalAreaParams`, `optionalPositionParams`
 - Discriminated unions: `ZParameter`
 - Helper functions: `zParameterToString()`
 
 **url_builder.ts (380 lines):**
+
 - Default export: `EDRQueryBuilder` class
 - Query methods: `getAreaData()`, `getPositionData()`, etc.
 - Private helpers: URL construction, caching
 - Import from three tiers: shared → OGC API → EDR
 
 **helpers.ts (26 lines):**
+
 - Pure utility functions
 - `DateTimeParameterToEDRString()` - Date/interval formatting
 - Used by url_builder.ts
@@ -98,6 +102,7 @@ src/stac/
 **Notable:** STAC has barrel file (`index.ts`), EDR does not.
 
 **STAC index.ts:**
+
 ```typescript
 export { default as StacEndpoint } from './endpoint.js';
 export type { GetCollectionItemsOptions } from './endpoint.js';
@@ -174,6 +179,7 @@ src/ogc-api/csapi/
 ```
 
 **File count:**
+
 - Core implementation: 3-4 files
 - Format parsers: 15-20 files (in formats/ subfolder)
 - Tests: 2 files
@@ -212,12 +218,14 @@ src/ogc-api/csapi/
 ```
 
 **File count:**
+
 - Implementation: 11 files (model + 9 builders + helpers)
 - Format parsers: 15-20 files
 - Tests: 10 files (model + 9 builders)
 - **Total: 36-41 files**
 
 **Problems:**
+
 1. ❌ **Violates flat structure convention** - Would need subdirectories
 2. ❌ **21 builder files** - Unprecedented in ogc-client
 3. ❌ **Difficult navigation** - Too many files
@@ -241,12 +249,14 @@ src/ogc-api/csapi/
 ```
 
 **File count:**
+
 - Implementation: 4 files (model + 2 builders + helpers)
 - Format parsers: 15-20 files
 - Tests: 3 files
 - **Total: 22-27 files**
 
 **Better than 9-class, but still:**
+
 1. ❌ **Arbitrary split** - Part 1/Part 2 not meaningful to users
 2. ❌ **More files than EDR** - 4 vs 3 implementation files
 3. ❌ **Confusing for users** - Which builder to use?
@@ -261,11 +271,13 @@ src/ogc-api/csapi/
 **Pattern:** Always `{filename}.spec.ts`
 
 **Examples:**
+
 - `model.ts` → `model.spec.ts`
 - `url_builder.ts` → `url_builder.spec.ts`
 - `helpers.ts` → `helpers.spec.ts`
 
 **Never used:**
+
 - ❌ `test/{filename}.ts`
 - ❌ `__tests__/{filename}.ts`
 - ❌ `{filename}.test.ts`
@@ -275,6 +287,7 @@ src/ogc-api/csapi/
 **Rule:** Tests are always in same directory as implementation.
 
 **EDR example:**
+
 ```
 src/ogc-api/edr/
   model.ts          # Implementation
@@ -284,6 +297,7 @@ src/ogc-api/edr/
 ```
 
 **NOT this:**
+
 ```
 src/ogc-api/edr/
   model.ts
@@ -297,14 +311,15 @@ src/ogc-api/edr/
 
 **EDR test ratio:**
 
-| File | Implementation | Test | Ratio |
-|------|----------------|------|-------|
-| model.ts | 126 lines | 97 lines | 77% |
-| helpers.ts | 26 lines | 45 lines | 173% |
+| File       | Implementation | Test     | Ratio |
+| ---------- | -------------- | -------- | ----- |
+| model.ts   | 126 lines      | 97 lines | 77%   |
+| helpers.ts | 26 lines       | 45 lines | 173%  |
 
 **Observation:** Tests range from 75-175% of implementation lines.
 
 **For CSAPI:**
+
 - model.ts: 350-400 lines → 200-300 test lines (60-75%)
 - url_builder.ts: 700-800 lines → 800-1000 test lines (110-125%)
 - helpers.ts: 50-80 lines → 60-100 test lines (120-125%)
@@ -359,6 +374,7 @@ fixtures/ogc-api/csapi/
 **File count:** 10-12 fixture files
 
 **Naming convention:**
+
 - Collections: `{resource-type}-collection.json`
 - Items: `{resource-type}-{id}.json`
 - Root: `sample-csapi-endpoint.json`
@@ -397,11 +413,13 @@ describe('CSAPIQueryBuilder', () => {
 **From main `src/index.ts`:**
 
 ✅ **Always exported:**
+
 - Endpoint classes: `OgcApiEndpoint`, `WfsEndpoint`, `StacEndpoint`
 - Model types: `export * from './ogc-api/model.js'`
 - Shared types: `BoundingBox`, `DateTimeParameter`
 
 ❌ **Never exported:**
+
 - QueryBuilder classes (accessed via factory methods)
 - Utility functions: `parseEndpointInfo`, `getLinkUrl`
 - Internal helpers
@@ -420,7 +438,7 @@ export { default as EDRQueryBuilder } from './ogc-api/edr/url_builder.js';
 
 ```typescript
 const endpoint = new OgcApiEndpoint(url);
-const edrBuilder = await endpoint.edr(collectionId);  // Returns EDRQueryBuilder
+const edrBuilder = await endpoint.edr(collectionId); // Returns EDRQueryBuilder
 ```
 
 **EDR types are also NOT exported:**
@@ -469,7 +487,7 @@ const datastream: Datastream = await fetchDatastream();
 **Why NOT export QueryBuilder?** Same as EDR - factory method access:
 
 ```typescript
-const builder = await endpoint.csapi('sensors');  // Type is inferred
+const builder = await endpoint.csapi('sensors'); // Type is inferred
 ```
 
 ---
@@ -480,16 +498,17 @@ const builder = await endpoint.csapi('sensors');  // Type is inferred
 
 **Observed patterns:**
 
-| Pattern | Example | APIs Using |
-|---------|---------|------------|
-| Single word lowercase | `endpoint.ts`, `model.ts` | All |
-| Kebab-case | `link-utils.ts` | OGC API, STAC |
-| Snake_case | `url_builder.ts` | EDR |
-| Descriptive | `capabilities.ts`, `featureprops.ts` | WFS, WMS |
+| Pattern               | Example                              | APIs Using    |
+| --------------------- | ------------------------------------ | ------------- |
+| Single word lowercase | `endpoint.ts`, `model.ts`            | All           |
+| Kebab-case            | `link-utils.ts`                      | OGC API, STAC |
+| Snake_case            | `url_builder.ts`                     | EDR           |
+| Descriptive           | `capabilities.ts`, `featureprops.ts` | WFS, WMS      |
 
 **Inconsistency note:** `url_builder.ts` uses snake_case, but `link-utils.ts` uses kebab-case.
 
 **For CSAPI (following EDR):**
+
 - `model.ts` ✅
 - `url_builder.ts` ✅ (match EDR)
 - `helpers.ts` ✅
@@ -497,6 +516,7 @@ const builder = await endpoint.csapi('sensors');  // Type is inferred
 ### Class Naming
 
 **Always PascalCase:**
+
 - `OgcApiEndpoint`
 - `EDRQueryBuilder`
 - `CSAPIQueryBuilder` ✅
@@ -504,6 +524,7 @@ const builder = await endpoint.csapi('sensors');  // Type is inferred
 ### Function Naming
 
 **Always camelCase:**
+
 - `parseEndpointInfo`
 - `getLinkUrl`
 - `formatDateTime` ✅
@@ -511,11 +532,13 @@ const builder = await endpoint.csapi('sensors');  // Type is inferred
 ### Type Naming
 
 **PascalCase for types:**
+
 - `OgcApiCollectionInfo`
 - `DateTimeParameter`
 - `System`, `Deployment` ✅
 
 **camelCase for parameter interfaces (EDR convention):**
+
 - `optionalAreaParams`
 - `optionalPositionParams`
 - `SystemQueryOptions` ✅ (or `systemQueryOptions`?)
@@ -599,16 +622,19 @@ import { formatDateTime } from './helpers.js';
 **Users interact with:**
 
 1. **Endpoint class:**
+
    ```typescript
    const endpoint = new OgcApiEndpoint('https://api.example.com');
    ```
 
 2. **Factory method:**
+
    ```typescript
    const builder = await endpoint.csapi('sensors');
    ```
 
 3. **QueryBuilder methods:**
+
    ```typescript
    const systems = await builder.getSystems({ limit: 10 });
    ```
@@ -624,12 +650,14 @@ import { formatDateTime } from './helpers.js';
 **Users do NOT directly access:**
 
 1. **QueryBuilder constructor:**
+
    ```typescript
    // ❌ Not available
    new CSAPIQueryBuilder(collection);
    ```
 
 2. **Utility functions:**
+
    ```typescript
    // ❌ Not exported
    import { formatDateTime } from 'ogc-client/csapi/helpers';
@@ -658,37 +686,37 @@ src/ogc-api/csapi/
     - Query options (QueryOptions, SystemQueryOptions, etc.)
     - Helper types (TimeInterval, ResourceLink)
     - Enums (CSAPIResourceTypes)
-  
+
   url_builder.ts        # 700-800 lines
     - CSAPIQueryBuilder class (default export)
     - ~70-80 public methods for resources
     - ~5-10 private helper methods
     - Resource validation (~140-160 lines)
-  
+
   helpers.ts            # 50-80 lines
     - formatDateTime()
     - formatBBox()
     - formatQueryOptions()
     - Parameter conversion utilities
-  
+
   formats/              # 3,300-4,650 lines (format parsing)
     index.ts
     geojson.ts
     constants.ts
     sensorml/           # 6 files, 1,600-2,200 lines
     swecommon/          # 6 files, 1,600-2,250 lines
-  
+
   model.spec.ts         # 200-300 lines
     - Type validation tests
     - Helper function tests
     - Enum tests
-  
+
   url_builder.spec.ts   # 800-1000 lines
     - Tests for all 70-80 methods
     - Parameter handling tests
     - Error case tests
     - Validation tests
-  
+
   (optional) index.ts   # 10 lines
     - Barrel file for convenience
 ```
@@ -699,15 +727,16 @@ src/ogc-api/csapi/
 
 **Based on EDR precedent:**
 
-| File | EDR Size | CSAPI Size | Ratio |
-|------|----------|------------|-------|
-| model.ts | 126 lines | 350-400 lines | 2.8-3.2x |
+| File           | EDR Size  | CSAPI Size    | Ratio    |
+| -------------- | --------- | ------------- | -------- |
+| model.ts       | 126 lines | 350-400 lines | 2.8-3.2x |
 | url_builder.ts | 380 lines | 700-800 lines | 1.8-2.1x |
-| helpers.ts | 26 lines | 50-80 lines | 1.9-3.1x |
+| helpers.ts     | 26 lines  | 50-80 lines   | 1.9-3.1x |
 
 **Reason for larger files:** CSAPI has 9 resources vs EDR's 1 resource type.
 
 **Per-resource average:**
+
 - EDR: 380 lines / 1 resource = 380 lines per resource
 - CSAPI: 700-800 lines / 9 resources = 78-89 lines per resource
 
@@ -739,12 +768,14 @@ src/ogc-api/csapi/formats/
 ```
 
 **Justification:**
+
 - Format parsing is 3,300-4,650 lines (larger than all other code combined)
 - Distinct concern (URL building vs parsing)
 - Users import separately: `import { parseSensorML30 } from 'ogc-client/csapi/formats'`
 - Precedent: WFS has subdirectories for complex parsing
 
 **This is acceptable** because:
+
 1. ✅ Scope justifies organization (3,300+ lines)
 2. ✅ Clear separation of concerns
 3. ✅ Optional for users (tree-shakeable)
@@ -818,9 +849,8 @@ export function checkHasConnectedSystems([conformance]: [
     conformance.indexOf(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
     ) > -1 ||
-    conformance.indexOf(
-      'http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core'
-    ) > -1
+    conformance.indexOf('http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core') >
+      -1
   );
 }
 ```
@@ -851,7 +881,10 @@ export type {
 } from './ogc-api/csapi/model.js';
 
 // Optional: Export format parsers
-export { parseSensorML30, parseSWECommon30 } from './ogc-api/csapi/formats/index.js';
+export {
+  parseSensorML30,
+  parseSWECommon30,
+} from './ogc-api/csapi/formats/index.js';
 ```
 
 **Total:** 17-20 lines added
@@ -944,17 +977,17 @@ src/ogc-api/csapi/
 
 **Single-class CSAPI structure:**
 
-| Rule | Compliant? | Notes |
-|------|-----------|-------|
-| Flat structure | ✅ YES | 6 core files (formats/ subdirectory justified) |
-| Colocated tests | ✅ YES | `.spec.ts` next to implementation |
-| Default export | ✅ YES | `CSAPIQueryBuilder` default export |
-| Named exports | ✅ YES | Types, helpers as named exports |
-| Relative imports | ✅ YES | All imports relative with `.js` |
-| Separate model.ts | ✅ YES | All types in model.ts |
-| Separate helpers.ts | ✅ YES | Utilities in helpers.ts |
-| Barrel file | ✅ OPTIONAL | Can add index.ts if desired |
-| Subdirectories | ✅ YES | formats/ justified (3,300+ lines) |
+| Rule                | Compliant?  | Notes                                          |
+| ------------------- | ----------- | ---------------------------------------------- |
+| Flat structure      | ✅ YES      | 6 core files (formats/ subdirectory justified) |
+| Colocated tests     | ✅ YES      | `.spec.ts` next to implementation              |
+| Default export      | ✅ YES      | `CSAPIQueryBuilder` default export             |
+| Named exports       | ✅ YES      | Types, helpers as named exports                |
+| Relative imports    | ✅ YES      | All imports relative with `.js`                |
+| Separate model.ts   | ✅ YES      | All types in model.ts                          |
+| Separate helpers.ts | ✅ YES      | Utilities in helpers.ts                        |
+| Barrel file         | ✅ OPTIONAL | Can add index.ts if desired                    |
+| Subdirectories      | ✅ YES      | formats/ justified (3,300+ lines)              |
 
 **Compliance:** 100% (9/9 rules followed)
 
@@ -962,17 +995,17 @@ src/ogc-api/csapi/
 
 **9-class CSAPI structure:**
 
-| Rule | Compliant? | Notes |
-|------|-----------|-------|
-| Flat structure | ❌ NO | Requires builders/ subdirectory (only 21 files, not justified) |
-| Colocated tests | ⚠️ MAYBE | Would need tests/ subdirectory or 21 test files at root |
-| Default export | ✅ YES | Each builder default export |
-| Named exports | ✅ YES | Types as named exports |
-| Relative imports | ✅ YES | All imports relative |
-| Separate model.ts | ✅ YES | Shared types in model.ts |
-| Separate helpers.ts | ✅ YES | Shared utilities |
-| Barrel file | ⚠️ COMPLEX | Would need to export all 9 builders |
-| Subdirectories | ❌ NO | Not justified for 21 files |
+| Rule                | Compliant? | Notes                                                          |
+| ------------------- | ---------- | -------------------------------------------------------------- |
+| Flat structure      | ❌ NO      | Requires builders/ subdirectory (only 21 files, not justified) |
+| Colocated tests     | ⚠️ MAYBE   | Would need tests/ subdirectory or 21 test files at root        |
+| Default export      | ✅ YES     | Each builder default export                                    |
+| Named exports       | ✅ YES     | Types as named exports                                         |
+| Relative imports    | ✅ YES     | All imports relative                                           |
+| Separate model.ts   | ✅ YES     | Shared types in model.ts                                       |
+| Separate helpers.ts | ✅ YES     | Shared utilities                                               |
+| Barrel file         | ⚠️ COMPLEX | Would need to export all 9 builders                            |
+| Subdirectories      | ❌ NO      | Not justified for 21 files                                     |
 
 **Compliance:** 50-60% (4-5/9 rules followed, 2 broken, 2-3 unclear)
 
@@ -1038,6 +1071,7 @@ src/ogc-api/csapi/
 ### Single-Class PR
 
 **New files created:**
+
 ```
 src/ogc-api/csapi/
   model.ts              # NEW
@@ -1052,6 +1086,7 @@ fixtures/ogc-api/csapi/
 ```
 
 **Modified files:**
+
 ```
 src/ogc-api/endpoint.ts   # +35 lines
 src/ogc-api/info.ts       # +12 lines
@@ -1059,6 +1094,7 @@ src/index.ts              # +17 lines
 ```
 
 **PR summary:**
+
 - New files: 21-26 (6 core + 15-20 formats)
 - Modified files: 3
 - Total additions: ~4,200-5,800 lines
@@ -1069,6 +1105,7 @@ src/index.ts              # +17 lines
 ### Multi-Class PR (9-Class)
 
 **New files created:**
+
 ```
 src/ogc-api/csapi/
   model.ts              # NEW
@@ -1088,6 +1125,7 @@ fixtures/ogc-api/csapi/
 ```
 
 **Modified files:**
+
 ```
 src/ogc-api/endpoint.ts   # +150-180 lines (9 imports, 9 caches, 9 factory methods)
 src/ogc-api/info.ts       # +12 lines
@@ -1095,6 +1133,7 @@ src/index.ts              # +60-80 lines (export 9 builders + types)
 ```
 
 **PR summary:**
+
 - New files: 36-41
 - Modified files: 3
 - Total additions: ~4,400-6,100 lines
@@ -1108,35 +1147,35 @@ src/index.ts              # +60-80 lines (export 9 builders + types)
 
 ### File Count
 
-| Approach | Core Files | Format Files | Test Files | **Total** |
-|----------|-----------|--------------|------------|-----------|
-| **Single-class** | 3-4 | 15-20 | 2 | **20-26** |
-| **Two-class** | 4 | 15-20 | 3 | **22-27** |
-| **Nine-class** | 11 | 15-20 | 10 | **36-41** |
+| Approach         | Core Files | Format Files | Test Files | **Total** |
+| ---------------- | ---------- | ------------ | ---------- | --------- |
+| **Single-class** | 3-4        | 15-20        | 2          | **20-26** |
+| **Two-class**    | 4          | 15-20        | 3          | **22-27** |
+| **Nine-class**   | 11         | 15-20        | 10         | **36-41** |
 
 ### Convention Compliance
 
-| Approach | Compliance | Rules Followed |
-|----------|-----------|----------------|
-| **Single-class** | ✅ 100% | 9/9 rules |
-| **Two-class** | ⚠️ 90% | 8/9 rules |
-| **Nine-class** | ❌ 50-60% | 4-5/9 rules |
+| Approach         | Compliance | Rules Followed |
+| ---------------- | ---------- | -------------- |
+| **Single-class** | ✅ 100%    | 9/9 rules      |
+| **Two-class**    | ⚠️ 90%     | 8/9 rules      |
+| **Nine-class**   | ❌ 50-60%  | 4-5/9 rules    |
 
 ### Maintainability
 
-| Approach | Score | Primary Issue |
-|----------|-------|---------------|
-| **Single-class** | 9/10 | Large file (mitigated by comments) |
-| **Two-class** | 6/10 | Arbitrary split, user confusion |
-| **Nine-class** | 4/10 | Too many files, navigation difficulty |
+| Approach         | Score | Primary Issue                         |
+| ---------------- | ----- | ------------------------------------- |
+| **Single-class** | 9/10  | Large file (mitigated by comments)    |
+| **Two-class**    | 6/10  | Arbitrary split, user confusion       |
+| **Nine-class**   | 4/10  | Too many files, navigation difficulty |
 
 ### PR Reviewability
 
-| Approach | Score | Primary Issue |
-|----------|-------|---------------|
-| **Single-class** | 5/5 | Clear, organized, follows EDR |
-| **Two-class** | 3/5 | More files, unclear benefit |
-| **Nine-class** | 2/5 | Too many files, complex structure |
+| Approach         | Score | Primary Issue                     |
+| ---------------- | ----- | --------------------------------- |
+| **Single-class** | 5/5   | Clear, organized, follows EDR     |
+| **Two-class**    | 3/5   | More files, unclear benefit       |
+| **Nine-class**   | 2/5   | Too many files, complex structure |
 
 ---
 

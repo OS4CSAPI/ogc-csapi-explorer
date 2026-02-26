@@ -12,14 +12,14 @@
 
 ### 1.1 Documents Reviewed
 
-| # | Document | Lines | Status | Verdict |
-|---|----------|-------|--------|---------|
-| 08 | [csapi-specification-test-requirements.md](../findings/08-csapi-specification-test-requirements.md) | 1,321 | ✅ Reviewed | ❌ Critical Issues |
-| 09 | [sensorml-testing-requirements.md](../findings/09-sensorml-testing-requirements.md) | 1,253 | ✅ Reviewed | ❌ Critical Issues |
-| 10 | [swe-common-testing-requirements.md](../findings/10-swe-common-testing-requirements.md) | 1,952 | ✅ Reviewed | ❌ Significant Issues |
-| 11 | [geojson-csapi-testing-requirements.md](../findings/11-geojson-csapi-testing-requirements.md) | 2,565 | ✅ Reviewed | ⚠️ Issues Found |
-| 21 | [typescript-type-testing-strategy.md](../findings/21-typescript-type-testing-strategy.md) | 2,083 | ✅ Reviewed | ⚠️ Issues Found |
-| 22 | [conformance-capability-testing.md](../findings/22-conformance-capability-testing.md) | 1,680 | ✅ Reviewed | ✅ Mostly Sound |
+| #   | Document                                                                                            | Lines | Status      | Verdict               |
+| --- | --------------------------------------------------------------------------------------------------- | ----- | ----------- | --------------------- |
+| 08  | [csapi-specification-test-requirements.md](../findings/08-csapi-specification-test-requirements.md) | 1,321 | ✅ Reviewed | ❌ Critical Issues    |
+| 09  | [sensorml-testing-requirements.md](../findings/09-sensorml-testing-requirements.md)                 | 1,253 | ✅ Reviewed | ❌ Critical Issues    |
+| 10  | [swe-common-testing-requirements.md](../findings/10-swe-common-testing-requirements.md)             | 1,952 | ✅ Reviewed | ❌ Significant Issues |
+| 11  | [geojson-csapi-testing-requirements.md](../findings/11-geojson-csapi-testing-requirements.md)       | 2,565 | ✅ Reviewed | ⚠️ Issues Found       |
+| 21  | [typescript-type-testing-strategy.md](../findings/21-typescript-type-testing-strategy.md)           | 2,083 | ✅ Reviewed | ⚠️ Issues Found       |
+| 22  | [conformance-capability-testing.md](../findings/22-conformance-capability-testing.md)               | 1,680 | ✅ Reviewed | ✅ Mostly Sound       |
 
 **Total Lines Reviewed:** 10,854
 
@@ -42,21 +42,21 @@ These 6 documents define the CSAPI-specific testing requirements: specification 
 
 Each document was checked against all 5 Phase 0 anti-patterns:
 
-| ID | Anti-Pattern | Description |
-|----|-------------|-------------|
-| AP1 | Testing Response Content | Tests validate server responses rather than client code |
-| AP2 | Hybrid Fixture/Live | Tests designed to run against live servers OR fixtures |
-| AP3 | OGC Requirement Traceability | Test structure mirrors spec requirements, not client code |
-| AP4 | Asserting Data Shape | Tests check response structure without testing transformation |
-| AP5 | Graceful Skipping | Tests skip based on fixture content rather than failing |
+| ID  | Anti-Pattern                 | Description                                                   |
+| --- | ---------------------------- | ------------------------------------------------------------- |
+| AP1 | Testing Response Content     | Tests validate server responses rather than client code       |
+| AP2 | Hybrid Fixture/Live          | Tests designed to run against live servers OR fixtures        |
+| AP3 | OGC Requirement Traceability | Test structure mirrors spec requirements, not client code     |
+| AP4 | Asserting Data Shape         | Tests check response structure without testing transformation |
+| AP5 | Graceful Skipping            | Tests skip based on fixture content rather than failing       |
 
 ### 2.2 Cross-Reference Documents
 
-| Document | Purpose |
-|----------|---------|
+| Document                                                                       | Purpose                                     |
+| ------------------------------------------------------------------------------ | ------------------------------------------- |
 | [Phase 0: Lessons from Failed Attempt](phase-0-lessons-from-failed-attempt.md) | Anti-pattern catalog with concrete examples |
-| [Implementation Guide](../../../planning/csapi-implementation-guide.md) | Authoritative component architecture |
-| Upstream `camptocamp/ogc-client` | Reference test patterns |
+| [Implementation Guide](../../../planning/csapi-implementation-guide.md)        | Authoritative component architecture        |
+| Upstream `camptocamp/ogc-client`                                               | Reference test patterns                     |
 
 ### 2.3 Client vs. Server Test Criteria
 
@@ -77,22 +77,23 @@ For each test pattern, example, or recommendation, the review asked:
 
 ### 3.2 Anti-Pattern Severity by Document
 
-| Document | AP1 | AP2 | AP3 | AP4 | AP5 | Overall |
-|----------|-----|-----|-----|-----|-----|---------|
-| 08 (CSAPI Spec Requirements) | 🔴 Severe | ⚠️ Moderate | 🔴 Severe | 🔴 Severe | — | ❌ Critical |
-| 09 (SensorML Testing) | 🔴 High | ⚠️ Moderate | 🔴 High | 🔴 High | ⚠️ Low | ❌ Critical |
-| 10 (SWE Common Testing) | ⚠️ Moderate | ⚠️ Moderate | 🔴 Strong | ⚠️ Moderate | ⚠️ Low | ❌ Significant |
-| 11 (GeoJSON Testing) | ⚠️ Moderate | — | ⚠️ Moderate | ⚠️ Moderate | — | ⚠️ Issues |
-| 21 (Type Testing) | — | — | — | 🔴 Pervasive | — | ⚠️ Issues |
-| 22 (Conformance Testing) | — | ⚠️ Minor | ⚠️ Moderate | — | — | ✅ Mostly Sound |
+| Document                     | AP1         | AP2         | AP3         | AP4          | AP5    | Overall         |
+| ---------------------------- | ----------- | ----------- | ----------- | ------------ | ------ | --------------- |
+| 08 (CSAPI Spec Requirements) | 🔴 Severe   | ⚠️ Moderate | 🔴 Severe   | 🔴 Severe    | —      | ❌ Critical     |
+| 09 (SensorML Testing)        | 🔴 High     | ⚠️ Moderate | 🔴 High     | 🔴 High      | ⚠️ Low | ❌ Critical     |
+| 10 (SWE Common Testing)      | ⚠️ Moderate | ⚠️ Moderate | 🔴 Strong   | ⚠️ Moderate  | ⚠️ Low | ❌ Significant  |
+| 11 (GeoJSON Testing)         | ⚠️ Moderate | —           | ⚠️ Moderate | ⚠️ Moderate  | —      | ⚠️ Issues       |
+| 21 (Type Testing)            | —           | —           | —           | 🔴 Pervasive | —      | ⚠️ Issues       |
+| 22 (Conformance Testing)     | —           | ⚠️ Minor    | ⚠️ Moderate | —            | —      | ✅ Mostly Sound |
 
 ### 3.3 The Fundamental Problem
 
 **Documents 08, 09, and 10 are specification compliance test suites disguised as client library test plans.** They catalog what servers MUST do (spec SHALL/MUST statements) and label this as "client testing." The Phase 0 anti-pattern catalog predicted exactly this failure mode.
 
 Key evidence:
+
 - **Doc 08** contains 334 requirement IDs (SYS-001 through CMD-082, VAL-GJ-001 through VAL-SWE-072) tracing to spec sections — the document IS a traceability matrix
-- **Doc 09** defines 43 validation/error IDs (VAL-SML-*, ERR-SML-*) that test whether SensorML documents conform to the spec, not what the parser outputs
+- **Doc 09** defines 43 validation/error IDs (VAL-SML-_, ERR-SML-_) that test whether SensorML documents conform to the spec, not what the parser outputs
 - **Doc 10** is organized around SWE Common spec sections (§7.2.1–§7.7), not parser module functions
 
 **None of these documents define what the client code's API looks like.** They exhaustively catalog spec requirements but never specify: What does `parseSensorML()` return? What TypeScript interface does the parser produce? What methods does the CSAPIQueryBuilder expose?
@@ -112,6 +113,7 @@ Key evidence:
 **Problem:** Doc 08's stated purpose is to "extract all 250+ testable normative requirements (SHALL/MUST statements)" with "complete requirement-to-test traceability." SHALL/MUST statements in OGC specifications are **server requirements** — they define what a conformant server must do. A client library does not "claim conformance" to API specifications; it consumes them.
 
 Evidence:
+
 - **334 requirement IDs** mapping 1:1 from spec sections to test cases
 - **9 occurrences of "Server exposes"** as test requirements (SYS-011, DEP-011, PROC-011, etc.)
 - **Section 11 "Conformance Claim Validation"** is the OGC framework for server implementations to claim conformance
@@ -134,6 +136,7 @@ Evidence:
 **Problem:** Doc 09 defines 43 validation/error IDs (VAL-SML-001 through VAL-SML-081, ERR-SML-001 through ERR-SML-052) that test whether SensorML JSON documents conform to the SensorML 3.0 specification. A client parser's job is to transform input into a useful TypeScript model, not to be a conformance validator.
 
 Critical concerns:
+
 - **No output model defined.** The document catalogs every SensorML property, validation rule, and error scenario but never defines what `parseSensorML()` returns. What TypeScript interface is the parser output? Unspecified.
 - **"Parser" conflated with "validator."** Line 271: "MUST enforce: Parser rejects invalid documents." A client parser should parse what it receives and produce a useful model — not act as a specification conformance validator.
 - **Test structure mirrors the SensorML spec**, not client code. Tests organized by SensorML structure types (PhysicalSystem, PhysicalComponent, SimpleProcess, AggregateProcess) and spec sections (§7, §8.3), not by parser functions.
@@ -157,6 +160,7 @@ Critical concerns:
 **Problem:** Doc 10 is a 1,952-line specification compliance test plan organized around the SWE Common 3.0 spec's component type taxonomy (12+ component types × 3 encodings × properties × edge cases = 195 tests). It never defines what the parser's API looks like or how its functions should be tested.
 
 Key issues:
+
 - **Spec-driven organization.** Tests organized by SWE Common §7.2.1–§7.7, not by parser modules (e.g., `BinaryReader`, `JsonComponentParser`).
 - **22 error IDs** (`ERR-SWE-JSON-001` through `ERR-SWE-BIN-010`) mimic OGC requirement ID naming.
 - **98 research questions** organized by specification concepts (Q1-Q98), not by client code concerns.
@@ -165,7 +169,7 @@ Key issues:
 
 **Mitigating factor:** The binary parsing section (~50% of the document's test effort) is genuinely client-oriented. Byte-level parsing tests (endianness, IEEE 754 edge cases, buffer truncation) directly test parser implementation behavior.
 
-**Fix Required:** Remove OpenSensorHub live server fixture strategy. Remove ERR-SWE-* IDs. Define the parser's TypeScript output interfaces. Reorganize tests by parser functions rather than spec sections. The binary parsing content is sound and can remain.
+**Fix Required:** Remove OpenSensorHub live server fixture strategy. Remove ERR-SWE-\* IDs. Define the parser's TypeScript output interfaces. Reorganize tests by parser functions rather than spec sections. The binary parsing content is sound and can remain.
 
 ---
 
@@ -175,6 +179,7 @@ Key issues:
 **Documents:** [09-sensorml-testing-requirements.md](../findings/09-sensorml-testing-requirements.md), [10-swe-common-testing-requirements.md](../findings/10-swe-common-testing-requirements.md)
 
 **Problem:** Both documents plan to source fixtures from OpenSensorHub's demo server (`https://api.georobotix.io/ogc/t18/api`). The strategy includes:
+
 - Fetching sample systems/datastreams from live endpoints
 - Requesting specific formats (SensorML via Accept header, SWE Common encodings)
 - Creating a two-tier test system where spec-sourced fixtures have strict assertions (MUST) and live-sourced fixtures have weak assertions (SHOULD handle gracefully)
@@ -323,6 +328,7 @@ The document correctly identifies this limitation in Section 5 (Runtime vs Compi
 ### P1: Doc 22 — Excellent Client-Testing Orientation
 
 Doc 22 (Conformance and Capability Testing) is the strongest document in this category. Nearly every test verifies actual client behavior:
+
 - `CSAPIClient` conformance detection: `hasConnectedSystems`, `detectCapabilities()`
 - Method availability guarding: CRUD methods throw `ConformanceError` when server doesn't support them
 - Graceful degradation: subsystem/datastream accessors return `null` when unsupported
@@ -372,6 +378,7 @@ Most Server-Oriented                                           Most Client-Orien
 ### 9.2 Common Pattern: No Client API Definition
 
 Documents 08, 09, and 10 share a critical blind spot — they exhaustively catalog what the specification defines but never define what the client code's API looks like. None specify:
+
 - What `CSAPIQueryBuilder` methods exist (documented in Implementation Guide)
 - What `parseSensorML()` returns (no TypeScript interface defined)
 - What `parseSWECommon()` returns (no TypeScript interface defined)
@@ -381,26 +388,26 @@ The Implementation Guide defines the component architecture (CSAPIQueryBuilder, 
 
 ### 9.3 Implementation Guide Alignment
 
-| Implementation Guide Component | Relevant Doc(s) | Alignment |
-|-------------------------------|-----------------|-----------|
-| CSAPIQueryBuilder (URL construction) | 08 | ❌ Doc 08 catalogs endpoints but never mentions QueryBuilder |
-| SensorML 3.0 Parser | 09 | ⚠️ Doc 09 covers input format but not output interface |
-| SWE Common 3.0 Parser | 10 | ⚠️ Doc 10 covers encodings but not output interface; binary section usable |
-| Conformance Reader (extension) | 22 | ✅ Doc 22 directly tests conformance detection behavior |
-| GeoJSON Handler (extension) | 11 | ⚠️ Mixed — transformation tests good, validation tests server-oriented |
-| model.ts Type Definitions | 21 | ⚠️ Analysis sound but proposed tests are shape-assertions |
+| Implementation Guide Component       | Relevant Doc(s) | Alignment                                                                  |
+| ------------------------------------ | --------------- | -------------------------------------------------------------------------- |
+| CSAPIQueryBuilder (URL construction) | 08              | ❌ Doc 08 catalogs endpoints but never mentions QueryBuilder               |
+| SensorML 3.0 Parser                  | 09              | ⚠️ Doc 09 covers input format but not output interface                     |
+| SWE Common 3.0 Parser                | 10              | ⚠️ Doc 10 covers encodings but not output interface; binary section usable |
+| Conformance Reader (extension)       | 22              | ✅ Doc 22 directly tests conformance detection behavior                    |
+| GeoJSON Handler (extension)          | 11              | ⚠️ Mixed — transformation tests good, validation tests server-oriented     |
+| model.ts Type Definitions            | 21              | ⚠️ Analysis sound but proposed tests are shape-assertions                  |
 
 ### 9.4 Requirement ID Inflation
 
-| Document | Unique Requirement IDs | Type |
-|----------|----------------------|------|
-| Doc 08 | 334 | SYS-001, DEP-001, ..., VAL-GJ-001, ..., VAL-SWE-072 |
-| Doc 09 | 43 | VAL-SML-001..021, ERR-SML-001..022 |
-| Doc 10 | 22 | ERR-SWE-JSON-001..006, ERR-SWE-TEXT-001..006, ERR-SWE-BIN-001..010 |
-| Doc 11 | 0 | Uses priority labels (P0-P3) |
-| Doc 21 | 0 | Uses pattern names |
-| Doc 22 | 0 | Uses scenario numbers (S1-S8) |
-| **Total** | **399** | — |
+| Document  | Unique Requirement IDs | Type                                                               |
+| --------- | ---------------------- | ------------------------------------------------------------------ |
+| Doc 08    | 334                    | SYS-001, DEP-001, ..., VAL-GJ-001, ..., VAL-SWE-072                |
+| Doc 09    | 43                     | VAL-SML-001..021, ERR-SML-001..022                                 |
+| Doc 10    | 22                     | ERR-SWE-JSON-001..006, ERR-SWE-TEXT-001..006, ERR-SWE-BIN-001..010 |
+| Doc 11    | 0                      | Uses priority labels (P0-P3)                                       |
+| Doc 21    | 0                      | Uses pattern names                                                 |
+| Doc 22    | 0                      | Uses scenario numbers (S1-S8)                                      |
+| **Total** | **399**                | —                                                                  |
 
 There are 399 requirement IDs across Docs 08-10, every one tracing to a spec section. Docs 11, 21, 22 (the better-oriented documents) use zero requirement IDs. The correlation is clear: the more requirement IDs, the more server-oriented the document.
 
@@ -444,20 +451,20 @@ Proceed to **Phase 2E** covering remaining document categories, or begin targete
 
 ## 11. Issue Tracker
 
-| ID | Severity | Document(s) | Issue | Status |
-|----|----------|-------------|-------|--------|
-| C1 | CRITICAL | 08 | Entire document is server compliance test suite with 334 requirement IDs | ✅ Resolved |
-| C2 | CRITICAL | 09 | SensorML testing validates documents, not parser — no output model defined | ✅ Resolved |
-| H1 | HIGH | 10 | SWE Common testing organized by spec sections with 22 error IDs, not parser code | ✅ Resolved |
-| H2 | HIGH | 09, 10 | Live server fixture sourcing from OpenSensorHub (AP2) | ✅ Resolved |
-| H3 | HIGH | 11 | Server data validation functions (validateUID, validateName, etc.) | ✅ Resolved |
-| H4 | HIGH | 21 | Shape-assertion model.spec.ts template tests nothing TypeScript compiler doesn't validate | ✅ Resolved |
-| M1 | MEDIUM | 08 | Useful spec reference buried under test framework framing | ✅ Resolved |
-| M2 | MEDIUM | 10 | Sound binary parsing tests buried alongside spec-oriented content | ✅ Resolved |
-| M3 | MEDIUM | 11 | Property matrix mirrors spec structure (AP3) | ✅ Resolved |
-| M4 | MEDIUM | 22 | Live server profiles included as reference context | ✅ Resolved |
-| L1 | LOW | 21 | 6-hour estimate for low-value shape-assertion tests | ✅ Resolved |
-| L2 | LOW | 11 | Over-specified test organization before code exists | ✅ Resolved |
-| L3 | LOW | 10 | 98 research questions disproportionate to implementation scope | ✅ Resolved |
+| ID  | Severity | Document(s) | Issue                                                                                     | Status      |
+| --- | -------- | ----------- | ----------------------------------------------------------------------------------------- | ----------- |
+| C1  | CRITICAL | 08          | Entire document is server compliance test suite with 334 requirement IDs                  | ✅ Resolved |
+| C2  | CRITICAL | 09          | SensorML testing validates documents, not parser — no output model defined                | ✅ Resolved |
+| H1  | HIGH     | 10          | SWE Common testing organized by spec sections with 22 error IDs, not parser code          | ✅ Resolved |
+| H2  | HIGH     | 09, 10      | Live server fixture sourcing from OpenSensorHub (AP2)                                     | ✅ Resolved |
+| H3  | HIGH     | 11          | Server data validation functions (validateUID, validateName, etc.)                        | ✅ Resolved |
+| H4  | HIGH     | 21          | Shape-assertion model.spec.ts template tests nothing TypeScript compiler doesn't validate | ✅ Resolved |
+| M1  | MEDIUM   | 08          | Useful spec reference buried under test framework framing                                 | ✅ Resolved |
+| M2  | MEDIUM   | 10          | Sound binary parsing tests buried alongside spec-oriented content                         | ✅ Resolved |
+| M3  | MEDIUM   | 11          | Property matrix mirrors spec structure (AP3)                                              | ✅ Resolved |
+| M4  | MEDIUM   | 22          | Live server profiles included as reference context                                        | ✅ Resolved |
+| L1  | LOW      | 21          | 6-hour estimate for low-value shape-assertion tests                                       | ✅ Resolved |
+| L2  | LOW      | 11          | Over-specified test organization before code exists                                       | ✅ Resolved |
+| L3  | LOW      | 10          | 98 research questions disproportionate to implementation scope                            | ✅ Resolved |
 
 **Summary:** 2 Critical, 4 High, 4 Medium, 3 Low — **13 total issues**

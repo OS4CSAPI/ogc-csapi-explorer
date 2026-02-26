@@ -29,7 +29,7 @@ Copy the prompt below and paste it into the conversation after completing coding
 
 ## Prompt
 
-```
+````
 Please perform a code review of the work completed since the last review.
 
 ### Scope
@@ -169,9 +169,10 @@ Checklist compliance score:
 
 ## Overall Assessment
 {{2-3 paragraph assessment of code quality, patterns, and trajectory}}
-```
+````
 
 Then commit the report, push, and confirm the file is at the expected path.
+
 ```
 
 ---
@@ -206,7 +207,9 @@ Every code review report MUST include:
 Reports follow this naming pattern:
 
 ```
+
 docs/implementation/phase-{major}.{minor}-code-review.md
+
 ```
 
 Where:
@@ -231,3 +234,4 @@ When performing a code review, the reviewer should have access to:
 | Implementation Guide | `docs/planning/csapi-implementation-guide.md` | Spec compliance reference |
 | ROADMAP | `docs/planning/ROADMAP.md` | Phase/issue context |
 | AI Operational Constraints | `docs/governance/AI_OPERATIONAL_CONSTRAINTS.md` | Behavioral boundaries |
+```

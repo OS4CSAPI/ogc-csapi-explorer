@@ -3,9 +3,10 @@
 **Research Plan:** [docs/research/testing/research-plans/05-roadmap-testing-integration.md](../research-plans/05-roadmap-testing-integration.md)  
 **Research Questions:** 62 questions about incremental testing workflow, test checkpoints, accumulation patterns, commit strategy, and test debt prevention  
 **Methodology:** 3-phase analysis (roadmap deep dive → cross-reference analysis → documentation)  
-**Research Time:** 1 hour (February 5, 2026)  
+**Research Time:** 1 hour (February 5, 2026)
 
 **Primary Source:**
+
 - CSAPI Roadmap v3.0: [docs/planning/ROADMAP.md](../../../planning/ROADMAP.md)
   - All 4 phases with 34 task breakdowns
   - Test-immediately specifications
@@ -13,6 +14,7 @@
   - Test line estimates per phase
 
 **Supporting Resources:**
+
 - Section 4: Implementation Guide Testing Requirements (validated test specifications)
 - CSAPI Implementation Guide: [docs/planning/csapi-implementation-guide.md](../../../planning/csapi-implementation-guide.md) (cross-reference validation)
 
@@ -33,11 +35,11 @@ This document defines the incremental testing workflow for the 34-task CSAPI Roa
 ### Test Line Accumulation Timeline
 
 | After Phase | Cumulative Test Lines | Checkpoints in Phase | Total Checkpoints |
-|-------------|---------------------|---------------------|-------------------|
-| Phase 1 | 400-550 lines | 4 | 4 |
-| Phase 2 | 1,200-1,550 lines | 9 | 13 |
-| Phase 3 | 3,600-5,050 lines | 15 | 28 |
-| Phase 4 | 4,400-6,300 lines | 3 | 31 |
+| ----------- | --------------------- | -------------------- | ----------------- |
+| Phase 1     | 400-550 lines         | 4                    | 4                 |
+| Phase 2     | 1,200-1,550 lines     | 9                    | 13                |
+| Phase 3     | 3,600-5,050 lines     | 15                   | 28                |
+| Phase 4     | 4,400-6,300 lines     | 3                    | 31                |
 
 ### Key Incremental Testing Principles
 
@@ -50,16 +52,19 @@ This document defines the incremental testing workflow for the 34-task CSAPI Roa
 ### Implementation Guide Alignment
 
 **Total Test Estimate Validation:**
+
 - Implementation Guide: 4,500-6,000 lines
 - Roadmap: 4,400-6,300 lines
 - **Alignment:** ✅ **Perfect match** (overlapping ranges)
 
 **Test File Structure Validation:**
+
 - Implementation Guide specifies: `model.spec.ts`, `url_builder.spec.ts`, helper tests, format tests, worker tests, integration tests
 - Roadmap creates exactly these files across 4 phases
 - **Alignment:** ✅ **Complete match**
 
 **Coverage Target Validation:**
+
 - Implementation Guide: >80% statement, >80% branch, 100% public API
 - Roadmap achieves >80% incrementally: 60-70% → 70-75% → 75-80% → >80%
 - **Alignment:** ✅ **Achieved through incremental approach**
@@ -75,17 +80,18 @@ This document defines the incremental testing workflow for the 34-task CSAPI Roa
 **Definition:** Write and commit tests within **2-3 hours** of completing implementation for that subtask.
 
 **Maximum Test Debt Thresholds:**
+
 - **Time threshold:** 2-3 hours maximum between implementation and tests
 - **Line threshold:** ~800 lines maximum without tests (Phase 3 Tasks 5 and 9)
 - **Task threshold:** 1 subtask = 1 test checkpoint (no batching multiple tasks)
 
 **Pattern by Task Type:**
 
-| Task Type | Implementation Time | Testing Time | Total Time | Example |
-|-----------|-------------------|--------------|------------|---------|
-| **Implementation + Test** | 1.5-2.5 hrs | 0.5 hr | 2-3 hrs | Phase 2 Task 1 (Systems methods) |
-| **Pure Testing Task** | 0 hrs | 4-6 hrs | 4-6 hrs | Phase 4 Task 2 (Integration tests) |
-| **Documentation Task** | 2-3 hrs | 0 hrs | 2-3 hrs | Phase 4 Task 4 (API documentation) |
+| Task Type                 | Implementation Time | Testing Time | Total Time | Example                            |
+| ------------------------- | ------------------- | ------------ | ---------- | ---------------------------------- |
+| **Implementation + Test** | 1.5-2.5 hrs         | 0.5 hr       | 2-3 hrs    | Phase 2 Task 1 (Systems methods)   |
+| **Pure Testing Task**     | 0 hrs               | 4-6 hrs      | 4-6 hrs    | Phase 4 Task 2 (Integration tests) |
+| **Documentation Task**    | 2-3 hrs             | 0 hrs        | 2-3 hrs    | Phase 4 Task 4 (API documentation) |
 
 **Why This Works:**
 
@@ -100,6 +106,7 @@ This document defines the incremental testing workflow for the 34-task CSAPI Roa
 **Problem Prevented:**
 
 In Roadmap v2.0, Phase 3 had this structure:
+
 - Task 1: Implement ALL SWE Common parsers (5-10 hours, ~2,900 lines)
 - Task 2: Test SWE Common parsers (2-4 hours, ~1,500 lines)
 - **Result:** 5-10 hours and 2,900 lines accumulated before testing ❌
@@ -107,21 +114,23 @@ In Roadmap v2.0, Phase 3 had this structure:
 **Solution in Roadmap v3.0:**
 
 Phase 3 restructured into 17 granular subtasks:
+
 - Each subtask: Implement one component (1-3 hours, 50-800 lines) → Test immediately (0.5 hr)
 - **Result:** Max 3 hours and 800 lines before testing ✅
 
 **Debt Accumulation Prevented:**
 
-| Metric | v2.0 (Batched) | v3.0 (Incremental) | Improvement |
-|--------|----------------|-------------------|-------------|
-| **Max time without tests** | 10 hours | 3 hours | 3.3× better |
-| **Max lines without tests** | 2,900 lines | 800 lines | 3.6× better |
-| **Checkpoints in Phase 3** | 2 | 15 | 7.5× more |
-| **Longest task** | 10 hours | 3 hours | 3.3× shorter |
+| Metric                      | v2.0 (Batched) | v3.0 (Incremental) | Improvement  |
+| --------------------------- | -------------- | ------------------ | ------------ |
+| **Max time without tests**  | 10 hours       | 3 hours            | 3.3× better  |
+| **Max lines without tests** | 2,900 lines    | 800 lines          | 3.6× better  |
+| **Checkpoints in Phase 3**  | 2              | 15                 | 7.5× more    |
+| **Longest task**            | 10 hours       | 3 hours            | 3.3× shorter |
 
 ### Natural Checkpoint Identification
 
 **Checkpoint Criteria:**
+
 1. **Component boundary** - New file, new class, new resource type
 2. **Functional boundary** - CRUD complete, parser complete, navigation methods complete
 3. **Time boundary** - Task takes 1-3 hours (natural session length)
@@ -130,23 +139,27 @@ Phase 3 restructured into 17 granular subtasks:
 **Examples of Natural Checkpoints:**
 
 **Phase 1 (Foundation):**
+
 - ✅ Types defined → Test type validation
 - ✅ Helpers implemented → Test helper functions
 - ✅ Stub QueryBuilder created → Test constructor/validation
 - ✅ Integration complete → Test endpoint detection
 
 **Phase 2 (QueryBuilder):**
+
 - ✅ Systems methods implemented → Test Systems methods
 - ✅ Deployments methods implemented → Test Deployments methods
 - [Repeat for all 9 resource types]
 
 **Phase 3 (Format Parsing):**
+
 - ✅ SWE Common types defined → Test type compilation
 - ✅ Simple Process parser implemented → Test Simple Process parsing
 - ✅ DataRecord parser implemented → Test DataRecord parsing
 - [Repeat for all 17 format subtasks]
 
 **Phase 4 (Worker & Testing):**
+
 - ✅ Worker extensions implemented → Test worker message handlers
 - ✅ Integration tests written → Tests themselves validate integration
 - ✅ Unit tests completed → Tests themselves validate coverage
@@ -169,6 +182,7 @@ Implementation: ~150-200 lines added to url_builder.ts"
 ```
 
 **Benefits:**
+
 - ✅ Atomic commits (implementation + tests = complete feature)
 - ✅ Rollback-friendly (revert removes both implementation and tests)
 - ✅ PR review-friendly (reviewer sees tests with implementation)
@@ -193,6 +207,7 @@ git commit -m "Add tests for Systems QueryBuilder methods
 ```
 
 **When to Use Alternative:**
+
 - Large implementation (>500 lines) where splitting aids review
 - Test file in different directory (less common with colocated tests)
 - PR feedback requested on implementation before tests
@@ -217,18 +232,18 @@ Implementation: Y lines added/modified
 
 **Validation Across All 34 Tasks:**
 
-| Phase | Task | Impl Time | Test Time | Total | Status |
-|-------|------|-----------|-----------|-------|--------|
-| 1 | Task 1 | 4-5 hrs | immediate | 4-5 hrs | ✅ <3 hrs between |
-| 1 | Task 2 | 3-4 hrs | immediate | 3-4 hrs | ✅ <3 hrs between |
-| 1 | Task 3 | 2-3 hrs | immediate | 2-3 hrs | ✅ <3 hrs between |
-| 1 | Task 4 | 3-4 hrs | immediate | 3-4 hrs | ✅ <3 hrs between |
-| 2 | Tasks 1-9 | 1.5-2.5 hrs each | 0.5 hr each | 2-3 hrs | ✅ <3 hrs between (all) |
-| 3 | Tasks 1-17 | 0.5-3 hrs each | immediate | 1-3.5 hrs | ✅ <3.5 hrs max |
-| 4 | Task 1 | 3-4 hrs | 0.5 hr | 3.5-4.5 hrs | ⚠️ Slightly over, but worker complex |
-| 4 | Task 2 | 0 hrs (pure testing) | 4-6 hrs | 4-6 hrs | ✅ N/A (is testing) |
-| 4 | Task 3 | 0 hrs (pure testing) | 3-4 hrs | 3-4 hrs | ✅ N/A (is testing) |
-| 4 | Task 4 | 2-3 hrs (documentation) | 0 hrs | 2-3 hrs | ✅ N/A (documentation) |
+| Phase | Task       | Impl Time               | Test Time   | Total       | Status                               |
+| ----- | ---------- | ----------------------- | ----------- | ----------- | ------------------------------------ |
+| 1     | Task 1     | 4-5 hrs                 | immediate   | 4-5 hrs     | ✅ <3 hrs between                    |
+| 1     | Task 2     | 3-4 hrs                 | immediate   | 3-4 hrs     | ✅ <3 hrs between                    |
+| 1     | Task 3     | 2-3 hrs                 | immediate   | 2-3 hrs     | ✅ <3 hrs between                    |
+| 1     | Task 4     | 3-4 hrs                 | immediate   | 3-4 hrs     | ✅ <3 hrs between                    |
+| 2     | Tasks 1-9  | 1.5-2.5 hrs each        | 0.5 hr each | 2-3 hrs     | ✅ <3 hrs between (all)              |
+| 3     | Tasks 1-17 | 0.5-3 hrs each          | immediate   | 1-3.5 hrs   | ✅ <3.5 hrs max                      |
+| 4     | Task 1     | 3-4 hrs                 | 0.5 hr      | 3.5-4.5 hrs | ⚠️ Slightly over, but worker complex |
+| 4     | Task 2     | 0 hrs (pure testing)    | 4-6 hrs     | 4-6 hrs     | ✅ N/A (is testing)                  |
+| 4     | Task 3     | 0 hrs (pure testing)    | 3-4 hrs     | 3-4 hrs     | ✅ N/A (is testing)                  |
+| 4     | Task 4     | 2-3 hrs (documentation) | 0 hrs       | 2-3 hrs     | ✅ N/A (documentation)               |
 
 **Result:** 31 of 31 test checkpoints meet <3 hour threshold ✅ (with Phase 4 Task 1 at 3.5-4.5 hours being complex worker integration)
 
@@ -239,12 +254,14 @@ Implementation: Y lines added/modified
 ### Task 1: Create Type System
 
 **Implementation:** (~4-5 hours, Low complexity)
+
 - Create `src/ogc-api/csapi/model.ts` (~350-400 lines)
 - Define all Part 1 resource interfaces (System, Deployment, Procedure, SamplingFeature, Property)
 - Define all Part 2 resource interfaces (Datastream, Observation, ControlStream, Command)
 - Define query options interfaces (QueryOptions, SystemQueryOptions, ObservationQueryOptions, etc.)
 
 **Testing:** (immediate, ~200-300 lines)
+
 - **What to test:**
   - Type definitions compile without errors (TypeScript compilation test)
   - All required properties present in interfaces
@@ -267,12 +284,12 @@ describe('CSAPI Type System', () => {
       properties: {
         featureType: 'sosa:System',
         uniqueIdentifier: 'urn:system:1',
-        name: 'Test System'
-      }
+        name: 'Test System',
+      },
     };
     expect(system).toBeDefined();
   });
-  
+
   // Repeat for all 9 resource types
 });
 ```
@@ -284,12 +301,14 @@ describe('CSAPI Type System', () => {
 ### Task 2: Create Helper Utilities
 
 **Implementation:** (~3-4 hours, Low complexity)
+
 - Create `src/ogc-api/csapi/helpers.ts` (~50-80 lines)
 - Implement `buildResourceUrl(resourceType, id?, subPath?, options?)` - core URL construction
 - Implement `buildQueryString(options?)` - parameter serialization with encoding
 - Implement URL encoding utilities, temporal parsing utilities, validation utilities
 
 **Testing:** (immediate, ~100-150 lines)
+
 - **What to test:**
   - `buildResourceUrl` with all parameter combinations (resource only, resource+id, resource+id+subPath)
   - `buildQueryString` with all parameter types (strings, numbers, arrays, objects)
@@ -309,12 +328,12 @@ describe('buildResourceUrl', () => {
     const url = buildResourceUrl('systems');
     expect(url).toBe('/collections/systems/items');
   });
-  
+
   it('should build single resource URL', () => {
     const url = buildResourceUrl('systems', 'sys-123');
     expect(url).toBe('/collections/systems/items/sys-123');
   });
-  
+
   it('should build nested resource URL', () => {
     const url = buildResourceUrl('systems', 'sys-123', 'datastreams');
     expect(url).toBe('/collections/systems/items/sys-123/datastreams');
@@ -326,17 +345,19 @@ describe('buildQueryString', () => {
     const qs = buildQueryString({ limit: 10, offset: 20 });
     expect(qs).toBe('?limit=10&offset=20');
   });
-  
+
   it('should encode special characters', () => {
     const qs = buildQueryString({ name: 'Test System' });
     expect(qs).toBe('?name=Test%20System');
   });
-  
+
   it('should serialize temporal intervals', () => {
-    const qs = buildQueryString({ 
-      phenomenonTime: '2024-01-01T00:00:00Z/2024-12-31T23:59:59Z' 
+    const qs = buildQueryString({
+      phenomenonTime: '2024-01-01T00:00:00Z/2024-12-31T23:59:59Z',
     });
-    expect(qs).toContain('phenomenonTime=2024-01-01T00%3A00%3A00Z%2F2024-12-31T23%3A59%3A59Z');
+    expect(qs).toContain(
+      'phenomenonTime=2024-01-01T00%3A00%3A00Z%2F2024-12-31T23%3A59%3A59Z'
+    );
   });
 });
 ```
@@ -348,6 +369,7 @@ describe('buildQueryString', () => {
 ### Task 3: Create Stub QueryBuilder
 
 **Implementation:** (~2-3 hours, Low complexity)
+
 - Create `src/ogc-api/csapi/url_builder.ts` (stub with constructor + 1-2 methods)
 - Implement constructor with collection info parameter
 - Implement `extractAvailableResources()` helper for resource discovery
@@ -356,6 +378,7 @@ describe('buildQueryString', () => {
 - Validate resource availability before URL construction
 
 **Testing:** (immediate, ~100-150 lines)
+
 - **What to test:**
   - Constructor extracts available resources from collection info
   - `availableResources` property populated correctly
@@ -373,30 +396,32 @@ describe('buildQueryString', () => {
 describe('CSAPIQueryBuilder', () => {
   let endpoint: OgcApiEndpoint;
   let builder: CSAPIQueryBuilder;
-  
+
   beforeEach(async () => {
     endpoint = new OgcApiEndpoint('http://test/csapi/');
     builder = await endpoint.csapi('full-collection');
   });
-  
+
   describe('constructor and resource validation', () => {
     it('should extract available resources from collection', () => {
       expect(builder.availableResources).toContain('systems');
       expect(builder.availableResources).toContain('datastreams');
     });
-    
+
     it('should throw when resource unavailable', async () => {
       const minimalBuilder = await endpoint.csapi('minimal-collection');
-      expect(() => minimalBuilder.getSystem('id')).toThrow('systems resource not available');
+      expect(() => minimalBuilder.getSystem('id')).toThrow(
+        'systems resource not available'
+      );
     });
   });
-  
+
   describe('getSystems', () => {
     it('should build collection URL', async () => {
       const url = builder.getSystems();
       expect(url).toBe('http://test/csapi/collections/systems/items');
     });
-    
+
     it('should build URL with pagination', async () => {
       const url = builder.getSystems({ limit: 10, offset: 20 });
       const parsed = new URL(url);
@@ -414,11 +439,13 @@ describe('CSAPIQueryBuilder', () => {
 ### Task 4: Integrate with OgcApiEndpoint
 
 **Implementation:** (~3-4 hours, Low complexity)
+
 - Modify `src/ogc-api/endpoint.ts` (+35 lines) - add csapi methods
 - Modify `src/ogc-api/shared/info.ts` (+12 lines) - add conformance checking
 - Modify `src/ogc-api/index.ts` (+17 lines) - add exports
 
 **Testing:** (immediate, ~100-150 lines)
+
 - **What to test:**
   - `csapiCollections` getter returns CSAPI collections
   - `hasConnectedSystems` getter checks Part 1 Core + Part 2 Dynamic Data conformance
@@ -435,35 +462,36 @@ describe('CSAPIQueryBuilder', () => {
 ```typescript
 describe('OgcApiEndpoint CSAPI integration', () => {
   let endpoint: OgcApiEndpoint;
-  
+
   beforeEach(async () => {
     endpoint = new OgcApiEndpoint('http://test/csapi/');
   });
-  
+
   it('should detect CSAPI collections', () => {
     const collections = endpoint.csapiCollections;
     expect(collections.length).toBeGreaterThan(0);
     expect(collections[0]).toHaveProperty('id');
   });
-  
+
   it('should check Connected Systems conformance', () => {
     expect(endpoint.hasConnectedSystems).toBe(true);
   });
-  
+
   it('should create CSAPIQueryBuilder', async () => {
     const builder = await endpoint.csapi('systems-collection');
     expect(builder).toBeInstanceOf(CSAPIQueryBuilder);
   });
-  
+
   it('should cache QueryBuilder instances', async () => {
     const builder1 = await endpoint.csapi('systems-collection');
     const builder2 = await endpoint.csapi('systems-collection');
     expect(builder1).toBe(builder2); // Same instance
   });
-  
+
   it('should throw for non-CSAPI collections', async () => {
-    await expect(endpoint.csapi('non-csapi-collection'))
-      .rejects.toThrow('Collection is not a CSAPI collection');
+    await expect(endpoint.csapi('non-csapi-collection')).rejects.toThrow(
+      'Collection is not a CSAPI collection'
+    );
   });
 });
 ```
@@ -482,6 +510,7 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 **Coverage After Phase 1:** ~60-70% (foundation only)
 
 **Commits:**
+
 1. "Add CSAPI type system with tests" (~350-400 impl + ~200-300 tests)
 2. "Add CSAPI helper utilities with tests" (~50-80 impl + ~100-150 tests)
 3. "Add stub CSAPI QueryBuilder with resource validation and tests" (~50-80 impl + ~100-150 tests)
@@ -498,12 +527,14 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 **Each Task Follows This Pattern:**
 
 1. **Implement** resource type methods in `url_builder.ts` (1.5-2.5 hours)
+
    - All CRUD operations (if applicable)
    - All navigation methods
    - All query parameters
    - Resource validation (~2 lines per method)
 
 2. **Test immediately** (0.5 hour, add to `url_builder.spec.ts`)
+
    - CRUD operation URLs
    - Navigation method URLs
    - Query parameter encoding
@@ -513,6 +544,7 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 3. **Commit** (implementation + tests together)
 
 **Why This Pattern:**
+
 - ✅ Each resource type is self-contained (atomic commit)
 - ✅ Tests written while method details fresh
 - ✅ Helper function bugs discovered early (Systems, not Commands)
@@ -525,6 +557,7 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 ### Task 1: Systems Methods
 
 **Implementation:** (~2-2.5 hours implementation, Medium complexity)
+
 - **Implement 12 Systems methods in `url_builder.ts`:**
   - `getSystems(options?)` - Collection query with pagination
   - `getSystem(id, options?)` - Single system by ID
@@ -540,6 +573,7 @@ describe('OgcApiEndpoint CSAPI integration', () => {
   - `getSystemProcedures(id, options?)` - Association link
 
 **Testing:** (~0.5 hour, ~40-50 lines)
+
 - **What to test:**
   - `getSystems` with pagination (limit, offset)
   - `getSystems` with filtering (systemType, bbox, datetime)
@@ -556,35 +590,39 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 ```typescript
 describe('Systems methods', () => {
   let builder: CSAPIQueryBuilder;
-  
+
   beforeEach(async () => {
     endpoint = new OgcApiEndpoint('http://test/csapi/');
     builder = await endpoint.csapi('systems-collection');
   });
-  
+
   describe('CRUD operations', () => {
     it('should create system (POST)', async () => {
-      const url = builder.createSystem({ /* body */ });
+      const url = builder.createSystem({
+        /* body */
+      });
       expect(url).toContain('/collections/systems/items');
       expect(url).not.toContain('?'); // No query params for POST
     });
-    
+
     it('should get single system (GET)', async () => {
       const url = builder.getSystem('sys-123');
       expect(url).toBe('http://test/csapi/collections/systems/items/sys-123');
     });
-    
+
     it('should update system (PUT)', async () => {
-      const url = builder.updateSystem('sys-123', { /* body */ });
+      const url = builder.updateSystem('sys-123', {
+        /* body */
+      });
       expect(url).toBe('http://test/csapi/collections/systems/items/sys-123');
     });
-    
+
     it('should delete system (DELETE)', async () => {
       const url = builder.deleteSystem('sys-123');
       expect(url).toBe('http://test/csapi/collections/systems/items/sys-123');
     });
   });
-  
+
   describe('collection queries', () => {
     it('should get systems with pagination', async () => {
       const url = builder.getSystems({ limit: 10, offset: 20 });
@@ -592,41 +630,42 @@ describe('Systems methods', () => {
       expect(parsed.searchParams.get('limit')).toBe('10');
       expect(parsed.searchParams.get('offset')).toBe('20');
     });
-    
+
     it('should get systems with bbox filter', async () => {
       const url = builder.getSystems({ bbox: [-180, -90, 180, 90] });
       expect(url).toContain('bbox=-180,-90,180,90');
     });
-    
+
     it('should get systems with systemType filter', async () => {
       const url = builder.getSystems({ systemType: 'sensor' });
       const parsed = new URL(url);
       expect(parsed.searchParams.get('systemType')).toBe('sensor');
     });
   });
-  
+
   describe('navigation methods', () => {
     it('should get system subsystems', async () => {
       const url = builder.getSystemSubsystems('sys-123');
       expect(url).toContain('/systems/items/sys-123/subsystems');
     });
-    
+
     it('should get system datastreams', async () => {
       const url = builder.getSystemDataStreams('sys-123');
       expect(url).toContain('/systems/items/sys-123/datastreams');
     });
-    
+
     it('should get system sampling features', async () => {
       const url = builder.getSystemSamplingFeatures('sys-123');
       expect(url).toContain('/systems/items/sys-123/samplingFeatures');
     });
   });
-  
+
   describe('error handling', () => {
     it('should throw if systems resource unavailable', async () => {
       const builder2 = await endpoint.csapi('minimal-collection');
-      await expect(() => builder2.getSystem('sys-123'))
-        .toThrow('systems resource not available');
+      await expect(() => builder2.getSystem('sys-123')).toThrow(
+        'systems resource not available'
+      );
     });
   });
 });
@@ -639,10 +678,12 @@ describe('Systems methods', () => {
 ### Task 2: Deployments Methods
 
 **Implementation:** (~1.5-2 hours, Medium complexity)
+
 - **Implement 8 Deployments methods**
 - Pattern identical to Systems (CRUD + navigation + history)
 
 **Testing:** (~0.5 hour, ~30-40 lines)
+
 - **What to test:**
   - Collection and individual retrieval
   - CRUD operations
@@ -658,9 +699,11 @@ describe('Systems methods', () => {
 ### Task 3: Procedures Methods
 
 **Implementation:** (~1.5-2 hours, Medium complexity)
+
 - **Implement 8 Procedures methods**
 
 **Testing:** (~0.5 hour, ~30-40 lines)
+
 - **What to test:**
   - Collection and retrieval
   - CRUD operations
@@ -676,9 +719,11 @@ describe('Systems methods', () => {
 ### Task 4: Sampling Features Methods
 
 **Implementation:** (~1.5-2 hours, Medium complexity)
+
 - **Implement 8 Sampling Features methods**
 
 **Testing:** (~0.5 hour, ~30-40 lines)
+
 - **What to test:**
   - Spatial filtering (bbox, geometry)
   - Observation retrieval
@@ -693,9 +738,11 @@ describe('Systems methods', () => {
 ### Task 5: Properties Methods
 
 **Implementation:** (~1-1.5 hours, Medium complexity)
+
 - **Implement 6 Properties methods** (read-only, no CRUD)
 
 **Testing:** (~0.5 hour, ~25-30 lines)
+
 - **What to test:**
   - Property retrieval
   - System/DataStream/ControlStream associations
@@ -708,9 +755,11 @@ describe('Systems methods', () => {
 ### Task 6: DataStreams Methods
 
 **Implementation:** (~2-2.5 hours, Medium-High complexity)
+
 - **Implement 11 DataStreams methods** (includes schema operations)
 
 **Testing:** (~0.5 hour, ~45-55 lines)
+
 - **What to test:**
   - Temporal filtering (phenomenonTime, resultTime)
   - Schema retrieval (`/schema` endpoint)
@@ -726,9 +775,11 @@ describe('Systems methods', () => {
 ### Task 7: Observations Methods
 
 **Implementation:** (~1.5-2 hours, Medium-High complexity)
+
 - **Implement 9 Observations methods** (includes bulk creation)
 
 **Testing:** (~0.5 hour, ~35-45 lines)
+
 - **What to test:**
   - Temporal filtering (phenomenonTime)
   - Bulk creation (POST array of observations)
@@ -743,9 +794,11 @@ describe('Systems methods', () => {
 ### Task 8: Control Streams Methods
 
 **Implementation:** (~1.5-2 hours, Medium-High complexity)
+
 - **Implement 8 Control Streams methods** (includes schema and feasibility)
 
 **Testing:** (~0.5 hour, ~30-40 lines)
+
 - **What to test:**
   - Schema retrieval
   - Feasibility checking (POST `/feasibility`)
@@ -760,9 +813,11 @@ describe('Systems methods', () => {
 ### Task 9: Commands Methods
 
 **Implementation:** (~1.5-2 hours, Medium-High complexity)
+
 - **Implement 10 Commands methods** (includes status, result, cancel)
 
 **Testing:** (~0.5 hour, ~40-50 lines)
+
 - **What to test:**
   - Temporal filtering (issueTime, executionTime)
   - Bulk command creation
@@ -790,24 +845,49 @@ describe('Systems methods', () => {
 
 ```typescript
 describe('CSAPIQueryBuilder', () => {
-  describe('constructor and resource validation', () => { /* Phase 1 */ });
-  
-  describe('Systems methods', () => { /* Task 1 */ });
-  describe('Deployments methods', () => { /* Task 2 */ });
-  describe('Procedures methods', () => { /* Task 3 */ });
-  describe('Sampling Features methods', () => { /* Task 4 */ });
-  describe('Properties methods', () => { /* Task 5 */ });
-  describe('DataStreams methods', () => { /* Task 6 */ });
-  describe('Observations methods', () => { /* Task 7 */ });
-  describe('Control Streams methods', () => { /* Task 8 */ });
-  describe('Commands methods', () => { /* Task 9 */ });
-  
-  describe('query parameter encoding', () => { /* Shared tests */ });
-  describe('combined filtering', () => { /* Integration tests */ });
+  describe('constructor and resource validation', () => {
+    /* Phase 1 */
+  });
+
+  describe('Systems methods', () => {
+    /* Task 1 */
+  });
+  describe('Deployments methods', () => {
+    /* Task 2 */
+  });
+  describe('Procedures methods', () => {
+    /* Task 3 */
+  });
+  describe('Sampling Features methods', () => {
+    /* Task 4 */
+  });
+  describe('Properties methods', () => {
+    /* Task 5 */
+  });
+  describe('DataStreams methods', () => {
+    /* Task 6 */
+  });
+  describe('Observations methods', () => {
+    /* Task 7 */
+  });
+  describe('Control Streams methods', () => {
+    /* Task 8 */
+  });
+  describe('Commands methods', () => {
+    /* Task 9 */
+  });
+
+  describe('query parameter encoding', () => {
+    /* Shared tests */
+  });
+  describe('combined filtering', () => {
+    /* Integration tests */
+  });
 });
 ```
 
 **Test Duplication Prevention:**
+
 - Shared `beforeEach` for all resource types (endpoint setup)
 - Shared utility functions for URL parsing validation
 - Shared fixtures for query parameters
@@ -822,11 +902,13 @@ describe('CSAPIQueryBuilder', () => {
 ### Why Phase 3 Was Restructured
 
 **Problem in v2.0 (Batched Testing):**
+
 - Task 1: Implement ALL SWE Common parsers (5-10 hours, ~2,900 lines)
 - Task 2: Test SWE Common parsers (2-4 hours, ~1,500 lines)
 - **Result:** 5-10 hours and 2,900 lines accumulated before testing ❌
 
 **Solution in v3.0 (Incremental Testing):**
+
 - 17 granular subtasks instead of 7
 - Each subtask: Implement one component (1-3 hours) → Test immediately (0.5 hr)
 - **Result:** Max 3 hours and 800 lines before testing ✅
@@ -834,10 +916,12 @@ describe('CSAPIQueryBuilder', () => {
 ### Dependency Fix: SWE Common Types Before SensorML Types
 
 **Critical Dependency:**
+
 - SensorML types depend on SWE Common types (for capability/characteristic values)
 - Must create SWE Common types (Task 4) BEFORE SensorML types (Task 5)
 
 **Task Order:**
+
 1. GeoJSON extensions (Task 1)
 2. Format Detector extensions (Task 2)
 3. Validator extensions (Task 3)
@@ -852,12 +936,14 @@ describe('CSAPIQueryBuilder', () => {
 ### Task 1: GeoJSON Handler Extensions
 
 **Implementation:** (~2-3 hours, Medium complexity)
+
 - Extend existing GeoJSON parser
 - Add CSAPI `featureType` recognition (sosa:System, sosa:Deployment, etc.)
 - Extract CSAPI properties (uniqueIdentifier, systemType, assetType, validTime)
 - Add validation (uniqueIdentifier must be URI, systemType from SOSA vocabulary)
 
 **Testing:** (immediate, ~150-300 lines)
+
 - **What to test:**
   - featureType recognition for all 9 resource types
   - Property extraction (uniqueIdentifier, systemType, assetType, validTime, etc.)
@@ -876,23 +962,25 @@ describe('GeoJSON CSAPI extensions', () => {
       geometry: { type: 'Point', coordinates: [0, 0] },
       properties: {
         featureType: 'sosa:System',
-        uniqueIdentifier: 'urn:system:1'
-      }
+        uniqueIdentifier: 'urn:system:1',
+      },
     };
     const parsed = parseGeoJSON(feature);
     expect(parsed.type).toBe('System');
   });
-  
+
   it('should extract CSAPI properties', () => {
-    const feature = { /* ... */ };
+    const feature = {
+      /* ... */
+    };
     const parsed = parseGeoJSON(feature);
     expect(parsed.uniqueIdentifier).toBe('urn:system:1');
     expect(parsed.systemType).toBe('sensor');
   });
-  
+
   it('should validate uniqueIdentifier is URI', () => {
     const feature = {
-      properties: { uniqueIdentifier: 'not-a-uri' }
+      properties: { uniqueIdentifier: 'not-a-uri' },
     };
     expect(() => parseGeoJSON(feature)).toThrow('uniqueIdentifier must be URI');
   });
@@ -906,10 +994,12 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 2: Format Detector Extensions
 
 **Implementation:** (~1-2 hours, Low complexity)
+
 - Register 4 new media types (`application/sml+json`, `application/swe+json`, etc.)
 - Add routing logic to parsers
 
 **Testing:** (immediate, ~50-100 lines)
+
 - **What to test:**
   - Media type registration
   - Routing to correct parser
@@ -923,11 +1013,13 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 3: Validator Extensions
 
 **Implementation:** (~3-4 hours, Medium complexity)
+
 - Add Part 1 validation rules
 - Add Part 2 validation rules
 - Add cross-reference validation
 
 **Testing:** (immediate, ~200-400 lines)
+
 - **What to test:**
   - Part 1 validation (required properties, URI formats, temporal validity)
   - Part 2 validation (schema conformance, result validation)
@@ -941,12 +1033,14 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 4: SWE Common Types
 
 **Implementation:** (~2-3 hours, Medium complexity)
+
 - Create `src/ogc-api/csapi/formats/swecommon/types.ts` (~600-800 lines)
 - Define all DataComponent interfaces
 - Define all Encoding interfaces
 - Define all Constraint interfaces
 
 **Testing:** (immediate, ~50-100 lines)
+
 - **What to test:**
   - Type definitions compile without errors
   - Union types discriminate correctly
@@ -961,11 +1055,13 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 5: SensorML Types
 
 **Implementation:** (~2-3 hours, Medium complexity)
+
 - Create `src/ogc-api/csapi/formats/sensorml/types.ts` (~800-1,200 lines)
 - Define all SensorML system interfaces
 - **Link to SWE Common types** from Task 4
 
 **Testing:** (immediate, ~50-100 lines)
+
 - **What to test:**
   - Type definitions compile without errors
   - SWE Common type integration works
@@ -979,10 +1075,12 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 6: SensorML Simple Process Parser
 
 **Implementation:** (~2-3 hours, Medium-High complexity)
+
 - Create `formats/sensorml/simple-process.ts` (~150-200 lines)
 - Implement SimpleProcess descriptor parser
 
 **Testing:** (immediate, ~100-150 lines)
+
 - **What to test:**
   - Parsing with spec example fixtures
   - Invalid document handling
@@ -996,10 +1094,12 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 7: SensorML Aggregate Process Parser
 
 **Implementation:** (~2-3 hours, Medium-High complexity)
+
 - Create `formats/sensorml/aggregate-process.ts` (~200-250 lines)
 - Implement AggregateProcess descriptor parser
 
 **Testing:** (immediate, ~150-200 lines)
+
 - **What to test:**
   - Parsing with spec example fixtures
   - Connection handling
@@ -1013,10 +1113,12 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 8: SensorML Physical System Parser
 
 **Implementation:** (~2-3 hours, Medium-High complexity)
+
 - Create `formats/sensorml/physical-system.ts` (~200-250 lines)
 - Implement PhysicalSystem descriptor parser
 
 **Testing:** (immediate, ~150-200 lines)
+
 - **What to test:**
   - Parsing with spec example fixtures
   - Position/location parsing
@@ -1030,10 +1132,12 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 9: SensorML Main Parser
 
 **Implementation:** (~2-3 hours, High complexity)
+
 - Create `formats/sensorml/parser.ts` (~600-800 lines)
 - Main parser with type discrimination and delegation
 
 **Testing:** (immediate, ~150-200 lines)
+
 - **What to test:**
   - Type discrimination (SimpleProcess vs AggregateProcess vs PhysicalSystem)
   - Recursive parsing
@@ -1048,10 +1152,12 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 10: SensorML Index
 
 **Implementation:** (~0.5-1 hour, Low complexity)
+
 - Create `formats/sensorml/index.ts` (~50-100 lines)
 - Barrel file exporting all SensorML parsers and types
 
 **Testing:** (immediate, ~20-30 lines)
+
 - **What to test:**
   - Exports work correctly
   - Tree-shaking friendly
@@ -1064,10 +1170,12 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 11: SWE Common Simple Components Parser
 
 **Implementation:** (~2-3 hours, Medium-High complexity)
+
 - Create `formats/swecommon/components.ts` (~300-400 lines)
 - Implement parsers for all simple components
 
 **Testing:** (immediate, ~200-300 lines)
+
 - **What to test:**
   - Each component type with fixtures
   - Constraint validation
@@ -1081,9 +1189,11 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 12: SWE Common DataRecord Parser
 
 **Implementation:** (~2-3 hours, Medium-High complexity)
+
 - Create `formats/swecommon/data-record.ts` (~150-200 lines)
 
 **Testing:** (immediate, ~100-150 lines)
+
 - **What to test:**
   - Flat records
   - Nested records
@@ -1097,9 +1207,11 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 13: SWE Common DataArray Parser
 
 **Implementation:** (~2-3 hours, Medium-High complexity)
+
 - Create `formats/swecommon/data-array.ts` (~200-250 lines)
 
 **Testing:** (immediate, ~150-200 lines)
+
 - **What to test:**
   - JSON encoding
   - Text encoding
@@ -1114,9 +1226,11 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 14: SWE Common Main Parser
 
 **Implementation:** (~2-3 hours, High complexity)
+
 - Create `formats/swecommon/parser.ts` (~500-700 lines)
 
 **Testing:** (immediate, ~200-300 lines)
+
 - **What to test:**
   - Type discrimination
   - Encoding detection
@@ -1131,9 +1245,11 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 15: SWE Common Index
 
 **Implementation:** (~0.5-1 hour, Low complexity)
+
 - Create `formats/swecommon/index.ts` (~50-100 lines)
 
 **Testing:** (immediate, ~20-30 lines)
+
 - **What to test:**
   - Exports work correctly
 - **Test file:** Add to `swecommon/parser.spec.ts`
@@ -1145,9 +1261,11 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 16: Format Constants
 
 **Implementation:** (~1-2 hours, Low complexity)
+
 - Create `src/ogc-api/csapi/formats/constants.ts` (~50-100 lines)
 
 **Testing:** (immediate, ~0 lines - validated by format detector tests)
+
 - **What to test:**
   - Constants validated by format detector tests (no separate test file)
 
@@ -1158,9 +1276,11 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 17: Format Index
 
 **Implementation:** (~1-2 hours, Low complexity)
+
 - Create `src/ogc-api/csapi/formats/index.ts` (~50-100 lines)
 
 **Testing:** (immediate, ~50-100 lines)
+
 - **What to test:**
   - All exports accessible
   - Tree-shaking works
@@ -1182,6 +1302,7 @@ describe('GeoJSON CSAPI extensions', () => {
 **Commits:** 17 commits (one per subtask, each with implementation + tests)
 
 **Maximum Test Debt Prevented:**
+
 - **Before (v2.0):** 10 hours, 2,900 lines without tests ❌
 - **After (v3.0):** 3 hours, 800 lines max without tests ✅ (Tasks 5 and 9)
 - **Improvement:** 3.3× time reduction, 3.6× line reduction
@@ -1195,10 +1316,12 @@ describe('GeoJSON CSAPI extensions', () => {
 ### Task 1: Worker Extensions
 
 **Implementation:** (~3-4 hours, Medium complexity)
+
 - Add 9 CSAPI message types to existing Web Worker
 - Integrate SensorML and SWE Common parsers
 
 **Testing:** (immediate, ~200-300 lines)
+
 - **What to test:**
   - Each message type (9 types)
   - Parser integration
@@ -1213,29 +1336,32 @@ describe('GeoJSON CSAPI extensions', () => {
 describe('CSAPI Worker Message Handlers', () => {
   describe('PARSE_SENSORML_3', () => {
     it('should parse PhysicalSystem', async () => {
-      const input = { type: 'PhysicalSystem', /* ... */ };
+      const input = { type: 'PhysicalSystem' /* ... */ };
       const result = await worker.send('PARSE_SENSORML_3', input);
       expect(result.type).toBe('PhysicalSystem');
     });
-    
+
     it('should handle invalid input', async () => {
       const input = { type: 'Invalid' };
-      await expect(worker.send('PARSE_SENSORML_3', input))
-        .rejects.toThrow('Invalid SensorML document');
+      await expect(worker.send('PARSE_SENSORML_3', input)).rejects.toThrow(
+        'Invalid SensorML document'
+      );
     });
   });
-  
+
   describe('PARSE_SWE_BINARY', () => {
     it('should decode binary block', async () => {
       const input = {
         data: 'base64EncodedBinaryData...',
-        schema: { /* SWE DataArray schema */ }
+        schema: {
+          /* SWE DataArray schema */
+        },
       };
       const result = await worker.send('PARSE_SWE_BINARY', input);
       expect(Array.isArray(result)).toBe(true);
     });
   });
-  
+
   // ... other message types
 });
 ```
@@ -1247,10 +1373,12 @@ describe('CSAPI Worker Message Handlers', () => {
 ### Task 2: Integration Tests (PURE TESTING TASK)
 
 **Implementation:** (~4-6 hours, Medium complexity)
+
 - **THIS IS A TESTING TASK** - no implementation added
 - Write end-to-end workflow tests (~500-800 lines)
 
 **Testing:** (this IS the task, ~500-800 lines)
+
 - **What to test:**
   - **Discovery workflow:** connect → conformance → collections → resources
   - **Observation workflow:** systems → datastreams → observations → pagination → parsing
@@ -1269,50 +1397,50 @@ describe('CSAPI Integration Tests', () => {
     it('should discover and query CSAPI collections', async () => {
       // Connect
       const endpoint = new OgcApiEndpoint('http://test/csapi/');
-      
+
       // Check conformance
       expect(endpoint.hasConnectedSystems).toBe(true);
-      
+
       // List collections
       const collections = endpoint.csapiCollections;
       expect(collections.length).toBeGreaterThan(0);
-      
+
       // Create QueryBuilder
       const builder = await endpoint.csapi(collections[0].id);
-      
+
       // Query systems
       const systems = builder.getSystems({ limit: 10 });
       expect(systems).toBeDefined();
     });
   });
-  
+
   describe('Observation workflow', () => {
     it('should query observations end-to-end', async () => {
       const endpoint = new OgcApiEndpoint('http://test/csapi/');
       const builder = await endpoint.csapi('systems-collection');
-      
+
       // Get systems
       const systems = builder.getSystems();
       const systemId = systems.features[0].id;
-      
+
       // Get datastreams
       const datastreams = builder.getSystemDataStreams(systemId);
       const datastreamId = datastreams.features[0].id;
-      
+
       // Query observations
       const observations = builder.getDataStreamObservations(datastreamId, {
         phenomenonTime: '2024-01-01T00:00:00Z/2024-12-31T23:59:59Z',
-        limit: 100
+        limit: 100,
       });
-      
+
       expect(observations.features.length).toBeGreaterThan(0);
-      
+
       // Parse results
       const parsed = parseSWEDataRecord(observations.features[0].result);
       expect(parsed).toBeDefined();
     });
   });
-  
+
   // ... other workflows
 });
 ```
@@ -1324,10 +1452,12 @@ describe('CSAPI Integration Tests', () => {
 ### Task 3: Unit Tests Completion (PURE TESTING TASK)
 
 **Implementation:** (~3-4 hours, Medium complexity)
+
 - **THIS IS A TESTING TASK** - no implementation added
 - Complete coverage gaps (~300-450 lines)
 
 **Testing:** (this IS the task, ~300-450 lines)
+
 - **What to test:**
   - Edge cases: empty collections, minimal resources, boundary conditions
   - Error cases: invalid parameters, malformed URLs, resource validation failures
@@ -1343,10 +1473,12 @@ describe('CSAPI Integration Tests', () => {
 ### Task 4: API Documentation
 
 **Implementation:** (~2-3 hours, Low complexity)
+
 - **THIS IS A DOCUMENTATION TASK** - verify JSDoc complete
 - No tests added (documentation validation only)
 
 **Testing:** (validation only, ~0 lines)
+
 - **What to validate:**
   - TypeDoc configuration includes CSAPI types
   - All JSDoc comments complete and accurate
@@ -1368,6 +1500,7 @@ describe('CSAPI Integration Tests', () => {
 **Coverage After Phase 4:** >80% (comprehensive testing complete)
 
 **Commits:**
+
 1. "Add CSAPI worker extensions with tests" (~50 impl + ~200-300 tests)
 2. "Add CSAPI integration tests" (~500-800 tests only)
 3. "Complete CSAPI unit test coverage" (~300-450 tests only)
@@ -1382,11 +1515,13 @@ describe('CSAPI Integration Tests', () => {
 ### Phase 1: Foundation Test Files Created
 
 **Created:**
+
 - `model.spec.ts` (~200-300 lines) - Type validation tests
 - `helpers.spec.ts` (~100-150 lines) - Helper utility tests
 - `url_builder.spec.ts` (~100-150 lines initially) - Stub QueryBuilder tests
 
 **Modified:**
+
 - `endpoint.spec.ts` (+100-150 lines) - Integration tests for CSAPI detection
 
 **Total After Phase 1:** ~500-750 lines across 4 files
@@ -1396,9 +1531,11 @@ describe('CSAPI Integration Tests', () => {
 ### Phase 2: QueryBuilder Tests Expanded
 
 **Created:**
+
 - None (all added to existing `url_builder.spec.ts`)
 
 **Modified:**
+
 - `url_builder.spec.ts` (+700-850 lines) - Grows to ~800-1,000 lines total
   - Systems methods tests (+40-50)
   - Deployments methods tests (+30-40)
@@ -1417,6 +1554,7 @@ describe('CSAPI Integration Tests', () => {
 ### Phase 3: Format Parser Tests Added
 
 **Created (15 new test files):**
+
 - `formats/swecommon/types.spec.ts` (~50-100 lines)
 - `formats/sensorml/types.spec.ts` (~50-100 lines)
 - `formats/sensorml/simple-process.spec.ts` (~100-150 lines)
@@ -1437,9 +1575,11 @@ describe('CSAPI Integration Tests', () => {
 ### Phase 4: Worker and Integration Tests Added
 
 **Created:**
+
 - `worker/csapi-handlers.spec.ts` (~200-300 lines)
 
 **Modified:**
+
 - `endpoint.spec.ts` or new `integration.spec.ts` (+500-800 lines) - Integration workflows
 - Multiple existing test files (+300-450 lines) - Unit test completion
 
@@ -1487,48 +1627,48 @@ Plus modifications to existing test files:
 
 ### Cumulative Test Lines by Checkpoint
 
-| Checkpoint | Phase | Task | Lines Added | Cumulative Lines | % of Total |
-|------------|-------|------|-------------|-----------------|-----------|
-| **Phase 1 Start** | | | | 0 | 0% |
-| 1 | 1 | Task 1 (Types) | 200-300 | 200-300 | 4-5% |
-| 2 | 1 | Task 2 (Helpers) | 100-150 | 300-450 | 6-7% |
-| 3 | 1 | Task 3 (Stub QB) | 100-150 | 400-600 | 8-9% |
-| 4 | 1 | Task 4 (Integration) | 100-150 | 500-750 | 10-12% |
-| **Phase 1 End** | | | | **500-750** | **10-12%** |
-| 5 | 2 | Task 1 (Systems) | 40-50 | 540-800 | 11-12% |
-| 6 | 2 | Task 2 (Deployments) | 30-40 | 570-840 | 11-13% |
-| 7 | 2 | Task 3 (Procedures) | 30-40 | 600-880 | 12-14% |
-| 8 | 2 | Task 4 (SamplingFeatures) | 30-40 | 630-920 | 12-14% |
-| 9 | 2 | Task 5 (Properties) | 25-30 | 655-950 | 13-15% |
-| 10 | 2 | Task 6 (DataStreams) | 45-55 | 700-1,005 | 14-15% |
-| 11 | 2 | Task 7 (Observations) | 35-45 | 735-1,050 | 14-16% |
-| 12 | 2 | Task 8 (ControlStreams) | 30-40 | 765-1,090 | 15-17% |
-| 13 | 2 | Task 9 (Commands) | 40-50 | 805-1,140 | 16-18% |
-| **Phase 2 End** | | | | **805-1,140** | **16-18%** |
-| 14 | 3 | Task 1 (GeoJSON) | 150-300 | 955-1,440 | 19-22% |
-| 15 | 3 | Task 2 (Detector) | 50-100 | 1,005-1,540 | 20-24% |
-| 16 | 3 | Task 3 (Validator) | 200-400 | 1,205-1,940 | 24-30% |
-| 17 | 3 | Task 4 (SWE Types) | 50-100 | 1,255-2,040 | 25-31% |
-| 18 | 3 | Task 5 (SML Types) | 50-100 | 1,305-2,140 | 26-33% |
-| 19 | 3 | Task 6 (SimpleProcess) | 100-150 | 1,405-2,290 | 28-35% |
-| 20 | 3 | Task 7 (AggregateProcess) | 150-200 | 1,555-2,490 | 31-38% |
-| 21 | 3 | Task 8 (PhysicalSystem) | 150-200 | 1,705-2,690 | 34-41% |
-| 22 | 3 | Task 9 (SML Parser) | 150-200 | 1,855-2,890 | 37-44% |
-| 23 | 3 | Task 10 (SML Index) | 20-30 | 1,875-2,920 | 37-45% |
-| 24 | 3 | Task 11 (SWE Components) | 200-300 | 2,075-3,220 | 41-49% |
-| 25 | 3 | Task 12 (DataRecord) | 100-150 | 2,175-3,370 | 43-52% |
-| 26 | 3 | Task 13 (DataArray) | 150-200 | 2,325-3,570 | 46-55% |
-| 27 | 3 | Task 14 (SWE Parser) | 200-300 | 2,525-3,870 | 50-59% |
-| 28 | 3 | Task 15 (SWE Index) | 20-30 | 2,545-3,900 | 51-60% |
-| 29 | 3 | Task 16 (Constants) | 0 | 2,545-3,900 | 51-60% |
-| 30 | 3 | Task 17 (Format Index) | 50-100 | 2,595-4,000 | 52-61% |
-| **Phase 3 End** | | | | **2,595-4,000** | **52-61%** |
-| 31 | 4 | Task 1 (Worker) | 200-300 | 2,795-4,300 | 56-66% |
-| 32 | 4 | Task 2 (Integration) | 500-800 | 3,295-5,100 | 66-78% |
-| 33 | 4 | Task 3 (Unit Completion) | 300-450 | 3,595-5,550 | 72-85% |
-| 34 | 4 | Task 4 (Documentation) | 0 | 3,595-5,550 | 72-85% |
-| **Phase 4 End** | | | | **3,595-5,550** | **72-85%** |
-| **TOTAL** | | | | **~4,400-6,300** | **100%** |
+| Checkpoint        | Phase | Task                      | Lines Added | Cumulative Lines | % of Total |
+| ----------------- | ----- | ------------------------- | ----------- | ---------------- | ---------- |
+| **Phase 1 Start** |       |                           |             | 0                | 0%         |
+| 1                 | 1     | Task 1 (Types)            | 200-300     | 200-300          | 4-5%       |
+| 2                 | 1     | Task 2 (Helpers)          | 100-150     | 300-450          | 6-7%       |
+| 3                 | 1     | Task 3 (Stub QB)          | 100-150     | 400-600          | 8-9%       |
+| 4                 | 1     | Task 4 (Integration)      | 100-150     | 500-750          | 10-12%     |
+| **Phase 1 End**   |       |                           |             | **500-750**      | **10-12%** |
+| 5                 | 2     | Task 1 (Systems)          | 40-50       | 540-800          | 11-12%     |
+| 6                 | 2     | Task 2 (Deployments)      | 30-40       | 570-840          | 11-13%     |
+| 7                 | 2     | Task 3 (Procedures)       | 30-40       | 600-880          | 12-14%     |
+| 8                 | 2     | Task 4 (SamplingFeatures) | 30-40       | 630-920          | 12-14%     |
+| 9                 | 2     | Task 5 (Properties)       | 25-30       | 655-950          | 13-15%     |
+| 10                | 2     | Task 6 (DataStreams)      | 45-55       | 700-1,005        | 14-15%     |
+| 11                | 2     | Task 7 (Observations)     | 35-45       | 735-1,050        | 14-16%     |
+| 12                | 2     | Task 8 (ControlStreams)   | 30-40       | 765-1,090        | 15-17%     |
+| 13                | 2     | Task 9 (Commands)         | 40-50       | 805-1,140        | 16-18%     |
+| **Phase 2 End**   |       |                           |             | **805-1,140**    | **16-18%** |
+| 14                | 3     | Task 1 (GeoJSON)          | 150-300     | 955-1,440        | 19-22%     |
+| 15                | 3     | Task 2 (Detector)         | 50-100      | 1,005-1,540      | 20-24%     |
+| 16                | 3     | Task 3 (Validator)        | 200-400     | 1,205-1,940      | 24-30%     |
+| 17                | 3     | Task 4 (SWE Types)        | 50-100      | 1,255-2,040      | 25-31%     |
+| 18                | 3     | Task 5 (SML Types)        | 50-100      | 1,305-2,140      | 26-33%     |
+| 19                | 3     | Task 6 (SimpleProcess)    | 100-150     | 1,405-2,290      | 28-35%     |
+| 20                | 3     | Task 7 (AggregateProcess) | 150-200     | 1,555-2,490      | 31-38%     |
+| 21                | 3     | Task 8 (PhysicalSystem)   | 150-200     | 1,705-2,690      | 34-41%     |
+| 22                | 3     | Task 9 (SML Parser)       | 150-200     | 1,855-2,890      | 37-44%     |
+| 23                | 3     | Task 10 (SML Index)       | 20-30       | 1,875-2,920      | 37-45%     |
+| 24                | 3     | Task 11 (SWE Components)  | 200-300     | 2,075-3,220      | 41-49%     |
+| 25                | 3     | Task 12 (DataRecord)      | 100-150     | 2,175-3,370      | 43-52%     |
+| 26                | 3     | Task 13 (DataArray)       | 150-200     | 2,325-3,570      | 46-55%     |
+| 27                | 3     | Task 14 (SWE Parser)      | 200-300     | 2,525-3,870      | 50-59%     |
+| 28                | 3     | Task 15 (SWE Index)       | 20-30       | 2,545-3,900      | 51-60%     |
+| 29                | 3     | Task 16 (Constants)       | 0           | 2,545-3,900      | 51-60%     |
+| 30                | 3     | Task 17 (Format Index)    | 50-100      | 2,595-4,000      | 52-61%     |
+| **Phase 3 End**   |       |                           |             | **2,595-4,000**  | **52-61%** |
+| 31                | 4     | Task 1 (Worker)           | 200-300     | 2,795-4,300      | 56-66%     |
+| 32                | 4     | Task 2 (Integration)      | 500-800     | 3,295-5,100      | 66-78%     |
+| 33                | 4     | Task 3 (Unit Completion)  | 300-450     | 3,595-5,550      | 72-85%     |
+| 34                | 4     | Task 4 (Documentation)    | 0           | 3,595-5,550      | 72-85%     |
+| **Phase 4 End**   |       |                           |             | **3,595-5,550**  | **72-85%** |
+| **TOTAL**         |       |                           |             | **~4,400-6,300** | **100%**   |
 
 **Note:** Final total may vary slightly from accumulation due to rounding and overlaps (e.g., integration tests span multiple components).
 
@@ -1560,6 +1700,7 @@ Legend:
 ```
 
 **Key Observations:**
+
 - **Slow start (Phase 1):** Foundation work, modest test accumulation
 - **Steady climb (Phase 2):** Consistent ~40-50 lines per task, predictable growth
 - **Rapid climb (Phase 3):** Largest phase, 17 checkpoints, steepest slope
@@ -1572,12 +1713,14 @@ Legend:
 ### When to Create New Test Files
 
 **Create New Test File When:**
+
 1. **New component type** - Different architectural layer (QueryBuilder vs Parser vs Worker)
 2. **New format type** - Different parser (SensorML vs SWE Common)
 3. **New resource type** - Only if >500 lines of tests (not needed for CSAPI, all in `url_builder.spec.ts`)
 4. **New subsystem** - Different functional area (formats/ vs worker/)
 
 **Add to Existing Test File When:**
+
 1. **Same component** - Adding methods to QueryBuilder (all 9 resource types in `url_builder.spec.ts`)
 2. **Same parser** - Adding parser functions (all SWE components in `components.spec.ts`)
 3. **Same architectural layer** - Integration tests (all in `endpoint.spec.ts`)
@@ -1585,12 +1728,14 @@ Legend:
 ### Preventing Test File Bloat
 
 **Guidelines:**
+
 - **Maximum file size:** ~500 lines per test file (split if exceeding)
 - **Split by component:** SensorML parsers split into 5 files (types, simple-process, aggregate-process, physical-system, parser)
 - **Split by functionality:** SWE Common split into 5 files (types, components, data-record, data-array, parser)
 - **Exception:** QueryBuilder stays in one file (~800-1,000 lines) because splitting by resource type would create duplication
 
 **Why QueryBuilder Doesn't Split:**
+
 - All 9 resource types share same test pattern (CRUD, navigation, query params)
 - Shared `beforeEach` setup (endpoint, builder)
 - Shared utility functions (URL parsing, fixtures)
@@ -1605,42 +1750,51 @@ Legend:
 describe('CSAPIQueryBuilder', () => {
   let endpoint: OgcApiEndpoint;
   let builder: CSAPIQueryBuilder;
-  
+
   // Shared setup for ALL 9 resource types
   beforeEach(async () => {
     endpoint = new OgcApiEndpoint('http://test/csapi/');
     builder = await endpoint.csapi('full-collection');
   });
-  
+
   // Shared utility functions
   function expectValidUrl(url: string, path: string) {
     const parsed = new URL(url);
     expect(parsed.pathname).toBe(path);
   }
-  
+
   function expectQueryParam(url: string, key: string, value: string) {
     const parsed = new URL(url);
     expect(parsed.searchParams.get(key)).toBe(value);
   }
-  
+
   // Resource type 1
   describe('Systems methods', () => {
-    describe('CRUD operations', () => { /* tests */ });
-    describe('collection queries', () => { /* tests */ });
-    describe('navigation methods', () => { /* tests */ });
-    describe('error handling', () => { /* tests */ });
+    describe('CRUD operations', () => {
+      /* tests */
+    });
+    describe('collection queries', () => {
+      /* tests */
+    });
+    describe('navigation methods', () => {
+      /* tests */
+    });
+    describe('error handling', () => {
+      /* tests */
+    });
   });
-  
+
   // Resource type 2
   describe('Deployments methods', () => {
     // Same structure as Systems
   });
-  
+
   // ... Repeat for all 9 resource types
 });
 ```
 
 **Benefits:**
+
 - ✅ One `beforeEach` for all tests (no duplication)
 - ✅ Shared utility functions (no duplication)
 - ✅ Consistent structure (easy to review/maintain)
@@ -1669,6 +1823,7 @@ formats/
 ```
 
 **Benefits:**
+
 - ✅ Each parser component in separate file (~100-300 lines)
 - ✅ Easy to locate tests (file name = component name)
 - ✅ Tests isolated (no dependencies between files)
@@ -1676,6 +1831,7 @@ formats/
 - ✅ Incremental commits (one file per task)
 
 **When Tests Cross Boundaries:**
+
 - **SensorML depends on SWE Common types** - Use mocks or real SWE Common types (import from `../swecommon/types`)
 - **Main parser depends on sub-parsers** - Test main parser with integration tests (use real sub-parsers)
 - **Format round-tripping** - Integration tests in `endpoint.spec.ts` (test full parse → serialize → parse cycle)
@@ -1710,6 +1866,7 @@ Coverage: 100% of Systems methods"
 ```
 
 **Benefits:**
+
 - ✅ **Atomic commits** - Implementation and tests are one unit
 - ✅ **Rollback-friendly** - `git revert` removes both implementation and tests
 - ✅ **PR review-friendly** - Reviewer sees tests with implementation
@@ -1742,6 +1899,7 @@ Tests: ~40-50 lines added to url_builder.spec.ts"
 ```
 
 **When to Use Alternative:**
+
 - **Large implementation** (>500 lines) where splitting aids review
 - **Test file in different directory** (rare with colocated tests)
 - **PR feedback requested** on implementation before tests
@@ -1772,6 +1930,7 @@ Coverage: Z% of <component>
 **Examples:**
 
 **Phase 1 Commit:**
+
 ```
 Add CSAPI type system with tests
 
@@ -1791,6 +1950,7 @@ Coverage: 100% type coverage
 ```
 
 **Phase 2 Commit:**
+
 ```
 Add DataStreams QueryBuilder methods with tests
 
@@ -1813,6 +1973,7 @@ Coverage: 100% of DataStreams methods
 ```
 
 **Phase 3 Commit:**
+
 ```
 Add SensorML Physical System parser with tests
 
@@ -1834,6 +1995,7 @@ Coverage: 100% of PhysicalSystem parser
 ```
 
 **Phase 4 Commit:**
+
 ```
 Add CSAPI integration tests
 
@@ -1851,6 +2013,7 @@ Coverage: Integration workflows complete
 ### Commit Frequency
 
 **Recommended Frequency:**
+
 - **Per task** (not per subtask, not per phase)
 - **Phase 1:** 4 commits (one per task)
 - **Phase 2:** 9 commits (one per resource type)
@@ -1859,10 +2022,12 @@ Coverage: Integration workflows complete
 - **Total:** ~33-34 commits across all phases
 
 **Too Frequent:**
+
 - ❌ Per method (100+ commits) - too granular
 - ❌ Per test (200+ commits) - too granular
 
 **Too Infrequent:**
+
 - ❌ Per phase (4 commits total) - too large, hard to review
 - ❌ One commit at end (1 commit) - impossible to review, no rollback points
 
@@ -1883,6 +2048,7 @@ Coverage: Integration workflows complete
 ```
 
 **Benefits:**
+
 - ✅ **Clear progression** - Each commit adds one resource type
 - ✅ **Bisect-friendly** - Can binary search for bugs
 - ✅ **Rollback-friendly** - Can revert individual resource types
@@ -1896,20 +2062,20 @@ Coverage: Integration workflows complete
 
 **Validation Across All 34 Tasks:**
 
-| Phase | Task | Impl Time | Test Time | Max Gap | Status |
-|-------|------|-----------|-----------|---------|--------|
-| 1 | All 4 tasks | 2-5 hrs | immediate | 2-5 hrs | ✅ <5 hrs |
-| 2 | All 9 tasks | 1.5-2.5 hrs | 0.5 hr | 2-3 hrs | ✅ <3 hrs |
-| 3 | Tasks 1-3 | 1-4 hrs | immediate | 1-4 hrs | ✅ <4 hrs |
-| 3 | Task 4 (SWE Types) | 2-3 hrs | immediate | 2-3 hrs | ✅ <3 hrs |
-| 3 | Task 5 (SML Types) | 2-3 hrs | immediate | 2-3 hrs | ✅ <3 hrs |
-| 3 | Tasks 6-10 (SML Parsers) | 0.5-3 hrs | immediate | 0.5-3 hrs | ✅ <3 hrs |
-| 3 | Tasks 11-15 (SWE Parsers) | 0.5-3 hrs | immediate | 0.5-3 hrs | ✅ <3 hrs |
-| 3 | Tasks 16-17 (Indices) | 0.5-2 hrs | immediate | 0.5-2 hrs | ✅ <2 hrs |
-| 4 | Task 1 (Worker) | 3-4 hrs | 0.5 hr | 3.5-4.5 hrs | ⚠️ Slightly over (complex) |
-| 4 | Task 2 (Integration) | 0 hrs | 4-6 hrs | N/A | ✅ Pure testing |
-| 4 | Task 3 (Unit Completion) | 0 hrs | 3-4 hrs | N/A | ✅ Pure testing |
-| 4 | Task 4 (Documentation) | 2-3 hrs | 0 hrs | N/A | ✅ Documentation |
+| Phase | Task                      | Impl Time   | Test Time | Max Gap     | Status                     |
+| ----- | ------------------------- | ----------- | --------- | ----------- | -------------------------- |
+| 1     | All 4 tasks               | 2-5 hrs     | immediate | 2-5 hrs     | ✅ <5 hrs                  |
+| 2     | All 9 tasks               | 1.5-2.5 hrs | 0.5 hr    | 2-3 hrs     | ✅ <3 hrs                  |
+| 3     | Tasks 1-3                 | 1-4 hrs     | immediate | 1-4 hrs     | ✅ <4 hrs                  |
+| 3     | Task 4 (SWE Types)        | 2-3 hrs     | immediate | 2-3 hrs     | ✅ <3 hrs                  |
+| 3     | Task 5 (SML Types)        | 2-3 hrs     | immediate | 2-3 hrs     | ✅ <3 hrs                  |
+| 3     | Tasks 6-10 (SML Parsers)  | 0.5-3 hrs   | immediate | 0.5-3 hrs   | ✅ <3 hrs                  |
+| 3     | Tasks 11-15 (SWE Parsers) | 0.5-3 hrs   | immediate | 0.5-3 hrs   | ✅ <3 hrs                  |
+| 3     | Tasks 16-17 (Indices)     | 0.5-2 hrs   | immediate | 0.5-2 hrs   | ✅ <2 hrs                  |
+| 4     | Task 1 (Worker)           | 3-4 hrs     | 0.5 hr    | 3.5-4.5 hrs | ⚠️ Slightly over (complex) |
+| 4     | Task 2 (Integration)      | 0 hrs       | 4-6 hrs   | N/A         | ✅ Pure testing            |
+| 4     | Task 3 (Unit Completion)  | 0 hrs       | 3-4 hrs   | N/A         | ✅ Pure testing            |
+| 4     | Task 4 (Documentation)    | 2-3 hrs     | 0 hrs     | N/A         | ✅ Documentation           |
 
 **Result:** All tasks meet <5 hour threshold, most meet <3 hour threshold ✅
 
@@ -1917,29 +2083,30 @@ Coverage: Integration workflows complete
 
 **Validation Across All 34 Tasks:**
 
-| Phase | Task | Impl Lines | Status |
-|-------|------|------------|--------|
-| 1 | Task 1 (Types) | 350-400 | ✅ <800 |
-| 1 | Task 2 (Helpers) | 50-80 | ✅ <800 |
-| 1 | Task 3 (Stub QB) | 50-80 | ✅ <800 |
-| 1 | Task 4 (Integration) | 64 | ✅ <800 |
-| 2 | Tasks 1-9 (All Resource Types) | 150-200 each | ✅ <800 each |
-| 3 | Task 1 (GeoJSON) | 150-300 | ✅ <800 |
-| 3 | Task 2 (Detector) | 50-100 | ✅ <800 |
-| 3 | Task 3 (Validator) | 200-400 | ✅ <800 |
-| 3 | Task 4 (SWE Types) | 600-800 | ✅ =800 (at threshold) |
-| 3 | Task 5 (SML Types) | 800-1,200 | ⚠️ Over threshold |
-| 3 | Tasks 6-8 (SML Parsers) | 150-250 each | ✅ <800 each |
-| 3 | Task 9 (SML Main) | 600-800 | ✅ =800 (at threshold) |
-| 3 | Task 10 (SML Index) | 50-100 | ✅ <800 |
-| 3 | Tasks 11-13 (SWE Parsers) | 150-400 each | ✅ <800 each |
-| 3 | Task 14 (SWE Main) | 500-700 | ✅ <800 |
-| 3 | Task 15 (SWE Index) | 50-100 | ✅ <800 |
-| 3 | Task 16 (Constants) | 50-100 | ✅ <800 |
-| 3 | Task 17 (Format Index) | 50-100 | ✅ <800 |
-| 4 | Task 1 (Worker) | 50 | ✅ <800 |
+| Phase | Task                           | Impl Lines   | Status                 |
+| ----- | ------------------------------ | ------------ | ---------------------- |
+| 1     | Task 1 (Types)                 | 350-400      | ✅ <800                |
+| 1     | Task 2 (Helpers)               | 50-80        | ✅ <800                |
+| 1     | Task 3 (Stub QB)               | 50-80        | ✅ <800                |
+| 1     | Task 4 (Integration)           | 64           | ✅ <800                |
+| 2     | Tasks 1-9 (All Resource Types) | 150-200 each | ✅ <800 each           |
+| 3     | Task 1 (GeoJSON)               | 150-300      | ✅ <800                |
+| 3     | Task 2 (Detector)              | 50-100       | ✅ <800                |
+| 3     | Task 3 (Validator)             | 200-400      | ✅ <800                |
+| 3     | Task 4 (SWE Types)             | 600-800      | ✅ =800 (at threshold) |
+| 3     | Task 5 (SML Types)             | 800-1,200    | ⚠️ Over threshold      |
+| 3     | Tasks 6-8 (SML Parsers)        | 150-250 each | ✅ <800 each           |
+| 3     | Task 9 (SML Main)              | 600-800      | ✅ =800 (at threshold) |
+| 3     | Task 10 (SML Index)            | 50-100       | ✅ <800                |
+| 3     | Tasks 11-13 (SWE Parsers)      | 150-400 each | ✅ <800 each           |
+| 3     | Task 14 (SWE Main)             | 500-700      | ✅ <800                |
+| 3     | Task 15 (SWE Index)            | 50-100       | ✅ <800                |
+| 3     | Task 16 (Constants)            | 50-100       | ✅ <800                |
+| 3     | Task 17 (Format Index)         | 50-100       | ✅ <800                |
+| 4     | Task 1 (Worker)                | 50           | ✅ <800                |
 
 **Result:** Only Task 5 (SensorML Types, 800-1,200 lines) exceeds 800 line threshold. This is acceptable because:
+
 1. Types are compilation-tested (quick feedback)
 2. No complex logic (just interface definitions)
 3. Depends on Task 4 (SWE Types) which is tested first
@@ -1947,16 +2114,19 @@ Coverage: Integration workflows complete
 ### Phase 3 Restructure: Preventing 5-10 Hour Test Debt
 
 **Before (v2.0):**
+
 - Task 1: Implement ALL SWE Common parsers (5-10 hours, ~2,900 lines)
 - Task 2: Test SWE Common parsers (2-4 hours, ~1,500 lines)
 - **Problem:** 5-10 hours and 2,900 lines accumulated before testing ❌
 
 **After (v3.0):**
+
 - 6 SWE Common subtasks (Tasks 11-15 + types in Task 4)
 - Each subtask: 0.5-3 hours, 50-800 lines
 - **Solution:** Max 3 hours and 800 lines before testing ✅
 
 **Improvement:**
+
 - **Time:** 5-10 hours → 3 hours max (3.3× better)
 - **Lines:** 2,900 lines → 800 lines max (3.6× better)
 - **Checkpoints:** 1 → 6 (6× more frequent)
@@ -1964,6 +2134,7 @@ Coverage: Integration workflows complete
 ### Continuous Coverage Tracking Approach
 
 **After Each Task:**
+
 1. Run tests: `npm test`
 2. Generate coverage: `npm run test:coverage`
 3. Review coverage report: `coverage/lcov-report/index.html`
@@ -1989,6 +2160,7 @@ npm run test:coverage
 ```
 
 **CI Integration:**
+
 - Coverage check in CI/CD pipeline
 - Fail build if coverage drops below phase target
 - Coverage badge in README
@@ -1999,35 +2171,36 @@ npm run test:coverage
 
 ### Target Coverage After Each Phase
 
-| After Phase | Target Statement | Target Branch | Target Function | Target Line | Rationale |
-|-------------|------------------|---------------|-----------------|-------------|-----------|
-| **Phase 1** | 60-70% | 55-65% | 80-90% | 60-70% | Foundation only, many methods stubbed |
-| **Phase 2** | 70-75% | 65-70% | 85-95% | 70-75% | QueryBuilder complete, formats not tested |
-| **Phase 3** | 75-80% | 70-75% | 90-95% | 75-80% | Formats complete, integration not tested |
-| **Phase 4** | >80% | >80% | >95% | >80% | All components tested, integration complete |
+| After Phase | Target Statement | Target Branch | Target Function | Target Line | Rationale                                   |
+| ----------- | ---------------- | ------------- | --------------- | ----------- | ------------------------------------------- |
+| **Phase 1** | 60-70%           | 55-65%        | 80-90%          | 60-70%      | Foundation only, many methods stubbed       |
+| **Phase 2** | 70-75%           | 65-70%        | 85-95%          | 70-75%      | QueryBuilder complete, formats not tested   |
+| **Phase 3** | 75-80%           | 70-75%        | 90-95%          | 75-80%      | Formats complete, integration not tested    |
+| **Phase 4** | >80%             | >80%          | >95%            | >80%        | All components tested, integration complete |
 
 ### Incremental Coverage Growth
 
 **Coverage Growth by Checkpoint:**
 
-| Checkpoint | Component Added | Cumulative Coverage | Growth |
-|------------|----------------|-------------------|--------|
-| **Phase 1 Start** | None | 0% | - |
-| Task 1 | Types | 5-10% | +5-10% |
-| Task 2 | Helpers | 15-20% | +10% |
-| Task 3 | Stub QueryBuilder | 25-30% | +10% |
-| Task 4 | Integration | 60-70% | +35-40% (large jump) |
-| **Phase 1 End** | | **60-70%** | |
-| Tasks 1-9 (Phase 2) | All QueryBuilder methods | +2-3% each | +18-27% total |
-| **Phase 2 End** | | **70-75%** | |
-| Tasks 1-17 (Phase 3) | All format parsers | +0.5-1% each | +8-17% total |
-| **Phase 3 End** | | **75-80%** | |
-| Task 1 (Phase 4) | Worker | +1-2% | |
-| Task 2 (Phase 4) | Integration tests | +3-5% | |
-| Task 3 (Phase 4) | Unit test completion | +5-10% | |
-| **Phase 4 End** | | **>80%** | |
+| Checkpoint           | Component Added          | Cumulative Coverage | Growth               |
+| -------------------- | ------------------------ | ------------------- | -------------------- |
+| **Phase 1 Start**    | None                     | 0%                  | -                    |
+| Task 1               | Types                    | 5-10%               | +5-10%               |
+| Task 2               | Helpers                  | 15-20%              | +10%                 |
+| Task 3               | Stub QueryBuilder        | 25-30%              | +10%                 |
+| Task 4               | Integration              | 60-70%              | +35-40% (large jump) |
+| **Phase 1 End**      |                          | **60-70%**          |                      |
+| Tasks 1-9 (Phase 2)  | All QueryBuilder methods | +2-3% each          | +18-27% total        |
+| **Phase 2 End**      |                          | **70-75%**          |                      |
+| Tasks 1-17 (Phase 3) | All format parsers       | +0.5-1% each        | +8-17% total         |
+| **Phase 3 End**      |                          | **75-80%**          |                      |
+| Task 1 (Phase 4)     | Worker                   | +1-2%               |                      |
+| Task 2 (Phase 4)     | Integration tests        | +3-5%               |                      |
+| Task 3 (Phase 4)     | Unit test completion     | +5-10%              |                      |
+| **Phase 4 End**      |                          | **>80%**            |                      |
 
 **Key Observations:**
+
 - **Largest jump after Phase 1 Task 4** - Integration tests cover many components
 - **Steady climb in Phase 2** - Each resource type adds ~2-3%
 - **Gradual climb in Phase 3** - Many small components, each adds ~0.5-1%
@@ -2036,17 +2209,20 @@ npm run test:coverage
 ### Components with Full Coverage Early vs Late
 
 **Early Full Coverage (Phase 1-2):**
+
 - **Types** - 100% (compilation tests, Phase 1 Task 1)
 - **Helpers** - 95-100% (pure functions, Phase 1 Task 2)
 - **QueryBuilder constructor** - 100% (Phase 1 Task 3)
 - **QueryBuilder methods** - 100% per resource type (Phase 2 Tasks 1-9)
 
 **Late Full Coverage (Phase 3-4):**
+
 - **Format parsers** - 80-90% after Phase 3, 90-95% after Phase 4 (complex logic, edge cases added late)
 - **Worker handlers** - 80-85% after Phase 4 Task 1, 90-95% after Task 3 (integration and edge cases added late)
 - **Error handling** - 70-80% after Phase 3, >90% after Phase 4 (error cases discovered incrementally)
 
 **Why Different Components Reach Full Coverage at Different Times:**
+
 - **Simple components (types, helpers):** Easy to achieve 100% early (pure functions, no dependencies)
 - **Complex components (parsers, workers):** Harder to achieve 100% early (many edge cases, integration dependencies)
 - **Integration components (error handling):** Coverage grows as edge cases discovered during implementation
@@ -2054,6 +2230,7 @@ npm run test:coverage
 ### How to Track Coverage During Incremental Development
 
 **Tooling:**
+
 - **Jest coverage:** `npm run test:coverage` after each task
 - **CI/CD:** Coverage report in PR comments
 - **Coverage badge:** Update badge after each phase
@@ -2061,11 +2238,13 @@ npm run test:coverage
 **Monitoring Strategy:**
 
 1. **After each task:**
+
    - Run `npm run test:coverage`
    - Check coverage report
    - If below phase target, add tests
 
 2. **After each phase:**
+
    - Verify phase target met
    - Update coverage badge
    - Document coverage in commit message
@@ -2088,6 +2267,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 ```
 
 **Interpretation:**
+
 - ✅ **Types (model.ts):** 100% - All types tested
 - ✅ **Helpers:** 96.67% - Nearly all helper functions tested
 - ⚠️ **QueryBuilder:** 68.42% - Only Systems methods tested so far (expected, more coming in Tasks 2-9)
@@ -2100,10 +2280,12 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 ### Test Estimate Validation
 
 **Implementation Guide Estimates:**
+
 - Total test lines: 4,500-6,000
 - Test-to-code ratio: 0.97-0.98× (nearly 1:1)
 
 **Roadmap Estimates:**
+
 - Phase 1: 400-550 lines
 - Phase 2: 800-1,000 lines
 - Phase 3: 2,400-3,500 lines
@@ -2112,18 +2294,19 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 
 **Comparison:**
 
-| Source | Min | Max | Average |
-|--------|-----|-----|---------|
-| Implementation Guide | 4,500 | 6,000 | 5,250 |
-| Roadmap | 4,400 | 6,300 | 5,350 |
-| **Difference** | **-100** | **+300** | **+100** |
-| **% Difference** | **-2.2%** | **+5.0%** | **+1.9%** |
+| Source               | Min       | Max       | Average   |
+| -------------------- | --------- | --------- | --------- |
+| Implementation Guide | 4,500     | 6,000     | 5,250     |
+| Roadmap              | 4,400     | 6,300     | 5,350     |
+| **Difference**       | **-100**  | **+300**  | **+100**  |
+| **% Difference**     | **-2.2%** | **+5.0%** | **+1.9%** |
 
 **Result:** ✅ **Perfect alignment** - Overlapping ranges, <2% average difference
 
 ### Test File Structure Validation
 
 **Implementation Guide Specifies:**
+
 - `model.spec.ts` (~200-300 lines) - Type tests
 - `url_builder.spec.ts` (~800-1,000 lines) - QueryBuilder tests
 - Helper tests (~100-150 lines)
@@ -2132,6 +2315,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 - Integration tests (~500-800 lines)
 
 **Roadmap Creates:**
+
 - ✅ `model.spec.ts` (~200-300 lines) - Phase 1 Task 1
 - ✅ `helpers.spec.ts` (~100-150 lines) - Phase 1 Task 2
 - ✅ `url_builder.spec.ts` (~800-1,000 lines) - Phase 1 Task 3 + Phase 2 Tasks 1-9
@@ -2144,6 +2328,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 ### Test Type Coverage Validation
 
 **Implementation Guide Specifies:**
+
 - Format parser tests (SensorML, SWE Common, GeoJSON)
 - Resource method tests (all 9 resource types, CRUD, query params)
 - QueryBuilder tests (URL construction, param encoding, validation)
@@ -2152,6 +2337,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 - Fixture tests (spec examples, edge cases, large datasets)
 
 **Roadmap Includes:**
+
 - ✅ Format parser tests (Phase 3 Tasks 1-17)
 - ✅ Resource method tests (Phase 2 Tasks 1-9)
 - ✅ QueryBuilder tests (Phase 1 Task 3 + Phase 2 Tasks 1-9)
@@ -2164,11 +2350,13 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 ### Coverage Target Validation
 
 **Implementation Guide Specifies:**
-- >80% statement coverage
-- >80% branch coverage
+
+- > 80% statement coverage
+- > 80% branch coverage
 - 100% public API coverage
 
 **Roadmap Achieves:**
+
 - ✅ >80% statement coverage (by Phase 4 end)
 - ✅ >80% branch coverage (by Phase 4 end)
 - ✅ 100% public API coverage (all methods tested)
@@ -2179,6 +2367,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 ### Discrepancy Resolution
 
 **No Discrepancies Found:**
+
 - ✅ Test estimates align (overlapping ranges, <2% difference)
 - ✅ Test file structure aligns (all specified files created)
 - ✅ Test types align (all specified types included)
@@ -2187,17 +2376,17 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 
 **Cross-Reference Table:**
 
-| Requirement | Implementation Guide | Roadmap | Status |
-|-------------|---------------------|---------|--------|
-| **Total test lines** | 4,500-6,000 | 4,400-6,300 | ✅ Aligned |
-| **Test-to-code ratio** | 0.97-0.98× | ~1.0× | ✅ Aligned |
-| **Test files created** | 17 files | 17 files | ✅ Aligned |
-| **Test file names** | Specified | Match exactly | ✅ Aligned |
-| **Test types** | 5 types | All 5 included | ✅ Aligned |
-| **Coverage targets** | >80% | >80% achieved | ✅ Aligned |
-| **Incremental testing** | Implied | Explicit (31 checkpoints) | ✅ Enhanced |
-| **Test debt prevention** | Not specified | Max 3 hrs, 800 lines | ✅ Enhanced |
-| **Commit strategy** | Not specified | Per task, impl+tests | ✅ Enhanced |
+| Requirement              | Implementation Guide | Roadmap                   | Status      |
+| ------------------------ | -------------------- | ------------------------- | ----------- |
+| **Total test lines**     | 4,500-6,000          | 4,400-6,300               | ✅ Aligned  |
+| **Test-to-code ratio**   | 0.97-0.98×           | ~1.0×                     | ✅ Aligned  |
+| **Test files created**   | 17 files             | 17 files                  | ✅ Aligned  |
+| **Test file names**      | Specified            | Match exactly             | ✅ Aligned  |
+| **Test types**           | 5 types              | All 5 included            | ✅ Aligned  |
+| **Coverage targets**     | >80%                 | >80% achieved             | ✅ Aligned  |
+| **Incremental testing**  | Implied              | Explicit (31 checkpoints) | ✅ Enhanced |
+| **Test debt prevention** | Not specified        | Max 3 hrs, 800 lines      | ✅ Enhanced |
+| **Commit strategy**      | Not specified        | Per task, impl+tests      | ✅ Enhanced |
 
 **Conclusion:** Roadmap perfectly aligns with Implementation Guide and enhances it with explicit incremental testing strategy.
 
@@ -2212,18 +2401,21 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 **For Each Task (Tasks 1-4):**
 
 1. **Plan:**
+
    - Read task specification
    - Identify what to implement (files, interfaces, methods)
    - Identify what to test (test cases, edge cases, error cases)
    - Estimate time (implementation + testing)
 
 2. **Implement:**
+
    - Create/modify implementation files
    - Write JSDoc comments as you code
    - Write method signatures first, then implementation
    - Use helper functions for code reuse
 
 3. **Test Immediately:**
+
    - Create/modify test files
    - Write tests for all public methods
    - Write tests for edge cases
@@ -2231,12 +2423,14 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
    - Run tests: `npm test`
 
 4. **Validate:**
+
    - All tests pass
    - Coverage meets phase target (>60-70%)
    - JSDoc complete
    - No lint errors: `npm run lint`
 
 5. **Commit:**
+
    - Stage implementation + tests together
    - Write commit message (see Commit Strategy section)
    - Push to branch
@@ -2249,17 +2443,20 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 **For Each Resource Type (Tasks 1-9):**
 
 1. **Plan:**
+
    - Review resource type specification (Systems, Deployments, etc.)
    - Identify all methods (CRUD, navigation, query params)
    - Estimate lines (~150-200 impl, ~40-50 tests)
 
 2. **Implement:**
+
    - Add methods to `url_builder.ts`
    - Add resource validation (~2 lines per method)
    - Use helpers (`buildResourceUrl`, `buildQueryString`)
    - Write JSDoc for all methods
 
 3. **Test Immediately:**
+
    - Add tests to `url_builder.spec.ts`
    - Test CRUD operations
    - Test query parameters
@@ -2268,12 +2465,14 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
    - Run tests: `npm test`
 
 4. **Validate:**
+
    - All tests pass
    - Coverage increasing (~2-3% per task)
    - JSDoc complete
    - No lint errors
 
 5. **Commit:**
+
    - Commit implementation + tests
    - Message: "Add [ResourceType] QueryBuilder methods with tests"
 
@@ -2285,17 +2484,20 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 **For Each Parser Component (Tasks 1-17):**
 
 1. **Plan:**
+
    - Review component specification (GeoJSON, SWE Types, SML Parser, etc.)
    - Identify dependencies (Task 5 depends on Task 4)
    - Estimate lines (50-800 impl, 50-300 tests)
 
 2. **Implement:**
+
    - Create new file (or modify existing)
    - Implement parser/types/extensions
    - Write JSDoc with spec references
    - Test against spec examples
 
 3. **Test Immediately:**
+
    - Create test file (same name with `.spec.ts`)
    - Test with spec example fixtures
    - Test edge cases (empty, missing, invalid)
@@ -2303,12 +2505,14 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
    - Run tests: `npm test`
 
 4. **Validate:**
+
    - All tests pass
    - Coverage increasing (~0.5-1% per task)
    - JSDoc complete
    - No lint errors
 
 5. **Commit:**
+
    - Commit implementation + tests
    - Message: "Add [Component] parser with tests"
 
@@ -2322,15 +2526,18 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 **Task 1 (Worker Extensions):**
 
 1. **Plan:**
+
    - Review 9 message types
    - Identify parser integrations
 
 2. **Implement:**
+
    - Add message handlers to worker
    - Integrate parsers
    - Add fallback
 
 3. **Test Immediately:**
+
    - Create `worker/csapi-handlers.spec.ts`
    - Test all 9 message types
    - Test fallback behavior
@@ -2342,10 +2549,12 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 **Task 2 (Integration Tests) - PURE TESTING:**
 
 1. **Plan:**
+
    - Review 7 workflow types
    - Identify test scenarios
 
 2. **Implement Tests:**
+
    - Write integration tests (~500-800 lines)
    - Test all workflows end-to-end
    - Test error handling
@@ -2358,10 +2567,12 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 **Task 3 (Unit Test Completion) - PURE TESTING:**
 
 1. **Plan:**
+
    - Review coverage report
    - Identify gaps
 
 2. **Implement Tests:**
+
    - Add edge case tests
    - Add error case tests
    - Complete coverage gaps
@@ -2374,6 +2585,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 **Task 4 (Documentation):**
 
 1. **Validate:**
+
    - TypeDoc configuration includes CSAPI
    - All JSDoc complete
    - Usage examples present
@@ -2386,6 +2598,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 ### Checklist for Each Task
 
 **Before Starting Task:**
+
 - [ ] Read task specification
 - [ ] Understand what to implement
 - [ ] Understand what to test
@@ -2393,6 +2606,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 - [ ] Estimate time
 
 **During Implementation:**
+
 - [ ] Create/modify implementation files
 - [ ] Write JSDoc comments as you code
 - [ ] Write method signatures first
@@ -2400,6 +2614,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 - [ ] Test against spec examples
 
 **Immediately After Implementation:**
+
 - [ ] Create/modify test files
 - [ ] Write tests for all public methods
 - [ ] Write tests for edge cases
@@ -2408,6 +2623,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 - [ ] Check coverage: `npm run test:coverage`
 
 **Before Committing:**
+
 - [ ] All tests pass
 - [ ] Coverage meets phase target
 - [ ] JSDoc complete
@@ -2416,6 +2632,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 - [ ] Write commit message (implementation + testing details)
 
 **After Committing:**
+
 - [ ] Push to branch
 - [ ] Verify CI passes
 - [ ] Update progress tracker (if using)
@@ -2430,24 +2647,28 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 **Concrete Examples:**
 
 **Phase 1 Task 1 (Types):**
+
 - ✅ Define System interface → Test System interface compiles
 - ✅ Define all 9 interfaces → Test all 9 interfaces compile
 - ✅ Define query options → Test query options compile
 - ✅ **Commit immediately after tests pass**
 
 **Phase 2 Task 1 (Systems):**
+
 - ✅ Implement `getSystems()` → Test `getSystems()` URL
 - ✅ Implement all 12 methods → Test all 12 methods
 - ✅ Add resource validation → Test validation throws error
 - ✅ **Commit immediately after tests pass**
 
 **Phase 3 Task 9 (SML Main Parser):**
+
 - ✅ Implement type discrimination → Test type discrimination
 - ✅ Implement recursive parsing → Test recursive parsing
 - ✅ Implement capability integration → Test capability integration
 - ✅ **Commit immediately after tests pass**
 
 **Phase 4 Task 1 (Worker):**
+
 - ✅ Add PARSE_SENSORML_3 handler → Test handler
 - ✅ Add all 9 handlers → Test all 9 handlers
 - ✅ Add fallback → Test fallback
@@ -2456,17 +2677,20 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 **What NOT to Do:**
 
 ❌ **Batch testing at end of phase:**
+
 - Implement all Phase 2 methods (20-28 hours)
 - Test all methods at once (5-8 hours)
 - **Problem:** 20-28 hours accumulated, helper bugs discovered late
 
 ❌ **Skip testing for "temporary" code:**
+
 - Implement Systems methods (2 hours)
 - "I'll test later"
 - Implement Deployments methods (2 hours)
 - **Problem:** Test debt accumulates, tests never written
 
 ❌ **Test only happy paths:**
+
 - Test `getSystems()` works
 - Skip error cases (invalid params, unavailable resource)
 - **Problem:** Low coverage, bugs in production
@@ -2476,12 +2700,14 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 **At Each Checkpoint:**
 
 **Phase 1:**
+
 - Types compile without errors
 - Helper functions work correctly (all parameter combinations)
 - QueryBuilder constructor works (resource extraction, validation)
 - Integration points work (endpoint detection, factory method)
 
 **Phase 2:**
+
 - Each method builds correct URL
 - Query parameters encoded correctly
 - Resource validation throws error when unavailable
@@ -2489,6 +2715,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 - Navigation methods build correct paths
 
 **Phase 3:**
+
 - Each parser parses spec examples correctly
 - Each parser handles edge cases (empty, missing, invalid)
 - Each parser handles errors (malformed documents)
@@ -2496,6 +2723,7 @@ All files                     |   72.35 |    68.42 |   85.71 |   71.83 |
 - Indices export correctly
 
 **Phase 4:**
+
 - Worker handlers process messages correctly
 - Worker handlers handle errors
 - Integration workflows work end-to-end
@@ -2531,6 +2759,7 @@ git push origin feature/csapi-implementation
 ```
 
 **Key Points:**
+
 - ✅ Stage implementation + tests together (atomic commit)
 - ✅ Write descriptive message (what was implemented, what was tested)
 - ✅ Include metrics (lines, coverage)
@@ -2541,12 +2770,14 @@ git push origin feature/csapi-implementation
 **Checklist:**
 
 1. **Tests Pass:**
+
    ```bash
    npm test
    # All tests should pass (green)
    ```
 
 2. **Coverage Target Met:**
+
    ```bash
    npm run test:coverage
    # Check coverage report
@@ -2557,18 +2788,21 @@ git push origin feature/csapi-implementation
    ```
 
 3. **Lint Clean:**
+
    ```bash
    npm run lint
    # No errors, no warnings
    ```
 
 4. **JSDoc Complete:**
+
    - Open implementation file
    - Verify all public methods have JSDoc
    - Verify all parameters documented
    - Verify all examples present
 
 5. **Commit Clean:**
+
    ```bash
    git status
    # No uncommitted changes
@@ -2579,6 +2813,7 @@ git push origin feature/csapi-implementation
    - All checks green
 
 **If Any Check Fails:**
+
 - Fix issues before moving to next task
 - Don't accumulate technical debt
 - Don't move forward with failing tests
@@ -2590,18 +2825,21 @@ git push origin feature/csapi-implementation
 ### Key Findings
 
 **1. Incremental Testing Pattern is Well-Defined:**
+
 - 34 tasks with 31 test checkpoints (3 are documentation/index tasks)
 - "Test immediately after each subtask" = Max 2-3 hours between implementation and tests
 - Never accumulate >800 lines without tests
 - Each task is commit-able with tests (atomic commits)
 
 **2. Phase 3 Restructuring Prevents Test Debt:**
+
 - Before (v2.0): 10 hours, 2,900 lines without tests ❌
 - After (v3.0): 3 hours, 800 lines max without tests ✅
 - Improvement: 3.3× time reduction, 3.6× line reduction
 - Dependency fix: SWE Common types (Task 4) before SensorML types (Task 5)
 
 **3. Implementation Guide Alignment is Perfect:**
+
 - Test estimates: 4,400-6,300 (Roadmap) vs 4,500-6,000 (Guide) = 98% overlap
 - Test file structure: Exact match
 - Test types: All 5 types included
@@ -2609,12 +2847,14 @@ git push origin feature/csapi-implementation
 - No conflicts found
 
 **4. Test Organization Strategy is Practical:**
+
 - QueryBuilder: One file ~800-1,000 lines (shared setup, consistent pattern)
 - Format parsers: Split into 15 files (component isolation)
 - Commit strategy: Implementation + tests in same commit (atomic)
 - Coverage tracking: After each task (continuous monitoring)
 
 **5. Workflow is Implementation-Ready:**
+
 - Step-by-step guide for each phase
 - Checklist for each task
 - Clear definition of "when to write tests"
@@ -2627,6 +2867,7 @@ git push origin feature/csapi-implementation
 **Line Count:** ~1,900 lines
 
 **Sections:**
+
 1. Executive Summary (test accumulation, alignment)
 2. Incremental Testing Principles (definitions, thresholds, prevention)
 3. Phase 1 Testing (4 tasks, detailed)
@@ -2651,6 +2892,7 @@ git push origin feature/csapi-implementation
 ### Additions to Section 10 (Notes and Open Questions)
 
 **New Insights:**
+
 - Roadmap v3.0 restructuring successfully prevents test debt (validated by max time/lines thresholds)
 - All 34 tasks meet incremental testing criteria (31 test checkpoints, max 3 hours, max 800 lines)
 - Implementation Guide alignment is perfect (no discrepancies, no conflicts)
@@ -2665,6 +2907,7 @@ git push origin feature/csapi-implementation
 ### Sections Now Unblocked
 
 **This section defines incremental workflow for:**
+
 - ✅ Section 12: QueryBuilder Testing Strategy (Phase 2 workflow, when to test each method)
 - ✅ Section 13: Format Parser Testing Strategy (Phase 3 workflow, when to test each parser)
 - ✅ Section 14: Integration Test Workflow Design (Phase 4 Task 2 specifications)

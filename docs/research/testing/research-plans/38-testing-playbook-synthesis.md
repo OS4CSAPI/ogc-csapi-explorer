@@ -67,6 +67,7 @@ Synthesize all research into a comprehensive step-by-step testing playbook for i
 **Objective:** Consolidate all research deliverables into cohesive playbook
 
 **Tasks:**
+
 1. Review all 37 section deliverables
 2. Extract key patterns and workflows
 3. Identify dependencies and sequencing
@@ -78,6 +79,7 @@ Synthesize all research into a comprehensive step-by-step testing playbook for i
 **Objective:** Design step-by-step workflows for each ROADMAP phase
 
 **Tasks:**
+
 1. Design Phase 1 workflow (Core API & Collections)
 2. Design Phase 2 workflow (Resource Navigation)
 3. Design Phase 3 workflow (Command Lifecycle)
@@ -90,6 +92,7 @@ Synthesize all research into a comprehensive step-by-step testing playbook for i
 **Objective:** Create step-by-step patterns for each component type
 
 **Tasks:**
+
 1. Synthesize parser testing patterns
 2. Synthesize API testing patterns
 3. Synthesize QueryBuilder testing patterns
@@ -102,6 +105,7 @@ Synthesize all research into a comprehensive step-by-step testing playbook for i
 **Objective:** Create concrete examples demonstrating each pattern
 
 **Tasks:**
+
 1. Create parser test example (SWE Common)
 2. Create API test example (Collections)
 3. Create QueryBuilder test example (getCollections)
@@ -114,6 +118,7 @@ Synthesize all research into a comprehensive step-by-step testing playbook for i
 **Objective:** Document tools, commands, and practical mechanics
 
 **Tasks:**
+
 1. Document test execution commands
 2. Document coverage checking commands
 3. Document debugging techniques
@@ -126,6 +131,7 @@ Synthesize all research into a comprehensive step-by-step testing playbook for i
 **Objective:** Design progress tracking and validation mechanisms
 
 **Tasks:**
+
 1. Define progress milestones per phase
 2. Design progress tracking dashboard
 3. Define completion criteria per component
@@ -137,6 +143,7 @@ Synthesize all research into a comprehensive step-by-step testing playbook for i
 **Objective:** Create complete testing playbook
 
 **Tasks:**
+
 1. Consolidate all workflows and patterns
 2. Organize playbook structure
 3. Create comprehensive examples
@@ -169,6 +176,7 @@ This research is complete when:
 Content includes:
 
 **Part 1: Getting Started**
+
 - Playbook purpose and structure
 - How to use this playbook
 - Prerequisites and setup
@@ -176,6 +184,7 @@ Content includes:
 - Tool installation and setup
 
 **Part 2: Phase-by-Phase Workflows**
+
 - Phase 1 workflow (Core API & Collections)
   - Task-by-task breakdown
   - Test writing sequence
@@ -186,6 +195,7 @@ Content includes:
 - ROADMAP task mapping
 
 **Part 3: Component Testing Patterns**
+
 - Parser testing step-by-step (JSON, SensorML, SWE Common, GeoJSON)
 - API testing step-by-step (endpoints, responses, errors)
 - QueryBuilder testing step-by-step (methods, parameters, URLs)
@@ -193,6 +203,7 @@ Content includes:
 - Worker testing step-by-step (message types, background processing)
 
 **Part 4: Practical Examples**
+
 - Example: Writing first parser test (SWE Common DataRecord)
 - Example: Writing first API test (GET /collections)
 - Example: Writing first QueryBuilder test (getCollections method)
@@ -201,12 +212,14 @@ Content includes:
 - Complete walkthroughs with code
 
 **Part 5: Test Quality Validation**
+
 - Using the test quality checklist
 - Self-review process
 - Peer review process
 - Common quality issues and fixes
 
 **Part 6: Tools and Commands**
+
 - Running tests: `npm test`
 - Running specific tests: `npm test -- path/to/test`
 - Coverage checking: `npm run test:coverage`
@@ -216,6 +229,7 @@ Content includes:
 - Command reference
 
 **Part 7: Progress Tracking**
+
 - Component completion criteria
 - Coverage targets per component
 - Progress tracking template
@@ -223,6 +237,7 @@ Content includes:
 - Dashboard metrics
 
 **Part 8: Troubleshooting**
+
 - Common test failures and fixes
 - Debugging strategies
 - Fixture issues
@@ -231,6 +246,7 @@ Content includes:
 - Where to get help
 
 **Part 9: Reference**
+
 - Test utilities API reference
 - Fixture catalog
 - JSDoc templates
@@ -239,6 +255,7 @@ Content includes:
 - Glossary
 
 **Part 10: Maintenance**
+
 - Test update workflow
 - Fixture maintenance
 - Documentation updates
@@ -249,6 +266,7 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - ALL previous sections (1-37) - comprehensive synthesis source
 - Section 36: Test Quality Checklist (validation process)
 - Section 35: JSDoc Documentation Standards (documentation guidance)
@@ -256,6 +274,7 @@ Content includes:
 - ROADMAP finalized (task sequencing)
 
 **Blocks:**
+
 - NOTHING - This is the final deliverable that enables implementation
 
 ---
@@ -280,6 +299,7 @@ Content includes:
 <!-- Add notes and unresolved questions here as research progresses -->
 
 **Initial Observations:**
+
 - This is the culmination of all research
 - Must be practical and actionable, not theoretical
 - Developers should be able to start testing immediately
@@ -289,6 +309,7 @@ Content includes:
 Transform comprehensive research into step-by-step implementation guide that developers can follow during Phase 1-4 implementation.
 
 **Key Success Criteria:**
+
 - Developer can read Phase 1 section and start writing tests immediately
 - Clear answer to "what do I do next?"
 - Examples demonstrate every major pattern
@@ -296,6 +317,7 @@ Transform comprehensive research into step-by-step implementation guide that dev
 - Progress tracking shows when component is done
 
 **Synthesis Approach:**
+
 1. Extract workflows from all research sections
 2. Organize by implementation phase (1-4)
 3. Provide step-by-step instructions
@@ -304,6 +326,7 @@ Transform comprehensive research into step-by-step implementation guide that dev
 6. Document tools and commands
 
 **Example Format:**
+
 - **Goal**: What you're trying to accomplish
 - **Steps**: 1, 2, 3... concrete actions
 - **Code**: Complete working example
@@ -311,6 +334,7 @@ Transform comprehensive research into step-by-step implementation guide that dev
 - **Checklist**: Quality validation items
 
 **Playbook vs Research Plans:**
+
 - **Research Plans**: WHY, WHAT (requirements, specifications)
 - **Playbook**: HOW (step-by-step implementation)
 - Research answers "what should tests cover?"
@@ -323,6 +347,7 @@ Transform comprehensive research into step-by-step implementation guide that dev
 **Testing Playbook Delivered:**
 
 **10 Comprehensive Parts:**
+
 1. **Getting Started** - Prerequisites, setup, environment configuration, fixture organization
 2. **Phase-by-Phase Workflows** - Step-by-step implementation for all 4 ROADMAP phases (34 tasks)
 3. **Component Testing Patterns** - QueryBuilder, Parser, Integration, Utilities, Worker patterns
@@ -335,6 +360,7 @@ Transform comprehensive research into step-by-step implementation guide that dev
 10. **Maintenance** - Test update workflows, health monitoring, adding new tests
 
 **Phase 1 Workflow Detail (Example):**
+
 - Task 1.1: Type System (4-5 hours)
   - 7 steps: Create types → Write tests → Add Part 2 types → Write tests → Add query options → Write tests → Validate
   - Expected output: ~350-400 lines model.ts, ~200-300 lines model.spec.ts
@@ -347,6 +373,7 @@ Transform comprehensive research into step-by-step implementation guide that dev
 - Task 1.4: OgcApiEndpoint Integration (3-4 hours)
 
 **Component Patterns Provided:**
+
 - **QueryBuilder Pattern:** URL validation + parameter encoding + resource availability (standard test structure)
 - **Parser Pattern:** Structure validation + type inference + nested parsing + error handling
 - **Integration Pattern:** End-to-end workflow + fixture-driven + multi-step validation
@@ -354,23 +381,27 @@ Transform comprehensive research into step-by-step implementation guide that dev
 - **Worker Pattern:** Message handling + async operations + error propagation
 
 **3 Complete Examples:**
+
 1. **First QueryBuilder Test:** Complete walkthrough from setup to running test (getSystems method)
 2. **First Parser Test:** Fixture creation → parser implementation → test creation → validation (DataRecord)
 3. **First Integration Test:** Multi-step discovery workflow (endpoint → collection → systems → datastreams)
 
 **Quality Validation:**
+
 - Pre-commit checklist (23 items across 5 categories)
 - Common quality issues and fixes (4 detailed examples)
 - Bug detection validation process
 - Coverage target validation
 
 **Progress Tracking:**
+
 - Component completion criteria (3 components defined)
 - Phase completion checklists (4 phases)
 - Coverage targets by component (Statement 90-95%, Branch 85-90%, Function 88-100%)
 - Progress dashboard template
 
 **Key Success Factors:**
+
 - **Immediate Action:** Developer can start Phase 1, Task 1.1 immediately after reading
 - **Clear Steps:** Every task has 5-7 concrete steps with time estimates
 - **Examples:** 3 complete working examples to copy/adapt
@@ -378,12 +409,14 @@ Transform comprehensive research into step-by-step implementation guide that dev
 - **Reference:** All 37 research sections synthesized and linked
 
 **Testing Principles Reinforced:**
+
 - **Meaningful:** Validate real behavior, not mocks (use parseAndValidateUrl)
 - **Useful:** Catch real bugs (validate by breaking code)
 - **Deep:** Comprehensive coverage (>85% statement, >80% branch, all edge cases)
 - **End-to-End:** Complete workflows (3+ operations, real fixtures)
 
 **What This Unblocks:**
+
 - ✅ Phase 1 implementation can begin immediately
 - ✅ Clear answer to "what do I do next?" at every step
 - ✅ Pattern consistency across all components

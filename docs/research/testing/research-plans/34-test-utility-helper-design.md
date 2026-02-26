@@ -66,6 +66,7 @@ Design shared test utilities and helper functions to reduce duplication and impr
 **Objective:** Identify common patterns across all test specifications
 
 **Tasks:**
+
 1. ✅ Review all previous section deliverables (semantic search - 20 excerpts)
 2. ✅ Identify repeated code patterns (URL parsing, fixture loading, mock fetch)
 3. ✅ Identify repeated assertion patterns (ISO dates, GeoJSON, errors)
@@ -80,6 +81,7 @@ Design shared test utilities and helper functions to reduce duplication and impr
 **Objective:** Analyze test utilities in upstream implementations
 
 **Tasks:**
+
 1. ✅ Identify test utilities in upstream codebase (grep searches - 78+ matches)
 2. ✅ Extract reusable utility patterns (modern vs legacy patterns)
 3. ✅ Document utility organization (no exported utilities found)
@@ -94,6 +96,7 @@ Design shared test utilities and helper functions to reduce duplication and impr
 **Objective:** Design utility categories and organization
 
 **Tasks:**
+
 1. ✅ Define URL utility category (8 functions)
 2. ✅ Define fixture utility category (6 functions)
 3. ✅ Define assertion utility category (12 functions)
@@ -109,6 +112,7 @@ Design shared test utilities and helper functions to reduce duplication and impr
 **Objective:** Design specific utility functions
 
 **Tasks:**
+
 1. ✅ Design URL construction utilities (parseAndValidateUrl, buildResourceUrl, etc.)
 2. ✅ Design URL parsing utilities (extractResourceId, parseLinks, etc.)
 3. ✅ Design fixture loading utilities (loadFixture, loadFixtureSet, etc.)
@@ -125,8 +129,9 @@ Design shared test utilities and helper functions to reduce duplication and impr
 **Objective:** Define utility reusability and maintenance strategy
 
 **Tasks:**
+
 1. ✅ Define utility module organization (3 files + index.ts)
-2. ✅ Define utility naming conventions (parse*, expect*, build*, etc.)
+2. ✅ Define utility naming conventions (parse*, expect*, build\*, etc.)
 3. ✅ Define utility documentation standards (JSDoc with examples)
 4. ✅ Define utility testing approach (test-utils.spec.ts)
 5. ✅ Define utility versioning strategy (deprecation path)
@@ -139,6 +144,7 @@ Design shared test utilities and helper functions to reduce duplication and impr
 **Objective:** Create comprehensive test utility library specification
 
 **Tasks:**
+
 1. ✅ Consolidate utility specifications (50 functions across 6 categories)
 2. ✅ Create utility API documentation (detailed specifications with examples)
 3. ✅ Document utility organization (file structure, naming, imports)
@@ -169,6 +175,7 @@ This research is complete when:
 **Test utility library specification with reusable helper functions**
 
 Content includes:
+
 - Common test pattern inventory
 - Utility category organization (URL, fixture, assertion, mocking, setup, data)
 - URL construction utilities (buildApiUrl, buildResourceUrl, etc.)
@@ -218,11 +225,13 @@ buildCommand({ parameters, ... }): Command
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1-2: Upstream Analysis (utility patterns)
 - All previous sections (common patterns across all tests)
 - Section 19: Test Organization and File Structure (utility organization)
 
 **Blocks:**
+
 - Test implementation (utilities needed before writing tests)
 - Test maintainability (utilities reduce duplication)
 
@@ -248,11 +257,13 @@ buildCommand({ parameters, ... }): Command
 ### Research Findings
 
 **Key Discovery: No Upstream Test Utilities**
+
 - Upstream has NO exported test utilities
 - Patterns exist but not formalized
 - Must design utilities from scratch based on common patterns
 
 **Common Patterns Identified (20+):**
+
 - URL parsing with `new URL()` (50+ occurrences)
 - Fixture loading with `readFile()` (40+ occurrences)
 - Mock fetch setup (30+ occurrences)
@@ -262,18 +273,21 @@ buildCommand({ parameters, ... }): Command
 - Query parameter assertions (30+ occurrences)
 
 **Utility Organization:**
+
 - **test-utils.ts** (~200-250 lines): URL parsing, assertions, validation
 - **test-helpers.ts** (~150-200 lines): Setup, mocking, cleanup
 - **test-fixtures.ts** (~100-150 lines): Fixture loading, caching
 - **Total:** ~450-600 lines (50 utility functions)
 
 **Impact Estimates:**
+
 - 60-70% reduction in test code duplication
 - Saves ~10,000-15,000 lines across 100-150 test files
 - Improved test readability and maintainability
 - Fix bugs once in utility, not 50 times across test files
 
 **Utility Categories (6):**
+
 1. **URL Utilities** (8 functions): parseAndValidateUrl, expectQueryParam, buildResourceUrl, extractResourceId, parseLinks, validateEncoding, expectLinkRel, buildLinks
 2. **Fixture Utilities** (6 functions): loadFixture, loadFixtureSync, loadFixtureSet, createFixtureCache, clearFixtureCache, fixtureExists
 3. **Assertion Utilities** (12 functions): expectValidIsoDate, expectValidIsoInterval, expectValidGeoJSON, expectValidUuid, expectValidUrl, expectValidSweSchema, expectError, expectCollectionResponse, expectResourceResponse, expectLinkArray, expectPaginationLinks, expectFormatNegotiation
@@ -282,6 +296,7 @@ buildCommand({ parameters, ... }): Command
 6. **Data Builder Utilities** (10 functions): buildSystem, buildDeployment, buildDatastream, buildObservation, buildCommand, buildSweSchema, buildGeoJSON, buildTemporalExtent, buildSpatialExtent, buildLinks
 
 **CSAPI-Specific Utilities (Not in Upstream):**
+
 - Temporal validation (ISO 8601 intervals, phenomenon time)
 - Spatial validation (GeoJSON, point/polygon creation)
 - SWE Common utilities (schema validation, observation builders)
@@ -290,11 +305,13 @@ buildCommand({ parameters, ... }): Command
 - Link relation utilities (CSAPI-specific rel parsing)
 
 **Implementation Estimates:**
+
 - **Week 1 (Phase 1-3):** Core utilities, validation utilities, helper utilities (~32 hours)
 - **Week 2 (Phase 4-5):** Data builders, testing, documentation (~24 hours)
 - **Total:** ~38-56 hours (1-1.5 weeks, 1 developer)
 
 **Next Steps:**
+
 1. Implement utility functions in `src/csapi-querybuilder/test-utils/`
 2. Write utility tests (test the tests)
 3. Migrate existing tests to use utilities (phased migration)
@@ -304,6 +321,7 @@ buildCommand({ parameters, ... }): Command
 ### Open Questions
 
 **Resolved:**
+
 - ✅ What patterns are most common? (URL parsing, fixture loading, mock fetch)
 - ✅ What utilities exist upstream? (NONE - must design from scratch)
 - ✅ How to organize utilities? (3 files: test-utils, test-helpers, test-fixtures)
@@ -313,6 +331,7 @@ buildCommand({ parameters, ... }): Command
 **No Outstanding Questions** - Research complete and ready for implementation
 
 **Naming Conventions:**
+
 - URL utilities: `build*Url`, `parse*`, `extract*`
 - Fixture utilities: `load*Fixture`
 - Assertion utilities: `expect*`, `validate*`

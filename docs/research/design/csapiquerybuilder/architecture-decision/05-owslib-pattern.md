@@ -11,16 +11,19 @@
 ## Research Objectives
 
 1. **Pattern Analysis:**
+
    - Document OWSLib's class structure (SystemsClient, DeploymentsClient, etc.)
    - Identify code organization strategy
    - Analyze code reuse mechanisms
 
 2. **Maturity Assessment:**
+
    - How long has OWSLib CSAPI been in production?
    - What issues has this pattern encountered?
    - How maintainable is the codebase?
 
 3. **Comparison to Single-Class:**
+
    - What are advantages of separate classes?
    - What are disadvantages?
    - Code duplication levels?
@@ -49,12 +52,14 @@
 ## Expected Findings
 
 **If separate classes work well:**
+
 - Proven production pattern
 - Clear organization
 - Manageable duplication
 - May favor separate clients for CSAPI
 
 **If pattern shows problems:**
+
 - Code duplication issues
 - Maintenance burden
 - May favor single-class consolidation

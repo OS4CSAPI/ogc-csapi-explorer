@@ -5,6 +5,7 @@
 This section documents the common format requirements and negotiation mechanisms that apply across all CSAPI resource types in both Part 1 (Core Resources) and Part 2 (Dynamic Data). These requirements establish the foundation for how the client library should handle format selection, content negotiation, and format-specific processing.
 
 **Key Objectives:**
+
 - Define required vs optional formats for different resource types
 - Document media type identifiers and their purposes
 - Explain format negotiation mechanisms (Accept headers, query parameters)
@@ -24,6 +25,7 @@ This section documents the common format requirements and negotiation mechanisms
 **Required Formats:**
 
 1. **application/json** (Plain JSON)
+
    - **Status:** REQUIRED for all Part 1 resources
    - **Purpose:** Base JSON representation
    - **Resources:** All resource types support this
@@ -32,6 +34,7 @@ This section documents the common format requirements and negotiation mechanisms
    - **Client Library:** MUST support
 
 2. **application/geo+json** (GeoJSON)
+
    - **Status:** REQUIRED for spatial resources
    - **Purpose:** Spatial feature representation
    - **Resources:** Systems, Deployments, Procedures, SamplingFeatures (any resource with geometry)
@@ -58,6 +61,7 @@ This section documents the common format requirements and negotiation mechanisms
 **Required Formats:**
 
 1. **application/json** (Plain JSON)
+
    - **Status:** REQUIRED for all Part 2 resources
    - **Purpose:** Base JSON representation
    - **Resources:** DataStreams, Observations, ControlStreams, Commands, CommandStatus, CommandResult, SystemEvents
@@ -66,6 +70,7 @@ This section documents the common format requirements and negotiation mechanisms
    - **Client Library:** MUST support
 
 2. **application/swe+json** (SWE Common JSON)
+
    - **Status:** OPTIONAL but recommended for structured data
    - **Purpose:** SWE Common Data Model 3.0 JSON encoding
    - **Resources:** Observations, Commands, schemas
@@ -73,6 +78,7 @@ This section documents the common format requirements and negotiation mechanisms
    - **Client Library:** SHOULD support (required for full functionality)
 
 3. **application/swe+text** (SWE Common CSV/DSV)
+
    - **Status:** OPTIONAL
    - **Purpose:** Delimiter-separated values (2-5x more compact than JSON)
    - **Resources:** Observations, Commands
@@ -98,19 +104,20 @@ This section documents the common format requirements and negotiation mechanisms
 
 ### Complete Media Type Matrix
 
-| Media Type | Standard | Part | Resources | Purpose |
-|-----------|----------|------|-----------|---------|
-| `application/json` | JSON | 1, 2 | All resources | Base JSON representation |
-| `application/geo+json` | RFC 7946 | 1, 2 | Spatial resources | GeoJSON Feature/FeatureCollection |
-| `application/sml+json` | SensorML 3.0 | 1 | Systems, Procedures | System/procedure metadata |
-| `application/swe+json` | SWE Common 3.0 | 2 | Observations, Commands | SWE Common JSON encoding |
-| `application/swe+text` | SWE Common 3.0 | 2 | Observations, Commands | CSV/DSV encoding |
-| `application/swe+binary` | SWE Common 3.0 | 2 | Observations, Commands | Binary encoding |
-| `text/uri-list` | RFC 2483 | 1 | Collection additions | URI list (one per line) |
+| Media Type               | Standard       | Part | Resources              | Purpose                           |
+| ------------------------ | -------------- | ---- | ---------------------- | --------------------------------- |
+| `application/json`       | JSON           | 1, 2 | All resources          | Base JSON representation          |
+| `application/geo+json`   | RFC 7946       | 1, 2 | Spatial resources      | GeoJSON Feature/FeatureCollection |
+| `application/sml+json`   | SensorML 3.0   | 1    | Systems, Procedures    | System/procedure metadata         |
+| `application/swe+json`   | SWE Common 3.0 | 2    | Observations, Commands | SWE Common JSON encoding          |
+| `application/swe+text`   | SWE Common 3.0 | 2    | Observations, Commands | CSV/DSV encoding                  |
+| `application/swe+binary` | SWE Common 3.0 | 2    | Observations, Commands | Binary encoding                   |
+| `text/uri-list`          | RFC 2483       | 1    | Collection additions   | URI list (one per line)           |
 
 ### Media Type Characteristics
 
 **application/json:**
+
 - Standard: JSON (ECMA-404)
 - Charset: UTF-8 (default)
 - Binary: No
@@ -119,6 +126,7 @@ This section documents the common format requirements and negotiation mechanisms
 - Compression: High (verbose)
 
 **application/geo+json:**
+
 - Standard: RFC 7946 (GeoJSON)
 - Charset: UTF-8 (MUST be UTF-8)
 - Binary: No
@@ -127,6 +135,7 @@ This section documents the common format requirements and negotiation mechanisms
 - Compression: High (verbose)
 
 **application/sml+json:**
+
 - Standard: SensorML 3.0 (OGC 23-000)
 - Charset: UTF-8 (default)
 - Binary: No
@@ -135,6 +144,7 @@ This section documents the common format requirements and negotiation mechanisms
 - Compression: High (verbose)
 
 **application/swe+json:**
+
 - Standard: SWE Common 3.0 (OGC 23-000)
 - Charset: UTF-8 (default)
 - Binary: No
@@ -143,6 +153,7 @@ This section documents the common format requirements and negotiation mechanisms
 - Compression: Medium (more compact than JSON)
 
 **application/swe+text:**
+
 - Standard: SWE Common 3.0 (TextEncoding)
 - Charset: UTF-8 (default)
 - Binary: No
@@ -151,6 +162,7 @@ This section documents the common format requirements and negotiation mechanisms
 - Compression: Medium (2-5x smaller than JSON)
 
 **application/swe+binary:**
+
 - Standard: SWE Common 3.0 (BinaryEncoding)
 - Charset: N/A (binary)
 - Binary: Yes
@@ -167,6 +179,7 @@ This section documents the common format requirements and negotiation mechanisms
 **Part 1 Format Negotiation (Section 5.3):**
 
 Client specifies desired format via Accept header:
+
 ```http
 GET /systems/sys123
 Accept: application/geo+json
@@ -180,18 +193,21 @@ Accept: application/sml+json
 **Part 2 Format Negotiation:**
 
 Client specifies desired observation format:
+
 ```http
 GET /datastreams/ds123/observations
 Accept: application/swe+binary
 ```
 
 **Multiple Accept Values:**
+
 ```http
 GET /systems/sys123
 Accept: application/geo+json, application/json;q=0.8
 ```
 
 **Quality Values (q):**
+
 - RFC 9110 quality value mechanism
 - Client specifies preference weights
 - Server selects best match based on weights and capabilities
@@ -201,6 +217,7 @@ Accept: application/geo+json, application/json;q=0.8
 **Part 1 Query Parameters:**
 
 1. **`f` parameter (short form):**
+
    ```
    GET /systems/sys123?f=geojson
    GET /procedures/proc456?f=sml
@@ -215,6 +232,7 @@ Accept: application/geo+json, application/json;q=0.8
 **Part 2 Query Parameters:**
 
 1. **`f` parameter (full media type):**
+
    ```
    GET /datastreams/ds123/observations?f=application/swe+binary
    GET /controlstreams/cs456/commands?f=application/swe+json
@@ -227,6 +245,7 @@ Accept: application/geo+json, application/json;q=0.8
    ```
 
 **URL Encoding:**
+
 - `+` character MUST be URL-encoded as `%2B`
 - Example: `application/swe+csv` → `application/swe%2Bcsv`
 - Proper encoding: `?f=application/swe%2Bcsv`
@@ -236,6 +255,7 @@ Accept: application/geo+json, application/json;q=0.8
 **Server Indicates Format:**
 
 Server MUST include Content-Type header in response:
+
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/geo+json; charset=utf-8
@@ -254,6 +274,7 @@ Content-Type: application/swe+binary
 ```
 
 **Charset Parameter:**
+
 - JSON formats: `charset=utf-8` (SHOULD be included)
 - Binary formats: No charset parameter
 
@@ -262,16 +283,19 @@ Content-Type: application/swe+binary
 **OGC API Convention (Part 1, Section 5.3):**
 
 1. **Query parameter takes precedence:**
+
    - If `f` or `format` parameter specified → use requested format
    - Query parameter overrides Accept header
    - Example: `?f=geojson` with `Accept: application/sml+json` → returns GeoJSON
 
 2. **Accept header as fallback:**
+
    - If no query parameter → use Accept header
    - Select best match based on quality values
    - Example: `Accept: application/geo+json` → returns GeoJSON
 
 3. **Default format:**
+
    - If no query parameter and no Accept header → use server default
    - Default is implementation-dependent
    - Typically: GeoJSON for spatial resources, SensorML for non-spatial (Part 1)
@@ -282,6 +306,7 @@ Content-Type: application/swe+binary
    - Response body contains error details
 
 **Precedence Order:**
+
 ```
 Query Parameter (f/format)
   ↓ (if not specified)
@@ -303,6 +328,7 @@ Server Default Format
 **Part 2: Explicit Advertisement**
 
 DataStream/ControlStream `formats` property:
+
 ```json
 {
   "type": "DataStream",
@@ -317,6 +343,7 @@ DataStream/ControlStream `formats` property:
 ```
 
 **Client Discovery:**
+
 - Client SHOULD check `formats` property before requesting specific format
 - Client SHOULD fall back to `application/json` if preferred format not listed
 - Client SHOULD handle 406 errors gracefully
@@ -330,11 +357,13 @@ DataStream/ControlStream `formats` property:
 **MUST Support (Core Formats):**
 
 1. **application/json** - All resource types
+
    - Parse JSON responses
    - Serialize JSON for write operations
    - Validate JSON structure
 
 2. **application/geo+json** - Spatial resources (Part 1)
+
    - Parse GeoJSON Feature/FeatureCollection
    - Extract geometry and properties
    - Serialize GeoJSON for write operations
@@ -349,12 +378,14 @@ DataStream/ControlStream `formats` property:
 **SHOULD Support (Extended Formats):**
 
 4. **application/swe+json** - Observations/Commands (Part 2)
+
    - Parse SWE Common JSON encoding
    - Decode data according to schema
    - Serialize SWE Common JSON for write operations
    - Validate against schema
 
 5. **application/swe+text** - Bulk observations (Part 2)
+
    - Parse CSV/DSV according to schema
    - Decode text encoding (separators, decimal separator)
    - Serialize CSV/DSV for write operations
@@ -374,15 +405,15 @@ DataStream/ControlStream `formats` property:
 
 ### Format Support Matrix
 
-| Format | Part | Status | Read | Write | Validate | Client API |
-|--------|------|--------|------|-------|----------|-----------|
-| application/json | 1, 2 | MUST | ✓ | ✓ | ✓ | Full support |
-| application/geo+json | 1 | MUST | ✓ | ✓ | ✓ | Geometry utilities |
-| application/sml+json | 1 | MUST | ✓ | ✓ | ✓ | Metadata extraction |
-| application/swe+json | 2 | SHOULD | ✓ | ✓ | ✓ | Schema-driven |
-| application/swe+text | 2 | SHOULD | ✓ | ✓ | ✓ | Schema-driven |
-| application/swe+binary | 2 | SHOULD | ✓ | ✓ | ✓ | Schema-driven |
-| Other formats | 1, 2 | MAY | Pass-through | - | - | Raw access |
+| Format                 | Part | Status | Read         | Write | Validate | Client API          |
+| ---------------------- | ---- | ------ | ------------ | ----- | -------- | ------------------- |
+| application/json       | 1, 2 | MUST   | ✓            | ✓     | ✓        | Full support        |
+| application/geo+json   | 1    | MUST   | ✓            | ✓     | ✓        | Geometry utilities  |
+| application/sml+json   | 1    | MUST   | ✓            | ✓     | ✓        | Metadata extraction |
+| application/swe+json   | 2    | SHOULD | ✓            | ✓     | ✓        | Schema-driven       |
+| application/swe+text   | 2    | SHOULD | ✓            | ✓     | ✓        | Schema-driven       |
+| application/swe+binary | 2    | SHOULD | ✓            | ✓     | ✓        | Schema-driven       |
+| Other formats          | 1, 2 | MAY    | Pass-through | -     | -        | Raw access          |
 
 ---
 
@@ -391,18 +422,21 @@ DataStream/ControlStream `formats` property:
 ### Full Parsing (MUST Support)
 
 **application/json:**
+
 - Parse to JavaScript objects
 - Validate JSON structure
 - No schema required (self-describing)
 - Example: `JSON.parse(responseBody)`
 
 **application/geo+json:**
+
 - Parse to GeoJSON Feature objects
 - Validate geometry structure (coordinates, type)
 - Extract properties (ogc-rel: prefix)
 - Example: See Section 3.2 (GeoJSON Requirements)
 
 **application/sml+json:**
+
 - Parse to SensorML component objects
 - Extract core properties (type, label, uniqueId)
 - Preserve complex metadata (inputs, outputs, characteristics)
@@ -411,18 +445,21 @@ DataStream/ControlStream `formats` property:
 ### Schema-Driven Parsing (SHOULD Support)
 
 **application/swe+json:**
+
 - Fetch schema from DataStream/ControlStream
 - Parse according to DataComponent structure
 - Decode data according to field definitions
 - Example: See Section 3.4 (SWE Common Requirements)
 
 **application/swe+text:**
+
 - Fetch schema from DataStream/ControlStream
 - Parse CSV/DSV according to separators
 - Decode fields according to DataComponent types
 - Example: See Section 3.4 (SWE Common Requirements)
 
 **application/swe+binary:**
+
 - Fetch schema from DataStream/ControlStream
 - Parse binary data according to byte layout
 - Decode fields according to data types
@@ -431,12 +468,14 @@ DataStream/ControlStream `formats` property:
 ### Pass-Through (MAY Support)
 
 **Unsupported Formats:**
+
 - Return raw response body
 - No parsing or validation
 - Client application handles format-specific processing
 - Example: HTML, XML, custom formats
 
 **Client API Design:**
+
 ```typescript
 interface FormatOptions {
   format?: string;
@@ -444,13 +483,15 @@ interface FormatOptions {
 }
 
 // Full parsing (default)
-const system = await client.systems.get('sys123', { format: 'application/geo+json' });
+const system = await client.systems.get('sys123', {
+  format: 'application/geo+json',
+});
 // Returns: GeoJSONFeature object
 
 // Pass-through
-const systemRaw = await client.systems.get('sys123', { 
+const systemRaw = await client.systems.get('sys123', {
   format: 'application/xml',
-  parse: false 
+  parse: false,
 });
 // Returns: string (raw XML)
 ```
@@ -462,12 +503,14 @@ const systemRaw = await client.systems.get('sys123', {
 ### Part 1: Core Resources
 
 **application/json:**
+
 - Serialize JavaScript objects to JSON
 - Include required properties (uid, name, featureType)
 - Omit undefined/null optional properties
 - Example: `JSON.stringify(resourceObject)`
 
 **application/geo+json:**
+
 - Serialize to GeoJSON Feature
 - Include `type: "Feature"` property
 - Serialize geometry (type, coordinates)
@@ -476,6 +519,7 @@ const systemRaw = await client.systems.get('sys123', {
 - Example: See Section 3.2 (GeoJSON Requirements)
 
 **application/sml+json:**
+
 - Serialize to SensorML component
 - Include required properties (type, label, uniqueId)
 - Preserve complex metadata (inputs, outputs, characteristics)
@@ -485,11 +529,13 @@ const systemRaw = await client.systems.get('sys123', {
 ### Part 2: Dynamic Data
 
 **application/json:**
+
 - Serialize Observation/Command objects to JSON
 - Include required properties (phenomenonTime, result, etc.)
 - Example: `JSON.stringify(observationObject)`
 
 **application/swe+json:**
+
 - Fetch schema from DataStream/ControlStream
 - Serialize according to DataComponent structure
 - Encode data according to field definitions
@@ -497,6 +543,7 @@ const systemRaw = await client.systems.get('sys123', {
 - Example: See Section 3.4 (SWE Common Requirements)
 
 **application/swe+text:**
+
 - Fetch schema from DataStream/ControlStream
 - Serialize to CSV/DSV according to separators
 - Encode fields according to DataComponent types
@@ -504,6 +551,7 @@ const systemRaw = await client.systems.get('sys123', {
 - Example: See Section 3.4 (SWE Common Requirements)
 
 **application/swe+binary:**
+
 - Fetch schema from DataStream/ControlStream
 - Serialize to binary data according to byte layout
 - Encode fields according to data types
@@ -515,17 +563,19 @@ const systemRaw = await client.systems.get('sys123', {
 **POST/PUT/PATCH Requests:**
 
 Client MUST include Content-Type header:
+
 ```typescript
 const response = await fetch('/systems', {
   method: 'POST',
   headers: {
-    'Content-Type': 'application/geo+json; charset=utf-8'
+    'Content-Type': 'application/geo+json; charset=utf-8',
   },
-  body: JSON.stringify(geoJsonFeature)
+  body: JSON.stringify(geoJsonFeature),
 });
 ```
 
 **Charset Parameter:**
+
 - JSON formats: Include `charset=utf-8`
 - Binary formats: Omit charset parameter
 
@@ -536,11 +586,13 @@ const response = await fetch('/systems', {
 ### Client-Side Validation Strategy
 
 **Pre-Send Validation:**
+
 - Validate format structure before sending to server
 - Prevent 400 Bad Request errors
 - Improve client-side error messages
 
 **Post-Receive Validation:**
+
 - Validate format structure after receiving from server
 - Detect malformed responses
 - Handle server-side errors gracefully
@@ -548,35 +600,41 @@ const response = await fetch('/systems', {
 ### Format-Specific Validation
 
 **application/json:**
+
 - JSON syntax validation (automatic with `JSON.parse()`)
 - Schema validation (optional, JSON Schema)
 - Required property validation
 
 **application/geo+json:**
+
 - GeoJSON structure validation (type, coordinates)
 - Geometry validation (coordinate count, closure)
 - CRS validation (WGS84/CRS84 only)
 - See Section 3.2 for detailed validation rules
 
 **application/sml+json:**
+
 - SensorML structure validation (type, label, uniqueId)
 - Component type validation (PhysicalSystem, etc.)
 - Required property validation
 - See Section 3.3 for detailed validation rules
 
 **application/swe+json:**
+
 - DataComponent structure validation
 - Field type validation
 - Unit validation (UCUM codes)
 - See Section 3.4 for detailed validation rules
 
 **application/swe+text:**
+
 - Field count validation (matches schema)
 - Field type validation (numeric, string, datetime)
 - Separator validation (consistent use)
 - See Section 3.4 for detailed validation rules
 
 **application/swe+binary:**
+
 - Byte layout validation (matches schema)
 - Data type validation (byte length)
 - Byte order validation (BIG_ENDIAN/LITTLE_ENDIAN)
@@ -585,28 +643,30 @@ const response = await fetch('/systems', {
 ### Validation Libraries
 
 **Recommended:**
+
 - **ajv** - JSON Schema validation
 - **@turf/turf** - GeoJSON geometry validation
 - Custom validators for SensorML and SWE Common
 
 **Client Library API:**
+
 ```typescript
 interface ValidationOptions {
   validate?: boolean; // default: true
-  strict?: boolean;   // default: false
+  strict?: boolean; // default: false
 }
 
 // Validate before sending
-const system = await client.systems.create(systemData, { 
+const system = await client.systems.create(systemData, {
   format: 'application/geo+json',
   validate: true,
-  strict: true 
+  strict: true,
 });
 
 // Skip validation (for performance)
-const observation = await client.observations.create(obsData, { 
+const observation = await client.observations.create(obsData, {
   format: 'application/swe+json',
-  validate: false 
+  validate: false,
 });
 ```
 
@@ -617,36 +677,39 @@ const observation = await client.observations.create(obsData, {
 ### Format Selection API
 
 **Method-Level Format Parameter:**
+
 ```typescript
 // Explicit format selection
-const system = await client.systems.get('sys123', { 
-  format: 'application/geo+json' 
+const system = await client.systems.get('sys123', {
+  format: 'application/geo+json',
 });
 
 // Default format (application/json)
 const system = await client.systems.get('sys123');
 
 // Multiple format preferences
-const system = await client.systems.get('sys123', { 
-  formats: ['application/geo+json', 'application/json']
+const system = await client.systems.get('sys123', {
+  formats: ['application/geo+json', 'application/json'],
 });
 ```
 
 **Global Format Preferences:**
+
 ```typescript
 const client = new CSAPIClient({
   baseURL: 'https://api.example.org',
   defaultFormats: {
     systems: 'application/geo+json',
     procedures: 'application/sml+json',
-    observations: 'application/swe+binary'
-  }
+    observations: 'application/swe+binary',
+  },
 });
 ```
 
 ### Format-Specific Convenience Methods
 
 **GeoJSON Methods:**
+
 ```typescript
 // Get system as GeoJSON Feature
 const feature = await client.systems.getAsGeoJSON('sys123');
@@ -659,6 +722,7 @@ const system = await client.systems.createFromGeoJSON(geoJsonFeature);
 ```
 
 **SensorML Methods:**
+
 ```typescript
 // Get system as SensorML
 const sensorML = await client.systems.getAsSensorML('sys123');
@@ -671,23 +735,29 @@ const characteristics = await client.systems.getCharacteristics('sys123');
 ```
 
 **SWE Common Methods:**
+
 ```typescript
 // Get observations with specific encoding
 const observations = await client.observations.list('ds123', {
   format: 'application/swe+binary',
-  limit: 10000
+  limit: 10000,
 });
 
 // Decode observations according to schema
 const decoded = await client.observations.decode(observations, schema);
 
 // Encode observations for write operation
-const encoded = await client.observations.encode(observationData, schema, 'application/swe+binary');
+const encoded = await client.observations.encode(
+  observationData,
+  schema,
+  'application/swe+binary'
+);
 ```
 
 ### Format Detection API
 
 **Automatic Format Detection:**
+
 ```typescript
 // Detect format from Content-Type header
 const system = await client.systems.get('sys123');
@@ -699,13 +769,17 @@ console.log(detectedFormat); // 'application/geo+json'
 ```
 
 **Format Capabilities API:**
+
 ```typescript
 // Get supported formats for resource type
 const formats = await client.systems.getSupportedFormats('sys123');
 console.log(formats); // ['application/json', 'application/geo+json', 'application/sml+json']
 
 // Check if format supported
-const supported = await client.systems.supportsFormat('sys123', 'application/geo+json');
+const supported = await client.systems.supportsFormat(
+  'sys123',
+  'application/geo+json'
+);
 console.log(supported); // true
 ```
 
@@ -716,10 +790,11 @@ console.log(supported); // true
 ### Format-Related Errors
 
 **Unsupported Format (406 Not Acceptable):**
+
 ```typescript
 try {
-  const system = await client.systems.get('sys123', { 
-    format: 'application/xml' 
+  const system = await client.systems.get('sys123', {
+    format: 'application/xml',
   });
 } catch (error) {
   if (error.status === 406) {
@@ -731,27 +806,29 @@ try {
 ```
 
 **Malformed Content (Parse Error):**
+
 ```typescript
 try {
   const observations = await client.observations.list('ds123', {
-    format: 'application/swe+binary'
+    format: 'application/swe+binary',
   });
 } catch (error) {
   if (error instanceof ParseError) {
     console.error('Failed to parse binary data:', error.message);
     // Log error and retry with different format
     const observations = await client.observations.list('ds123', {
-      format: 'application/json'
+      format: 'application/json',
     });
   }
 }
 ```
 
 **Validation Error (400 Bad Request):**
+
 ```typescript
 try {
   const system = await client.systems.create(invalidSystemData, {
-    format: 'application/geo+json'
+    format: 'application/geo+json',
   });
 } catch (error) {
   if (error.status === 400) {
@@ -764,37 +841,43 @@ try {
 ### Error Types
 
 **UnsupportedFormatError:**
+
 - Thrown when requested format not supported by server
 - HTTP Status: 406 Not Acceptable
 - Includes: `requestedFormat`, `supportedFormats`
 
 **MalformedFormatError:**
+
 - Thrown when response cannot be parsed
 - Includes: `format`, `responseBody`, `parseError`
 
 **ValidationError:**
+
 - Thrown when data fails validation
 - HTTP Status: 400 Bad Request
 - Includes: `validationErrors`, `fieldPath`, `expectedType`
 
 **FormatConversionError:**
+
 - Thrown when format conversion fails
 - Includes: `sourceFormat`, `targetFormat`, `conversionError`
 
 ### Error Handling Strategy
 
 **Graceful Degradation:**
+
 1. Try preferred format
 2. If 406 error → fall back to `application/json`
 3. If parse error → log and retry with different format
 4. If all formats fail → throw error
 
 **Format Fallback Chain:**
+
 ```typescript
 const formatChain = [
-  'application/swe+binary',  // Preferred
-  'application/swe+json',    // Fallback 1
-  'application/json'         // Fallback 2 (always supported)
+  'application/swe+binary', // Preferred
+  'application/swe+json', // Fallback 1
+  'application/json', // Fallback 2 (always supported)
 ];
 
 let observations;
@@ -812,20 +895,21 @@ for (const format of formatChain) {
 ```
 
 **Logging and Monitoring:**
+
 ```typescript
 client.on('format-error', (error) => {
   console.warn('Format error:', {
     type: error.type,
     format: error.format,
     resource: error.resourceType,
-    message: error.message
+    message: error.message,
   });
 });
 
 // Metrics
 client.metrics.incrementCounter('format_errors', {
   format: 'application/swe+binary',
-  error_type: 'parse_error'
+  error_type: 'parse_error',
 });
 ```
 
@@ -836,21 +920,25 @@ client.metrics.incrementCounter('format_errors', {
 This section establishes the foundation for format handling in the CSAPI client library:
 
 1. **Required Formats:**
+
    - Part 1: `application/json`, `application/geo+json`, `application/sml+json`
    - Part 2: `application/json`, `application/swe+json`, `application/swe+text`, `application/swe+binary`
 
 2. **Format Negotiation:**
+
    - Query parameter (f/format) takes precedence
    - Accept header as fallback
    - Server default if neither specified
    - 406 Not Acceptable if format not supported
 
 3. **Client Library Requirements:**
+
    - MUST support: JSON, GeoJSON, SensorML
    - SHOULD support: SWE Common (JSON, CSV, Binary)
    - MAY support: Other formats (pass-through)
 
 4. **Processing Strategy:**
+
    - Full parsing for all MUST/SHOULD formats
    - Schema-driven parsing for SWE Common formats
    - Pass-through for unsupported formats

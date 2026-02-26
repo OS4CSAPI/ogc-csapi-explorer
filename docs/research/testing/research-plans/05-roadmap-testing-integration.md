@@ -18,6 +18,7 @@ Understand how the 34-task incremental Roadmap structures testing with the "test
 **Why This Research Fifth:**
 
 The Roadmap specifies "write tests immediately after each subtask" as a core principle to prevent test debt. After validating Implementation Guide requirements (Section 4), understand how those requirements distribute across 34 incremental tasks. This defines:
+
 - **When** to write tests (after which subtasks)
 - **What** to test at each checkpoint
 - **How** to organize tests incrementally
@@ -45,92 +46,35 @@ Must follow Section 4 (Implementation Guide validation) to ensure Roadmap test e
 ### Detailed Questions
 
 **Roadmap Structure (4 questions):**
+
 1. How many total tasks are in the Roadmap? (34 tasks across 4 phases)
 2. How do tasks break down by phase? (Phase 1: 4, Phase 2: 9, Phase 3: 15, Phase 4: 4)
 3. What's the time estimate for each phase?
 4. What's the incremental testing pattern per phase?
 
-**Test-Immediately Pattern (4 questions):**
-5. What does "test immediately after each subtask" mean concretely?
-6. How does this pattern vary by phase?
-7. How does this pattern vary by task type (implementation vs pure testing)?
-8. What's the maximum time between implementation and tests?
+**Test-Immediately Pattern (4 questions):** 5. What does "test immediately after each subtask" mean concretely? 6. How does this pattern vary by phase? 7. How does this pattern vary by task type (implementation vs pure testing)? 8. What's the maximum time between implementation and tests?
 
-**Phase 1 Testing Strategy (5 questions):**
-9. What are Phase 1's 4 tasks?
-10. What tests are written after each Phase 1 task?
-11. What's the test accumulation pattern in Phase 1?
-12. What test files exist after Phase 1 completion?
-13. What coverage is expected after Phase 1?
+**Phase 1 Testing Strategy (5 questions):** 9. What are Phase 1's 4 tasks? 10. What tests are written after each Phase 1 task? 11. What's the test accumulation pattern in Phase 1? 12. What test files exist after Phase 1 completion? 13. What coverage is expected after Phase 1?
 
-**Phase 2 Testing Strategy (6 questions):**
-14. What are Phase 2's 9 resource type tasks?
-15. What tests are written after each resource type implementation?
-16. How do tests accumulate across 9 resource types?
-17. What's the commit strategy for Phase 2 tests?
-18. What test organization prevents duplication across 9 similar tasks?
-19. What coverage is expected after Phase 2?
+**Phase 2 Testing Strategy (6 questions):** 14. What are Phase 2's 9 resource type tasks? 15. What tests are written after each resource type implementation? 16. How do tests accumulate across 9 resource types? 17. What's the commit strategy for Phase 2 tests? 18. What test organization prevents duplication across 9 similar tasks? 19. What coverage is expected after Phase 2?
 
-**Phase 3 Testing Strategy (5 questions):**
-20. What are Phase 3's 15 format handling tasks?
-21. How do tests accumulate across 15 parser subtasks?
-22. What's the testing checkpoint for each parser component?
-23. How are format tests organized (all in one file vs separate)?
-24. What coverage is expected after Phase 3?
+**Phase 3 Testing Strategy (5 questions):** 20. What are Phase 3's 15 format handling tasks? 21. How do tests accumulate across 15 parser subtasks? 22. What's the testing checkpoint for each parser component? 23. How are format tests organized (all in one file vs separate)? 24. What coverage is expected after Phase 3?
 
-**Phase 4 Testing Strategy (6 questions):**
-25. What are Phase 4's 4 tasks?
-26. How does Phase 4 differ (Tasks 2-3 ARE testing tasks)?
-27. What worker tests are written in Task 1?
-28. What integration tests are written in Task 2?
-29. What unit tests are completed in Task 3?
-30. What documentation is completed in Task 4?
+**Phase 4 Testing Strategy (6 questions):** 25. What are Phase 4's 4 tasks? 26. How does Phase 4 differ (Tasks 2-3 ARE testing tasks)? 27. What worker tests are written in Task 1? 28. What integration tests are written in Task 2? 29. What unit tests are completed in Task 3? 30. What documentation is completed in Task 4?
 
-**Test File Evolution (5 questions):**
-31. What test files are created in Phase 1?
-32. What test files are added in Phase 2?
-33. What test files are added in Phase 3?
-34. What test files are added in Phase 4?
-35. How does test file structure evolve across phases?
+**Test File Evolution (5 questions):** 31. What test files are created in Phase 1? 32. What test files are added in Phase 2? 33. What test files are added in Phase 3? 34. What test files are added in Phase 4? 35. How does test file structure evolve across phases?
 
-**Test Line Accumulation (4 questions):**
-36. What are test line estimates by phase? (Phase 1: 400-550, Phase 2: 800-1,000, Phase 3: 2,400-3,500, Phase 4: 800-1,250)
-37. How do estimates align with task granularity?
-38. What's the average lines per task?
-39. Are any tasks accumulating too many test lines without checkpoints?
+**Test Line Accumulation (4 questions):** 36. What are test line estimates by phase? (Phase 1: 400-550, Phase 2: 800-1,000, Phase 3: 2,400-3,500, Phase 4: 800-1,250) 37. How do estimates align with task granularity? 38. What's the average lines per task? 39. Are any tasks accumulating too many test lines without checkpoints?
 
-**Test Debt Prevention (5 questions):**
-40. What's the maximum implementation time before testing?
-41. How does incremental testing prevent test debt?
-42. What are the natural test checkpoints in each phase?
-43. What's the commit frequency for tests?
-44. How to balance test completeness vs incremental progress?
+**Test Debt Prevention (5 questions):** 40. What's the maximum implementation time before testing? 41. How does incremental testing prevent test debt? 42. What are the natural test checkpoints in each phase? 43. What's the commit frequency for tests? 44. How to balance test completeness vs incremental progress?
 
-**Test Organization Strategy (5 questions):**
-45. How are tests organized to support incremental development?
-46. When to create new test files vs add to existing?
-47. How to structure tests for 9 similar resource types (Phase 2)?
-48. How to structure tests for 15 parser subtasks (Phase 3)?
-49. How to prevent test file bloat?
+**Test Organization Strategy (5 questions):** 45. How are tests organized to support incremental development? 46. When to create new test files vs add to existing? 47. How to structure tests for 9 similar resource types (Phase 2)? 48. How to structure tests for 15 parser subtasks (Phase 3)? 49. How to prevent test file bloat?
 
-**Coverage Evolution (4 questions):**
-50. What's the target coverage after each phase?
-51. How does coverage increase incrementally?
-52. What components have full coverage early vs late?
-53. How to track coverage during incremental development?
+**Coverage Evolution (4 questions):** 50. What's the target coverage after each phase? 51. How does coverage increase incrementally? 52. What components have full coverage early vs late? 53. How to track coverage during incremental development?
 
-**Integration with Implementation Guide (4 questions):**
-54. How do Roadmap test estimates align with Implementation Guide estimates?
-55. Are there discrepancies in test line counts?
-56. Are there discrepancies in test types?
-57. Are there discrepancies in test organization?
+**Integration with Implementation Guide (4 questions):** 54. How do Roadmap test estimates align with Implementation Guide estimates? 55. Are there discrepancies in test line counts? 56. Are there discrepancies in test types? 57. Are there discrepancies in test organization?
 
-**Commit Strategy (5 questions):**
-58. What's the recommended commit frequency?
-59. Should tests be committed with implementation (same commit)?
-60. Should tests be committed separately (test-only commits)?
-61. What's the recommended commit message pattern?
-62. How to track incremental test progress in commits?
+**Commit Strategy (5 questions):** 58. What's the recommended commit frequency? 59. Should tests be committed with implementation (same commit)? 60. Should tests be committed separately (test-only commits)? 61. What's the recommended commit message pattern? 62. How to track incremental test progress in commits?
 
 ---
 
@@ -158,6 +102,7 @@ Must follow Section 4 (Implementation Guide validation) to ensure Roadmap test e
 **Objective:** Extract complete task-by-task test specifications
 
 **Tasks:**
+
 1. Read complete Roadmap document systematically
 2. Extract all 34 tasks with time estimates
 3. Identify test specifications per task (what to test, when to test)
@@ -171,6 +116,7 @@ Must follow Section 4 (Implementation Guide validation) to ensure Roadmap test e
 **Objective:** Validate Roadmap integration with Implementation Guide
 
 **Tasks:**
+
 1. Compare Roadmap test estimates with Implementation Guide (Section 4 deliverable)
 2. Validate test organization aligns with file structure specs
 3. Identify any discrepancies or gaps between Roadmap and Guide
@@ -183,6 +129,7 @@ Must follow Section 4 (Implementation Guide validation) to ensure Roadmap test e
 **Objective:** Create comprehensive incremental testing workflow guide
 
 **Tasks:**
+
 1. Synthesize findings into incremental testing workflow document
 2. Create phase-by-phase testing guide with task-by-task breakdowns
 3. Document task-by-task test specifications for all 34 tasks
@@ -218,6 +165,7 @@ This research is complete when:
 Content includes:
 
 1. **Executive Summary**
+
    - 34 tasks across 4 phases
    - Test-immediately pattern summary
    - Total test line accumulation (4,500-6,000 lines)
@@ -225,6 +173,7 @@ Content includes:
    - Commit strategy recommendation
 
 2. **Incremental Testing Principles**
+
    - What "test immediately" means concretely
    - Maximum time between implementation and tests (2-3 hours)
    - Test debt prevention strategy
@@ -232,6 +181,7 @@ Content includes:
    - Commit frequency recommendations
 
 3. **Phase 1: Core Structure (4 tasks, 400-550 test lines)**
+
    - **Task 1: Create Type System**
      - What to test: Type validation tests (~200-300 lines)
      - When to test: Immediately after types defined
@@ -251,6 +201,7 @@ Content includes:
    - **Phase 1 completion:** 4 test checkpoints, ~400-550 lines total
 
 4. **Phase 2: QueryBuilder Methods (9 tasks, 800-1,000 test lines)**
+
    - Task-by-task breakdown for all 9 resource types
    - **For each task (example: Task 1 - Systems Methods):**
      - Implementation: 12 Systems methods (~2-2.5 hrs)
@@ -261,6 +212,7 @@ Content includes:
    - **Phase 2 completion:** 9 test checkpoints, ~800-1,000 lines accumulated
 
 5. **Phase 3: Format Handling (15 tasks, 2,400-3,500 test lines)**
+
    - Task-by-task breakdown for all 15 format subtasks
    - **Extensions (Tasks 1-3):**
      - GeoJSON, Format Detector, Validator
@@ -275,6 +227,7 @@ Content includes:
    - **Phase 3 completion:** 15 test checkpoints, ~2,400-3,500 lines accumulated
 
 6. **Phase 4: Worker & Tests (4 tasks, 800-1,250 test lines)**
+
    - **Task 1: Worker Extensions**
      - Implementation: 9 message types (~3-4 hrs)
      - Testing: Worker tests immediately (~0.5 hr, ~200-300 lines)
@@ -287,6 +240,7 @@ Content includes:
    - **Phase 4 completion:** 3 test checkpoints (Task 1 impl test, Tasks 2-3 pure testing)
 
 7. **Test File Evolution Timeline**
+
    - **Phase 1:** Create `model.spec.ts`, `url_builder.spec.ts` (initial)
    - **Phase 2:** Expand `url_builder.spec.ts` (9 resource types)
    - **Phase 3:** Add format test files (SensorML, SWE Common, GeoJSON tests)
@@ -294,6 +248,7 @@ Content includes:
    - Final test file structure
 
 8. **Test Line Accumulation Chart**
+
    - **Phase 1:** 0 → 400-550 lines (4 checkpoints)
    - **Phase 2:** 400-550 → 1,200-1,550 lines (9 checkpoints)
    - **Phase 3:** 1,200-1,550 → 3,600-5,050 lines (15 checkpoints)
@@ -301,6 +256,7 @@ Content includes:
    - **Total:** 31 test checkpoints across 34 tasks
 
 9. **Test Organization Strategy**
+
    - When to create new test files (new component types)
    - When to add to existing test files (similar functionality)
    - How to organize 9 similar resource type tests (consistent pattern, avoid duplication)
@@ -308,6 +264,7 @@ Content includes:
    - Preventing test file bloat (split by component, keep under 500 lines)
 
 10. **Commit Strategy**
+
     - **Recommended:** Implementation + immediate tests in same commit
     - **Alternative:** Implementation commit → test commit immediately after
     - Commit message pattern examples
@@ -315,6 +272,7 @@ Content includes:
     - When to squash vs keep granular commits (PR review context)
 
 11. **Test Debt Prevention**
+
     - Maximum 2-3 hours between implementation and tests
     - Never accumulate >800 lines without tests
     - Each subtask is commit-able with tests
@@ -322,6 +280,7 @@ Content includes:
     - Continuous coverage tracking approach
 
 12. **Coverage Evolution**
+
     - **Target after Phase 1:** ~60-70% (foundation only)
     - **Target after Phase 2:** ~70-75% (QueryBuilder complete)
     - **Target after Phase 3:** ~75-80% (formats complete)
@@ -329,6 +288,7 @@ Content includes:
     - Incremental coverage tracking approach
 
 13. **Implementation Guide Alignment**
+
     - Validation: Do Roadmap estimates match Implementation Guide?
     - Discrepancy resolution (if any)
     - Cross-reference table showing alignment
@@ -346,9 +306,11 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 4: Implementation Guide Testing Requirements - provides validated test specifications to align with
 
 **Blocks:**
+
 - All subsequent sections (defines when to apply their patterns during incremental development)
 - Section 12: QueryBuilder Testing Strategy (Phase 2 workflow)
 - Section 14: Integration Test Workflow Design (Phase 4 Task 2 specifications)
@@ -359,12 +321,14 @@ Content includes:
 ## 9. Research Status Checklist
 
 - [x] **Phase 1: Roadmap Deep Dive (20-30 min) - Complete**
+
   - Started: February 5, 2026
   - Completed: February 5, 2026
   - Actual Time: ~25 minutes
   - Deliverables: 34 tasks extracted with test specs, accumulation pattern documented, checkpoints identified
 
 - [x] **Phase 2: Cross-Reference Analysis (20-30 min) - Complete**
+
   - Started: February 5, 2026
   - Completed: February 5, 2026
   - Actual Time: ~20 minutes
@@ -382,6 +346,7 @@ Content includes:
 ---
 
 ## 10. Notes and Open Questions
+
 - [ ] Commit strategy defined
 
 ---
@@ -393,6 +358,7 @@ Content includes:
 **Research Completed:** February 5, 2026
 
 **Final Observations:**
+
 - Roadmap's 34-task structure provides 31 natural test checkpoints (3 tasks are documentation/index with no tests)
 - "Test immediately" pattern validated: max 2-3 hours, max 800 lines between implementation and tests
 - Phase 3 restructuring (17 subtasks) prevents 5-10 hour test debt (v2.0 would have accumulated 2,900 lines)
@@ -418,6 +384,7 @@ Content includes:
 **Mitigation:** Set realistic phase targets; allow flexibility; track actual coverage vs targets; adjust if needed
 
 **Workflow Validation:**
+
 - All 34 tasks have test specifications
 - Test estimates align with Implementation Guide
 - Incremental pattern prevents test debt (validated by max time/lines thresholds)
@@ -426,6 +393,7 @@ Content includes:
 - Workflow guide is implementation-ready
 
 **Next Steps After Completion:**
+
 1. Use workflow guide during implementation (reference during development)
 2. Track actual test lines vs estimates during development
 3. Adjust estimates if reality differs from plan

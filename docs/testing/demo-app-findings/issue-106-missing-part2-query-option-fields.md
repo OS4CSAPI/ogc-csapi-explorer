@@ -29,11 +29,11 @@ Issue #106 identifies missing optional filter fields across several Part 2 `Quer
 
 After verifying each claimed gap against the normative OGC 23-002 specification (Clause 13 — Advanced Filtering), this analysis finds:
 
-| Category | Count | Details |
-|---|---|---|
-| **Confirmed spec-normative gaps** | 7 fields + 1 interface | Missing from our interfaces but normatively required by OGC 23-002 §13 |
-| **Not spec-normative (do NOT implement)** | 3 fields | Proposed in the issue but not defined as query parameters in OGC 23-002 §13 |
-| **Incorrect spec citations in issue** | 5 | Issue references §2.x and §8.x; actual normative clauses are in §13.x |
+| Category                                  | Count                  | Details                                                                     |
+| ----------------------------------------- | ---------------------- | --------------------------------------------------------------------------- |
+| **Confirmed spec-normative gaps**         | 7 fields + 1 interface | Missing from our interfaces but normatively required by OGC 23-002 §13      |
+| **Not spec-normative (do NOT implement)** | 3 fields               | Proposed in the issue but not defined as query parameters in OGC 23-002 §13 |
+| **Incorrect spec citations in issue**     | 5                      | Issue references §2.x and §8.x; actual normative clauses are in §13.x       |
 
 **Recommendation**: Add the 7 confirmed spec-normative fields to existing interfaces and create the `CommandStatusQueryOptions` interface. Do **NOT** add `dataStream`, `controlStream`, or `reportTime` — these are not defined as query parameters in the spec. The risk is **low**: all changes are additive optional fields on TypeScript interfaces, with one backward-compatible method signature change on `getCommandStatus()`.
 
@@ -69,13 +69,13 @@ Each gap was verified against OGC 23-002 Clause 13 (Advanced Filtering), which i
 
 The issue contains several incorrect spec section references. This table maps each to the actual normative clause:
 
-| Issue Citation | Actual Normative Clause | Notes |
-|---|---|---|
-| "OGC 23-002 §8.3–8.4 (Req 52-55)" | §13.4.1–13.4.2 (Req 52-53) | §8 is "Common"; §13.4 is "ControlStream Query Parameters". Req 54 is `controlledProperty`, Req 55 is `foi` — not temporal filters. |
-| "OGC 23-002 §2.1–2.4" | §13.2.4, §13.3.3, §13.4.4, §13.5.5 | §2 is "Conformance"; §13.x.y are the individual `foi` filter requirements |
-| "OGC 23-002 §2.2" | Not in §13.3 | No `dataStream` query parameter is defined anywhere in §13 |
-| "OGC 23-002 §2.4" (controlStream) | Not in §13.5 | No `controlStream` query parameter is defined anywhere in §13 |
-| "OGC 23-002 §2.4" (sender) | §13.5.4 (Req 59) | `sender` is normatively required |
+| Issue Citation                    | Actual Normative Clause            | Notes                                                                                                                              |
+| --------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| "OGC 23-002 §8.3–8.4 (Req 52-55)" | §13.4.1–13.4.2 (Req 52-53)         | §8 is "Common"; §13.4 is "ControlStream Query Parameters". Req 54 is `controlledProperty`, Req 55 is `foi` — not temporal filters. |
+| "OGC 23-002 §2.1–2.4"             | §13.2.4, §13.3.3, §13.4.4, §13.5.5 | §2 is "Conformance"; §13.x.y are the individual `foi` filter requirements                                                          |
+| "OGC 23-002 §2.2"                 | Not in §13.3                       | No `dataStream` query parameter is defined anywhere in §13                                                                         |
+| "OGC 23-002 §2.4" (controlStream) | Not in §13.5                       | No `controlStream` query parameter is defined anywhere in §13                                                                      |
+| "OGC 23-002 §2.4" (sender)        | §13.5.4 (Req 59)                   | `sender` is normatively required                                                                                                   |
 
 These inaccuracies are significant because they suggest the issue was written without precise spec cross-referencing. This report corrects each citation before making recommendations.
 
@@ -88,6 +88,7 @@ These inaccuracies are significant because they suggest the issue was written wi
 **Status**: ✅ CONFIRMED — Spec-normative
 
 **Current interface** (model.ts):
+
 ```typescript
 export interface ControlStreamQueryOptions extends QueryOptions {
   systemId?: string;
@@ -97,8 +98,9 @@ export interface ControlStreamQueryOptions extends QueryOptions {
 ```
 
 **Spec evidence**:
-- OGC 23-002 §13.4.1 — Req 52 (`/req/advanced-filtering/controlstream-by-issuetime`): *"The HTTP GET operation at a ControlStream resources endpoint SHALL support a parameter `issueTime`."*
-- OGC 23-002 §13.4.2 — Req 53 (`/req/advanced-filtering/controlstream-by-exectime`): *"The HTTP GET operation at a ControlStream resources endpoint SHALL support a parameter `executionTime`."*
+
+- OGC 23-002 §13.4.1 — Req 52 (`/req/advanced-filtering/controlstream-by-issuetime`): _"The HTTP GET operation at a ControlStream resources endpoint SHALL support a parameter `issueTime`."_
+- OGC 23-002 §13.4.2 — Req 53 (`/req/advanced-filtering/controlstream-by-exectime`): _"The HTTP GET operation at a ControlStream resources endpoint SHALL support a parameter `executionTime`."_
 
 **Wire-name compatibility**: Both `issueTime` and `executionTime` are already in `TEMPORAL_KEYS` (added for `CommandQueryOptions`). They will be correctly handled by `buildQueryString()` (ISO 8601 formatting) and their TypeScript names match the spec wire names — no `PARAM_NAME_MAP` entry needed.
 
@@ -112,14 +114,14 @@ export interface ControlStreamQueryOptions extends QueryOptions {
 
 **Affected interfaces and spec references**:
 
-| Interface | Spec Clause | Requirement |
-|---|---|---|
-| `DatastreamQueryOptions` | §13.2.4 | Req 48: `/req/advanced-filtering/datastream-by-foi` |
-| `ObservationQueryOptions` | §13.3.3 | Req 51: `/req/advanced-filtering/obs-by-foi` |
-| `ControlStreamQueryOptions` | §13.4.4 | Req 55: `/req/advanced-filtering/controlstream-by-foi` |
-| `CommandQueryOptions` | §13.5.5 | Req 60: `/req/advanced-filtering/cmd-by-foi` |
+| Interface                   | Spec Clause | Requirement                                            |
+| --------------------------- | ----------- | ------------------------------------------------------ |
+| `DatastreamQueryOptions`    | §13.2.4     | Req 48: `/req/advanced-filtering/datastream-by-foi`    |
+| `ObservationQueryOptions`   | §13.3.3     | Req 51: `/req/advanced-filtering/obs-by-foi`           |
+| `ControlStreamQueryOptions` | §13.4.4     | Req 55: `/req/advanced-filtering/controlstream-by-foi` |
+| `CommandQueryOptions`       | §13.5.5     | Req 60: `/req/advanced-filtering/cmd-by-foi`           |
 
-All four requirements use the same language: *"SHALL support a parameter `foi` of type `ID_List`"*.
+All four requirements use the same language: _"SHALL support a parameter `foi` of type `ID_List`"_.
 
 **Wire-name compatibility**: The spec wire name is `foi`. The TypeScript property name `foi` matches directly — no `PARAM_NAME_MAP` entry needed. Note: `SystemQueryOptions` uses `foiId` (which maps to `foi` via `PARAM_NAME_MAP` from #105). The Part 2 interfaces should use `foi` directly since there's no legacy naming conflict — they are new additions. However, for consistency with the existing Part 1 convention of using `foiId`, a project decision should be made on whether to name the new field `foiId` (and rely on the existing PARAM_NAME_MAP entry) or `foi` (matching the spec directly). Both work at the wire level.
 
@@ -131,9 +133,10 @@ All four requirements use the same language: *"SHALL support a parameter `foi` o
 
 **Status**: ❌ NOT SPEC-NORMATIVE — Do NOT implement
 
-**Issue claim**: *"Missing: `dataStream` — Spec: OGC 23-002 §2.2"*
+**Issue claim**: _"Missing: `dataStream` — Spec: OGC 23-002 §2.2"_
 
 **Spec evidence**: OGC 23-002 §13.3 ("Observation Query Parameters") defines exactly three query parameters:
+
 - §13.3.1 `phenomenonTime` (Req 49)
 - §13.3.2 `resultTime` (Req 50)
 - §13.3.3 `foi` (Req 51)
@@ -142,7 +145,7 @@ There is **no** `dataStream` query parameter defined in §13.3 or anywhere else 
 
 The spec's intended approach for filtering observations by datastream is the **nested endpoint**: `GET /datastreams/{dsId}/observations` — which our library already supports via `getDataStreamObservations()`.
 
-**Issue's own assessment**: The issue acknowledges this: *"Less critical since `getDataStreamObservations()` exists as a workaround."*
+**Issue's own assessment**: The issue acknowledges this: _"Less critical since `getDataStreamObservations()` exists as a workaround."_
 
 **Recommendation**: Do NOT add. This would be scope expansion (AI_OPERATIONAL_CONSTRAINTS §2.1) and introduce a non-spec parameter.
 
@@ -152,7 +155,7 @@ The spec's intended approach for filtering observations by datastream is the **n
 
 **Status**: ✅ CONFIRMED — Spec-normative
 
-**Spec evidence**: OGC 23-002 §13.5.4 — Req 59 (`/req/advanced-filtering/cmd-by-sender`): *"The HTTP GET operation at a Command resources endpoint SHALL support a parameter `sender`"*
+**Spec evidence**: OGC 23-002 §13.5.4 — Req 59 (`/req/advanced-filtering/cmd-by-sender`): _"The HTTP GET operation at a Command resources endpoint SHALL support a parameter `sender`"_
 
 **Wire-name compatibility**: TypeScript name `sender` matches the spec wire name. No `PARAM_NAME_MAP` entry needed.
 
@@ -164,9 +167,10 @@ The spec's intended approach for filtering observations by datastream is the **n
 
 **Status**: ❌ NOT SPEC-NORMATIVE — Do NOT implement
 
-**Issue claim**: *"Missing: `controlStream` — Spec: OGC 23-002 §2.4"*
+**Issue claim**: _"Missing: `controlStream` — Spec: OGC 23-002 §2.4"_
 
 **Spec evidence**: OGC 23-002 §13.5 ("Command Query Parameters") defines exactly five query parameters:
+
 - §13.5.1 `issueTime` (Req 56)
 - §13.5.2 `executionTime` (Req 57)
 - §13.5.3 `statusCode` (Req 58)
@@ -186,6 +190,7 @@ The spec's intended approach for filtering commands by control stream is the **n
 **Status**: ✅ PARTIALLY CONFIRMED
 
 **Current code** (url_builder.ts line 2336):
+
 ```typescript
 getCommandStatus(id: string): string {
   this.assertResourceAvailable('commands');
@@ -195,18 +200,21 @@ getCommandStatus(id: string): string {
 
 The method takes no options parameter, so callers cannot pass any query filters.
 
-**Spec evidence for `statusCode`**: OGC 23-002 §13.6.1 — Req 61 (`/req/advanced-filtering/status-by-statuscode`): *"The HTTP GET operation at a Command Status resources endpoint SHALL support a parameter `statusCode`"*
+**Spec evidence for `statusCode`**: OGC 23-002 §13.6.1 — Req 61 (`/req/advanced-filtering/status-by-statuscode`): _"The HTTP GET operation at a Command Status resources endpoint SHALL support a parameter `statusCode`"_
 
-**Spec evidence for `reportTime`**: OGC 23-002 §13.6 defines only ONE subsection (§13.6.1 — `statusCode`). There is **no** explicit `reportTime` query parameter defined. The base endpoint requirement (Req 31) states: *"The operation SHALL support the parameters `limit` and `datetime`"* — and `datetime` would evaluate against the `reportTime` property of CommandStatus resources. But `datetime` is already in the base `QueryOptions` interface. A dedicated `reportTime` field is **not** required.
+**Spec evidence for `reportTime`**: OGC 23-002 §13.6 defines only ONE subsection (§13.6.1 — `statusCode`). There is **no** explicit `reportTime` query parameter defined. The base endpoint requirement (Req 31) states: _"The operation SHALL support the parameters `limit` and `datetime`"_ — and `datetime` would evaluate against the `reportTime` property of CommandStatus resources. But `datetime` is already in the base `QueryOptions` interface. A dedicated `reportTime` field is **not** required.
 
 **What is confirmed**:
+
 - `statusCode` filter — normatively required (Req 61)
 - `limit`, `datetime`, `offset`, `cursor` — already available via base `QueryOptions`
 
 **What is NOT confirmed**:
+
 - `reportTime` as a named query parameter — not in the spec. The `datetime` base parameter serves this purpose.
 
 **Required changes**:
+
 1. Create a `CommandStatusQueryOptions` interface extending `QueryOptions` with `statusCode?: CommandStatusCode`
 2. Update `getCommandStatus(id: string)` to `getCommandStatus(id: string, options?: CommandStatusQueryOptions)` and append the query string
 
@@ -216,19 +224,19 @@ The method takes no options parameter, so callers cannot pass any query filters.
 
 ## Complete Verification Table
 
-| Interface | Field | OGC 23-002 Clause | Requirement | Wire Name | Spec-Normative? | Recommendation |
-|---|---|---|---|---|---|---|
-| `ControlStreamQueryOptions` | `issueTime` | §13.4.1 | Req 52 | `issueTime` | ✅ YES | ADD |
-| `ControlStreamQueryOptions` | `executionTime` | §13.4.2 | Req 53 | `executionTime` | ✅ YES | ADD |
-| `ControlStreamQueryOptions` | `foi` | §13.4.4 | Req 55 | `foi` | ✅ YES | ADD |
-| `DatastreamQueryOptions` | `foi` | §13.2.4 | Req 48 | `foi` | ✅ YES | ADD |
-| `ObservationQueryOptions` | `foi` | §13.3.3 | Req 51 | `foi` | ✅ YES | ADD |
-| `CommandQueryOptions` | `sender` | §13.5.4 | Req 59 | `sender` | ✅ YES | ADD |
-| `CommandQueryOptions` | `foi` | §13.5.5 | Req 60 | `foi` | ✅ YES | ADD |
-| `CommandStatusQueryOptions` *(new)* | `statusCode` | §13.6.1 | Req 61 | `statusCode` | ✅ YES | ADD |
-| `ObservationQueryOptions` | `dataStream` | — | — | — | ❌ NO | DO NOT ADD |
-| `CommandQueryOptions` | `controlStream` | — | — | — | ❌ NO | DO NOT ADD |
-| `CommandStatusQueryOptions` | `reportTime` | — | — | — | ❌ NO | DO NOT ADD |
+| Interface                           | Field           | OGC 23-002 Clause | Requirement | Wire Name       | Spec-Normative? | Recommendation |
+| ----------------------------------- | --------------- | ----------------- | ----------- | --------------- | --------------- | -------------- |
+| `ControlStreamQueryOptions`         | `issueTime`     | §13.4.1           | Req 52      | `issueTime`     | ✅ YES          | ADD            |
+| `ControlStreamQueryOptions`         | `executionTime` | §13.4.2           | Req 53      | `executionTime` | ✅ YES          | ADD            |
+| `ControlStreamQueryOptions`         | `foi`           | §13.4.4           | Req 55      | `foi`           | ✅ YES          | ADD            |
+| `DatastreamQueryOptions`            | `foi`           | §13.2.4           | Req 48      | `foi`           | ✅ YES          | ADD            |
+| `ObservationQueryOptions`           | `foi`           | §13.3.3           | Req 51      | `foi`           | ✅ YES          | ADD            |
+| `CommandQueryOptions`               | `sender`        | §13.5.4           | Req 59      | `sender`        | ✅ YES          | ADD            |
+| `CommandQueryOptions`               | `foi`           | §13.5.5           | Req 60      | `foi`           | ✅ YES          | ADD            |
+| `CommandStatusQueryOptions` _(new)_ | `statusCode`    | §13.6.1           | Req 61      | `statusCode`    | ✅ YES          | ADD            |
+| `ObservationQueryOptions`           | `dataStream`    | —                 | —           | —               | ❌ NO           | DO NOT ADD     |
+| `CommandQueryOptions`               | `controlStream` | —                 | —           | —               | ❌ NO           | DO NOT ADD     |
+| `CommandStatusQueryOptions`         | `reportTime`    | —                 | —           | —               | ❌ NO           | DO NOT ADD     |
 
 ---
 
@@ -260,25 +268,25 @@ The method takes no options parameter, so callers cannot pass any query filters.
 
 **Fix the 7 confirmed spec-normative gaps + 1 new interface:**
 
-| # | Change | File | Risk |
-|---|---|---|---|
-| 1 | Add `issueTime?: DateTimeParameter` to `ControlStreamQueryOptions` | model.ts | None |
-| 2 | Add `executionTime?: DateTimeParameter` to `ControlStreamQueryOptions` | model.ts | None |
-| 3 | Add `foi?: string` to `ControlStreamQueryOptions` | model.ts | None |
-| 4 | Add `foi?: string` to `DatastreamQueryOptions` | model.ts | None |
-| 5 | Add `foi?: string` to `ObservationQueryOptions` | model.ts | None |
-| 6 | Add `sender?: string` to `CommandQueryOptions` | model.ts | None |
-| 7 | Add `foi?: string` to `CommandQueryOptions` | model.ts | None |
-| 8 | Create `CommandStatusQueryOptions` with `statusCode?: CommandStatusCode` | model.ts | None |
-| 9 | Update `getCommandStatus()` to accept optional `CommandStatusQueryOptions` | url_builder.ts | Low |
+| #   | Change                                                                     | File           | Risk |
+| --- | -------------------------------------------------------------------------- | -------------- | ---- |
+| 1   | Add `issueTime?: DateTimeParameter` to `ControlStreamQueryOptions`         | model.ts       | None |
+| 2   | Add `executionTime?: DateTimeParameter` to `ControlStreamQueryOptions`     | model.ts       | None |
+| 3   | Add `foi?: string` to `ControlStreamQueryOptions`                          | model.ts       | None |
+| 4   | Add `foi?: string` to `DatastreamQueryOptions`                             | model.ts       | None |
+| 5   | Add `foi?: string` to `ObservationQueryOptions`                            | model.ts       | None |
+| 6   | Add `sender?: string` to `CommandQueryOptions`                             | model.ts       | None |
+| 7   | Add `foi?: string` to `CommandQueryOptions`                                | model.ts       | None |
+| 8   | Create `CommandStatusQueryOptions` with `statusCode?: CommandStatusCode`   | model.ts       | None |
+| 9   | Update `getCommandStatus()` to accept optional `CommandStatusQueryOptions` | url_builder.ts | Low  |
 
 ### DO NOT Implement
 
-| # | Field | Reason |
-|---|---|---|
-| 1 | `dataStream` on `ObservationQueryOptions` | Not a spec-defined query parameter. Nested endpoint `getDataStreamObservations()` is the spec-intended approach. |
-| 2 | `controlStream` on `CommandQueryOptions` | Not a spec-defined query parameter. Nested endpoint `getControlStreamCommands()` is the spec-intended approach. |
-| 3 | `reportTime` on `CommandStatusQueryOptions` | Not a named query parameter in §13.6. The base `datetime` parameter (already in `QueryOptions`) serves this purpose. |
+| #   | Field                                       | Reason                                                                                                               |
+| --- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1   | `dataStream` on `ObservationQueryOptions`   | Not a spec-defined query parameter. Nested endpoint `getDataStreamObservations()` is the spec-intended approach.     |
+| 2   | `controlStream` on `CommandQueryOptions`    | Not a spec-defined query parameter. Nested endpoint `getControlStreamCommands()` is the spec-intended approach.      |
+| 3   | `reportTime` on `CommandStatusQueryOptions` | Not a named query parameter in §13.6. The base `datetime` parameter (already in `QueryOptions`) serves this purpose. |
 
 ### Open Decision: `foi` vs `foiId` Naming
 
@@ -293,11 +301,11 @@ Both options produce the same wire output (`?foi=...`). The choice is purely abo
 
 ## Files Affected
 
-| File | Action | Est. Lines | Purpose |
-|---|---|---|---|
-| `src/ogc-api/csapi/model.ts` | Modify | ~15 | Add optional fields to 4 interfaces + create 1 new interface |
-| `src/ogc-api/csapi/url_builder.ts` | Modify | ~5 | Update `getCommandStatus()` signature and body |
-| `src/ogc-api/csapi/url_builder.spec.ts` | Modify | ~40 | Add tests for new query option fields |
+| File                                    | Action | Est. Lines | Purpose                                                      |
+| --------------------------------------- | ------ | ---------- | ------------------------------------------------------------ |
+| `src/ogc-api/csapi/model.ts`            | Modify | ~15        | Add optional fields to 4 interfaces + create 1 new interface |
+| `src/ogc-api/csapi/url_builder.ts`      | Modify | ~5         | Update `getCommandStatus()` signature and body               |
+| `src/ogc-api/csapi/url_builder.spec.ts` | Modify | ~40        | Add tests for new query option fields                        |
 
 ---
 
@@ -317,6 +325,7 @@ Both options produce the same wire output (`?foi=...`). The choice is purely abo
 **Is it within scope?** Yes. The library's explicit goal is spec-complete typed coverage of OGC API — Connected Systems. These are additive optional fields directly traceable to normative requirements (Req 48, 51–53, 55, 59–61) in OGC 23-002 §13.
 
 **Priority and risk:**
+
 - **Low priority** — no runtime behavior is broken; this is a developer-experience improvement.
 - **Low risk** — all changes are additive optional fields on TypeScript interfaces. One backward-compatible method signature change (`getCommandStatus()`). No parser, fixture, serialization, or model changes.
 - **Safe to defer** — nothing breaks if this waits. Nothing regresses.
@@ -329,15 +338,15 @@ Both options produce the same wire output (`?foi=...`). The choice is purely abo
 
 ## References
 
-| # | Document | What It Provides |
-|---|---|---|
-| 1 | [OGC 23-002 §13 — Advanced Filtering](https://docs.ogc.org/is/23-002/23-002.html#clause-advanced-filtering) | Normative query parameter definitions for all Part 2 resources |
-| 2 | [OGC 23-002 §13.2 — DataStream Query Parameters](https://docs.ogc.org/is/23-002/23-002.html#clause-datastream-query-params) | `phenomenonTime`, `resultTime`, `observedProperty`, `foi` |
-| 3 | [OGC 23-002 §13.3 — Observation Query Parameters](https://docs.ogc.org/is/23-002/23-002.html#clause-observation-query-params) | `phenomenonTime`, `resultTime`, `foi` (NO `dataStream`) |
-| 4 | [OGC 23-002 §13.4 — ControlStream Query Parameters](https://docs.ogc.org/is/23-002/23-002.html#clause-controlstream-query-params) | `issueTime`, `executionTime`, `controlledProperty`, `foi` |
-| 5 | [OGC 23-002 §13.5 — Command Query Parameters](https://docs.ogc.org/is/23-002/23-002.html#clause-command-query-params) | `issueTime`, `executionTime`, `statusCode`, `sender`, `foi` (NO `controlStream`) |
-| 6 | [OGC 23-002 §13.6 — CommandStatus Query Parameters](https://docs.ogc.org/is/23-002/23-002.html#_CommandStatus_Query_Params) | `statusCode` only (NO `reportTime`) |
-| 7 | [`docs/governance/AI_OPERATIONAL_CONSTRAINTS.md`](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | Mandatory operational constraints — especially §2.1 (no scope expansion), §2.3 (no refactoring) |
-| 8 | [ogc-csapi-explorer#35](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/35) | Demo app issue where missing filter fields were discovered |
-| 9 | [Issue #105 — Query parameter name mismatches](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/105) | Resolved. `PARAM_NAME_MAP` and `TEMPORAL_KEYS` already support the new fields |
-| 10 | [Issue #105 Findings Report](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/testing/demo-app-findings/issue-105-query-parameter-name-mismatches.md) | Related findings report for query parameter serialization |
+| #   | Document                                                                                                                                                           | What It Provides                                                                                |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| 1   | [OGC 23-002 §13 — Advanced Filtering](https://docs.ogc.org/is/23-002/23-002.html#clause-advanced-filtering)                                                        | Normative query parameter definitions for all Part 2 resources                                  |
+| 2   | [OGC 23-002 §13.2 — DataStream Query Parameters](https://docs.ogc.org/is/23-002/23-002.html#clause-datastream-query-params)                                        | `phenomenonTime`, `resultTime`, `observedProperty`, `foi`                                       |
+| 3   | [OGC 23-002 §13.3 — Observation Query Parameters](https://docs.ogc.org/is/23-002/23-002.html#clause-observation-query-params)                                      | `phenomenonTime`, `resultTime`, `foi` (NO `dataStream`)                                         |
+| 4   | [OGC 23-002 §13.4 — ControlStream Query Parameters](https://docs.ogc.org/is/23-002/23-002.html#clause-controlstream-query-params)                                  | `issueTime`, `executionTime`, `controlledProperty`, `foi`                                       |
+| 5   | [OGC 23-002 §13.5 — Command Query Parameters](https://docs.ogc.org/is/23-002/23-002.html#clause-command-query-params)                                              | `issueTime`, `executionTime`, `statusCode`, `sender`, `foi` (NO `controlStream`)                |
+| 6   | [OGC 23-002 §13.6 — CommandStatus Query Parameters](https://docs.ogc.org/is/23-002/23-002.html#_CommandStatus_Query_Params)                                        | `statusCode` only (NO `reportTime`)                                                             |
+| 7   | [`docs/governance/AI_OPERATIONAL_CONSTRAINTS.md`](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)          | Mandatory operational constraints — especially §2.1 (no scope expansion), §2.3 (no refactoring) |
+| 8   | [ogc-csapi-explorer#35](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/35)                                                                                  | Demo app issue where missing filter fields were discovered                                      |
+| 9   | [Issue #105 — Query parameter name mismatches](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/105)                                                          | Resolved. `PARAM_NAME_MAP` and `TEMPORAL_KEYS` already support the new fields                   |
+| 10  | [Issue #105 Findings Report](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/testing/demo-app-findings/issue-105-query-parameter-name-mismatches.md) | Related findings report for query parameter serialization                                       |

@@ -12,20 +12,20 @@
 
 ### 1.1 Documents Reviewed
 
-| # | Document | Lines | Status | Verdict |
-|---|----------|-------|--------|---------|
-| 18 | [error-condition-testing-strategy.md](../findings/18-error-condition-testing-strategy.md) | 1,195 | ✅ Reviewed | ✅ Pass |
-| 23 | [pagination-testing.md](../findings/23-pagination-testing.md) | 1,667 | ✅ Reviewed | ⚠️ Issues Found |
-| 24 | [query-parameter-combination-testing.md](../findings/24-query-parameter-combination-testing.md) | 1,906 | ✅ Reviewed | ⚠️ Issues Found |
-| 25 | [format-negotiation-testing.md](../findings/25-format-negotiation-testing.md) | 1,460 | ✅ Reviewed | ⚠️ Issues Found |
-| 26 | [subresource-navigation-testing.md](../findings/26-subresource-navigation-testing.md) | 1,798 | ✅ Reviewed | ✅ Pass |
-| 27 | [schema-driven-validation-testing.md](../findings/27-schema-driven-validation-testing.md) | 1,660 | ✅ Reviewed | ⚠️ Issues Found |
-| 28 | [temporal-query-testing.md](../findings/28-temporal-query-testing.md) | 1,496 | ✅ Reviewed | ⚠️ Issues Found |
-| 29 | [spatial-query-testing.md](../findings/29-spatial-query-testing.md) | 1,597 | ✅ Reviewed | ⚠️ Issues Found (mild) |
-| 30 | [bulk-operations-testing.md](../findings/30-bulk-operations-testing.md) | 1,723 | ✅ Reviewed | ⚠️ Issues Found |
-| 31 | [command-lifecycle-testing.md](../findings/31-command-lifecycle-testing.md) | 2,006 | ✅ Reviewed | ✅ Pass |
-| 32 | [real-world-server-compatibility-testing.md](../findings/32-real-world-server-compatibility-testing.md) | 2,061 | ✅ Reviewed | ❌ Critical Issues |
-| 33 | [performance-efficiency-testing.md](../findings/33-performance-efficiency-testing.md) | 2,020 | ✅ Reviewed | ⚠️ Issues (scope) |
+| #   | Document                                                                                                | Lines | Status      | Verdict                |
+| --- | ------------------------------------------------------------------------------------------------------- | ----- | ----------- | ---------------------- |
+| 18  | [error-condition-testing-strategy.md](../findings/18-error-condition-testing-strategy.md)               | 1,195 | ✅ Reviewed | ✅ Pass                |
+| 23  | [pagination-testing.md](../findings/23-pagination-testing.md)                                           | 1,667 | ✅ Reviewed | ⚠️ Issues Found        |
+| 24  | [query-parameter-combination-testing.md](../findings/24-query-parameter-combination-testing.md)         | 1,906 | ✅ Reviewed | ⚠️ Issues Found        |
+| 25  | [format-negotiation-testing.md](../findings/25-format-negotiation-testing.md)                           | 1,460 | ✅ Reviewed | ⚠️ Issues Found        |
+| 26  | [subresource-navigation-testing.md](../findings/26-subresource-navigation-testing.md)                   | 1,798 | ✅ Reviewed | ✅ Pass                |
+| 27  | [schema-driven-validation-testing.md](../findings/27-schema-driven-validation-testing.md)               | 1,660 | ✅ Reviewed | ⚠️ Issues Found        |
+| 28  | [temporal-query-testing.md](../findings/28-temporal-query-testing.md)                                   | 1,496 | ✅ Reviewed | ⚠️ Issues Found        |
+| 29  | [spatial-query-testing.md](../findings/29-spatial-query-testing.md)                                     | 1,597 | ✅ Reviewed | ⚠️ Issues Found (mild) |
+| 30  | [bulk-operations-testing.md](../findings/30-bulk-operations-testing.md)                                 | 1,723 | ✅ Reviewed | ⚠️ Issues Found        |
+| 31  | [command-lifecycle-testing.md](../findings/31-command-lifecycle-testing.md)                             | 2,006 | ✅ Reviewed | ✅ Pass                |
+| 32  | [real-world-server-compatibility-testing.md](../findings/32-real-world-server-compatibility-testing.md) | 2,061 | ✅ Reviewed | ❌ Critical Issues     |
+| 33  | [performance-efficiency-testing.md](../findings/33-performance-efficiency-testing.md)                   | 2,020 | ✅ Reviewed | ⚠️ Issues (scope)      |
 
 **Total Lines Reviewed:** 20,589
 
@@ -48,13 +48,13 @@ These 12 documents define advanced testing scenarios for error handling, paginat
 
 Each document was checked against all 5 Phase 0 anti-patterns:
 
-| ID | Anti-Pattern | Description |
-|----|-------------|-------------|
-| AP1 | Testing Response Content | Tests validate server responses rather than client code |
-| AP2 | Hybrid Fixture/Live | Tests designed to run against live servers OR fixtures |
-| AP3 | OGC Requirement Traceability | Test structure mirrors spec requirements, not client code |
-| AP4 | Asserting Data Shape | Tests check response structure without testing transformation |
-| AP5 | Graceful Skipping | Tests conditionally skip based on fixture content |
+| ID  | Anti-Pattern                 | Description                                                   |
+| --- | ---------------------------- | ------------------------------------------------------------- |
+| AP1 | Testing Response Content     | Tests validate server responses rather than client code       |
+| AP2 | Hybrid Fixture/Live          | Tests designed to run against live servers OR fixtures        |
+| AP3 | OGC Requirement Traceability | Test structure mirrors spec requirements, not client code     |
+| AP4 | Asserting Data Shape         | Tests check response structure without testing transformation |
+| AP5 | Graceful Skipping            | Tests conditionally skip based on fixture content             |
 
 ### 2.2 Client Orientation Scoring
 
@@ -74,35 +74,35 @@ Documents were checked for internal contradictions (e.g., error class philosophy
 
 ### Verdict: ⚠️ CONDITIONAL GO — Significant corrections required
 
-| Metric | Value |
-|--------|-------|
-| Documents passing | 3 of 12 (Docs 18, 26, 31) |
-| Documents with issues | 8 of 12 |
-| Documents with critical issues | 1 of 12 (Doc 32) |
-| Total issues identified | 27 |
-| Critical issues | 2 |
-| High-priority issues | 10 |
-| Medium-priority issues | 11 |
-| Low-priority issues | 4 |
-| Aggregate scope creep | **~600+ tests, ~300-450h estimated effort** — wildly disproportionate |
+| Metric                         | Value                                                                 |
+| ------------------------------ | --------------------------------------------------------------------- |
+| Documents passing              | 3 of 12 (Docs 18, 26, 31)                                             |
+| Documents with issues          | 8 of 12                                                               |
+| Documents with critical issues | 1 of 12 (Doc 32)                                                      |
+| Total issues identified        | 27                                                                    |
+| Critical issues                | 2                                                                     |
+| High-priority issues           | 10                                                                    |
+| Medium-priority issues         | 11                                                                    |
+| Low-priority issues            | 4                                                                     |
+| Aggregate scope creep          | **~600+ tests, ~300-450h estimated effort** — wildly disproportionate |
 
 ### Client Orientation Summary
 
-| Document | Client % | Primary Concern |
-|----------|----------|----------------|
-| 18 — Error Conditions | ~85% | Minor scope items |
-| 23 — Pagination | ~40% | `fetchJson()` asserts fixture content, not client behavior |
-| 24 — Query Parameters | ~70% | Server validation/precedence testing |
-| 25 — Format Negotiation | ~60% | 45 scenarios test server HTTP behavior |
-| 26 — Sub-Resource Navigation | ~90% | Minor cosmetic issues only |
-| 27 — Schema Validation | ~70% | Schema evolution tests require server integration |
-| 28 — Temporal Queries | ~55% | Identifies client code but doesn't test it |
-| 29 — Spatial Queries | ~65% | Milder — has some good client validation tests |
-| 30 — Bulk Operations | ~40% | Asserts fixture data directly; ignores client chunking logic |
-| 31 — Command Lifecycle | ~85% | Properly mocked, client-oriented |
-| 32 — Server Compatibility | ~35% | Fundamentally a server conformance test suite |
-| 33 — Performance | ~90% | Well-oriented but entirely out of scope |
-| **Weighted Average** | **~63%** | **~37% of test patterns are server-oriented** |
+| Document                     | Client % | Primary Concern                                              |
+| ---------------------------- | -------- | ------------------------------------------------------------ |
+| 18 — Error Conditions        | ~85%     | Minor scope items                                            |
+| 23 — Pagination              | ~40%     | `fetchJson()` asserts fixture content, not client behavior   |
+| 24 — Query Parameters        | ~70%     | Server validation/precedence testing                         |
+| 25 — Format Negotiation      | ~60%     | 45 scenarios test server HTTP behavior                       |
+| 26 — Sub-Resource Navigation | ~90%     | Minor cosmetic issues only                                   |
+| 27 — Schema Validation       | ~70%     | Schema evolution tests require server integration            |
+| 28 — Temporal Queries        | ~55%     | Identifies client code but doesn't test it                   |
+| 29 — Spatial Queries         | ~65%     | Milder — has some good client validation tests               |
+| 30 — Bulk Operations         | ~40%     | Asserts fixture data directly; ignores client chunking logic |
+| 31 — Command Lifecycle       | ~85%     | Properly mocked, client-oriented                             |
+| 32 — Server Compatibility    | ~35%     | Fundamentally a server conformance test suite                |
+| 33 — Performance             | ~90%     | Well-oriented but entirely out of scope                      |
+| **Weighted Average**         | **~63%** | **~37% of test patterns are server-oriented**                |
 
 ---
 
@@ -137,6 +137,7 @@ Documents were checked for internal contradictions (e.g., error class philosophy
 **Problem:** Sections 5.1-5.2 contain ~30 test scenarios using an undefined `fetchJson()` function that directly asserts server response fixture content. These tests would pass even if the client code did nothing — the hallmark of server testing.
 
 Key instances:
+
 - `const response = await fetchJson('/systems?limit=10&offset=0'); const nextLink = response.links?.find(...)` — asserts fixture has `next` link
 - `expect(response.features).toEqual([])` — asserts fixture returns empty
 - `expect(response.numberReturned).toBe(5)` — validates fixture metadata
@@ -157,6 +158,7 @@ Key instances:
 **Document:** [32-real-world-server-compatibility-testing.md](../findings/32-real-world-server-compatibility-testing.md)
 
 Tests throughout Section 5 assert live server response content rather than client transformation:
+
 - `expect(systems.items.length).toBeGreaterThan(0)` — validates server returns items
 - `expect(system.id).toMatch(/^[a-z0-9]+$/)` — validates server's ID format (Base32). Client shouldn't care about ID format
 - `expect(ds).toHaveProperty('observedProperty')` — asserts server response has expected fields
@@ -174,6 +176,7 @@ Tests throughout Section 5 assert live server response content rather than clien
 Section 4 (scenarios 1-45) is structured as HTTP request → expected HTTP response assertions (`GET /systems/sys123?f=json → Expected: 200 OK, Content-Type: application/json`). These test what the SERVER returns, not what the CLIENT constructs or parses. The client library only builds URLs with `f=` parameters and handles responses — whether the server returns 200 or 406 is server compliance testing.
 
 Aggravating factors:
+
 - Accept header scenarios (scenarios 21-25) explicitly note the client does NOT use Accept headers, yet 5 tests are designed for them
 - Default format scenarios (scenarios 31-35) test what the server returns when no format is specified
 - The entire FormatValidator/URL encoding section is only ~15% of the document but represents the actual client-testable surface
@@ -191,9 +194,11 @@ The document itself notes the client implements format selection in "~13 lines o
 Two categories of test scenarios in Section 4.2 test server behavior:
 
 **Category A — "Wrong Parameter for Resource" (10 scenarios):**
+
 - `GET /properties?bbox=-180,-90,180,90` → "Expected: 400 Bad Request or silently ignored" — testing whether SERVER validates parameter applicability
 
 **Category C — "Precedence Conflicts" (10 scenarios):**
+
 - `offset + cursor` → "Expected: cursor takes precedence, offset ignored" — testing SERVER's precedence resolution
 - `datetime + phenomenonTime` → "Expected: phenomenonTime takes precedence" — SERVER behavior
 - `f + Accept header` → "Expected: f parameter takes precedence" — SERVER behavior
@@ -209,6 +214,7 @@ The client's job is to build the URLs requested by the user and handle whatever 
 **Document:** [30-bulk-operations-testing.md](../findings/30-bulk-operations-testing.md)
 
 Section 4.1-4.2 test patterns assert fixture response data:
+
 - `expect(response.data.items).toHaveLength(10)` — verifies fixture content
 - `expect(obs.id).toMatch(/^obs-/)` — validates fixture ID format
 - `expect(obs.result).toBe(20 + i * 0.5)` — checks fixture contains expected values
@@ -223,6 +229,7 @@ Section 4.1-4.2 test patterns assert fixture response data:
 **Document:** [30-bulk-operations-testing.md](../findings/30-bulk-operations-testing.md)
 
 The document defines substantial client-side code (auto-chunking, fallback-to-sequential, BulkCreateResult construction, progress callbacks) but the test scenarios in Section 4 don't test any of it. The structural gap is:
+
 - Section 6 defines `autoChunk()`, `fallbackToSequential()`, `BulkCreateResult<T>` — real client code
 - Section 4 tests fixture response data — not the client code from Section 6
 
@@ -245,6 +252,7 @@ Section 7 defines 5 client utility functions (`parseInstant()`, `parseInterval()
 **Document:** [23-pagination-testing.md](../findings/23-pagination-testing.md)
 
 Section 5.2: Multiple tests assert server pagination state:
+
 - Loops through all pages testing SERVER produces no duplicates
 - Tests that SERVER returns different items per page
 - Tests SERVER's maximum limit enforcement
@@ -260,6 +268,7 @@ These are server conformance tests, not client tests.
 **Document:** [32-real-world-server-compatibility-testing.md](../findings/32-real-world-server-compatibility-testing.md)
 
 5+ instances of conditional test skipping based on live server availability:
+
 - `console.warn('OSH server unavailable - skipping live tests'); return;`
 - `console.warn('OSH unavailable - skipping tests'); return;`
 - `console.warn('No datastreams for system - skipping'); return;`
@@ -355,6 +364,7 @@ Section 5.1, Metadata Validation: `if (response.numberMatched !== undefined) { e
 ### M10: Doc 32 — Server ID Format and Coordinate Assertions (AP4)
 
 Separate instances of asserting server data shape:
+
 - `expect(system.id).toMatch(/^[a-z0-9]+$/)` — client shouldn't care about ID format
 - `expect(lon).toBeCloseTo(14.03, 0)` — asserts specific coordinates from 52°North server's Baltic Sea buoy
 
@@ -368,9 +378,9 @@ Section 4.2 Category B: ~50% are legitimate client validation (bbox minLon > max
 
 ## 7. Low-Priority Issues
 
-### L1: Doc 18 — SWE Common Binary Encoding *Error Test Scenarios* May Be Speculative
+### L1: Doc 18 — SWE Common Binary Encoding _Error Test Scenarios_ May Be Speculative
 
-23-25 binary encoding error tests (wrong endianness, insufficient buffer, invalid data type codes) are speculative — these specific error scenarios may need refinement once binary parsing is implemented. **Clarification:** Binary SWE parsing itself (Doc 10, 96 tests) is IN SCOPE per the implementation guide §7 and Phase 2D assessment (M2, P4: "sound and directly usable"). This L1 flag is about the *error test specificity* in Doc 18 §4.2.3 only, not about binary parsing scope.
+23-25 binary encoding error tests (wrong endianness, insufficient buffer, invalid data type codes) are speculative — these specific error scenarios may need refinement once binary parsing is implemented. **Clarification:** Binary SWE parsing itself (Doc 10, 96 tests) is IN SCOPE per the implementation guide §7 and Phase 2D assessment (M2, P4: "sound and directly usable"). This L1 flag is about the _error test specificity_ in Doc 18 §4.2.3 only, not about binary parsing scope.
 
 ---
 
@@ -398,40 +408,41 @@ Section 4.2 Category B: ~50% are legitimate client validation (bbox minLon > max
 
 The combined scope proposed across all 12 documents is massively disproportionate to an initial contribution:
 
-| Document | Tests | Fixtures | Est. Hours | Test Files |
-|----------|-------|----------|------------|------------|
-| 18 — Error Conditions | ~40 | ~25 | 15-22h | 3 |
-| 23 — Pagination | 53 | 20 | 19-28h | 5 |
-| 24 — Query Parameters | 120 | ~40 | 34-49h | 5 |
-| 25 — Format Negotiation | 50 | 37 | 18-28h | 5 |
-| 26 — Sub-Resource Navigation | 60 | 50 | 40-52h | 4 |
-| 27 — Schema Validation | 66 | 60 | 28-41h | 4 |
-| 28 — Temporal Queries | 72 | 55 | 25-36h | 4 |
-| 29 — Spatial Queries | 43 | 40 | 18-26h | 3 |
-| 30 — Bulk Operations | 28 | 30 | 20-30h | 3 |
-| 31 — Command Lifecycle | 42 | 35 | 20-28h | 3 |
-| 32 — Server Compatibility | 56 | ~25 | 31-46h | 5 |
-| 33 — Performance | 53 | 51 | 46-64h | 5 |
-| **TOTAL** | **~683** | **~468** | **~314-450h** | **~49** |
+| Document                     | Tests    | Fixtures | Est. Hours    | Test Files |
+| ---------------------------- | -------- | -------- | ------------- | ---------- |
+| 18 — Error Conditions        | ~40      | ~25      | 15-22h        | 3          |
+| 23 — Pagination              | 53       | 20       | 19-28h        | 5          |
+| 24 — Query Parameters        | 120      | ~40      | 34-49h        | 5          |
+| 25 — Format Negotiation      | 50       | 37       | 18-28h        | 5          |
+| 26 — Sub-Resource Navigation | 60       | 50       | 40-52h        | 4          |
+| 27 — Schema Validation       | 66       | 60       | 28-41h        | 4          |
+| 28 — Temporal Queries        | 72       | 55       | 25-36h        | 4          |
+| 29 — Spatial Queries         | 43       | 40       | 18-26h        | 3          |
+| 30 — Bulk Operations         | 28       | 30       | 20-30h        | 3          |
+| 31 — Command Lifecycle       | 42       | 35       | 20-28h        | 3          |
+| 32 — Server Compatibility    | 56       | ~25      | 31-46h        | 5          |
+| 33 — Performance             | 53       | 51       | 46-64h        | 5          |
+| **TOTAL**                    | **~683** | **~468** | **~314-450h** | **~49**    |
 
 For context, upstream `ogc-client` has approximately **15 test files** totaling **~2,500 lines**. These 12 documents alone propose **49 test files** with **~683 tests** requiring **~314-450 hours** (8-11 weeks of full-time work) — and this is only 12 of 38 research documents.
 
 ### 8.2 Specific Scope Concerns
 
-| ID | Document | Concern | Severity |
-|----|----------|---------|----------|
-| S1 | Doc 24 | 120 test scenarios, 34-49h for parameter combinations alone | CRITICAL |
-| S2 | Doc 32 | 56 tests, 31-46h for server compatibility infrastructure | HIGH |
-| S3 | Doc 33 | 53 tests, 46-64h for explicitly out-of-scope performance testing | HIGH |
-| S4 | Doc 25 | 50 tests for ~13 lines of format selection code | HIGH |
-| S5 | Doc 28 | 72 tests, 25-36h for temporal query URL construction | HIGH |
-| S6 | Doc 27 | 66 tests, 60 fixtures, full validation implementation in test doc | HIGH |
-| S7 | Doc 26 | 60 tests, 40-52h — scope justified by 16 relationship types but still substantial | MEDIUM |
-| S8 | Doc 30 | 500+ lines of implementation code (auto-chunking, fallback) in test research doc | MEDIUM |
+| ID  | Document | Concern                                                                           | Severity |
+| --- | -------- | --------------------------------------------------------------------------------- | -------- |
+| S1  | Doc 24   | 120 test scenarios, 34-49h for parameter combinations alone                       | CRITICAL |
+| S2  | Doc 32   | 56 tests, 31-46h for server compatibility infrastructure                          | HIGH     |
+| S3  | Doc 33   | 53 tests, 46-64h for explicitly out-of-scope performance testing                  | HIGH     |
+| S4  | Doc 25   | 50 tests for ~13 lines of format selection code                                   | HIGH     |
+| S5  | Doc 28   | 72 tests, 25-36h for temporal query URL construction                              | HIGH     |
+| S6  | Doc 27   | 66 tests, 60 fixtures, full validation implementation in test doc                 | HIGH     |
+| S7  | Doc 26   | 60 tests, 40-52h — scope justified by 16 relationship types but still substantial | MEDIUM   |
+| S8  | Doc 30   | 500+ lines of implementation code (auto-chunking, fallback) in test research doc  | MEDIUM   |
 
 ### 8.3 Implementation Code in Test Research Documents
 
 Several documents embed substantial implementation code that belongs in design/planning documents, not test research:
+
 - **Doc 28** Section 7-8: ISO 8601 parsing utilities, client API design with `DateTimeParameter` types
 - **Doc 29** Section 8: Antimeridian handling workarounds with split-query strategy
 - **Doc 30** Sections 6.3-6.4, 9.3: Auto-chunking strategy, fallback-to-sequential, retry with exponential backoff
@@ -476,13 +487,13 @@ Despite Doc 32's critical issues, its conformance detection tests (~35% of conte
 
 ## 10. Anti-Pattern Distribution
 
-| Anti-Pattern | Occurrences | Documents Affected | Severity Range |
-|-------------|-------------|-------------------|---------------|
-| AP1 (Response Content) | 18 instances | 8 docs (23, 24, 25, 28, 29, 30, 32, 27) | CRITICAL — LOW |
-| AP2 (Hybrid Fixture/Live) | 2 instances | 1 doc (32) | CRITICAL |
-| AP3 (OGC Requirement IDs) | 0 instances | None | — |
-| AP4 (Asserting Data Shape) | 6 instances | 5 docs (23, 28, 29, 30, 32) | HIGH — LOW |
-| AP5 (Graceful Skipping) | 7 instances | 2 docs (23, 32) | HIGH — MEDIUM |
+| Anti-Pattern               | Occurrences  | Documents Affected                      | Severity Range |
+| -------------------------- | ------------ | --------------------------------------- | -------------- |
+| AP1 (Response Content)     | 18 instances | 8 docs (23, 24, 25, 28, 29, 30, 32, 27) | CRITICAL — LOW |
+| AP2 (Hybrid Fixture/Live)  | 2 instances  | 1 doc (32)                              | CRITICAL       |
+| AP3 (OGC Requirement IDs)  | 0 instances  | None                                    | —              |
+| AP4 (Asserting Data Shape) | 6 instances  | 5 docs (23, 28, 29, 30, 32)             | HIGH — LOW     |
+| AP5 (Graceful Skipping)    | 7 instances  | 2 docs (23, 32)                         | HIGH — MEDIUM  |
 
 **Key finding:** AP1 (Testing Response Content) is the dominant anti-pattern, appearing in 8 of 12 documents. This is the residual "server testing" orientation that the senior developer warned about. AP2 (Hybrid Fixture/Live) is concentrated in Doc 32, which is the most severely affected document.
 
@@ -538,34 +549,34 @@ The aggregate scope creep (~683 tests, ~450h) is the category-level concern that
 
 ## 13. Issue Resolution Tracker
 
-| ID | Severity | Doc | Description | Status |
-|----|----------|-----|-------------|--------|
-| C1 | CRITICAL | 32 | Hybrid fixture/live execution model (AP2) | ✅ Resolved |
-| C2 | CRITICAL | 23 | Test templates assert fixture content via `fetchJson()` (AP1) | ✅ Resolved |
-| H1 | HIGH | 32 | Response content assertions throughout (AP1, AP4) | ✅ Resolved |
-| H2 | HIGH | 25 | 45 scenarios test server HTTP response behavior (AP1) | ✅ Resolved |
-| H3 | HIGH | 24 | Server validation/precedence testing (AP1) | ✅ Resolved |
-| H4 | HIGH | 30 | Tests assert fixture response data directly (AP1) | ✅ Resolved |
-| H5 | HIGH | 30 | No tests for actual client logic — chunking, fallback (AP4) | ✅ Resolved |
-| H6 | HIGH | 28 | Identifies client utilities but doesn't test them (AP4) | ✅ Resolved |
-| H7 | HIGH | 23 | Cursor pagination tests assert server behavior (AP1) | ✅ Resolved |
-| H8 | HIGH | 32 | Graceful skipping on server availability — 5+ instances (AP5) | ✅ Resolved |
-| H9 | HIGH | 25 | Accept header tests for unused feature (AP1) | ✅ Resolved |
-| H10 | HIGH | 27 | Schema evolution tests require server integration (AP1) | ✅ Resolved |
-| M1 | MEDIUM | 24 | `ParameterValidationError` contradicts Doc 18 (cross-doc) | ✅ Resolved |
-| M2 | MEDIUM | 25 | Format precedence rules describe server behavior (AP1) | ✅ Resolved |
-| M3 | MEDIUM | 25 | `ResponseValidator` tests server Content-Type (AP1) | ✅ Resolved |
-| M4 | MEDIUM | 23 | Server invalid parameter rejection tests (AP1) | ✅ Resolved |
-| M5 | MEDIUM | 27 | "Server-Side Validation" section documents server compliance | ✅ Resolved |
-| M6 | MEDIUM | 28 | `response.ok` assertions meaningless against fixtures (AP1) | ✅ Resolved |
-| M7 | MEDIUM | 29 | Same `response.ok` pattern as Doc 28 (AP1) | ✅ Resolved |
-| M8 | MEDIUM | 30 | Performance tests measure server response timing (AP1) | ✅ Resolved |
-| M9 | MEDIUM | 23 | Conditional assertion on fixture content (AP5) | ✅ Resolved |
-| M10 | MEDIUM | 32 | Server ID format and coordinate assertions (AP4) | ✅ Resolved |
-| M11 | MEDIUM | 24 | Mixed client/server invalid parameter tests (AP1) | ✅ Resolved |
-| L1 | LOW | 18 | SWE binary encoding error test scenarios may be speculative (binary parsing itself is in scope) | ✅ Resolved |
-| L2 | LOW | 18 | Worker extension errors — premature | ✅ Resolved |
-| L3 | LOW | 23 | Metadata validation checks fixture invariants (AP4) | ✅ Resolved |
-| L4 | LOW | 29 | Point bbox test compares result set sizes (AP4) | ✅ Resolved |
+| ID  | Severity | Doc | Description                                                                                     | Status      |
+| --- | -------- | --- | ----------------------------------------------------------------------------------------------- | ----------- |
+| C1  | CRITICAL | 32  | Hybrid fixture/live execution model (AP2)                                                       | ✅ Resolved |
+| C2  | CRITICAL | 23  | Test templates assert fixture content via `fetchJson()` (AP1)                                   | ✅ Resolved |
+| H1  | HIGH     | 32  | Response content assertions throughout (AP1, AP4)                                               | ✅ Resolved |
+| H2  | HIGH     | 25  | 45 scenarios test server HTTP response behavior (AP1)                                           | ✅ Resolved |
+| H3  | HIGH     | 24  | Server validation/precedence testing (AP1)                                                      | ✅ Resolved |
+| H4  | HIGH     | 30  | Tests assert fixture response data directly (AP1)                                               | ✅ Resolved |
+| H5  | HIGH     | 30  | No tests for actual client logic — chunking, fallback (AP4)                                     | ✅ Resolved |
+| H6  | HIGH     | 28  | Identifies client utilities but doesn't test them (AP4)                                         | ✅ Resolved |
+| H7  | HIGH     | 23  | Cursor pagination tests assert server behavior (AP1)                                            | ✅ Resolved |
+| H8  | HIGH     | 32  | Graceful skipping on server availability — 5+ instances (AP5)                                   | ✅ Resolved |
+| H9  | HIGH     | 25  | Accept header tests for unused feature (AP1)                                                    | ✅ Resolved |
+| H10 | HIGH     | 27  | Schema evolution tests require server integration (AP1)                                         | ✅ Resolved |
+| M1  | MEDIUM   | 24  | `ParameterValidationError` contradicts Doc 18 (cross-doc)                                       | ✅ Resolved |
+| M2  | MEDIUM   | 25  | Format precedence rules describe server behavior (AP1)                                          | ✅ Resolved |
+| M3  | MEDIUM   | 25  | `ResponseValidator` tests server Content-Type (AP1)                                             | ✅ Resolved |
+| M4  | MEDIUM   | 23  | Server invalid parameter rejection tests (AP1)                                                  | ✅ Resolved |
+| M5  | MEDIUM   | 27  | "Server-Side Validation" section documents server compliance                                    | ✅ Resolved |
+| M6  | MEDIUM   | 28  | `response.ok` assertions meaningless against fixtures (AP1)                                     | ✅ Resolved |
+| M7  | MEDIUM   | 29  | Same `response.ok` pattern as Doc 28 (AP1)                                                      | ✅ Resolved |
+| M8  | MEDIUM   | 30  | Performance tests measure server response timing (AP1)                                          | ✅ Resolved |
+| M9  | MEDIUM   | 23  | Conditional assertion on fixture content (AP5)                                                  | ✅ Resolved |
+| M10 | MEDIUM   | 32  | Server ID format and coordinate assertions (AP4)                                                | ✅ Resolved |
+| M11 | MEDIUM   | 24  | Mixed client/server invalid parameter tests (AP1)                                               | ✅ Resolved |
+| L1  | LOW      | 18  | SWE binary encoding error test scenarios may be speculative (binary parsing itself is in scope) | ✅ Resolved |
+| L2  | LOW      | 18  | Worker extension errors — premature                                                             | ✅ Resolved |
+| L3  | LOW      | 23  | Metadata validation checks fixture invariants (AP4)                                             | ✅ Resolved |
+| L4  | LOW      | 29  | Point bbox test compares result set sizes (AP4)                                                 | ✅ Resolved |
 
 **Summary:** 2 Critical, 10 High, 11 Medium, 4 Low — **27 total issues**

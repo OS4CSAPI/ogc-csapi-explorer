@@ -17,13 +17,14 @@ The CSAPI contribution adds three layers to the ogc-client library:
 3. **Type Definitions** — TypeScript interfaces for all resource types, query options, status codes, media types, etc.
 
 ### The 9 CSAPI Resource Types
+
 | Part 1 (GeoJSON) | Part 2 (non-GeoJSON) |
-|---|---|
-| Systems | Datastreams |
-| Deployments | Observations |
-| Procedures | ControlStreams |
-| SamplingFeatures | Commands |
-| Properties | |
+| ---------------- | -------------------- |
+| Systems          | Datastreams          |
+| Deployments      | Observations         |
+| Procedures       | ControlStreams       |
+| SamplingFeatures | Commands             |
+| Properties       |                      |
 
 ### Key Architectural Detail: The HTTP Client Gap
 
@@ -38,6 +39,7 @@ Building a **quick demo webapp** ("CSAPI Explorer") that uses the ogc-client-CSA
 ### New Repository
 
 The demo app lives in a fork of ogc-client-CSAPI_2:
+
 - **Fork created from:** `OS4CSAPI/ogc-client-CSAPI_2`
 - **Originally at:** `Sam-Bolling/ogc-client-CSAPI_2`
 - **Intended transfer:** To `OS4CSAPI` org, renamed to `csapi-explorer`
@@ -51,10 +53,10 @@ The demo app imports the library directly from `../src/` (or `./src/` depending 
 
 ## Demo Servers
 
-| Server | URL | Auth | Notes |
-|--------|-----|------|-------|
-| 52North | `https://csa.demo.52north.org/` | None | Public demo, full CRUD allowed |
-| OSH SensorHub | `http://45.55.99.236:8080/sensorhub/api` | Basic auth (username + password) | Full CRUD allowed |
+| Server        | URL                                      | Auth                             | Notes                          |
+| ------------- | ---------------------------------------- | -------------------------------- | ------------------------------ |
+| 52North       | `https://csa.demo.52north.org/`          | None                             | Public demo, full CRUD allowed |
+| OSH SensorHub | `http://45.55.99.236:8080/sensorhub/api` | Basic auth (username + password) | Full CRUD allowed              |
 
 The user has confirmed **CRUD permission on both servers**.
 
@@ -62,26 +64,28 @@ The user has confirmed **CRUD permission on both servers**.
 
 ## Technical Decisions Made
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Where the demo app lives** | `demo/` folder in the forked repo | Direct `../src/` imports, zero setup |
-| **Framework** | Vue 3 + Vite | Already the pattern in the library repo |
-| **UI Components** | PrimeVue | DataTable, forms, tabs, sidebar out of the box |
-| **CORS handling** | Vite dev server proxy | ~10 lines of config, also handles auth injection |
-| **Map** | Skip for v1 | Nice-to-have, not essential to proving CRUD works |
-| **Deployment** | Codespaces dev server | No hosting needed, just `npm run dev` |
+| Decision                     | Choice                            | Rationale                                         |
+| ---------------------------- | --------------------------------- | ------------------------------------------------- |
+| **Where the demo app lives** | `demo/` folder in the forked repo | Direct `../src/` imports, zero setup              |
+| **Framework**                | Vue 3 + Vite                      | Already the pattern in the library repo           |
+| **UI Components**            | PrimeVue                          | DataTable, forms, tabs, sidebar out of the box    |
+| **CORS handling**            | Vite dev server proxy             | ~10 lines of config, also handles auth injection  |
+| **Map**                      | Skip for v1                       | Nice-to-have, not essential to proving CRUD works |
+| **Deployment**               | Codespaces dev server             | No hosting needed, just `npm run dev`             |
 
 ---
 
 ## App Design
 
 ### Page 1: Server Configuration ("Data Source Manager")
+
 - Text inputs for server URL, optional username/password
 - "Connect" button → uses `OgcApiEndpoint` to discover capabilities
 - Shows: conformance classes, available CSAPI collections, detected resource types
 - Save/manage multiple server connections
 
 ### Page 2: Resource Explorer
+
 - **Sidebar:** List of 9 resource types
 - **Main area per resource type:**
   - **List:** Table with filter inputs (bbox, datetime, q, limit), pagination controls (offset-based AND cursor-based), refresh
@@ -91,6 +95,7 @@ The user has confirmed **CRUD permission on both servers**.
   - **Delete:** Select resource → DELETE → confirm
 
 ### Page 3 (optional, time permitting): Map View
+
 - OpenLayers map showing spatial resources
 - Click feature → detail panel
 
@@ -99,6 +104,7 @@ The user has confirmed **CRUD permission on both servers**.
 ## Scope Tiers
 
 ### Must-have:
+
 - Server connection with auth
 - Vite proxy for CORS
 - Discovery (show what the server supports)
@@ -110,12 +116,14 @@ The user has confirmed **CRUD permission on both servers**.
 - Both pagination styles demonstrated
 
 ### Nice-to-have:
+
 - Map view for spatial resources
 - Structured forms instead of raw JSON for create/update
 - Pretty-printed parsed results
 - SWE Common schema display for datastreams
 
 ### Skip:
+
 - Production-quality error handling
 - Responsive design
 - Automated tests
@@ -126,6 +134,7 @@ The user has confirmed **CRUD permission on both servers**.
 ## First Actions in the New Workspace
 
 1. **Scaffold the demo app:**
+
    ```bash
    npm create vite@latest demo -- --template vue-ts
    cd demo
@@ -133,11 +142,13 @@ The user has confirmed **CRUD permission on both servers**.
    ```
 
 2. **Add PrimeVue:**
+
    ```bash
    npm install primevue @primevue/themes primeicons
    ```
 
 3. **Set up Vite proxy config** in `demo/vite.config.ts`:
+
    ```ts
    server: {
      proxy: {
@@ -172,6 +183,7 @@ The demo app will primarily use:
 - **Types** — `System`, `Deployment`, `Procedure`, `Observation`, `Command`, etc.
 
 ### Example Usage Pattern
+
 ```ts
 import { OgcApiEndpoint } from '../src/index';
 

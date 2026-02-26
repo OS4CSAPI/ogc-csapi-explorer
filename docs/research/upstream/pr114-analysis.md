@@ -33,38 +33,40 @@ public async edr(collection_id: string): Promise<EDRQueryBuilder> {
 ## Code Volume Metrics
 
 **Total Changes:**
+
 - **2858 additions**
-- **54 deletions** 
+- **54 deletions**
 - **18 files changed**
 - **43 commits** (squashed)
 
 **Net Addition:** ~2800 lines (including tests and fixtures)
 
 **Breakdown by Category:**
+
 1. **Implementation:** ~750 lines
    - `url_builder.ts`: 561 lines (main builder class)
    - `model.ts`: 125 lines (types and helpers)
    - `helpers.ts`: 23 lines (date formatting)
    - `endpoint.ts`: 43 lines (integration)
-   
 2. **Tests:** ~375 lines
    - `endpoint.spec.ts`: 298 lines (integration tests)
    - `model.spec.ts`: 38 lines (ZParameter tests)
    - `helpers.spec.ts`: 39 lines (datetime tests)
-   
 3. **Fixtures:** ~1700 lines (test data JSON files)
 
 **Code Volume Assessment for CSAPI:**
+
 - **PR #114 baseline:** ~2800 lines total
 - **Fixture ratio:** 61% fixtures, 27% implementation, 13% tests
 - **Implementation-only:** ~750 lines for 7 query types
-- **CSAPI projection:** 
+- **CSAPI projection:**
   - 9 CSAPI resource types ≈ 1.3x EDR query types
   - Expected implementation: ~975 lines (1.3x × 750)
   - With tests & fixtures: ~3500 lines total
   - **Target:** Stay under 4000 lines total
 
 **Comparison to Original Concern:**
+
 - Previous CSAPI attempt was "2x upstream repo size"
 - Upstream repo is ~8500 lines (from PR metadata)
 - PR #114 is 2800 lines (~33% of upstream)
@@ -78,6 +80,7 @@ public async edr(collection_id: string): Promise<EDRQueryBuilder> {
 ### New Files Created
 
 **Implementation Files (3):**
+
 ```
 src/ogc-api/edr/
 ├── url_builder.ts      (561 lines) - Main query builder class
@@ -86,6 +89,7 @@ src/ogc-api/edr/
 ```
 
 **Test Files (3):**
+
 ```
 src/ogc-api/edr/
 ├── helpers.spec.ts     (39 lines)  - Helper function tests
@@ -96,12 +100,14 @@ src/ogc-api/
 ```
 
 **Example Files (1):**
+
 ```
 app/examples/
 └── edr.ts             (28 lines)  - Usage demonstration
 ```
 
 **Fixture Files (8):**
+
 ```
 fixtures/ogc-api/edr/
 ├── sample-data-hub.json
@@ -114,6 +120,7 @@ fixtures/ogc-api/edr/
 ```
 
 **Modified Files (3):**
+
 ```
 src/ogc-api/
 ├── endpoint.ts         (+43 lines)  - Add edr() method
@@ -123,6 +130,7 @@ src/ogc-api/
 ```
 
 **CSAPI Mapping:**
+
 ```
 src/ogc-api/csapi/
 ├── url_builder.ts      (~600 lines estimated)
@@ -144,6 +152,7 @@ src/ogc-api/
 **Location:** `src/ogc-api/edr/url_builder.ts`
 
 **Constructor Pattern:**
+
 ```typescript
 export default class EDRQueryBuilder {
   private supported_query_types: {
@@ -173,7 +182,7 @@ export default class EDRQueryBuilder {
     this.supported_crs = collection.crs;
     this.links = collection.links;
   }
-  
+
   // Getter for supported queries
   get supported_queries(): Set<DataQueryType> {
     const queries: Set<DataQueryType> = new Set();
@@ -186,6 +195,7 @@ export default class EDRQueryBuilder {
 ```
 
 **CSAPI Pattern:**
+
 ```typescript
 export default class CSAPIQueryBuilder {
   private supported_resource_types: {
@@ -199,10 +209,10 @@ export default class CSAPIQueryBuilder {
     controlStreams: boolean;
     commands: boolean;
   };
-  
+
   public collection: OgcApiCollectionInfo;
   public links: OgcApiDocumentLink[] = [];
-  
+
   constructor(private collection: OgcApiCollectionInfo) {
     // Similar validation pattern
   }
@@ -212,9 +222,11 @@ export default class CSAPIQueryBuilder {
 ### 2. Endpoint Integration
 
 **Pattern from `endpoint.ts`:**
+
 ```typescript
 export default class OgcApiEndpoint {
-  private collection_id_to_edr_builder_: Map<string, EDRQueryBuilder> = new Map();
+  private collection_id_to_edr_builder_: Map<string, EDRQueryBuilder> =
+    new Map();
 
   get edrCollections(): Promise<string[]> {
     return Promise.all([this.data, this.hasEnvironmentalDataRetrieval])
@@ -247,9 +259,11 @@ export default class OgcApiEndpoint {
 ```
 
 **CSAPI Pattern:**
+
 ```typescript
 export default class OgcApiEndpoint {
-  private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Map();
+  private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> =
+    new Map();
 
   get csapiCollections(): Promise<string[]> {
     // Similar pattern
@@ -270,6 +284,7 @@ export default class OgcApiEndpoint {
 ### 3. Conformance Detection
 
 **From `info.ts`:**
+
 ```typescript
 export function checkHasEnvironmentalDataRetrieval([conformance]: [
   ConformanceClass[]
@@ -283,10 +298,9 @@ export function checkHasEnvironmentalDataRetrieval([conformance]: [
 ```
 
 **CSAPI Pattern:**
+
 ```typescript
-export function checkHasConnectedSystems([conformance]: [
-  ConformanceClass[]
-]) {
+export function checkHasConnectedSystems([conformance]: [ConformanceClass[]]) {
   return (
     conformance.indexOf(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
@@ -300,6 +314,7 @@ export function checkHasConnectedSystems([conformance]: [
 ### 4. Type Extensions
 
 **From `model.ts`:**
+
 ```typescript
 export const DataQueryTypes = [
   'items',
@@ -317,7 +332,7 @@ export type DataQueryType = (typeof DataQueryTypes)[number];
 
 export interface OgcApiCollectionInfo {
   // ... existing props
-  
+
   data_queries?: {
     [K in DataQueryType]?: {
       link: {
@@ -331,6 +346,7 @@ export interface OgcApiCollectionInfo {
 ```
 
 **CSAPI Pattern:**
+
 ```typescript
 export const CSAPIResourceTypes = [
   'systems',
@@ -348,7 +364,7 @@ export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
 
 export interface OgcApiCollectionInfo {
   // ... existing props
-  
+
   csapi_resources?: {
     [K in CSAPIResourceType]?: {
       link: {
@@ -367,6 +383,7 @@ export interface OgcApiCollectionInfo {
 ### Method Signature Pattern
 
 **From `url_builder.ts` (Example: Area Query):**
+
 ```typescript
 buildAreaDownloadUrl(
   coords: WellKnownTextString,
@@ -382,7 +399,7 @@ buildAreaDownloadUrl(
 
   // 3. Set required parameters
   url.searchParams.set('coords', coords);
-  
+
   // 4. Set optional parameters with validation
   if (optional_params.z !== undefined)
     url.searchParams.set('z', zParameterToString(optional_params.z));
@@ -414,13 +431,14 @@ buildAreaDownloadUrl(
   }
   if (optional_params.f !== undefined)
     url.searchParams.set('f', optional_params.f);
-    
+
   // 5. Return built URL string
   return url.toString();
 }
 ```
 
 **CSAPI Pattern (Example: Systems Resource):**
+
 ```typescript
 buildSystemsUrl(
   optional_params: SystemsParams = {}
@@ -471,6 +489,7 @@ buildSystemsUrl(
 ```
 
 **KEY PATTERN ELEMENTS:**
+
 1. **Guard clause:** Check resource type support first
 2. **Base URL:** Extract from collection metadata
 3. **Parameter validation:** Validate against collection metadata
@@ -484,15 +503,16 @@ buildSystemsUrl(
 ### Test File Structure
 
 **Pattern from `endpoint.spec.ts`:**
+
 ```typescript
 describe('OgcApiEndpoint with EDR', () => {
   let endpoint: OgcApiEndpoint;
-  
+
   describe('nominal case', () => {
     beforeEach(() => {
       endpoint = new OgcApiEndpoint('http://local/edr/sample-data-hub');
     });
-    
+
     describe('#info', () => {
       it('returns endpoint info', async () => {
         await expect(endpoint.info).resolves.toEqual({
@@ -503,7 +523,9 @@ describe('OgcApiEndpoint with EDR', () => {
       });
 
       it('supports EDR ', async () => {
-        await expect(endpoint.hasEnvironmentalDataRetrieval).resolves.toBe(true);
+        await expect(endpoint.hasEnvironmentalDataRetrieval).resolves.toBe(
+          true
+        );
       });
 
       it('can list all the EDR collections', async () => {
@@ -541,7 +563,7 @@ describe('OgcApiEndpoint with EDR', () => {
         expect(areaUrlWithoutParam).toEqual(
           'https://dummy.edr.app/collections/reservoir-api/area?coords=...'
         );
-        
+
         const areaUrlWithParam = builder.buildAreaDownloadUrl(
           'POLYGON((-1.0 50.0, -1.0 51.0, 0.0 51.0, 0.0 50.0, -1.0 50.0))',
           { parameter_name: ['Water Temperature'] }
@@ -576,22 +598,27 @@ describe('OgcApiEndpoint with EDR', () => {
 ```
 
 **Test Categories:**
+
 1. **Endpoint detection tests**
+
    - Conformance class detection
    - Collection listing
    - Support flags
 
 2. **Builder instantiation tests**
+
    - Constructor validation
    - Caching behavior
    - Metadata parsing
 
 3. **URL building tests**
+
    - Required parameters only
    - Optional parameters
    - Parameter combinations
 
 4. **Validation tests**
+
    - Invalid parameters
    - Unsupported query types
    - Malformed inputs
@@ -601,6 +628,7 @@ describe('OgcApiEndpoint with EDR', () => {
    - Parameter serialization
 
 **CSAPI Test Projection:**
+
 - ~400 lines of integration tests (1.3x EDR)
 - ~100 lines of unit tests (2x EDR for more complex helpers)
 - Total: ~500 lines of tests
@@ -612,6 +640,7 @@ describe('OgcApiEndpoint with EDR', () => {
 ### 1. Minimal Upstream Modifications
 
 **Modified Core Files:**
+
 - `endpoint.ts`: +43 lines (1 getter, 1 method, 1 cache)
 - `info.ts`: +16 lines (1 function, 1 type extension)
 - `model.ts`: +47 lines (1 type, 2 interfaces)
@@ -624,6 +653,7 @@ describe('OgcApiEndpoint with EDR', () => {
 ### 2. Self-Contained Implementation
 
 **EDR-Specific Code Location:**
+
 ```
 src/ogc-api/edr/
 ├── url_builder.ts    (self-contained)
@@ -636,6 +666,7 @@ src/ogc-api/edr/
 ### 3. Fixture-Driven Testing
 
 **Fixture Breakdown:**
+
 - Root endpoint metadata
 - Conformance document
 - Collections list
@@ -646,13 +677,14 @@ src/ogc-api/edr/
 ### 4. Progressive Enhancement Pattern
 
 **EDR adds to endpoint without breaking existing functionality:**
+
 ```typescript
 // Existing pattern
-endpoint.featureCollections  // Still works
-endpoint.tileCollections     // Still works
+endpoint.featureCollections; // Still works
+endpoint.tileCollections; // Still works
 
 // New pattern
-endpoint.edrCollections      // Added without conflict
+endpoint.edrCollections; // Added without conflict
 ```
 
 **LESSON:** CSAPI should follow same pattern. Don't modify existing properties/methods.
@@ -664,13 +696,15 @@ endpoint.edrCollections      // Added without conflict
 ### Q1: Subresource URL Building
 
 **EDR Pattern:**
+
 ```typescript
 // EDR has flat query types: position, cube, area, etc.
-buildPositionDownloadUrl(coords, params)
-buildCubeDownloadUrl(bbox, params)
+buildPositionDownloadUrl(coords, params);
+buildCubeDownloadUrl(bbox, params);
 ```
 
 **CSAPI Challenge:**
+
 ```typescript
 // CSAPI has nested resources:
 // /systems
@@ -681,21 +715,23 @@ buildCubeDownloadUrl(bbox, params)
 ```
 
 **QUESTION:** Should we have separate methods for each nesting level?
+
 ```typescript
-buildSystemsUrl(params)
-buildSystemUrl(systemId)
-buildSystemProceduresUrl(systemId, params)
-buildSystemDatastreamsUrl(systemId, params)
-buildSystemDatastreamObservationsUrl(systemId, datastreamId, params)
+buildSystemsUrl(params);
+buildSystemUrl(systemId);
+buildSystemProceduresUrl(systemId, params);
+buildSystemDatastreamsUrl(systemId, params);
+buildSystemDatastreamObservationsUrl(systemId, datastreamId, params);
 ```
 
 **OR:** Use a hierarchical approach?
+
 ```typescript
-systems(params)           // /systems
-system(id).get()         // /systems/{id}
-system(id).procedures()  // /systems/{id}/procedures
-system(id).datastreams() // /systems/{id}/datastreams
-system(id).datastream(id).observations() // /systems/{id}/datastreams/{id}/observations
+systems(params); // /systems
+system(id).get(); // /systems/{id}
+system(id).procedures(); // /systems/{id}/procedures
+system(id).datastreams(); // /systems/{id}/datastreams
+system(id).datastream(id).observations(); // /systems/{id}/datastreams/{id}/observations
 ```
 
 **DECISION NEEDED:** Research more complex OGC API implementations.
@@ -703,18 +739,21 @@ system(id).datastream(id).observations() // /systems/{id}/datastreams/{id}/obser
 ### Q2: Collection Association
 
 **EDR Pattern:**
+
 ```typescript
 // EDR queries are collection-scoped:
 endpoint.edr('reservoir-api').buildAreaDownloadUrl(...)
 ```
 
 **CSAPI Pattern Option 1 (Collection-Scoped):**
+
 ```typescript
 // Same pattern:
 endpoint.csapi('weather-stations').buildSystemsUrl(...)
 ```
 
 **CSAPI Pattern Option 2 (Top-Level):**
+
 ```typescript
 // CSAPI resources might be top-level:
 endpoint.csapi().buildSystemsUrl(...)
@@ -727,12 +766,14 @@ endpoint.csapi().buildSystemsUrl(...)
 ### Q3: Format Negotiation
 
 **EDR Pattern:**
+
 ```typescript
 // Format is optional parameter:
-buildAreaDownloadUrl(coords, { f: 'json' })
+buildAreaDownloadUrl(coords, { f: 'json' });
 ```
 
 **CSAPI Support:**
+
 - GeoJSON (RFC 7946)
 - SensorML 3.0 (XML/JSON)
 - SWE Common 3.0 (XML/JSON)
@@ -771,20 +812,24 @@ buildAreaDownloadUrl(coords, { f: 'json' })
 ## Critical Findings Summary
 
 ### ✅ TERMINOLOGY RESOLVED
+
 - **Object name:** `EDRQueryBuilder` (NOT "navigator")
 - **CSAPI equivalent:** `CSAPIQueryBuilder`
 
 ### ✅ CODE VOLUME ACCEPTABLE
+
 - **PR #114:** ~2800 lines total (750 implementation)
 - **CSAPI projection:** ~3500 lines total (975 implementation)
 - **Verdict:** Within acceptable range (~41% of upstream vs. previous 2x)
 
 ### ✅ PATTERN IDENTIFIED
+
 - **Minimal core modifications:** 115 lines across 4 files
 - **Self-contained implementation:** All in `edr/` subfolder
 - **Progressive enhancement:** Doesn't break existing API
 
 ### ⚠️ OPEN QUESTIONS
+
 1. How to handle CSAPI subresource URL building?
 2. Are CSAPI resources collection-scoped or top-level?
 3. How to handle format negotiation for multiple content types?

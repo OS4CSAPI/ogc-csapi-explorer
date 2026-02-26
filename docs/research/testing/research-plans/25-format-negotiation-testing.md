@@ -32,7 +32,7 @@ Define testing strategy for format negotiation via Accept headers, query paramet
 - Which resources support which formats?
 - How is format negotiation prioritized (Accept header vs f= parameter)?
 - What is the default format?
-- How to test wildcard Accept headers (*/*)?
+- How to test wildcard Accept headers (_/_)?
 - How to test complex Accept headers with quality values?
 - How to test format links in resource representations?
 - What error responses occur for unsupported formats?
@@ -65,6 +65,7 @@ Define testing strategy for format negotiation via Accept headers, query paramet
 **Objective:** Extract format negotiation requirements from CSAPI
 
 **Tasks:**
+
 1. Identify all CSAPI media types
 2. Document media type support by resource type
 3. Extract Accept header requirements
@@ -78,6 +79,7 @@ Define testing strategy for format negotiation via Accept headers, query paramet
 **Objective:** Analyze format negotiation testing in upstream
 
 **Tasks:**
+
 1. Identify format negotiation tests in upstream
 2. Extract Accept header test patterns
 3. Extract query parameter format test patterns
@@ -90,6 +92,7 @@ Define testing strategy for format negotiation via Accept headers, query paramet
 **Objective:** Design test scenarios for format negotiation
 
 **Tasks:**
+
 1. Design Accept header test scenarios
 2. Design f= query parameter test scenarios
 3. Design link-based format discovery test scenarios
@@ -103,6 +106,7 @@ Define testing strategy for format negotiation via Accept headers, query paramet
 **Objective:** Create comprehensive media type support matrix
 
 **Tasks:**
+
 1. Map media types to resource types
 2. Document default formats
 3. Document format precedence
@@ -114,6 +118,7 @@ Define testing strategy for format negotiation via Accept headers, query paramet
 **Objective:** Design fixtures for format negotiation testing
 
 **Tasks:**
+
 1. Design Accept header fixtures
 2. Design format-specific response fixtures
 3. Design link relation fixtures
@@ -125,6 +130,7 @@ Define testing strategy for format negotiation via Accept headers, query paramet
 **Objective:** Create comprehensive format negotiation testing strategy
 
 **Tasks:**
+
 1. Consolidate format negotiation scenarios
 2. Create format test templates
 3. Document fixture requirements
@@ -152,6 +158,7 @@ This research is complete when:
 **Format negotiation testing strategy covering all three negotiation methods**
 
 Content includes:
+
 - Complete CSAPI media type inventory
 - Media type support matrix by resource type
 - Accept header test patterns
@@ -170,11 +177,13 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 8: CSAPI Specification Review (media type definitions)
 - Section 24: Query Parameter Combination Testing (f= parameter)
 - Format Negotiation Architecture document
 
 **Blocks:**
+
 - Format negotiation implementation
 - Media type selection logic
 - Section 19: Test Organization and File Structure (format test organization)
@@ -203,6 +212,7 @@ Content includes:
 **Key Findings from Research:**
 
 **7 Media Types Identified:**
+
 1. `application/json` - Base JSON (REQUIRED, all resources)
 2. `application/geo+json` - GeoJSON (REQUIRED, spatial resources)
 3. `application/sml+json` - SensorML (REQUIRED, systems/procedures)
@@ -212,6 +222,7 @@ Content includes:
 7. `text/uri-list` - URI list (OPTIONAL, collection additions)
 
 **3 Format Negotiation Methods:**
+
 1. Query parameter (`f` or `format`) - PRIMARY (highest precedence)
 2. Accept header - FALLBACK (second precedence)
 3. Server default - LAST RESORT
@@ -219,23 +230,28 @@ Content includes:
 **Precedence Rule:** Query parameter > Accept header > Server default > 406 Not Acceptable
 
 **Part 1 vs Part 2 Differences:**
+
 - Part 1: Short format names (f=json, f=geojson, f=sml)
 - Part 2: Full media types required (f=application/swe+json)
 
 **URL Encoding Critical:**
+
 - Plus character (+) MUST be encoded as %2B
 - Example: application/swe+json → application/swe%2Bjson
 
 **Format Advertisement:**
+
 - Part 1: Implicit (via API metadata)
 - Part 2: Explicit (formats property in DataStream/ControlStream)
 
 **No Link-Based Format Discovery:**
+
 - Research plan mentioned link-based selection
 - CSAPI follows EDR pattern (query parameter only)
 - Links are informational only
 
 **50 Test Scenarios Designed:**
+
 - 20 query parameter tests
 - 10 Accept header tests
 - 5 default format tests
@@ -244,6 +260,7 @@ Content includes:
 - 5 format advertisement tests
 
 **37 Fixtures Designed:**
+
 - 15 valid query strings
 - 5 invalid query strings
 - 6 Accept header variations
@@ -252,6 +269,7 @@ Content includes:
 - 3 error responses
 
 **Implementation Estimates:**
+
 - Test Implementation: 9-14 hours
 - Fixture Creation: 3-4 hours
 - Validation Utilities: 4-7 hours
@@ -259,7 +277,8 @@ Content includes:
 
 ---
 
-**Next Steps:** 
+**Next Steps:**
+
 1. Implement format negotiation tests (~9-14 hours)
 2. Create format validation utilities (~4-7 hours)
 3. Create format-specific fixtures (~3-4 hours)

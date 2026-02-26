@@ -12,14 +12,14 @@
 
 ### 1.1 Documents Reviewed
 
-| # | Document | Lines | Status | Verdict |
-|---|----------|-------|--------|---------|
-| 03 | [typescript-testing-standards.md](../findings/03-typescript-testing-standards.md) | 1,834 | ✅ Reviewed | ⚠️ Issues Found |
-| 17 | [coverage-targets-and-metrics.md](../findings/17-coverage-targets-and-metrics.md) | 873 | ✅ Reviewed | ❌ Significant Issues |
-| 20 | [test-to-code-ratio-validation.md](../findings/20-test-to-code-ratio-validation.md) | 949 | ✅ Reviewed | ⚠️ Issues Found |
-| 35 | [jsdoc-testing-documentation-standards.md](../findings/35-jsdoc-testing-documentation-standards.md) | 1,850 | ✅ Reviewed | ❌ Significant Issues |
-| 36 | [test-quality-checklist-review-process.md](../findings/36-test-quality-checklist-review-process.md) | 1,966 | ✅ Reviewed | ❌ Critical Issues |
-| 37 | [test-maintenance-evolution-strategy.md](../findings/37-test-maintenance-evolution-strategy.md) | 1,837 | ✅ Reviewed | ❌ Significant Issues |
+| #   | Document                                                                                            | Lines | Status      | Verdict               |
+| --- | --------------------------------------------------------------------------------------------------- | ----- | ----------- | --------------------- |
+| 03  | [typescript-testing-standards.md](../findings/03-typescript-testing-standards.md)                   | 1,834 | ✅ Reviewed | ⚠️ Issues Found       |
+| 17  | [coverage-targets-and-metrics.md](../findings/17-coverage-targets-and-metrics.md)                   | 873   | ✅ Reviewed | ❌ Significant Issues |
+| 20  | [test-to-code-ratio-validation.md](../findings/20-test-to-code-ratio-validation.md)                 | 949   | ✅ Reviewed | ⚠️ Issues Found       |
+| 35  | [jsdoc-testing-documentation-standards.md](../findings/35-jsdoc-testing-documentation-standards.md) | 1,850 | ✅ Reviewed | ❌ Significant Issues |
+| 36  | [test-quality-checklist-review-process.md](../findings/36-test-quality-checklist-review-process.md) | 1,966 | ✅ Reviewed | ❌ Critical Issues    |
+| 37  | [test-maintenance-evolution-strategy.md](../findings/37-test-maintenance-evolution-strategy.md)     | 1,837 | ✅ Reviewed | ❌ Significant Issues |
 
 **Total Lines Reviewed:** 9,309
 
@@ -42,38 +42,38 @@ These 6 documents define the quality standards, metrics, documentation, review p
 
 Each document was checked against all 5 Phase 0 anti-patterns:
 
-| ID | Anti-Pattern | Description |
-|----|-------------|-------------|
-| AP1 | Testing Response Content | Tests validate server responses rather than client code |
-| AP2 | Hybrid Fixture/Live | Tests designed to run against live servers OR fixtures |
-| AP3 | OGC Requirement Traceability | Test structure mirrors spec requirements, not client code |
-| AP4 | Asserting Data Shape | Tests check response structure without testing transformation |
-| AP5 | Graceful Skipping | Tests skip based on fixture content rather than failing |
+| ID  | Anti-Pattern                 | Description                                                   |
+| --- | ---------------------------- | ------------------------------------------------------------- |
+| AP1 | Testing Response Content     | Tests validate server responses rather than client code       |
+| AP2 | Hybrid Fixture/Live          | Tests designed to run against live servers OR fixtures        |
+| AP3 | OGC Requirement Traceability | Test structure mirrors spec requirements, not client code     |
+| AP4 | Asserting Data Shape         | Tests check response structure without testing transformation |
+| AP5 | Graceful Skipping            | Tests skip based on fixture content rather than failing       |
 
 ### 2.2 Upstream Baseline (Verified)
 
 Before reviewing, the following upstream facts were independently verified:
 
-| Fact | Verified Value | Source |
-|------|---------------|--------|
-| Jest import style | Global (no `@jest/globals` imports) | All 31 `.spec.ts` files |
-| `@types/jest` | Installed (`^29.5.11`) | `package.json` |
-| Coverage thresholds | **None configured** | `jest.config.cjs` — no `coverageThreshold` |
-| Coverage scripts | **None** | `package.json` — only `test`, `test:browser`, `test:node` |
-| JSDoc in test files | Near zero (0 `@fileoverview`, 0 `@module`, ~1 JSDoc block in ~9,000 lines) | All `.spec.ts` files |
-| Test-to-code ratios | WFS≈1.86, WMS≈1.21, WMTS≈2.47, TMS≈1.04, STAC≈0.66, OGC-API≈1.47 | Line counts |
-| Average ratio | ~1.45:1 | Computed |
-| Review process | Standard GitHub PR review by maintainer(s) | Upstream contribution model |
+| Fact                | Verified Value                                                             | Source                                                    |
+| ------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Jest import style   | Global (no `@jest/globals` imports)                                        | All 31 `.spec.ts` files                                   |
+| `@types/jest`       | Installed (`^29.5.11`)                                                     | `package.json`                                            |
+| Coverage thresholds | **None configured**                                                        | `jest.config.cjs` — no `coverageThreshold`                |
+| Coverage scripts    | **None**                                                                   | `package.json` — only `test`, `test:browser`, `test:node` |
+| JSDoc in test files | Near zero (0 `@fileoverview`, 0 `@module`, ~1 JSDoc block in ~9,000 lines) | All `.spec.ts` files                                      |
+| Test-to-code ratios | WFS≈1.86, WMS≈1.21, WMTS≈2.47, TMS≈1.04, STAC≈0.66, OGC-API≈1.47           | Line counts                                               |
+| Average ratio       | ~1.45:1                                                                    | Computed                                                  |
+| Review process      | Standard GitHub PR review by maintainer(s)                                 | Upstream contribution model                               |
 
 ### 2.3 Cross-Document Consistency Check
 
 This category's estimates were validated against previously reviewed documents:
 
-| Metric | Doc 19 (authoritative) | Doc 20 | Doc 17 | Consistent? |
-|--------|----------------------|--------|--------|-------------|
-| Test file count | 22 files | — | — | ✅ |
-| Test lines | 4,040–5,340 | 4,150–5,850 | **13,090–17,016** | ❌ Doc 17 is 3× higher |
-| CSAPI test-to-code ratio | — | 0.86–0.90:1 | — | ✅ Reasonable |
+| Metric                   | Doc 19 (authoritative) | Doc 20      | Doc 17            | Consistent?            |
+| ------------------------ | ---------------------- | ----------- | ----------------- | ---------------------- |
+| Test file count          | 22 files               | —           | —                 | ✅                     |
+| Test lines               | 4,040–5,340            | 4,150–5,850 | **13,090–17,016** | ❌ Doc 17 is 3× higher |
+| CSAPI test-to-code ratio | —                      | 0.86–0.90:1 | —                 | ✅ Reasonable          |
 
 ---
 
@@ -98,16 +98,18 @@ This category's estimates were validated against previously reviewed documents:
 **Problem:** Document 36 explicitly states as a quality philosophy:
 
 > **Spec Compliance Over Implementation:**
+>
 > - ❌ Test implementation details (private methods, internals)
 > - ✅ Test spec requirements (public API, conformance classes)
 
-This directly prescribes AP3 (OGC Requirement Traceability). Testing "spec requirements" and "conformance classes" is testing whether a *server* is spec-compliant, not testing whether *our client code* correctly builds URLs, parses responses, and handles errors. The senior developer's feedback was precisely that tests were "too geared towards evaluating a server and not a client."
+This directly prescribes AP3 (OGC Requirement Traceability). Testing "spec requirements" and "conformance classes" is testing whether a _server_ is spec-compliant, not testing whether _our client code_ correctly builds URLs, parses responses, and handles errors. The senior developer's feedback was precisely that tests were "too geared towards evaluating a server and not a client."
 
 The document further reinforces this with checklist item M-6: "Tests validate against spec requirements explicitly."
 
 **Fix Required:** Replace "Spec Compliance Over Implementation" with "Client Behavior Over Spec Compliance." The quality philosophy should be: test that our code produces correct URLs, parses responses correctly, and handles errors — not that our code validates OGC conformance.
 
 **Resolution:** Replaced philosophy heading with "Spec-Informed Client Behavior" — spec knowledge is legitimate INPUT to test design (it tells us what correct behavior looks like), but spec compliance is not the GOAL of testing. Changes applied:
+
 - Philosophy section: Added explicit distinction between spec-conformance testing (❌) and spec-informed client behavior testing (✅)
 - M-6 checklist item: Reframed from "validate against spec requirements" to "validate correct client behavior (informed by spec)"
 - "Missing Specification Links" example: Replaced with "Testing Spec Compliance Instead of Client Behavior" showing parser output assertions
@@ -129,16 +131,18 @@ The document further reinforces this with checklist item M-6: "Tests validate ag
 3. **Doc 36** requires checklist item M-6: "Tests validate against spec requirements explicitly"
 
 This entire system is AP3 (OGC Requirement Traceability) — organizing tests around OGC spec sections rather than around client code behavior. The upstream codebase has zero JSDoc in test files and zero spec-traceability infrastructure. This system would:
+
 - Structure tests around spec sections instead of client code modules
 - Create maintenance burden tracking spec version changes
 - Encourage testing spec compliance rather than client behavior
 - Add ~2,000 lines of JSDoc overhead to a ~5,000 line test suite
 
-**Fix Required:** Remove the `@specification` tag from Doc 35's recommended tags. Remove the traceability system from Doc 37. Reframe Doc 36's checklist around client behavior validation, not spec compliance. Spec references can exist as *comments* for context but should never be structural/machine-readable tags that drive test organization.
+**Fix Required:** Remove the `@specification` tag from Doc 35's recommended tags. Remove the traceability system from Doc 37. Reframe Doc 36's checklist around client behavior validation, not spec compliance. Spec references can exist as _comments_ for context but should never be structural/machine-readable tags that drive test organization.
 
 **Resolution:** Dismantled the interconnected `@specification` tag traceability system across all three documents. Key principle preserved: spec knowledge is legitimate INPUT to test design as plain comments; the structural JSDoc tag infrastructure is the problem. Changes applied:
 
 **Doc 35 (JSDoc Standards):**
+
 - `@specification` tag: changed from "Recommended" to "Not recommended" in tag table (with strikethrough)
 - `#### @specification` subsection: replaced with AP3 warning and plain `// Spec context:` comment guidance
 - Key Principle #2: "Specification Traceability" → "Spec-Informed Context"
@@ -148,6 +152,7 @@ This entire system is AP3 (OGC Requirement Traceability) — organizing tests ar
 - Added top-level AP3 review notice warning that remaining `@specification` instances in code examples should be read as plain comments
 
 **Doc 37 (Maintenance Strategy):**
+
 - Executive summary: "Test-to-Spec Traceability System" → "Spec-Informed Test Maintenance" with AP3 warning
 - §2.3: Removed entire traceability system (tag format, `scripts/test-traceability.js`, npm commands, spec change impact analysis) → replaced with lightweight grep-based approach
 - Proactive maintenance: "Spec-to-test traceability (via @specification tags)" → "Spec-aware test context (plain comments)"
@@ -176,10 +181,12 @@ This entire system is AP3 (OGC Requirement Traceability) — organizing tests ar
 **Status:** ✅ Resolved
 
 **Problem:** Doc 17 contains two contradictory test line estimates within the same document:
+
 - Line 59: "Total Test Lines: ~4,500-6,000 lines expected" (from Implementation Guide)
 - Line 139: "Total Estimated Test Lines: ~13,090-17,016 lines" (from component target matrix)
 
 The 13,090–17,016 figure is **3× higher** than every other estimate in the research series:
+
 - Doc 19 (authoritative): 4,040–5,340 lines
 - Doc 20: 4,150–5,850 lines
 - Implementation Guide: 4,400–6,300 lines
@@ -199,6 +206,7 @@ The inflation comes from extremely granular component estimates: Endpoint (~4,80
 **Status:** ✅ Resolved
 
 **Problem:** Doc 36 proposes a 3-stage review process with invented roles:
+
 - **Stage 1:** Self-review (15–30 minutes per test file)
 - **Stage 2:** Peer review ("not original developer")
 - **Stage 3:** Tech Lead sign-off
@@ -220,6 +228,7 @@ Upstream `camptocamp/ogc-client` is a small open-source library where contributi
 **Status:** ✅ Resolved
 
 **Problem:** Doc 37 proposes enterprise-level maintenance infrastructure for a library contribution:
+
 - Monthly health checks (2–4 hours/month)
 - ~70–120 hours/year maintenance burden
 - Custom `scripts/test-traceability.js` tool
@@ -261,13 +270,13 @@ The document honestly acknowledges the tension: "Don't over-document tests (upst
 
 **Problem:** Doc 20's file-level line counts for EDR module components are significantly wrong when checked against the actual codebase:
 
-| File | Doc 20 Claim | Actual | Error |
-|------|-------------|--------|-------|
-| `helpers.ts` | 26 lines | 17 lines | +53% |
-| `model.ts` | 126 lines | 110 lines | +15% |
-| `url_builder.ts` | 380 lines | 529 lines | **-28%** |
-| `helpers.spec.ts` | 45 lines | 33 lines | +36% |
-| `model.spec.ts` | 97 lines | 32 lines | **+203%** |
+| File              | Doc 20 Claim | Actual    | Error     |
+| ----------------- | ------------ | --------- | --------- |
+| `helpers.ts`      | 26 lines     | 17 lines  | +53%      |
+| `model.ts`        | 126 lines    | 110 lines | +15%      |
+| `url_builder.ts`  | 380 lines    | 529 lines | **-28%**  |
+| `helpers.spec.ts` | 45 lines     | 33 lines  | +36%      |
+| `model.spec.ts`   | 97 lines     | 32 lines  | **+203%** |
 
 The `model.spec.ts` claim is off by 3×. These are not counting methodology differences — they are factually wrong and may indicate the counts were generated rather than measured.
 
@@ -304,6 +313,7 @@ The `model.spec.ts` claim is off by 3×. These are not counting methodology diff
 > Behavior Coverage = (Behavior Tests / Total Requirements) × 100%
 
 And lists "Required Behavior Tests" that are spec requirements:
+
 - "Systems list endpoint supports pagination"
 - "DataStreams can be filtered by phenomenonTime"
 
@@ -372,6 +382,7 @@ This frames coverage as spec-requirement coverage (AP3), not as code-path covera
 ### P1: Doc 03 — Strong Upstream Pattern Analysis
 
 Doc 03 correctly identifies and recommends upstream conventions:
+
 - Global Jest imports (not `@jest/globals`)
 - `jest.fn().mockImplementation()` for fetch mocking
 - 0% E2E tests (all mocked)
@@ -416,13 +427,13 @@ This system would embed spec-traceability into every test file, every review, an
 
 ### 9.2 Test Line Estimate Inconsistency
 
-| Source | Estimate | Status |
-|--------|----------|--------|
-| Doc 19 (authoritative) | 4,040–5,340 lines | ✅ Reference |
-| Implementation Guide | 4,400–6,300 lines | ✅ Compatible |
-| Doc 20 | 4,150–5,850 lines | ✅ Compatible |
-| Doc 03 | 4,500–6,000 lines | ✅ Compatible |
-| **Doc 17** | **13,090–17,016 lines** | **❌ 3× inflation** |
+| Source                 | Estimate                | Status              |
+| ---------------------- | ----------------------- | ------------------- |
+| Doc 19 (authoritative) | 4,040–5,340 lines       | ✅ Reference        |
+| Implementation Guide   | 4,400–6,300 lines       | ✅ Compatible       |
+| Doc 20                 | 4,150–5,850 lines       | ✅ Compatible       |
+| Doc 03                 | 4,500–6,000 lines       | ✅ Compatible       |
+| **Doc 17**             | **13,090–17,016 lines** | **❌ 3× inflation** |
 
 Doc 17 is the sole outlier. Its component-level breakdown appears to have been estimated independently for each component without checking against the authoritative file inventory.
 
@@ -461,21 +472,21 @@ Proceed to **Phase 2D: Format Parsers** (Docs 09, 10, 11), which have high AP4 r
 
 ## 11. Issue Tracker
 
-| ID | Severity | Document(s) | Issue | Status |
-|----|----------|-------------|-------|--------|
-| C1 | CRITICAL | 36 | "Spec Compliance Over Implementation" philosophy (AP3) | ✅ Resolved |
-| C2 | CRITICAL | 35, 36, 37 | Systemic AP3 through `@specification` tag traceability system | ✅ Resolved |
-| H1 | HIGH | 17 | Test line estimate 13,090–17,016 is 3× higher than all other estimates | ✅ Resolved |
-| H2 | HIGH | 36 | Invented 3-stage enterprise review process with 41-item checklist | ✅ Resolved |
-| H3 | HIGH | 37 | Over-engineered maintenance framework (70–120 hrs/yr, custom tools, RACI) | ✅ Resolved |
-| H4 | HIGH | 35 | Massive JSDoc over-engineering despite acknowledging upstream minimalism | ✅ Resolved |
-| H5 | HIGH | 20 | EDR file-level line counts demonstrably wrong (model.spec.ts off by 3×) | ✅ Resolved |
-| M1 | MEDIUM | 03 | Fabricated "~80% estimated" coverage for upstream | ✅ Resolved |
-| M2 | MEDIUM | 17 | AP3 in behavior coverage metrics (spec requirements as coverage targets) | ✅ Resolved |
-| M3 | MEDIUM | 20 | Module-level ratios systematically inflated 5–13% | ✅ Resolved |
-| M4 | MEDIUM | 37 | AP2 risk in fixture `_metadata` versioning system | ✅ Resolved |
-| L1 | LOW | 20 | Unverifiable industry library ratio estimates | ✅ Resolved |
-| L2 | LOW | 17 | Premature Jest configuration for non-existent files | ✅ Resolved |
-| L3 | LOW | 03 | Minor ratio measurement discrepancies (5–12%) | ✅ Resolved |
+| ID  | Severity | Document(s) | Issue                                                                     | Status      |
+| --- | -------- | ----------- | ------------------------------------------------------------------------- | ----------- |
+| C1  | CRITICAL | 36          | "Spec Compliance Over Implementation" philosophy (AP3)                    | ✅ Resolved |
+| C2  | CRITICAL | 35, 36, 37  | Systemic AP3 through `@specification` tag traceability system             | ✅ Resolved |
+| H1  | HIGH     | 17          | Test line estimate 13,090–17,016 is 3× higher than all other estimates    | ✅ Resolved |
+| H2  | HIGH     | 36          | Invented 3-stage enterprise review process with 41-item checklist         | ✅ Resolved |
+| H3  | HIGH     | 37          | Over-engineered maintenance framework (70–120 hrs/yr, custom tools, RACI) | ✅ Resolved |
+| H4  | HIGH     | 35          | Massive JSDoc over-engineering despite acknowledging upstream minimalism  | ✅ Resolved |
+| H5  | HIGH     | 20          | EDR file-level line counts demonstrably wrong (model.spec.ts off by 3×)   | ✅ Resolved |
+| M1  | MEDIUM   | 03          | Fabricated "~80% estimated" coverage for upstream                         | ✅ Resolved |
+| M2  | MEDIUM   | 17          | AP3 in behavior coverage metrics (spec requirements as coverage targets)  | ✅ Resolved |
+| M3  | MEDIUM   | 20          | Module-level ratios systematically inflated 5–13%                         | ✅ Resolved |
+| M4  | MEDIUM   | 37          | AP2 risk in fixture `_metadata` versioning system                         | ✅ Resolved |
+| L1  | LOW      | 20          | Unverifiable industry library ratio estimates                             | ✅ Resolved |
+| L2  | LOW      | 17          | Premature Jest configuration for non-existent files                       | ✅ Resolved |
+| L3  | LOW      | 03          | Minor ratio measurement discrepancies (5–12%)                             | ✅ Resolved |
 
 **Summary:** 2 Critical, 5 High, 4 Medium, 3 Low — **14 total issues**

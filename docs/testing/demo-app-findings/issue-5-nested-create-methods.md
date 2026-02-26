@@ -42,11 +42,11 @@ This report does not expand scope beyond what Issue #5 describes. No refactoring
 
 The issue identifies two genuine gaps in `CSAPIQueryBuilder`:
 
-| Finding | Description | Severity | Risk of Fix |
-|---------|-------------|----------|-------------|
-| **F-1** | `createDataStream()` generates top-level `/datastreams` URL; spec-compliant servers reject with 405 | High | Low (additive) |
-| **F-2** | Three nested create methods missing (`createDataStreamForSystem`, `createControlStreamForSystem`, `createSamplingFeatureForSystem`) | Medium | Low (additive) |
-| **F-83** | Two additional nested create methods missing (`createSubsystem`, `createSubdeployment`) | Medium | Low (additive) |
+| Finding  | Description                                                                                                                         | Severity | Risk of Fix    |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------- |
+| **F-1**  | `createDataStream()` generates top-level `/datastreams` URL; spec-compliant servers reject with 405                                 | High     | Low (additive) |
+| **F-2**  | Three nested create methods missing (`createDataStreamForSystem`, `createControlStreamForSystem`, `createSamplingFeatureForSystem`) | Medium   | Low (additive) |
+| **F-83** | Two additional nested create methods missing (`createSubsystem`, `createSubdeployment`)                                             | Medium   | Low (additive) |
 
 **Key finding:** All proposed changes are **purely additive** — new methods added alongside existing ones. No existing method signatures change. No existing tests break. No behavioral modifications to any current code path. This is the lowest-risk category of library change.
 
@@ -76,30 +76,31 @@ This produces: `POST /collections/iot/datastreams` (top-level collection endpoin
 
 The library already has the correct nested pattern for observations and commands:
 
-| Method | Pattern | Status |
-|--------|---------|--------|
-| `createObservation(datastreamId)` | `POST /datastreams/{id}/observations` | ✅ Exists (L1371) |
-| `createCommand(controlStreamId)` | `POST /controlStreams/{id}/commands` | ✅ Exists (L1873) |
-| `createDataStreamForSystem(systemId)` | `POST /systems/{id}/datastreams` | ❌ Missing |
-| `createControlStreamForSystem(systemId)` | `POST /systems/{id}/controlstreams` | ❌ Missing |
-| `createSamplingFeatureForSystem(systemId)` | `POST /systems/{id}/samplingFeatures` | ❌ Missing |
+| Method                                     | Pattern                               | Status            |
+| ------------------------------------------ | ------------------------------------- | ----------------- |
+| `createObservation(datastreamId)`          | `POST /datastreams/{id}/observations` | ✅ Exists (L1371) |
+| `createCommand(controlStreamId)`           | `POST /controlStreams/{id}/commands`  | ✅ Exists (L1873) |
+| `createDataStreamForSystem(systemId)`      | `POST /systems/{id}/datastreams`      | ❌ Missing        |
+| `createControlStreamForSystem(systemId)`   | `POST /systems/{id}/controlstreams`   | ❌ Missing        |
+| `createSamplingFeatureForSystem(systemId)` | `POST /systems/{id}/samplingFeatures` | ❌ Missing        |
 
 The library also has corresponding **GET** methods that produce the exact same base URLs:
 
-| GET Method (exists) | Missing POST counterpart |
-|---------------------|-------------------------|
-| `getSystemDataStreams(id)` (L442) | `createDataStreamForSystem(id)` |
-| `getSystemControlStreams(id)` (L463) | `createControlStreamForSystem(id)` |
+| GET Method (exists)                    | Missing POST counterpart             |
+| -------------------------------------- | ------------------------------------ |
+| `getSystemDataStreams(id)` (L442)      | `createDataStreamForSystem(id)`      |
+| `getSystemControlStreams(id)` (L463)   | `createControlStreamForSystem(id)`   |
 | `getSystemSamplingFeatures(id)` (L484) | `createSamplingFeatureForSystem(id)` |
 
 ### F-83: Additional missing nested methods (Issue #5 amendment)
 
-| Missing Method | Pattern | Spec Reference |
-|----------------|---------|----------------|
-| `createSubsystem(parentId)` | `POST /systems/{id}/subsystems` | OGC 23-001r1 §7.2 |
+| Missing Method                  | Pattern                                 | Spec Reference    |
+| ------------------------------- | --------------------------------------- | ----------------- |
+| `createSubsystem(parentId)`     | `POST /systems/{id}/subsystems`         | OGC 23-001r1 §7.2 |
 | `createSubdeployment(parentId)` | `POST /deployments/{id}/subdeployments` | OGC 23-001r1 §9.2 |
 
 The corresponding GET methods already exist:
+
 - `getSystemSubsystems(id)` (L421) → `GET /systems/{id}/subsystems`
 - `getDeploymentSubdeployments(id)` (L653) → `GET /deployments/{id}/subdeployments`
 
@@ -243,18 +244,19 @@ All 12 linked reference documents from the ogc-csapi-explorer repository were re
 
 ### 6.1 What could go wrong?
 
-| Risk | Likelihood | Mitigation |
-|------|-----------|------------|
-| New methods break existing tests | **None** | Purely additive — no existing code changes |
-| New methods produce wrong URLs | **Very low** | Follow exact same `buildResourceUrl()` pattern as `createObservation()`/`createCommand()` |
-| Deprecating `createDataStream()` breaks consumers | **None if Option B** | Option B (non-breaking) adds new method alongside existing one |
-| Naming convention mismatch | **Low** | `createDataStreamForSystem(systemId)` follows the issue's proposed naming; alternative `createSystemDataStream(systemId)` follows existing `getSystemDataStreams(id)` pattern |
+| Risk                                              | Likelihood           | Mitigation                                                                                                                                                                    |
+| ------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New methods break existing tests                  | **None**             | Purely additive — no existing code changes                                                                                                                                    |
+| New methods produce wrong URLs                    | **Very low**         | Follow exact same `buildResourceUrl()` pattern as `createObservation()`/`createCommand()`                                                                                     |
+| Deprecating `createDataStream()` breaks consumers | **None if Option B** | Option B (non-breaking) adds new method alongside existing one                                                                                                                |
+| Naming convention mismatch                        | **Low**              | `createDataStreamForSystem(systemId)` follows the issue's proposed naming; alternative `createSystemDataStream(systemId)` follows existing `getSystemDataStreams(id)` pattern |
 
 ### 6.2 Risk classification
 
 **This is a LOW RISK, HIGH VALUE change.**
 
 - **Low risk** because:
+
   - All changes are purely additive (new methods)
   - The internal machinery (`buildResourceUrl`) already fully supports the pattern
   - Two existing methods (`createObservation`, `createCommand`) prove the pattern works
@@ -322,13 +324,13 @@ New tests for each new method, following the existing test structure. Approximat
 
 ## Appendix A: Authority Precedence Analysis
 
-| Authority Level | Source | Says About Nested Creation | Weight |
-|----------------|--------|----------------------------|--------|
-| 1 (Highest) | OGC 23-002r1 §7.2 | "Datastreams are created as sub-resources of Systems" | Definitive |
-| 2 | AI Collaboration Agreement | Spec is primary authority | Confirms |
-| 3 | Issue #5 | Proposes additive methods + optional deprecation | Scoping |
-| 4 | Existing code | `createObservation()`/`createCommand()` already use nested pattern | Precedent |
-| 5 | Demo app testing | 405 error from OSH confirms spec interpretation | Evidence |
+| Authority Level | Source                     | Says About Nested Creation                                         | Weight     |
+| --------------- | -------------------------- | ------------------------------------------------------------------ | ---------- |
+| 1 (Highest)     | OGC 23-002r1 §7.2          | "Datastreams are created as sub-resources of Systems"              | Definitive |
+| 2               | AI Collaboration Agreement | Spec is primary authority                                          | Confirms   |
+| 3               | Issue #5                   | Proposes additive methods + optional deprecation                   | Scoping    |
+| 4               | Existing code              | `createObservation()`/`createCommand()` already use nested pattern | Precedent  |
+| 5               | Demo app testing           | 405 error from OSH confirms spec interpretation                    | Evidence   |
 
 All authority levels align: nested creation is the correct pattern, and the library should support it.
 
@@ -336,20 +338,20 @@ All authority levels align: nested creation is the correct pattern, and the libr
 
 ## Appendix B: Cross-Reference Matrix
 
-| Document | Location | Relevance to Issue #5 |
-|----------|----------|-----------------------|
-| upstream-findings.md | ogc-csapi-explorer | F-1/F-2 consolidated findings with priority ranking |
-| library-findings-gap-analysis.md | ogc-csapi-explorer | Detailed F-1/F-2 breakdown, severity ratings, code examples |
-| e2e-write-operations-report.md | ogc-csapi-explorer | Live server evidence: 405 error, 14/15 tests pass |
-| e2e-cross-server-report.md | ogc-csapi-explorer | Cross-server validation: OSH full CRUD, 52N read-only |
-| library-integration-report.md | ogc-csapi-explorer | Findings #12 (CRUD symmetry) and #13 (nested creation works) |
-| contribution-goal-accuracy-assessment.md | ogc-csapi-explorer | Validates F-1 bug, confirms spec-scoped library |
-| library-source-changes-audit.md | ogc-csapi-explorer | Confirms clean library source, only 1 prior commit |
-| conformance-bypass-architecture-notes.md | ogc-csapi-explorer | Explains why bypass exposed these gaps |
-| crud-smoke-test-findings.md | ogc-csapi-explorer | F-15/F-16 additional findings (separate from Issue #5) |
-| endpoint-error-isolation-report.md | ogc-csapi-explorer | EndpointError refactor context (e73cff8) |
-| schema-display-findings.md | ogc-csapi-explorer | F-13/F-14 schema findings (separate from Issue #5) |
-| AI_OPERATIONAL_CONSTRAINTS.md | ogc-client-CSAPI_2 | Authority precedence, no scope expansion, minimal diffs |
+| Document                                 | Location           | Relevance to Issue #5                                        |
+| ---------------------------------------- | ------------------ | ------------------------------------------------------------ |
+| upstream-findings.md                     | ogc-csapi-explorer | F-1/F-2 consolidated findings with priority ranking          |
+| library-findings-gap-analysis.md         | ogc-csapi-explorer | Detailed F-1/F-2 breakdown, severity ratings, code examples  |
+| e2e-write-operations-report.md           | ogc-csapi-explorer | Live server evidence: 405 error, 14/15 tests pass            |
+| e2e-cross-server-report.md               | ogc-csapi-explorer | Cross-server validation: OSH full CRUD, 52N read-only        |
+| library-integration-report.md            | ogc-csapi-explorer | Findings #12 (CRUD symmetry) and #13 (nested creation works) |
+| contribution-goal-accuracy-assessment.md | ogc-csapi-explorer | Validates F-1 bug, confirms spec-scoped library              |
+| library-source-changes-audit.md          | ogc-csapi-explorer | Confirms clean library source, only 1 prior commit           |
+| conformance-bypass-architecture-notes.md | ogc-csapi-explorer | Explains why bypass exposed these gaps                       |
+| crud-smoke-test-findings.md              | ogc-csapi-explorer | F-15/F-16 additional findings (separate from Issue #5)       |
+| endpoint-error-isolation-report.md       | ogc-csapi-explorer | EndpointError refactor context (e73cff8)                     |
+| schema-display-findings.md               | ogc-csapi-explorer | F-13/F-14 schema findings (separate from Issue #5)           |
+| AI_OPERATIONAL_CONSTRAINTS.md            | ogc-client-CSAPI_2 | Authority precedence, no scope expansion, minimal diffs      |
 
 ---
 

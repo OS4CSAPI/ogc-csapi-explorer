@@ -26,12 +26,14 @@
 ### The Tension
 
 **DRY Principle (Don't Repeat Yourself):**
+
 - Reuse existing utilities
 - Reduce code volume
 - Leverage tested code
 - Align with upstream patterns
 
 **Isolation Principle:**
+
 - Minimize coupling
 - Reduce merge conflict risk
 - Make code self-contained
@@ -40,11 +42,13 @@
 ### Governance Constraints
 
 **From AI_OPERATIONAL_CONSTRAINTS.md:**
+
 - Minimize changes to existing upstream files
 - Prefer duplication over refactoring shared code
 - Keep CSAPI additions isolated
 
 **From FEATURE_SPEC.md:**
+
 - Non-negotiable: minimal impact on existing code
 - Additive-only approach
 - Each modification must be justified
@@ -52,6 +56,7 @@
 ### Resolution Strategy
 
 **Balance approach:**
+
 1. **Always reuse:** Stable, well-tested shared utilities (bbox, datetime, errors)
 2. **Selective reuse:** OGC API utilities (link-utils, endpoint patterns)
 3. **Duplicate when:** CSAPI-specific logic, isolation improves clarity
@@ -65,29 +70,29 @@
 
 **From `src/shared/`:**
 
-| Utility | Purpose | Stability | CSAPI Use |
-|---------|---------|-----------|-----------|
-| `bbox-utils.ts` | BoundingBox validation | High | ✅ Yes - query params |
-| `cache.ts` | Response caching | High | ❌ No - endpoint handles |
-| `crs-utils.ts` | CRS code handling | High | ❌ No - not needed |
-| `encoding.ts` | String encoding | High | ❌ No - not needed |
-| `errors.ts` | EndpointError, ServiceExceptionError | High | ✅ Yes - error handling |
-| `http-utils.ts` | Fetch configuration | High | ❌ No - endpoint handles |
-| `id.ts` | Unique ID generation | High | ❌ No - not needed |
-| `mime-type.ts` | MIME type checking | Medium | ❌ No - format strings only |
-| `models.ts` | TypeScript types | High | ✅ Yes - BoundingBox, DateTimeParameter |
-| `url-utils.ts` | URL manipulation | High | ✅ Yes - getChildPath |
-| `xml-utils.ts` | XML parsing | High | ❌ No - CSAPI is JSON |
-| `ows.ts` | OWS XML parsing | High | ❌ No - CSAPI not OWS |
+| Utility         | Purpose                              | Stability | CSAPI Use                               |
+| --------------- | ------------------------------------ | --------- | --------------------------------------- |
+| `bbox-utils.ts` | BoundingBox validation               | High      | ✅ Yes - query params                   |
+| `cache.ts`      | Response caching                     | High      | ❌ No - endpoint handles                |
+| `crs-utils.ts`  | CRS code handling                    | High      | ❌ No - not needed                      |
+| `encoding.ts`   | String encoding                      | High      | ❌ No - not needed                      |
+| `errors.ts`     | EndpointError, ServiceExceptionError | High      | ✅ Yes - error handling                 |
+| `http-utils.ts` | Fetch configuration                  | High      | ❌ No - endpoint handles                |
+| `id.ts`         | Unique ID generation                 | High      | ❌ No - not needed                      |
+| `mime-type.ts`  | MIME type checking                   | Medium    | ❌ No - format strings only             |
+| `models.ts`     | TypeScript types                     | High      | ✅ Yes - BoundingBox, DateTimeParameter |
+| `url-utils.ts`  | URL manipulation                     | High      | ✅ Yes - getChildPath                   |
+| `xml-utils.ts`  | XML parsing                          | High      | ❌ No - CSAPI is JSON                   |
+| `ows.ts`        | OWS XML parsing                      | High      | ❌ No - CSAPI not OWS                   |
 
 **From `src/ogc-api/`:**
 
-| Utility | Purpose | Stability | CSAPI Use |
-|---------|---------|-----------|-----------|
-| `link-utils.ts` | Link extraction | High | ✅ Yes - resource discovery |
-| `model.ts` | OGC API types | High | ✅ Yes - OgcApiCollectionInfo |
-| `info.ts` | Conformance checking | High | ✅ Yes - add CSAPI checks |
-| `endpoint.ts` | Endpoint class | High | ✅ Yes - add csapi() method |
+| Utility         | Purpose              | Stability | CSAPI Use                     |
+| --------------- | -------------------- | --------- | ----------------------------- |
+| `link-utils.ts` | Link extraction      | High      | ✅ Yes - resource discovery   |
+| `model.ts`      | OGC API types        | High      | ✅ Yes - OgcApiCollectionInfo |
+| `info.ts`       | Conformance checking | High      | ✅ Yes - add CSAPI checks     |
+| `endpoint.ts`   | Endpoint class       | High      | ✅ Yes - add csapi() method   |
 
 ### Reuse Categories
 
@@ -95,7 +100,11 @@
 
 ```typescript
 // From src/shared/models.ts
-import { BoundingBox, DateTimeParameter, MimeType } from '../../shared/models.js';
+import {
+  BoundingBox,
+  DateTimeParameter,
+  MimeType,
+} from '../../shared/models.js';
 
 // From src/ogc-api/model.ts
 import { OgcApiCollectionInfo, OgcApiDocument } from '../model.js';
@@ -151,8 +160,8 @@ import { ... } from '../wfs/capabilities.js';  // NO
 
 ```typescript
 // EDR imports
-import { CrsCode } from '../../shared/models.js';  // Type only
-import { DateTimeParameter } from '../../shared/models.js';  // Type only
+import { CrsCode } from '../../shared/models.js'; // Type only
+import { DateTimeParameter } from '../../shared/models.js'; // Type only
 
 // No other imports from shared
 // No imports from other OGC APIs
@@ -161,6 +170,7 @@ import { DateTimeParameter } from '../../shared/models.js';  // Type only
 **Pattern:** Minimal imports, types only, no utilities.
 
 **EDR implements its own:**
+
 - Query string building
 - Parameter validation
 - URL construction
@@ -171,8 +181,8 @@ import { DateTimeParameter } from '../../shared/models.js';  // Type only
 
 ```typescript
 // STAC imports
-import { OgcApiCollectionInfo } from '../model.js';  // Core type
-import { sharedFetch } from '../../shared/http-utils.js';  // HTTP utility
+import { OgcApiCollectionInfo } from '../model.js'; // Core type
+import { sharedFetch } from '../../shared/http-utils.js'; // HTTP utility
 
 // Note: STAC is different - it fetches data, not just builds URLs
 ```
@@ -185,9 +195,9 @@ import { sharedFetch } from '../../shared/http-utils.js';  // HTTP utility
 
 ```typescript
 // WFS imports
-import { Provider, GenericEndpointInfo } from '../shared/models.js';  // Types
-import { queryXmlDocument } from '../shared/http-utils.js';  // XML fetch
-import { parseCapabilities } from '../shared/ows.js';  // OWS parsing
+import { Provider, GenericEndpointInfo } from '../shared/models.js'; // Types
+import { queryXmlDocument } from '../shared/http-utils.js'; // XML fetch
+import { parseCapabilities } from '../shared/ows.js'; // OWS parsing
 
 // WFS is XML-based, uses XML utilities
 ```
@@ -198,13 +208,13 @@ import { parseCapabilities } from '../shared/ows.js';  // OWS parsing
 
 **By API family:**
 
-| API | Import Count | Categories | Note |
-|-----|--------------|------------|------|
-| EDR | 2-3 | Types only | Minimal coupling |
-| STAC | 5-7 | Types + HTTP | Fetches data |
-| WFS | 10-15 | Types + XML/OWS | XML family |
-| WMS | 10-15 | Types + XML/OWS | XML family |
-| WMTS | 10-15 | Types + XML/OWS | XML family |
+| API  | Import Count | Categories      | Note             |
+| ---- | ------------ | --------------- | ---------------- |
+| EDR  | 2-3          | Types only      | Minimal coupling |
+| STAC | 5-7          | Types + HTTP    | Fetches data     |
+| WFS  | 10-15        | Types + XML/OWS | XML family       |
+| WMS  | 10-15        | Types + XML/OWS | XML family       |
+| WMTS | 10-15        | Types + XML/OWS | XML family       |
 
 **CSAPI pattern:** Follow EDR (JSON API, URL building only).
 
@@ -217,27 +227,34 @@ import { parseCapabilities } from '../shared/ows.js';  // OWS parsing
 **Reuse when:**
 
 1. **Type definitions:**
+
    ```typescript
    import { BoundingBox } from '../../shared/models.js';
    ```
+
    **Trade-off:** Zero coupling (types disappear at runtime), full alignment.
 
 2. **Stable, tested utilities:**
+
    ```typescript
    import { EndpointError } from '../../shared/errors.js';
    ```
+
    **Trade-off:** Minimal coupling, consistent error handling.
 
 3. **OGC API patterns:**
+
    ```typescript
    import { getLinkUrl } from '../link-utils.js';
    ```
+
    **Trade-off:** Slight coupling, but CSAPI is OGC API so alignment is good.
 
 4. **Would require significant code duplication:**
+
    ```typescript
    import { getChildPath } from '../../shared/url-utils.js';
-   
+
    // Alternative: Duplicate 10-15 lines
    function getChildPath(url: string, child: string): string {
      const urlObj = new URL(url);
@@ -249,6 +266,7 @@ import { parseCapabilities } from '../shared/ows.js';  // OWS parsing
      return urlObj.toString();
    }
    ```
+
    **Trade-off:** Import saves ~15 lines, utility is stable.
 
 ### When to Duplicate
@@ -256,22 +274,25 @@ import { parseCapabilities } from '../shared/ows.js';  // OWS parsing
 **Duplicate when:**
 
 1. **CSAPI-specific logic:**
+
    ```typescript
    // ✅ Duplicate - CSAPI-specific resource discovery
    private extractAvailableResources(): Set<string> {
      const resources = new Set<string>();
      const linkRels = this.collection_.links.map(l => l.rel);
-     
+
      if (linkRels.includes('systems')) resources.add('systems');
      if (linkRels.includes('datastreams')) resources.add('datastreams');
      // ... CSAPI resource types
-     
+
      return resources;
    }
    ```
+
    **Rationale:** Specific to CSAPI, wouldn't be shared anyway.
 
 2. **Simple helpers (< 5 lines):**
+
    ```typescript
    // ✅ Duplicate - trivial helper
    private formatDateTime(dt: DateTimeParameter): string {
@@ -281,9 +302,11 @@ import { parseCapabilities } from '../shared/ows.js';  // OWS parsing
      return `../${dt.end.toISOString()}`;
    }
    ```
+
    **Rationale:** 5-line function, self-contained, no dependency.
 
 3. **Clarity improvement:**
+
    ```typescript
    // ✅ Duplicate - clearer when inline
    private buildQueryString(options?: QueryOptions): string {
@@ -296,6 +319,7 @@ import { parseCapabilities } from '../shared/ows.js';  // OWS parsing
      return params.toString() ? `?${params.toString()}` : '';
    }
    ```
+
    **Rationale:** Simple, readable, no need for shared utility.
 
 4. **Isolation from API-specific patterns:**
@@ -317,12 +341,12 @@ import { parseCapabilities } from '../shared/ows.js';  // OWS parsing
 
 **Guidelines:**
 
-| Code Size | Action | Rationale |
-|-----------|--------|-----------|
-| 1-5 lines | Always duplicate | Trivial, no value in extracting |
-| 6-15 lines | Duplicate if CSAPI-specific | Isolation > DRY for small code |
-| 16-30 lines | Consider extracting to helper | Balance point |
-| 31+ lines | Extract or import | DRY > isolation for large code |
+| Code Size   | Action                        | Rationale                       |
+| ----------- | ----------------------------- | ------------------------------- |
+| 1-5 lines   | Always duplicate              | Trivial, no value in extracting |
+| 6-15 lines  | Duplicate if CSAPI-specific   | Isolation > DRY for small code  |
+| 16-30 lines | Consider extracting to helper | Balance point                   |
+| 31+ lines   | Extract or import             | DRY > isolation for large code  |
 
 **Exception:** If upstream already has utility for 31+ lines, always import.
 
@@ -336,15 +360,9 @@ import { parseCapabilities } from '../shared/ows.js';  // OWS parsing
 
 ```typescript
 // In src/ogc-api/csapi/url_builder.ts
-import type { 
-  BoundingBox, 
-  DateTimeParameter 
-} from '../../shared/models.js';
+import type { BoundingBox, DateTimeParameter } from '../../shared/models.js';
 
-import type { 
-  OgcApiCollectionInfo,
-  OgcApiDocument 
-} from '../model.js';
+import type { OgcApiCollectionInfo, OgcApiDocument } from '../model.js';
 ```
 
 **Utilities (minimal coupling):**
@@ -367,18 +385,20 @@ import type { BoundingBox, DateTimeParameter } from '../../shared/models.js';
 export interface QueryOptions {
   limit?: number;
   offset?: number;
-  bbox?: BoundingBox;  // [number, number, number, number]
-  datetime?: DateTimeParameter;  // Date | { start: Date } | ...
+  bbox?: BoundingBox; // [number, number, number, number]
+  datetime?: DateTimeParameter; // Date | { start: Date } | ...
   f?: string;
 }
 ```
 
 **Pros:**
+
 - Consistent with upstream types
 - Well-documented types
 - Zero runtime coupling
 
 **Cons:**
+
 - None (types are free)
 
 **Option 2: Duplicate types**
@@ -389,16 +409,22 @@ export interface QueryOptions {
   limit?: number;
   offset?: number;
   bbox?: [number, number, number, number];
-  datetime?: Date | { start: Date } | { end: Date } | { start: Date; end: Date };
+  datetime?:
+    | Date
+    | { start: Date }
+    | { end: Date }
+    | { start: Date; end: Date };
   f?: string;
 }
 ```
 
 **Pros:**
+
 - Self-contained
 - No imports
 
 **Cons:**
+
 - Inconsistent with upstream
 - Duplicates well-established types
 - Loses type documentation
@@ -494,6 +520,7 @@ import { buildOgcApiQueryString } from '../query-utils.js';
 ```
 
 **Problems:**
+
 1. Creates new shared file (modifies upstream structure)
 2. Couples CSAPI to new abstraction
 3. No other API needs this (EDR builds inline)
@@ -571,6 +598,7 @@ export function extractResourceLinks(
 ```
 
 **Problems:**
+
 1. Only CSAPI needs this
 2. Creates coupling to new abstraction
 3. Resource types are CSAPI-specific
@@ -581,11 +609,11 @@ export function extractResourceLinks(
 private extractAvailableResources(): Set<string> {
   const resources = new Set<string>();
   const linkRels = this.collection_.links.map(l => l.rel);
-  
+
   if (linkRels.includes('systems')) resources.add('systems');
   if (linkRels.includes('deployments')) resources.add('deployments');
   // ... all 9 resources
-  
+
   return resources;
 }
 ```
@@ -616,6 +644,7 @@ async getSystem(systemId: string): Promise<string> {
 ```
 
 **Problems with duplication:**
+
 - Doesn't handle trailing slashes
 - Doesn't handle URL encoding
 - Missing edge case handling
@@ -673,22 +702,22 @@ import { parseCapabilities } from '../../shared/ows.js';
 import { sharedFetch } from '../../shared/http-utils.js';
 
 // ❌ Utilities that don't exist yet
-import { buildQueryString } from '../query-utils.js';  // Would need to create
+import { buildQueryString } from '../query-utils.js'; // Would need to create
 ```
 
 ### Rationale Summary
 
-| Import Type | Action | Reason |
-|-------------|--------|--------|
-| Shared types | ✅ Import | Zero coupling, consistency |
-| Shared errors | ✅ Import | Consistent error handling |
-| OGC API utils | ✅ Import | CSAPI is OGC API |
-| URL utils | ✅ Import | Stable, tested, saves code |
-| Query building | ❌ Duplicate | CSAPI-specific, isolated |
-| DateTime formatting | ❌ Duplicate | Simple, no utility exists |
-| Resource discovery | ❌ Duplicate | CSAPI-specific |
-| Other APIs | ❌ Never | Creates coupling |
-| XML/OWS utils | ❌ Never | Wrong API family |
+| Import Type         | Action       | Reason                     |
+| ------------------- | ------------ | -------------------------- |
+| Shared types        | ✅ Import    | Zero coupling, consistency |
+| Shared errors       | ✅ Import    | Consistent error handling  |
+| OGC API utils       | ✅ Import    | CSAPI is OGC API           |
+| URL utils           | ✅ Import    | Stable, tested, saves code |
+| Query building      | ❌ Duplicate | CSAPI-specific, isolated   |
+| DateTime formatting | ❌ Duplicate | Simple, no utility exists  |
+| Resource discovery  | ❌ Duplicate | CSAPI-specific             |
+| Other APIs          | ❌ Never     | Creates coupling           |
+| XML/OWS utils       | ❌ Never     | Wrong API family           |
 
 ---
 
@@ -709,14 +738,9 @@ src/ogc-api/csapi/
 
 ```typescript
 // Types (compile-time only)
-import type { 
-  BoundingBox, 
-  DateTimeParameter 
-} from '../../shared/models.js';
+import type { BoundingBox, DateTimeParameter } from '../../shared/models.js';
 
-import type { 
-  OgcApiCollectionInfo 
-} from '../model.js';
+import type { OgcApiCollectionInfo } from '../model.js';
 
 // Runtime utilities
 import { EndpointError } from '../../shared/errors.js';
@@ -767,7 +791,10 @@ export function checkHasConnectedSystems([conformance]: [
 ```typescript
 // Add CSAPI exports
 export { default as CSAPIQueryBuilder } from './ogc-api/csapi/url_builder.js';
-export type { QueryOptions, HistoryOptions } from './ogc-api/csapi/url_builder.js';
+export type {
+  QueryOptions,
+  HistoryOptions,
+} from './ogc-api/csapi/url_builder.js';
 
 // Total: ~3 lines added
 ```
@@ -775,11 +802,13 @@ export type { QueryOptions, HistoryOptions } from './ogc-api/csapi/url_builder.j
 ### Code Volume Breakdown
 
 **New files:**
+
 - url_builder.ts: ~500-700 lines (implementation)
 - formats.ts: ~10 lines (optional)
 - index.ts: ~3 lines (exports)
 
 **Modified files:**
+
 - endpoint.ts: +30 lines
 - info.ts: +15 lines
 - index.ts: +3 lines
@@ -793,16 +822,19 @@ export type { QueryOptions, HistoryOptions } from './ogc-api/csapi/url_builder.j
 ### Upstream Impact
 
 **Files modified:**
+
 - `src/ogc-api/endpoint.ts` - Add csapi() method
 - `src/ogc-api/info.ts` - Add conformance check
 - `src/index.ts` - Add exports
 
 **Files created:**
+
 - `src/ogc-api/csapi/url_builder.ts`
 - `src/ogc-api/csapi/formats.ts`
 - `src/ogc-api/csapi/index.ts`
 
 **Files NOT modified:**
+
 - `src/shared/*` - No changes to shared utilities
 - `src/ogc-api/edr/*` - No changes to EDR
 - `src/ogc-api/stac/*` - No changes to STAC
@@ -817,12 +849,14 @@ export type { QueryOptions, HistoryOptions } from './ogc-api/csapi/url_builder.j
 ### Code Reuse Strategy
 
 **Import these (justified):**
+
 1. ✅ Types: BoundingBox, DateTimeParameter, OgcApiCollectionInfo
 2. ✅ Errors: EndpointError
 3. ✅ OGC API: getLinkUrl, hasLinks
 4. ✅ URL utils: getChildPath
 
 **Duplicate these (isolated):**
+
 1. ✅ Query string building (~20 lines)
 2. ✅ DateTime formatting (~10 lines)
 3. ✅ Resource discovery (~15 lines)
@@ -831,11 +865,13 @@ export type { QueryOptions, HistoryOptions } from './ogc-api/csapi/url_builder.j
 ### Guidelines
 
 **Reuse when:**
+
 - Type definitions (zero coupling)
 - Stable shared utilities (>15 lines)
 - OGC API patterns (CSAPI is OGC API)
 
 **Duplicate when:**
+
 - Simple helpers (<15 lines)
 - CSAPI-specific logic
 - Isolation improves clarity

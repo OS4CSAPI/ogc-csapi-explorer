@@ -30,6 +30,7 @@
 **ogc-client uses minimal, targeted error handling:**
 
 **Principles:**
+
 1. Throw errors for library-detectable problems
 2. Let HTTP errors propagate naturally
 3. Use specific error types for different categories
@@ -40,12 +41,13 @@
 
 **Two custom error classes:**
 
-| Class | Usage | Location |
-|-------|-------|----------|
-| `EndpointError` | Endpoint configuration/capability issues | `shared/errors.ts` |
-| `ServiceExceptionError` | OWS XML exception reports | `shared/errors.ts` |
+| Class                   | Usage                                    | Location           |
+| ----------------------- | ---------------------------------------- | ------------------ |
+| `EndpointError`         | Endpoint configuration/capability issues | `shared/errors.ts` |
+| `ServiceExceptionError` | OWS XML exception reports                | `shared/errors.ts` |
 
 **Plus:**
+
 - Generic `Error` - Parameter validation, unsupported operations
 - Native `fetch` errors - Network issues (not caught)
 
@@ -73,6 +75,7 @@ export class EndpointError extends Error {
 **Usage contexts:**
 
 1. **Missing capabilities:**
+
    ```typescript
    if (!this.hasEnvironmentalDataRetrieval) {
      throw new EndpointError('Endpoint does not support EDR');
@@ -80,11 +83,13 @@ export class EndpointError extends Error {
    ```
 
 2. **Missing resources:**
+
    ```typescript
    throw new EndpointError(`Collection not found: ${collectionId}`);
    ```
 
 3. **Missing links:**
+
    ```typescript
    throw new EndpointError(`Could not find link with type: ${relType}`);
    ```
@@ -99,6 +104,7 @@ export class EndpointError extends Error {
    ```
 
 **Characteristics:**
+
 - General-purpose endpoint issues
 - Optional HTTP status code
 - Optional CORS indicator
@@ -165,6 +171,7 @@ throw new Error('Invalid DateTimeParameter');
 ```
 
 **Characteristics:**
+
 - Simple validation errors
 - Parameter checking
 - Logical constraints
@@ -188,6 +195,7 @@ public async edr(collection_id: string): Promise<EDRQueryBuilder> {
 ```
 
 **Pattern:**
+
 - Check conformance first
 - Throw EndpointError if not supported
 - Descriptive message
@@ -242,11 +250,13 @@ buildPositionDownloadUrl(
 ```
 
 **What's validated:**
+
 - Query type availability
 - Parameter name existence
 - CRS support
 
 **What's NOT validated:**
+
 - Coordinate format
 - DateTime string format
 - Numeric ranges (except logical bounds)
@@ -278,6 +288,7 @@ assertHasLinks(rootDoc, [
 ```
 
 **Pattern:**
+
 - Validate critical links exist
 - Fail fast with clear message
 - Use at initialization time
@@ -297,6 +308,7 @@ if (options?.outputFormat && !linkWithFormat) {
 ```
 
 **When to warn vs throw:**
+
 - ✅ Warn: Optional feature may still work
 - ❌ Throw: Required feature missing
 
@@ -309,6 +321,7 @@ if (options?.outputFormat && !linkWithFormat) {
 **EDR validates:**
 
 1. **Query type availability:**
+
    ```typescript
    if (!this.supported_query_types.position) {
      throw new Error('Collection does not support position queries');
@@ -316,13 +329,17 @@ if (options?.outputFormat && !linkWithFormat) {
    ```
 
 2. **Parameter existence:**
+
    ```typescript
    if (!this.supported_parameters[parameter]) {
-     throw new Error(`Parameter '${parameter}' does not exist on this collection`);
+     throw new Error(
+       `Parameter '${parameter}' does not exist on this collection`
+     );
    }
    ```
 
 3. **CRS support:**
+
    ```typescript
    if (!this.supported_crs.includes(crs)) {
      throw new Error(`CRS '${crs}' not supported by this collection`);
@@ -339,17 +356,20 @@ if (options?.outputFormat && !linkWithFormat) {
 ### What Doesn't Get Validated
 
 **Trust TypeScript types:**
+
 - No runtime type checking
 - No instanceof checks
 - No property existence checks (beyond null/undefined)
 
 **Trust server:**
+
 - Coordinate format validity
 - DateTime ISO 8601 format
 - URL validity
 - JSON schema compliance
 
 **Trust user:**
+
 - Parameter values within valid ranges
 - Format strings (MIME types)
 - Resource IDs exist
@@ -413,10 +433,12 @@ async getCollectionInfo(collectionId: string): Promise<OgcApiCollectionInfo> {
 ```
 
 **When to check:**
+
 - Collection lookup in endpoint methods
 - Before creating QueryBuilder
 
 **Not checked:**
+
 - Individual resource IDs (e.g., system-123)
 - Sub-resources (e.g., datastream items)
 
@@ -445,6 +467,7 @@ export function getLinkUrl(
 ```
 
 **Pattern:**
+
 - Optional `required` flag
 - Returns null if not required and not found
 - Throws EndpointError if required and not found
@@ -461,6 +484,7 @@ if (!style) {
 ```
 
 **Consistent pattern:**
+
 1. Look up resource in collection/list
 2. If not found, throw EndpointError
 3. Use descriptive message with ID
@@ -504,11 +528,13 @@ ${e.message}`);
 ```
 
 **Conformance checks:**
+
 1. Root document fetchable
 2. Required links present
 3. Conformance classes advertised
 
 **Not checked:**
+
 - Full OGC API compliance
 - All optional features
 - Response format validity
@@ -527,6 +553,7 @@ public async edr(collection_id: string): Promise<EDRQueryBuilder> {
 ```
 
 **Simple conformance check:**
+
 - Based on conformance class URIs
 - Checked before creating QueryBuilder
 - Clear error message
@@ -546,6 +573,7 @@ const data = await response.json();
 ```
 
 **Not caught:**
+
 - Network timeouts
 - DNS resolution failures
 - TLS/SSL errors
@@ -558,28 +586,28 @@ const data = await response.json();
 **Limited CORS detection in http-utils.ts:**
 
 ```typescript
-return sharedFetch(url)
-  .catch(() =>
-    // attempt a HEAD to see if failure comes from CORS or unreachable host
-    fetch(url, { ...getFetchOptions(), method: 'HEAD', mode: 'no-cors' })
-      .catch((error) => {
-        throw new EndpointError(
-          `Fetching the document failed either due to network errors or unreachable host, error is: ${error.message}`,
-          0,
-          false
-        );
-      })
-      .then(() => {
-        throw new EndpointError(
-          `Fetching the document failed likely due to CORS configuration of the endpoint.`,
-          0,
-          true
-        );
-      })
-  );
+return sharedFetch(url).catch(() =>
+  // attempt a HEAD to see if failure comes from CORS or unreachable host
+  fetch(url, { ...getFetchOptions(), method: 'HEAD', mode: 'no-cors' })
+    .catch((error) => {
+      throw new EndpointError(
+        `Fetching the document failed either due to network errors or unreachable host, error is: ${error.message}`,
+        0,
+        false
+      );
+    })
+    .then(() => {
+      throw new EndpointError(
+        `Fetching the document failed likely due to CORS configuration of the endpoint.`,
+        0,
+        true
+      );
+    })
+);
 ```
 
 **Pattern:**
+
 - Try normal fetch
 - On failure, try no-cors HEAD
 - If HEAD succeeds, assume CORS issue
@@ -596,16 +624,19 @@ return sharedFetch(url)
 **When library throws:**
 
 1. **Library can't proceed:**
+
    ```typescript
    throw new EndpointError('Endpoint does not support EDR');
    ```
 
 2. **Required data missing:**
+
    ```typescript
    throw new EndpointError(`Collection not found: ${collectionId}`);
    ```
 
 3. **Invalid library state:**
+
    ```typescript
    throw new Error('No data queries found, so cannot issue EDR queries');
    ```
@@ -620,6 +651,7 @@ return sharedFetch(url)
 **When library doesn't throw (lets server validate):**
 
 1. **Invalid resource ID:**
+
    ```typescript
    // User requests:
    const url = await builder.getSystem('invalid-id');
@@ -628,6 +660,7 @@ return sharedFetch(url)
    ```
 
 2. **Invalid parameter values:**
+
    ```typescript
    // User requests:
    const url = await builder.getSystems({ limit: 999999 });
@@ -635,6 +668,7 @@ return sharedFetch(url)
    ```
 
 3. **Invalid format string:**
+
    ```typescript
    // User requests:
    const url = await builder.getSystems({ f: 'invalid/format' });
@@ -648,16 +682,16 @@ return sharedFetch(url)
 
 ### Decision Matrix
 
-| Scenario | Library Action | Reason |
-|----------|---------------|---------|
-| Non-CSAPI endpoint | Throw EndpointError | Library can detect via conformance |
-| Collection not found | Throw EndpointError | Library has collection list |
-| Query type not supported | Throw Error | Library has collection metadata |
-| Parameter not in collection | Throw Error | Library has parameter list |
-| Invalid system ID | Let server handle | Library doesn't know all IDs |
-| Invalid limit value | Let server handle | Library doesn't know limits |
-| Invalid bbox coordinates | Let server handle | Server validates geometry |
-| Missing required parameter | Let TypeScript types handle | Compile-time checking |
+| Scenario                    | Library Action              | Reason                             |
+| --------------------------- | --------------------------- | ---------------------------------- |
+| Non-CSAPI endpoint          | Throw EndpointError         | Library can detect via conformance |
+| Collection not found        | Throw EndpointError         | Library has collection list        |
+| Query type not supported    | Throw Error                 | Library has collection metadata    |
+| Parameter not in collection | Throw Error                 | Library has parameter list         |
+| Invalid system ID           | Let server handle           | Library doesn't know all IDs       |
+| Invalid limit value         | Let server handle           | Library doesn't know limits        |
+| Invalid bbox coordinates    | Let server handle           | Server validates geometry          |
+| Missing required parameter  | Let TypeScript types handle | Compile-time checking              |
 
 ---
 
@@ -705,6 +739,7 @@ const collection = await this.getCollectionInfo(collection_id);
 **What CSAPI should validate:**
 
 1. **Resource type support (optional):**
+
    ```typescript
    // If collection metadata includes supported resources
    if (this.collection_.supportedResources) {
@@ -750,9 +785,9 @@ export default class CSAPIQueryBuilder {
       ['systems', 'http://www.opengis.net/def/rel/ogc/1.0/systems'],
       this.baseUrl
     );
-    
+
     // getLinkUrl throws if link not found (library needs link)
-    
+
     return this.buildUrl(baseUrl, options);
   }
 
@@ -764,12 +799,12 @@ export default class CSAPIQueryBuilder {
 
   private buildUrl(base: string, options?: QueryOptions): string {
     const url = new URL(base);
-    
+
     // No validation of parameter values - server validates
     if (options?.limit) url.searchParams.set('limit', options.limit.toString());
     if (options?.bbox) url.searchParams.set('bbox', options.bbox.join(','));
     // ... more params
-    
+
     return url.toString();
   }
 }
@@ -778,6 +813,7 @@ export default class CSAPIQueryBuilder {
 **Result:** ~0 explicit error throws in CSAPIQueryBuilder.
 
 **Errors come from:**
+
 - `getLinkUrl()` - throws if required link missing
 - `new URL()` - throws if URL construction fails
 - Native TypeScript - throws if accessing undefined
@@ -810,6 +846,7 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
 ```
 
 **Errors thrown:**
+
 - `EndpointError` - Endpoint doesn't support CSAPI
 - `EndpointError` - Collection not found (from getCollectionInfo)
 
@@ -832,10 +869,10 @@ export default class CSAPIQueryBuilder {
       ['systems', 'http://www.opengis.net/def/rel/ogc/1.0/systems'],
       this.baseUrl,
       undefined,
-      true  // required = true
+      true // required = true
     );
     // getLinkUrl throws EndpointError if link not found
-    
+
     return this.buildUrl(baseUrl, options);
   }
 
@@ -849,33 +886,34 @@ export default class CSAPIQueryBuilder {
   private buildUrl(base: string, options?: QueryOptions): string {
     // No validation - trust types and server
     const url = new URL(base);
-    
+
     if (options?.limit) {
       url.searchParams.set('limit', options.limit.toString());
     }
-    
+
     if (options?.offset) {
       url.searchParams.set('offset', options.offset.toString());
     }
-    
+
     if (options?.bbox) {
       url.searchParams.set('bbox', options.bbox.join(','));
     }
-    
+
     if (options?.datetime) {
       url.searchParams.set('datetime', formatDateTime(options.datetime));
     }
-    
+
     if (options?.f) {
       url.searchParams.set('f', options.f);
     }
-    
+
     return url.toString();
   }
 }
 ```
 
 **Errors thrown:**
+
 - `EndpointError` - Required link not found (from getLinkUrl)
 - Native errors - URL construction fails (from new URL)
 
@@ -886,33 +924,38 @@ export default class CSAPIQueryBuilder {
 **Clear, actionable messages:**
 
 ✅ **Good:**
+
 ```typescript
 throw new EndpointError('Endpoint does not support Connected Systems API');
 throw new EndpointError(`Collection not found: ${collectionId}`);
 ```
 
 ❌ **Bad (too vague):**
+
 ```typescript
 throw new Error('Invalid input');
 throw new Error('Operation failed');
 ```
 
 ❌ **Bad (too prescriptive):**
+
 ```typescript
-throw new Error('The systemId parameter must be a valid UUID matching RFC 4122');
+throw new Error(
+  'The systemId parameter must be a valid UUID matching RFC 4122'
+);
 ```
 
 ### Error Handling Summary
 
 **CSAPI error strategy:**
 
-| Error Type | When | Where | Class |
-|------------|------|-------|-------|
-| No CSAPI support | Endpoint conformance check | endpoint.ts | EndpointError |
-| Collection not found | Factory method | endpoint.ts | EndpointError |
-| Required link missing | URL building | url_builder.ts | EndpointError (from getLinkUrl) |
-| Invalid URL construction | URL building | url_builder.ts | Native Error |
-| Everything else | Server validation | N/A | HTTP status codes |
+| Error Type               | When                       | Where          | Class                           |
+| ------------------------ | -------------------------- | -------------- | ------------------------------- |
+| No CSAPI support         | Endpoint conformance check | endpoint.ts    | EndpointError                   |
+| Collection not found     | Factory method             | endpoint.ts    | EndpointError                   |
+| Required link missing    | URL building               | url_builder.ts | EndpointError (from getLinkUrl) |
+| Invalid URL construction | URL building               | url_builder.ts | Native Error                    |
+| Everything else          | Server validation          | N/A            | HTTP status codes               |
 
 **Total explicit error throws in CSAPI code:** 1 (conformance check)
 
@@ -935,6 +978,7 @@ throw new Error('The systemId parameter must be a valid UUID matching RFC 4122')
 ### CSAPI Error Handling Checklist
 
 ✅ **Implementation:**
+
 - [x] Conformance check in endpoint.csapi() method
 - [x] Reuse getCollectionInfo() for collection validation
 - [x] Let getLinkUrl() handle missing links
@@ -943,6 +987,7 @@ throw new Error('The systemId parameter must be a valid UUID matching RFC 4122')
 - [x] No custom error classes
 
 ✅ **Error count:**
+
 - Explicit throws: 1 (conformance check)
 - Implicit throws: 2-3 (from utilities)
 - Total error handling code: ~3 lines
@@ -956,11 +1001,13 @@ throw new Error('The systemId parameter must be a valid UUID matching RFC 4122')
 CSAPI should use **minimal error handling** following EDR pattern:
 
 **Only throw when:**
+
 1. Endpoint doesn't support CSAPI (conformance check)
 2. Collection not found (reuse existing validation)
 3. Required link missing (let getLinkUrl throw)
 
 **Never throw for:**
+
 - Resource ID validation
 - Parameter value validation
 - Format validation

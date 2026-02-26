@@ -3,11 +3,13 @@
 **Review Date:** June 2025  
 **Category:** Test Fixtures (Sourcing, Organization, Documentation)  
 **Documents Reviewed:**
+
 - `docs/research/testing/findings/15-fixture-sourcing-organization.md` (Part 1, 1956 lines)
 - `docs/research/testing/findings/15-part-2-fixture-documentation-best-practices.md` (Part 2, 494 lines)
 - `docs/testing/fixtures-guide.md` (v2.0, 997 lines)
 
 **Cross-References:**
+
 - `docs/research/testing/review/phase-0-lessons-from-failed-attempt.md` (Anti-pattern catalog)
 - `fixtures/` directory (actual repo structure, 120 files)
 - Upstream `camptocamp/ogc-client` fixture patterns
@@ -21,6 +23,7 @@ The fixtures category contains three documents at different stages of maturity. 
 **Overall Assessment:** The fixtures category demonstrates a healthy self-correction process (Part 2 catching Part 1's hallucination), but remediation was incomplete — the hallucinated content still exists in Part 1, and several secondary issues (inflated counts, server-testing patterns, over-engineered infrastructure) persist across documents.
 
 **Severity Summary:**
+
 - Critical Issues: 1 (~~unresolved hallucination in Part 1 Section 7~~ resolved, see C1 commit `990e60e`)
 - High Issues: 4 (~~inflated counts~~ H1 resolved; ~~anti-pattern violations~~ H2 resolved + cleanup commit `fcdd3e3`; ~~directory mismatch~~ H3 resolved; ~~naming inconsistency~~ H4 resolved)
 - Medium Issues: 3 (~~effort estimate inflation~~ resolved with H1; ~~over-engineered infrastructure~~ resolved with H2 cleanup `fcdd3e3`; ~~inaccurate fixture counts in guide~~ M3 resolved)
@@ -44,24 +47,26 @@ The fixtures category contains three documents at different stages of maturity. 
 
 Actual fixture count in repository: **120 files** (81 JSON, 39 XML)
 
-| Directory | Actual Count | Doc Claims |
-|-----------|-------------|------------|
-| `ogc-api/` (with subdirs) | ~60 | ~15 (fixtures-guide undercount) |
-| `wfs/` | 21 | 30 (fixtures-guide overcount) |
-| `wms/` | 9 | 20 (fixtures-guide overcount) |
-| `wmts/` | 8 | ~10 (fixtures-guide approximate) |
-| `stac/` (with subdirs) | ~17 | ~5 (fixtures-guide undercount) |
-| `tms/` | 2 | ~3 (fixtures-guide approximate) |
-| **Total** | **120** | ~80 (fixtures-guide) / ~280 (Part 1 target) |
+| Directory                 | Actual Count | Doc Claims                                  |
+| ------------------------- | ------------ | ------------------------------------------- |
+| `ogc-api/` (with subdirs) | ~60          | ~15 (fixtures-guide undercount)             |
+| `wfs/`                    | 21           | 30 (fixtures-guide overcount)               |
+| `wms/`                    | 9            | 20 (fixtures-guide overcount)               |
+| `wmts/`                   | 8            | ~10 (fixtures-guide approximate)            |
+| `stac/` (with subdirs)    | ~17          | ~5 (fixtures-guide undercount)              |
+| `tms/`                    | 2            | ~3 (fixtures-guide approximate)             |
+| **Total**                 | **120**      | ~80 (fixtures-guide) / ~280 (Part 1 target) |
 
 ### 2.3 Upstream Fixture Patterns (camptocamp/ogc-client)
 
 Three fixture loading mechanisms identified:
+
 1. **ES import + Jest transformer** (WFS/WMS/WMTS): XML imported as strings via `jest.ts-transformer.cjs`, fed to `globalThis.fetchResponseFactory`
 2. **File-based mock fetch** (OGC API/STAC): `jest.fn()` replacing `globalThis.fetch`, mapping URL paths to fixture files via `readFile` from `fs/promises`
 3. **Binary buffer read** (encoding tests): `readFileSync` for raw `Buffer` data
 
 Key characteristics:
+
 - Directory structure mirrors API URL paths (OGC API fixtures)
 - Zero embedded metadata in any fixture file
 - Zero sidecar files, zero per-directory READMEs
@@ -77,6 +82,7 @@ Key characteristics:
 **Document:** `15-fixture-sourcing-organization.md`, Section 7 "Fixture Metadata and Provenance" (lines ~960-1150, ~190 lines)
 
 **Description:** Part 2 explicitly identified Part 1's Section 7 as "100% confirmed AI hallucination" and listed an action item to remove it: `[ ] Update Section 15 Part 1 to remove hallucinated content`. This action item was **never completed**. Section 7 still contains the full fabricated system including:
+
 - Embedded `$metadata` / `_fixture_metadata` JSON fields
 - Sidecar `.meta.json` files for CSV/binary fixtures
 - `SOURCES.md` provenance tracking file
@@ -91,6 +97,7 @@ Key characteristics:
 **Impact:** Any reader encountering Part 1 without also reading Part 2 will be misled into implementing an elaborate, non-standard metadata system with zero industry precedent.
 
 **Recommendation:** Either:
+
 - (a) Remove Section 7 entirely and replace with a brief note referencing Part 2's findings, or
 - (b) Add a prominent banner at the top of Section 7 marking it as superseded: `> ⚠️ **SUPERSEDED:** This section contains hallucinated content identified in Part 2. The correct approach is descriptive filenames + git history. See Part 2 and fixtures-guide.md v2.0.`
 
@@ -110,15 +117,15 @@ The most inflated category is SWE Common: 120 fixtures (40 JSON + 40 text + 40 b
 
 **Breakdown of Inflation:**
 
-| Category | Part 1 Estimate | Realistic Estimate | Inflation Factor |
-|----------|----------------|-------------------|-----------------|
-| SWE Common | 120 | 15-25 | 5-8x |
-| Integration Workflows | 33 | 10-15 | 2-3x |
-| Error/Edge Cases | 30 | 8-12 | 2.5-3.7x |
-| SensorML | 25 | 8-12 | 2-3x |
-| GeoJSON CSAPI | 20 | 10-15 | 1.3-2x |
-| QueryBuilder + Resources | 28 | 15-20 | 1.4-1.9x |
-| **Total** | **~280** | **~80-100** | **~3x** |
+| Category                 | Part 1 Estimate | Realistic Estimate | Inflation Factor |
+| ------------------------ | --------------- | ------------------ | ---------------- |
+| SWE Common               | 120             | 15-25              | 5-8x             |
+| Integration Workflows    | 33              | 10-15              | 2-3x             |
+| Error/Edge Cases         | 30              | 8-12               | 2.5-3.7x         |
+| SensorML                 | 25              | 8-12               | 2-3x             |
+| GeoJSON CSAPI            | 20              | 10-15              | 1.3-2x           |
+| QueryBuilder + Resources | 28              | 15-20              | 1.4-1.9x         |
+| **Total**                | **~280**        | **~80-100**        | **~3x**          |
 
 **Impact:** Over-engineering fixture creation will consume effort that should go toward actual client implementation.
 
@@ -129,10 +136,12 @@ The most inflated category is SWE Common: 120 fixtures (40 JSON + 40 text + 40 b
 **Document:** `15-fixture-sourcing-organization.md`, Section 10 "Fixture Validation Requirements"
 
 **Phase 0 Anti-Patterns Triggered:**
+
 - **Anti-Pattern 1:** Testing response content instead of client behavior
 - **Anti-Pattern 4:** Asserting data shape instead of testing transformation
 
 **Description:** Section 10 proposes elaborate validation of fixture content:
+
 - Schema validation of fixture files against OGC JSON schemas (Section 10.1)
 - Semantic validation checking URI format, vocabulary values, temporal periods, link integrity (Section 10.2)
 - Integration validation checking link chains resolve between fixtures (Section 10.3)
@@ -141,6 +150,7 @@ The most inflated category is SWE Common: 120 fixtures (40 JSON + 40 text + 40 b
 This is server-testing thinking applied to test fixtures. **Fixtures are test inputs, not test subjects.** The purpose of a fixture is to provide controlled input to our client parser — not to validate that the fixture itself conforms to OGC specifications. A deliberately malformed fixture is perfectly valid if it tests our parser's error handling.
 
 **Example of the Problem (Section 10.2):**
+
 ```typescript
 // This validates the FIXTURE, not our CLIENT CODE
 function validateCSAPISystem(feature: SystemFeature): ValidationResult {
@@ -154,6 +164,7 @@ function validateCSAPISystem(feature: SystemFeature): ValidationResult {
 ```
 
 **What tests should actually do:**
+
 ```typescript
 // This tests our CLIENT CODE using the fixture as input
 it('should extract system UID from feature', () => {
@@ -171,6 +182,7 @@ it('should extract system UID from feature', () => {
 **Document:** `15-fixture-sourcing-organization.md`, Section 5
 
 **Description:** Part 1 proposes a completely new directory structure:
+
 ```
 fixtures/
 ├── csapi-querybuilder/
@@ -185,6 +197,7 @@ fixtures/
 ```
 
 This structure organizes by **test type** and **data format**, not by **service protocol**. The upstream pattern organizes by service protocol, matching URL paths:
+
 ```
 fixtures/
 ├── ogc-api/      # Service protocol
@@ -200,6 +213,7 @@ CSAPI extends OGC API — so CSAPI fixtures should logically go in `fixtures/ogc
 **Impact:** A parallel fixture structure creates organizational confusion and makes fixtures harder to discover. The test file-based mock fetch pattern in upstream maps URL paths to file paths — a separate directory structure would require a separate loading mechanism.
 
 **Recommendation:** Place CSAPI fixtures in `fixtures/csapi/` following the URL-path-mapping pattern used by `fixtures/ogc-api/`:
+
 ```
 fixtures/
 ├── csapi/
@@ -220,9 +234,11 @@ fixtures/
 **Description:** Two incompatible naming conventions are proposed:
 
 Part 1 Section 6: `<category>-<subcategory>-<variant>.<extension>`
+
 - Example: `system-weather-station-valid.json`
 
 Fixtures-guide.md Section 8 / Part 2: `{operation}-{source}-{version}.{extension}`
+
 - Example: `capabilities-pigma-2-0-0.xml`
 
 The Part 1 convention was designed for CSAPI-specific fixtures (GeoJSON features, SWE components) and doesn't follow the existing upstream convention. This creates a two-tier naming system where existing fixtures use one pattern and new CSAPI fixtures use another.
@@ -240,14 +256,16 @@ The Part 1 convention was designed for CSAPI-specific fixtures (GeoJSON features
 **Document:** `15-fixture-sourcing-organization.md`, Sections 2.2, 11, 12.5
 
 **Description:** Part 1 estimates 240-290 hours (6-7.5 weeks at 40 hrs/week) for fixture creation. This estimate assumes:
+
 - 280 individual fixtures to create
 - Elaborate metadata system to maintain
 - CI/CD validation pipeline to build
 - Quarterly review process to establish
 
 With realistic fixture targets (~80-100 fixtures) and no metadata system overhead, the effort estimate should be:
+
 - Extracting spec examples: ~20-30 hours
-- Hand-crafting CSAPI fixtures: ~20-30 hours  
+- Hand-crafting CSAPI fixtures: ~20-30 hours
 - Integration workflow fixtures: ~10-15 hours
 - Total: **~50-75 hours (~1.5-2 weeks)**
 
@@ -258,6 +276,7 @@ With realistic fixture targets (~80-100 fixtures) and no metadata system overhea
 **Document:** `15-fixture-sourcing-organization.md`, Sections 9, 10.4, 14
 
 **Description:** Part 1 proposes extensive maintenance infrastructure that doesn't exist for the current 120 fixtures and isn't needed:
+
 - `fixtures/CHANGELOG.md` for tracking fixture changes
 - `fixtures/REVIEW.md` for quarterly review findings
 - `fixtures/SOURCES.md` for provenance tracking
@@ -276,16 +295,17 @@ None of this infrastructure exists for the current 120 upstream fixtures, which 
 
 **Description:** The fixtures-guide states "approximately 80 fixtures" but actual count is 120. Individual service counts are also incorrect:
 
-| Service | Guide Claims | Actual |
-|---------|-------------|--------|
+| Service | Guide Claims        | Actual    |
+| ------- | ------------------- | --------- |
 | OGC API | ~15 files + subdirs | ~60 files |
-| WFS | ~30 files | 21 files |
-| WMS | ~20 files | 9 files |
-| STAC | ~5 files | ~17 files |
+| WFS     | ~30 files           | 21 files  |
+| WMS     | ~20 files           | 9 files   |
+| STAC    | ~5 files            | ~17 files |
 
 The guide likely counted top-level files but missed nested subdirectory contents (OGC API, STAC) while overestimating flat directories (WFS, WMS).
 
 **Recommendation:** Update fixture counts to reflect actual repository state. Use automated counting:
+
 ```bash
 find fixtures/ -type f | wc -l  # Total: 120
 ```
@@ -309,6 +329,7 @@ find fixtures/ -type f | wc -l  # Total: 120
 **Document:** `15-part-2-fixture-documentation-best-practices.md`
 
 **Description:** Part 2 lists explicit action items, all unchecked:
+
 - `[ ] Update Section 15 Part 1 to remove hallucinated content` → NOT DONE (Critical, see C1)
 - `[ ] Update Section 38 Section 1.3 with correct guidance` → Status unclear
 - `[ ] Review Sections 9/10/37 for metadata references` → Status unclear
@@ -322,6 +343,7 @@ find fixtures/ -type f | wc -l  # Total: 120
 ### P1: Part 2 Self-Correction Mechanism
 
 Part 2 demonstrates exactly the kind of critical self-review that elevates research quality. The document:
+
 - Identified the hallucination through systematic investigation
 - Conducted actual industry research across 3 major open-source projects
 - Provided a clear comparison table (hallucinated vs. actual practices)
@@ -333,6 +355,7 @@ This is the single strongest document in the fixtures category.
 ### P2: fixtures-guide.md v2.0 Incorporates Corrections
 
 The v2.0 guide successfully incorporates Part 2's findings:
+
 - Uses descriptive filenames + git history as documentation pattern
 - No embedded metadata system recommended
 - Accurately describes the three loading mechanisms
@@ -342,6 +365,7 @@ The v2.0 guide successfully incorporates Part 2's findings:
 ### P3: Existing Fixtures Already Follow Correct Patterns
 
 The actual `fixtures/` directory (120 files) demonstrates the universal pattern:
+
 - Directory organization by service type
 - Descriptive kebab-case filenames with version encoding
 - Zero embedded metadata in any fixture file
@@ -353,6 +377,7 @@ This confirms Part 2's finding that the correct approach was already in place.
 ### P4: Part 1 Fixture Category Analysis Provides Useful Planning Detail
 
 Despite over-counting, Part 1's Sections 4.1-4.8 provide genuinely useful analysis of what CSAPI fixture categories will be needed:
+
 - CSAPI resource types (Systems, Deployments, Procedures, etc.)
 - SensorML document types (PhysicalSystem, PhysicalComponent, Process)
 - SWE Common encoding formats (JSON, text, binary)
@@ -363,6 +388,7 @@ This categorical analysis, with revised realistic counts, provides a good starti
 ### P5: Client-Oriented Perspective in fixtures-guide.md
 
 The fixtures-guide.md maintains appropriate client orientation:
+
 - "Test fixtures hold data in known states during test execution"
 - Focus on providing controlled input to parsing logic
 - Loading patterns match upstream mock-fetch infrastructure
@@ -380,11 +406,11 @@ The fixtures-guide.md maintains appropriate client orientation:
 
 ### 8.2 Document Status
 
-| Document | Status | Action Needed |
-|----------|--------|---------------|
-| Part 1 | Partially valid | Remove/banner Section 7; revise counts in Sections 2, 5, 12; remove Section 10 server-testing patterns |
-| Part 2 | Complete and accurate | Complete unchecked action items |
-| fixtures-guide.md v2.0 | Good with minor corrections | Update fixture counts (Section 3) |
+| Document               | Status                      | Action Needed                                                                                          |
+| ---------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Part 1                 | Partially valid             | Remove/banner Section 7; revise counts in Sections 2, 5, 12; remove Section 10 server-testing patterns |
+| Part 2                 | Complete and accurate       | Complete unchecked action items                                                                        |
+| fixtures-guide.md v2.0 | Good with minor corrections | Update fixture counts (Section 3)                                                                      |
 
 ### 8.3 Supersession Relationships
 
@@ -396,13 +422,13 @@ The fixtures-guide.md maintains appropriate client orientation:
 
 ## 9. Phase 0 Anti-Pattern Cross-Reference
 
-| Anti-Pattern | Presence | Location | Severity |
-|---|---|---|---|
-| AP1: Testing response content instead of client behavior | **YES** | Part 1 Section 10 (fixture semantic validation) | High |
-| AP2: Hybrid fixture/live execution model | No | — | — |
-| AP3: OGC requirement traceability as test design driver | Partial | Part 1 organizes fixtures by research section number | Low |
-| AP4: Asserting data shape instead of testing transformation | **YES** | Part 1 Section 10 (schema validation of fixtures) | High |
-| AP5: Graceful skipping based on fixture content | No | — | — |
+| Anti-Pattern                                                | Presence | Location                                             | Severity |
+| ----------------------------------------------------------- | -------- | ---------------------------------------------------- | -------- |
+| AP1: Testing response content instead of client behavior    | **YES**  | Part 1 Section 10 (fixture semantic validation)      | High     |
+| AP2: Hybrid fixture/live execution model                    | No       | —                                                    | —        |
+| AP3: OGC requirement traceability as test design driver     | Partial  | Part 1 organizes fixtures by research section number | Low      |
+| AP4: Asserting data shape instead of testing transformation | **YES**  | Part 1 Section 10 (schema validation of fixtures)    | High     |
+| AP5: Graceful skipping based on fixture content             | No       | —                                                    | —        |
 
 Part 1 Section 10 is the primary anti-pattern concern: it proposes validating that fixture content conforms to OGC specifications (AP1, AP4) rather than using fixtures as inputs to test client parsing and transformation logic. The fixtures-guide.md v2.0 does not exhibit these anti-patterns.
 
@@ -412,28 +438,28 @@ Part 1 Section 10 is the primary anti-pattern concern: it proposes validating th
 
 ### Immediate Actions
 
-| ID | Action | Priority | Document | Effort |
-|----|--------|----------|----------|--------|
-| C1 | Add supersession banner to Part 1 Section 7 (hallucinated metadata system) | Critical | Part 1 | 15 min |
-| H2 | Remove/replace Part 1 Section 10 (server-testing fixture validation) | High | Part 1 | 30 min |
-| M3 | Correct fixture counts in fixtures-guide.md | Medium | fixtures-guide.md | 15 min |
+| ID  | Action                                                                     | Priority | Document          | Effort |
+| --- | -------------------------------------------------------------------------- | -------- | ----------------- | ------ |
+| C1  | Add supersession banner to Part 1 Section 7 (hallucinated metadata system) | Critical | Part 1            | 15 min |
+| H2  | Remove/replace Part 1 Section 10 (server-testing fixture validation)       | High     | Part 1            | 30 min |
+| M3  | Correct fixture counts in fixtures-guide.md                                | Medium   | fixtures-guide.md | 15 min |
 
 ### Planning-Phase Actions
 
-| ID | Action | Priority | Impact |
-|----|--------|----------|--------|
-| H1 | Revise CSAPI fixture target from ~280 to ~80-100 | High | Prevents 3x over-engineering |
-| H3 | Align CSAPI fixture directory structure with upstream URL-path pattern | High | Compatibility with existing loading infrastructure |
-| H4 | Standardize naming on upstream convention | High | Consistency |
-| M1 | Revise effort estimate from 240-290 hrs to 50-75 hrs | Medium | Realistic planning |
-| M2 | Remove proposed maintenance infrastructure (CHANGELOG, REVIEW, SOURCES, CI/CD) | Medium | Avoid unnecessary overhead |
+| ID  | Action                                                                         | Priority | Impact                                             |
+| --- | ------------------------------------------------------------------------------ | -------- | -------------------------------------------------- |
+| H1  | Revise CSAPI fixture target from ~280 to ~80-100                               | High     | Prevents 3x over-engineering                       |
+| H3  | Align CSAPI fixture directory structure with upstream URL-path pattern         | High     | Compatibility with existing loading infrastructure |
+| H4  | Standardize naming on upstream convention                                      | High     | Consistency                                        |
+| M1  | Revise effort estimate from 240-290 hrs to 50-75 hrs                           | Medium   | Realistic planning                                 |
+| M2  | Remove proposed maintenance infrastructure (CHANGELOG, REVIEW, SOURCES, CI/CD) | Medium   | Avoid unnecessary overhead                         |
 
 ### Deferred Actions (During Category Reviews)
 
-| ID | Action | Target |
-|----|--------|--------|
-| L2-a | Check Section 38 Section 1.3 for metadata references | Phase 2 Section 38 review |
-| L2-b | Check Sections 9, 10, 37 for metadata references | Respective category reviews |
+| ID   | Action                                               | Target                      |
+| ---- | ---------------------------------------------------- | --------------------------- |
+| L2-a | Check Section 38 Section 1.3 for metadata references | Phase 2 Section 38 review   |
+| L2-b | Check Sections 9, 10, 37 for metadata references     | Respective category reviews |
 
 ---
 

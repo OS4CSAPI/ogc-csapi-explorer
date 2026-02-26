@@ -40,15 +40,15 @@ This report does not propose behavioral modifications to the library without app
 
 **Issue #10 identifies a genuine, pre-existing one-word bug in the upstream `ogc-client` library where `endpoint.ts` line 75 throws `new Error(...)` instead of `new EndpointError(...)`. The fix is trivial, no-risk, and aligns the production code with both the existing test expectation and the library's established error hierarchy.**
 
-| Aspect | Assessment |
-|--------|------------|
-| **Change type** | Bug fix — error constructor mismatch |
-| **Scope** | One word: `Error` → `EndpointError` on line 75 of `endpoint.ts` |
-| **Production behavior modified** | Yes — the thrown error is now an `EndpointError` instance instead of `Error` |
-| **Existing tests affected** | Yes — **positively**; the test at `endpoint.spec.ts` L1791 already expects `EndpointError` and currently fails due to this bug |
-| **Risk to library integrity** | **None** — the import already exists, every other throw in the same file uses `EndpointError`, and the test explicitly expects `EndpointError` |
-| **Pre-existing upstream bug** | Yes — this bug predates all CSAPI work |
-| **Estimated effort** | One-word change on one line |
+| Aspect                           | Assessment                                                                                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Change type**                  | Bug fix — error constructor mismatch                                                                                                           |
+| **Scope**                        | One word: `Error` → `EndpointError` on line 75 of `endpoint.ts`                                                                                |
+| **Production behavior modified** | Yes — the thrown error is now an `EndpointError` instance instead of `Error`                                                                   |
+| **Existing tests affected**      | Yes — **positively**; the test at `endpoint.spec.ts` L1791 already expects `EndpointError` and currently fails due to this bug                 |
+| **Risk to library integrity**    | **None** — the import already exists, every other throw in the same file uses `EndpointError`, and the test explicitly expects `EndpointError` |
+| **Pre-existing upstream bug**    | Yes — this bug predates all CSAPI work                                                                                                         |
+| **Estimated effort**             | One-word change on one line                                                                                                                    |
 
 **Key findings from this review:**
 
@@ -89,11 +89,11 @@ ${e.message}`);
 
 ### 3.3 The Mismatch
 
-| | Production Code (L75) | Test Expectation (L1791) |
-|---|---|---|
-| Error constructor | `new Error(...)` | `new EndpointError(...)` |
-| `instanceof EndpointError` | `false` | `true` (expected) |
-| Catchable by `catch(e) { if (e instanceof EndpointError) }` | **No** — missed | **Yes** — expected |
+|                                                             | Production Code (L75) | Test Expectation (L1791) |
+| ----------------------------------------------------------- | --------------------- | ------------------------ |
+| Error constructor                                           | `new Error(...)`      | `new EndpointError(...)` |
+| `instanceof EndpointError`                                  | `false`               | `true` (expected)        |
+| Catchable by `catch(e) { if (e instanceof EndpointError) }` | **No** — missed       | **Yes** — expected       |
 
 ### 3.4 Why This Matters
 
@@ -117,11 +117,13 @@ try {
 ### 4.1 `endpoint.ts` — All EndpointError Usage (L38, L72–80, L344, L387, L442, L482)
 
 **Import (L38):**
+
 ```typescript
 import { EndpointError } from '../shared/errors.js';
 ```
 
 **The buggy line (L75) — the ONLY throw using plain `Error`:**
+
 ```typescript
 throw new Error(`The endpoint appears non-conforming, the following error was encountered:
 ${e.message}`);
@@ -129,12 +131,12 @@ ${e.message}`);
 
 **All other throws in the same class — correctly use `EndpointError`:**
 
-| Line | Context | Code |
-|------|---------|------|
-| 344 | `edr()` method — no EDR support | `throw new EndpointError('Endpoint does not support EDR')` |
-| 387 | `csapi()` method — no CSA support | `throw new EndpointError('Endpoint does not support Connected Systems...')` |
-| 442 | Collection lookup — not found | `throw new EndpointError(\`Collection not found: ${collectionId}\`)` |
-| 482 | Style lookup — not found | `throw new EndpointError(\`Style not found: "${styleId}".\`)` |
+| Line | Context                           | Code                                                                        |
+| ---- | --------------------------------- | --------------------------------------------------------------------------- |
+| 344  | `edr()` method — no EDR support   | `throw new EndpointError('Endpoint does not support EDR')`                  |
+| 387  | `csapi()` method — no CSA support | `throw new EndpointError('Endpoint does not support Connected Systems...')` |
+| 442  | Collection lookup — not found     | `throw new EndpointError(\`Collection not found: ${collectionId}\`)`        |
+| 482  | Style lookup — not found          | `throw new EndpointError(\`Style not found: "${styleId}".\`)`               |
 
 **Assessment:** Line 75 is clearly an oversight. Every other throw in the class uses `EndpointError`. The import exists. The test expects `EndpointError`. This is a textbook one-line bug.
 
@@ -187,7 +189,7 @@ All 12 linked reference documents from the ogc-csapi-explorer repository were re
 
 Finding **F-5** is defined here:
 
-> *"The `root` getter in `ogc-api/endpoint.ts` throws `new Error(...)` on line 74, but the corresponding test at `endpoint.spec.ts:1789` expects `new EndpointError(...)`. The production code should use `EndpointError` to match the test expectation and the library's error hierarchy."*
+> _"The `root` getter in `ogc-api/endpoint.ts` throws `new Error(...)` on line 74, but the corresponding test at `endpoint.spec.ts:1789` expects `new EndpointError(...)`. The production code should use `EndpointError` to match the test expectation and the library's error hierarchy."_
 >
 > Priority rank: **#11** (Low severity, Low effort)
 
@@ -197,19 +199,19 @@ F-5 is categorized under **Category 1: Library Bugs (Must Fix)** despite its low
 
 **Finding F** in this report is where the bug was originally discovered:
 
-> *"During test verification, we discovered that the OGC API endpoint's `root` getter throws `new Error(...)` on line 74 [...] This is a **pre-existing bug**: the production code should use `new EndpointError(...)` instead of `new Error(...)` to match the test expectation and align with the library's error hierarchy."*
+> _"During test verification, we discovered that the OGC API endpoint's `root` getter throws `new Error(...)` on line 74 [...] This is a **pre-existing bug**: the production code should use `new EndpointError(...)` instead of `new Error(...)` to match the test expectation and align with the library's error hierarchy."_
 
-The report also notes: *"If we're already touching `endpoint.ts` imports for the `EndpointError` migration, this would be an easy fix."*
+The report also notes: _"If we're already touching `endpoint.ts` imports for the `EndpointError` migration, this would be an easy fix."_
 
 Under **Pre-Existing Test Failures**: The report explicitly categorizes this as a pre-existing failure unrelated to any CSAPI work:
 
-> | Suite | Failures | Root Cause |
-> |-------|----------|------------|
-> | `src/ogc-api/endpoint.spec.ts` | 1 | Line 74 of `endpoint.ts` throws `new Error(...)` but the test at line 1789 expects `EndpointError`. Pre-existing bug. |
+> | Suite                          | Failures | Root Cause                                                                                                            |
+> | ------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------- |
+> | `src/ogc-api/endpoint.spec.ts` | 1        | Line 74 of `endpoint.ts` throws `new Error(...)` but the test at line 1789 expects `EndpointError`. Pre-existing bug. |
 
 ### 5.3 Contribution Goal Accuracy Assessment (`contribution-goal-accuracy-assessment.md`)
 
-This document validates that `EndpointError` usage is the library's established pattern. Under "Quality Standards": *"Compliance with OGC API specifications"* — which includes consistent error hierarchy.
+This document validates that `EndpointError` usage is the library's established pattern. Under "Quality Standards": _"Compliance with OGC API specifications"_ — which includes consistent error hierarchy.
 
 ### 5.4 Library Source Changes Audit (`library-source-changes-audit.md`)
 
@@ -219,27 +221,27 @@ Confirms that only 1 commit has touched library source files (the EndpointError 
 
 The following documents were reviewed and found to have no direct bearing on Issue #10 (the error type mismatch does not affect URL building, content negotiation, CRUD operations, schema display, or conformance bypass):
 
-| Document | Location | Relevance |
-|----------|----------|-----------|
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | ogc-csapi-explorer | Lists F-5 but no additional analysis |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | ogc-csapi-explorer | Not directly relevant — covers bridge integration, not error hierarchy |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — demo bypasses OgcApiEndpoint entirely |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | ogc-csapi-explorer | Not relevant — covers write operations, not endpoint error handling |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | ogc-csapi-explorer | Not relevant — covers cross-server interoperability, not error types |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | ogc-csapi-explorer | Not relevant — covers write operations |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | ogc-csapi-explorer | Not relevant — covers SWE Common schema display |
+| Document                                                                                                                                                       | Location           | Relevance                                                              |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | ogc-csapi-explorer | Lists F-5 but no additional analysis                                   |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                       | ogc-csapi-explorer | Not directly relevant — covers bridge integration, not error hierarchy |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — demo bypasses OgcApiEndpoint entirely                   |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | ogc-csapi-explorer | Not relevant — covers write operations, not endpoint error handling    |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | ogc-csapi-explorer | Not relevant — covers cross-server interoperability, not error types   |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | ogc-csapi-explorer | Not relevant — covers write operations                                 |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | ogc-csapi-explorer | Not relevant — covers SWE Common schema display                        |
 
 ---
 
 ## 6. Risk Assessment
 
-| Risk Category | Level | Rationale |
-|---------------|-------|-----------|
-| **Regression risk** | **None** | The change makes the test that already expects `EndpointError` pass. No test expects plain `Error`. |
-| **Behavioral impact** | **Minimal** | Only consumers specifically checking `instanceof Error` but NOT `instanceof EndpointError` could notice. Since `EndpointError extends Error`, `instanceof Error` remains `true`. |
-| **Scope creep** | **None** | One-word change on one line. No new abstractions, no new files, no new imports. |
-| **Upstream compatibility** | **Positive** | Aligns production code with the test the upstream authors wrote. This is what upstream intended. |
-| **CSAPI contribution impact** | **None** | This is a pre-existing upstream bug in non-CSAPI code. The fix does not touch any CSAPI module. |
+| Risk Category                 | Level        | Rationale                                                                                                                                                                        |
+| ----------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Regression risk**           | **None**     | The change makes the test that already expects `EndpointError` pass. No test expects plain `Error`.                                                                              |
+| **Behavioral impact**         | **Minimal**  | Only consumers specifically checking `instanceof Error` but NOT `instanceof EndpointError` could notice. Since `EndpointError extends Error`, `instanceof Error` remains `true`. |
+| **Scope creep**               | **None**     | One-word change on one line. No new abstractions, no new files, no new imports.                                                                                                  |
+| **Upstream compatibility**    | **Positive** | Aligns production code with the test the upstream authors wrote. This is what upstream intended.                                                                                 |
+| **CSAPI contribution impact** | **None**     | This is a pre-existing upstream bug in non-CSAPI code. The fix does not touch any CSAPI module.                                                                                  |
 
 ### 6.1 `instanceof` Compatibility
 
@@ -260,14 +262,14 @@ Any consumer catching `Error` generically will continue to catch this error. Con
 
 The `OgcApiEndpoint` class has exactly six places where errors are thrown. Five use `EndpointError`. One does not:
 
-| Line | Method/Getter | Error Type | Consistent? |
-|------|--------------|------------|-------------|
-| 75 | `root` getter | `Error` | **NO** ← the bug |
-| 344 | `edr()` | `EndpointError` | Yes |
-| 387 | `csapi()` | `EndpointError` | Yes |
-| 442 | `allCollections` | `EndpointError` | Yes |
-| 482 | `getStyle()` | `EndpointError` | Yes |
-| (spec L2883) | `csapi()` test | expects `EndpointError` | Yes |
+| Line         | Method/Getter    | Error Type              | Consistent?      |
+| ------------ | ---------------- | ----------------------- | ---------------- |
+| 75           | `root` getter    | `Error`                 | **NO** ← the bug |
+| 344          | `edr()`          | `EndpointError`         | Yes              |
+| 387          | `csapi()`        | `EndpointError`         | Yes              |
+| 442          | `allCollections` | `EndpointError`         | Yes              |
+| 482          | `getStyle()`     | `EndpointError`         | Yes              |
+| (spec L2883) | `csapi()` test   | expects `EndpointError` | Yes              |
 
 The pattern is clear: `EndpointError` is the class's standard error type. Line 75 is the sole deviation.
 
@@ -279,17 +281,17 @@ Evidence: The `EndpointError` import exists in the file (line 38), which means s
 
 ### 7.3 Whether This Should Be Part of the CSAPI Upstream PR
 
-The [upstream findings document](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) ranks this as priority #11 and notes: *"technically outside the CSAPI contribution scope, but it's an easy one-line fix if touched during the upstream PR."*
+The [upstream findings document](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) ranks this as priority #11 and notes: _"technically outside the CSAPI contribution scope, but it's an easy one-line fix if touched during the upstream PR."_
 
-The [endpoint-error-isolation-report](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) similarly suggests: *"If we're already touching `endpoint.ts` imports for the `EndpointError` migration, this would be an easy fix."*
+The [endpoint-error-isolation-report](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) similarly suggests: _"If we're already touching `endpoint.ts` imports for the `EndpointError` migration, this would be an easy fix."_
 
 **Options for inclusion in upstream PR:**
 
-| Option | Pros | Cons |
-|--------|------|------|
-| Include in CSAPI PR | Fixes pre-existing test failure; one-line diff; already touching `endpoint.ts` | Technically outside CSAPI scope |
-| Separate PR | Clean scope separation | Overhead of separate PR for one word |
-| Leave for upstream | Zero diff | Bug remains; test failure persists |
+| Option              | Pros                                                                           | Cons                                 |
+| ------------------- | ------------------------------------------------------------------------------ | ------------------------------------ |
+| Include in CSAPI PR | Fixes pre-existing test failure; one-line diff; already touching `endpoint.ts` | Technically outside CSAPI scope      |
+| Separate PR         | Clean scope separation                                                         | Overhead of separate PR for one word |
+| Leave for upstream  | Zero diff                                                                      | Bug remains; test failure persists   |
 
 **Inference:** Including this fix in the CSAPI upstream PR is the pragmatic choice. The diff is one word, the fix is unambiguous, and the test already expects `EndpointError`. The upstream maintainers are already reviewing `endpoint.ts` changes (the `csapi()` factory method is added to this file). Including a one-word bug fix in the same review reduces overhead for everyone.
 
@@ -329,33 +331,33 @@ Change line 75 of `src/ogc-api/endpoint.ts`:
 
 ## Appendix A: Authority Precedence Analysis
 
-| Authority Level | Source | Says About This Fix | Weight |
-|----------------|--------|---------------------|--------|
-| 1 (Highest) | Library error hierarchy | `EndpointError` is the documented error type for endpoint-level failures | Definitive |
-| 2 | AI Operational Constraints | "Prefer minimal diffs over idealized rewrites" — one word is minimal; "Do not expand scope beyond the issue description" — the issue describes exactly this one-line fix | Supportive |
-| 3 | Issue description | Explicitly identifies the bug and proposes the exact fix | Scoping |
-| 4 | Existing code patterns | Five of six throws in the class use `EndpointError`; one doesn't — that's the bug | Confirming |
-| 5 | Test expectations | `endpoint.spec.ts` L1791 expects `EndpointError`; the test is correct, the production code is wrong | Confirming |
-| 6 | Reference documents | F-5 in upstream-findings.md; Finding F in endpoint-error-isolation-report.md — both describe the same bug and recommend the same fix | Corroborating |
+| Authority Level | Source                     | Says About This Fix                                                                                                                                                      | Weight        |
+| --------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| 1 (Highest)     | Library error hierarchy    | `EndpointError` is the documented error type for endpoint-level failures                                                                                                 | Definitive    |
+| 2               | AI Operational Constraints | "Prefer minimal diffs over idealized rewrites" — one word is minimal; "Do not expand scope beyond the issue description" — the issue describes exactly this one-line fix | Supportive    |
+| 3               | Issue description          | Explicitly identifies the bug and proposes the exact fix                                                                                                                 | Scoping       |
+| 4               | Existing code patterns     | Five of six throws in the class use `EndpointError`; one doesn't — that's the bug                                                                                        | Confirming    |
+| 5               | Test expectations          | `endpoint.spec.ts` L1791 expects `EndpointError`; the test is correct, the production code is wrong                                                                      | Confirming    |
+| 6               | Reference documents        | F-5 in upstream-findings.md; Finding F in endpoint-error-isolation-report.md — both describe the same bug and recommend the same fix                                     | Corroborating |
 
 ---
 
 ## Appendix B: Cross-Reference Matrix
 
-| Document | Location | Relevance to Issue #10 |
-|----------|----------|-----------------------|
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | ogc-csapi-explorer | F-5 definition; priority #11; Category 1 "Library Bugs (Must Fix)" |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | ogc-csapi-explorer | Finding F — where this bug was originally discovered during test verification; documents it as pre-existing |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Validates EndpointError as the library's established error pattern |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | ogc-csapi-explorer | Context: only 1 prior commit touched library source; this would be an additional pre-existing bug fix |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | ogc-csapi-explorer | Lists F-5; no additional analysis beyond upstream-findings.md |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | ogc-csapi-explorer | Not directly relevant — covers bridge integration patterns |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — demo bypasses OgcApiEndpoint |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | ogc-csapi-explorer | Not relevant — covers write operations |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | ogc-csapi-explorer | Not relevant — covers cross-server interoperability |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | ogc-csapi-explorer | Not relevant — covers write operations |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | ogc-csapi-explorer | Not relevant — covers SWE Common schema display |
-| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | ogc-client-CSAPI_2 | Authority precedence; minimal diffs; no scope expansion |
+| Document                                                                                                                                                       | Location           | Relevance to Issue #10                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | ogc-csapi-explorer | F-5 definition; priority #11; Category 1 "Library Bugs (Must Fix)"                                          |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | ogc-csapi-explorer | Finding F — where this bug was originally discovered during test verification; documents it as pre-existing |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Validates EndpointError as the library's established error pattern                                          |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | ogc-csapi-explorer | Context: only 1 prior commit touched library source; this would be an additional pre-existing bug fix       |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | ogc-csapi-explorer | Lists F-5; no additional analysis beyond upstream-findings.md                                               |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                       | ogc-csapi-explorer | Not directly relevant — covers bridge integration patterns                                                  |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — demo bypasses OgcApiEndpoint                                                                 |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | ogc-csapi-explorer | Not relevant — covers write operations                                                                      |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | ogc-csapi-explorer | Not relevant — covers cross-server interoperability                                                         |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | ogc-csapi-explorer | Not relevant — covers write operations                                                                      |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | ogc-csapi-explorer | Not relevant — covers SWE Common schema display                                                             |
+| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)                        | ogc-client-CSAPI_2 | Authority precedence; minimal diffs; no scope expansion                                                     |
 
 ---
 

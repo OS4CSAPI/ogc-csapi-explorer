@@ -60,6 +60,7 @@ Define complete test file structure, naming conventions, and organization strate
 **Objective:** Analyze test file organization in upstream codebase
 
 **Tasks:**
+
 1. Map upstream test file structure
 2. Analyze test file naming conventions
 3. Document describe/it block organization patterns
@@ -71,6 +72,7 @@ Define complete test file structure, naming conventions, and organization strate
 **Objective:** Create complete inventory of needed test files
 
 **Tasks:**
+
 1. Compile test file requirements from all component sections
 2. Categorize test files by type (unit, integration, e2e)
 3. Identify shared utilities and helpers needed
@@ -82,6 +84,7 @@ Define complete test file structure, naming conventions, and organization strate
 **Objective:** Design test directory structure
 
 **Tasks:**
+
 1. Design root test directory structure
 2. Design component test subdirectories
 3. Design fixture directory structure (integrate Section 15 deliverable)
@@ -93,6 +96,7 @@ Define complete test file structure, naming conventions, and organization strate
 **Objective:** Define test file and directory naming conventions
 
 **Tasks:**
+
 1. Define test file naming patterns
 2. Define fixture file naming patterns
 3. Define test utility naming patterns
@@ -104,6 +108,7 @@ Define complete test file structure, naming conventions, and organization strate
 **Objective:** Create reusable test file templates
 
 **Tasks:**
+
 1. Create unit test file template
 2. Create integration test file template
 3. Create parser test file template
@@ -116,6 +121,7 @@ Define complete test file structure, naming conventions, and organization strate
 **Objective:** Create comprehensive test organization specification
 
 **Tasks:**
+
 1. Consolidate directory structure design
 2. Finalize naming conventions
 3. Document test file templates
@@ -143,6 +149,7 @@ This research is complete when:
 **Complete test file structure specification with naming conventions**
 
 Content includes:
+
 - Test file inventory (names, purposes, scopes)
 - Directory structure specification
 - Test file naming conventions
@@ -158,12 +165,14 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis (test file patterns)
 - Section 2: Existing Upstream Test Pattern Survey (organization patterns)
 - Section 15: Fixture Sourcing and Organization Strategy (fixture structure)
 - All component testing sections (8-18) for test file requirements
 
 **Blocks:**
+
 - All test implementation (structure must exist before tests are written)
 - Jest configuration (test file patterns needed)
 
@@ -187,12 +196,14 @@ Content includes:
 **Research Complete - Key Findings:**
 
 1. **Upstream Patterns Confirmed:**
+
    - ✅ All upstream APIs use flat structure (no subdirectories)
    - ✅ `.spec.ts` naming convention universal
    - ✅ Colocated tests (test files next to implementation)
    - ✅ One `describe` block per function/class
 
 2. **CSAPI-Specific Design:**
+
    - ✅ 22 test files organized in flat colocated structure
    - ✅ URL builder split into 9 resource-specific files (improvement over upstream)
    - ✅ ~4,000-5,000 lines of test code total

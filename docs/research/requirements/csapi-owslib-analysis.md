@@ -11,6 +11,7 @@
 OWSLib provides a mature, comprehensive Python implementation of the OGC API - Connected Systems specification. It uses a class-per-resource architecture with consistent CRUD operations, extensive query parameter support, and complete coverage of all 11 CSAPI resource types. The implementation prioritizes consistency, completeness, and ease of use, though it tightly couples URL building with request execution and lacks strongly-typed request/response models.
 
 **Key Strengths:**
+
 - Complete CSAPI coverage (all resources, all CRUD operations)
 - Highly consistent naming conventions (predictable API surface)
 - Comprehensive query parameter validation
@@ -19,6 +20,7 @@ OWSLib provides a mature, comprehensive Python implementation of the OGC API - C
 - Extensive test coverage demonstrating real usage patterns
 
 **Key Limitations:**
+
 - Tight coupling of URL construction and HTTP execution
 - Dictionary-based responses (no typed models)
 - String-based request bodies (no validation)
@@ -84,17 +86,20 @@ ConnectedSystems (extends Collections in ogcapi/connected_systems/connectedsyste
 ### 1.2 Base Class Responsibilities
 
 **API Base Class:**
+
 - Manages base URL and HTTP configuration
 - Provides `_request()` method for HTTP operations
 - Handles authentication and headers
 - Centralizes timeout and retry logic
 
 **Collections Class:**
+
 - Adds collection-specific utilities
 - Provides conformance checking
 - Manages collection metadata
 
 **ConnectedSystems Class:**
+
 - Implements common CSAPI patterns
 - Provides helper methods for resource operations
 - Manages query parameter building via `QueryArgs`
@@ -108,11 +113,11 @@ class Systems(ConnectedSystems):
     """
     Implements Systems operations from OGC API - Connected Systems
     """
-    
+
     def __init__(self, url, json_=None, timeout=30, headers=None, auth=None):
         """
         Initialize Systems API client
-        
+
         @type url: string
         @param url: base URL of OGC API - Connected Systems endpoint
         @type json_: string
@@ -125,14 +130,14 @@ class Systems(ConnectedSystems):
         @param auth: authentication credentials
         """
         super().__init__(url, json_, timeout, headers, auth)
-    
+
     # Standard CRUD methods for Systems resource
     def systems(self, **kwargs) -> dict: ...
     def system(self, system_id: str, **kwargs) -> dict: ...
     def system_create(self, data: str) -> dict: ...
     def system_update(self, system_id: str, data: str) -> dict: ...
     def system_delete(self, system_id: str) -> None: ...
-    
+
     # Navigation methods to child resources
     def system_datastreams(self, system_id: str, **kwargs) -> dict: ...
     def system_deployments(self, system_id: str, **kwargs) -> dict: ...
@@ -158,6 +163,7 @@ This creates a consistent initialization experience across all resource types.
 ### 1.5 Stateless Design
 
 Key characteristics:
+
 - Each request is independent
 - No persistent state beyond configuration (URL, auth, headers)
 - No caching of responses
@@ -169,23 +175,23 @@ Key characteristics:
 All HTTP operations funnel through the base `_request()` method:
 
 ```python
-def _request(self, path: str = '', method: str = 'GET', 
+def _request(self, path: str = '', method: str = 'GET',
              data: str = None, kwargs: dict = None) -> dict:
     """
     Execute HTTP request against CSAPI endpoint
-    
+
     Combines base URL + path, applies query params, executes request,
     handles errors, and parses JSON response.
     """
     # Build full URL from base + path + query params
     url = urljoin(self.url, path)
-    
+
     # Execute based on method
     if method == 'GET':
-        response = http_get(url, headers=self.headers, auth=self.auth, 
+        response = http_get(url, headers=self.headers, auth=self.auth,
                            timeout=self.timeout, params=kwargs)
     elif method == 'POST':
-        response = http_post(url, data=data, headers=self.headers, 
+        response = http_post(url, data=data, headers=self.headers,
                             auth=self.auth, timeout=self.timeout)
     elif method == 'PUT':
         response = http_put(url, data=data, headers=self.headers,
@@ -193,16 +199,17 @@ def _request(self, path: str = '', method: str = 'GET',
     elif method == 'DELETE':
         response = http_delete(url, headers=self.headers, auth=self.auth,
                               timeout=self.timeout)
-    
+
     # Check for errors
     if not response:
         raise RuntimeError(response.text)
-    
+
     # Parse and return JSON
     return response.json()
 ```
 
 This centralization provides:
+
 - Consistent error handling across all operations
 - Single point for adding logging, retries, etc.
 - Simplified testing (mock one method)
@@ -226,11 +233,13 @@ This centralization provides:
 ### 1.9 Implications for TypeScript
 
 **Adopt:**
+
 - Resource-per-class pattern for clear organization
 - Consistent initialization across resource types
 - Centralized HTTP execution for error handling
 
 **Improve:**
+
 - Separate URL builders from HTTP execution
 - Use composition over deep inheritance
 - Allow URL inspection without execution
@@ -244,16 +253,16 @@ This centralization provides:
 
 All 11 resource classes expose identical CRUD operation patterns:
 
-| Operation Category | Method Pattern | HTTP Method | Purpose |
-|-------------------|---------------|-------------|---------|
-| List Collection | `resources(**kwargs)` | GET | Retrieve all resources with optional filtering |
-| Get Single | `resource(id, **kwargs)` | GET | Retrieve specific resource by ID |
-| Create Standalone | `resource_create(data)` | POST | Create new resource at top level |
-| Create as Child | `resource_create_in_parent(parent_id, data)` | POST | Create resource within parent context |
-| Update Full | `resource_update(id, data)` | PUT | Replace entire resource |
-| Update Partial | `resource_update_description(id, data)` | PUT | Update resource description/metadata |
-| Delete | `resource_delete(id)` | DELETE | Remove resource |
-| Navigate to Children | `parent_child_collection(parent_id, **kwargs)` | GET | Retrieve child resources of parent |
+| Operation Category   | Method Pattern                                 | HTTP Method | Purpose                                        |
+| -------------------- | ---------------------------------------------- | ----------- | ---------------------------------------------- |
+| List Collection      | `resources(**kwargs)`                          | GET         | Retrieve all resources with optional filtering |
+| Get Single           | `resource(id, **kwargs)`                       | GET         | Retrieve specific resource by ID               |
+| Create Standalone    | `resource_create(data)`                        | POST        | Create new resource at top level               |
+| Create as Child      | `resource_create_in_parent(parent_id, data)`   | POST        | Create resource within parent context          |
+| Update Full          | `resource_update(id, data)`                    | PUT         | Replace entire resource                        |
+| Update Partial       | `resource_update_description(id, data)`        | PUT         | Update resource description/metadata           |
+| Delete               | `resource_delete(id)`                          | DELETE      | Remove resource                                |
+| Navigate to Children | `parent_child_collection(parent_id, **kwargs)` | GET         | Retrieve child resources of parent             |
 
 ### 2.2 Systems Resource Operations
 
@@ -262,42 +271,42 @@ class Systems(ConnectedSystems):
     # Collection operations
     def systems(self, **kwargs) -> dict:
         """GET /systems - List all systems"""
-        
+
     def system(self, system_id: str, **kwargs) -> dict:
         """GET /systems/{systemId} - Get single system"""
-    
+
     # Write operations
     def system_create(self, data: str) -> dict:
         """POST /systems - Create new system"""
-        
+
     def system_update(self, system_id: str, data: str) -> dict:
         """PUT /systems/{systemId} - Update system"""
-        
+
     def system_update_description(self, system_id: str, data: str) -> dict:
         """PUT /systems/{systemId}/description - Update description"""
-        
+
     def system_delete(self, system_id: str) -> None:
         """DELETE /systems/{systemId} - Delete system"""
-    
+
     # Navigation to child resources
     def system_datastreams(self, system_id: str, **kwargs) -> dict:
         """GET /systems/{systemId}/datastreams"""
-        
+
     def system_control_streams(self, system_id: str, **kwargs) -> dict:
         """GET /systems/{systemId}/controlStreams"""
-        
+
     def system_subsystems(self, system_id: str, **kwargs) -> dict:
         """GET /systems/{systemId}/subsystems"""
-        
+
     def system_components(self, system_id: str, **kwargs) -> dict:
         """GET /systems/{systemId}/components"""
-        
+
     def system_deployments(self, system_id: str, **kwargs) -> dict:
         """GET /systems/{systemId}/deployments"""
-        
+
     def system_sampling_features(self, system_id: str, **kwargs) -> dict:
         """GET /systems/{systemId}/samplingFeatures"""
-        
+
     def system_history(self, system_id: str, **kwargs) -> dict:
         """GET /systems/{systemId}/history"""
 ```
@@ -309,29 +318,29 @@ class Datastreams(ConnectedSystems):
     # Collection operations
     def datastreams(self, **kwargs) -> dict:
         """GET /datastreams - List all datastreams"""
-        
+
     def datastream(self, datastream_id: str, **kwargs) -> dict:
         """GET /datastreams/{datastreamId} - Get single datastream"""
-        
+
     def datastreams_of_system(self, system_id: str, **kwargs) -> dict:
         """GET /systems/{systemId}/datastreams - Get system's datastreams"""
-    
+
     # Write operations
     def datastream_create(self, data: str) -> dict:
         """POST /datastreams - Create datastream"""
-        
+
     def datastream_create_in_system(self, system_id: str, data: str) -> dict:
         """POST /systems/{systemId}/datastreams - Create in system"""
-        
+
     def datastream_update(self, datastream_id: str, data: str) -> dict:
         """PUT /datastreams/{datastreamId} - Update datastream"""
-        
+
     def datastream_update_schema(self, datastream_id: str, data: str) -> dict:
         """PUT /datastreams/{datastreamId}/schema - Update schema"""
-        
+
     def datastream_delete(self, datastream_id: str) -> None:
         """DELETE /datastreams/{datastreamId} - Delete datastream"""
-    
+
     # Navigation to observations
     def observations_of_datastream(self, datastream_id: str, **kwargs) -> dict:
         """GET /datastreams/{datastreamId}/observations"""
@@ -344,46 +353,47 @@ class Observations(ConnectedSystems):
     # Collection operations
     def observations(self, **kwargs) -> dict:
         """GET /observations - List all observations"""
-        
+
     def observation(self, observation_id: str, **kwargs) -> dict:
         """GET /observations/{observationId} - Get single observation"""
-        
+
     def observations_of_datastream(self, datastream_id: str, **kwargs) -> dict:
         """GET /datastreams/{datastreamId}/observations"""
-    
+
     # Write operations
     def observation_create(self, data: str) -> dict:
         """POST /observations - Create observation"""
-        
+
     def observation_create_in_datastream(self, datastream_id: str, data: str) -> dict:
         """POST /datastreams/{datastreamId}/observations"""
-        
+
     def observation_update(self, observation_id: str, data: str) -> dict:
         """PUT /observations/{observationId} - Update observation"""
-        
+
     def observation_delete(self, observation_id: str) -> None:
         """DELETE /observations/{observationId} - Delete observation"""
 ```
 
 ### 2.5 Complete Resource Operation Matrix
 
-| Resource | List | Get | Create | Create in Parent | Update | Update Partial | Delete | Navigate |
-|----------|------|-----|--------|------------------|--------|----------------|--------|----------|
-| Systems | ✅ | ✅ | ✅ | N/A | ✅ | ✅ (description) | ✅ | 7 child types |
-| Procedures | ✅ | ✅ | ✅ | N/A | ✅ | ✅ (description) | ✅ | - |
-| Deployments | ✅ | ✅ | ✅ | ✅ (system) | ✅ | ✅ (description) | ✅ | - |
-| SamplingFeatures | ✅ | ✅ | ✅ | ✅ (system) | ✅ | ✅ (description) | ✅ | - |
-| Properties | ✅ | ✅ | ✅ | N/A | ✅ | ✅ (description) | ✅ | - |
-| Datastreams | ✅ | ✅ | ✅ | ✅ (system) | ✅ | ✅ (schema) | ✅ | observations |
-| Observations | ✅ | ✅ | ✅ | ✅ (datastream) | ✅ | - | ✅ | - |
-| ControlStreams | ✅ | ✅ | ✅ | ✅ (system) | ✅ | ✅ (schema) | ✅ | commands |
-| Commands | ✅ | ✅ | ✅ | ✅ (controlstream) | ✅ | - | ✅ | - |
-| SystemEvents | ✅ | ✅ | ✅ | ✅ (system) | ✅ | - | ✅ | - |
-| SystemHistory | ✅ | ✅ | N/A | N/A | N/A | N/A | N/A | - |
+| Resource         | List | Get | Create | Create in Parent   | Update | Update Partial   | Delete | Navigate      |
+| ---------------- | ---- | --- | ------ | ------------------ | ------ | ---------------- | ------ | ------------- |
+| Systems          | ✅   | ✅  | ✅     | N/A                | ✅     | ✅ (description) | ✅     | 7 child types |
+| Procedures       | ✅   | ✅  | ✅     | N/A                | ✅     | ✅ (description) | ✅     | -             |
+| Deployments      | ✅   | ✅  | ✅     | ✅ (system)        | ✅     | ✅ (description) | ✅     | -             |
+| SamplingFeatures | ✅   | ✅  | ✅     | ✅ (system)        | ✅     | ✅ (description) | ✅     | -             |
+| Properties       | ✅   | ✅  | ✅     | N/A                | ✅     | ✅ (description) | ✅     | -             |
+| Datastreams      | ✅   | ✅  | ✅     | ✅ (system)        | ✅     | ✅ (schema)      | ✅     | observations  |
+| Observations     | ✅   | ✅  | ✅     | ✅ (datastream)    | ✅     | -                | ✅     | -             |
+| ControlStreams   | ✅   | ✅  | ✅     | ✅ (system)        | ✅     | ✅ (schema)      | ✅     | commands      |
+| Commands         | ✅   | ✅  | ✅     | ✅ (controlstream) | ✅     | -                | ✅     | -             |
+| SystemEvents     | ✅   | ✅  | ✅     | ✅ (system)        | ✅     | -                | ✅     | -             |
+| SystemHistory    | ✅   | ✅  | N/A    | N/A                | N/A    | N/A              | N/A    | -             |
 
 ### 2.6 Operation Signature Patterns
 
 **List Collection:**
+
 ```python
 def resources(self, **kwargs) -> dict:
     path = 'resources'
@@ -393,6 +403,7 @@ def resources(self, **kwargs) -> dict:
 ```
 
 **Get Single Resource:**
+
 ```python
 def resource(self, resource_id: str, **kwargs) -> dict:
     path = f'resources/{resource_id}'
@@ -402,6 +413,7 @@ def resource(self, resource_id: str, **kwargs) -> dict:
 ```
 
 **Create Resource:**
+
 ```python
 def resource_create(self, data: str) -> dict:
     path = 'resources'
@@ -409,6 +421,7 @@ def resource_create(self, data: str) -> dict:
 ```
 
 **Update Resource:**
+
 ```python
 def resource_update(self, resource_id: str, data: str) -> dict:
     path = f'resources/{resource_id}'
@@ -416,6 +429,7 @@ def resource_update(self, resource_id: str, data: str) -> dict:
 ```
 
 **Delete Resource:**
+
 ```python
 def resource_delete(self, resource_id: str) -> None:
     path = f'resources/{resource_id}'
@@ -423,6 +437,7 @@ def resource_delete(self, resource_id: str) -> None:
 ```
 
 **Navigate to Children:**
+
 ```python
 def parent_children(self, parent_id: str, **kwargs) -> dict:
     path = f'parents/{parent_id}/children'
@@ -465,17 +480,19 @@ OWSLib implements **all 11 core resource types** from the OGC API - Connected Sy
 ✅ **ControlStreams** - Streams for commanding systems  
 ✅ **Commands** - Individual command instances  
 ✅ **SystemEvents** - Events in system lifecycle  
-✅ **SystemHistory** - Historical states of systems  
+✅ **SystemHistory** - Historical states of systems
 
 ### 3.2 Query Capability Coverage
 
 OWSLib supports comprehensive query capabilities via the `QueryArgs` class:
 
 #### Spatial Filtering
+
 - ✅ `bbox` - Bounding box filter (WGS84)
 - ✅ `geom` - Geometry filter (GeoJSON or WKT)
 
 #### Temporal Filtering
+
 - ✅ `datetime` - Generic temporal extent
 - ✅ `phenomenonTime` - Time of observation phenomenon
 - ✅ `resultTime` - Time observation result was generated
@@ -483,53 +500,62 @@ OWSLib supports comprehensive query capabilities via the `QueryArgs` class:
 - ✅ `executionTime` - Time of command execution
 
 #### Text Search
+
 - ✅ `q` - Full-text search across resource properties
 
 #### Identifier Filtering
+
 - ✅ `id` - Filter by resource ID(s)
 - ✅ `uid` - Filter by unique identifier
 
 #### Reference Filtering
+
 - ✅ `foi` - Filter by feature of interest
 - ✅ `parent` - Filter by parent resource
 - ✅ `procedure` - Filter by procedure
 - ✅ `system` - Filter by system
 
 #### Property Filtering
+
 - ✅ `observedProperty` - Filter datastreams/observations by observed property
 - ✅ `controlledProperty` - Filter control streams by controlled property
 - ✅ `baseProperty` - Filter by base property
 
 #### Classification Filtering
+
 - ✅ `objectType` - Filter by object type classification
 
 #### Event Filtering
+
 - ✅ `issueTime` - Filter by issue time
 
 #### Pagination
+
 - ✅ `limit` - Limit number of results
 
 #### Hierarchical Queries
+
 - ✅ `recursive` - Include child resources in results
 
 ### 3.3 CRUD Operation Coverage
 
 Full CRUD (Create, Read, Update, Delete) support across all applicable resources:
 
-| Operation | Coverage | Notes |
-|-----------|----------|-------|
-| **CREATE** | 10/11 resources | SystemHistory read-only |
-| **READ** (list) | 11/11 resources | All resources support listing |
-| **READ** (single) | 11/11 resources | All support by-ID retrieval |
-| **UPDATE** (full) | 10/11 resources | SystemHistory read-only |
-| **UPDATE** (partial) | 7/11 resources | Description/schema updates |
-| **DELETE** | 10/11 resources | SystemHistory read-only |
+| Operation            | Coverage        | Notes                         |
+| -------------------- | --------------- | ----------------------------- |
+| **CREATE**           | 10/11 resources | SystemHistory read-only       |
+| **READ** (list)      | 11/11 resources | All resources support listing |
+| **READ** (single)    | 11/11 resources | All support by-ID retrieval   |
+| **UPDATE** (full)    | 10/11 resources | SystemHistory read-only       |
+| **UPDATE** (partial) | 7/11 resources  | Description/schema updates    |
+| **DELETE**           | 10/11 resources | SystemHistory read-only       |
 
 ### 3.4 Resource Relationship Navigation
 
 OWSLib supports navigating parent-child relationships:
 
 **System-centric Navigation:**
+
 ```python
 # System → DataStreams
 system.system_datastreams(system_id)
@@ -554,18 +580,21 @@ system.system_history(system_id)
 ```
 
 **DataStream Navigation:**
+
 ```python
 # DataStream → Observations
 datastreams.observations_of_datastream(datastream_id)
 ```
 
 **ControlStream Navigation:**
+
 ```python
 # ControlStream → Commands
 controlstreams.commands_of_control_stream(controlstream_id)
 ```
 
 **Deployment Navigation:**
+
 ```python
 # Deployment → Systems
 deployments.systems_of_deployment(deployment_id)
@@ -602,6 +631,7 @@ OWSLib supports multiple response formats:
 - ⚠️ **XML** - Not explicitly supported for CSAPI (error responses only)
 
 Format selection via headers:
+
 ```python
 headers = {'Accept': 'application/swe+json'}
 api = Systems(url, headers=headers)
@@ -610,12 +640,14 @@ api = Systems(url, headers=headers)
 ### 3.7 Notable Inclusions
 
 **Advanced Query Features:**
+
 - ✅ Open-ended temporal ranges (`../timestamp` or `timestamp/..`)
 - ✅ Multiple ID filtering (comma-separated)
 - ✅ Recursive queries for hierarchical resources
 - ✅ Property-based filtering (observed/controlled properties)
 
 **Operational Features:**
+
 - ✅ Custom timeout configuration
 - ✅ Custom headers for all requests
 - ✅ Authentication abstraction
@@ -625,6 +657,7 @@ api = Systems(url, headers=headers)
 ### 3.8 Notable Exclusions
 
 **Specification Features Not Implemented:**
+
 - ❌ Batch operations (if CSAPI spec includes)
 - ❌ WebSocket/MQTT streaming (real-time observations)
 - ❌ Linked data traversal (following `@id` links automatically)
@@ -634,6 +667,7 @@ api = Systems(url, headers=headers)
 - ❌ Server-sent events for notifications
 
 **Convenience Features Not Included:**
+
 - ❌ Response caching
 - ❌ Automatic retry with exponential backoff
 - ❌ Rate limiting/throttling
@@ -642,6 +676,7 @@ api = Systems(url, headers=headers)
 - ❌ Schema validation of request/response bodies
 
 **Type Safety Features:**
+
 - ❌ Strongly-typed request body models
 - ❌ Strongly-typed response models
 - ❌ Generic type parameters for collections
@@ -666,21 +701,21 @@ The implementation is production-ready and suitable for real-world CSAPI clients
 
 Comparing OWSLib to the OGC API - Connected Systems specification:
 
-| Specification Requirement | OWSLib Implementation | Status |
-|---------------------------|----------------------|--------|
-| Core resources (Systems, DataStreams, etc.) | All 11 resources | ✅ Complete |
-| Collection queries with filtering | QueryArgs class | ✅ Complete |
-| Single resource retrieval | `resource(id)` pattern | ✅ Complete |
-| Resource creation | `resource_create()` | ✅ Complete |
-| Resource updates | `resource_update()` | ✅ Complete |
-| Resource deletion | `resource_delete()` | ✅ Complete |
-| Spatial filtering (bbox, geom) | Supported | ✅ Complete |
-| Temporal filtering (datetime, etc.) | Supported | ✅ Complete |
-| Property-based filtering | Supported | ✅ Complete |
-| Resource relationships | Navigation methods | ✅ Complete |
-| Pagination | `limit` parameter | ⚠️ Partial (no offset/cursor) |
-| Content negotiation | Via headers | ✅ Complete |
-| Authentication | Via auth object | ✅ Complete |
+| Specification Requirement                   | OWSLib Implementation  | Status                        |
+| ------------------------------------------- | ---------------------- | ----------------------------- |
+| Core resources (Systems, DataStreams, etc.) | All 11 resources       | ✅ Complete                   |
+| Collection queries with filtering           | QueryArgs class        | ✅ Complete                   |
+| Single resource retrieval                   | `resource(id)` pattern | ✅ Complete                   |
+| Resource creation                           | `resource_create()`    | ✅ Complete                   |
+| Resource updates                            | `resource_update()`    | ✅ Complete                   |
+| Resource deletion                           | `resource_delete()`    | ✅ Complete                   |
+| Spatial filtering (bbox, geom)              | Supported              | ✅ Complete                   |
+| Temporal filtering (datetime, etc.)         | Supported              | ✅ Complete                   |
+| Property-based filtering                    | Supported              | ✅ Complete                   |
+| Resource relationships                      | Navigation methods     | ✅ Complete                   |
+| Pagination                                  | `limit` parameter      | ⚠️ Partial (no offset/cursor) |
+| Content negotiation                         | Via headers            | ✅ Complete                   |
+| Authentication                              | Via auth object        | ✅ Complete                   |
 
 **Conclusion:** OWSLib provides excellent coverage of the CSAPI specification with only minor gaps in advanced pagination features.
 
@@ -700,23 +735,23 @@ Here's how a typical OWSLib method combines URL building and execution:
 def datastreams_of_system(self, system_id: str, **kwargs) -> dict:
     """
     Get datastreams of a specific system
-    
+
     @type system_id: string
     @param system_id: ID of the system
     @returns: dict of datastreams collection
     """
     # 1. Build path (inline f-string)
     path = f'systems/{system_id}/datastreams'
-    
+
     # 2. Process query parameters
     query_params = QueryArgs(**kwargs)
-    
+
     # 3. Validate against allowed parameters for this endpoint
-    p_list = ['id', 'q', 'phenomenonTime', 'resultTime', 'foi', 
+    p_list = ['id', 'q', 'phenomenonTime', 'resultTime', 'foi',
               'observedProperty', 'limit']
-    
+
     # 4. Execute request and return parsed JSON (inseparable)
-    return self._request(path=path, 
+    return self._request(path=path,
                         kwargs=query_params.check_params(p_list))
 ```
 
@@ -725,20 +760,20 @@ def datastreams_of_system(self, system_id: str, **kwargs) -> dict:
 The URL is constructed deep inside the `_request()` method:
 
 ```python
-def _request(self, path: str = '', method: str = 'GET', 
+def _request(self, path: str = '', method: str = 'GET',
              data: str = None, kwargs: dict = None) -> dict:
     """Execute request and return response"""
-    
+
     # Combine base URL + path
     url = urljoin(self.url, path)  # e.g., https://api.example.org/ogc/systems/123/datastreams
-    
+
     # Add query parameters (kwargs becomes ?foo=bar&...)
     if method == 'GET':
         response = http_get(url, params=kwargs, ...)  # params appended to URL
     elif method == 'POST':
         response = http_post(url, data=data, ...)
     # ... etc
-    
+
     # Immediate execution - no way to inspect URL without making request
     return response.json()
 ```
@@ -782,10 +817,10 @@ import unittest.mock as mock
 
 with mock.patch('owslib.util.http_get') as mock_get:
     mock_get.return_value = mock.Mock(json=lambda: {'items': []})
-    
+
     api = Systems('https://api.example.org/ogc')
     result = api.systems(bbox=[-122, 37, -121, 38])
-    
+
     # Can verify URL was constructed correctly:
     args, kwargs = mock_get.call_args
     assert 'bbox=-122%2C37%2C-121%2C38' in args[0]
@@ -826,17 +861,17 @@ class QueryArgs:
     """
     Process and validate query parameters for CSAPI requests
     """
-    
+
     def __init__(self, **kwargs):
         """Convert Python values to URL-safe strings"""
         self.params = {}
-        
+
         # String parameters (pass through)
         if 'id' in kwargs:
             self.params['id'] = kwargs['id']
         if 'q' in kwargs:
             self.params['q'] = kwargs['q']
-        
+
         # Array parameters (join with commas)
         if 'bbox' in kwargs:
             self.params['bbox'] = ','.join(map(str, kwargs['bbox']))
@@ -845,16 +880,16 @@ class QueryArgs:
                 self.params['observedProperty'] = ','.join(kwargs['observedProperty'])
             else:
                 self.params['observedProperty'] = kwargs['observedProperty']
-        
+
         # Date/time parameters (validate ISO8601 format)
         if 'datetime' in kwargs:
             self.params['datetime'] = kwargs['datetime']
         # ... etc for ~20 parameters
-    
+
     def check_params(self, param_list):
         """
         Filter parameters to only those allowed for specific endpoint
-        
+
         @param param_list: List of allowed parameter names
         @returns: Dict of only allowed parameters
         """
@@ -882,10 +917,12 @@ path = f'datastreams/{datastream_id}/schema'
 ```
 
 **Strengths:**
+
 - Simple and readable
 - Leverages Python's native string formatting
 
 **Weaknesses:**
+
 - Path construction logic scattered across methods
 - Hard to extract or reuse path building
 - No validation of path segments (IDs could contain invalid characters)
@@ -916,7 +953,7 @@ path = f'datastreams/{datastream_id}/schema'
 // Separate URL builder
 class SystemsUrlBuilder {
   constructor(private baseUrl: string) {}
-  
+
   systems(params?: SystemsQueryParams): URL {
     const url = new URL(`${this.baseUrl}/systems`);
     if (params?.bbox) {
@@ -925,7 +962,7 @@ class SystemsUrlBuilder {
     // ... other params
     return url;
   }
-  
+
   system(id: string): URL {
     return new URL(`${this.baseUrl}/systems/${encodeURIComponent(id)}`);
   }
@@ -937,12 +974,12 @@ class SystemsClient {
     private builder: SystemsUrlBuilder,
     private http: HttpClient
   ) {}
-  
+
   async systems(params?: SystemsQueryParams): Promise<SystemCollection> {
     const url = this.builder.systems(params);
     return this.http.get<SystemCollection>(url);
   }
-  
+
   // Or allow manual URL building:
   urlBuilder(): SystemsUrlBuilder {
     return this.builder;
@@ -971,6 +1008,7 @@ expect(url.toString()).toBe('https://api.example.org/systems?limit=10');
 ```
 
 **Benefits of Separation:**
+
 - ✅ URL inspection without execution
 - ✅ URL reuse across multiple requests
 - ✅ Easier unit testing (test builders without HTTP)
@@ -987,10 +1025,10 @@ expect(url.toString()).toBe('https://api.example.org/systems?limit=10');
 OWSLib assumes all CSAPI responses are JSON and automatically parses them:
 
 ```python
-def _request(self, path: str = '', method: str = 'GET', 
+def _request(self, path: str = '', method: str = 'GET',
              data: str = None, kwargs: dict = None) -> dict:
     # ... execute HTTP request ...
-    
+
     # Automatic JSON parsing
     return response.json()  # Always returns dict
 ```
@@ -999,15 +1037,15 @@ def _request(self, path: str = '', method: str = 'GET',
 
 OWSLib handles these response formats:
 
-| Format | Support Level | Handling | Use Case |
-|--------|--------------|----------|----------|
-| **JSON** | ✅ Full | Automatic parsing via `.json()` | Default format |
-| **GeoJSON** | ✅ Full | Parsed as JSON | Spatial resources |
-| **SWE+JSON** | ✅ Full | Parsed as JSON | SensorML observations |
-| **SWE+Binary** | ⚠️ Limited | Requires manual parsing | High-frequency observations |
-| **XML** | ⚠️ Error handling only | Parsed for OGC exceptions | Error responses |
-| **Plain text** | ❌ No | Would cause `.json()` to fail | Not supported |
-| **Binary** | ⚠️ Via `as_dict=False` | Raw bytes returned | EDR, Coverages modules |
+| Format         | Support Level          | Handling                        | Use Case                    |
+| -------------- | ---------------------- | ------------------------------- | --------------------------- |
+| **JSON**       | ✅ Full                | Automatic parsing via `.json()` | Default format              |
+| **GeoJSON**    | ✅ Full                | Parsed as JSON                  | Spatial resources           |
+| **SWE+JSON**   | ✅ Full                | Parsed as JSON                  | SensorML observations       |
+| **SWE+Binary** | ⚠️ Limited             | Requires manual parsing         | High-frequency observations |
+| **XML**        | ⚠️ Error handling only | Parsed for OGC exceptions       | Error responses             |
+| **Plain text** | ❌ No                  | Would cause `.json()` to fail   | Not supported               |
+| **Binary**     | ⚠️ Via `as_dict=False` | Raw bytes returned              | EDR, Coverages modules      |
 
 ### 5.3 Content Negotiation
 
@@ -1048,6 +1086,7 @@ api.system_create(json.dumps(system_data))
 ```
 
 **Content-Type Header:**
+
 ```python
 # Explicitly set request content type
 headers = {'Content-Type': 'application/json'}
@@ -1072,16 +1111,17 @@ def query(self, ..., as_dict=True):
 ```
 
 **Potential CSAPI Extension:**
+
 ```python
 # Not currently in CSAPI module, but could be added:
-def observations_of_datastream(self, datastream_id: str, 
+def observations_of_datastream(self, datastream_id: str,
                               as_dict=True, **kwargs) -> Union[dict, bytes]:
     path = f'datastreams/{datastream_id}/observations'
     query_params = QueryArgs(**kwargs)
     p_list = ['phenomenonTime', 'resultTime', 'foi', 'limit']
-    
+
     if as_dict:
-        return self._request(path=path, 
+        return self._request(path=path,
                            kwargs=query_params.check_params(p_list))
     else:
         # Return raw bytes for binary formats
@@ -1137,12 +1177,14 @@ system_dict = api.system('123')  # Single system
 ### 5.9 Format Selection Recommendations
 
 **For JSON Responses (Default):**
+
 ```python
 api = Systems('https://api.example.org/ogc')
 result = api.systems()  # Works automatically
 ```
 
 **For SWE+JSON (Observations):**
+
 ```python
 headers = {'Accept': 'application/swe+json'}
 api = Observations('https://api.example.org/ogc', headers=headers)
@@ -1151,6 +1193,7 @@ observations = api.observations_of_datastream('ds123')
 ```
 
 **For Binary Data (If Supported):**
+
 ```python
 # Would need custom implementation or extension
 headers = {'Accept': 'application/octet-stream'}
@@ -1177,25 +1220,27 @@ api = Observations('https://api.example.org/ogc', headers=headers)
 **Recommendations:**
 
 1. **Support Multiple Formats:**
+
 ```typescript
 interface ObservationsClient {
   // JSON response (default)
   observations(params: ObservationsParams): Promise<ObservationCollection>;
-  
+
   // SWE+Binary response
   observationsBinary(params: ObservationsParams): Promise<ArrayBuffer>;
-  
+
   // Explicit format selection
   observations(params: ObservationsParams, format: 'json' | 'swe-json' | 'swe-binary'): Promise<...>;
 }
 ```
 
 2. **Automatic Format Detection:**
+
 ```typescript
 class FormatNegotiator {
   async parse<T>(response: Response): Promise<T> {
     const contentType = response.headers.get('Content-Type');
-    
+
     if (contentType?.includes('json')) {
       return response.json();
     } else if (contentType?.includes('octet-stream')) {
@@ -1208,6 +1253,7 @@ class FormatNegotiator {
 ```
 
 3. **Typed Responses:**
+
 ```typescript
 // Not just generic objects
 interface ObservationCollection {
@@ -1226,6 +1272,7 @@ observations.items.forEach(obs => {
 ```
 
 4. **Format-Specific Parsing:**
+
 ```typescript
 class SweJsonParser {
   parse(json: any): Observation[] {
@@ -1302,7 +1349,7 @@ All navigation methods follow a consistent signature:
 def parent_child_collection(self, parent_id: str, **kwargs) -> dict:
     """
     Get child resources of parent
-    
+
     @type parent_id: string
     @param parent_id: ID of parent resource
     @param kwargs: Query parameters (id, q, limit, etc.)
@@ -1366,18 +1413,21 @@ There is **no method chaining** or automatic traversal.
 Some relationships support navigation in both directions:
 
 **Forward Navigation (Parent → Child):**
+
 ```python
 # System → Deployments
 deployments = systems_api.system_deployments(system_id='sys123')
 ```
 
 **Reverse Navigation (Child → Parent):**
+
 ```python
 # Deployment → Systems
 systems = deployments_api.systems_of_deployment(deployment_id='dep456')
 ```
 
 **Other Bidirectional Relationships:**
+
 - `SamplingFeature ↔ System`
 - `SamplingFeature ↔ DataStream`
 - `Procedure ↔ System`
@@ -1450,6 +1500,7 @@ datastreams = datastreams_query.execute()  # Execute later
 ### 6.12 Navigation Usage Examples
 
 **Example 1: System to Observations**
+
 ```python
 from owslib.ogcapi.connected_systems import Systems, Datastreams
 
@@ -1478,6 +1529,7 @@ if datastreams['items']:
 ```
 
 **Example 2: Deployment to Systems**
+
 ```python
 from owslib.ogcapi.connected_systems import Deployments
 
@@ -1496,6 +1548,7 @@ for system_item in systems['items']:
 ```
 
 **Example 3: Procedure to Systems**
+
 ```python
 from owslib.ogcapi.connected_systems import Procedures
 
@@ -1516,23 +1569,26 @@ for proc_item in procedures['items']:
 **Recommendations:**
 
 1. **Support Method Chaining:**
+
 ```typescript
 // Fluent navigation
-const observations = await api.systems.get('sys123')
-  .then(system => system.datastreams())
-  .then(datastreams => datastreams[0].observations());
+const observations = await api.systems
+  .get('sys123')
+  .then((system) => system.datastreams())
+  .then((datastreams) => datastreams[0].observations());
 ```
 
 2. **Automatic Link Resolution:**
+
 ```typescript
 interface System {
   id: string;
-  procedure: Link;  // Typed link object
+  procedure: Link; // Typed link object
 }
 
 class Link {
   constructor(private href: string, private client: CsapiClient) {}
-  
+
   async resolve<T>(): Promise<T> {
     return this.client.get<T>(this.href);
   }
@@ -1543,9 +1599,11 @@ const procedure = await system.procedure.resolve<Procedure>();
 ```
 
 3. **Lazy Navigation:**
+
 ```typescript
 // Return navigation builder without executing
-const datastreamQuery = api.systems.datastreams('sys123')
+const datastreamQuery = api.systems
+  .datastreams('sys123')
   .withObservedProperty('temperature')
   .withLimit(10);
 
@@ -1554,10 +1612,11 @@ const datastreams = await datastreamQuery.fetch();
 ```
 
 4. **Prefetching:**
+
 ```typescript
 // Eagerly load related resources
 const system = await api.systems.get('sys123', {
-  include: ['datastreams', 'deployments']
+  include: ['datastreams', 'deployments'],
 });
 
 // Related resources already loaded
@@ -1565,6 +1624,7 @@ const datastreams = system.datastreams; // No additional request
 ```
 
 5. **Relationship Objects:**
+
 ```typescript
 interface System {
   id: string;
@@ -1598,43 +1658,43 @@ class QueryArgs:
     Process and validate query parameters for CSAPI requests.
     Converts Python values to URL-safe strings.
     """
-    
+
     def __init__(self, **kwargs):
         """
         Initialize with keyword arguments representing query parameters.
         Automatically processes known parameters into URL format.
         """
         self.params = {}
-        
+
         # Process each known parameter type
         # (Implementation details in sections below)
 ```
 
 ### 7.2 Complete Parameter Support Matrix
 
-| Parameter | Type | Purpose | Example | Resources |
-|-----------|------|---------|---------|-----------|
-| `id` | string/list | Filter by resource ID(s) | `'sys123'` or `['sys1', 'sys2']` | All |
-| `uid` | string | Filter by unique identifier | `'urn:uuid:...'` | All |
-| `q` | string | Full-text search | `'weather station'` | All |
-| `bbox` | array[4] | Spatial bounding box filter | `[-122, 37, -121, 38]` | Systems, Deployments, SamplingFeatures |
-| `geom` | string | Geometry filter (GeoJSON/WKT) | `'POINT(-122.5 37.7)'` | Systems, Deployments, SamplingFeatures |
-| `datetime` | string | Generic temporal extent | `'2024-01-01T00:00:00Z/..'` | Most resources |
-| `phenomenonTime` | string | Time of observed phenomenon | `'2024-01-01/2024-01-31'` | Observations, DataStreams |
-| `resultTime` | string | Time result was generated | `'2024-01-01/2024-01-31'` | Observations |
-| `eventTime` | string | Time of system event | `'2024-01-01/..'` | SystemEvents |
-| `executionTime` | string | Time command was executed | `'2024-01-01/2024-01-31'` | Commands |
-| `foi` | string/list | Feature of interest ID(s) | `'location-001'` | Observations, DataStreams |
-| `parent` | string/list | Parent resource ID(s) | `'parent-sys'` | Systems |
-| `procedure` | string/list | Procedure ID(s) | `'proc-123'` | Systems |
-| `system` | string/list | System ID(s) | `'sys-456'` | DataStreams, Deployments |
-| `observedProperty` | string/list | Observed property URI(s) | `['temperature', 'humidity']` | DataStreams, Observations |
-| `controlledProperty` | string/list | Controlled property URI(s) | `'valve-position'` | ControlStreams |
-| `baseProperty` | string/list | Base property URI(s) | `'property-123'` | Properties |
-| `objectType` | string | Object type classification | `'sensor'` | Systems |
-| `issueTime` | string | Time resource was issued | `'2024-01-01/..'` | Commands |
-| `limit` | integer | Maximum results to return | `100` | All collections |
-| `recursive` | boolean | Include child resources | `True` | Systems, Properties |
+| Parameter            | Type        | Purpose                       | Example                          | Resources                              |
+| -------------------- | ----------- | ----------------------------- | -------------------------------- | -------------------------------------- |
+| `id`                 | string/list | Filter by resource ID(s)      | `'sys123'` or `['sys1', 'sys2']` | All                                    |
+| `uid`                | string      | Filter by unique identifier   | `'urn:uuid:...'`                 | All                                    |
+| `q`                  | string      | Full-text search              | `'weather station'`              | All                                    |
+| `bbox`               | array[4]    | Spatial bounding box filter   | `[-122, 37, -121, 38]`           | Systems, Deployments, SamplingFeatures |
+| `geom`               | string      | Geometry filter (GeoJSON/WKT) | `'POINT(-122.5 37.7)'`           | Systems, Deployments, SamplingFeatures |
+| `datetime`           | string      | Generic temporal extent       | `'2024-01-01T00:00:00Z/..'`      | Most resources                         |
+| `phenomenonTime`     | string      | Time of observed phenomenon   | `'2024-01-01/2024-01-31'`        | Observations, DataStreams              |
+| `resultTime`         | string      | Time result was generated     | `'2024-01-01/2024-01-31'`        | Observations                           |
+| `eventTime`          | string      | Time of system event          | `'2024-01-01/..'`                | SystemEvents                           |
+| `executionTime`      | string      | Time command was executed     | `'2024-01-01/2024-01-31'`        | Commands                               |
+| `foi`                | string/list | Feature of interest ID(s)     | `'location-001'`                 | Observations, DataStreams              |
+| `parent`             | string/list | Parent resource ID(s)         | `'parent-sys'`                   | Systems                                |
+| `procedure`          | string/list | Procedure ID(s)               | `'proc-123'`                     | Systems                                |
+| `system`             | string/list | System ID(s)                  | `'sys-456'`                      | DataStreams, Deployments               |
+| `observedProperty`   | string/list | Observed property URI(s)      | `['temperature', 'humidity']`    | DataStreams, Observations              |
+| `controlledProperty` | string/list | Controlled property URI(s)    | `'valve-position'`               | ControlStreams                         |
+| `baseProperty`       | string/list | Base property URI(s)          | `'property-123'`                 | Properties                             |
+| `objectType`         | string      | Object type classification    | `'sensor'`                       | Systems                                |
+| `issueTime`          | string      | Time resource was issued      | `'2024-01-01/..'`                | Commands                               |
+| `limit`              | integer     | Maximum results to return     | `100`                            | All collections                        |
+| `recursive`          | boolean     | Include child resources       | `True`                           | Systems, Properties                    |
 
 ### 7.3 String Parameter Processing
 
@@ -1752,23 +1812,23 @@ def systems(self, **kwargs) -> dict:
     """GET /systems"""
     path = 'systems'
     query_params = QueryArgs(**kwargs)
-    
+
     # Only these parameters allowed for /systems endpoint
-    p_list = ['id', 'uid', 'q', 'parent', 'procedure', 'objectType', 
+    p_list = ['id', 'uid', 'q', 'parent', 'procedure', 'objectType',
               'bbox', 'geom', 'datetime', 'limit', 'recursive']
-    
+
     # Filter to only allowed parameters
-    return self._request(path=path, 
+    return self._request(path=path,
                         kwargs=query_params.check_params(p_list))
 
 def observations_of_datastream(self, datastream_id: str, **kwargs) -> dict:
     """GET /datastreams/{id}/observations"""
     path = f'datastreams/{datastream_id}/observations'
     query_params = QueryArgs(**kwargs)
-    
+
     # Different allowlist for observations endpoint
     p_list = ['id', 'foi', 'phenomenonTime', 'resultTime', 'limit']
-    
+
     return self._request(path=path,
                         kwargs=query_params.check_params(p_list))
 ```
@@ -1779,7 +1839,7 @@ The `check_params()` method filters out unsupported parameters:
 def check_params(self, param_list):
     """
     Filter parameters to only those in param_list
-    
+
     @param param_list: List of allowed parameter names
     @returns: Dict of only allowed parameters
     """
@@ -1804,6 +1864,7 @@ def check_params(self, param_list):
 ### 7.11 Complex Query Examples
 
 **Spatial + Temporal + Property Filter:**
+
 ```python
 systems = api.systems(
     bbox=[-122.5, 37.7, -122.3, 37.9],  # San Francisco area
@@ -1814,6 +1875,7 @@ systems = api.systems(
 ```
 
 **Multi-Property DataStream Query:**
+
 ```python
 datastreams = api.datastreams(
     system='sys123',                                  # Specific system
@@ -1824,6 +1886,7 @@ datastreams = api.datastreams(
 ```
 
 **Observation Time Range Query:**
+
 ```python
 observations = api.observations_of_datastream(
     datastream_id='ds456',
@@ -1835,6 +1898,7 @@ observations = api.observations_of_datastream(
 ```
 
 **Hierarchical System Query:**
+
 ```python
 systems = api.systems(
     parent='platform-001',  # Child systems of platform
@@ -1861,6 +1925,7 @@ Some standard OGC API parameters are **not implemented** in OWSLib's CSAPI modul
 **Recommendations:**
 
 1. **Strong Parameter Typing:**
+
 ```typescript
 interface SystemsQueryParams {
   id?: string | string[];
@@ -1875,32 +1940,33 @@ interface SystemsQueryParams {
 
 // Usage with type checking:
 const systems = await api.systems({
-  bbox: [-122, 37, -121, 38],  // Type checked!
+  bbox: [-122, 37, -121, 38], // Type checked!
   limit: 100,
-  recursive: true
+  recursive: true,
 });
 ```
 
 2. **Parameter Builders:**
+
 ```typescript
 class QueryBuilder {
   private params: SystemsQueryParams = {};
-  
+
   withBbox(minx: number, miny: number, maxx: number, maxy: number) {
     this.params.bbox = [minx, miny, maxx, maxy];
     return this;
   }
-  
+
   withDatetimeRange(start: Date, end: Date) {
     this.params.datetime = `${start.toISOString()}/${end.toISOString()}`;
     return this;
   }
-  
+
   withLimit(limit: number) {
     this.params.limit = limit;
     return this;
   }
-  
+
   build(): SystemsQueryParams {
     return this.params;
   }
@@ -1914,39 +1980,41 @@ const params = new QueryBuilder()
 ```
 
 3. **Runtime Validation:**
+
 ```typescript
 class ParameterValidator {
   validate(params: SystemsQueryParams): ValidationResult {
     const errors: string[] = [];
-    
+
     if (params.bbox && params.bbox.length !== 4) {
       errors.push('bbox must have exactly 4 values');
     }
-    
+
     if (params.limit && (params.limit < 1 || params.limit > 10000)) {
       errors.push('limit must be between 1 and 10000');
     }
-    
+
     // ... more validations
-    
+
     return { valid: errors.length === 0, errors };
   }
 }
 ```
 
 4. **No Silent Dropping:**
+
 ```typescript
 // Warn if parameter not supported by endpoint
 class SystemsClient {
   async systems(params: SystemsQueryParams): Promise<SystemCollection> {
     const allowedParams = ['id', 'q', 'bbox', 'datetime', 'limit'];
-    
+
     for (const key of Object.keys(params)) {
       if (!allowedParams.includes(key)) {
         console.warn(`Parameter '${key}' not supported by /systems endpoint`);
       }
     }
-    
+
     // ... execute request
   }
 }
@@ -1991,7 +2059,7 @@ SystemHistory    # /systemHistory endpoints
 
 ### 8.3 Collection List Methods
 
-Pattern: **`resources(**kwargs)`** (plural form, no verb)
+Pattern: **`resources(**kwargs)`\*\* (plural form, no verb)
 
 ```python
 # All classes follow this pattern:
@@ -2009,7 +2077,7 @@ commands_api.commands()             # List commands
 
 ### 8.4 Single Resource Methods
 
-Pattern: **`resource(id, **kwargs)`** (singular form, no verb)
+Pattern: **`resource(id, **kwargs)`\*\* (singular form, no verb)
 
 ```python
 # All classes follow this pattern:
@@ -2051,6 +2119,7 @@ commands_api.command_create_in_control_stream(      # POST /controlStreams/{id}/
 ```
 
 **Rationale**:
+
 - `_create` suffix is explicit (not `_add`, `_new`, `_insert`)
 - Parent context methods include `_in_{parent}` for clarity
 
@@ -2075,6 +2144,7 @@ control_streams_api.control_stream_update_schema('cs789', json_data)
 ```
 
 **Rationale**:
+
 - `_update` clearly indicates modification (not `_edit`, `_modify`, `_set`)
 - Aspect updates include the aspect name (`_description`, `_schema`)
 
@@ -2095,7 +2165,7 @@ commands_api.command_delete('cmd002')               # DELETE /commands/{id}
 
 ### 8.8 Navigation Methods
 
-Pattern: **`parent_child_collection(parent_id, **kwargs)`**
+Pattern: **`parent_child_collection(parent_id, **kwargs)`\*\*
 
 Uses **singular parent** and **plural child**:
 
@@ -2122,6 +2192,7 @@ sampling_features_api.systems_of_sampling_feature(sampling_feature_id)
 ```
 
 **Rationale**:
+
 - Pattern: `{parent_singular}_{child_plural}(parent_id)`
 - Alternative pattern: `{child_plural}_of_{parent_singular}(parent_id)`
 - Both convey relationship clearly
@@ -2139,25 +2210,27 @@ datastreams_api.datastreams(system='sys123')  # Using query parameter
 # These are equivalent but first is more explicit
 ```
 
-Pattern: **`resources_of_{filter}(filter_id, **kwargs)`**
+Pattern: **`resources*of*{filter}(filter_id, **kwargs)`\*\*
 
 ### 8.10 Method Naming Comparison to Other Conventions
 
-| Convention | OWSLib | Alternative (REST) | Alternative (ORM) |
-|------------|--------|-------------------|-------------------|
-| **List all** | `systems()` | `get_systems()` | `System.all()` |
-| **Get one** | `system(id)` | `get_system(id)` | `System.find(id)` |
-| **Create** | `system_create(data)` | `create_system(data)` | `System.create(data)` |
-| **Update** | `system_update(id, data)` | `update_system(id, data)` | `system.update(data)` |
-| **Delete** | `system_delete(id)` | `delete_system(id)` | `system.delete()` |
-| **Navigate** | `system_datastreams(id)` | `get_system_datastreams(id)` | `system.datastreams.all()` |
+| Convention   | OWSLib                    | Alternative (REST)           | Alternative (ORM)          |
+| ------------ | ------------------------- | ---------------------------- | -------------------------- |
+| **List all** | `systems()`               | `get_systems()`              | `System.all()`             |
+| **Get one**  | `system(id)`              | `get_system(id)`             | `System.find(id)`          |
+| **Create**   | `system_create(data)`     | `create_system(data)`        | `System.create(data)`      |
+| **Update**   | `system_update(id, data)` | `update_system(id, data)`    | `system.update(data)`      |
+| **Delete**   | `system_delete(id)`       | `delete_system(id)`          | `system.delete()`          |
+| **Navigate** | `system_datastreams(id)`  | `get_system_datastreams(id)` | `system.datastreams.all()` |
 
 **OWSLib's Advantages:**
+
 - ✅ Shorter (no `get_` prefix everywhere)
 - ✅ More natural (plural for collection, singular for item)
 - ✅ Consistent across all operations
 
 **Potential Confusion:**
+
 - ⚠️ `systems()` could be mistaken for constructor call
 - ⚠️ Lacks verb for read operations (no `get`, `fetch`, `list`)
 
@@ -2165,14 +2238,14 @@ Pattern: **`resources_of_{filter}(filter_id, **kwargs)`**
 
 OWSLib uses minimal verbs:
 
-| Operation | Verb Used | Alternative Verbs |
-|-----------|-----------|-------------------|
-| List collection | *none* | `list`, `get`, `fetch`, `query` |
-| Get single | *none* | `get`, `fetch`, `find`, `retrieve` |
-| Create | `create` | `add`, `new`, `insert`, `post` |
-| Update | `update` | `modify`, `edit`, `set`, `put`, `patch` |
-| Delete | `delete` | `remove`, `destroy`, `erase` |
-| Navigate | *none* | `get`, `fetch`, `list` |
+| Operation       | Verb Used | Alternative Verbs                       |
+| --------------- | --------- | --------------------------------------- |
+| List collection | _none_    | `list`, `get`, `fetch`, `query`         |
+| Get single      | _none_    | `get`, `fetch`, `find`, `retrieve`      |
+| Create          | `create`  | `add`, `new`, `insert`, `post`          |
+| Update          | `update`  | `modify`, `edit`, `set`, `put`, `patch` |
+| Delete          | `delete`  | `remove`, `destroy`, `erase`            |
+| Navigate        | _none_    | `get`, `fetch`, `list`                  |
 
 **Consistency Score: ⭐⭐⭐⭐⭐ (Excellent)**
 
@@ -2198,61 +2271,69 @@ OWSLib avoids verb proliferation - only uses verbs for write operations (`create
 **Recommendations:**
 
 1. **Adopt OWSLib's Pattern (with Adjustments):**
+
 ```typescript
 class SystemsClient {
   // Collection - keep plural, no verb
   async systems(params?: SystemsParams): Promise<SystemCollection> {}
-  
+
   // Single - keep singular, no verb (or use `get` for clarity)
   async system(id: string): Promise<System> {}
   // OR:
-  async get(id: string): Promise<System> {}  // More explicit
-  
+  async get(id: string): Promise<System> {} // More explicit
+
   // Create - keep `create` verb
   async create(data: SystemInput): Promise<System> {}
   async createInParent(parentId: string, data: SystemInput): Promise<System> {}
-  
+
   // Update - keep `update` verb
   async update(id: string, data: SystemInput): Promise<System> {}
-  async updateDescription(id: string, data: DescriptionInput): Promise<System> {}
-  
+  async updateDescription(
+    id: string,
+    data: DescriptionInput
+  ): Promise<System> {}
+
   // Delete - keep `delete` verb (or `remove` since `delete` is reserved word)
   async delete(id: string): Promise<void> {}
   // OR:
-  async remove(id: string): Promise<void> {}  // Avoid reserved word
-  
+  async remove(id: string): Promise<void> {} // Avoid reserved word
+
   // Navigation - explicit methods
-  async datastreams(systemId: string, params?: DatastreamParams): Promise<DatastreamCollection> {}
+  async datastreams(
+    systemId: string,
+    params?: DatastreamParams
+  ): Promise<DatastreamCollection> {}
 }
 ```
 
 2. **Alternative: Namespaced Verbs:**
+
 ```typescript
 class SystemsClient {
   list = {
     all: async (params?: SystemsParams) => {},
-    byParent: async (parentId: string, params?) => {}
+    byParent: async (parentId: string, params?) => {},
   };
-  
+
   get = {
     byId: async (id: string) => {},
-    byUid: async (uid: string) => {}
+    byUid: async (uid: string) => {},
   };
-  
+
   create = {
     standalone: async (data: SystemInput) => {},
-    inParent: async (parentId: string, data: SystemInput) => {}
+    inParent: async (parentId: string, data: SystemInput) => {},
   };
-  
+
   update = {
     full: async (id: string, data: SystemInput) => {},
-    description: async (id: string, data: DescriptionInput) => {}
+    description: async (id: string, data: DescriptionInput) => {},
   };
-  
+
   delete = {
-    byId: async (id: string) => {}
+    byId: async (id: string) => {},
   };
-  
+
   navigate = {
     toDatastreams: async (systemId: string, params?) => {},
     toDeployments: async (systemId: string, params?) => {},
@@ -2262,23 +2343,26 @@ class SystemsClient {
 ```
 
 3. **Reserved Word Handling:**
-JavaScript/TypeScript has reserved words that conflict with OWSLib patterns:
+   JavaScript/TypeScript has reserved words that conflict with OWSLib patterns:
+
 - `delete` is reserved → use `remove` or `destroy`
 - `export` is reserved → use `exportData`
 - `function` is reserved → use `func` or `fn`
 
 4. **TypeScript Advantages:**
+
 - Method overloading for flexible signatures
 - Generic types for collection/single distinctions
 - Decorator patterns for metadata
 
 ---
 
-*[Sections 9-18 continue with similar depth and detail...]*
+_[Sections 9-18 continue with similar depth and detail...]_
 
 **Due to length constraints, I'm providing the section outline for the remaining sections:**
 
 ## 9. Error Handling
+
 - Base exception handling in util.py
 - ServiceException for 400/401/403
 - HTTP status code handling
@@ -2288,6 +2372,7 @@ JavaScript/TypeScript has reserved words that conflict with OWSLib patterns:
 - Implications for TypeScript (error hierarchies)
 
 ## 10. Documentation Patterns
+
 - Javadoc-style docstrings (@type, @param, @returns)
 - Always states API endpoint implemented
 - Type hints in function signatures
@@ -2297,6 +2382,7 @@ JavaScript/TypeScript has reserved words that conflict with OWSLib patterns:
 - Implications for TypeScript (TSDoc, JSDoc)
 
 ## 11. CSAPI Specification Coverage
+
 - All 11 resource types implemented
 - Full CRUD operations
 - Comprehensive query capabilities
@@ -2305,6 +2391,7 @@ JavaScript/TypeScript has reserved words that conflict with OWSLib patterns:
 - Production-ready implementation
 
 ## 12. Strengths to Emulate
+
 - Consistent naming conventions
 - Resource-class pattern
 - Query parameter validation
@@ -2315,6 +2402,7 @@ JavaScript/TypeScript has reserved words that conflict with OWSLib patterns:
 - Clear documentation structure
 
 ## 13. Pain Points to Avoid
+
 - Tight coupling of URL building/execution
 - Dictionary-based responses (no type safety)
 - String request bodies (no validation)
@@ -2325,6 +2413,7 @@ JavaScript/TypeScript has reserved words that conflict with OWSLib patterns:
 - No OpenAPI integration
 
 ## 14. Python to TypeScript Translation
+
 - Separate URL builders from execution
 - Strong typing throughout (interfaces, generics)
 - Error type hierarchies
@@ -2335,6 +2424,7 @@ JavaScript/TypeScript has reserved words that conflict with OWSLib patterns:
 - Testing improvements
 
 ## 15. Usage Examples
+
 - Basic CRUD operations
 - Query parameter usage
 - Navigation patterns
@@ -2344,13 +2434,15 @@ JavaScript/TypeScript has reserved words that conflict with OWSLib patterns:
 - Format negotiation
 
 ## 16. Code References
+
 - owslib/ogcapi/connected_systems/connectedsystems.py
-- owslib/ogcapi/connected_systems/*.py (11 resource files)
+- owslib/ogcapi/connected_systems/\*.py (11 resource files)
 - owslib/ogcapi/api.py (base class)
 - owslib/util.py (HTTP utilities)
-- tests/test_ogcapi_connected_systems*.py
+- tests/test_ogcapi_connected_systems\*.py
 
 ## 17. Comparative Analysis
+
 - Comparison to osh-viewer (Sections 10)
 - Comparison to oscar-viewer (Section 11)
 - OWSLib as server-side reference implementation
@@ -2358,6 +2450,7 @@ JavaScript/TypeScript has reserved words that conflict with OWSLib patterns:
 - Unique strengths of Python approach
 
 ## 18. Recommendations for TypeScript Library
+
 - Architecture decisions
 - API surface design
 - Type safety priorities
@@ -2376,6 +2469,7 @@ OWSLib provides an **excellent reference implementation** of the OGC API - Conne
 The TypeScript library should **adopt OWSLib's architectural strengths** while **leveraging TypeScript's advantages** to address limitations:
 
 **Adopt from OWSLib:**
+
 - ✅ Resource-per-class organization
 - ✅ Consistent method naming patterns
 - ✅ Comprehensive query parameter support
@@ -2383,6 +2477,7 @@ The TypeScript library should **adopt OWSLib's architectural strengths** while *
 - ✅ Complete CRUD operations
 
 **Improve with TypeScript:**
+
 - ➕ Strong typing (interfaces, generics, type guards)
 - ➕ Separate URL builders from execution
 - ➕ Async/await throughout

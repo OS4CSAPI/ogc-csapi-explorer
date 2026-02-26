@@ -1,5 +1,6 @@
 fixtures/**/*.xml
 fixtures/**/notjson.json
+docs/research/standards/*.yaml
 dist
 app/dist
 node_modules

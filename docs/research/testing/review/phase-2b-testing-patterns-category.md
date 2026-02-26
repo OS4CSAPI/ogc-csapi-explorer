@@ -12,13 +12,13 @@
 
 ### 1.1 Documents Reviewed
 
-| # | Document | Lines | Status | Verdict |
-|---|----------|-------|--------|---------|
-| 06 | [meaningful-vs-trivial-definition.md](../findings/06-meaningful-vs-trivial-definition.md) | 2,321 | ✅ Reviewed | ⚠️ Issues Found |
-| 13 | [resource-method-testing-patterns.md](../findings/13-resource-method-testing-patterns.md) | 1,574 | ✅ Reviewed | ⚠️ Issues Found |
-| 14 | [integration-test-workflow-design.md](../findings/14-integration-test-workflow-design.md) | 2,265 | ✅ Reviewed | ⚠️ Issues Found |
-| 19 | [test-organization-file-structure.md](../findings/19-test-organization-file-structure.md) | 1,484 | ✅ Reviewed | ⚠️ Issues Found |
-| 34 | [test-utility-helper-design.md](../findings/34-test-utility-helper-design.md) | 2,613 | ✅ Reviewed | ❌ Significant Issues |
+| #   | Document                                                                                  | Lines | Status      | Verdict               |
+| --- | ----------------------------------------------------------------------------------------- | ----- | ----------- | --------------------- |
+| 06  | [meaningful-vs-trivial-definition.md](../findings/06-meaningful-vs-trivial-definition.md) | 2,321 | ✅ Reviewed | ⚠️ Issues Found       |
+| 13  | [resource-method-testing-patterns.md](../findings/13-resource-method-testing-patterns.md) | 1,574 | ✅ Reviewed | ⚠️ Issues Found       |
+| 14  | [integration-test-workflow-design.md](../findings/14-integration-test-workflow-design.md) | 2,265 | ✅ Reviewed | ⚠️ Issues Found       |
+| 19  | [test-organization-file-structure.md](../findings/19-test-organization-file-structure.md) | 1,484 | ✅ Reviewed | ⚠️ Issues Found       |
+| 34  | [test-utility-helper-design.md](../findings/34-test-utility-helper-design.md)             | 2,613 | ✅ Reviewed | ❌ Significant Issues |
 
 **Total Lines Reviewed:** 10,257
 
@@ -40,17 +40,18 @@ These 5 documents collectively define the testing patterns strategy for the CSAP
 
 Each document was checked against all 5 Phase 0 anti-patterns:
 
-| ID | Anti-Pattern | Description |
-|----|-------------|-------------|
-| AP1 | Testing Response Content | Tests validate server responses rather than client code |
-| AP2 | Hybrid Fixture/Live | Tests designed to run against live servers OR fixtures |
-| AP3 | OGC Requirement Traceability | Test structure mirrors spec requirements, not client code |
-| AP4 | Asserting Data Shape | Tests check response structure without testing transformation |
-| AP5 | Graceful Skipping | Tests skip based on fixture content rather than failing |
+| ID  | Anti-Pattern                 | Description                                                   |
+| --- | ---------------------------- | ------------------------------------------------------------- |
+| AP1 | Testing Response Content     | Tests validate server responses rather than client code       |
+| AP2 | Hybrid Fixture/Live          | Tests designed to run against live servers OR fixtures        |
+| AP3 | OGC Requirement Traceability | Test structure mirrors spec requirements, not client code     |
+| AP4 | Asserting Data Shape         | Tests check response structure without testing transformation |
+| AP5 | Graceful Skipping            | Tests skip based on fixture content rather than failing       |
 
 ### 2.2 Upstream Verification
 
 Patterns were verified against the actual upstream EDR tests at `src/ogc-api/endpoint.spec.ts` (lines 2543-2835), which demonstrate:
+
 - Public API entry via `new OgcApiEndpoint('http://local/...')`
 - Exact string URL matching (`expect(url).toEqual(...)`)
 - Fixture-driven via mock fetch mapped to URL paths
@@ -66,6 +67,7 @@ Patterns were verified against the actual upstream EDR tests at `src/ogc-api/end
 The testing patterns are **fundamentally sound in orientation** — they correctly target client-side behavior (URL construction, parameter encoding, conformance detection, builder factory patterns). None of the 5 documents advocate for server-compliance testing, and all align with the upstream mock-fetch-driven approach.
 
 However, **significant quality issues exist**:
+
 - Inflated numeric claims (test counts, line savings, fixture counts)
 - Internal inconsistencies between documents
 - One document (34) contains mathematically impossible claims
@@ -73,12 +75,12 @@ However, **significant quality issues exist**:
 
 ### 3.2 Severity Distribution
 
-| Severity | Count | Description |
-|----------|-------|-------------|
-| Critical | 0 | No showstoppers |
-| High | 3 | Must fix before implementation |
-| Medium | 4 | Should fix for consistency |
-| Low | 3 | Minor improvements |
+| Severity | Count | Description                    |
+| -------- | ----- | ------------------------------ |
+| Critical | 0     | No showstoppers                |
+| High     | 3     | Must fix before implementation |
+| Medium   | 4     | Should fix for consistency     |
+| Low      | 3     | Minor improvements             |
 
 ---
 
@@ -135,6 +137,7 @@ expect(url).toContain('phenomenonTime=2024-01-01T00%3A00%3A00Z...');
 Document 06 explicitly flags `toContain` as a "Red Flag" and "Trivial" pattern (Section 15), yet Document 14 uses it throughout.
 
 The actual upstream EDR tests use exact string matching:
+
 ```typescript
 // Upstream pattern (endpoint.spec.ts L2612):
 expect(areaUrlWithoutParam).toEqual(areaUrlWithouParam);
@@ -207,6 +210,7 @@ This tests whether the mocked fixture contains the right shape — the mock is s
 **Status:** ✅ Resolved
 
 **Problem:** Fixture counts vary across documents without reconciliation:
+
 - Doc 13: 23 fixtures (5 universal + 18 resource-specific)
 - Doc 14: 33 fixtures (organized by workflow)
 - Doc 19: ~280 fixtures (including SensorML, SWE Common, GeoJSON parsers, errors)
@@ -226,6 +230,7 @@ These counts are not additive in any obvious way and no document reconciles them
 **Status:** ✅ Resolved
 
 **Problem:** 10,257 lines across 5 documents for testing patterns that could be conveyed more concisely. Significant redundancy exists:
+
 - Documents 06 and 13 both define "meaningful" testing depth criteria
 - Documents 13, 14, and 19 all propose test file structures
 - Documents 13, 14, and 34 all provide code templates for test utilities
@@ -236,6 +241,7 @@ These counts are not additive in any obvious way and no document reconciles them
 **Recommendation:** No immediate fix needed, but when implementation begins, designate a single "Testing Patterns Reference" document that supersedes overlapping sections.
 
 **Resolution:** Added "Authority Note" cross-references at each overlap point in the non-authoritative documents:
+
 - Doc 13, Section 6 (test depth): points to Doc 06 as authoritative for meaningful/trivial criteria
 - Doc 13, Section 7 (test organization): points to Doc 19 as authoritative for file structure
 - Doc 13, Section 7.3 (shared utilities): points to Doc 34 as authoritative for utility specifications
@@ -282,6 +288,7 @@ Each note follows the pattern: "If [topic] conflicts, [authoritative doc] takes 
 ### P1: Correct Client-Side Orientation
 
 All 5 documents consistently frame testing around client-side behavior:
+
 - URL construction and parameter encoding (Docs 06, 13)
 - Conformance detection and collection filtering (Doc 14)
 - Builder factory pattern and caching (Doc 14)
@@ -293,6 +300,7 @@ This aligns well with the Phase 0 anti-pattern catalog and upstream patterns.
 ### P2: Strong Upstream Alignment
 
 The integration test patterns in Document 14 closely mirror the actual upstream EDR tests:
+
 - Public API entry via `new OgcApiEndpoint(...)`
 - `hasConnectedSystems` parallels `hasEnvironmentalDataRetrieval`
 - `csapiCollections` parallels `edrCollections`
@@ -303,6 +311,7 @@ The integration test patterns in Document 14 closely mirror the actual upstream 
 ### P3: Anti-Pattern Awareness in Doc 06
 
 Document 06 explicitly catalogs trivial vs. meaningful testing patterns with 17+ side-by-side code examples. This provides a strong quality reference for test reviews. The document correctly identifies:
+
 - `toContain` URL checks as insufficient
 - `toBeTruthy` / `toBeDefined` as non-assertions
 - Single-scenario tests as incomplete
@@ -320,13 +329,13 @@ Document 14 clearly defines the boundary between unit tests (URL correctness, pa
 
 ## 6. Anti-Pattern Cross-Reference Summary
 
-| Anti-Pattern | Doc 06 | Doc 13 | Doc 14 | Doc 19 | Doc 34 |
-|-------------|--------|--------|--------|--------|--------|
-| AP1: Testing Response Content | ✅ Avoided | ✅ Avoided | ⚠️ M3 risk | ✅ N/A | ✅ Avoided |
-| AP2: Hybrid Fixture/Live | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided |
-| AP3: OGC Req Traceability | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided |
-| AP4: Asserting Data Shape | ✅ Avoided | ✅ Avoided | ⚠️ M3 risk | ✅ N/A | ✅ Avoided |
-| AP5: Graceful Skipping | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided |
+| Anti-Pattern                  | Doc 06     | Doc 13     | Doc 14     | Doc 19     | Doc 34     |
+| ----------------------------- | ---------- | ---------- | ---------- | ---------- | ---------- |
+| AP1: Testing Response Content | ✅ Avoided | ✅ Avoided | ⚠️ M3 risk | ✅ N/A     | ✅ Avoided |
+| AP2: Hybrid Fixture/Live      | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided |
+| AP3: OGC Req Traceability     | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided |
+| AP4: Asserting Data Shape     | ✅ Avoided | ✅ Avoided | ⚠️ M3 risk | ✅ N/A     | ✅ Avoided |
+| AP5: Graceful Skipping        | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided | ✅ Avoided |
 
 **Assessment:** No documents explicitly commit anti-patterns. Document 14 has edge-case risks (M3 — response shape assertions that may test fixtures rather than client code), but these are correctable with clarifying comments.
 
@@ -350,6 +359,7 @@ Document 14 clearly defines the boundary between unit tests (URL correctness, pa
 ### 7.3 Authority Designation
 
 When implementation begins, designate authoritative documents for overlapping concerns:
+
 - **Test quality depth:** Doc 06 (authoritative)
 - **Resource method patterns:** Doc 13 (authoritative)
 - **Integration workflows:** Doc 14 (authoritative)

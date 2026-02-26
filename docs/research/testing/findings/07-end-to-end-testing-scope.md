@@ -15,12 +15,14 @@
 **Research Time:** ~1 hour (70 minutes) (February 5, 2026)
 
 **Primary Source(s):**
+
 - Section 1: EDR Test Pattern Blueprint (upstream e2e patterns from accepted PR #114)
 - Section 2: Upstream Test Consistency Matrix (e2e tests across 6 implementations)
 - Section 3: TypeScript Testing Standards (industry e2e standards and test pyramid)
 - Implementation Guide: csapi-implementation-guide.md (4 workflow types specification)
 
 **Supporting Resources:**
+
 - Section 6: Meaningful vs Trivial Definition (quality criteria for e2e tests)
 - Senior dev feedback documentation (lack of e2e tests criticism)
 
@@ -36,6 +38,7 @@
 For a URL-building library like CSAPI, "end-to-end" means **complete multi-component workflows from endpoint detection through URL construction and format detection**, NOT integration tests that make real HTTP calls. The library builds URLs but doesn't fetch data, so e2e tests must mock HTTP responses while testing complete workflows.
 
 **Critical Distinction:**
+
 - ❌ **Traditional E2E** (not applicable): Tests against real HTTP servers, makes real network calls
 - ✅ **CSAPI E2E** (what we need): Tests complete workflows (endpoint → collection → QueryBuilder → URL + format detection) with mocked HTTP responses
 
@@ -44,16 +47,16 @@ Previous implementation was rejected for lacking "end-to-end" tests. For CSAPI, 
 
 ### E2E vs Integration Distinction for CSAPI
 
-| Aspect | Integration Test | End-to-End Test (CSAPI) |
-|--------|-----------------|-------------------------|
-| **Scope** | 2-3 components | All components (endpoint → QueryBuilder → format) |
-| **Entry Point** | Mid-level (QueryBuilder creation) | Top-level (`new OgcApiEndpoint()`) |
-| **Workflow** | Partial (single operation) | Complete (discovery → query → parse) |
-| **Components** | QueryBuilder + helpers | Endpoint + conformance + collections + QueryBuilder + format detection |
-| **Example** | `builder.getSystems({ limit: 10 })` | Discovery → list collections → create builder → query systems → detect format |
-| **HTTP Mocking** | Single endpoint | Complete workflow (root + conformance + collections + resources) |
-| **Length** | 20-50 lines per test | 100-200 lines per test |
-| **Count** | ~60-80 tests | ~4-6 tests (workflows) |
+| Aspect           | Integration Test                    | End-to-End Test (CSAPI)                                                       |
+| ---------------- | ----------------------------------- | ----------------------------------------------------------------------------- |
+| **Scope**        | 2-3 components                      | All components (endpoint → QueryBuilder → format)                             |
+| **Entry Point**  | Mid-level (QueryBuilder creation)   | Top-level (`new OgcApiEndpoint()`)                                            |
+| **Workflow**     | Partial (single operation)          | Complete (discovery → query → parse)                                          |
+| **Components**   | QueryBuilder + helpers              | Endpoint + conformance + collections + QueryBuilder + format detection        |
+| **Example**      | `builder.getSystems({ limit: 10 })` | Discovery → list collections → create builder → query systems → detect format |
+| **HTTP Mocking** | Single endpoint                     | Complete workflow (root + conformance + collections + resources)              |
+| **Length**       | 20-50 lines per test                | 100-200 lines per test                                                        |
+| **Count**        | ~60-80 tests                        | ~4-6 tests (workflows)                                                        |
 
 **Key Insight:** What Implementation Guide calls "Integration Tests" are actually **E2E tests** by industry definition - they test complete workflows across all library layers.
 
@@ -75,12 +78,14 @@ Previous implementation was rejected for lacking "end-to-end" tests. For CSAPI, 
 ```
 
 **Distribution:**
+
 - **Unit Tests (55-60%):** 3,000-3,600 lines, ~200-250 tests
 - **Integration Tests (25-30%):** 800-1,000 lines, ~50-60 tests (multi-component, 2-3 components)
 - **E2E Tests (10-15%):** 500-800 lines, ~4-6 tests (complete workflows, all components)
 - **Total:** ~4,800-5,600 test lines for ~1,600 implementation lines (3.0-3.5× ratio)
 
 **Note:** This is higher than upstream average (1.44×) due to:
+
 1. 9 resource types vs EDR's 1 resource type
 2. Complex nested relationships requiring more integration tests
 3. Two format types (SensorML, SWE Common) requiring parser tests
@@ -89,6 +94,7 @@ Previous implementation was rejected for lacking "end-to-end" tests. For CSAPI, 
 ### E2E Scope Boundaries
 
 **IN SCOPE (what e2e tests DO cover):**
+
 - ✅ Complete workflows from `new OgcApiEndpoint()` to parsed results
 - ✅ Multi-resource navigation (Systems → Deployments → DataStreams → Observations)
 - ✅ Conformance-based behavior (adapt based on server capabilities)
@@ -98,6 +104,7 @@ Previous implementation was rejected for lacking "end-to-end" tests. For CSAPI, 
 - ✅ Link following (pagination, nested resources)
 
 **OUT OF SCOPE (what e2e tests DON'T cover):**
+
 - ❌ Actual HTTP calls (all responses mocked with realistic fixtures)
 - ❌ Server-side behavior validation
 - ❌ Network latency or performance testing
@@ -109,18 +116,21 @@ Previous implementation was rejected for lacking "end-to-end" tests. For CSAPI, 
 Based on Implementation Guide requirements:
 
 1. **Discovery Workflow** (~100-150 lines)
+
    - Entry: `new OgcApiEndpoint(url)`
    - Steps: Connect → conformance check → list collections → filter by type → create builder → check available resources
    - Exit: QueryBuilder with validated resources
    - Components: Endpoint, conformance parser, collection parser, QueryBuilder factory
 
 2. **Observation Query Workflow** (~150-200 lines)
+
    - Entry: `new OgcApiEndpoint(url)`
    - Steps: Discover systems → find datastreams → query observations → paginate → parse SWE Common results
    - Exit: Parsed observation array with typed results
    - Components: Endpoint, QueryBuilder (systems, datastreams, observations), SWE Common parser
 
 3. **Command Submission Workflow** (~150-200 lines)
+
    - Entry: `new OgcApiEndpoint(url)`
    - Steps: Discover systems → find control streams → check feasibility → submit command → track status → retrieve results
    - Exit: Command result with status tracking
@@ -141,16 +151,18 @@ Based on Implementation Guide requirements:
 ### What "End-to-End" Means for CSAPI
 
 **Traditional E2E (NOT applicable to CSAPI):**
+
 ```typescript
 // ❌ Traditional e2e for API clients (makes real HTTP calls)
 it('should fetch data from real server', async () => {
   const client = new APIClient('https://real-server.com');
-  const data = await client.getData();  // Real HTTP request
+  const data = await client.getData(); // Real HTTP request
   expect(data.items).toHaveLength(10);
 });
 ```
 
 **CSAPI E2E (what we implement):**
+
 ```typescript
 // ✅ CSAPI e2e (tests complete workflow with mocked HTTP)
 it('should complete observation query workflow end-to-end', async () => {
@@ -160,33 +172,36 @@ it('should complete observation query workflow end-to-end', async () => {
     'https://api.example.com/conformance': conformanceFixture,
     'https://api.example.com/collections': collectionsFixture,
     'https://api.example.com/collections/sensors/items': systemsFixture,
-    'https://api.example.com/collections/sensors/items/sys-1/datastreams': datastreamsFixture,
+    'https://api.example.com/collections/sensors/items/sys-1/datastreams':
+      datastreamsFixture,
   });
-  
+
   // 1. Endpoint detection (HTTP call #1: landing page)
   const endpoint = new OgcApiEndpoint('https://api.example.com/');
-  
+
   // 2. Conformance check (HTTP call #2: conformance)
   expect(await endpoint.hasConnectedSystems).toBe(true);
-  
+
   // 3. Collection listing (HTTP call #3: collections)
   const collections = await endpoint.csapiCollections;
   expect(collections).toContain('sensors');
-  
+
   // 4. QueryBuilder creation (HTTP call #4: collection info)
   const builder = await endpoint.csapi('sensors');
   expect(builder.availableResources).toContain('systems');
   expect(builder.availableResources).toContain('datastreams');
-  
+
   // 5. Systems query URL construction (no HTTP - pure URL building)
   const systemsUrl = builder.getSystems({ limit: 10 });
   expect(new URL(systemsUrl).searchParams.get('limit')).toBe('10');
-  
+
   // 6. DataStreams query URL construction (no HTTP)
   const datastreamsUrl = builder.getSystemDataStreams('sys-1');
-  expect(new URL(datastreamsUrl).pathname).toContain('/systems/items/sys-1/datastreams');
-  
-  // Validates: HTTP mocking, endpoint detection, conformance, collections, 
+  expect(new URL(datastreamsUrl).pathname).toContain(
+    '/systems/items/sys-1/datastreams'
+  );
+
+  // Validates: HTTP mocking, endpoint detection, conformance, collections,
   //            builder creation, resource validation, URL construction
 });
 ```
@@ -194,18 +209,21 @@ it('should complete observation query workflow end-to-end', async () => {
 ### Entry and Exit Points
 
 **Entry Point:** Always `new OgcApiEndpoint(url)`
+
 - First interaction with the library
 - Triggers endpoint detection
 - Loads conformance and collections
 - Entry to complete workflow
 
 **Exit Points (vary by workflow):**
+
 - **Discovery:** Validated `CSAPIQueryBuilder` instance with available resources
 - **Observation Query:** Parsed observation array (SWE Common → TypeScript objects)
 - **Command Submission:** Command result with status (submitted, completed, failed)
 - **Cross-Resource Navigation:** Complete resource relationship graph
 
 **What's In Between:**
+
 - HTTP calls (mocked in tests, real in production)
 - Conformance parsing
 - Collection info parsing
@@ -220,24 +238,28 @@ it('should complete observation query workflow end-to-end', async () => {
 **All library layers must be tested:**
 
 1. **Endpoint Layer:** `OgcApiEndpoint`
+
    - `.fromUrl()` factory
    - `.hasConnectedSystems` property
    - `.csapiCollections` property
    - `.csapi(collectionId)` factory method
 
 2. **Info/Conformance Layer:** Parsers
+
    - Conformance class detection
    - Collection parsing
    - Link resolution
    - Resource availability detection
 
 3. **QueryBuilder Layer:** `CSAPIQueryBuilder`
+
    - Factory method creation
    - Caching behavior
    - Resource validation
    - URL construction methods (70-80 methods)
 
 4. **Format Layer:** Parsers
+
    - SensorML 3.0 parser
    - SWE Common 3.0 parser
    - Format detection/negotiation
@@ -256,6 +278,7 @@ it('should complete observation query workflow end-to-end', async () => {
 ### Clear Boundary Definition
 
 **Integration Test:**
+
 - Tests 2-3 components together
 - Mocks some internal components
 - Partial workflow (one operation)
@@ -267,6 +290,7 @@ it('should complete observation query workflow end-to-end', async () => {
   - Link resolver + URL builder
 
 **End-to-End Test:**
+
 - Tests ALL components together (5+ layers)
 - Only mocks external HTTP calls
 - Complete workflow (multi-step)
@@ -280,24 +304,25 @@ it('should complete observation query workflow end-to-end', async () => {
 ### Side-by-Side Comparison
 
 **Integration Test Example:**
+
 ```typescript
 describe('CSAPIQueryBuilder integration', () => {
   it('should build systems URL with spatial filter', async () => {
     // Setup: Mock only the collection info HTTP call
     mockFetch({
-      'http://test/collections/sensors': collectionInfoFixture
+      'http://test/collections/sensors': collectionInfoFixture,
     });
-    
+
     // Entry: Mid-level (already have endpoint)
     const endpoint = new OgcApiEndpoint('http://test/');
     const builder = await endpoint.csapi('sensors');
-    
+
     // Test: Single operation
     const url = builder.getSystems({
       bbox: [-180, -90, 180, 90],
-      limit: 10
+      limit: 10,
     });
-    
+
     // Validation: URL structure only
     const parsed = new URL(url);
     expect(parsed.searchParams.get('bbox')).toBe('-180,-90,180,90');
@@ -307,6 +332,7 @@ describe('CSAPIQueryBuilder integration', () => {
 ```
 
 **End-to-End Test Example:**
+
 ```typescript
 describe('CSAPI observation workflow end-to-end', () => {
   it('should query observations from discovery to parsed results', async () => {
@@ -317,50 +343,57 @@ describe('CSAPI observation workflow end-to-end', () => {
       'http://test/collections': collectionsFixture,
       'http://test/collections/sensors': sensorsCollectionFixture,
       'http://test/collections/sensors/items': systemsFixture,
-      'http://test/collections/sensors/items/sys-1/datastreams': datastreamsFixture,
-      'http://test/collections/sensors/items/sys-1/datastreams/ds-1/observations': observationsFixture
+      'http://test/collections/sensors/items/sys-1/datastreams':
+        datastreamsFixture,
+      'http://test/collections/sensors/items/sys-1/datastreams/ds-1/observations':
+        observationsFixture,
     });
-    
+
     // Entry: Top-level (fresh start)
     const endpoint = new OgcApiEndpoint('http://test/');
-    
+
     // Step 1: Verify CSAPI support (conformance check)
     expect(await endpoint.hasConnectedSystems).toBe(true);
-    
+
     // Step 2: List CSAPI collections
     const collections = await endpoint.csapiCollections;
     expect(collections).toContain('sensors');
-    
+
     // Step 3: Create QueryBuilder (validates resources)
     const builder = await endpoint.csapi('sensors');
     expect(builder.availableResources).toContain('systems');
     expect(builder.availableResources).toContain('datastreams');
     expect(builder.availableResources).toContain('observations');
-    
+
     // Step 4: Query systems
     const systemsUrl = builder.getSystems({ systemType: 'sensor', limit: 5 });
     expect(new URL(systemsUrl).pathname).toBe('/collections/sensors/items');
     expect(new URL(systemsUrl).searchParams.get('systemType')).toBe('sensor');
-    
+
     // Step 5: Query system's datastreams
     const datastreamsUrl = builder.getSystemDataStreams('sys-1', {
-      observedProperty: 'temperature'
+      observedProperty: 'temperature',
     });
-    expect(new URL(datastreamsUrl).pathname).toContain('/systems/items/sys-1/datastreams');
-    
+    expect(new URL(datastreamsUrl).pathname).toContain(
+      '/systems/items/sys-1/datastreams'
+    );
+
     // Step 6: Query datastream's observations
     const observationsUrl = builder.getDataStreamObservations('ds-1', {
       phenomenonTime: '2024-01-01T00:00:00Z/2024-01-31T23:59:59Z',
-      limit: 100
+      limit: 100,
     });
-    expect(new URL(observationsUrl).pathname).toContain('/datastreams/items/ds-1/observations');
-    expect(new URL(observationsUrl).searchParams.get('phenomenonTime'))
-      .toMatch(/2024-01-01.*2024-01-31/);
-    
+    expect(new URL(observationsUrl).pathname).toContain(
+      '/datastreams/items/ds-1/observations'
+    );
+    expect(new URL(observationsUrl).searchParams.get('phenomenonTime')).toMatch(
+      /2024-01-01.*2024-01-31/
+    );
+
     // Step 7: Validate observation format detection
     // (In production, user would fetch observationsUrl and parse response)
     // Test validates URL leads to correct format negotiation
-    
+
     // Validates: Endpoint detection, conformance, collections, builder creation,
     //            multi-resource navigation, URL construction, query parameters,
     //            resource relationships, all working together
@@ -373,7 +406,9 @@ describe('CSAPI observation workflow end-to-end', () => {
 **Important:** What Implementation Guide calls "Integration Tests" are **E2E tests** by definition:
 
 From Implementation Guide Task 2:
+
 > **Integration Tests (End-to-End Workflows):**
+>
 > - Discovery workflows: Connect → check conformance → list collections → filter by type → retrieve resources
 > - Observation workflows: Discover systems → find datastreams → query observations → paginate → parse results
 > - Command workflows: Discover systems → find control streams → check feasibility → submit → track status → retrieve results
@@ -381,6 +416,7 @@ From Implementation Guide Task 2:
 These are **complete workflows across all components** = E2E tests, not integration tests.
 
 **Terminology Mapping:**
+
 - Implementation Guide "Integration Tests" = E2E Tests (what this research defines)
 - Implementation Guide doesn't explicitly define true integration tests
 - We need BOTH:
@@ -394,40 +430,47 @@ These are **complete workflows across all components** = E2E tests, not integrat
 ### In Scope: What E2E Tests Cover
 
 ✅ **1. Complete Workflows:**
+
 - Entry: `new OgcApiEndpoint(url)`
 - All steps from discovery to final result
 - Multi-resource navigation paths
 - Realistic user scenarios
 
 ✅ **2. Multi-Component Interaction:**
+
 - Endpoint detection + conformance parsing + collection parsing
 - QueryBuilder factory + resource validation
 - URL construction + query parameter serialization
 - Format detection + format parsing
 
 ✅ **3. Conformance-Based Behavior:**
+
 - Adapt QueryBuilder methods based on collection's supported resources
 - Throw errors when unsupported resources accessed
 - Validate resource relationships (e.g., system must exist before datastreams)
 
 ✅ **4. Format Detection and Parsing:**
+
 - Detect format from URL or response headers
 - Parse SensorML 3.0 documents to TypeScript objects
 - Parse SWE Common 3.0 results to TypeScript objects
 - Round-trip validation (parse → serialize → parse)
 
 ✅ **5. Error Workflows:**
+
 - Server errors (404 Not Found, 500 Internal Server Error) → client error handling
 - Validation errors (invalid parameters) → descriptive error messages
 - Malformed responses → parse error handling
 - Network errors (mocked timeout) → retry or fail gracefully
 
 ✅ **6. Caching and Performance:**
+
 - QueryBuilder instance caching (same collection → same builder)
 - Collection info caching
 - No unnecessary HTTP calls
 
 ✅ **7. Link Following:**
+
 - Pagination with rel="next" links
 - Nested resource links (system → datastreams link)
 - Collection link resolution
@@ -435,33 +478,39 @@ These are **complete workflows across all components** = E2E tests, not integrat
 ### Out of Scope: What E2E Tests DON'T Cover
 
 ❌ **1. Actual HTTP Calls:**
+
 - No real network requests
 - All responses mocked with realistic fixtures
 - Mock infrastructure manages request/response pairing
 
 ❌ **2. Server-Side Behavior:**
+
 - Don't validate server implements CSAPI spec correctly
 - Assume server responses are spec-compliant
 - Focus on client library behavior given spec-compliant responses
 
 ❌ **3. Network Conditions:**
+
 - No latency testing
 - No bandwidth testing
 - No connection stability testing
 - (These belong in consuming application's e2e tests)
 
 ❌ **4. Performance/Load Testing:**
+
 - No load testing (concurrent requests)
 - No memory leak testing
 - No stress testing
 - (These belong in separate performance test suite)
 
 ❌ **5. Real-Time Streaming:**
+
 - Unless CSAPI library explicitly supports streaming
 - Most workflows are request/response
 - If streaming added later, add streaming e2e tests
 
 ❌ **6. Browser-Specific Testing:**
+
 - No browser compatibility testing in e2e tests
 - (These belong in cross-browser test suite)
 - E2E tests run in Node.js environment
@@ -475,6 +524,7 @@ These are **complete workflows across all components** = E2E tests, not integrat
 **Purpose:** Validate endpoint detection, conformance checking, collection listing, and QueryBuilder creation
 
 **Steps:**
+
 1. Connect to endpoint via `new OgcApiEndpoint(url)` (HTTP: landing page)
 2. Check CSAPI support via `endpoint.hasConnectedSystems` (HTTP: conformance)
 3. List CSAPI collections via `endpoint.csapiCollections` (HTTP: collections)
@@ -483,6 +533,7 @@ These are **complete workflows across all components** = E2E tests, not integrat
 6. Validate available resources via `builder.availableResources` (client-side)
 
 **Components Involved:**
+
 - `OgcApiEndpoint` (factory, properties)
 - Conformance parser
 - Collection parser
@@ -494,6 +545,7 @@ These are **complete workflows across all components** = E2E tests, not integrat
 **Exit:** Validated `CSAPIQueryBuilder` with confirmed resource availability
 
 **Assertions:**
+
 - `endpoint.hasConnectedSystems === true`
 - `endpoint.csapiCollections` contains expected collection IDs
 - Builder creation succeeds
@@ -503,12 +555,14 @@ These are **complete workflows across all components** = E2E tests, not integrat
 **Test Length:** ~100-150 lines
 
 **HTTP Mocks Required:**
+
 - Landing page (`/`)
 - Conformance (`/conformance`)
 - Collections list (`/collections`)
 - Collection info (`/collections/{collectionId}`)
 
 **Example Structure:**
+
 ```typescript
 describe('CSAPI Discovery Workflow E2E', () => {
   it('should discover endpoint, check conformance, list collections, and create builder', async () => {
@@ -517,28 +571,28 @@ describe('CSAPI Discovery Workflow E2E', () => {
       'http://test/': landingPageFixture,
       'http://test/conformance': conformanceFixture,
       'http://test/collections': collectionsFixture,
-      'http://test/collections/sensors': sensorsCollectionFixture
+      'http://test/collections/sensors': sensorsCollectionFixture,
     });
-    
+
     // Step 1: Connect
     const endpoint = new OgcApiEndpoint('http://test/');
     expect(endpoint).toBeInstanceOf(OgcApiEndpoint);
-    
+
     // Step 2: Check conformance
     const hasCSAPI = await endpoint.hasConnectedSystems;
     expect(hasCSAPI).toBe(true);
-    
+
     // Step 3: List collections
     const collections = await endpoint.csapiCollections;
     expect(collections).toContain('sensors');
     expect(collections).toContain('stations');
-    
+
     // Step 4: Create builder
     const builder1 = await endpoint.csapi('sensors');
     expect(builder1).toBeDefined();
     expect(builder1.availableResources).toContain('systems');
     expect(builder1.availableResources).toContain('datastreams');
-    
+
     // Step 5: Validate caching
     const builder2 = await endpoint.csapi('sensors');
     expect(builder1).toBe(builder2); // Same instance
@@ -553,6 +607,7 @@ describe('CSAPI Discovery Workflow E2E', () => {
 **Purpose:** Validate complete observation query workflow from system discovery to parsed observation results
 
 **Steps:**
+
 1. Connect to endpoint (discovery workflow steps 1-5)
 2. Query systems with spatial/temporal filters (HTTP: systems collection)
 3. Navigate to system's datastreams (HTTP: datastreams for system)
@@ -563,6 +618,7 @@ describe('CSAPI Discovery Workflow E2E', () => {
 8. Validate parsed observation structure (client-side)
 
 **Components Involved:**
+
 - All from Discovery workflow
 - QueryBuilder (systems, datastreams, observations methods)
 - SWE Common parser
@@ -573,6 +629,7 @@ describe('CSAPI Discovery Workflow E2E', () => {
 **Exit:** Array of parsed observations with typed results
 
 **Assertions:**
+
 - Systems query URL correct (path, query params, encoding)
 - DataStreams query URL correct (nested under system)
 - Observations query URL correct (nested under datastream, temporal filter)
@@ -583,6 +640,7 @@ describe('CSAPI Discovery Workflow E2E', () => {
 **Test Length:** ~150-200 lines
 
 **HTTP Mocks Required:**
+
 - All from Discovery workflow
 - Systems collection response
 - DataStreams for specific system
@@ -590,6 +648,7 @@ describe('CSAPI Discovery Workflow E2E', () => {
 - Pagination next page (if testing pagination)
 
 **Example Structure:**
+
 ```typescript
 describe('CSAPI Observation Query Workflow E2E', () => {
   it('should query observations from system discovery to parsed results', async () => {
@@ -600,41 +659,51 @@ describe('CSAPI Observation Query Workflow E2E', () => {
       'http://test/collections': collectionsFixture,
       'http://test/collections/sensors': sensorsCollectionFixture,
       'http://test/collections/sensors/items?systemType=sensor': systemsFixture,
-      'http://test/collections/sensors/items/sys-1/datastreams?observedProperty=temperature': datastreamsFixture,
-      'http://test/collections/sensors/items/sys-1/datastreams/ds-1/observations?phenomenonTime=2024-01-01T00:00:00Z/2024-01-31T23:59:59Z': observationsFixture
+      'http://test/collections/sensors/items/sys-1/datastreams?observedProperty=temperature':
+        datastreamsFixture,
+      'http://test/collections/sensors/items/sys-1/datastreams/ds-1/observations?phenomenonTime=2024-01-01T00:00:00Z/2024-01-31T23:59:59Z':
+        observationsFixture,
     });
-    
+
     // Discovery steps
     const endpoint = new OgcApiEndpoint('http://test/');
     expect(await endpoint.hasConnectedSystems).toBe(true);
     const builder = await endpoint.csapi('sensors');
-    
+
     // Step 1: Query systems
     const systemsUrl = builder.getSystems({ systemType: 'sensor' });
     expect(new URL(systemsUrl).pathname).toBe('/collections/sensors/items');
     expect(new URL(systemsUrl).searchParams.get('systemType')).toBe('sensor');
-    
+
     // Step 2: Navigate to system's datastreams
     const datastreamsUrl = builder.getSystemDataStreams('sys-1', {
-      observedProperty: 'temperature'
+      observedProperty: 'temperature',
     });
-    expect(new URL(datastreamsUrl).pathname).toBe('/collections/sensors/items/sys-1/datastreams');
-    expect(new URL(datastreamsUrl).searchParams.get('observedProperty')).toBe('temperature');
-    
+    expect(new URL(datastreamsUrl).pathname).toBe(
+      '/collections/sensors/items/sys-1/datastreams'
+    );
+    expect(new URL(datastreamsUrl).searchParams.get('observedProperty')).toBe(
+      'temperature'
+    );
+
     // Step 3: Query observations
     const observationsUrl = builder.getDataStreamObservations('ds-1', {
-      phenomenonTime: '2024-01-01T00:00:00Z/2024-01-31T23:59:59Z'
+      phenomenonTime: '2024-01-01T00:00:00Z/2024-01-31T23:59:59Z',
     });
-    expect(new URL(observationsUrl).pathname).toBe('/collections/sensors/items/sys-1/datastreams/ds-1/observations');
-    expect(new URL(observationsUrl).searchParams.get('phenomenonTime')).toMatch(/2024-01-01.*2024-01-31/);
-    
+    expect(new URL(observationsUrl).pathname).toBe(
+      '/collections/sensors/items/sys-1/datastreams/ds-1/observations'
+    );
+    expect(new URL(observationsUrl).searchParams.get('phenomenonTime')).toMatch(
+      /2024-01-01.*2024-01-31/
+    );
+
     // Step 4: Validate complete URL structure
     const parsed = new URL(observationsUrl);
     expect(parsed.protocol).toBe('http:');
     expect(parsed.host).toBe('test');
     expect(parsed.pathname).toContain('/observations');
     expect(parsed.searchParams.has('phenomenonTime')).toBe(true);
-    
+
     // In production: fetch(observationsUrl) → parse SWE Common
     // Test validates URL leads to correct observation retrieval
   });
@@ -648,6 +717,7 @@ describe('CSAPI Observation Query Workflow E2E', () => {
 **Purpose:** Validate command submission workflow from control stream discovery to command status tracking
 
 **Steps:**
+
 1. Connect to endpoint (discovery workflow steps 1-5)
 2. Query systems that support commands (HTTP: systems with command capability)
 3. Navigate to system's control streams (HTTP: control streams for system)
@@ -657,6 +727,7 @@ describe('CSAPI Observation Query Workflow E2E', () => {
 7. Retrieve command results when complete (HTTP: command result endpoint)
 
 **Components Involved:**
+
 - All from Discovery workflow
 - QueryBuilder (systems, controlstreams, commands methods)
 - Command status tracker
@@ -667,6 +738,7 @@ describe('CSAPI Observation Query Workflow E2E', () => {
 **Exit:** Command result with final status (completed, failed, cancelled)
 
 **Assertions:**
+
 - Systems query filters for command capability
 - Control streams query URL correct
 - Feasibility check URL correct (assert URL construction and parsed response structure — NOT the server's feasibility determination)
@@ -678,6 +750,7 @@ describe('CSAPI Observation Query Workflow E2E', () => {
 **Test Length:** ~150-200 lines
 
 **HTTP Mocks Required:**
+
 - All from Discovery workflow
 - Systems with command capability
 - Control streams for system
@@ -687,6 +760,7 @@ describe('CSAPI Observation Query Workflow E2E', () => {
 - Command result response
 
 **Example Structure:**
+
 ```typescript
 describe('CSAPI Command Submission Workflow E2E', () => {
   it('should submit command and track status to completion', async () => {
@@ -696,38 +770,52 @@ describe('CSAPI Command Submission Workflow E2E', () => {
       'http://test/conformance': conformanceFixture,
       'http://test/collections': collectionsFixture,
       'http://test/collections/actuators': actuatorsCollectionFixture,
-      'http://test/collections/actuators/items?capabilities=command': systemsWithCommandsFixture,
-      'http://test/collections/actuators/items/sys-1/controlstreams': controlStreamsFixture,
-      'http://test/collections/actuators/items/sys-1/controlstreams/cs-1/feasibility': feasibilityCheckFixture,
-      'http://test/collections/actuators/items/sys-1/controlstreams/cs-1/commands': commandSubmissionFixture,
-      'http://test/collections/actuators/items/sys-1/controlstreams/cs-1/commands/cmd-1/status': commandStatusFixture,
-      'http://test/collections/actuators/items/sys-1/controlstreams/cs-1/commands/cmd-1/result': commandResultFixture
+      'http://test/collections/actuators/items?capabilities=command':
+        systemsWithCommandsFixture,
+      'http://test/collections/actuators/items/sys-1/controlstreams':
+        controlStreamsFixture,
+      'http://test/collections/actuators/items/sys-1/controlstreams/cs-1/feasibility':
+        feasibilityCheckFixture,
+      'http://test/collections/actuators/items/sys-1/controlstreams/cs-1/commands':
+        commandSubmissionFixture,
+      'http://test/collections/actuators/items/sys-1/controlstreams/cs-1/commands/cmd-1/status':
+        commandStatusFixture,
+      'http://test/collections/actuators/items/sys-1/controlstreams/cs-1/commands/cmd-1/result':
+        commandResultFixture,
     });
-    
+
     // Discovery steps
     const endpoint = new OgcApiEndpoint('http://test/');
     const builder = await endpoint.csapi('actuators');
-    
+
     // Step 1: Find systems with command capability
     const systemsUrl = builder.getSystems({ capabilities: 'command' });
-    expect(new URL(systemsUrl).searchParams.get('capabilities')).toBe('command');
-    
+    expect(new URL(systemsUrl).searchParams.get('capabilities')).toBe(
+      'command'
+    );
+
     // Step 2: Get control streams
     const controlStreamsUrl = builder.getSystemControlStreams('sys-1');
-    expect(new URL(controlStreamsUrl).pathname).toBe('/collections/actuators/items/sys-1/controlstreams');
-    
+    expect(new URL(controlStreamsUrl).pathname).toBe(
+      '/collections/actuators/items/sys-1/controlstreams'
+    );
+
     // Step 3: Check feasibility
-    const feasibilityUrl = builder.getControlStreamFeasibility('cs-1', { /* params */ });
+    const feasibilityUrl = builder.getControlStreamFeasibility('cs-1', {
+      /* params */
+    });
     expect(new URL(feasibilityUrl).pathname).toContain('/feasibility');
-    
+
     // Step 4: Submit command
-    const submitUrl = builder.createCommand('cs-1', { /* command payload */ });
+    const submitUrl = builder.createCommand('cs-1', {
+      /* command payload */
+    });
     expect(new URL(submitUrl).pathname).toContain('/commands');
-    
+
     // Step 5: Track status
     const statusUrl = builder.getCommandStatus('cmd-1');
     expect(new URL(statusUrl).pathname).toContain('/status');
-    
+
     // Step 6: Get result
     const resultUrl = builder.getCommandResult('cmd-1');
     expect(new URL(resultUrl).pathname).toContain('/result');
@@ -742,6 +830,7 @@ describe('CSAPI Command Submission Workflow E2E', () => {
 **Purpose:** Validate seamless navigation across all 9 resource types
 
 **Steps:**
+
 1. Connect to endpoint (discovery workflow steps 1-5)
 2. Query systems (HTTP: systems collection)
 3. Navigate to system's deployments (HTTP: deployments for system)
@@ -752,6 +841,7 @@ describe('CSAPI Command Submission Workflow E2E', () => {
 8. Validate complete resource relationship graph (client-side)
 
 **Components Involved:**
+
 - All from Discovery workflow
 - QueryBuilder (all 9 resource type methods)
 - Link resolver (nested resource navigation)
@@ -762,6 +852,7 @@ describe('CSAPI Command Submission Workflow E2E', () => {
 **Exit:** Complete resource graph showing 6-hop navigation path
 
 **Assertions:**
+
 - Each navigation step produces correct nested URL
 - Resource IDs propagate correctly through navigation chain
 - Query parameters preserved across navigation
@@ -771,11 +862,13 @@ describe('CSAPI Command Submission Workflow E2E', () => {
 **Test Length:** ~100-150 lines
 
 **HTTP Mocks Required:**
+
 - All from Discovery workflow
 - Each resource type's collection response (9 types)
 - Nested resource responses (6 navigation steps)
 
 **Example Structure:**
+
 ```typescript
 describe('CSAPI Cross-Resource Navigation Workflow E2E', () => {
   it('should navigate across 6 resource types seamlessly', async () => {
@@ -786,36 +879,51 @@ describe('CSAPI Cross-Resource Navigation Workflow E2E', () => {
       'http://test/collections': collectionsFixture,
       'http://test/collections/sensors': sensorsCollectionFixture,
       'http://test/collections/sensors/items': systemsFixture,
-      'http://test/collections/sensors/items/sys-1/deployments': deploymentsFixture,
-      'http://test/collections/sensors/items/sys-1/deployments/dep-1/procedures': proceduresFixture,
-      'http://test/collections/sensors/items/sys-1/deployments/dep-1/procedures/proc-1/samplingfeatures': samplingFeaturesFixture,
-      'http://test/collections/sensors/items/sys-1/samplingfeatures/sf-1/datastreams': datastreamsFixture,
-      'http://test/collections/sensors/items/sys-1/datastreams/ds-1/observations': observationsFixture
+      'http://test/collections/sensors/items/sys-1/deployments':
+        deploymentsFixture,
+      'http://test/collections/sensors/items/sys-1/deployments/dep-1/procedures':
+        proceduresFixture,
+      'http://test/collections/sensors/items/sys-1/deployments/dep-1/procedures/proc-1/samplingfeatures':
+        samplingFeaturesFixture,
+      'http://test/collections/sensors/items/sys-1/samplingfeatures/sf-1/datastreams':
+        datastreamsFixture,
+      'http://test/collections/sensors/items/sys-1/datastreams/ds-1/observations':
+        observationsFixture,
     });
-    
+
     // Discovery steps
     const endpoint = new OgcApiEndpoint('http://test/');
     const builder = await endpoint.csapi('sensors');
-    
+
     // Navigation chain (6 hops)
     const systemsUrl = builder.getSystems();
     expect(new URL(systemsUrl).pathname).toBe('/collections/sensors/items');
-    
+
     const deploymentsUrl = builder.getSystemDeployments('sys-1');
-    expect(new URL(deploymentsUrl).pathname).toBe('/collections/sensors/items/sys-1/deployments');
-    
+    expect(new URL(deploymentsUrl).pathname).toBe(
+      '/collections/sensors/items/sys-1/deployments'
+    );
+
     const proceduresUrl = builder.getDeploymentProcedures('sys-1', 'dep-1');
-    expect(new URL(proceduresUrl).pathname).toBe('/collections/sensors/items/sys-1/deployments/dep-1/procedures');
-    
+    expect(new URL(proceduresUrl).pathname).toBe(
+      '/collections/sensors/items/sys-1/deployments/dep-1/procedures'
+    );
+
     const samplingFeaturesUrl = builder.getProcedureSamplingFeatures('proc-1');
-    expect(new URL(samplingFeaturesUrl).pathname).toContain('/procedures/proc-1/samplingfeatures');
-    
+    expect(new URL(samplingFeaturesUrl).pathname).toContain(
+      '/procedures/proc-1/samplingfeatures'
+    );
+
     const datastreamsUrl = builder.getSamplingFeatureDataStreams('sf-1');
-    expect(new URL(datastreamsUrl).pathname).toContain('/samplingfeatures/sf-1/datastreams');
-    
+    expect(new URL(datastreamsUrl).pathname).toContain(
+      '/samplingfeatures/sf-1/datastreams'
+    );
+
     const observationsUrl = builder.getDataStreamObservations('ds-1');
-    expect(new URL(observationsUrl).pathname).toContain('/datastreams/ds-1/observations');
-    
+    expect(new URL(observationsUrl).pathname).toContain(
+      '/datastreams/ds-1/observations'
+    );
+
     // Validate: Single builder navigated through 6 resource types
     // No builder switching, no separate factories, seamless navigation
   });
@@ -850,23 +958,27 @@ describe('CSAPI Cross-Resource Navigation Workflow E2E', () => {
 CSAPI test-to-code ratio is **higher than upstream average (1.44×)** due to:
 
 1. **More Resource Types:** 9 resource types vs EDR's 1 resource type
+
    - Each resource type needs CRUD operation tests (4-5 tests × 9 = 36-45 tests)
    - Each resource type needs query parameter tests (10+ tests × 9 = 90+ tests)
    - Nested resource relationships need tests (30+ combinations)
 
 2. **Complex Nested Relationships:**
+
    - System → Deployments (1 level)
    - System → Deployments → Procedures (2 levels)
    - System → DataStreams → Observations (2 levels)
    - Each nesting pattern needs tests (10+ nested patterns)
 
 3. **Two Format Types:**
+
    - SensorML 3.0 parser (15-20 tests for all system types)
    - SWE Common 3.0 parser (15-20 tests for all encodings)
    - Round-trip tests (10+ tests)
    - Format detection tests (5-10 tests)
 
 4. **More Query Parameters:**
+
    - Temporal (phenomenonTime, resultTime, validTime) - 15+ tests
    - Spatial (bbox, geometry) - 10+ tests
    - Relationship (parent, observed property, FOI) - 15+ tests
@@ -889,24 +1001,22 @@ CSAPI test-to-code ratio is **higher than upstream average (1.44×)** due to:
 **Purpose:** Test individual functions/methods in isolation
 
 **Categories:**
+
 - **Helper Functions** (~300-400 lines, ~30-40 tests):
   - Temporal parameter serialization (phenomenonTime, resultTime, validTime)
   - Spatial parameter serialization (bbox, geometry encoding)
   - URL encoding helpers (special characters, spaces, reserved)
   - Relationship parameter serialization
-  
 - **Format Parsers** (~800-1,000 lines, ~60-80 tests):
   - SensorML 3.0 parser (PhysicalSystem, AggregateProcess, SimpleProcess)
   - SWE Common 3.0 parser (DataRecord, DataArray, all field types)
   - Format detection
   - Parse error handling
-  
 - **QueryBuilder Methods** (~1,500-1,800 lines, ~90-110 tests):
   - Each resource type's CRUD operations (9 × 4 = 36 tests)
   - Nested resource URL construction (30+ tests)
   - Query parameter encoding (50+ tests)
   - Validation errors (30+ tests)
-  
 - **Validators** (~400-500 lines, ~30-40 tests):
   - Resource availability validation
   - Parameter constraint validation
@@ -918,21 +1028,19 @@ CSAPI test-to-code ratio is **higher than upstream average (1.44×)** due to:
 **Purpose:** Test 2-3 components together
 
 **Categories:**
+
 - **QueryBuilder + Helpers** (~400-500 lines, ~20-25 tests):
   - QueryBuilder method calls helper functions
   - Complex parameter combinations
   - Multiple resource queries
-  
 - **Endpoint + Conformance** (~200-300 lines, ~10-15 tests):
   - Endpoint detection with conformance parsing
   - Collection listing with filtering
   - QueryBuilder creation with caching
-  
 - **Format Parser + Validators** (~300-400 lines, ~10-15 tests):
   - Parse with validation
   - Format detection with parsing
   - Round-trip (serialize → parse → validate)
-  
 - **Link Resolver + QueryBuilder** (~300-400 lines, ~10-15 tests):
   - Follow pagination links
   - Resolve nested resource links
@@ -943,12 +1051,12 @@ CSAPI test-to-code ratio is **higher than upstream average (1.44×)** due to:
 **Purpose:** Test complete workflows across all components
 
 **Categories:**
+
 - **Core Workflows** (~400-600 lines, 4 tests):
   - Discovery workflow (~100-150 lines)
   - Observation query workflow (~150-200 lines)
   - Command submission workflow (~150-200 lines)
   - Cross-resource navigation workflow (~100-150 lines)
-  
 - **Error Workflows** (~100-200 lines, 1-2 tests):
   - Server error handling (404, 500)
   - Validation error handling
@@ -1011,15 +1119,15 @@ import * as path from 'path';
 describe('CSAPI End-to-End Workflows', () => {
   // Shared setup
   const fixtureDir = path.join(__dirname, '../../../fixtures/ogc-api/csapi/e2e');
-  
+
   beforeEach(() => {
     // Mock fetch will be configured per test
   });
-  
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
-  
+
   describe('Discovery Workflow', () => {
     it('should discover endpoint, verify conformance, list collections, and create builder', async () => {
       // Mock HTTP responses for discovery workflow
@@ -1029,55 +1137,55 @@ describe('CSAPI End-to-End Workflows', () => {
         'http://test/collections': path.join(fixtureDir, 'discovery/collections.json'),
         'http://test/collections/sensors': path.join(fixtureDir, 'discovery/sensors-collection.json')
       });
-      
+
       // E2E workflow steps (100-150 lines)
       // ...
     });
   });
-  
+
   describe('Observation Query Workflow', () => {
     it('should query observations from system discovery to parsed results', async () => {
       // Mock HTTP responses for observation workflow
       mockFetchWithFixtures({
         // ... all fixtures for observation workflow (7-8 endpoints)
       });
-      
+
       // E2E workflow steps (150-200 lines)
       // ...
     });
   });
-  
+
   describe('Command Submission Workflow', () => {
     it('should submit command and track status to completion', async () => {
       // Mock HTTP responses for command workflow
       mockFetchWithFixtures({
         // ... all fixtures for command workflow (10+ endpoints)
       });
-      
+
       // E2E workflow steps (150-200 lines)
       // ...
     });
   });
-  
+
   describe('Cross-Resource Navigation Workflow', () => {
     it('should navigate across 6 resource types seamlessly', async () => {
       // Mock HTTP responses for navigation workflow
       mockFetchWithFixtures({
         // ... all fixtures for navigation workflow (15+ endpoints)
       });
-      
+
       // E2E workflow steps (100-150 lines)
       // ...
     });
   });
-  
+
   describe('Error Workflows', () => {
     it('should handle server errors gracefully', async () => {
       // Mock error responses
       mockFetchWithErrors({
         'http://test/collections/sensors/items/nonexistent': { status: 404, body: {...} }
       });
-      
+
       // Error handling workflow (50-100 lines)
       // ...
     });
@@ -1092,41 +1200,45 @@ describe('CSAPI End-to-End Workflows', () => {
 ```typescript
 // test-utils/mock-fetch.ts
 
-export function mockFetchWithFixtures(urlToFixturePath: Record<string, string>): void {
+export function mockFetchWithFixtures(
+  urlToFixturePath: Record<string, string>
+): void {
   globalThis.fetch = jest.fn(async (url: string) => {
     const urlStr = typeof url === 'string' ? url : url.toString();
     const fixturePath = urlToFixturePath[urlStr];
-    
+
     if (!fixturePath) {
       return {
         ok: false,
         status: 404,
-        json: async () => ({ error: 'Not Found' })
+        json: async () => ({ error: 'Not Found' }),
       } as Response;
     }
-    
+
     const contents = await fs.promises.readFile(fixturePath, 'utf-8');
     return {
       ok: true,
       status: 200,
-      json: async () => JSON.parse(contents)
+      json: async () => JSON.parse(contents),
     } as Response;
   });
 }
 
-export function mockFetchWithErrors(urlToError: Record<string, { status: number; body: any }>): void {
+export function mockFetchWithErrors(
+  urlToError: Record<string, { status: number; body: any }>
+): void {
   globalThis.fetch = jest.fn(async (url: string) => {
     const urlStr = typeof url === 'string' ? url : url.toString();
     const error = urlToError[urlStr];
-    
+
     if (!error) {
       throw new Error(`No mock configured for: ${urlStr}`);
     }
-    
+
     return {
       ok: false,
       status: error.status,
-      json: async () => error.body
+      json: async () => error.body,
     } as Response;
   });
 }
@@ -1146,6 +1258,7 @@ export function mockFetchWithErrors(urlToError: Record<string, { status: number;
 ### Minimum Viable E2E Coverage (Initial Contribution Target)
 
 **4 workflow tests (400-500 lines) — recommended starting point:**
+
 1. Discovery workflow (happy path only)
 2. Observation query workflow (happy path only)
 3. Command submission workflow (happy path only)
@@ -1154,11 +1267,13 @@ export function mockFetchWithErrors(urlToError: Record<string, { status: number;
 **No error workflows**
 
 **Sufficient for:**
+
 - Initial PR acceptance
 - Addresses "lack of e2e tests" criticism
 - Demonstrates complete workflows
 
 **Not sufficient for:**
+
 - Production readiness
 - Comprehensive error handling validation
 - Edge case coverage
@@ -1166,35 +1281,33 @@ export function mockFetchWithErrors(urlToError: Record<string, { status: number;
 ### Comprehensive E2E Coverage (Stretch Goal — Post-Acceptance)
 
 **4 core workflows + variations (600-800 lines) — expand after initial PR acceptance:**
+
 1. **Discovery workflow** (150-200 lines):
    - Happy path
    - Missing conformance classes
    - Empty collection list
    - Collection without CSAPI resources
-   
 2. **Observation query workflow** (200-250 lines):
    - Happy path with pagination
    - Large result sets (100+ observations)
    - Different temporal filter types (instant, interval, open-ended)
    - Multiple observed properties
-   
 3. **Command submission workflow** (200-250 lines):
    - Happy path to completion
    - Command rejection (feasibility check fails)
    - Command cancellation mid-execution
    - Async command with long execution time
-   
 4. **Cross-resource navigation workflow** (150-200 lines):
    - Full 6-hop navigation
    - Short navigation (2-3 hops)
    - Different starting points (system vs sampling feature)
 
-**Error workflows (100-200 lines):**
-5. **Server error handling**:
-   - 404 Not Found → EndpointError
-   - 500 Internal Server Error → EndpointError
-   - 403 Forbidden → AuthorizationError
-   
+**Error workflows (100-200 lines):** 5. **Server error handling**:
+
+- 404 Not Found → EndpointError
+- 500 Internal Server Error → EndpointError
+- 403 Forbidden → AuthorizationError
+
 6. **Validation error handling**:
    - Invalid query parameters → ValidationError
    - Unsupported resource type → EndpointError
@@ -1203,6 +1316,7 @@ export function mockFetchWithErrors(urlToError: Record<string, { status: number;
 **Total:** ~700-1,000 lines (6-10 tests)
 
 **Sufficient for:**
+
 - Production readiness
 - Comprehensive workflow coverage
 - Error scenario validation
@@ -1211,12 +1325,14 @@ export function mockFetchWithErrors(urlToError: Record<string, { status: number;
 ### What NOT to Cover in E2E
 
 **Leave for unit/integration tests:**
+
 - Individual query parameter validation (unit tests)
 - URL encoding edge cases (unit tests)
 - Format parsing edge cases (unit tests)
 - Each CRUD operation for each resource type (integration tests)
 
 **E2E tests focus on:**
+
 - Complete workflows (multi-step)
 - Multi-component interaction
 - Realistic usage scenarios
@@ -1231,6 +1347,7 @@ export function mockFetchWithErrors(urlToError: Record<string, { status: number;
 **Pattern:** Mock `fetch` at global level with fixture-based responses
 
 **Why this approach:**
+
 - Matches EDR/STAC pattern (proven in upstream)
 - Allows tests to use real URLs (realistic)
 - Fixtures serve as spec compliance documentation
@@ -1246,7 +1363,8 @@ beforeEach(() => {
   // Configure mock for this specific test
   mockFetchWithFixtures({
     'http://test/': 'fixtures/ogc-api/csapi/e2e/discovery/landing-page.json',
-    'http://test/conformance': 'fixtures/ogc-api/csapi/e2e/discovery/conformance.json',
+    'http://test/conformance':
+      'fixtures/ogc-api/csapi/e2e/discovery/conformance.json',
     // ... all endpoints needed for test
   });
 });
@@ -1264,9 +1382,12 @@ afterEach(() => {
 export function mockDiscoveryWorkflow(baseUrl: string): void {
   mockFetchWithFixtures({
     [`${baseUrl}/`]: 'fixtures/ogc-api/csapi/e2e/discovery/landing-page.json',
-    [`${baseUrl}/conformance`]: 'fixtures/ogc-api/csapi/e2e/discovery/conformance.json',
-    [`${baseUrl}/collections`]: 'fixtures/ogc-api/csapi/e2e/discovery/collections.json',
-    [`${baseUrl}/collections/sensors`]: 'fixtures/ogc-api/csapi/e2e/discovery/sensors-collection.json'
+    [`${baseUrl}/conformance`]:
+      'fixtures/ogc-api/csapi/e2e/discovery/conformance.json',
+    [`${baseUrl}/collections`]:
+      'fixtures/ogc-api/csapi/e2e/discovery/collections.json',
+    [`${baseUrl}/collections/sensors`]:
+      'fixtures/ogc-api/csapi/e2e/discovery/sensors-collection.json',
   });
 }
 
@@ -1274,8 +1395,10 @@ export function mockObservationWorkflow(baseUrl: string): void {
   // Include discovery workflow + observation-specific endpoints
   mockDiscoveryWorkflow(baseUrl);
   mockFetchWithFixtures({
-    [`${baseUrl}/collections/sensors/items`]: 'fixtures/ogc-api/csapi/e2e/observation-query/systems.json',
-    [`${baseUrl}/collections/sensors/items/sys-1/datastreams`]: 'fixtures/ogc-api/csapi/e2e/observation-query/datastreams.json',
+    [`${baseUrl}/collections/sensors/items`]:
+      'fixtures/ogc-api/csapi/e2e/observation-query/systems.json',
+    [`${baseUrl}/collections/sensors/items/sys-1/datastreams`]:
+      'fixtures/ogc-api/csapi/e2e/observation-query/datastreams.json',
     // ...
   });
 }
@@ -1284,6 +1407,7 @@ export function mockObservationWorkflow(baseUrl: string): void {
 ### Fixture Requirements
 
 **Fixture characteristics:**
+
 - ✅ Real examples from OGC CSAPI spec
 - ✅ Realistic data (sensor names, locations, measurements)
 - ✅ Complete structure (all required properties)
@@ -1345,24 +1469,28 @@ fixtures/ogc-api/csapi/e2e/
 ### Error Workflow Categories
 
 **1. Server Errors (HTTP status codes):**
+
 - 404 Not Found (resource doesn't exist)
 - 500 Internal Server Error (server malfunction)
 - 403 Forbidden (authentication required)
 - 503 Service Unavailable (temporary failure)
 
 **2. Validation Errors (invalid parameters):**
+
 - Invalid query parameter format
 - Unsupported query parameter
 - Out-of-range values
 - Malformed spatial/temporal filters
 
 **3. Parse Errors (malformed responses):**
+
 - Invalid JSON syntax
 - Missing required properties
 - Wrong property types
 - Schema violations
 
 **4. Network Errors:**
+
 - Timeout (no response within limit)
 - Connection refused (server unreachable)
 - DNS resolution failure
@@ -1370,16 +1498,19 @@ fixtures/ogc-api/csapi/e2e/
 ### Error Testing Strategy
 
 **Unit tests handle:**
+
 - Individual parameter validation
 - Format parsing errors
 - URL encoding errors
 
 **Integration tests handle:**
+
 - Multi-component error propagation
 - Error message formatting
 - Error type discrimination
 
 **E2E tests handle:**
+
 - Complete error workflows (error → recovery)
 - Multiple error points in workflow
 - Error impact on subsequent steps
@@ -1387,39 +1518,40 @@ fixtures/ogc-api/csapi/e2e/
 ### E2E Error Test Examples
 
 **Server Error Workflow:**
+
 ```typescript
 it('should handle 404 Not Found gracefully in observation workflow', async () => {
   // Mock discovery workflow succeeds
   mockDiscoveryWorkflow('http://test');
-  
+
   // Mock systems query succeeds
   mockFetchWithFixtures({
-    'http://test/collections/sensors/items': systemsFixture
+    'http://test/collections/sensors/items': systemsFixture,
   });
-  
+
   // Mock datastreams query returns 404
   mockFetchWithErrors({
     'http://test/collections/sensors/items/sys-1/datastreams': {
       status: 404,
       body: {
         code: 'ResourceNotFound',
-        description: 'System sys-1 does not exist'
-      }
-    }
+        description: 'System sys-1 does not exist',
+      },
+    },
   });
-  
+
   // Discovery succeeds
   const endpoint = new OgcApiEndpoint('http://test/');
   const builder = await endpoint.csapi('sensors');
-  
+
   // Systems query succeeds
   const systemsUrl = builder.getSystems();
   expect(systemsUrl).toBeDefined();
-  
+
   // DataStreams query should succeed (URL construction)
   const datastreamsUrl = builder.getSystemDataStreams('sys-1');
   expect(datastreamsUrl).toBeDefined();
-  
+
   // In production, fetch(datastreamsUrl) would throw EndpointError
   // Test validates URL construction still works despite nonexistent resource
   // Error handling is user's responsibility (fetch → catch → handle)
@@ -1427,22 +1559,27 @@ it('should handle 404 Not Found gracefully in observation workflow', async () =>
 ```
 
 **Validation Error Workflow:**
+
 ```typescript
 it('should throw validation error for invalid query parameters', async () => {
   mockDiscoveryWorkflow('http://test');
-  
+
   const endpoint = new OgcApiEndpoint('http://test/');
   const builder = await endpoint.csapi('sensors');
-  
+
   // Invalid temporal parameter format
-  expect(() => builder.getObservations({ 
-    phenomenonTime: 'invalid-format' 
-  })).toThrow('Invalid phenomenonTime format');
-  
+  expect(() =>
+    builder.getObservations({
+      phenomenonTime: 'invalid-format',
+    })
+  ).toThrow('Invalid phenomenonTime format');
+
   // Invalid spatial parameter (wrong bbox length)
-  expect(() => builder.getSystems({ 
-    bbox: [1, 2, 3]  // Should be 4 values
-  })).toThrow('bbox must have 4 values');
+  expect(() =>
+    builder.getSystems({
+      bbox: [1, 2, 3], // Should be 4 values
+    })
+  ).toThrow('bbox must have 4 values');
 });
 ```
 
@@ -1453,13 +1590,16 @@ it('should throw validation error for invalid query parameters', async () => {
 ### Implementation Guide Terminology Clarification
 
 **Implementation Guide states:**
+
 > **Integration Tests (End-to-End Workflows):**
+>
 > - Discovery workflows
 > - Observation workflows
 > - Command workflows
 > - Cross-resource navigation
 
 **Correct interpretation:**
+
 - Implementation Guide "Integration Tests" = **E2E Tests** (by this research's definition)
 - They test complete workflows = E2E
 - They involve all components = E2E
@@ -1467,13 +1607,14 @@ it('should throw validation error for invalid query parameters', async () => {
 
 **What we need:**
 
-| Test Type | Count | Lines | Purpose |
-|-----------|-------|-------|---------|
-| **Unit** | ~200-250 | ~3,000-3,600 | Individual functions/methods |
-| **Integration** | ~50-60 | ~1,200-1,600 | 2-3 components together |
-| **E2E** | ~4-6 | ~500-800 | Complete workflows (Implementation Guide "Integration Tests") |
+| Test Type       | Count    | Lines        | Purpose                                                       |
+| --------------- | -------- | ------------ | ------------------------------------------------------------- |
+| **Unit**        | ~200-250 | ~3,000-3,600 | Individual functions/methods                                  |
+| **Integration** | ~50-60   | ~1,200-1,600 | 2-3 components together                                       |
+| **E2E**         | ~4-6     | ~500-800     | Complete workflows (Implementation Guide "Integration Tests") |
 
 **Phase 4, Task 2 mapping:**
+
 - Task 2: "Integration Tests (End-to-End Workflows)" = **E2E Tests**
 - Time estimate: 4-6 hours
 - Line estimate: 500-800 lines
@@ -1486,6 +1627,7 @@ it('should throw validation error for invalid query parameters', async () => {
 ### EDR E2E Patterns
 
 **From PR #114 analysis:**
+
 - EDR has **integration tests in endpoint.spec.ts** (298 lines added)
 - These tests are actually **e2e tests** by our definition:
   - Start from `OgcApiEndpoint` creation
@@ -1495,12 +1637,14 @@ it('should throw validation error for invalid query parameters', async () => {
 
 **Pattern validation:**
 ✅ CSAPI should follow EDR pattern:
+
 - E2E tests in separate file or dedicated describe block
 - Mock all HTTP responses with realistic fixtures
 - Test complete workflows from endpoint creation
 - Validate multi-component interaction
 
 **Differences:**
+
 - EDR: 1 resource type (data_queries) → simpler
 - CSAPI: 9 resource types → more complex
 - EDR: ~300 lines integration/e2e tests
@@ -1509,6 +1653,7 @@ it('should throw validation error for invalid query parameters', async () => {
 ### Other Upstream Implementations
 
 **WFS, WMS, WMTS, TMS, STAC:**
+
 - All have **integration tests in endpoint.spec.ts**
 - Test patterns similar to EDR
 - Focus on complete workflows
@@ -1516,6 +1661,7 @@ it('should throw validation error for invalid query parameters', async () => {
 
 **Consistency with CSAPI:**
 ✅ CSAPI aligns with all upstream implementations:
+
 - Jest framework
 - Colocated test files
 - Mock fetch with fixtures
@@ -1523,6 +1669,7 @@ it('should throw validation error for invalid query parameters', async () => {
 - Real spec examples as fixtures
 
 **Upstream test pyramid:**
+
 - Avg 1.44× test-to-code ratio
 - ~60% unit, ~40% integration (includes e2e)
 - CSAPI: 3.0-3.75× ratio justified by complexity
@@ -1536,16 +1683,19 @@ it('should throw validation error for invalid query parameters', async () => {
 **From Section 3 (TypeScript Testing Standards):**
 
 **Industry standard distribution:**
+
 - 60-70% unit tests
 - 30-40% integration tests
 - **0-5% e2e tests (or none)**
 
 **Why so few e2e tests in industry?**
+
 - Client libraries don't make real HTTP calls in tests
 - E2E belongs in consuming applications
 - What we call "e2e" is actually "integration" by industry terms
 
 **Industry definition:**
+
 - **Unit:** Single function, all dependencies mocked
 - **Integration:** Multiple components, HTTP mocked
 - **E2E:** Real HTTP calls to real servers (rare in client libraries)
@@ -1554,24 +1704,27 @@ it('should throw validation error for invalid query parameters', async () => {
 
 **CSAPI adapts industry standards to context:**
 
-| Industry Term | Industry Definition | CSAPI Interpretation |
-|---------------|---------------------|---------------------|
-| **Unit** | Single function, mocked deps | Same: QueryBuilder method, helpers |
-| **Integration** | Multiple components, HTTP mocked | Same: 2-3 components together |
-| **E2E** | Real HTTP to real servers | **Adapted:** Complete workflow, HTTP mocked |
+| Industry Term   | Industry Definition              | CSAPI Interpretation                        |
+| --------------- | -------------------------------- | ------------------------------------------- |
+| **Unit**        | Single function, mocked deps     | Same: QueryBuilder method, helpers          |
+| **Integration** | Multiple components, HTTP mocked | Same: 2-3 components together               |
+| **E2E**         | Real HTTP to real servers        | **Adapted:** Complete workflow, HTTP mocked |
 
 **Why adaptation is necessary:**
+
 - CSAPI is URL-building library (doesn't make HTTP calls)
 - Senior dev wants "e2e tests" (complete workflows)
 - Industry's "integration" doesn't capture complete workflow testing
 - Need term for "complete workflow with all components"
 
 **CSAPI distribution:**
+
 - 55-60% unit (slightly lower than industry to accommodate e2e)
 - 25-30% integration (standard multi-component tests)
 - 10-15% e2e (complete workflows - higher than industry 0-5% because senior dev explicitly requested)
 
 **Justification:**
+
 - ✅ Senior dev's e2e requirement satisfied
 - ✅ Industry standard adapted appropriately
 - ✅ Upstream patterns followed
@@ -1584,12 +1737,15 @@ it('should throw validation error for invalid query parameters', async () => {
 ### Phase 4, Task 2: Integration Tests = E2E Tests
 
 **From Implementation Guide:**
+
 > **Task 2: Integration Tests (End-to-End Workflows)**
+>
 > - **Estimated Time:** 4-6 hours
 > - **Lines:** ~500-800 lines
 > - **Tests:** 4 workflow tests + error scenarios
 
 **This research provides:**
+
 - ✅ Clear e2e definition for CSAPI context
 - ✅ 4 workflow specifications (ready to implement)
 - ✅ Test structure and organization
@@ -1598,6 +1754,7 @@ it('should throw validation error for invalid query parameters', async () => {
 - ✅ Success criteria
 
 **Implementation checklist:**
+
 1. Create `endpoint.e2e.spec.ts` file
 2. Set up fixture directory structure (`fixtures/ogc-api/csapi/e2e/`)
 3. Create fixtures for each workflow (discovery, observation-query, command-submission, cross-resource)
@@ -1608,6 +1765,7 @@ it('should throw validation error for invalid query parameters', async () => {
 8. Verify complete workflow coverage
 
 **Time breakdown:**
+
 - Fixture creation: 1-2 hours (40-60 fixtures needed)
 - Mock infrastructure: 30-60 minutes
 - Discovery workflow: 60-90 minutes (~100-150 lines)
@@ -1626,6 +1784,7 @@ it('should throw validation error for invalid query parameters', async () => {
 ### Key Takeaways
 
 1. **"End-to-End" for CSAPI means:**
+
    - Complete multi-component workflows
    - All library layers tested together
    - HTTP mocked with realistic fixtures
@@ -1633,11 +1792,13 @@ it('should throw validation error for invalid query parameters', async () => {
    - Exit: Parsed results or validated URLs
 
 2. **E2E vs Integration distinction:**
+
    - Integration: 2-3 components, partial workflow, 20-50 lines
    - E2E: All components, complete workflow, 100-200 lines
    - Implementation Guide "Integration Tests" = E2E Tests
 
 3. **4 core workflows required:**
+
    - Discovery (100-150 lines)
    - Observation query (150-200 lines)
    - Command submission (150-200 lines)
@@ -1645,6 +1806,7 @@ it('should throw validation error for invalid query parameters', async () => {
    - Total: 500-700 lines
 
 4. **Test pyramid distribution:**
+
    - 55-60% unit (~3,000-3,600 lines)
    - 25-30% integration (~1,200-1,600 lines)
    - 10-15% e2e (~500-800 lines)
@@ -1662,23 +1824,27 @@ it('should throw validation error for invalid query parameters', async () => {
 **For Phase 4, Task 2 Implementation:**
 
 1. ✅ **Follow this specification exactly**
+
    - Use 4 workflow structure defined here
    - Follow test organization recommendations
    - Use fixture strategy outlined
    - Implement mock infrastructure as specified
 
 2. ✅ **Create comprehensive fixtures**
+
    - Budget 1-2 hours for fixture creation
    - Use real OGC CSAPI spec examples
    - Document fixture provenance
    - Organize by workflow
 
 3. ✅ **Start with minimum viable e2e**
+
    - 4 happy path workflows first (~400-500 lines)
    - Add error workflows after core workflows pass (~100-200 lines)
    - Total: ~500-700 lines
 
 4. ✅ **Validate against this research**
+
    - Each workflow must match specification
    - All components must be tested
    - Entry/exit points must match
@@ -1693,6 +1859,7 @@ it('should throw validation error for invalid query parameters', async () => {
 ### Success Criteria Validation
 
 ✅ **All research objectives met:**
+
 - [x] Clear e2e definition for CSAPI (URL builder + format parser context)
 - [x] Unambiguous integration vs e2e distinction with examples
 - [x] Scope and boundaries defined (in scope vs out of scope)

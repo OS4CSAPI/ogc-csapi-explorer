@@ -34,7 +34,7 @@ Per the [AI Operational Constraints](https://github.com/OS4CSAPI/ogc-client-CSAP
 
 This report does not propose behavioral modifications to the library without approval. All recommendations distinguish between **fact** (verified), **inference** (reasoned), and **proposal** (requires approval), per Section 3 of the constraints.
 
-**Critical constraint for this issue:** Section 2.2 of the AI Operational Constraints states: *"Do not introduce new abstractions, layers, or dependencies without approval."* Issue #11 proposes adding a new abstraction layer (generic CRUD dispatch methods). This constraint is directly applicable and is central to this report's analysis.
+**Critical constraint for this issue:** Section 2.2 of the AI Operational Constraints states: _"Do not introduce new abstractions, layers, or dependencies without approval."_ Issue #11 proposes adding a new abstraction layer (generic CRUD dispatch methods). This constraint is directly applicable and is central to this report's analysis.
 
 ---
 
@@ -42,17 +42,17 @@ This report does not propose behavioral modifications to the library without app
 
 **Issue #11 proposes adding 5 generic CRUD methods (`getResources()`, `getResource()`, `createResource()`, `updateResource()`, `deleteResource()`) to `CSAPIQueryBuilder`. This is a legitimate developer-experience (DX) enhancement that would reduce consumer boilerplate, but it introduces a new abstraction layer that requires careful evaluation against the AI Operational Constraints, the upstream library's design patterns, and the CSAPI contribution scope.**
 
-| Aspect | Assessment |
-|--------|------------|
-| **Change type** | Enhancement — new public API surface on `CSAPIQueryBuilder` |
-| **Scope** | 5 new public methods in `url_builder.ts`, corresponding tests in `url_builder.spec.ts` |
-| **Production behavior modified** | No — existing methods are untouched; these are purely additive |
-| **Existing tests affected** | None — all existing 298 tests remain unchanged |
-| **Risk to library integrity** | **Low** — additive-only, delegates to existing `buildResourceUrl()` private method |
-| **New abstraction introduced** | **Yes** — a generic dispatch layer over 77+ type-specific methods |
-| **Upstream pattern precedent** | **None** — no equivalent generic dispatch exists in the upstream `ogc-client` library (EDR, WFS, WMS, WMTS modules all use type-specific methods exclusively) |
-| **AI Constraints trigger** | **Yes** — Section 2.2: "Do not introduce new abstractions, layers, or dependencies without approval" |
-| **Priority ranking** | #7 in upstream-findings.md (Medium severity, Medium effort) — "Should Address" category |
+| Aspect                           | Assessment                                                                                                                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Change type**                  | Enhancement — new public API surface on `CSAPIQueryBuilder`                                                                                                   |
+| **Scope**                        | 5 new public methods in `url_builder.ts`, corresponding tests in `url_builder.spec.ts`                                                                        |
+| **Production behavior modified** | No — existing methods are untouched; these are purely additive                                                                                                |
+| **Existing tests affected**      | None — all existing 298 tests remain unchanged                                                                                                                |
+| **Risk to library integrity**    | **Low** — additive-only, delegates to existing `buildResourceUrl()` private method                                                                            |
+| **New abstraction introduced**   | **Yes** — a generic dispatch layer over 77+ type-specific methods                                                                                             |
+| **Upstream pattern precedent**   | **None** — no equivalent generic dispatch exists in the upstream `ogc-client` library (EDR, WFS, WMS, WMTS modules all use type-specific methods exclusively) |
+| **AI Constraints trigger**       | **Yes** — Section 2.2: "Do not introduce new abstractions, layers, or dependencies without approval"                                                          |
+| **Priority ranking**             | #7 in upstream-findings.md (Medium severity, Medium effort) — "Should Address" category                                                                       |
 
 **Key findings from this review:**
 
@@ -83,16 +83,28 @@ The `CSAPIQueryBuilder` provides 77+ type-specific methods but no generic dispat
 ```typescript
 function getListUrl(type: string, options: QueryOptions): string {
   switch (type) {
-    case 'systems': return builder.getSystems(options as SystemQueryOptions);
-    case 'deployments': return builder.getDeployments(options as DeploymentQueryOptions);
-    case 'procedures': return builder.getProcedures(options as ProcedureQueryOptions);
-    case 'samplingFeatures': return builder.getSamplingFeatures(options as SamplingFeatureQueryOptions);
-    case 'properties': return builder.getProperties(options as PropertyQueryOptions);
-    case 'datastreams': return builder.getDataStreams(options as DataStreamQueryOptions);
-    case 'observations': return builder.getObservations(options as ObservationQueryOptions);
-    case 'controlStreams': return builder.getControlStreams(options as ControlStreamQueryOptions);
-    case 'commands': return builder.getCommands(options as CommandQueryOptions);
-    default: return `/${type}`;
+    case 'systems':
+      return builder.getSystems(options as SystemQueryOptions);
+    case 'deployments':
+      return builder.getDeployments(options as DeploymentQueryOptions);
+    case 'procedures':
+      return builder.getProcedures(options as ProcedureQueryOptions);
+    case 'samplingFeatures':
+      return builder.getSamplingFeatures(
+        options as SamplingFeatureQueryOptions
+      );
+    case 'properties':
+      return builder.getProperties(options as PropertyQueryOptions);
+    case 'datastreams':
+      return builder.getDataStreams(options as DataStreamQueryOptions);
+    case 'observations':
+      return builder.getObservations(options as ObservationQueryOptions);
+    case 'controlStreams':
+      return builder.getControlStreams(options as ControlStreamQueryOptions);
+    case 'commands':
+      return builder.getCommands(options as CommandQueryOptions);
+    default:
+      return `/${type}`;
   }
 }
 ```
@@ -103,13 +115,13 @@ This pattern was repeated 5 times in the demo app's bridge module (list, detail,
 
 Add 5 generic methods to `CSAPIQueryBuilder`:
 
-| Method | Signature | Delegates To |
-|--------|-----------|-------------|
-| `getResources()` | `(type: CSAPIResourceType, options?: QueryOptions): string` | `buildResourceUrl(type, undefined, undefined, options)` |
-| `getResource()` | `(type: CSAPIResourceType, id: string, options?: QueryOptions): string` | `buildResourceUrl(type, id, undefined, options)` |
-| `createResource()` | `(type: CSAPIResourceType): string` | `buildResourceUrl(type)` |
-| `updateResource()` | `(type: CSAPIResourceType, id: string): string` | `buildResourceUrl(type, id)` |
-| `deleteResource()` | `(type: CSAPIResourceType, id: string): string` | `buildResourceUrl(type, id)` |
+| Method             | Signature                                                               | Delegates To                                            |
+| ------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------- |
+| `getResources()`   | `(type: CSAPIResourceType, options?: QueryOptions): string`             | `buildResourceUrl(type, undefined, undefined, options)` |
+| `getResource()`    | `(type: CSAPIResourceType, id: string, options?: QueryOptions): string` | `buildResourceUrl(type, id, undefined, options)`        |
+| `createResource()` | `(type: CSAPIResourceType): string`                                     | `buildResourceUrl(type)`                                |
+| `updateResource()` | `(type: CSAPIResourceType, id: string): string`                         | `buildResourceUrl(type, id)`                            |
+| `deleteResource()` | `(type: CSAPIResourceType, id: string): string`                         | `buildResourceUrl(type, id)`                            |
 
 Each method would call `assertResourceAvailable(type)` first, then delegate to the existing `buildResourceUrl()` private method — the same core helper that all 77+ existing methods use.
 
@@ -177,8 +189,15 @@ getSystems(options?: SystemQueryOptions): string {
 
 ```typescript
 export const CSAPIResourceTypes = [
-  'systems', 'deployments', 'samplingFeatures', 'procedures',
-  'properties', 'datastreams', 'observations', 'controlStreams', 'commands',
+  'systems',
+  'deployments',
+  'samplingFeatures',
+  'procedures',
+  'properties',
+  'datastreams',
+  'observations',
+  'controlStreams',
+  'commands',
 ] as const;
 
 export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
@@ -190,12 +209,12 @@ export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
 
 The type-specific API surface includes methods that go beyond simple CRUD:
 
-| Method Category | Example | Generic Equivalent? |
-|----------------|---------|-------------------|
-| Nested listings | `getSystemDataStreams(systemId)` | **No** — requires subPath knowledge |
+| Method Category | Example                           | Generic Equivalent?                              |
+| --------------- | --------------------------------- | ------------------------------------------------ |
+| Nested listings | `getSystemDataStreams(systemId)`  | **No** — requires subPath knowledge              |
 | Nested creation | `createObservation(datastreamId)` | **No** — requires parent resource type knowledge |
-| History | `getSystemHistory(systemId)` | **No** — requires subPath `'history'` |
-| Sub-hierarchies | `getSystemSubsystems(systemId)` | **No** — requires subPath `'subsystems'` |
+| History         | `getSystemHistory(systemId)`      | **No** — requires subPath `'history'`            |
+| Sub-hierarchies | `getSystemSubsystems(systemId)`   | **No** — requires subPath `'subsystems'`         |
 
 The proposed 5 generic methods only cover the **flat CRUD** operations (list all, get by ID, create at collection level, update by ID, delete by ID). They do not replace the nested/relational methods.
 
@@ -209,7 +228,7 @@ All 12 linked reference documents from the ogc-csapi-explorer repository were re
 
 Finding **F-7** is defined here:
 
-> *"The library provides 77+ type-specific methods [...] but no generic method like `getResources(type, options)` or `getResource(type, id)`. [...] Our bridge module required this pattern for list, detail, create, update, and delete — five dispatchers."*
+> _"The library provides 77+ type-specific methods [...] but no generic method like `getResources(type, options)` or `getResource(type, id)`. [...] Our bridge module required this pattern for list, detail, create, update, and delete — five dispatchers."_
 >
 > Priority rank: **#7** (Medium severity, Medium effort)
 
@@ -219,21 +238,22 @@ F-7 is categorized under **Category 2: Library Design Improvements (Should Addre
 
 **Library Finding #2** is where this was first identified:
 
-> *"The `CSAPIQueryBuilder` has 77+ type-specific methods [...] but no generic method. [...] any consumer that works with dynamic resource types (like our explorer) must write a switch/case dispatcher over all 9 types."*
+> _"The `CSAPIQueryBuilder` has 77+ type-specific methods [...] but no generic method. [...] any consumer that works with dynamic resource types (like our explorer) must write a switch/case dispatcher over all 9 types."_
 
 The report acknowledges both sides:
-- **Pro:** *"Type-specific methods give excellent TypeScript type safety."*
-- **Con:** *"Any UI framework, CLI tool, or admin panel that needs to work with resource types dynamically will need the same boilerplate dispatcher."*
 
-The recommendation: *"Consider adding `getResources(type: CSAPIResourceType, options?: QueryOptions)` convenience method alongside the type-specific methods."*
+- **Pro:** _"Type-specific methods give excellent TypeScript type safety."_
+- **Con:** _"Any UI framework, CLI tool, or admin panel that needs to work with resource types dynamically will need the same boilerplate dispatcher."_
+
+The recommendation: _"Consider adding `getResources(type: CSAPIResourceType, options?: QueryOptions)` convenience method alongside the type-specific methods."_
 
 ### 5.3 Library Findings Gap Analysis (`library-findings-gap-analysis.md`)
 
 F-7 actionability assessment:
 
-| Finding | Actionable? | Effort | Priority |
-|---------|------------|--------|----------|
-| F-7 | Yes — DX improvement | Medium | 5 (Medium) |
+| Finding | Actionable?          | Effort | Priority   |
+| ------- | -------------------- | ------ | ---------- |
+| F-7     | Yes — DX improvement | Medium | 5 (Medium) |
 
 This document ranks F-7 at priority **5** (Medium), lower than its ranking of **7** in upstream-findings.md. Both agree it is medium priority.
 
@@ -241,55 +261,55 @@ This document ranks F-7 at priority **5** (Medium), lower than its ranking of **
 
 **Section 2.2** is directly applicable:
 
-> *"Do not introduce new abstractions, layers, or dependencies without approval."*
+> _"Do not introduce new abstractions, layers, or dependencies without approval."_
 
 The generic CRUD methods constitute a new abstraction layer — a dispatch mechanism over the existing type-specific methods. While the implementation is simple (thin wrappers), the API design decision is significant: it establishes a precedent that the library should provide both type-specific and generic access patterns.
 
 **Section 2.1** is also relevant:
 
-> *"Do not expand scope beyond the issue description."*
+> _"Do not expand scope beyond the issue description."_
 
 The issue description focuses on 5 specific methods with clear signatures. However, the issue itself may represent scope expansion relative to the core CSAPI contribution goal (which is to provide a well-typed URL builder for Connected Systems API resources).
 
 ### 5.5 Other Documents Reviewed
 
-| Document | Location | Relevance to Issue #11 |
-|----------|----------|----------------------|
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Peripheral — validates library's URL builder role; generic methods expand that role |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | ogc-csapi-explorer | Context — adding 5 new methods increases the diff surface of the upstream PR |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app architecture |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | ogc-csapi-explorer | Peripheral — the smoke test uses the bridge dispatchers that F-7 would make unnecessary |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | ogc-csapi-explorer | Not relevant — covers cross-server interoperability |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | ogc-csapi-explorer | Not relevant — covers write operations |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | ogc-csapi-explorer | Not relevant — covers SWE Common schema display |
+| Document                                                                                                                                                       | Location           | Relevance to Issue #11                                                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------- |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring                                         |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Peripheral — validates library's URL builder role; generic methods expand that role     |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | ogc-csapi-explorer | Context — adding 5 new methods increases the diff surface of the upstream PR            |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app architecture                                             |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | ogc-csapi-explorer | Peripheral — the smoke test uses the bridge dispatchers that F-7 would make unnecessary |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | ogc-csapi-explorer | Not relevant — covers cross-server interoperability                                     |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | ogc-csapi-explorer | Not relevant — covers write operations                                                  |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | ogc-csapi-explorer | Not relevant — covers SWE Common schema display                                         |
 
 ---
 
 ## 6. Risk Assessment
 
-| Risk Category | Level | Rationale |
-|---------------|-------|-----------|
-| **Regression risk** | **None** | Additive-only; no existing methods are modified |
-| **Behavioral impact** | **None** | Existing API surface is unchanged; new methods are supplementary |
-| **Type safety erosion** | **Low-Medium** | Consumers who adopt generic methods lose access to type-specific query options (`SystemQueryOptions.parent`, `DataStreamQueryOptions.phenomenonTime`, etc.). This may lead to `as any` casts or runtime query parameter errors. |
-| **Scope creep** | **Medium** | Introduces a new abstraction pattern not present elsewhere in `ogc-client`. If accepted, consumers may expect similar generic methods in future modules. |
-| **Upstream acceptance** | **Uncertain** | The upstream maintainers may prefer the strict type-specific API design. Adding generic dispatch methods could be seen as weakening the library's type safety guarantees. |
-| **CSAPI contribution impact** | **Low** | The methods are additive and do not modify the existing CSAPI code. However, they expand the PR's surface area. |
-| **Diff size impact** | **Medium** | ~50 lines for 5 methods + ~100 lines for tests = ~150 additional lines in the upstream PR |
-| **AI Constraints compliance** | **Requires approval** | Section 2.2 explicitly requires approval for "new abstractions, layers, or dependencies" |
+| Risk Category                 | Level                 | Rationale                                                                                                                                                                                                                       |
+| ----------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Regression risk**           | **None**              | Additive-only; no existing methods are modified                                                                                                                                                                                 |
+| **Behavioral impact**         | **None**              | Existing API surface is unchanged; new methods are supplementary                                                                                                                                                                |
+| **Type safety erosion**       | **Low-Medium**        | Consumers who adopt generic methods lose access to type-specific query options (`SystemQueryOptions.parent`, `DataStreamQueryOptions.phenomenonTime`, etc.). This may lead to `as any` casts or runtime query parameter errors. |
+| **Scope creep**               | **Medium**            | Introduces a new abstraction pattern not present elsewhere in `ogc-client`. If accepted, consumers may expect similar generic methods in future modules.                                                                        |
+| **Upstream acceptance**       | **Uncertain**         | The upstream maintainers may prefer the strict type-specific API design. Adding generic dispatch methods could be seen as weakening the library's type safety guarantees.                                                       |
+| **CSAPI contribution impact** | **Low**               | The methods are additive and do not modify the existing CSAPI code. However, they expand the PR's surface area.                                                                                                                 |
+| **Diff size impact**          | **Medium**            | ~50 lines for 5 methods + ~100 lines for tests = ~150 additional lines in the upstream PR                                                                                                                                       |
+| **AI Constraints compliance** | **Requires approval** | Section 2.2 explicitly requires approval for "new abstractions, layers, or dependencies"                                                                                                                                        |
 
 ### 6.1 The Precedent Problem
 
 No other module in the upstream `ogc-client` library provides generic dispatch:
 
-| Module | Type-Specific Methods | Generic Dispatch? |
-|--------|--------------------|------------------|
-| EDR (`EdrEndpoint`) | `getCoverage()`, `getPosition()`, `getArea()`, `getCube()`, `getTrajectory()`, `getLocations()` | No |
-| WFS (`WfsEndpoint`) | `getFeature()`, `getFeatureUrl()` | No (single resource type) |
-| WMS (`WmsEndpoint`) | `getMapUrl()`, `getFeatureInfoUrl()` | No |
-| WMTS (`WmtsEndpoint`) | `getTileUrl()` | No |
-| CSAPI (`CSAPIQueryBuilder`) | 77+ methods across 9 resource types | **Proposed in F-7** |
+| Module                      | Type-Specific Methods                                                                           | Generic Dispatch?         |
+| --------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------- |
+| EDR (`EdrEndpoint`)         | `getCoverage()`, `getPosition()`, `getArea()`, `getCube()`, `getTrajectory()`, `getLocations()` | No                        |
+| WFS (`WfsEndpoint`)         | `getFeature()`, `getFeatureUrl()`                                                               | No (single resource type) |
+| WMS (`WmsEndpoint`)         | `getMapUrl()`, `getFeatureInfoUrl()`                                                            | No                        |
+| WMTS (`WmtsEndpoint`)       | `getTileUrl()`                                                                                  | No                        |
+| CSAPI (`CSAPIQueryBuilder`) | 77+ methods across 9 resource types                                                             | **Proposed in F-7**       |
 
 Introducing a generic dispatch layer in CSAPI would be the first instance of this pattern in the library. This is not inherently wrong, but it does establish a precedent that the upstream maintainers should evaluate.
 
@@ -299,24 +319,26 @@ Introducing a generic dispatch layer in CSAPI would be the first instance of thi
 
 ### 7.1 The Core Trade-off
 
-| Dimension | Type-Specific Methods (Current) | Generic Methods (Proposed) |
-|-----------|-------------------------------|--------------------------|
-| **Type safety** | Full — `SystemQueryOptions`, `DeploymentQueryOptions`, etc. | Reduced — only `QueryOptions` base type |
-| **IDE autocomplete** | Discoverable — `builder.get…` shows all options | Less discoverable — requires knowing `CSAPIResourceType` values |
-| **Dynamic-type UIs** | Requires switch/case dispatcher | Direct dispatch: `builder.getResources(type)` |
-| **Static-type consumers** | Perfect fit — know the type at compile time | No benefit; loss of type specificity |
-| **API surface area** | 77+ methods (larger surface, higher discoverability) | 5 additional methods (minimal surface expansion) |
-| **Maintenance burden** | None — already exists | Low — thin wrappers over `buildResourceUrl()` |
+| Dimension                 | Type-Specific Methods (Current)                             | Generic Methods (Proposed)                                      |
+| ------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------- |
+| **Type safety**           | Full — `SystemQueryOptions`, `DeploymentQueryOptions`, etc. | Reduced — only `QueryOptions` base type                         |
+| **IDE autocomplete**      | Discoverable — `builder.get…` shows all options             | Less discoverable — requires knowing `CSAPIResourceType` values |
+| **Dynamic-type UIs**      | Requires switch/case dispatcher                             | Direct dispatch: `builder.getResources(type)`                   |
+| **Static-type consumers** | Perfect fit — know the type at compile time                 | No benefit; loss of type specificity                            |
+| **API surface area**      | 77+ methods (larger surface, higher discoverability)        | 5 additional methods (minimal surface expansion)                |
+| **Maintenance burden**    | None — already exists                                       | Low — thin wrappers over `buildResourceUrl()`                   |
 
 ### 7.2 Who Benefits?
 
 **Consumers who benefit from generic methods:**
+
 - Dynamic-type UIs (admin panels, explorers, dashboards) that iterate over resource types
 - CLI tools that accept resource type as a command argument
 - Generic CRUD frameworks that work with arbitrary resource types
 - Test harnesses that iterate over all resource types
 
 **Consumers who do NOT benefit:**
+
 - Application code that knows the resource type at compile time (e.g., `builder.getSystems()`)
 - Type-safe integrations that need type-specific query options
 - Code that works with nested/relational resources (subsystems, datastreams under systems, etc.)
@@ -336,7 +358,8 @@ The boilerplate could also be eliminated **without library changes** by creating
 // Consumer-side generic dispatcher (no library change needed)
 const methods = {
   systems: (o?: QueryOptions) => builder.getSystems(o as SystemQueryOptions),
-  deployments: (o?: QueryOptions) => builder.getDeployments(o as DeploymentQueryOptions),
+  deployments: (o?: QueryOptions) =>
+    builder.getDeployments(o as DeploymentQueryOptions),
   // ... etc.
 };
 
@@ -379,18 +402,19 @@ Issue #11 describes a **legitimate DX improvement**. The boilerplate is real, th
 
 ### 8.2 Options
 
-| Option | Pros | Cons |
-|--------|------|------|
-| **A. Include in CSAPI PR** | Reduces consumer boilerplate; one-time implementation; additive-only | New abstraction; no upstream precedent; increases PR surface; requires approval per AI constraints |
-| **B. Defer to a follow-up PR** | Keeps initial PR focused on core functionality (URL building, types, parsers); smaller diff for upstream review | Enhancement remains unaddressed; consumers write boilerplate |
-| **C. Leave as consumer-side concern** | Zero library changes; consumers implement their own dispatch; type safety preserved | Each dynamic-type consumer reinvents the same pattern |
-| **D. Propose to upstream maintainers first** | Gets buy-in before implementation; respects that this is an API design decision | Delays implementation; may be rejected |
+| Option                                       | Pros                                                                                                            | Cons                                                                                               |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **A. Include in CSAPI PR**                   | Reduces consumer boilerplate; one-time implementation; additive-only                                            | New abstraction; no upstream precedent; increases PR surface; requires approval per AI constraints |
+| **B. Defer to a follow-up PR**               | Keeps initial PR focused on core functionality (URL building, types, parsers); smaller diff for upstream review | Enhancement remains unaddressed; consumers write boilerplate                                       |
+| **C. Leave as consumer-side concern**        | Zero library changes; consumers implement their own dispatch; type safety preserved                             | Each dynamic-type consumer reinvents the same pattern                                              |
+| **D. Propose to upstream maintainers first** | Gets buy-in before implementation; respects that this is an API design decision                                 | Delays implementation; may be rejected                                                             |
 
 ### 8.3 Recommended Path: Option B (Defer) or Option D (Propose First)
 
 **Primary recommendation: Defer to a follow-up PR (Option B).**
 
 Rationale:
+
 - The initial CSAPI upstream PR should focus on the core contribution: URL builder, type model, parsers, and bug fixes (F-1 through F-5). This is already a substantial PR (~4,000 lines of library code + tests).
 - Adding a new API pattern (generic dispatch) to the initial PR increases reviewer burden and the risk of the PR being rejected or requiring significant revisions.
 - The generic methods can be added later once the core CSAPI module is accepted upstream and the maintainers have had a chance to assess the API design.
@@ -410,33 +434,33 @@ If the user believes this enhancement is important for the initial submission, i
 
 ## Appendix A: Authority Precedence Analysis
 
-| Authority Level | Source | Says About This Enhancement | Weight |
-|----------------|--------|---------------------------|--------|
-| 1 (Highest) | OGC specifications | Silent — specs define resource types and operations, not library API design patterns | N/A |
-| 2 | AI Operational Constraints | Section 2.2: "Do not introduce new abstractions, layers, or dependencies without approval" — **directly applicable** | Blocking without approval |
-| 2 | AI Operational Constraints | Section 2.1: "Do not expand scope beyond the issue description" — the issue describes the enhancement clearly, but is the issue itself within the project's scope? | Cautionary |
-| 3 | Issue description | Clearly defines 5 methods with signatures and rationale | Scoping |
-| 4 | Existing code patterns | No upstream module uses generic dispatch; all modules use type-specific methods exclusively | Against precedent |
-| 5 | Reference documents | upstream-findings.md: F-7, priority #7, "Should Address"; library-integration-report.md: Finding #2, acknowledges trade-off | Supportive (with caveats) |
+| Authority Level | Source                     | Says About This Enhancement                                                                                                                                        | Weight                    |
+| --------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
+| 1 (Highest)     | OGC specifications         | Silent — specs define resource types and operations, not library API design patterns                                                                               | N/A                       |
+| 2               | AI Operational Constraints | Section 2.2: "Do not introduce new abstractions, layers, or dependencies without approval" — **directly applicable**                                               | Blocking without approval |
+| 2               | AI Operational Constraints | Section 2.1: "Do not expand scope beyond the issue description" — the issue describes the enhancement clearly, but is the issue itself within the project's scope? | Cautionary                |
+| 3               | Issue description          | Clearly defines 5 methods with signatures and rationale                                                                                                            | Scoping                   |
+| 4               | Existing code patterns     | No upstream module uses generic dispatch; all modules use type-specific methods exclusively                                                                        | Against precedent         |
+| 5               | Reference documents        | upstream-findings.md: F-7, priority #7, "Should Address"; library-integration-report.md: Finding #2, acknowledges trade-off                                        | Supportive (with caveats) |
 
 ---
 
 ## Appendix B: Cross-Reference Matrix
 
-| Document | Location | Relevance to Issue #11 |
-|----------|----------|-----------------------|
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | ogc-csapi-explorer | F-7 definition; priority #7; Category 2 "Library Design Improvements (Should Address)" |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | ogc-csapi-explorer | Library Finding #2 — where F-7 was first identified during bridge module creation; documents the boilerplate and the trade-off |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | ogc-csapi-explorer | F-7 actionability: "DX improvement", Medium effort, priority 5 |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Validates the library's URL builder role; generic methods expand that role |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | ogc-csapi-explorer | Context: adding 5 new methods increases diff surface of the upstream PR |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app conformance architecture |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | ogc-csapi-explorer | Peripheral — smoke test uses bridge dispatchers that F-7 would make unnecessary |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | ogc-csapi-explorer | Not relevant — covers cross-server interoperability |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | ogc-csapi-explorer | Not relevant — covers write operations |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | ogc-csapi-explorer | Not relevant — covers SWE Common schema display |
-| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | ogc-client-CSAPI_2 | Directly applicable — Section 2.2 requires approval for new abstractions |
+| Document                                                                                                                                                       | Location           | Relevance to Issue #11                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | ogc-csapi-explorer | F-7 definition; priority #7; Category 2 "Library Design Improvements (Should Address)"                                         |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                       | ogc-csapi-explorer | Library Finding #2 — where F-7 was first identified during bridge module creation; documents the boilerplate and the trade-off |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | ogc-csapi-explorer | F-7 actionability: "DX improvement", Medium effort, priority 5                                                                 |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Validates the library's URL builder role; generic methods expand that role                                                     |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | ogc-csapi-explorer | Context: adding 5 new methods increases diff surface of the upstream PR                                                        |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring                                                                                |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app conformance architecture                                                                        |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | ogc-csapi-explorer | Peripheral — smoke test uses bridge dispatchers that F-7 would make unnecessary                                                |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | ogc-csapi-explorer | Not relevant — covers cross-server interoperability                                                                            |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | ogc-csapi-explorer | Not relevant — covers write operations                                                                                         |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | ogc-csapi-explorer | Not relevant — covers SWE Common schema display                                                                                |
+| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)                        | ogc-client-CSAPI_2 | Directly applicable — Section 2.2 requires approval for new abstractions                                                       |
 
 ---
 
@@ -447,6 +471,7 @@ Issue #11 describes a real DX friction point — dynamic-type consumers of `CSAP
 However, this is an **enhancement** (Category 2: "Should Address"), not a bug fix. It introduces a new abstraction layer that has **no precedent in the upstream `ogc-client` library**, and the AI Operational Constraints **explicitly require approval** for new abstractions (Section 2.2).
 
 The boilerplate motivating this enhancement:
+
 - Is real (~45 lines in the demo bridge)
 - Is written once per consumer (not scattered)
 - Can be eliminated consumer-side without library changes

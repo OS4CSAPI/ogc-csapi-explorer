@@ -12,12 +12,12 @@
 
 ### 1.1 Documents Reviewed
 
-| # | Document | Lines | Status | Verdict |
-|---|----------|-------|--------|---------|
-| 04 | [04-implementation-guide-testing-requirements.md](../findings/04-implementation-guide-testing-requirements.md) | 2,268 | ✅ Reviewed | ✅ Pass |
-| 05 | [05-roadmap-testing-integration.md](../findings/05-roadmap-testing-integration.md) | 2,676 | ✅ Reviewed | ✅ Pass |
-| 07 | [07-end-to-end-testing-scope.md](../findings/07-end-to-end-testing-scope.md) | 1,894 | ✅ Reviewed | ✅ Pass (minor notes) |
-| 16 | [16-worker-extensions-testing.md](../findings/16-worker-extensions-testing.md) | 1,854 | ✅ Reviewed | ⚠️ Issues Found |
+| #   | Document                                                                                                       | Lines | Status      | Verdict               |
+| --- | -------------------------------------------------------------------------------------------------------------- | ----- | ----------- | --------------------- |
+| 04  | [04-implementation-guide-testing-requirements.md](../findings/04-implementation-guide-testing-requirements.md) | 2,268 | ✅ Reviewed | ✅ Pass               |
+| 05  | [05-roadmap-testing-integration.md](../findings/05-roadmap-testing-integration.md)                             | 2,676 | ✅ Reviewed | ✅ Pass               |
+| 07  | [07-end-to-end-testing-scope.md](../findings/07-end-to-end-testing-scope.md)                                   | 1,894 | ✅ Reviewed | ✅ Pass (minor notes) |
+| 16  | [16-worker-extensions-testing.md](../findings/16-worker-extensions-testing.md)                                 | 1,854 | ✅ Reviewed | ⚠️ Issues Found       |
 
 **Total Lines Reviewed:** 8,692
 
@@ -40,13 +40,13 @@ These 4 documents form the integration and workflow backbone of the testing stra
 
 Each document was checked against all 5 Phase 0 anti-patterns:
 
-| ID | Anti-Pattern | Description |
-|----|-------------|-------------|
-| AP1 | Testing Response Content | Tests validate server responses rather than client code |
-| AP2 | Hybrid Fixture/Live | Tests designed to run against live servers OR fixtures |
-| AP3 | OGC Requirement Traceability | Test structure mirrors spec requirements, not client code |
-| AP4 | Asserting Data Shape | Tests check response structure without testing transformation |
-| AP5 | Graceful Skipping | Tests conditionally skip based on fixture content |
+| ID  | Anti-Pattern                 | Description                                                   |
+| --- | ---------------------------- | ------------------------------------------------------------- |
+| AP1 | Testing Response Content     | Tests validate server responses rather than client code       |
+| AP2 | Hybrid Fixture/Live          | Tests designed to run against live servers OR fixtures        |
+| AP3 | OGC Requirement Traceability | Test structure mirrors spec requirements, not client code     |
+| AP4 | Asserting Data Shape         | Tests check response structure without testing transformation |
+| AP5 | Graceful Skipping            | Tests conditionally skip based on fixture content             |
 
 ### 2.2 Client Orientation Scoring
 
@@ -59,6 +59,7 @@ Documents were validated against [ROADMAP.md](../../planning/ROADMAP.md) v3.0: 4
 ### 2.4 Scope Proportionality
 
 Test counts, fixture requirements, and effort estimates were evaluated against:
+
 - Upstream `ogc-client` baseline (~2,500 test lines across ~15 test files)
 - Upstream test-to-code ratio (avg 1.44×)
 - Initial contribution scope (not full product test suite)
@@ -69,37 +70,37 @@ Test counts, fixture requirements, and effort estimates were evaluated against:
 
 ### Verdict: ✅ GO — Minor corrections required for Doc 16
 
-| Metric | Value |
-|--------|-------|
-| Documents passing | 3 of 4 (Docs 04, 05, 07) |
-| Documents with issues | 1 of 4 (Doc 16) |
-| Documents with critical issues | 0 of 4 |
-| Total issues identified | 11 |
-| Critical issues | 0 |
-| High-priority issues | 3 |
-| Medium-priority issues | 5 |
-| Low-priority issues | 3 |
+| Metric                         | Value                    |
+| ------------------------------ | ------------------------ |
+| Documents passing              | 3 of 4 (Docs 04, 05, 07) |
+| Documents with issues          | 1 of 4 (Doc 16)          |
+| Documents with critical issues | 0 of 4                   |
+| Total issues identified        | 11                       |
+| Critical issues                | 0                        |
+| High-priority issues           | 3                        |
+| Medium-priority issues         | 5                        |
+| Low-priority issues            | 3                        |
 
 ### Client Orientation Summary
 
-| Document | Client % | Primary Concern |
-|----------|----------|----------------|
-| 04 — Impl Guide Testing Reqs | ~92% | All test examples use URL parsing assertions; minor edge cases |
-| 05 — Roadmap Testing Integration | ~95% | All code examples test `builder.*` → URL assertions |
-| 07 — E2E Testing Scope | ~93% | Explicitly excludes server testing; minor workflow phrasing |
-| 16 — Worker Extensions Testing | ~78% | Performance thresholds are environmental; premature scope |
-| **Weighted Average** | **~90%** | **Strong client orientation across category** |
+| Document                         | Client % | Primary Concern                                                |
+| -------------------------------- | -------- | -------------------------------------------------------------- |
+| 04 — Impl Guide Testing Reqs     | ~92%     | All test examples use URL parsing assertions; minor edge cases |
+| 05 — Roadmap Testing Integration | ~95%     | All code examples test `builder.*` → URL assertions            |
+| 07 — E2E Testing Scope           | ~93%     | Explicitly excludes server testing; minor workflow phrasing    |
+| 16 — Worker Extensions Testing   | ~78%     | Performance thresholds are environmental; premature scope      |
+| **Weighted Average**             | **~90%** | **Strong client orientation across category**                  |
 
 ### Cross-Category Comparison
 
-| Phase | Category | Documents | Client % | Issues | Verdict |
-|-------|----------|-----------|----------|--------|---------|
-| 2A | Fixtures | 4 | ~88% | 9 | ⚠️ Conditional Go |
-| 2B | Testing Patterns | 4 | ~82% | 12 | ⚠️ Conditional Go |
-| 2C | Standards & Quality | 4 | ~85% | 8 | ⚠️ Conditional Go |
-| 2D | CSAPI-Specific Testing | 4 | ~79% | 15 | ⚠️ Conditional Go |
-| 2E | Advanced Scenarios | 12 | ~63% | 27 | ⚠️ Conditional Go |
-| **2F** | **Integration & Workflow** | **4** | **~90%** | **11** | **✅ Go** |
+| Phase  | Category                   | Documents | Client % | Issues | Verdict           |
+| ------ | -------------------------- | --------- | -------- | ------ | ----------------- |
+| 2A     | Fixtures                   | 4         | ~88%     | 9      | ⚠️ Conditional Go |
+| 2B     | Testing Patterns           | 4         | ~82%     | 12     | ⚠️ Conditional Go |
+| 2C     | Standards & Quality        | 4         | ~85%     | 8      | ⚠️ Conditional Go |
+| 2D     | CSAPI-Specific Testing     | 4         | ~79%     | 15     | ⚠️ Conditional Go |
+| 2E     | Advanced Scenarios         | 12        | ~63%     | 27     | ⚠️ Conditional Go |
+| **2F** | **Integration & Workflow** | **4**     | **~90%** | **11** | **✅ Go**         |
 
 **Phase 2F is the strongest-performing category** across all phases reviewed. The integration and workflow documents demonstrate mature understanding of the client library context and consistently apply correct testing patterns.
 
@@ -127,13 +128,13 @@ Test counts, fixture requirements, and effort estimates were evaluated against:
 
 #### Anti-Pattern Assessment
 
-| AP | Status | Notes |
-|----|--------|-------|
+| AP  | Status   | Notes                                                                  |
+| --- | -------- | ---------------------------------------------------------------------- |
 | AP1 | ✅ Clear | All test examples assert client outputs (URLs, parsed objects, errors) |
-| AP2 | ✅ Clear | No hybrid fixture/live patterns proposed |
-| AP3 | ✅ Clear | Test structure follows component hierarchy, not spec requirement IDs |
-| AP4 | ✅ Clear | Tests target transformation outputs, not fixture shapes |
-| AP5 | ✅ Clear | No conditional skipping patterns |
+| AP2 | ✅ Clear | No hybrid fixture/live patterns proposed                               |
+| AP3 | ✅ Clear | Test structure follows component hierarchy, not spec requirement IDs   |
+| AP4 | ✅ Clear | Tests target transformation outputs, not fixture shapes                |
+| AP5 | ✅ Clear | No conditional skipping patterns                                       |
 
 #### Minor Notes
 
@@ -166,13 +167,13 @@ Test counts, fixture requirements, and effort estimates were evaluated against:
 
 #### Anti-Pattern Assessment
 
-| AP | Status | Notes |
-|----|--------|-------|
+| AP  | Status   | Notes                                                          |
+| --- | -------- | -------------------------------------------------------------- |
 | AP1 | ✅ Clear | All examples assert client-constructed URLs and parsed outputs |
-| AP2 | ✅ Clear | All tests use mocked fetch with fixtures |
-| AP3 | ✅ Clear | Structure follows ROADMAP tasks, not OGC requirement IDs |
-| AP4 | ✅ Clear | Tests target method outputs, not fixture data shapes |
-| AP5 | ✅ Clear | No conditional skipping |
+| AP2 | ✅ Clear | All tests use mocked fetch with fixtures                       |
+| AP3 | ✅ Clear | Structure follows ROADMAP tasks, not OGC requirement IDs       |
+| AP4 | ✅ Clear | Tests target method outputs, not fixture data shapes           |
+| AP5 | ✅ Clear | No conditional skipping                                        |
 
 #### Minor Notes
 
@@ -205,13 +206,13 @@ Test counts, fixture requirements, and effort estimates were evaluated against:
 
 #### Anti-Pattern Assessment
 
-| AP | Status | Notes |
-|----|--------|-------|
+| AP  | Status   | Notes                                                               |
+| --- | -------- | ------------------------------------------------------------------- |
 | AP1 | ✅ Clear | All workflow tests assert client outputs; explicit server exclusion |
-| AP2 | ✅ Clear | No live server testing proposed |
-| AP3 | ✅ Clear | Workflows based on user scenarios, not OGC requirement numbering |
-| AP4 | ✅ Clear | Tests target workflow outputs, not fixture shapes |
-| AP5 | ✅ Clear | No conditional skipping |
+| AP2 | ✅ Clear | No live server testing proposed                                     |
+| AP3 | ✅ Clear | Workflows based on user scenarios, not OGC requirement numbering    |
+| AP4 | ✅ Clear | Tests target workflow outputs, not fixture shapes                   |
+| AP5 | ✅ Clear | No conditional skipping                                             |
 
 #### Issues
 
@@ -255,13 +256,13 @@ Section 5.3 (Command Submission workflow) includes a "check feasibility" step: "
 
 #### Anti-Pattern Assessment
 
-| AP | Status | Notes |
-|----|--------|-------|
+| AP  | Status     | Notes                                                              |
+| --- | ---------- | ------------------------------------------------------------------ |
 | AP1 | ⚠️ Partial | Performance threshold assertions test environment, not client code |
-| AP2 | ✅ Clear | No live server testing |
-| AP3 | ✅ Clear | Test structure follows message types, not spec requirements |
-| AP4 | ✅ Clear | Tests target parsed/transformed outputs |
-| AP5 | ✅ Clear | No conditional skipping |
+| AP2 | ✅ Clear   | No live server testing                                             |
+| AP3 | ✅ Clear   | Test structure follows message types, not spec requirements        |
+| AP4 | ✅ Clear   | Tests target parsed/transformed outputs                            |
+| AP5 | ✅ Clear   | No conditional skipping                                            |
 
 #### Issues
 
@@ -282,6 +283,7 @@ The document is research-complete and technically sound, but its testing strateg
 **(H2) Performance threshold tests are environmental and non-deterministic**
 
 Section 7 defines performance benchmarks:
+
 - `expect(duration).toBeLessThan(200)` — 200ms parse time threshold
 - `expect(workerDuration).toBeLessThanOrEqual(mainDuration * 1.1)` — worker vs main thread comparison
 - `expect(result.metadata.parseTime).toBeLessThan(200)` — metadata timing assertion
@@ -291,11 +293,11 @@ These assertions will produce different results on different hardware, CI enviro
 **Mitigating factor:** Section 12.1 Risk 3 acknowledges this: "Performance thresholds may vary by machine, CI environment." The mitigation (generous thresholds, logging, optional skip in slow environments) is reasonable but still means these tests will be flaky.
 
 **Impact:** Performance tests will cause CI flakiness and false failures. They test the environment, not the client code logic.  
-**Resolution:** Move performance threshold assertions to a separate, **optional** test suite (e.g., `performance.spec.ts` with `jest --testPathPattern=performance` run manually, not in CI). Keep performance metadata *collection* (logging) but remove hard assertions in the standard test suite.
+**Resolution:** Move performance threshold assertions to a separate, **optional** test suite (e.g., `performance.spec.ts` with `jest --testPathPattern=performance` run manually, not in CI). Keep performance metadata _collection_ (logging) but remove hard assertions in the standard test suite.
 
 **(H3) `PARSE_SWE_BINARY` worker message type is deferred to Phase 4 (binary parsing itself remains in scope)**
 
-The PARSE_SWE_BINARY message type includes 15 test scenarios (180-200 lines). This message type’s *worker offloading* tests should be deferred along with the rest of Doc 16 (Phase 4). **Clarification:** This deferral applies only to the worker message type in Doc 16. Binary SWE parsing at the parser level (Doc 10, 96 tests, ~50% of SWE Common effort) is IN SCOPE per the implementation guide §7 and Phase 2D assessment (M2, P4: "sound and directly usable").
+The PARSE*SWE_BINARY message type includes 15 test scenarios (180-200 lines). This message type’s \_worker offloading* tests should be deferred along with the rest of Doc 16 (Phase 4). **Clarification:** This deferral applies only to the worker message type in Doc 16. Binary SWE parsing at the parser level (Doc 10, 96 tests, ~50% of SWE Common effort) is IN SCOPE per the implementation guide §7 and Phase 2D assessment (M2, P4: "sound and directly usable").
 
 **Impact:** Low — does not affect other message types or binary parsing scope. Removing from worker test counts reduces from 201→186 scenarios.
 **Resolution:** Mark PARSE_SWE_BINARY worker message type as deferred within Doc 16. This does NOT affect Doc 10 binary parsing tests.
@@ -329,12 +331,12 @@ Section 6 defines 6 concurrent request scenarios. While valuable for production 
 
 ### 5.1 Test Effort Alignment
 
-| Source | Test Lines Estimate | Hours Estimate | Test-to-Code Ratio |
-|--------|-------------------|----------------|---------------------|
-| Doc 04 (Impl Guide Reqs) | 4,500-6,000 | Not stated | ~1.02× |
-| Doc 05 (Roadmap Integration) | 4,400-6,300 | ~40-60h | ~0.97-1.10× |
-| Doc 07 (E2E Scope) | 4,800-6,000 (total pyramid) | 6-8h (E2E only) | 3.0-3.75× |
-| Doc 16 (Worker Tests) | 2,310-2,860 (worker only) | 47-61h (worker only) | N/A (additive) |
+| Source                       | Test Lines Estimate         | Hours Estimate       | Test-to-Code Ratio |
+| ---------------------------- | --------------------------- | -------------------- | ------------------ |
+| Doc 04 (Impl Guide Reqs)     | 4,500-6,000                 | Not stated           | ~1.02×             |
+| Doc 05 (Roadmap Integration) | 4,400-6,300                 | ~40-60h              | ~0.97-1.10×        |
+| Doc 07 (E2E Scope)           | 4,800-6,000 (total pyramid) | 6-8h (E2E only)      | 3.0-3.75×          |
+| Doc 16 (Worker Tests)        | 2,310-2,860 (worker only)   | 47-61h (worker only) | N/A (additive)     |
 
 **Consistency assessment:** Docs 04 and 05 are internally consistent (4,500-6,300 range). Doc 07's total pyramid estimate (4,800-6,000) aligns well. Doc 16's worker test estimate (2,310-2,860) is **additive** to the other estimates — if taken at face value, total test lines would be ~6,800-8,860, which is significantly above the Implementation Guide's target.
 
@@ -342,12 +344,12 @@ Section 6 defines 6 concurrent request scenarios. While valuable for production 
 
 ### 5.2 ROADMAP Alignment
 
-| Document | ROADMAP Alignment | Notes |
-|----------|-------------------|-------|
-| Doc 04 | ✅ Perfect | All 4 phases covered, estimates consistent |
-| Doc 05 | ✅ Perfect | All 34 tasks mapped with test checkpoints |
-| Doc 07 | ✅ Good | E2E maps to Phase 4, Task 2 |
-| Doc 16 | ✅ Good | Worker maps to Phase 4, Task 1 (but estimates far exceed ROADMAP) |
+| Document | ROADMAP Alignment | Notes                                                             |
+| -------- | ----------------- | ----------------------------------------------------------------- |
+| Doc 04   | ✅ Perfect        | All 4 phases covered, estimates consistent                        |
+| Doc 05   | ✅ Perfect        | All 34 tasks mapped with test checkpoints                         |
+| Doc 07   | ✅ Good           | E2E maps to Phase 4, Task 2                                       |
+| Doc 16   | ✅ Good           | Worker maps to Phase 4, Task 1 (but estimates far exceed ROADMAP) |
 
 ### 5.3 Anti-Pattern Consistency
 
@@ -358,6 +360,7 @@ This is a significant improvement over Phases 2D-2E, where AP1 violations were e
 ### 5.4 Internal Consistency
 
 No contradictions found between documents. Key cross-references resolve correctly:
+
 - Doc 05 references Doc 04's test estimates and they match.
 - Doc 07 defines E2E scope that Doc 05 maps to Phase 4, Task 2.
 - Doc 16 references Doc 05's incremental testing approach and correctly extends it.
@@ -420,19 +423,19 @@ Despite the scope concerns (H1), Doc 16's technical analysis of the upstream wor
 
 ### Summary
 
-| ID | Document | Severity | Description | Status |
-|----|----------|----------|-------------|--------|
-| H1 | Doc 16 | High | Worker testing strategy premature — Phase 4 scope gating needed | ✅ Resolved |
-| H2 | Doc 16 | High | Performance thresholds out of scope — aligned with Doc 33 project-wide exclusion | ✅ Resolved |
-| H3 | Doc 16 | High | `PARSE_SWE_BINARY` worker message type deferred to Phase 4 — binary parsing itself (Doc 10) remains in scope | ✅ Resolved |
-| M1 | Doc 07 | Medium | E2E effort estimates — added "Initial Contribution Target" vs "Stretch Goal" labels | ✅ Resolved |
-| M2 | Doc 07 | Medium | Command feasibility "validate result" — clarified to assert URL + parsed structure, not server verdict | ✅ Resolved |
-| M3 | Doc 16 | Medium | TRAVERSE_HIERARCHY fetch mocking — added explicit mock injection note at Section 2.3.2 | ✅ Resolved |
-| M4 | Doc 16 | Medium | Total effort (47-61h) disproportionate — differentiated min vs comprehensive in top-level notice | ✅ Resolved |
-| M5 | Doc 16 | Medium | 9 new message types but no message handlers exist yet — covered by H1 scope gating notice | ✅ Resolved |
-| L1 | Doc 16 | Low | Concurrent request tests — added note to verify upstream coverage first (Section 6.3) | ✅ Resolved |
-| L2 | Doc 04 | Low | Test pyramid percentages — added explicit "60-65% unit / 35-40% integration / 0% E2E" recommendation | ✅ Resolved |
-| L3 | Doc 05 | Low | Test naming convention — advisory only; `should` pattern recommended in existing review notice | ✅ Resolved |
+| ID  | Document | Severity | Description                                                                                                  | Status      |
+| --- | -------- | -------- | ------------------------------------------------------------------------------------------------------------ | ----------- |
+| H1  | Doc 16   | High     | Worker testing strategy premature — Phase 4 scope gating needed                                              | ✅ Resolved |
+| H2  | Doc 16   | High     | Performance thresholds out of scope — aligned with Doc 33 project-wide exclusion                             | ✅ Resolved |
+| H3  | Doc 16   | High     | `PARSE_SWE_BINARY` worker message type deferred to Phase 4 — binary parsing itself (Doc 10) remains in scope | ✅ Resolved |
+| M1  | Doc 07   | Medium   | E2E effort estimates — added "Initial Contribution Target" vs "Stretch Goal" labels                          | ✅ Resolved |
+| M2  | Doc 07   | Medium   | Command feasibility "validate result" — clarified to assert URL + parsed structure, not server verdict       | ✅ Resolved |
+| M3  | Doc 16   | Medium   | TRAVERSE_HIERARCHY fetch mocking — added explicit mock injection note at Section 2.3.2                       | ✅ Resolved |
+| M4  | Doc 16   | Medium   | Total effort (47-61h) disproportionate — differentiated min vs comprehensive in top-level notice             | ✅ Resolved |
+| M5  | Doc 16   | Medium   | 9 new message types but no message handlers exist yet — covered by H1 scope gating notice                    | ✅ Resolved |
+| L1  | Doc 16   | Low      | Concurrent request tests — added note to verify upstream coverage first (Section 6.3)                        | ✅ Resolved |
+| L2  | Doc 04   | Low      | Test pyramid percentages — added explicit "60-65% unit / 35-40% integration / 0% E2E" recommendation         | ✅ Resolved |
+| L3  | Doc 05   | Low      | Test naming convention — advisory only; `should` pattern recommended in existing review notice               | ✅ Resolved |
 
 **Total: 11 issues — 11/11 resolved (0 critical, 3 high, 5 medium, 3 low)**
 
@@ -442,16 +445,16 @@ Despite the scope concerns (H1), Doc 16's technical analysis of the upstream wor
 
 ### Key Metrics
 
-| Metric | Value |
-|--------|-------|
-| Documents reviewed | 4 |
-| Total lines reviewed | 8,692 |
-| Issues identified | 11 |
-| Critical issues | 0 |
-| Client orientation | ~90% (highest across all phases) |
-| ROADMAP alignment | ✅ All 4 documents align |
-| Anti-pattern violations | 0 (AP1 concern in Doc 16 performance tests is environmental, not server-oriented) |
-| Cross-document consistency | ✅ No contradictions |
+| Metric                     | Value                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| Documents reviewed         | 4                                                                                 |
+| Total lines reviewed       | 8,692                                                                             |
+| Issues identified          | 11                                                                                |
+| Critical issues            | 0                                                                                 |
+| Client orientation         | ~90% (highest across all phases)                                                  |
+| ROADMAP alignment          | ✅ All 4 documents align                                                          |
+| Anti-pattern violations    | 0 (AP1 concern in Doc 16 performance tests is environmental, not server-oriented) |
+| Cross-document consistency | ✅ No contradictions                                                              |
 
 ### Category Verdict
 

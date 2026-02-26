@@ -12,6 +12,7 @@
 This document identifies real-world usage scenarios for OGC API – Connected Systems based on comprehensive analysis of the standard specifications, requirements documents, and common sensor web application patterns. The analysis prioritizes 15 core scenarios, defines 6 essential workflows, documents common query patterns, and recommends 17 convenience methods to simplify client library usage.
 
 **Key Findings:**
+
 - **15 Core Usage Scenarios** covering discovery, monitoring, control, and deployment
 - **6 Essential Workflows** from initialization through real-time monitoring and commanding
 - **8 Common Error Patterns** requiring specific handling strategies
@@ -44,11 +45,13 @@ This document identifies real-world usage scenarios for OGC API – Connected Sy
 **User Story:** "As a user, I want to find all temperature sensors within San Francisco so I can monitor local weather conditions."
 
 **API Operations:**
+
 ```
 GET /systems?bbox=-122.5,37.5,-122.3,37.7&observedProperty=temperature
 ```
 
 **Client Library Requirements:**
+
 - Spatial query builder for bbox construction
 - Property filter support (URI or CURIE format)
 - GeoJSON response parsing
@@ -69,6 +72,7 @@ GET /systems?bbox=-122.5,37.5,-122.3,37.7&observedProperty=temperature
 **User Story:** "As a dashboard user, I want to see the current temperature reading from sensor X updated every 5 seconds."
 
 **API Operations:**
+
 ```
 1. GET /systems/{id}/datastreams
 2. GET /datastreams/{id}/observations?resultTime=latest
@@ -76,6 +80,7 @@ GET /systems?bbox=-122.5,37.5,-122.3,37.7&observedProperty=temperature
 ```
 
 **Client Library Requirements:**
+
 - Check `datastream.live` property for availability
 - Polling abstraction with configurable interval
 - Incremental fetch using resultTime filter
@@ -96,12 +101,14 @@ GET /systems?bbox=-122.5,37.5,-122.3,37.7&observedProperty=temperature
 **User Story:** "As an analyst, I want to download all temperature observations from January 2024 so I can analyze monthly trends."
 
 **API Operations:**
+
 ```
 GET /datastreams/{id}/observations?phenomenonTime=2024-01-01T00:00:00Z/2024-02-01T00:00:00Z&limit=1000
 → Follow pagination links for complete dataset
 ```
 
 **Client Library Requirements:**
+
 - Temporal query builder (ISO 8601 intervals)
 - Automatic pagination handling
 - Streaming large result sets
@@ -123,6 +130,7 @@ GET /datastreams/{id}/observations?phenomenonTime=2024-01-01T00:00:00Z/2024-02-0
 **User Story:** "As a camera operator, I want to send a pan command to camera X and wait for confirmation that it completed."
 
 **API Operations:**
+
 ```
 1. GET /systems/{id}/controlstreams
 2. POST /controlstreams/{id}/commands
@@ -132,6 +140,7 @@ GET /datastreams/{id}/observations?phenomenonTime=2024-01-01T00:00:00Z/2024-02-0
 ```
 
 **Client Library Requirements:**
+
 - Schema validation before submission
 - Async command handling with polling
 - Status monitoring with timeout
@@ -153,6 +162,7 @@ GET /datastreams/{id}/observations?phenomenonTime=2024-01-01T00:00:00Z/2024-02-0
 **User Story:** "As a monitoring operator, I want to watch live video telemetry from a UAV and see position updates in real-time."
 
 **API Operations:**
+
 ```
 1. GET /datastreams/{id} → Check live=true
 2. Poll: GET /datastreams/{id}/observations?resultTime=2024-01-15T12:00:00Z/..
@@ -160,6 +170,7 @@ GET /datastreams/{id}/observations?phenomenonTime=2024-01-01T00:00:00Z/2024-02-0
 ```
 
 **Client Library Requirements:**
+
 - Polling with incremental time window
 - Back-pressure handling if observations arrive faster than consumed
 - Reconnection on failure
@@ -181,6 +192,7 @@ GET /datastreams/{id}/observations?phenomenonTime=2024-01-01T00:00:00Z/2024-02-0
 **User Story:** "As a project manager, I want to register a river monitoring deployment with 10 sensors along the waterway for Q1 2024."
 
 **API Operations:**
+
 ```
 1. POST /deployments
    Body: {
@@ -194,6 +206,7 @@ GET /datastreams/{id}/observations?phenomenonTime=2024-01-01T00:00:00Z/2024-02-0
 ```
 
 **Client Library Requirements:**
+
 - Deployment creation with validation
 - Bulk system association
 - Subdeployment support
@@ -214,12 +227,14 @@ GET /datastreams/{id}/observations?phenomenonTime=2024-01-01T00:00:00Z/2024-02-0
 **User Story:** "As a systems engineer, I want to see all sensors on a UAV platform, including those on gimbals and payloads."
 
 **API Operations:**
+
 ```
 GET /systems/{platformId}/subsystems?recursive=true
 → Returns all nested subsystems at all levels
 ```
 
 **Client Library Requirements:**
+
 - Recursive query support
 - Tree structure building
 - Lazy loading of subsystem details
@@ -240,12 +255,14 @@ GET /systems/{platformId}/subsystems?recursive=true
 **User Story:** "As a data curator, I want to see all versions of a sensor's configuration to understand calibration changes."
 
 **API Operations:**
+
 ```
 GET /systems/{id}?datetime=2023-01-01T00:00:00Z
 → System as it was on specific date (via validTime)
 ```
 
 **Client Library Requirements:**
+
 - Temporal queries on system resources
 - Version comparison utilities
 - ValidTime handling
@@ -265,6 +282,7 @@ GET /systems/{id}?datetime=2023-01-01T00:00:00Z
 **User Story:** "As a data scientist, I want to register water sampling points along a river and link them to the sensors that collect samples."
 
 **API Operations:**
+
 ```
 1. POST /systems/{sysId}/samplingFeatures
    Body: {
@@ -276,6 +294,7 @@ GET /systems/{id}?datetime=2023-01-01T00:00:00Z
 ```
 
 **Client Library Requirements:**
+
 - Sampling feature creation
 - FOI relationship management
 - Spatial sampling geometry support
@@ -295,6 +314,7 @@ GET /systems/{id}?datetime=2023-01-01T00:00:00Z
 **User Story:** "As a mission planner, I want to check if a satellite imaging task is feasible before submitting the actual command."
 
 **API Operations:**
+
 ```
 1. POST /controlstreams/{id}/feasibility
    Body: { same as command parameters }
@@ -303,6 +323,7 @@ GET /systems/{id}?datetime=2023-01-01T00:00:00Z
 ```
 
 **Client Library Requirements:**
+
 - Feasibility request creation
 - Status monitoring
 - Result interpretation
@@ -322,11 +343,13 @@ GET /systems/{id}?datetime=2023-01-01T00:00:00Z
 **User Story:** "As a fleet manager, I want to see all maintenance events for my sensor network in the past month."
 
 **API Operations:**
+
 ```
 GET /systems/{id}/events?time=2024-01-01T00:00:00Z/..
 ```
 
 **Client Library Requirements:**
+
 - Event querying and filtering
 - Event classification handling
 - Timeline visualization support
@@ -346,12 +369,14 @@ GET /systems/{id}/events?time=2024-01-01T00:00:00Z/..
 **User Story:** "As a GIS analyst, I want to see all sensors on a map with popups showing current readings."
 
 **API Operations:**
+
 ```
 GET /systems?bbox={viewport}&format=application/geo+json
 → Returns GeoJSON FeatureCollection
 ```
 
 **Client Library Requirements:**
+
 - GeoJSON format support
 - Easy integration with map libraries
 - Coordinate system handling (CRS)
@@ -372,6 +397,7 @@ GET /systems?bbox={viewport}&format=application/geo+json
 **User Story:** "As an operations center, I want a dashboard showing 50 sensors with live charts updating every 5 seconds."
 
 **API Operations:**
+
 ```
 For each sensor:
 1. GET /datastreams/{id}/observations?resultTime=latest
@@ -380,6 +406,7 @@ Display on charts/gauges
 ```
 
 **Client Library Requirements:**
+
 - Batch fetching multiple datastreams
 - Efficient polling with backoff
 - Observable pattern for reactive updates
@@ -400,6 +427,7 @@ Display on charts/gauges
 **User Story:** "As a remote sensing operator, I want to task a satellite to image a specific area and download the resulting observations."
 
 **API Operations:**
+
 ```
 1. POST /controlstreams/{id}/commands
    Body: { target area, parameters }
@@ -410,6 +438,7 @@ Display on charts/gauges
 ```
 
 **Client Library Requirements:**
+
 - Complex command parameters
 - Long-running task support (hours/days)
 - Result datastream resolution
@@ -430,6 +459,7 @@ Display on charts/gauges
 **User Story:** "As a sensor manufacturer, I want to publish datasheets for my sensor models so users can query specifications."
 
 **API Operations:**
+
 ```
 1. POST /procedures
    Body: SensorML PhysicalComponent description
@@ -439,6 +469,7 @@ Display on charts/gauges
 ```
 
 **Client Library Requirements:**
+
 - SensorML format support
 - Procedure-system association
 - Type-instance relationship queries
@@ -458,6 +489,7 @@ Display on charts/gauges
 **Purpose:** Establish connection to CSAPI server and discover available resources.
 
 **Steps:**
+
 ```
 1. Initialize client with base URL
    → client = new CSAPIClient('https://api.example.org/csapi')
@@ -477,11 +509,12 @@ Display on charts/gauges
 ```
 
 **Client Library API:**
+
 ```typescript
 // Simplified API
 const client = new CSAPIClient({
   baseUrl: 'https://api.example.org/csapi',
-  auth: { token: '...' }
+  auth: { token: '...' },
 });
 
 await client.initialize(); // Steps 2-3 automatically
@@ -491,6 +524,7 @@ const collections = await client.getCollections();
 ```
 
 **Requirements:**
+
 - Automatic conformance detection on initialization
 - Capability caching (rarely changes)
 - Collection metadata parsing
@@ -503,6 +537,7 @@ const collections = await client.getCollections();
 **Purpose:** Poll sensor observations continuously for live monitoring.
 
 **Steps:**
+
 ```
 1. Find system
    → GET /systems?observedProperty={prop}&bbox={area}
@@ -526,25 +561,27 @@ const collections = await client.getCollections();
 ```
 
 **Client Library API:**
+
 ```typescript
 // High-level polling abstraction
 const systems = await client.findSystems({
   bbox: [-122.5, 37.5, -122.3, 37.7],
-  observedProperty: 'temperature'
+  observedProperty: 'temperature',
 });
 
 const datastreams = await systems[0].getDataStreams();
-const liveStream = datastreams.find(ds => ds.live);
+const liveStream = datastreams.find((ds) => ds.live);
 
 // Observable pattern
 liveStream.observe({
   interval: 5000,
   onData: (observation) => updateUI(observation),
-  onError: (error) => handleError(error)
+  onError: (error) => handleError(error),
 });
 ```
 
 **Requirements:**
+
 - Polling abstraction with configurable interval
 - Observable/EventEmitter pattern
 - Automatic error handling and reconnection
@@ -557,6 +594,7 @@ liveStream.observe({
 **Purpose:** Download historical observations for analysis.
 
 **Steps:**
+
 ```
 1. Find system and datastream
    → GET /systems/{id}/datastreams
@@ -577,23 +615,25 @@ liveStream.observe({
 ```
 
 **Client Library API:**
+
 ```typescript
 // Automatic pagination handling
 const observations = await datastream.getObservations({
   phenomenonTime: ['2024-01-01', '2024-02-01'],
   autoPaginate: true, // Fetches all pages
-  onProgress: (page, total) => updateProgress(page, total)
+  onProgress: (page, total) => updateProgress(page, total),
 });
 
 // Streaming for large datasets
 for await (const observation of datastream.observationStream({
-  phenomenonTime: ['2024-01-01', '2024-02-01']
+  phenomenonTime: ['2024-01-01', '2024-02-01'],
 })) {
   process(observation);
 }
 ```
 
 **Requirements:**
+
 - Automatic pagination handling
 - Streaming API for large datasets
 - Progress callbacks
@@ -606,6 +646,7 @@ for await (const observation of datastream.observationStream({
 **Purpose:** Issue commands to actuators and monitor execution.
 
 **Steps:**
+
 ```
 1. Find actuator system
    → GET /systems?controlledProperty={prop}
@@ -632,10 +673,11 @@ for await (const observation of datastream.observationStream({
 ```
 
 **Client Library API:**
+
 ```typescript
 // Promise-based async command
 const systems = await client.findSystems({
-  controlledProperty: 'pan'
+  controlledProperty: 'pan',
 });
 
 const controlStreams = await systems[0].getControlStreams();
@@ -644,7 +686,7 @@ const panStream = controlStreams[0];
 // Async/await pattern
 const command = await panStream.sendCommand({
   params: { pan: 45 },
-  executionTime: 'now'
+  executionTime: 'now',
 });
 
 await command.waitForCompletion({ timeout: 30000 });
@@ -652,6 +694,7 @@ const result = await command.getResult();
 ```
 
 **Requirements:**
+
 - Schema validation before submission
 - Promise-based async API
 - Status polling with timeout
@@ -665,6 +708,7 @@ const result = await command.getResult();
 **Purpose:** Register and monitor sensor network deployments.
 
 **Steps:**
+
 ```
 1. Create deployment resource
    → POST /deployments
@@ -692,23 +736,25 @@ const result = await command.getResult();
 ```
 
 **Client Library API:**
+
 ```typescript
 // Deployment creation
 const deployment = await client.createDeployment({
   name: 'River Monitoring Q1 2024',
   validTime: ['2024-01-01', '2024-04-01'],
   geometry: riverLineString,
-  deployedSystems: systemIds
+  deployedSystems: systemIds,
 });
 
 // Monitor all deployment data
 const datastreams = await deployment.getDataStreams();
 const observations = await deployment.getAllObservations({
-  phenomenonTime: ['2024-01-01', '2024-02-01']
+  phenomenonTime: ['2024-01-01', '2024-02-01'],
 });
 ```
 
 **Requirements:**
+
 - Deployment CRUD operations
 - System association handling
 - Hierarchy navigation
@@ -721,6 +767,7 @@ const observations = await deployment.getAllObservations({
 **Purpose:** Validate command feasibility before execution.
 
 **Steps:**
+
 ```
 1. Find control stream
    → GET /controlstreams/{id}
@@ -745,23 +792,25 @@ const observations = await deployment.getAllObservations({
 ```
 
 **Client Library API:**
+
 ```typescript
 // Feasibility check
 const feasibility = await controlStream.checkFeasibility({
   params: { target: targetArea },
-  executionTime: '2024-01-15T12:00:00Z'
+  executionTime: '2024-01-15T12:00:00Z',
 });
 
 if (feasibility.isFeasible) {
   const command = await controlStream.sendCommand({
     params: { target: targetArea },
-    executionTime: '2024-01-15T12:00:00Z'
+    executionTime: '2024-01-15T12:00:00Z',
   });
   await command.waitForCompletion();
 }
 ```
 
 **Requirements:**
+
 - Feasibility request creation
 - Status monitoring
 - Result interpretation
@@ -776,6 +825,7 @@ if (feasibility.isFeasible) {
 **Pattern:** Find resources within geographic bounds
 
 **Examples:**
+
 ```
 # City area
 GET /systems?bbox=-122.5,37.5,-122.3,37.7
@@ -788,6 +838,7 @@ GET /systems?bbox=500000,4500000,600000,4600000&bbox-crs=EPSG:3857
 ```
 
 **Library Support:**
+
 ```typescript
 // BBox builder
 const systems = await client.findSystems({
@@ -795,13 +846,13 @@ const systems = await client.findSystems({
     west: -122.5,
     south: 37.5,
     east: -122.3,
-    north: 37.7
-  }
+    north: 37.7,
+  },
 });
 
 // Or array format
 const systems = await client.findSystems({
-  bbox: [-122.5, 37.5, -122.3, 37.7]
+  bbox: [-122.5, 37.5, -122.3, 37.7],
 });
 ```
 
@@ -812,6 +863,7 @@ const systems = await client.findSystems({
 **Pattern:** Query resources by time range or instant
 
 **Examples:**
+
 ```
 # Specific day
 GET /observations?phenomenonTime=2024-01-15T00:00:00Z/2024-01-16T00:00:00Z
@@ -830,25 +882,26 @@ GET /systems?datetime=now
 ```
 
 **Library Support:**
+
 ```typescript
 // Time range builder
 const observations = await datastream.getObservations({
   phenomenonTime: {
     start: '2024-01-15',
-    end: '2024-01-16'
-  }
+    end: '2024-01-16',
+  },
 });
 
 // Or ISO interval
 const observations = await datastream.getObservations({
-  phenomenonTime: '2024-01-15/2024-01-16'
+  phenomenonTime: '2024-01-15/2024-01-16',
 });
 
 // Special values
 const latest = await datastream.getLatestObservation();
 
 const active = await client.findSystems({
-  datetime: 'now'
+  datetime: 'now',
 });
 ```
 
@@ -859,6 +912,7 @@ const active = await client.findSystems({
 **Pattern:** Find resources by observed or controlled properties
 
 **Examples:**
+
 ```
 # Temperature sensors
 GET /systems?observedProperty=http://qudt.org/vocab/quantitykind/Temperature
@@ -874,14 +928,15 @@ GET /controlstreams?controlledProperty=http://example.org/properties/pan
 ```
 
 **Library Support:**
+
 ```typescript
 // Property filter
 const sensors = await client.findSystems({
-  observedProperty: ['temperature', 'humidity']
+  observedProperty: ['temperature', 'humidity'],
 });
 
 const actuators = await client.findSystems({
-  controlledProperty: 'pan'
+  controlledProperty: 'pan',
 });
 ```
 
@@ -892,6 +947,7 @@ const actuators = await client.findSystems({
 **Pattern:** Multiple filters for precise queries
 
 **Examples:**
+
 ```
 # Active temp sensors in SF
 GET /systems?bbox=-122.5,37.5,-122.3,37.7&observedProperty=temperature&datetime=now
@@ -904,13 +960,14 @@ GET /deployments?bbox={bbox}&datetime=2024-01-01T00:00:00Z/2024-02-01T00:00:00Z
 ```
 
 **Library Support:**
+
 ```typescript
 // Combine multiple filters
 const systems = await client.findSystems({
   bbox: [-122.5, 37.5, -122.3, 37.7],
   observedProperty: 'temperature',
   datetime: 'now',
-  limit: 50
+  limit: 50,
 });
 ```
 
@@ -921,6 +978,7 @@ const systems = await client.findSystems({
 **Pattern:** Navigate hierarchical relationships
 
 **Examples:**
+
 ```
 # All nested subsystems
 GET /systems/{id}/subsystems?recursive=true
@@ -934,10 +992,11 @@ GET /systems/{id}/subsystems?recursive=false
 ```
 
 **Library Support:**
+
 ```typescript
 // Recursive query
 const allSubsystems = await system.getSubsystems({
-  recursive: true
+  recursive: true,
 });
 
 // Build tree structure
@@ -952,6 +1011,7 @@ const tree = await system.getHierarchy();
 **Pattern:** Follow links between related resources
 
 **Examples:**
+
 ```
 # System relationships
 GET /systems/{id}/datastreams
@@ -970,6 +1030,7 @@ GET /commands/{id}/result
 ```
 
 **Library Support:**
+
 ```typescript
 // Relationship navigation
 const system = await client.getSystem(id);
@@ -980,7 +1041,7 @@ const observations = await datastreams[0].getObservations();
 const observations = await client
   .getSystem(id)
   .getDataStreams()
-  .then(ds => ds[0].getObservations());
+  .then((ds) => ds[0].getObservations());
 ```
 
 ---
@@ -990,6 +1051,7 @@ const observations = await client
 **Pattern:** Handle large result sets
 
 **Examples:**
+
 ```
 # First page (default limit: 10)
 GET /observations
@@ -1004,6 +1066,7 @@ GET {next_href}
 ```
 
 **Library Support:**
+
 ```typescript
 // Manual pagination
 const page1 = await datastream.getObservations({ limit: 1000 });
@@ -1014,7 +1077,7 @@ if (page1.links.next) {
 // Auto-pagination
 const allObservations = await datastream.getObservations({
   limit: 1000,
-  autoPaginate: true
+  autoPaginate: true,
 });
 
 // Streaming
@@ -1030,6 +1093,7 @@ for await (const obs of datastream.observationStream()) {
 **Pattern:** Query specific resources by ID
 
 **Examples:**
+
 ```
 # Single resource
 GET /systems/{id}
@@ -1043,6 +1107,7 @@ GET /systems?uid=urn:uuid:550e8400-e29b-41d4-a716-446655440000
 ```
 
 **Library Support:**
+
 ```typescript
 // Single resource
 const system = await client.getSystem('sys1');
@@ -1065,18 +1130,17 @@ const system = await client.findSystemByUID('urn:uuid:...');
 **Purpose:** Discover sensors in geographic area
 
 **Usage:**
+
 ```typescript
-const systems = await client.findSystemsInArea(
-  [-122.5, 37.5, -122.3, 37.7],
-  {
-    observedProperty: ['temperature', 'humidity'],
-    datetime: 'now',
-    systemType: 'sosa:Sensor'
-  }
-);
+const systems = await client.findSystemsInArea([-122.5, 37.5, -122.3, 37.7], {
+  observedProperty: ['temperature', 'humidity'],
+  datetime: 'now',
+  systemType: 'sosa:Sensor',
+});
 ```
 
 **Benefits:**
+
 - Simplified spatial queries
 - Common filter combinations
 - GeoJSON output ready for mapping
@@ -1088,16 +1152,18 @@ const systems = await client.findSystemsInArea(
 **Purpose:** Search for datastreams across systems
 
 **Usage:**
+
 ```typescript
 const streams = await client.findDataStreams({
   bbox: [-122.5, 37.5, -122.3, 37.7],
   observedProperty: 'temperature',
   live: true,
-  resultType: 'measure'
+  resultType: 'measure',
 });
 ```
 
 **Benefits:**
+
 - Cross-system datastream discovery
 - Filter by live status
 - Filter by result type
@@ -1111,6 +1177,7 @@ const streams = await client.findDataStreams({
 **Purpose:** Quick access to most recent observations
 
 **Usage:**
+
 ```typescript
 const latest = await client.getLatestObservations(datastreamId);
 // Returns single latest observation
@@ -1120,6 +1187,7 @@ const recent = await client.getLatestObservations(datastreamId, 10);
 ```
 
 **Benefits:**
+
 - No need to construct temporal queries
 - Common dashboard pattern
 - Efficient single-request operation
@@ -1131,6 +1199,7 @@ const recent = await client.getLatestObservations(datastreamId, 10);
 **Purpose:** Polling abstraction for real-time monitoring
 
 **Usage:**
+
 ```typescript
 const subscription = client.streamObservations(
   datastreamId,
@@ -1138,7 +1207,7 @@ const subscription = client.streamObservations(
   {
     interval: 5000,
     onError: (err) => console.error(err),
-    backoff: 'exponential'
+    backoff: 'exponential',
   }
 );
 
@@ -1147,6 +1216,7 @@ subscription.unsubscribe();
 ```
 
 **Benefits:**
+
 - Observable pattern
 - Automatic error handling
 - Configurable polling strategy
@@ -1159,6 +1229,7 @@ subscription.unsubscribe();
 **Purpose:** Simplified historical data retrieval
 
 **Usage:**
+
 ```typescript
 const observations = await client.getObservationsInRange(
   datastreamId,
@@ -1167,12 +1238,13 @@ const observations = await client.getObservationsInRange(
   {
     autoPaginate: true,
     format: 'csv',
-    onProgress: (page, total) => updateProgress(page, total)
+    onProgress: (page, total) => updateProgress(page, total),
   }
 );
 ```
 
 **Benefits:**
+
 - Automatic pagination
 - Format conversion
 - Progress tracking
@@ -1187,6 +1259,7 @@ const observations = await client.getObservationsInRange(
 **Purpose:** Async command with automatic status polling
 
 **Usage:**
+
 ```typescript
 const result = await client.sendCommandAndWait(
   controlstreamId,
@@ -1194,12 +1267,13 @@ const result = await client.sendCommandAndWait(
   {
     executionTime: 'now',
     timeout: 30000,
-    onStatus: (status) => updateUI(status)
+    onStatus: (status) => updateUI(status),
   }
 );
 ```
 
 **Benefits:**
+
 - Promise-based async handling
 - Automatic status polling
 - Timeout protection
@@ -1212,11 +1286,12 @@ const result = await client.sendCommandAndWait(
 **Purpose:** Pre-validate commands
 
 **Usage:**
+
 ```typescript
-const feasibility = await client.checkCommandFeasibility(
-  controlstreamId,
-  { target: area, time: '2024-01-15T12:00:00Z' }
-);
+const feasibility = await client.checkCommandFeasibility(controlstreamId, {
+  target: area,
+  time: '2024-01-15T12:00:00Z',
+});
 
 if (feasibility.isFeasible) {
   await client.sendCommand(controlstreamId, params);
@@ -1224,6 +1299,7 @@ if (feasibility.isFeasible) {
 ```
 
 **Benefits:**
+
 - Validation before execution
 - Conflict detection
 - Cost/risk assessment
@@ -1237,6 +1313,7 @@ if (feasibility.isFeasible) {
 **Purpose:** Build system tree structure
 
 **Usage:**
+
 ```typescript
 const tree = await client.getSystemHierarchy(systemId, true);
 // Returns:
@@ -1250,6 +1327,7 @@ const tree = await client.getSystemHierarchy(systemId, true);
 ```
 
 **Benefits:**
+
 - Tree structure building
 - Recursive relationships
 - Ready for UI rendering
@@ -1261,15 +1339,17 @@ const tree = await client.getSystemHierarchy(systemId, true);
 **Purpose:** Aggregate data from all deployed systems
 
 **Usage:**
+
 ```typescript
 const data = await client.getDeploymentData(deploymentId, {
   phenomenonTime: ['2024-01-01', '2024-02-01'],
-  limit: 1000
+  limit: 1000,
 });
 // Returns all observations from all datastreams of all deployed systems
 ```
 
 **Benefits:**
+
 - Cross-system aggregation
 - Simplified deployment monitoring
 - Single query for complex data
@@ -1283,17 +1363,19 @@ const data = await client.getDeploymentData(deploymentId, {
 **Purpose:** Spatial query builder
 
 **Usage:**
+
 ```typescript
 const bbox = client.buildBboxQuery({
   west: -122.5,
   south: 37.5,
   east: -122.3,
-  north: 37.7
+  north: 37.7,
 });
 // Returns: "-122.5,37.5,-122.3,37.7"
 ```
 
 **Benefits:**
+
 - Named parameters
 - Validation
 - Array conversion
@@ -1305,6 +1387,7 @@ const bbox = client.buildBboxQuery({
 **Purpose:** Temporal query builder
 
 **Usage:**
+
 ```typescript
 const range = client.buildTimeRange('2024-01-01', '2024-02-01');
 // Returns: "2024-01-01T00:00:00Z/2024-02-01T00:00:00Z"
@@ -1314,6 +1397,7 @@ const openStart = client.buildTimeRange(null, '2024-01-01');
 ```
 
 **Benefits:**
+
 - ISO 8601 formatting
 - Open interval support
 - Date parsing
@@ -1325,6 +1409,7 @@ const openStart = client.buildTimeRange(null, '2024-01-01');
 **Purpose:** Auto-pagination iterator
 
 **Usage:**
+
 ```typescript
 const allPages = await client.paginateAll(url, { limit: 1000 });
 // Returns all results from all pages
@@ -1336,6 +1421,7 @@ for await (const page of client.paginateAllStream(url)) {
 ```
 
 **Benefits:**
+
 - Automatic link following
 - Memory-efficient streaming
 - Progress tracking
@@ -1347,16 +1433,18 @@ for await (const page of client.paginateAllStream(url)) {
 **Purpose:** Fetch related resources
 
 **Usage:**
+
 ```typescript
 const system = await client.getSystem(id);
 const resolved = await client.resolveLinks(system, [
   'datastreams',
-  'subsystems'
+  'subsystems',
 ]);
 // Returns system with datastreams and subsystems populated
 ```
 
 **Benefits:**
+
 - Lazy loading
 - Selective resolution
 - Reduced round trips
@@ -1368,6 +1456,7 @@ const resolved = await client.resolveLinks(system, [
 **Purpose:** Schema-aware observation formatting
 
 **Usage:**
+
 ```typescript
 const schema = await datastream.getSchema();
 const formatted = client.formatObservation(observation, schema);
@@ -1375,6 +1464,7 @@ const formatted = client.formatObservation(observation, schema);
 ```
 
 **Benefits:**
+
 - Schema interpretation
 - Unit formatting
 - Label resolution
@@ -1388,6 +1478,7 @@ const formatted = client.formatObservation(observation, schema);
 **Purpose:** Client-side validation before submission
 
 **Usage:**
+
 ```typescript
 const valid = client.validateObservationSchema(observation, schema);
 if (!valid) {
@@ -1398,6 +1489,7 @@ if (!valid) {
 ```
 
 **Benefits:**
+
 - Prevent 400 errors
 - Early error detection
 - Schema compliance checking
@@ -1409,6 +1501,7 @@ if (!valid) {
 **Purpose:** Feature detection
 
 **Usage:**
+
 ```typescript
 const caps = await client.checkServerCapabilities();
 // Returns:
@@ -1426,6 +1519,7 @@ if (caps.hasCRUD) {
 ```
 
 **Benefits:**
+
 - Conformance detection
 - Graceful degradation
 - Feature availability checks
@@ -1439,12 +1533,14 @@ if (caps.hasCRUD) {
 #### 5.1.1 Network Errors
 
 **Scenarios:**
+
 - Connection timeout
 - DNS resolution failure
 - SSL/TLS errors
 - Network interruption
 
 **Handling Strategy:**
+
 ```typescript
 try {
   const systems = await client.findSystems({...});
@@ -1460,6 +1556,7 @@ try {
 ```
 
 **Requirements:**
+
 - Automatic retry for transient failures
 - Exponential backoff
 - Configurable retry limits
@@ -1470,11 +1567,13 @@ try {
 #### 5.1.2 Authentication Errors (401)
 
 **Scenarios:**
+
 - Missing credentials
 - Expired token
 - Invalid token
 
 **Handling Strategy:**
+
 ```typescript
 client.on('authError', async () => {
   // Refresh token
@@ -1485,6 +1584,7 @@ client.on('authError', async () => {
 ```
 
 **Requirements:**
+
 - Token refresh callback
 - Automatic retry after refresh
 - OAuth2/OIDC integration support
@@ -1494,10 +1594,12 @@ client.on('authError', async () => {
 #### 5.1.3 Authorization Errors (403)
 
 **Scenarios:**
+
 - Insufficient permissions
 - Resource access denied
 
 **Handling Strategy:**
+
 ```typescript
 try {
   await client.createSystem(system);
@@ -1510,6 +1612,7 @@ try {
 ```
 
 **Requirements:**
+
 - Clear error messages
 - Don't retry (permanent failure)
 - User notification
@@ -1519,12 +1622,14 @@ try {
 #### 5.1.4 Invalid Queries (400)
 
 **Scenarios:**
+
 - Malformed query parameters
 - Invalid temporal format
 - Invalid spatial bbox
 - Schema validation failure
 
 **Examples:**
+
 ```
 GET /observations?resultTime=invalid
 → 400 Bad Request
@@ -1535,6 +1640,7 @@ Body: { result: "wrong type" }
 ```
 
 **Handling Strategy:**
+
 ```typescript
 try {
   await datastream.createObservation(obs);
@@ -1547,6 +1653,7 @@ try {
 ```
 
 **Requirements:**
+
 - Client-side validation before submission
 - Detailed error messages from server
 - Validation error parsing
@@ -1557,11 +1664,13 @@ try {
 #### 5.1.5 Missing Resources (404)
 
 **Scenarios:**
+
 - Resource ID doesn't exist
 - Deleted resource
 - Wrong endpoint URL
 
 **Handling Strategy:**
+
 ```typescript
 const system = await client.getSystem(id);
 if (!system) {
@@ -1580,6 +1689,7 @@ try {
 ```
 
 **Requirements:**
+
 - Null vs exception handling (configurable)
 - Clear error messages
 - Suggestion for similar resources
@@ -1589,11 +1699,13 @@ try {
 #### 5.1.6 Conflict Errors (409)
 
 **Scenarios:**
+
 - Delete datastream with observations (cascade required)
 - Update schema when observations exist
 - Duplicate resource creation
 
 **Examples:**
+
 ```
 DELETE /datastreams/{id}
 → 409 Conflict "Datastream has observations, use cascade=true"
@@ -1603,6 +1715,7 @@ PUT /datastreams/{id}/schema
 ```
 
 **Handling Strategy:**
+
 ```typescript
 try {
   await datastream.delete();
@@ -1615,6 +1728,7 @@ try {
 ```
 
 **Requirements:**
+
 - Parse conflict reason from error
 - Suggest resolution (cascade, create new, etc.)
 - Automatic resolution for common cases
@@ -1624,11 +1738,13 @@ try {
 #### 5.1.7 Server Errors (5XX)
 
 **Scenarios:**
+
 - Internal server error (500)
 - Service unavailable (503)
 - Gateway timeout (504)
 
 **Handling Strategy:**
+
 ```typescript
 try {
   await client.findSystems({...});
@@ -1645,6 +1761,7 @@ try {
 ```
 
 **Requirements:**
+
 - Automatic retry for 5XX
 - Exponential backoff
 - Circuit breaker pattern
@@ -1655,10 +1772,12 @@ try {
 #### 5.1.8 Rate Limiting (429)
 
 **Scenarios:**
+
 - Too many requests
 - Quota exceeded
 
 **Handling Strategy:**
+
 ```typescript
 try {
   await client.findSystems({...});
@@ -1672,6 +1791,7 @@ try {
 ```
 
 **Requirements:**
+
 - Respect Retry-After header
 - Automatic backoff
 - Request throttling
@@ -1683,17 +1803,17 @@ try {
 
 **Strategy Matrix:**
 
-| Error Type | Retry? | Backoff | User Action |
-|------------|--------|---------|-------------|
-| Network timeout | Yes | Exponential | Inform user |
-| 401 Unauthorized | Yes (after refresh) | None | Prompt login |
-| 403 Forbidden | No | - | Show error |
-| 400 Bad Request | No | - | Fix input |
-| 404 Not Found | No | - | Handle gracefully |
-| 409 Conflict | Maybe (with cascade) | None | Resolve conflict |
-| 500 Server Error | Yes | Exponential | Inform user |
-| 503 Service Unavailable | Yes | Exponential | Wait + retry |
-| 429 Rate Limit | Yes | Retry-After | Throttle requests |
+| Error Type              | Retry?               | Backoff     | User Action       |
+| ----------------------- | -------------------- | ----------- | ----------------- |
+| Network timeout         | Yes                  | Exponential | Inform user       |
+| 401 Unauthorized        | Yes (after refresh)  | None        | Prompt login      |
+| 403 Forbidden           | No                   | -           | Show error        |
+| 400 Bad Request         | No                   | -           | Fix input         |
+| 404 Not Found           | No                   | -           | Handle gracefully |
+| 409 Conflict            | Maybe (with cascade) | None        | Resolve conflict  |
+| 500 Server Error        | Yes                  | Exponential | Inform user       |
+| 503 Service Unavailable | Yes                  | Exponential | Wait + retry      |
+| 429 Rate Limit          | Yes                  | Retry-After | Throttle requests |
 
 ---
 
@@ -1704,6 +1824,7 @@ try {
 **Purpose:** Display sensor locations on interactive maps
 
 **OpenLayers Example:**
+
 ```typescript
 import { Vector as VectorLayer } from 'ol/layer';
 import { Vector as VectorSource } from 'ol/source';
@@ -1712,24 +1833,24 @@ import { GeoJSON } from 'ol/format';
 // Fetch systems as GeoJSON
 const systems = await client.findSystems({
   bbox: map.getView().calculateExtent(),
-  format: 'application/geo+json'
+  format: 'application/geo+json',
 });
 
 // Add to map
 const vectorSource = new VectorSource({
-  features: new GeoJSON().readFeatures(systems)
+  features: new GeoJSON().readFeatures(systems),
 });
 
 const vectorLayer = new VectorLayer({
   source: vectorSource,
-  style: styleFunction
+  style: styleFunction,
 });
 
 map.addLayer(vectorLayer);
 
 // Click handler
 map.on('click', async (evt) => {
-  const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
+  const feature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
   if (feature) {
     const systemId = feature.getId();
     const datastreams = await client.getSystem(systemId).getDataStreams();
@@ -1739,6 +1860,7 @@ map.on('click', async (evt) => {
 ```
 
 **Requirements:**
+
 - GeoJSON format support
 - Accept header negotiation
 - Feature ID preservation
@@ -1752,27 +1874,30 @@ map.on('click', async (evt) => {
 **Purpose:** Visualize observation time series
 
 **Chart.js Example:**
+
 ```typescript
 import { Line } from 'react-chartjs-2';
 
 // Fetch observations
 const observations = await datastream.getObservations({
   phenomenonTime: ['2024-01-01', '2024-02-01'],
-  autoPaginate: true
+  autoPaginate: true,
 });
 
 // Extract time series
 const data = {
-  labels: observations.map(o => new Date(o.phenomenonTime)),
-  datasets: [{
-    label: datastream.name,
-    data: observations.map(o => o.result),
-    borderColor: 'rgb(75, 192, 192)',
-  }]
+  labels: observations.map((o) => new Date(o.phenomenonTime)),
+  datasets: [
+    {
+      label: datastream.name,
+      data: observations.map((o) => o.result),
+      borderColor: 'rgb(75, 192, 192)',
+    },
+  ],
 };
 
 // Render chart
-<Line data={data} options={options} />
+<Line data={data} options={options} />;
 
 // Live updates
 client.streamObservations(datastream.id, (obs) => {
@@ -1783,6 +1908,7 @@ client.streamObservations(datastream.id, (obs) => {
 ```
 
 **Requirements:**
+
 - Simple observation result extraction
 - Temporal parsing
 - Real-time update support
@@ -1795,51 +1921,54 @@ client.streamObservations(datastream.id, (obs) => {
 **Purpose:** Reactive UI updates with observables
 
 **RxJS Example:**
+
 ```typescript
 import { Observable } from 'rxjs';
 
 // Create observable from datastream
-const observable = new Observable(subscriber => {
+const observable = new Observable((subscriber) => {
   const subscription = client.streamObservations(
     datastreamId,
     (obs) => subscriber.next(obs),
     { interval: 5000, onError: (err) => subscriber.error(err) }
   );
-  
+
   return () => subscription.unsubscribe();
 });
 
 // Subscribe in component
 observable.subscribe({
   next: (observation) => updateUI(observation),
-  error: (error) => showError(error)
+  error: (error) => showError(error),
 });
 ```
 
 **React Hook Example:**
+
 ```typescript
 function useObservations(datastreamId, interval = 5000) {
   const [observation, setObservation] = useState(null);
   const [error, setError] = useState(null);
-  
+
   useEffect(() => {
     const subscription = client.streamObservations(
       datastreamId,
       (obs) => setObservation(obs),
       {
         interval,
-        onError: (err) => setError(err)
+        onError: (err) => setError(err),
       }
     );
-    
+
     return () => subscription.unsubscribe();
   }, [datastreamId, interval]);
-  
+
   return { observation, error };
 }
 ```
 
 **Requirements:**
+
 - Observable/EventEmitter pattern
 - Subscription management
 - Error propagation
@@ -1852,11 +1981,12 @@ function useObservations(datastreamId, interval = 5000) {
 **Purpose:** Efficient large dataset handling
 
 **Example:**
+
 ```typescript
 // Request binary format
 const observations = await datastream.getObservations({
   phenomenonTime: ['2024-01-01', '2024-02-01'],
-  format: 'application/swe+binary'
+  format: 'application/swe+binary',
 });
 
 // Parse with SWE Common library
@@ -1867,12 +1997,13 @@ const decoder = new SWEBinaryDecoder(schema.observationEncoding);
 const decoded = decoder.decode(observations);
 
 // Use decoded observations
-decoded.forEach(obs => {
+decoded.forEach((obs) => {
   console.log(obs.phenomenonTime, obs.result);
 });
 ```
 
 **Requirements:**
+
 - Format negotiation
 - Schema retrieval
 - Binary decoding integration
@@ -1889,18 +2020,20 @@ decoded.forEach(obs => {
 **Use Case:** Toggle between spatial view and detailed description
 
 **GeoJSON to SensorML:**
+
 ```typescript
 const systemGeoJSON = await client.getSystem(id, {
-  format: 'application/geo+json'
+  format: 'application/geo+json',
 });
 
 const systemSensorML = await client.getSystem(id, {
-  format: 'application/sml+json'
+  format: 'application/sml+json',
 });
 // More detailed: inputs, outputs, parameters, etc.
 ```
 
 **Requirements:**
+
 - Format negotiation via Accept header
 - Automatic parsing based on Content-Type
 - Format detection helpers
@@ -1912,6 +2045,7 @@ const systemSensorML = await client.getSystem(id, {
 **Use Case:** Efficient transmission vs human readability
 
 **JSON Observations:**
+
 ```json
 {
   "phenomenonTime": "2024-01-15T12:00:00Z",
@@ -1921,17 +2055,20 @@ const systemSensorML = await client.getSystem(id, {
 ```
 
 **SWE Common CSV:**
+
 ```
 2024-01-15T12:00:00Z,2024-01-15T12:00:01Z,23.5
 2024-01-15T12:05:00Z,2024-01-15T12:05:01Z,23.7
 ```
 
 **SWE Common Binary:**
+
 - 10-100x smaller than JSON
 - Structured binary encoding
 - Requires schema for decoding
 
 **Requirements:**
+
 - Format conversion helpers
 - Schema-aware parsing
 - Encoding/decoding utilities
@@ -1943,43 +2080,48 @@ const systemSensorML = await client.getSystem(id, {
 **Result Types:**
 
 1. **Measure (single value):**
+
 ```typescript
 const obs = { result: 23.5 };
 const value = obs.result; // number
 ```
 
 2. **Vector (array of values):**
+
 ```typescript
 const obs = { result: [23.5, 45.2, 67.8] };
 const [x, y, z] = obs.result;
 ```
 
 3. **Record (structured data):**
+
 ```typescript
 const obs = {
   result: {
     temperature: 23.5,
     humidity: 45.2,
-    pressure: 1013.25
-  }
+    pressure: 1013.25,
+  },
 };
 const temp = obs.result.temperature;
 ```
 
 4. **Complex (SWE Common structures):**
+
 ```typescript
 const obs = {
   result: {
     type: 'DataRecord',
     fields: [
       { name: 'temp', component: { type: 'Quantity', value: 23.5 } },
-      { name: 'unit', component: { type: 'Text', value: '°C' } }
-    ]
-  }
+      { name: 'unit', component: { type: 'Text', value: '°C' } },
+    ],
+  },
 };
 ```
 
 **Requirements:**
+
 - Result type detection
 - Schema-aware parsing
 - Type-safe accessors
@@ -1990,6 +2132,7 @@ const obs = {
 ### 7.3 Temporal Data Handling
 
 **ISO 8601 Parsing:**
+
 ```typescript
 // Instant
 const instant = parseDateTime('2024-01-15T12:00:00Z');
@@ -2005,6 +2148,7 @@ const duration = parseDuration('PT5M');
 ```
 
 **Special Values:**
+
 ```typescript
 // "now" - current time
 // "latest" - most recent observation
@@ -2012,6 +2156,7 @@ const duration = parseDuration('PT5M');
 ```
 
 **Requirements:**
+
 - ISO 8601 parsing library
 - Date/time utilities
 - Timezone handling
@@ -2022,6 +2167,7 @@ const duration = parseDuration('PT5M');
 ### 7.4 Unit Conversions
 
 **UOM Extraction:**
+
 ```typescript
 const schema = await datastream.getSchema();
 const uom = schema.resultSchema.uom;
@@ -2029,6 +2175,7 @@ const uom = schema.resultSchema.uom;
 ```
 
 **Conversion:**
+
 ```typescript
 const observation = { result: 23.5 }; // Celsius
 const fahrenheit = convertUnit(observation.result, 'Cel', '[degF]');
@@ -2036,6 +2183,7 @@ const fahrenheit = convertUnit(observation.result, 'Cel', '[degF]');
 ```
 
 **Requirements:**
+
 - UCUM code parsing
 - Unit conversion library
 - Unit compatibility checking
@@ -2048,6 +2196,7 @@ const fahrenheit = convertUnit(observation.result, 'Cel', '[degF]');
 ### 8.1 Pagination Strategies
 
 **Optimal Page Sizes:**
+
 - **Systems/Deployments:** 10-50 (rich metadata)
 - **Datastreams:** 50-100 (moderate metadata)
 - **Observations:** 100-1000 (lightweight data)
@@ -2056,6 +2205,7 @@ const fahrenheit = convertUnit(observation.result, 'Cel', '[degF]');
 **Pagination Patterns:**
 
 1. **Cursor-based (follow links):**
+
 ```typescript
 let page = await client.getObservations({ limit: 1000 });
 while (page.links.next) {
@@ -2065,6 +2215,7 @@ while (page.links.next) {
 ```
 
 2. **Offset-based:**
+
 ```typescript
 for (let offset = 0; offset < total; offset += 1000) {
   const page = await client.getObservations({ limit: 1000, offset });
@@ -2073,6 +2224,7 @@ for (let offset = 0; offset < total; offset += 1000) {
 ```
 
 3. **Streaming (memory-efficient):**
+
 ```typescript
 for await (const observation of datastream.observationStream()) {
   process(observation);
@@ -2081,6 +2233,7 @@ for await (const observation of datastream.observationStream()) {
 ```
 
 **Requirements:**
+
 - Configurable page sizes
 - Link-based pagination
 - Streaming API
@@ -2093,34 +2246,40 @@ for await (const observation of datastream.observationStream()) {
 **Cache-Friendly Resources:**
 
 1. **Conformance (long-lived):**
+
 ```typescript
 const conformance = await client.getConformance();
 cache.set('conformance', conformance, { ttl: 86400000 }); // 24 hours
 ```
 
 2. **System/Deployment metadata (medium-lived):**
+
 ```typescript
 const system = await client.getSystem(id);
 cache.set(`system:${id}`, system, { ttl: 3600000 }); // 1 hour
 ```
 
 3. **Schemas (locked once observations exist):**
+
 ```typescript
 const schema = await datastream.getSchema();
 cache.set(`schema:${datastream.id}`, schema, { ttl: Infinity }); // Never expire
 ```
 
 **Don't Cache:**
+
 - Observations (real-time data)
 - Command status (changes frequently)
 - Live datastreams (current state)
 
 **Cache Invalidation:**
+
 - On PUT/PATCH/DELETE operations
 - On 304 Not Modified response
 - On ETag mismatch
 
 **Requirements:**
+
 - Cache API integration
 - TTL configuration
 - ETag support
@@ -2133,6 +2292,7 @@ cache.set(`schema:${datastream.id}`, schema, { ttl: Infinity }); // Never expire
 **Strategies:**
 
 1. **Time Window Chunking:**
+
 ```typescript
 const start = new Date('2024-01-01');
 const end = new Date('2024-12-31');
@@ -2140,32 +2300,38 @@ const end = new Date('2024-12-31');
 // Process month by month
 for (let month = start; month < end; month.setMonth(month.getMonth() + 1)) {
   const observations = await datastream.getObservations({
-    phenomenonTime: [month, new Date(month.getFullYear(), month.getMonth() + 1, 0)]
+    phenomenonTime: [
+      month,
+      new Date(month.getFullYear(), month.getMonth() + 1, 0),
+    ],
   });
   process(observations);
 }
 ```
 
 2. **Binary Format:**
+
 ```typescript
 // 10-100x size reduction
 const observations = await datastream.getObservations({
-  format: 'application/swe+binary'
+  format: 'application/swe+binary',
 });
 ```
 
 3. **Parallel Requests:**
+
 ```typescript
 // Independent datastreams can be fetched in parallel
 const results = await Promise.all(
-  datastreams.map(ds => ds.getObservations({ limit: 1000 }))
+  datastreams.map((ds) => ds.getObservations({ limit: 1000 }))
 );
 ```
 
 4. **Async Iteration:**
+
 ```typescript
 for await (const observation of datastream.observationStream({
-  phenomenonTime: ['2024-01-01', '2024-12-31']
+  phenomenonTime: ['2024-01-01', '2024-12-31'],
 })) {
   await processAndStore(observation);
   // Process one at a time, no memory overflow
@@ -2173,6 +2339,7 @@ for await (const observation of datastream.observationStream({
 ```
 
 **Requirements:**
+
 - Chunking utilities
 - Binary format support
 - Parallel request management
@@ -2185,12 +2352,14 @@ for await (const observation of datastream.observationStream({
 **Polling Strategies:**
 
 1. **Fixed interval:**
+
 ```typescript
 // Simple, predictable
 setInterval(() => fetchLatest(), 5000);
 ```
 
 2. **Exponential backoff (no new data):**
+
 ```typescript
 let interval = 5000;
 const poll = async () => {
@@ -2205,13 +2374,14 @@ const poll = async () => {
 ```
 
 3. **Incremental fetch:**
+
 ```typescript
 let lastResultTime = null;
 const poll = async () => {
   const filter = lastResultTime
     ? { resultTime: `${lastResultTime}/..` }
     : { resultTime: 'latest' };
-  
+
   const observations = await datastream.getObservations(filter);
   if (observations.length > 0) {
     lastResultTime = observations[observations.length - 1].resultTime;
@@ -2222,11 +2392,13 @@ const poll = async () => {
 ```
 
 **Recommendations:**
+
 - Dashboard monitoring: 5-10 seconds
 - Real-time critical: 1-2 seconds
 - Historical analysis: No polling
 
 **Requirements:**
+
 - Configurable poll interval
 - Backoff strategies
 - Incremental fetch support
@@ -2239,6 +2411,7 @@ const poll = async () => {
 ### 9.1 API Design Patterns
 
 **Resource-Centric Design:**
+
 ```typescript
 // Objects represent resources
 const system = await client.getSystem(id);
@@ -2247,15 +2420,17 @@ const observations = await datastreams[0].getObservations();
 ```
 
 **Fluent API:**
+
 ```typescript
 // Method chaining
 const observations = await client
   .findSystems({ bbox })
-  .then(systems => systems[0].getDataStreams())
-  .then(datastreams => datastreams[0].getObservations());
+  .then((systems) => systems[0].getDataStreams())
+  .then((datastreams) => datastreams[0].getObservations());
 ```
 
 **Builder Pattern:**
+
 ```typescript
 // Query builder
 const systems = await client
@@ -2285,6 +2460,7 @@ const system = await client.getSystem('sys1'); // throws NetworkError on timeout
 ```
 
 **Error Hierarchy:**
+
 ```
 CSAPIError (base)
 ├── NetworkError (timeout, connection failed)
@@ -2301,19 +2477,22 @@ CSAPIError (base)
 ### 9.3 Promise vs Observable
 
 **Promises for single requests:**
+
 ```typescript
 const system = await client.getSystem(id);
 ```
 
 **Observables for streams:**
+
 ```typescript
 const subscription = datastream.observe().subscribe({
   next: (obs) => update(obs),
-  error: (err) => handle(err)
+  error: (err) => handle(err),
 });
 ```
 
 **Hybrid approach:**
+
 ```typescript
 // Return promise for single value
 getLatestObservation(): Promise<Observation>
@@ -2327,34 +2506,35 @@ streamObservations(): Observable<Observation>
 ### 9.4 Configuration Options
 
 **Client Configuration:**
+
 ```typescript
 const client = new CSAPIClient({
   baseUrl: 'https://api.example.org/csapi',
   auth: {
     type: 'bearer',
-    token: '...'
+    token: '...',
   },
   timeout: 30000,
   retry: {
     retries: 3,
-    backoff: 'exponential'
+    backoff: 'exponential',
   },
   cache: {
     enabled: true,
     ttl: {
       conformance: 86400000,
       systems: 3600000,
-      schemas: Infinity
-    }
+      schemas: Infinity,
+    },
   },
   pagination: {
     defaultLimit: 100,
-    maxLimit: 1000
+    maxLimit: 1000,
   },
   formats: {
     prefer: 'application/geo+json',
-    fallback: 'application/json'
-  }
+    fallback: 'application/json',
+  },
 });
 ```
 
@@ -2364,57 +2544,48 @@ const client = new CSAPIClient({
 
 ### Priority Matrix
 
-| Scenario | Priority | Complexity | Frequency |
-|----------|----------|------------|-----------|
-| Discover systems | P0 | Low | High |
-| Real-time monitoring | P0 | Medium | Very High |
-| Historical data | P0 | Medium | Medium |
-| Send commands | P0 | High | Medium-High |
-| Stream data | P0 | High | High |
-| Map integration | P0 | Low | High |
-| Dashboard building | P0 | High | Very High |
-| Deploy networks | P1 | Medium | Low-Medium |
-| Navigate hierarchies | P1 | Medium | Medium |
-| UAV/Satellite tasking | P1 | High | Low-Medium |
-| Track history | P2 | Low-Medium | Low |
-| Manage sampling | P2 | Medium | Low-Medium |
-| Feasibility checking | P2 | Medium | Low |
-| Monitor events | P2 | Low | Low-Medium |
-| Manage procedures | P2 | Medium | Low |
+| Scenario              | Priority | Complexity | Frequency   |
+| --------------------- | -------- | ---------- | ----------- |
+| Discover systems      | P0       | Low        | High        |
+| Real-time monitoring  | P0       | Medium     | Very High   |
+| Historical data       | P0       | Medium     | Medium      |
+| Send commands         | P0       | High       | Medium-High |
+| Stream data           | P0       | High       | High        |
+| Map integration       | P0       | Low        | High        |
+| Dashboard building    | P0       | High       | Very High   |
+| Deploy networks       | P1       | Medium     | Low-Medium  |
+| Navigate hierarchies  | P1       | Medium     | Medium      |
+| UAV/Satellite tasking | P1       | High       | Low-Medium  |
+| Track history         | P2       | Low-Medium | Low         |
+| Manage sampling       | P2       | Medium     | Low-Medium  |
+| Feasibility checking  | P2       | Medium     | Low         |
+| Monitor events        | P2       | Low        | Low-Medium  |
+| Manage procedures     | P2       | Medium     | Low         |
 
 ### Convenience Method Priorities
 
 **P0 (Must-have):**
+
 1. findSystemsInArea
 2. getLatestObservations
 3. streamObservations
 4. sendCommandAndWait
 5. paginateAll
 
-**P1 (Should-have):**
-6. getObservationsInRange
-7. getSystemHierarchy
-8. checkCommandFeasibility
-9. resolveLinks
-10. checkServerCapabilities
+**P1 (Should-have):** 6. getObservationsInRange 7. getSystemHierarchy 8. checkCommandFeasibility 9. resolveLinks 10. checkServerCapabilities
 
-**P2 (Nice-to-have):**
-11. findDataStreams
-12. getDeploymentData
-13. buildBboxQuery
-14. buildTimeRange
-15. formatObservation
-16. validateObservationSchema
-17. waitForCommandCompletion
+**P2 (Nice-to-have):** 11. findDataStreams 12. getDeploymentData 13. buildBboxQuery 14. buildTimeRange 15. formatObservation 16. validateObservationSchema 17. waitForCommandCompletion
 
 ### Integration Requirements
 
 **Essential:**
+
 - GeoJSON format for mapping
 - JSON format for charting
 - Polling for real-time updates
 
 **Advanced:**
+
 - SWE Common binary for large datasets
 - Observable pattern for reactive UIs
 - Streaming for memory efficiency

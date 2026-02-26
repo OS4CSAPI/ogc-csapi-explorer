@@ -7,6 +7,7 @@
 **Purpose:** Validate all 36 implemented builder methods against two real CSAPI servers, with particular focus on the 8 new SamplingFeatures methods from Phase 2.4.
 
 > This is the fourth live server smoke test. See also:
+>
 > - [Post Phase 2.1](live-server-smoke-test-post-phase-2.1.md) — identified critical F1/F2 link+URL findings
 > - [Post Phase 2.2](live-server-smoke-test-post-phase-2.2.md) — confirmed F1/F2 fixes, validated Systems + Deployments
 > - [Post Phase 2.3](live-server-smoke-test-post-phase-2.3.md) — validated Procedures, confirmed all 28 methods
@@ -29,62 +30,62 @@ No code changes were made. All tests were run from the terminal using raw HTTP c
 
 ### OpenSensorHub (OSH)
 
-| Property | Value |
-|----------|-------|
-| URL | `http://45.55.99.236:8080/sensorhub/api` |
-| Auth | Basic (credentials not stored in repo) |
-| Root status | ✅ 200 — 10 links in root document |
+| Property    | Value                                    |
+| ----------- | ---------------------------------------- |
+| URL         | `http://45.55.99.236:8080/sensorhub/api` |
+| Auth        | Basic (credentials not stored in repo)   |
+| Root status | ✅ 200 — 10 links in root document       |
 
-| Spec Part | Conformance Classes |
-|-----------|-------------------|
-| Part 1 (Resources) | core, system, subsystem, deployment, subdeployment, procedure, sf, property, create-replace-delete, geojson, sensorml |
+| Spec Part             | Conformance Classes                                                                                                                    |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Part 1 (Resources)    | core, system, subsystem, deployment, subdeployment, procedure, sf, property, create-replace-delete, geojson, sensorml                  |
 | Part 2 (Dynamic Data) | datastream, controlstream, system-history, system-event, create-replace-delete, json, swecommon-json, swecommon-text, swecommon-binary |
-| Part 3 (Pub/Sub) | websocket, mqtt |
+| Part 3 (Pub/Sub)      | websocket, mqtt                                                                                                                        |
 
 **Total conformance classes:** 33
 
 **Top-level resource links in root document:**
 
-| Resource Type | Present |
-|--------------|---------|
-| systems | ✅ |
-| deployments | ✅ |
-| procedures | ✅ |
-| samplingFeatures | ✅ |
-| datastreams | ✅ |
-| observations | ✅ |
-| controlstreams | ✅ |
-| properties | ✅ |
+| Resource Type    | Present |
+| ---------------- | ------- |
+| systems          | ✅      |
+| deployments      | ✅      |
+| procedures       | ✅      |
+| samplingFeatures | ✅      |
+| datastreams      | ✅      |
+| observations     | ✅      |
+| controlstreams   | ✅      |
+| properties       | ✅      |
 
 **Collections:** `all_systems`, `all_datastreams`, `all_fois`, `all_procedures` — each with `rel: "items"` links
 
 **Server resource inventory:**
 
-| Resource Type | Count | Status |
-|--------------|-------|--------|
-| Systems | 12 | ✅ Has data |
-| Deployments | 0 | ✅ Endpoint functional |
-| Procedures | 0 | ✅ Endpoint functional |
-| SamplingFeatures | 51+ | ✅ Has data |
-| Datastreams | 100+ | ✅ Has data |
-| Observations | 100+ | ✅ Has data |
-| ControlStreams | 8 | ✅ Has data |
-| Properties | 0 | ✅ Endpoint functional |
+| Resource Type    | Count | Status                 |
+| ---------------- | ----- | ---------------------- |
+| Systems          | 12    | ✅ Has data            |
+| Deployments      | 0     | ✅ Endpoint functional |
+| Procedures       | 0     | ✅ Endpoint functional |
+| SamplingFeatures | 51+   | ✅ Has data            |
+| Datastreams      | 100+  | ✅ Has data            |
+| Observations     | 100+  | ✅ Has data            |
+| ControlStreams   | 8     | ✅ Has data            |
+| Properties       | 0     | ✅ Endpoint functional |
 
 ### 52North CSA Demo
 
-| Property | Value |
-|----------|-------|
-| URL | `https://csa.demo.52north.org` |
-| Auth | None required |
-| SSL | Expired certificate — requires `-SkipCertificateCheck` |
-| Root status | ✅ 200 — 7 links in root document |
+| Property    | Value                                                  |
+| ----------- | ------------------------------------------------------ |
+| URL         | `https://csa.demo.52north.org`                         |
+| Auth        | None required                                          |
+| SSL         | Expired certificate — requires `-SkipCertificateCheck` |
+| Root status | ✅ 200 — 7 links in root document                      |
 
-| Spec Part | Conformance Classes |
-|-----------|-------------------|
-| Part 1 (Resources) | `ogcapi-common-1/1.0/conf/core` (only 1 class total) |
-| Part 2 (Dynamic Data) | — |
-| Part 3 (Pub/Sub) | — |
+| Spec Part             | Conformance Classes                                  |
+| --------------------- | ---------------------------------------------------- |
+| Part 1 (Resources)    | `ogcapi-common-1/1.0/conf/core` (only 1 class total) |
+| Part 2 (Dynamic Data) | —                                                    |
+| Part 3 (Pub/Sub)      | —                                                    |
 
 **Total conformance classes:** 1
 
@@ -94,16 +95,16 @@ No code changes were made. All tests were run from the terminal using raw HTTP c
 
 **Server resource inventory (CHANGED from prior tests):**
 
-| Resource Type | Count | Status | Change from Prior |
-|--------------|-------|--------|-------------------|
-| Systems | 2 | ✅ Has data | **NEW** — was 0 |
-| Deployments | 1 | ✅ Has data | **NEW** — was 0 |
-| Procedures | 1 | ✅ Has data | **NEW** — was 0 |
-| SamplingFeatures | 0 | ✅ Endpoint functional | Unchanged |
-| Datastreams | — | ❌ 500 Server Error | Unchanged |
-| Observations | — | ❌ 500 Server Error | Unchanged |
-| ControlStreams | — | ❌ 404 Not Found | Unchanged |
-| Properties | 0 | ✅ Endpoint functional | Unchanged |
+| Resource Type    | Count | Status                 | Change from Prior |
+| ---------------- | ----- | ---------------------- | ----------------- |
+| Systems          | 2     | ✅ Has data            | **NEW** — was 0   |
+| Deployments      | 1     | ✅ Has data            | **NEW** — was 0   |
+| Procedures       | 1     | ✅ Has data            | **NEW** — was 0   |
+| SamplingFeatures | 0     | ✅ Endpoint functional | Unchanged         |
+| Datastreams      | —     | ❌ 500 Server Error    | Unchanged         |
+| Observations     | —     | ❌ 500 Server Error    | Unchanged         |
+| ControlStreams   | —     | ❌ 404 Not Found       | Unchanged         |
+| Properties       | 0     | ✅ Endpoint functional | Unchanged         |
 
 ---
 
@@ -111,15 +112,15 @@ No code changes were made. All tests were run from the terminal using raw HTTP c
 
 ### Phase 2.1–2.3 Findings — Regression Check
 
-| Original Finding | Status | Notes |
-|-----------------|--------|-------|
-| **F1: Link relation prefix mismatch** (Critical) | **Still Fixed** ✅ | `scanCsapiLinks` detects 6 resource types from root document via Convention 2. |
-| **F2: Top-level vs. collection-scoped URLs** (Critical) | **Still Fixed** ✅ | `extractRootResourceUrls` returns correct mappings. |
-| **F3: Response envelope uses `items`** (Moderate) | **Still deferred** | Both servers now use `{ items: [...], links: [...] }` envelope. Phase 3 concern. |
-| **F4: `validTime` is an array** (Moderate) | **Still deferred** | OSH: `validTime: ["2026-01-26T18:32:01.56Z", "now"]`. Phase 3 concern. |
-| **F5: Missing pagination metadata** (Low) | **Still deferred** | Link-based pagination (`next`/`prev`) works on both servers. |
-| **F6: `systems/{id}/deployments` returns 400 on OSH** | **Still present** | Server limitation — OSH does not implement this nested route. |
-| **F7: `systems/{id}/procedures` returns 400 on OSH** | **Still present** | Server limitation — OSH does not implement this nested route. |
+| Original Finding                                        | Status             | Notes                                                                            |
+| ------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------- |
+| **F1: Link relation prefix mismatch** (Critical)        | **Still Fixed** ✅ | `scanCsapiLinks` detects 6 resource types from root document via Convention 2.   |
+| **F2: Top-level vs. collection-scoped URLs** (Critical) | **Still Fixed** ✅ | `extractRootResourceUrls` returns correct mappings.                              |
+| **F3: Response envelope uses `items`** (Moderate)       | **Still deferred** | Both servers now use `{ items: [...], links: [...] }` envelope. Phase 3 concern. |
+| **F4: `validTime` is an array** (Moderate)              | **Still deferred** | OSH: `validTime: ["2026-01-26T18:32:01.56Z", "now"]`. Phase 3 concern.           |
+| **F5: Missing pagination metadata** (Low)               | **Still deferred** | Link-based pagination (`next`/`prev`) works on both servers.                     |
+| **F6: `systems/{id}/deployments` returns 400 on OSH**   | **Still present**  | Server limitation — OSH does not implement this nested route.                    |
+| **F7: `systems/{id}/procedures` returns 400 on OSH**    | **Still present**  | Server limitation — OSH does not implement this nested route.                    |
 
 **Convention 3 fix verified:** `scanCsapiLinks` correctly normalizes `featuresOfInterest` → `samplingFeatures` in collection `rel: "items"` links on both servers, including 52North's `?f=application/json` query parameter.
 
@@ -133,37 +134,37 @@ No regressions. All prior fixes remain working.
 
 **OSH** (System ID: `03bc5ofvvstg` — "LIVE - Field Drone"):
 
-| Method | Server Response |
-|--------|----------------|
-| `getSystems({ limit: 1 })` | ✅ 200 — 1 item |
-| `getSystem('03bc5ofvvstg')` | ✅ 200 — GeoJSON Feature |
-| `createSystem()` | ✅ URL valid (POST target) |
-| `updateSystem(id)` | ✅ URL valid (PUT target) |
-| `deleteSystem(id)` | ✅ URL valid (DELETE target) |
-| `getSystemHistory(id)` | ✅ 200 — 1 history entry |
-| `getSubsystems(id)` | ✅ 200 — 0 items |
-| `getSystemDatastreams(id)` | ✅ 200 — 10 datastreams |
-| `getSystemControlstreams(id)` | ✅ 200 — 0 items |
-| `getSystemSamplingFeatures(id)` | ✅ 200 — 0 items |
-| `getSystemDeployments(id)` | ❌ 400 — server limitation (known F6) |
-| `getSystemProcedures(id)` | ❌ 400 — server limitation (known F7) |
+| Method                          | Server Response                       |
+| ------------------------------- | ------------------------------------- |
+| `getSystems({ limit: 1 })`      | ✅ 200 — 1 item                       |
+| `getSystem('03bc5ofvvstg')`     | ✅ 200 — GeoJSON Feature              |
+| `createSystem()`                | ✅ URL valid (POST target)            |
+| `updateSystem(id)`              | ✅ URL valid (PUT target)             |
+| `deleteSystem(id)`              | ✅ URL valid (DELETE target)          |
+| `getSystemHistory(id)`          | ✅ 200 — 1 history entry              |
+| `getSubsystems(id)`             | ✅ 200 — 0 items                      |
+| `getSystemDatastreams(id)`      | ✅ 200 — 10 datastreams               |
+| `getSystemControlstreams(id)`   | ✅ 200 — 0 items                      |
+| `getSystemSamplingFeatures(id)` | ✅ 200 — 0 items                      |
+| `getSystemDeployments(id)`      | ❌ 400 — server limitation (known F6) |
+| `getSystemProcedures(id)`       | ❌ 400 — server limitation (known F7) |
 
 **52North** (System ID: `5400-526` — "Doppler Current Profiler Sensor"):
 
-| Method | Server Response |
-|--------|----------------|
-| `getSystems({ limit: 1 })` | ✅ 200 — 1 item |
-| `getSystem('5400-526')` | ✅ 200 — SensorML PhysicalSystem |
-| `createSystem()` | ✅ URL valid (POST target) |
-| `updateSystem(id)` | ✅ URL valid (PUT target) |
-| `deleteSystem(id)` | ✅ URL valid (DELETE target) |
-| `getSystemHistory(id)` | ❌ 400 — not implemented |
-| `getSubsystems(id)` | ✅ 200 — 0 items |
-| `getSystemDatastreams(id)` | ❌ 500 — server error |
-| `getSystemControlstreams(id)` | ❌ 400 — not implemented |
-| `getSystemSamplingFeatures(id)` | ✅ 200 — 0 items |
-| `getSystemDeployments(id)` | ✅ 200 — 1 deployment (**works on 52North!**) |
-| `getSystemProcedures(id)` | ❌ 400 — not implemented |
+| Method                          | Server Response                               |
+| ------------------------------- | --------------------------------------------- |
+| `getSystems({ limit: 1 })`      | ✅ 200 — 1 item                               |
+| `getSystem('5400-526')`         | ✅ 200 — SensorML PhysicalSystem              |
+| `createSystem()`                | ✅ URL valid (POST target)                    |
+| `updateSystem(id)`              | ✅ URL valid (PUT target)                     |
+| `deleteSystem(id)`              | ✅ URL valid (DELETE target)                  |
+| `getSystemHistory(id)`          | ❌ 400 — not implemented                      |
+| `getSubsystems(id)`             | ✅ 200 — 0 items                              |
+| `getSystemDatastreams(id)`      | ❌ 500 — server error                         |
+| `getSystemControlstreams(id)`   | ❌ 400 — not implemented                      |
+| `getSystemSamplingFeatures(id)` | ✅ 200 — 0 items                              |
+| `getSystemDeployments(id)`      | ✅ 200 — 1 deployment (**works on 52North!**) |
+| `getSystemProcedures(id)`       | ❌ 400 — not implemented                      |
 
 #### Deployments Methods (8 methods)
 
@@ -171,16 +172,16 @@ No regressions. All prior fixes remain working.
 
 **52North** (Deployment ID: `af41f84f-2492-40e2-a154-17df67119271`):
 
-| Method | Server Response |
-|--------|----------------|
-| `getDeployments({ limit: 1 })` | ✅ 200 — 1 item |
-| `getDeployment(id)` | ✅ 200 — Deployment object |
-| `createDeployment()` | ✅ URL valid (POST target) |
-| `updateDeployment(id)` | ✅ URL valid (PUT target) |
-| `deleteDeployment(id)` | ✅ URL valid (DELETE target) |
-| `getDeploymentSubdeployments(id)` | ❌ 400 — not implemented |
-| `getDeploymentSystems(id)` | ❌ 400 — not implemented |
-| `getDeploymentHistory(id)` | ❌ 400 — not implemented |
+| Method                            | Server Response              |
+| --------------------------------- | ---------------------------- |
+| `getDeployments({ limit: 1 })`    | ✅ 200 — 1 item              |
+| `getDeployment(id)`               | ✅ 200 — Deployment object   |
+| `createDeployment()`              | ✅ URL valid (POST target)   |
+| `updateDeployment(id)`            | ✅ URL valid (PUT target)    |
+| `deleteDeployment(id)`            | ✅ URL valid (DELETE target) |
+| `getDeploymentSubdeployments(id)` | ❌ 400 — not implemented     |
+| `getDeploymentSystems(id)`        | ❌ 400 — not implemented     |
+| `getDeploymentHistory(id)`        | ❌ 400 — not implemented     |
 
 #### Procedures Methods (8 methods)
 
@@ -188,31 +189,31 @@ No regressions. All prior fixes remain working.
 
 **52North** (Procedure ID: `4e09de42-674d-4e03-a620-2d219b030a50`):
 
-| Method | Server Response |
-|--------|----------------|
-| `getProcedures({ limit: 1 })` | ✅ 200 — 1 item |
-| `getProcedure(id)` | ✅ 200 — PhysicalSystem object |
-| `createProcedure()` | ✅ URL valid (POST target) |
-| `updateProcedure(id)` | ✅ URL valid (PUT target) |
-| `deleteProcedure(id)` | ✅ URL valid (DELETE target) |
-| `getProcedureSystems(id)` | ❌ 400 — not implemented |
-| `getProcedureDatastreams(id)` | ❌ 400 — not implemented |
-| `getProcedureHistory(id)` | ❌ 400 — not implemented |
+| Method                        | Server Response                |
+| ----------------------------- | ------------------------------ |
+| `getProcedures({ limit: 1 })` | ✅ 200 — 1 item                |
+| `getProcedure(id)`            | ✅ 200 — PhysicalSystem object |
+| `createProcedure()`           | ✅ URL valid (POST target)     |
+| `updateProcedure(id)`         | ✅ URL valid (PUT target)      |
+| `deleteProcedure(id)`         | ✅ URL valid (DELETE target)   |
+| `getProcedureSystems(id)`     | ❌ 400 — not implemented       |
+| `getProcedureDatastreams(id)` | ❌ 400 — not implemented       |
+| `getProcedureHistory(id)`     | ❌ 400 — not implemented       |
 
 #### SamplingFeatures Methods (8 methods) — NEW in Phase 2.4
 
 **OSH** (SamplingFeature ID: `040g`):
 
-| Method | Server Response |
-|--------|----------------|
-| `getSamplingFeatures({ limit: 2 })` | ✅ 200 — 2 items |
-| `getSamplingFeature('040g')` | ✅ 200 — GeoJSON Feature |
-| `createSamplingFeature()` | ✅ URL valid (POST target) |
-| `updateSamplingFeature(id)` | ✅ URL valid (PUT target) |
-| `deleteSamplingFeature(id)` | ✅ URL valid (DELETE target) |
-| `getSamplingFeatureSystems(id)` | ❌ 400 — see **F8** below |
-| `getSamplingFeatureObservations(id)` | ✅ 200 — 100 items |
-| `getSamplingFeatureHistory(id)` | ❌ 400 — see **F9** below |
+| Method                               | Server Response              |
+| ------------------------------------ | ---------------------------- |
+| `getSamplingFeatures({ limit: 2 })`  | ✅ 200 — 2 items             |
+| `getSamplingFeature('040g')`         | ✅ 200 — GeoJSON Feature     |
+| `createSamplingFeature()`            | ✅ URL valid (POST target)   |
+| `updateSamplingFeature(id)`          | ✅ URL valid (PUT target)    |
+| `deleteSamplingFeature(id)`          | ✅ URL valid (DELETE target) |
+| `getSamplingFeatureSystems(id)`      | ❌ 400 — see **F8** below    |
+| `getSamplingFeatureObservations(id)` | ✅ 200 — 100 items           |
+| `getSamplingFeatureHistory(id)`      | ❌ 400 — see **F9** below    |
 
 **52North:** 0 samplingFeatures on server — top-level list endpoint confirmed functional (✅ 200 empty).
 
@@ -222,55 +223,55 @@ No regressions. All prior fixes remain working.
 
 #### OSH — Systems
 
-| Parameter | URL Pattern | Result |
-|-----------|------------|--------|
-| `limit` | `.../systems?limit=1` | ✅ 200 — 1 item |
-| `offset` | `.../systems?limit=1&offset=1` | ✅ 200 — 1 item |
-| `q` | `.../systems?q=weather` | ✅ 200 — 1 item |
-| `bbox` | `.../systems?bbox=-180,-90,180,90` | ✅ 200 — 0 items (no geometry) |
-| `datetime` | `.../systems?datetime=2020-01-01/2026-12-31` | ✅ 200 — 12 items |
-| `id` | `.../systems?id=03bc5ofvvstg` | ✅ 200 — 1 item |
-| `f` | `.../systems?limit=1&f=json` | ✅ 200 — 1 item |
+| Parameter  | URL Pattern                                  | Result                         |
+| ---------- | -------------------------------------------- | ------------------------------ |
+| `limit`    | `.../systems?limit=1`                        | ✅ 200 — 1 item                |
+| `offset`   | `.../systems?limit=1&offset=1`               | ✅ 200 — 1 item                |
+| `q`        | `.../systems?q=weather`                      | ✅ 200 — 1 item                |
+| `bbox`     | `.../systems?bbox=-180,-90,180,90`           | ✅ 200 — 0 items (no geometry) |
+| `datetime` | `.../systems?datetime=2020-01-01/2026-12-31` | ✅ 200 — 12 items              |
+| `id`       | `.../systems?id=03bc5ofvvstg`                | ✅ 200 — 1 item                |
+| `f`        | `.../systems?limit=1&f=json`                 | ✅ 200 — 1 item                |
 
 #### OSH — SamplingFeatures (NEW)
 
-| Parameter | URL Pattern | Result |
-|-----------|------------|--------|
-| `limit` | `.../samplingFeatures?limit=1` | ✅ 200 — 1 item |
-| `offset` | `.../samplingFeatures?limit=1&offset=1` | ✅ 200 — 1 item |
-| `q` | `.../samplingFeatures?q=Run` | ✅ 200 — 2 items |
-| `bbox` | `.../samplingFeatures?bbox=-180,-90,180,90` | ✅ 200 — 0 items |
-| `datetime` | `.../samplingFeatures?datetime=2020-01-01/2026-12-31` | ✅ 200 — 2 items |
-| `id` | `.../samplingFeatures?id=040g` | ✅ 200 — 1 item |
-| `f` | `.../samplingFeatures?limit=1&f=json` | ✅ 200 — 1 item |
+| Parameter         | URL Pattern                                               | Result           |
+| ----------------- | --------------------------------------------------------- | ---------------- |
+| `limit`           | `.../samplingFeatures?limit=1`                            | ✅ 200 — 1 item  |
+| `offset`          | `.../samplingFeatures?limit=1&offset=1`                   | ✅ 200 — 1 item  |
+| `q`               | `.../samplingFeatures?q=Run`                              | ✅ 200 — 2 items |
+| `bbox`            | `.../samplingFeatures?bbox=-180,-90,180,90`               | ✅ 200 — 0 items |
+| `datetime`        | `.../samplingFeatures?datetime=2020-01-01/2026-12-31`     | ✅ 200 — 2 items |
+| `id`              | `.../samplingFeatures?id=040g`                            | ✅ 200 — 1 item  |
+| `f`               | `.../samplingFeatures?limit=1&f=json`                     | ✅ 200 — 1 item  |
 | Nested pagination | `.../samplingFeatures/040g/observations?limit=2&offset=2` | ✅ 200 — 2 items |
 
 #### 52North — Systems
 
-| Parameter | URL Pattern | Result |
-|-----------|------------|--------|
-| `limit` | `.../systems?limit=1` | ✅ 200 — 1 item |
-| `offset` | `.../systems?limit=1&offset=1` | ✅ 200 — 1 item |
-| `q` | `.../systems?q=Doppler` | ✅ 200 — 1 item |
-| `bbox` | `.../systems?bbox=-180,-90,180,90` | ✅ 200 — 0 items |
+| Parameter  | URL Pattern                                  | Result           |
+| ---------- | -------------------------------------------- | ---------------- |
+| `limit`    | `.../systems?limit=1`                        | ✅ 200 — 1 item  |
+| `offset`   | `.../systems?limit=1&offset=1`               | ✅ 200 — 1 item  |
+| `q`        | `.../systems?q=Doppler`                      | ✅ 200 — 1 item  |
+| `bbox`     | `.../systems?bbox=-180,-90,180,90`           | ✅ 200 — 0 items |
 | `datetime` | `.../systems?datetime=2020-01-01/2026-12-31` | ✅ 200 — 3 items |
 
 #### 52North — Deployments
 
-| Parameter | URL Pattern | Result |
-|-----------|------------|--------|
-| `limit` | `.../deployments?limit=1` | ✅ 200 — 1 item |
-| `offset` | `.../deployments?limit=1&offset=0` | ✅ 200 — 1 item |
-| `q` | `.../deployments?q=test` | ✅ 200 — 1 item |
+| Parameter  | URL Pattern                                      | Result          |
+| ---------- | ------------------------------------------------ | --------------- |
+| `limit`    | `.../deployments?limit=1`                        | ✅ 200 — 1 item |
+| `offset`   | `.../deployments?limit=1&offset=0`               | ✅ 200 — 1 item |
+| `q`        | `.../deployments?q=test`                         | ✅ 200 — 1 item |
 | `datetime` | `.../deployments?datetime=2020-01-01/2026-12-31` | ✅ 200 — 1 item |
 
 #### 52North — Procedures
 
-| Parameter | URL Pattern | Result |
-|-----------|------------|--------|
-| `limit` | `.../procedures?limit=1` | ✅ 200 — 1 item |
-| `offset` | `.../procedures?limit=1&offset=0` | ✅ 200 — 1 item |
-| `q` | `.../procedures?q=current` | ✅ 200 — 1 item |
+| Parameter  | URL Pattern                                     | Result          |
+| ---------- | ----------------------------------------------- | --------------- |
+| `limit`    | `.../procedures?limit=1`                        | ✅ 200 — 1 item |
+| `offset`   | `.../procedures?limit=1&offset=0`               | ✅ 200 — 1 item |
+| `q`        | `.../procedures?q=current`                      | ✅ 200 — 1 item |
 | `datetime` | `.../procedures?datetime=2020-01-01/2026-12-31` | ✅ 200 — 1 item |
 
 All query parameters generated by `buildQueryString` are accepted by both servers.
@@ -310,6 +311,7 @@ OSH does not implement history for SamplingFeatures. Our URL is correctly formed
 **Severity:** Informational — positive development
 
 Since our last test, 52North has populated their demo server with real data:
+
 - **2 systems** (incl. "Doppler Current Profiler Sensor", id: `5400-526`)
 - **1 deployment** ("Messtonne 1 - 2025 Test", id: `af41f84f-2492-40e2-a154-17df67119271`)
 - **1 procedure** ("Doppler Current Profiler Sensor", id: `4e09de42-674d-4e03-a620-2d219b030a50`)
@@ -323,6 +325,7 @@ This allowed us to test individual GET and nested endpoints for the first time o
 **Severity:** Moderate — interoperability concern for Phase 3 response parsing
 
 OSH returns individual resources as **GeoJSON Features**:
+
 ```json
 {
   "type": "Feature",
@@ -333,6 +336,7 @@ OSH returns individual resources as **GeoJSON Features**:
 ```
 
 52North returns individual resources as **SensorML objects**:
+
 ```json
 {
   "type": "PhysicalSystem",
@@ -369,50 +373,50 @@ Both OSH and 52North now return collections in `{ items: [...], links: [...] }` 
 
 ### Endpoint Support Matrix
 
-| Endpoint Pattern | OSH | 52North |
-|-----------------|-----|---------|
-| `GET /{resource}` | ✅ All 4 types | ✅ All 4 types |
-| `GET /{resource}/{id}` | ✅ Systems, SF | ✅ Systems, Depl, Proc |
-| `GET /systems/{id}/subsystems` | ✅ 200 | ✅ 200 |
-| `GET /systems/{id}/deployments` | ❌ 400 | ✅ 200 |
-| `GET /systems/{id}/procedures` | ❌ 400 | ❌ 400 |
-| `GET /systems/{id}/datastreams` | ✅ 200 | ❌ 500 |
-| `GET /systems/{id}/controlstreams` | ✅ 200 | ❌ 400 |
-| `GET /systems/{id}/samplingFeatures` | ✅ 200 | ✅ 200 |
-| `GET /systems/{id}/history` | ✅ 200 | ❌ 400 |
-| `GET /deployments/{id}/subdeployments` | N/A (no data) | ❌ 400 |
-| `GET /deployments/{id}/systems` | N/A (no data) | ❌ 400 |
-| `GET /deployments/{id}/history` | N/A (no data) | ❌ 400 |
-| `GET /procedures/{id}/systems` | N/A (no data) | ❌ 400 |
-| `GET /procedures/{id}/datastreams` | N/A (no data) | ❌ 400 |
-| `GET /procedures/{id}/history` | N/A (no data) | ❌ 400 |
-| `GET /samplingFeatures/{id}/systems` | ❌ 400 | N/A (no data) |
-| `GET /samplingFeatures/{id}/observations` | ✅ 200 (100 items) | N/A (no data) |
-| `GET /samplingFeatures/{id}/history` | ❌ 400 | N/A (no data) |
+| Endpoint Pattern                          | OSH                | 52North                |
+| ----------------------------------------- | ------------------ | ---------------------- |
+| `GET /{resource}`                         | ✅ All 4 types     | ✅ All 4 types         |
+| `GET /{resource}/{id}`                    | ✅ Systems, SF     | ✅ Systems, Depl, Proc |
+| `GET /systems/{id}/subsystems`            | ✅ 200             | ✅ 200                 |
+| `GET /systems/{id}/deployments`           | ❌ 400             | ✅ 200                 |
+| `GET /systems/{id}/procedures`            | ❌ 400             | ❌ 400                 |
+| `GET /systems/{id}/datastreams`           | ✅ 200             | ❌ 500                 |
+| `GET /systems/{id}/controlstreams`        | ✅ 200             | ❌ 400                 |
+| `GET /systems/{id}/samplingFeatures`      | ✅ 200             | ✅ 200                 |
+| `GET /systems/{id}/history`               | ✅ 200             | ❌ 400                 |
+| `GET /deployments/{id}/subdeployments`    | N/A (no data)      | ❌ 400                 |
+| `GET /deployments/{id}/systems`           | N/A (no data)      | ❌ 400                 |
+| `GET /deployments/{id}/history`           | N/A (no data)      | ❌ 400                 |
+| `GET /procedures/{id}/systems`            | N/A (no data)      | ❌ 400                 |
+| `GET /procedures/{id}/datastreams`        | N/A (no data)      | ❌ 400                 |
+| `GET /procedures/{id}/history`            | N/A (no data)      | ❌ 400                 |
+| `GET /samplingFeatures/{id}/systems`      | ❌ 400             | N/A (no data)          |
+| `GET /samplingFeatures/{id}/observations` | ✅ 200 (100 items) | N/A (no data)          |
+| `GET /samplingFeatures/{id}/history`      | ❌ 400             | N/A (no data)          |
 
 ### Query Parameter Support
 
-| Parameter | OSH Systems | OSH SF | 52N Systems | 52N Depl | 52N Proc |
-|-----------|------------|--------|-------------|----------|----------|
-| `limit` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `offset` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `q` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `bbox` | ✅ | ✅ | ✅ | — | — |
-| `datetime` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `id` | ✅ | ✅ | — | — | — |
-| `f` | ✅ | ✅ | — | — | — |
+| Parameter  | OSH Systems | OSH SF | 52N Systems | 52N Depl | 52N Proc |
+| ---------- | ----------- | ------ | ----------- | -------- | -------- |
+| `limit`    | ✅          | ✅     | ✅          | ✅       | ✅       |
+| `offset`   | ✅          | ✅     | ✅          | ✅       | ✅       |
+| `q`        | ✅          | ✅     | ✅          | ✅       | ✅       |
+| `bbox`     | ✅          | ✅     | ✅          | —        | —        |
+| `datetime` | ✅          | ✅     | ✅          | ✅       | ✅       |
+| `id`       | ✅          | ✅     | —           | —        | —        |
+| `f`        | ✅          | ✅     | —           | —        | —        |
 
 ### Response Format Differences
 
-| Aspect | OSH | 52North |
-|--------|-----|---------|
-| Collection envelope | `{ items: [...] }` | `{ items: [...] }` |
-| Individual system | GeoJSON Feature | SensorML PhysicalSystem |
-| Individual deployment | N/A | Deployment object (with location, deployedSystems) |
-| Individual procedure | N/A | SensorML PhysicalSystem |
-| Individual samplingFeature | GeoJSON Feature | N/A |
-| Pagination | `next`/`prev` links | `next` links |
-| ID format | Short alphanumeric (`03bc5ofvvstg`) | UUID or formatted (`5400-526`) |
+| Aspect                     | OSH                                 | 52North                                            |
+| -------------------------- | ----------------------------------- | -------------------------------------------------- |
+| Collection envelope        | `{ items: [...] }`                  | `{ items: [...] }`                                 |
+| Individual system          | GeoJSON Feature                     | SensorML PhysicalSystem                            |
+| Individual deployment      | N/A                                 | Deployment object (with location, deployedSystems) |
+| Individual procedure       | N/A                                 | SensorML PhysicalSystem                            |
+| Individual samplingFeature | GeoJSON Feature                     | N/A                                                |
+| Pagination                 | `next`/`prev` links                 | `next` links                                       |
+| ID format                  | Short alphanumeric (`03bc5ofvvstg`) | UUID or formatted (`5400-526`)                     |
 
 ---
 
@@ -420,19 +424,19 @@ Both OSH and 52North now return collections in `{ items: [...], links: [...] }` 
 
 ### Test Coverage
 
-| Category | Tested | Passed | Failed | N/A |
-|----------|--------|--------|--------|-----|
-| **OSH — Systems (12 methods)** | 12 | 10 | 2 (known F6/F7) | 0 |
-| **OSH — Deployments (8 methods)** | 1 | 1 | 0 | 7 (no data) |
-| **OSH — Procedures (8 methods)** | 1 | 1 | 0 | 7 (no data) |
-| **OSH — SamplingFeatures (8 methods)** | 8 | 6 | 2 (new F8/F9) | 0 |
-| **52N — Systems (12 methods)** | 8 | 5 | 3 (server limits) | 4 (write ops) |
-| **52N — Deployments (8 methods)** | 5 | 2 | 3 (server limits) | 3 (write ops) |
-| **52N — Procedures (8 methods)** | 5 | 2 | 3 (server limits) | 3 (write ops) |
-| **52N — SamplingFeatures (8 methods)** | 1 | 1 | 0 | 7 (no data) |
-| **Query params — OSH** | 15 | 15 | 0 | 0 |
-| **Query params — 52N** | 13 | 13 | 0 | 0 |
-| **Total** | **69** | **56** | **13** | **31** |
+| Category                               | Tested | Passed | Failed            | N/A           |
+| -------------------------------------- | ------ | ------ | ----------------- | ------------- |
+| **OSH — Systems (12 methods)**         | 12     | 10     | 2 (known F6/F7)   | 0             |
+| **OSH — Deployments (8 methods)**      | 1      | 1      | 0                 | 7 (no data)   |
+| **OSH — Procedures (8 methods)**       | 1      | 1      | 0                 | 7 (no data)   |
+| **OSH — SamplingFeatures (8 methods)** | 8      | 6      | 2 (new F8/F9)     | 0             |
+| **52N — Systems (12 methods)**         | 8      | 5      | 3 (server limits) | 4 (write ops) |
+| **52N — Deployments (8 methods)**      | 5      | 2      | 3 (server limits) | 3 (write ops) |
+| **52N — Procedures (8 methods)**       | 5      | 2      | 3 (server limits) | 3 (write ops) |
+| **52N — SamplingFeatures (8 methods)** | 1      | 1      | 0                 | 7 (no data)   |
+| **Query params — OSH**                 | 15     | 15     | 0                 | 0             |
+| **Query params — 52N**                 | 13     | 13     | 0                 | 0             |
+| **Total**                              | **69** | **56** | **13**            | **31**        |
 
 ### Key Takeaways
 
@@ -446,25 +450,26 @@ Both OSH and 52North now return collections in `{ items: [...], links: [...] }` 
 
 ### Findings Ledger (Cumulative)
 
-| ID | Description | Severity | Status | Owner |
-|----|-------------|----------|--------|-------|
-| F1 | Link relation prefix mismatch | Critical | **Fixed** (Issue #34) | Client |
-| F2 | Top-level vs. collection-scoped URLs | Critical | **Fixed** (Issue #35) | Client |
-| F3 | Response envelope uses `items` | Moderate | Deferred to Phase 3 | Client |
-| F4 | `validTime` is an array | Moderate | Deferred to Phase 3 | Client |
-| F5 | Missing pagination metadata | Low | Deferred to Phase 3 | Client |
-| F6 | OSH rejects `systems/{id}/deployments` | Moderate | Server limitation | Server |
-| F7 | OSH rejects `systems/{id}/procedures` | Moderate | Server limitation | Server |
-| F8 | OSH rejects `samplingFeatures/{id}/systems` | Moderate | Server limitation | Server |
-| F9 | OSH rejects `samplingFeatures/{id}/history` | Moderate | Server limitation | Server |
-| F10 | 52North now has real data | Informational | Positive change | — |
-| F11 | 52North uses SensorML format | Moderate | Phase 3 concern | Client |
-| F12 | 52North `systems/{id}/deployments` works | Informational | Positive finding | — |
-| F13 | Both servers use `items` envelope | Informational | Confirms F3 | — |
+| ID  | Description                                 | Severity      | Status                | Owner  |
+| --- | ------------------------------------------- | ------------- | --------------------- | ------ |
+| F1  | Link relation prefix mismatch               | Critical      | **Fixed** (Issue #34) | Client |
+| F2  | Top-level vs. collection-scoped URLs        | Critical      | **Fixed** (Issue #35) | Client |
+| F3  | Response envelope uses `items`              | Moderate      | Deferred to Phase 3   | Client |
+| F4  | `validTime` is an array                     | Moderate      | Deferred to Phase 3   | Client |
+| F5  | Missing pagination metadata                 | Low           | Deferred to Phase 3   | Client |
+| F6  | OSH rejects `systems/{id}/deployments`      | Moderate      | Server limitation     | Server |
+| F7  | OSH rejects `systems/{id}/procedures`       | Moderate      | Server limitation     | Server |
+| F8  | OSH rejects `samplingFeatures/{id}/systems` | Moderate      | Server limitation     | Server |
+| F9  | OSH rejects `samplingFeatures/{id}/history` | Moderate      | Server limitation     | Server |
+| F10 | 52North now has real data                   | Informational | Positive change       | —      |
+| F11 | 52North uses SensorML format                | Moderate      | Phase 3 concern       | Client |
+| F12 | 52North `systems/{id}/deployments` works    | Informational | Positive finding      | —      |
+| F13 | Both servers use `items` envelope           | Informational | Confirms F3           | —      |
 
 ### Phase 3 Implications
 
 Based on this smoke test, Phase 3 response parsing must handle:
+
 - **Dual collection envelopes:** Both servers use `items`, but future servers may use `features`
 - **Dual individual formats:** GeoJSON Feature (OSH) vs. SensorML (52North)
 - **Graceful degradation:** Many nested endpoints return 400 or 500 — response parsing should handle errors cleanly

@@ -53,6 +53,7 @@ src/
 **Observation:** Neither EDR, STAC, nor XML-based APIs use subdirectories.
 
 **EDR structure (flat):**
+
 ```
 src/ogc-api/edr/
   model.ts
@@ -63,6 +64,7 @@ src/ogc-api/edr/
 ```
 
 **Not this:**
+
 ```
 src/ogc-api/edr/
   models/          # ❌ Not used
@@ -80,13 +82,13 @@ src/ogc-api/edr/
 
 **5 files total (3 implementation + 2 test):**
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `model.ts` | 126 | Type definitions |
-| `url_builder.ts` | 380 | EDRQueryBuilder class |
-| `helpers.ts` | 26 | Utility functions |
-| `model.spec.ts` | 97 | Model tests |
-| `helpers.spec.ts` | 45 | Helper tests |
+| File              | Lines | Purpose               |
+| ----------------- | ----- | --------------------- |
+| `model.ts`        | 126   | Type definitions      |
+| `url_builder.ts`  | 380   | EDRQueryBuilder class |
+| `helpers.ts`      | 26    | Utility functions     |
+| `model.spec.ts`   | 97    | Model tests           |
+| `helpers.spec.ts` | 45    | Helper tests          |
 
 **Total:** ~675 lines (including tests)
 
@@ -95,12 +97,14 @@ src/ogc-api/edr/
 #### `model.ts` - Type Definitions
 
 **Contains:**
+
 - Type aliases (`WellKnownTextString`, `bboxWithoutVerticalAxis`)
 - Discriminated unions (`ZParameter`)
 - Query parameter interfaces (`optionalAreaParams`, etc.)
 - Type conversion functions (`zParameterToString`)
 
 **Pattern:**
+
 ```typescript
 // Simple type alias
 export type WellKnownTextString = string;
@@ -125,12 +129,14 @@ export function zParameterToString(z: ZParameter): string {
 #### `url_builder.ts` - QueryBuilder Class
 
 **Contains:**
+
 - Single default export class
 - All query building methods
 - Private cache management
 - URL construction logic
 
 **Pattern:**
+
 ```typescript
 export default class EDRQueryBuilder {
   private collection_: OgcApiCollectionInfo;
@@ -144,7 +150,7 @@ export default class EDRQueryBuilder {
   // Public query methods
   async getAreaData(...): Promise<...> { }
   async getPositionData(...): Promise<...> { }
-  
+
   // Private helpers
   private buildUrl(...): string { }
 }
@@ -155,11 +161,13 @@ export default class EDRQueryBuilder {
 #### `helpers.ts` - Utility Functions
 
 **Contains:**
+
 - Pure utility functions
 - Type conversion helpers
 - Shared logic used by url_builder
 
 **Pattern:**
+
 ```typescript
 import { DateTimeParameter } from '../../shared/models.js';
 
@@ -226,6 +234,7 @@ src/stac/
 **Notable:** STAC has `index.ts` barrel file, EDR does not.
 
 **STAC index.ts:**
+
 ```typescript
 export { default as StacEndpoint } from './endpoint.js';
 export type { GetCollectionItemsOptions } from './endpoint.js';
@@ -288,6 +297,7 @@ src/wms/
 **Pattern:** `{filename}.spec.ts`
 
 **Examples:**
+
 - `model.ts` → `model.spec.ts`
 - `url_builder.ts` → (no test file exists for EDR, but would be `url_builder.spec.ts`)
 - `helpers.ts` → `helpers.spec.ts`
@@ -324,6 +334,7 @@ describe('DateTimeParameterToEDRString', () => {
 ```
 
 **Pattern:**
+
 - Import from relative path (`./helpers.js`)
 - One `describe` block per function/class
 - Multiple `it` blocks for test cases
@@ -332,10 +343,10 @@ describe('DateTimeParameterToEDRString', () => {
 
 **EDR test breakdown:**
 
-| File | Test Lines | Implementation Lines | Ratio |
-|------|-----------|---------------------|-------|
-| `model.spec.ts` | 97 | 126 | 77% |
-| `helpers.spec.ts` | 45 | 26 | 173% |
+| File              | Test Lines | Implementation Lines | Ratio |
+| ----------------- | ---------- | -------------------- | ----- |
+| `model.spec.ts`   | 97         | 126                  | 77%   |
+| `helpers.spec.ts` | 45         | 26                   | 173%  |
 
 **Observation:** Tests are substantial but not exhaustive. Model types have basic tests, helpers are well-tested.
 
@@ -383,6 +394,7 @@ fixtures/ogc-api/edr/
 ```
 
 **EDR mostly reuses parent fixtures:**
+
 - `fixtures/ogc-api/sample-data.json` - Root document
 - `fixtures/ogc-api/sample-data/` - Collection responses
 
@@ -438,6 +450,7 @@ export * from './stac/model.js';
 ```
 
 **Pattern:**
+
 - Default export for main endpoint class
 - Export all types from model.ts
 - Named exports for specific types if needed
@@ -455,7 +468,7 @@ export { default as EDRQueryBuilder } from './ogc-api/edr/url_builder.js';
 
 ```typescript
 const endpoint = new OgcApiEndpoint(url);
-const edrBuilder = await endpoint.edr(collectionId);  // Returns EDRQueryBuilder
+const edrBuilder = await endpoint.edr(collectionId); // Returns EDRQueryBuilder
 ```
 
 **Pattern:** Sub-API classes are accessed via factory methods, not direct exports.
@@ -487,15 +500,15 @@ export * from './stac/index.js';
 
 ### Implementation Files
 
-| Pattern | Example | Purpose |
-|---------|---------|---------|
-| `endpoint.ts` | All APIs | Main endpoint class |
-| `model.ts` | All APIs | Type definitions |
-| `{feature}.ts` | `capabilities.ts`, `url.ts` | Specific functionality |
-| `{class_name}.ts` | `url_builder.ts` | Single class file |
-| `helpers.ts` | EDR | Utility functions |
-| `info.ts` | OGC API, STAC | Parsing functions |
-| `link-utils.ts` | OGC API, STAC | Link traversal |
+| Pattern           | Example                     | Purpose                |
+| ----------------- | --------------------------- | ---------------------- |
+| `endpoint.ts`     | All APIs                    | Main endpoint class    |
+| `model.ts`        | All APIs                    | Type definitions       |
+| `{feature}.ts`    | `capabilities.ts`, `url.ts` | Specific functionality |
+| `{class_name}.ts` | `url_builder.ts`            | Single class file      |
+| `helpers.ts`      | EDR                         | Utility functions      |
+| `info.ts`         | OGC API, STAC               | Parsing functions      |
+| `link-utils.ts`   | OGC API, STAC               | Link traversal         |
 
 ### Test Files
 
@@ -506,16 +519,20 @@ export * from './stac/index.js';
 ### Casing Conventions
 
 **Files:**
+
 - **Kebab-case:** `link-utils.ts`, `url_builder.ts` (inconsistent: some use snake_case)
 - **Single word lowercase:** `endpoint.ts`, `model.ts`, `helpers.ts`
 
 **Classes:**
+
 - **PascalCase:** `OgcApiEndpoint`, `EDRQueryBuilder`, `WfsEndpoint`
 
 **Functions:**
+
 - **camelCase:** `parseEndpointInfo`, `getLinkUrl`, `fetchDocument`
 
 **Types:**
+
 - **PascalCase:** `OgcApiCollectionInfo`, `DateTimeParameter`
 - **camelCase for params:** `optionalAreaParams`, `bboxWithVerticalAxis`
 
@@ -535,6 +552,7 @@ import { DateTimeParameter } from '../../shared/models.js';
 ```
 
 **Never:**
+
 ```typescript
 // ❌ Don't use absolute imports
 import { optionalAreaParams } from 'src/ogc-api/edr/model';
@@ -576,11 +594,13 @@ import { Geometry } from 'geojson';
 **From main `src/index.ts`:**
 
 ✅ **Exported:**
+
 - Endpoint classes (`OgcApiEndpoint`, `WfsEndpoint`, etc.)
 - All model types (`export * from './ogc-api/model.js'`)
 - Shared types (`BoundingBox`, `DateTimeParameter`, etc.)
 
 ❌ **NOT Exported:**
+
 - Utility functions (`parseEndpointInfo`, `getLinkUrl`)
 - Internal classes (QueryBuilders accessed via factory)
 - Test files
@@ -602,8 +622,9 @@ const builder: EDRQueryBuilder = await endpoint.edr(collectionId);
 **Actually, EDR types are NOT in main exports!**
 
 Checking `src/index.ts`:
+
 ```typescript
-export * from './ogc-api/model.js';  // Only common OGC API types
+export * from './ogc-api/model.js'; // Only common OGC API types
 // EDR types are NOT exported
 ```
 
@@ -614,11 +635,13 @@ export * from './ogc-api/model.js';  // Only common OGC API types
 **For CSAPI:**
 
 1. **QueryBuilder accessed via factory:**
+
    ```typescript
    const csapiBuilder = await endpoint.csapi(collectionId);
    ```
 
 2. **Types may or may not be exported:**
+
    - If users need to construct query options → export
    - If users just call methods → internal
 
@@ -652,6 +675,7 @@ src/ogc-api/csapi/
 #### `model.ts` (~350-400 lines)
 
 **Contents:**
+
 - Resource type enum (`CSAPIResourceTypes`)
 - Query options interfaces (`QueryOptions`, `SystemQueryOptions`, etc.)
 - Helper types (`TimeInterval`, `ResourceLink`, etc.)
@@ -659,6 +683,7 @@ src/ogc-api/csapi/
 - Collection generic type (`Collection<T>`)
 
 **Pattern:**
+
 ```typescript
 // Imports
 import { Geometry } from 'geojson';
@@ -690,12 +715,14 @@ export interface Collection<T> { ... }
 #### `url_builder.ts` (~700-800 lines)
 
 **Contents:**
+
 - `CSAPIQueryBuilder` class (default export)
 - Methods for each resource × query type
 - Private URL building helpers
 - Cache management
 
 **Estimated methods:**
+
 - Systems: `getSystems()`, `getSystem(id)`
 - Deployments: `getDeployments()`, `getDeployment(id)`, `getDeploymentSystems(id)`
 - SamplingFeatures: `getSamplingFeatures()`, `getSamplingFeature(id)`
@@ -709,6 +736,7 @@ export interface Collection<T> { ... }
 **Total:** ~18 public methods + 5-10 private helpers
 
 **Pattern:**
+
 ```typescript
 export default class CSAPIQueryBuilder {
   private collection_: OgcApiCollectionInfo;
@@ -720,45 +748,45 @@ export default class CSAPIQueryBuilder {
   }
 
   // Public query methods
-  async getSystems(options?: SystemQueryOptions): Promise<string> { }
-  async getSystem(systemId: string): Promise<string> { }
-  async getDeployments(options?: QueryOptions): Promise<string> { }
+  async getSystems(options?: SystemQueryOptions): Promise<string> {}
+  async getSystem(systemId: string): Promise<string> {}
+  async getDeployments(options?: QueryOptions): Promise<string> {}
   // ... 15 more public methods
 
   // Private helpers
   private buildCollectionUrl(
     resourceType: string,
     options?: QueryOptions
-  ): string { }
-  
-  private buildItemUrl(
-    resourceType: string,
-    itemId: string
-  ): string { }
-  
+  ): string {}
+
+  private buildItemUrl(resourceType: string, itemId: string): string {}
+
   private buildSubResourceUrl(
     parentType: string,
     parentId: string,
     childType: string,
     options?: QueryOptions
-  ): string { }
+  ): string {}
 }
 ```
 
 #### `helpers.ts` (~50-80 lines)
 
 **Contents:**
+
 - Parameter formatting functions
 - Type conversion utilities
 - Shared logic extracted from url_builder
 
 **Possible functions:**
+
 - `formatQueryOptions(options: QueryOptions): URLSearchParams`
 - `formatDateTime(datetime: DateTimeParameter): string`
 - `formatBBox(bbox: BoundingBox): string`
 - `validateResourceId(id: string): void`
 
 **Pattern:**
+
 ```typescript
 import { DateTimeParameter, BoundingBox } from '../../shared/models.js';
 
@@ -766,7 +794,7 @@ export function formatDateTime(datetime: DateTimeParameter): string {
   if (datetime instanceof Date) {
     return datetime.toISOString();
   }
-  
+
   const start = datetime.start.toISOString();
   const end = datetime.end ? datetime.end.toISOString() : '..';
   return `${start}/${end}`;
@@ -776,23 +804,25 @@ export function formatBBox(bbox: BoundingBox): string {
   return bbox.join(',');
 }
 
-export function formatQueryOptions(options: QueryOptions): Record<string, string> {
+export function formatQueryOptions(
+  options: QueryOptions
+): Record<string, string> {
   const params: Record<string, string> = {};
-  
+
   if (options.limit !== undefined) {
     params.limit = options.limit.toString();
   }
-  
+
   if (options.bbox !== undefined) {
     params.bbox = formatBBox(options.bbox);
   }
-  
+
   if (options.datetime !== undefined) {
     params.datetime = formatDateTime(options.datetime);
   }
-  
+
   // ... more parameters
-  
+
   return params;
 }
 ```
@@ -800,11 +830,13 @@ export function formatQueryOptions(options: QueryOptions): Record<string, string
 #### `model.spec.ts` (~200-300 lines)
 
 **Contents:**
+
 - Tests for type conversion functions (if any in model.ts)
 - Tests for helper types/enums
 - Validation tests
 
 **Pattern:**
+
 ```typescript
 import { describe, expect, it } from 'vitest';
 import { CSAPIResourceTypes, CSAPIResourceType } from './model.js';
@@ -827,12 +859,14 @@ describe('CSAPIResourceTypes', () => {
 #### `url_builder.spec.ts` (~800-1000 lines)
 
 **Contents:**
+
 - Tests for all 18 query methods
 - Tests for URL construction
 - Tests for parameter handling
 - Tests for error cases
 
 **Pattern:**
+
 ```typescript
 import { describe, expect, it, beforeEach } from 'vitest';
 import CSAPIQueryBuilder from './url_builder.js';
@@ -887,9 +921,11 @@ describe('CSAPIQueryBuilder', () => {
 #### `index.ts` (optional, ~10 lines)
 
 **Contents:**
+
 - Barrel file for convenient imports
 
 **Pattern:**
+
 ```typescript
 export { default as CSAPIQueryBuilder } from './url_builder.js';
 export * from './model.js';
@@ -897,6 +933,7 @@ export * from './helpers.js';
 ```
 
 **Usage in parent:**
+
 ```typescript
 // src/index.ts
 export type { System, Deployment, ... } from './ogc-api/csapi/model.js';
@@ -914,6 +951,7 @@ export type { System, Deployment, ... } from './ogc-api/csapi/model.js';
 5. **No artificial boundaries** - Files naturally grouped by API
 
 **When subdirectories make sense:**
+
 - 20+ files (CSAPI has 5-6)
 - Multiple distinct concerns (CSAPI is cohesive)
 - Separate parsers for formats (CSAPI uses GeoJSON)
@@ -935,6 +973,7 @@ fixtures/ogc-api/csapi/
 ```
 
 **Why this structure?**
+
 - Follows EDR pattern (one directory under `fixtures/ogc-api/`)
 - Each resource type has collection + item examples
 - Root document separate from resources
@@ -947,16 +986,19 @@ fixtures/ogc-api/csapi/
 **Additions required:**
 
 1. **Import CSAPIQueryBuilder:**
+
    ```typescript
    import CSAPIQueryBuilder from './csapi/url_builder.js';
    ```
 
 2. **Add cache field:**
+
    ```typescript
    private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Map();
    ```
 
 3. **Add conformance check:**
+
    ```typescript
    get hasConnectedSystems(): Promise<boolean> {
      return this.conformance.then(checkHasConnectedSystems);
@@ -964,6 +1006,7 @@ fixtures/ogc-api/csapi/
    ```
 
 4. **Add collections getter:**
+
    ```typescript
    get csapiCollections(): Promise<string[]> {
      // Similar to edrCollections
@@ -1003,9 +1046,8 @@ export function checkHasConnectedSystems([conformance]: [
     conformance.indexOf(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
     ) > -1 ||
-    conformance.indexOf(
-      'http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core'
-    ) > -1
+    conformance.indexOf('http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core') >
+      -1
   );
 }
 ```
@@ -1060,6 +1102,7 @@ export type {
 ### CSAPI File Checklist
 
 ✅ **Implementation files (5-6):**
+
 - [x] `model.ts` - All types (~350-400 lines)
 - [x] `url_builder.ts` - CSAPIQueryBuilder class (~700-800 lines)
 - [x] `helpers.ts` - Utility functions (~50-80 lines)
@@ -1068,11 +1111,13 @@ export type {
 - [x] `index.ts` - Optional barrel file (~10 lines)
 
 ✅ **Integration files (2):**
+
 - [x] Modify `src/ogc-api/endpoint.ts` (~30 lines added)
 - [x] Modify `src/ogc-api/info.ts` (~10 lines added)
 - [x] Modify `src/index.ts` (~15 lines added)
 
 ✅ **Fixtures (8-10 files):**
+
 - [x] Root document
 - [x] Collection responses (9 resource types)
 - [x] Item responses (sample items)
@@ -1088,8 +1133,9 @@ export type {
 CSAPI should follow EDR's flat file organization pattern:
 
 **5 core files in `src/ogc-api/csapi/`:**
+
 1. `model.ts` - All types
-2. `url_builder.ts` - QueryBuilder class  
+2. `url_builder.ts` - QueryBuilder class
 3. `helpers.ts` - Utilities
 4. `model.spec.ts` - Type tests
 5. `url_builder.spec.ts` - QueryBuilder tests

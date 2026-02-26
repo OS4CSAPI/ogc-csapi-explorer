@@ -3,8 +3,7 @@
 > **Date:** 2026-02-21
 > **Issue:** [OS4CSAPI/ogc-client-CSAPI_2#108](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/108) — "Part 1 (GeoJSON) TypeScript interfaces omit all `@link` association properties"
 > **Repository under review:** `OS4CSAPI/ogc-client-CSAPI_2` (`src/ogc-api/csapi/model.ts`, `src/ogc-api/csapi/formats/geojson.ts`)
-> **Discovered by:** [ogc-csapi-explorer `tryLinkFallback()` workaround](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/ad06b52), [Gap Analysis Report](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/csapi-link-property-gap-analysis.md)
-> **Labels:** enhancement, model
+> **Discovered by:** [ogc-csapi-explorer `tryLinkFallback()` workaround](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/ad06b52), [Gap Analysis Report](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/csapi-link-property-gap-analysis.md) > **Labels:** enhancement, model
 
 ---
 
@@ -41,14 +40,14 @@ This report does not expand scope beyond what Issue #108 describes. Per §2.1 (d
 
 **Issue #108 identifies a genuine specification conformance gap — the four Part 1 GeoJSON resource interfaces (`System`, `Deployment`, `Procedure`, `SamplingFeature`) do not include any `@link` fields defined by OGC 23-001 §16 for encoding structural associations between resources. The proposed fix is purely additive — optional fields on existing interfaces plus a new shared type — with zero impact on existing consumers or tests.**
 
-| Finding | Description | Severity | Recommendation |
-|---------|-------------|----------|----------------|
-| **F-108.1** | 3 of 4 Part 1 interfaces are missing spec-defined `@link` fields that encode structural associations between resources | **SPEC GAP** | **FIX** — add optional `@link`-derived fields to interfaces |
-| **F-108.2** | `SamplingFeature` JSDoc (L412) explicitly states `sampledFeature@link` is required, but the interface omits it | **SELF-CONTRADICTORY** | FIX — interface should match its own documentation |
-| **F-108.3** | Proposed `CSAPIResourceRef` type matches spec's `@link` object shape (`{href, uid?, title?, rt?}`) and has no existing equivalent | **NEW TYPE NEEDED** | Add shared type — follows existing pattern (`ResourceLink` for HATEOAS links) |
-| **F-108.4** | All new fields are optional (`?`) — servers are not required to include `@link` properties in every response context | **LOW RISK** | Backward-compatible by definition |
-| **F-108.5** | `Procedure` has no spec-defined `@link` properties; issue correctly excludes it from changes | **NO CHANGE** | Correct — no modification needed |
-| **F-108.6** | This is the **interface-only** half of the fix; parser changes (`extractCSAPIFeature()`) are tracked separately in #109 | **SCOPE BOUNDARY** | Respect issue separation — this issue is model-only |
+| Finding     | Description                                                                                                                       | Severity               | Recommendation                                                                |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------- |
+| **F-108.1** | 3 of 4 Part 1 interfaces are missing spec-defined `@link` fields that encode structural associations between resources            | **SPEC GAP**           | **FIX** — add optional `@link`-derived fields to interfaces                   |
+| **F-108.2** | `SamplingFeature` JSDoc (L412) explicitly states `sampledFeature@link` is required, but the interface omits it                    | **SELF-CONTRADICTORY** | FIX — interface should match its own documentation                            |
+| **F-108.3** | Proposed `CSAPIResourceRef` type matches spec's `@link` object shape (`{href, uid?, title?, rt?}`) and has no existing equivalent | **NEW TYPE NEEDED**    | Add shared type — follows existing pattern (`ResourceLink` for HATEOAS links) |
+| **F-108.4** | All new fields are optional (`?`) — servers are not required to include `@link` properties in every response context              | **LOW RISK**           | Backward-compatible by definition                                             |
+| **F-108.5** | `Procedure` has no spec-defined `@link` properties; issue correctly excludes it from changes                                      | **NO CHANGE**          | Correct — no modification needed                                              |
+| **F-108.6** | This is the **interface-only** half of the fix; parser changes (`extractCSAPIFeature()`) are tracked separately in #109           | **SCOPE BOUNDARY**     | Respect issue separation — this issue is model-only                           |
 
 **Conclusion:** This is a genuine spec-conformance gap that is the direct Part 1 counterpart to Issue #103 (Part 2 `@id` fields). The fix is minimal (1 new type + 4 optional fields across 3 interfaces), purely additive, and backward-compatible. The contribution goal explicitly states the library should support "GeoJSON extensions recognizing all CSAPI-specific resource types **and properties**." `@link` properties are spec-defined properties. Recommend fixing with careful implementation.
 
@@ -72,6 +71,7 @@ After `extractCSAPIFeature()` parses server JSON, all `@link` data is silently d
 ### Real-World Impact
 
 The gap was discovered during development of the [ogc-csapi-explorer](https://github.com/OS4CSAPI/ogc-csapi-explorer) demo app against OSH SensorHub. That server:
+
 - **Does NOT** implement cross-resource navigation endpoints (`/systems/{id}/procedures` returns 400)
 - **DOES** include `@link` properties in GeoJSON responses (the only path to procedure associations)
 
@@ -84,6 +84,7 @@ The explorer had to implement a `tryLinkFallback()` workaround ([commit ad06b52]
 ### 4.1 Current Interface Definitions
 
 **System** ([model.ts L306–328](src/ogc-api/csapi/model.ts#L306-L328)):
+
 ```typescript
 export interface System {
   id: string;
@@ -93,7 +94,14 @@ export interface System {
     uid: string;
     name: string;
     description?: string;
-    assetType?: 'Equipment' | 'Human' | 'LivingThing' | 'Simulation' | 'Process' | 'Group' | 'Other';
+    assetType?:
+      | 'Equipment'
+      | 'Human'
+      | 'LivingThing'
+      | 'Simulation'
+      | 'Process'
+      | 'Group'
+      | 'Other';
     validTime?: TimeInterval;
     // ← no systemKind@link
   };
@@ -105,6 +113,7 @@ export interface System {
 **Missing:** `systemKind@link` (Conditional — when a procedure exists)
 
 **Deployment** ([model.ts L342–368](src/ogc-api/csapi/model.ts#L342-L368)):
+
 ```typescript
 export interface Deployment {
   id: string;
@@ -126,6 +135,7 @@ export interface Deployment {
 **Missing:** `platform@link` (Optional), `deployedSystems@link` (Required — array)
 
 **SamplingFeature** ([model.ts L416–433](src/ogc-api/csapi/model.ts#L416-L433)):
+
 ```typescript
 export interface SamplingFeature {
   id: string;
@@ -153,16 +163,16 @@ A search for `CSAPIResourceRef` across the entire codebase returns zero matches.
 
 The existing `ResourceLink` (alias for `OgcApiDocumentLink`: `{rel, type, title, href}`) models HATEOAS navigation links, not inline `@link` properties. The two have different shapes and serve different purposes:
 
-| Concept | Type | Shape | Purpose |
-|---------|------|-------|---------|
-| HATEOAS links | `ResourceLink` | `{rel, type, title, href}` | Server-provided navigation (self, alternate, items) |
-| Inline associations | *none* | `{href, uid?, title?, rt?}` | Structural resource-to-resource relationships |
+| Concept             | Type           | Shape                       | Purpose                                             |
+| ------------------- | -------------- | --------------------------- | --------------------------------------------------- |
+| HATEOAS links       | `ResourceLink` | `{rel, type, title, href}`  | Server-provided navigation (self, alternate, items) |
+| Inline associations | _none_         | `{href, uid?, title?, rt?}` | Structural resource-to-resource relationships       |
 
 ### 4.3 SamplingFeature JSDoc Is Self-Contradictory
 
 The JSDoc on [model.ts L412](src/ogc-api/csapi/model.ts#L412) explicitly states:
 
-> *"The `sampledFeature@link` link relation is also required."*
+> _"The `sampledFeature@link` link relation is also required."_
 
 But the `SamplingFeature` interface defined immediately below it (L416–433) does not include a `sampledFeatureLink` field. The documentation acknowledges the association field but the type definition omits it.
 
@@ -193,21 +203,21 @@ The parser ([geojson.ts L395–472](src/ogc-api/csapi/formats/geojson.ts#L395-L4
 
 ### 5.1 OGC 23-001 §8.3 Table 8 — System Associations
 
-| Association | Multiplicity | Description |
-|-------------|-------------|-------------|
+| Association | Multiplicity       | Description                                                                                |
+| ----------- | ------------------ | ------------------------------------------------------------------------------------------ |
 | `procedure` | 0..1 (Conditional) | Link to the procedure/method this system implements. Encoded as `systemKind@link` in JSON. |
 
 ### 5.2 OGC 23-001 §8.5 Table 10 — Deployment Associations
 
-| Association | Multiplicity | Description |
-|-------------|-------------|-------------|
-| `platform` | 0..1 (Optional) | Link to the platform system. Encoded as `platform@link` in JSON. |
-| `deployedSystems` | 1..* (Required) | Links to deployed systems. Encoded as `deployedSystems@link` (array) in JSON. |
+| Association       | Multiplicity     | Description                                                                   |
+| ----------------- | ---------------- | ----------------------------------------------------------------------------- |
+| `platform`        | 0..1 (Optional)  | Link to the platform system. Encoded as `platform@link` in JSON.              |
+| `deployedSystems` | 1..\* (Required) | Links to deployed systems. Encoded as `deployedSystems@link` (array) in JSON. |
 
 ### 5.3 OGC 23-001 §8.9 Table 14 — SamplingFeature Associations
 
-| Association | Multiplicity | Description |
-|-------------|-------------|-------------|
+| Association      | Multiplicity | Description                                                            |
+| ---------------- | ------------ | ---------------------------------------------------------------------- |
 | `sampledFeature` | 1 (Required) | Link to the sampled feature. Encoded as `sampledFeature@link` in JSON. |
 
 ### 5.4 OGC 23-001 §16 — JSON Encoding
@@ -237,14 +247,14 @@ Issue #103 (now closed, resolved) addressed the **Part 2** counterpart: five Par
 
 Issue #108 is the **Part 1** counterpart with two key differences:
 
-| Dimension | Issue #103 (Part 2) | Issue #108 (Part 1) |
-|-----------|--------------------|--------------------|
-| Resource types | Datastream, Observation, ControlStream, Command, CommandStatus | System, Deployment, SamplingFeature |
-| Field suffix | `@id` (scalar string) | `@link` (structured object) |
-| Value shape | `string` → `string` | `{href, uid?, title?, rt?}` → `CSAPIResourceRef` |
-| New shared type | None needed | `CSAPIResourceRef` (new) |
-| Parser file | `formats/part2.ts` | `formats/geojson.ts` (tracked in #109) |
-| Discarding mechanism | Explicit ("intentionally ignored" JSDoc) | Implicit (allowlist extraction — only named fields survive) |
+| Dimension            | Issue #103 (Part 2)                                            | Issue #108 (Part 1)                                         |
+| -------------------- | -------------------------------------------------------------- | ----------------------------------------------------------- |
+| Resource types       | Datastream, Observation, ControlStream, Command, CommandStatus | System, Deployment, SamplingFeature                         |
+| Field suffix         | `@id` (scalar string)                                          | `@link` (structured object)                                 |
+| Value shape          | `string` → `string`                                            | `{href, uid?, title?, rt?}` → `CSAPIResourceRef`            |
+| New shared type      | None needed                                                    | `CSAPIResourceRef` (new)                                    |
+| Parser file          | `formats/part2.ts`                                             | `formats/geojson.ts` (tracked in #109)                      |
+| Discarding mechanism | Explicit ("intentionally ignored" JSDoc)                       | Implicit (allowlist extraction — only named fields survive) |
 
 The dependency is natural: #108 defines the interface fields, #109 updates the parser to populate them — exactly as #103 did both in one issue for Part 2.
 
@@ -254,14 +264,14 @@ The dependency is natural: #108 defines the interface fields, #109 updates the p
 
 ### 7.1 Changes Proposed by Issue #108
 
-| Change | Risk | Rationale |
-|--------|------|-----------|
-| New `CSAPIResourceRef` interface | **NONE** | New type — no existing code references it |
-| Add `systemKindLink?: CSAPIResourceRef` to `System.properties` | **NONE** | Optional field — existing code cannot break |
-| Add `platformLink?: CSAPIResourceRef` to `Deployment.properties` | **NONE** | Optional field — existing code cannot break |
-| Add `deployedSystemsLink?: CSAPIResourceRef[]` to `Deployment.properties` | **NONE** | Optional field — existing code cannot break |
-| Add `sampledFeatureLink?: CSAPIResourceRef` to `SamplingFeature.properties` | **NONE** | Optional field — existing code cannot break |
-| Export `CSAPIResourceRef` from `src/index.ts` | **NONE** | Additive export — no existing exports change |
+| Change                                                                      | Risk     | Rationale                                    |
+| --------------------------------------------------------------------------- | -------- | -------------------------------------------- |
+| New `CSAPIResourceRef` interface                                            | **NONE** | New type — no existing code references it    |
+| Add `systemKindLink?: CSAPIResourceRef` to `System.properties`              | **NONE** | Optional field — existing code cannot break  |
+| Add `platformLink?: CSAPIResourceRef` to `Deployment.properties`            | **NONE** | Optional field — existing code cannot break  |
+| Add `deployedSystemsLink?: CSAPIResourceRef[]` to `Deployment.properties`   | **NONE** | Optional field — existing code cannot break  |
+| Add `sampledFeatureLink?: CSAPIResourceRef` to `SamplingFeature.properties` | **NONE** | Optional field — existing code cannot break  |
+| Export `CSAPIResourceRef` from `src/index.ts`                               | **NONE** | Additive export — no existing exports change |
 
 ### 7.2 What Does NOT Change
 
@@ -284,7 +294,7 @@ Adding optional properties to a TypeScript interface is the **most minimal, non-
 
 The [contribution goal](docs/planning/contribution-goal-and-definition.md) explicitly states:
 
-> *"GeoJSON extensions recognizing all CSAPI-specific resource types **and properties**"*
+> _"GeoJSON extensions recognizing all CSAPI-specific resource types **and properties**"_
 
 `@link` properties are spec-defined properties on Part 1 GeoJSON resources. Omitting them leaves the library's type system incomplete for an explicit contribution deliverable.
 
@@ -319,13 +329,13 @@ The proposed `CSAPIResourceRef` type and field naming convention from Issue #108
 
 ## Appendix A: Authority Precedence Analysis
 
-| Level | Source | Says | Supports Fix? |
-|-------|--------|------|---------------|
-| 1 (highest) | OGC 23-001 §8.3, §8.5, §8.9, §16 | `@link` properties are spec-defined associations on Part 1 GeoJSON resources | **YES** |
-| 2 | AI Collaboration Agreement / AI Operational Constraints | §2.2: Preserve upstream structure, prefer minimal diffs | **YES** — additive optional fields are minimal |
-| 3 | Issue #108 description | Add optional `@link`-derived fields to Part 1 interfaces | **YES** — clear scope |
-| 4 | Existing code (model.ts) | SamplingFeature JSDoc already states `sampledFeature@link` is required | **YES** — self-documenting gap |
-| 5 | Explorer workaround (ad06b52) | Consumers must bypass typed models to access `@link` data | **YES** — real-world impact confirmed |
+| Level       | Source                                                  | Says                                                                         | Supports Fix?                                  |
+| ----------- | ------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------- |
+| 1 (highest) | OGC 23-001 §8.3, §8.5, §8.9, §16                        | `@link` properties are spec-defined associations on Part 1 GeoJSON resources | **YES**                                        |
+| 2           | AI Collaboration Agreement / AI Operational Constraints | §2.2: Preserve upstream structure, prefer minimal diffs                      | **YES** — additive optional fields are minimal |
+| 3           | Issue #108 description                                  | Add optional `@link`-derived fields to Part 1 interfaces                     | **YES** — clear scope                          |
+| 4           | Existing code (model.ts)                                | SamplingFeature JSDoc already states `sampledFeature@link` is required       | **YES** — self-documenting gap                 |
+| 5           | Explorer workaround (ad06b52)                           | Consumers must bypass typed models to access `@link` data                    | **YES** — real-world impact confirmed          |
 
 No authority level contradicts the fix. All five levels support it.
 
@@ -335,13 +345,13 @@ No authority level contradicts the fix. All five levels support it.
 
 Per AI Operational Constraints §2.1 (do not expand scope beyond the issue description), the following items are explicitly **out of scope** for Issue #108:
 
-| Out-of-Scope Item | Why | Tracked In |
-|--------------------|-----|------------|
-| Parser changes to `extractCSAPIFeature()` | Separate concern — parser must extract, interfaces must define | [#109](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/109) |
-| `@link` resolution utility functions | Higher-level consumer API — depends on both #108 and #109 | [#110](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/110) |
-| Part 2 `@link` fields (as distinct from `@id`) | Part 2 resources also have `@link` variants; #103 covered `@id` only | Deferred to future issue |
-| Changes to `ResourceLink` / `OgcApiDocumentLink` | Different type for a different purpose (HATEOAS vs. inline associations) | N/A |
-| Changes to `Procedure` interface | No spec-defined `@link` properties for Procedure resources | N/A |
+| Out-of-Scope Item                                | Why                                                                      | Tracked In                                                        |
+| ------------------------------------------------ | ------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| Parser changes to `extractCSAPIFeature()`        | Separate concern — parser must extract, interfaces must define           | [#109](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/109) |
+| `@link` resolution utility functions             | Higher-level consumer API — depends on both #108 and #109                | [#110](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/110) |
+| Part 2 `@link` fields (as distinct from `@id`)   | Part 2 resources also have `@link` variants; #103 covered `@id` only     | Deferred to future issue                                          |
+| Changes to `ResourceLink` / `OgcApiDocumentLink` | Different type for a different purpose (HATEOAS vs. inline associations) | N/A                                                               |
+| Changes to `Procedure` interface                 | No spec-defined `@link` properties for Procedure resources               | N/A                                                               |
 
 ---
 

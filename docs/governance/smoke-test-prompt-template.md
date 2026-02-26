@@ -29,7 +29,7 @@ Copy the prompt below and paste it into the conversation after completing coding
 
 ## Prompt
 
-```
+````
 Please perform a live server smoke test of the work completed since the last smoke test.
 
 ### Scope
@@ -53,7 +53,8 @@ We test against TWO servers. Both must be tested in every smoke test.
   $cred = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("{{username}}:{{password}}"))
   $headers = @{ Authorization = "Basic $cred" }
   Invoke-RestMethod -Uri "http://45.55.99.236:8080/sensorhub/api" -Headers $headers
-  ```
+````
+
 - **Known characteristics:**
   - Advertises 20+ CSAPI conformance classes (Parts 1, 2, 3)
   - Uses Convention 2 (plain `rel` names) at root level for resource links
@@ -87,6 +88,7 @@ Follow this exact sequence. Do NOT modify any code during the smoke test (Lesson
 #### Step 1: Document Prior Findings
 
 Read the previous smoke test report and list ALL prior findings with their current status. For each:
+
 - If it was marked "Fixed" — re-verify it's still fixed
 - If it was marked "Deferred" — confirm it's still deferred, note if anything changed
 - If it was marked "Server limitation" — confirm it's still present
@@ -94,6 +96,7 @@ Read the previous smoke test report and list ALL prior findings with their curre
 #### Step 2: Test Server Connectivity and Profiles
 
 For EACH server:
+
 1. Fetch the root API document
 2. Fetch `/conformance` — record conformance classes
 3. Fetch `/collections` — record all collections and their links
@@ -103,6 +106,7 @@ For EACH server:
 #### Step 3: Test Resource Discovery
 
 Simulate our `scanCsapiLinks()` behavior against BOTH servers:
+
 1. **Convention 1** (ogc-cs: prefix): Check if any links use the `ogc-cs:` prefix
 2. **Convention 2** (plain rel name): Check root document links for plain resource type names (`rel: "systems"`, `rel: "deployments"`, etc.)
 3. **Convention 3** (rel: "items" + href): For each collection, extract `rel: "items"` links, verify segment extraction works with:
@@ -117,7 +121,7 @@ Record how many resource types are discovered per convention per server.
 For EACH server, test every implemented builder method. Use real resource IDs where available (from list endpoint responses). Record:
 
 | Method | Generated URL | Server | HTTP Status | Notes |
-|--------|--------------|--------|-------------|-------|
+| ------ | ------------- | ------ | ----------- | ----- |
 
 For methods that require a resource ID but the server has zero entries for that type, mark as **N/A (no data)** — the URL pattern is still validated by confirming the list endpoint works.
 
@@ -127,24 +131,25 @@ For CRUD methods (create, update, delete), do NOT execute write operations. Only
 
 Test each of these parameters against both servers (using a resource type with data if possible, otherwise test URL acceptance with empty results):
 
-| Parameter | Method Used | URL | OSH Result | 52North Result |
-|-----------|-------------|-----|------------|----------------|
-| limit | | | | |
-| offset | | | | |
-| q | | | | |
-| bbox | | | | |
-| datetime (single) | | | | |
-| datetime (interval) | | | | |
-| id (single) | | | | |
-| id (array) | | | | |
-| recursive | | | | |
-| f (format) | | | | |
-| cursor | | | | |
-| parent | | | | |
+| Parameter           | Method Used | URL | OSH Result | 52North Result |
+| ------------------- | ----------- | --- | ---------- | -------------- |
+| limit               |             |     |            |                |
+| offset              |             |     |            |                |
+| q                   |             |     |            |                |
+| bbox                |             |     |            |                |
+| datetime (single)   |             |     |            |                |
+| datetime (interval) |             |     |            |                |
+| id (single)         |             |     |            |                |
+| id (array)          |             |     |            |                |
+| recursive           |             |     |            |                |
+| f (format)          |             |     |            |                |
+| cursor              |             |     |            |                |
+| parent              |             |     |            |                |
 
 #### Step 6: Record Data Shape Observations
 
 For any responses that return actual data, note the response shape. These observations are Phase 3 reference material:
+
 - Envelope type (`items` vs `features` vs `FeatureCollection`)
 - Field names and types (especially `validTime`, temporal fields, geometry)
 - Pagination metadata (numbered vs link-based)
@@ -155,11 +160,12 @@ For any responses that return actual data, note the response shape. These observ
 If testing both servers (which should be every time), produce a comparison table:
 
 | Dimension | OpenSensorHub | 52North | Match? |
-|-----------|--------------|---------|--------|
+| --------- | ------------- | ------- | ------ |
 
 #### Step 8: Classify New Findings
 
 For each new finding, classify with:
+
 - **Severity:** Critical / Moderate / Low / Informational
 - **Category:** Code bug / Server limitation / Interoperability concern / Naming variation
 - **Affects:** Which function or code path
@@ -169,6 +175,7 @@ For each new finding, classify with:
 #### Step 9: Generate Impact Assessment
 
 For any findings classified as "Ours" or "Shared":
+
 1. Identify the specific file and function affected
 2. Assess upstream impact (does the fix touch any upstream file?)
 3. Estimate fix complexity (one-line, small, medium, architectural)
@@ -196,6 +203,7 @@ Use this exact structure (matching prior smoke tests):
 **Purpose:** {{One-sentence purpose statement}}
 
 > This is smoke test #{{N}} in the series. See also:
+>
 > - [Previous smoke test](link)
 
 ## Test Methodology
@@ -207,8 +215,8 @@ Use this exact structure (matching prior smoke tests):
 ### OpenSensorHub
 
 | Spec Part | Conformance Classes |
-|-----------|-------------------|
-| ... | ... |
+| --------- | ------------------- |
+| ...       | ...                 |
 
 Collections: {{list}}
 Top-level resource links: {{table}}
@@ -222,23 +230,23 @@ Server resource inventory: {{table with counts}}
 
 ### Prior Findings — Regression Check
 
-| Finding | Status | Evidence |
-|---------|--------|----------|
-| ... | Still Fixed ✅ / Still Deferred / Changed | ... |
+| Finding | Status                                    | Evidence |
+| ------- | ----------------------------------------- | -------- |
+| ...     | Still Fixed ✅ / Still Deferred / Changed | ...      |
 
 ### URL Generation — All {{N}} Methods
 
 #### {{Resource Type}} Methods ({{N}} methods) {{— NEW if applicable}}
 
-| Method Call | URL Pattern | OSH | 52North |
-|-------------|------------|-----|---------|
-| ... | ... | ✅/❌/N/A | ✅/❌/N/A |
+| Method Call | URL Pattern | OSH       | 52North   |
+| ----------- | ----------- | --------- | --------- |
+| ...         | ...         | ✅/❌/N/A | ✅/❌/N/A |
 
 ### Query Parameter Acceptance
 
-| Parameter | Method | URL | OSH | 52North |
-|-----------|--------|-----|-----|---------|
-| ... | ... | ... | ✅/❌ | ✅/❌ |
+| Parameter | Method | URL | OSH   | 52North |
+| --------- | ------ | --- | ----- | ------- |
+| ...       | ...    | ... | ✅/❌ | ✅/❌   |
 
 ## New Findings
 
@@ -258,27 +266,27 @@ Server resource inventory: {{table with counts}}
 ## Cross-Server Comparison
 
 | Dimension | OpenSensorHub | 52North | Match? |
-|-----------|--------------|---------|--------|
-| ... | ... | ... | ✅/❌ |
+| --------- | ------------- | ------- | ------ |
+| ...       | ...           | ...     | ✅/❌  |
 
 ## What WORKS (Verified)
 
 | Capability | Status |
-|------------|--------|
-| ... | ✅ |
+| ---------- | ------ |
+| ...        | ✅     |
 
 ## What Remains (Phase 3 Concerns)
 
 | Issue | Severity | Component | Target Phase |
-|-------|----------|-----------|-------------|
-| ... | ... | ... | ... |
+| ----- | -------- | --------- | ------------ |
+| ...   | ...      | ...       | ...          |
 
 ## Comparison: Phase {{prev}} → Phase {{current}}
 
-| Dimension | Phase {{prev}} | Phase {{current}} |
-|-----------|---------------|------------------|
-| Methods implemented | {{N}} | {{N}} |
-| ... | ... | ... |
+| Dimension           | Phase {{prev}} | Phase {{current}} |
+| ------------------- | -------------- | ----------------- |
+| Methods implemented | {{N}}          | {{N}}             |
+| ...                 | ...            | ...               |
 
 ## Verdict
 
@@ -289,6 +297,7 @@ Then commit the report, push, and confirm the file is at the expected path.
 
 If any new findings are classified as "Ours — Needs fix", create a GitHub
 issue for each using `docs/governance/issue-creation-prompt-template.md`.
+
 ```
 
 ---
@@ -323,10 +332,12 @@ These rules come from Lesson 8 and Lesson 10 in `docs/governance/phase-2-lessons
 Reports follow these naming patterns:
 
 ```
-docs/implementation/live-server-smoke-test-post-phase-{X.Y}.md     — Standard post-phase smoke test
-docs/implementation/live-server-smoke-test-{server-name}.md         — New server comparative test
-docs/implementation/cross-server-interoperability-analysis.md       — Cross-server synthesis
-docs/implementation/live-server-retest-post-issues-{N}-{M}.md      — Targeted retest after fixes
+
+docs/implementation/live-server-smoke-test-post-phase-{X.Y}.md — Standard post-phase smoke test
+docs/implementation/live-server-smoke-test-{server-name}.md — New server comparative test
+docs/implementation/cross-server-interoperability-analysis.md — Cross-server synthesis
+docs/implementation/live-server-retest-post-issues-{N}-{M}.md — Targeted retest after fixes
+
 ```
 
 Examples from our history:
@@ -365,3 +376,4 @@ When performing a smoke test, the tester should have access to:
 | Response envelope | `{ items: [...] }` | `{ type: "FeatureCollection", features: [...] }` |
 | Data availability | Rich (systems, datastreams, observations, etc.) | Mostly empty |
 | Resource naming | `samplingFeatures` | `featuresOfInterest` (in collection hrefs) |
+```

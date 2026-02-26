@@ -9,10 +9,10 @@
 
 ## Verification Status
 
-| Check | Result |
-|-------|--------|
-| 76 CSAPI unit tests | **PASS** |
-| 6 integration tests | **PASS** |
+| Check                         | Result    |
+| ----------------------------- | --------- |
+| 76 CSAPI unit tests           | **PASS**  |
+| 6 integration tests           | **PASS**  |
 | ESLint (all 6 modified files) | **CLEAN** |
 | `tsc --noEmit` (full project) | **CLEAN** |
 
@@ -21,18 +21,22 @@
 ## Files Reviewed
 
 ### Issue #1 — Type System
+
 - `src/ogc-api/csapi/model.ts` (582 lines)
 - `src/ogc-api/csapi/model.spec.ts` (383 lines, 27 tests)
 
 ### Issue #2 — Helper Utilities
+
 - `src/ogc-api/csapi/helpers.ts` (164 lines)
 - `src/ogc-api/csapi/helpers.spec.ts` (30 tests)
 
 ### Issue #3 — Stub QueryBuilder
+
 - `src/ogc-api/csapi/url_builder.ts` (211 lines)
 - `src/ogc-api/csapi/url_builder.spec.ts` (19 tests)
 
 ### Issue #4 — OgcApiEndpoint Integration
+
 - `src/ogc-api/info.ts` (+31 lines)
 - `src/ogc-api/endpoint.ts` (+52 lines)
 - `src/index.ts` (+25 lines)
@@ -96,11 +100,13 @@ This is a necessary workaround — the comment in the code explains the rational
 **Severity:** Informational (pre-existing, not our code)
 
 The existing EDR factory does:
+
 ```typescript
 if (!this.hasEnvironmentalDataRetrieval) {  // Bug: no await — truthy Promise always passes
 ```
 
 Our `csapi()` correctly awaits:
+
 ```typescript
 if (!(await this.hasConnectedSystems)) {
 ```
@@ -132,6 +138,7 @@ The following types are defined in `model.ts` but not exported from the library'
 **Severity:** Medium
 
 When handling array values:
+
 ```typescript
 } else if (Array.isArray(value)) {
   params.append(key, encodeArrayParameter(value));
@@ -194,13 +201,13 @@ Cross-checked against the implementation guide and OGC Connected Systems Parts 1
 
 ## Summary
 
-| Category | Count | Items |
-|----------|-------|-------|
-| Bug to fix now | **1** | F1 — `allCollections` missing `hasConnectedSystems` in return type |
-| Bug to fix in Phase 2 | **1** | F5 — Double-encoding in array params |
-| Design notes (no action) | **3** | F2 (cast), F3 (pre-existing EDR bug), F6 (hardcoded temporal keys) |
-| Gaps to revisit in Phase 2 | **1** | F4 — Missing collection type exports |
-| Positive findings | **3** | F7 (defensive parsing), F8 (spec compliance), F9 (test quality) |
+| Category                   | Count | Items                                                              |
+| -------------------------- | ----- | ------------------------------------------------------------------ |
+| Bug to fix now             | **1** | F1 — `allCollections` missing `hasConnectedSystems` in return type |
+| Bug to fix in Phase 2      | **1** | F5 — Double-encoding in array params                               |
+| Design notes (no action)   | **3** | F2 (cast), F3 (pre-existing EDR bug), F6 (hardcoded temporal keys) |
+| Gaps to revisit in Phase 2 | **1** | F4 — Missing collection type exports                               |
+| Positive findings          | **3** | F7 (defensive parsing), F8 (spec compliance), F9 (test quality)    |
 
 ---
 

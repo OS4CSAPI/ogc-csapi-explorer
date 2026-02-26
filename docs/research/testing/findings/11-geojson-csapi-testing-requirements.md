@@ -12,14 +12,14 @@
 > `validateSystemType()`, and `validateAssetType()` functions that test whether
 > server-provided values conform to the spec (valid URI format, SOSA vocabulary
 > membership, enum allowlists). These are server-side concerns — our parser
-> should *extract* these values into typed properties, not *validate* them.
+> should _extract_ these values into typed properties, not _validate_ them.
 > Parser tests should verify: `parseSystemFeature(fixture).uid === 'urn:...'`
 > not: `isValidURI(feature.properties.uid) === true`. See review notices at
 > each affected section.
 >
 > **M3 — Property Matrix Mirrors Spec Structure:** Section 4 catalogs every
 > property across 5 resource types with 150+ validation rules. This is useful
-> as a *reference* for what properties exist and which are required, but should
+> as a _reference_ for what properties exist and which are required, but should
 > not be translated into 150+ individual test cases. Tests should be structured
 > as: `parseSystemFeature(fullFixture) → verify all typed properties extracted`.
 >
@@ -43,11 +43,13 @@
 **Research Time:** 2 hours (February 5, 2026)
 
 **Primary Source(s):**
+
 - [CSAPI Part 1 Specification (23-001)](https://docs.ogc.org/is/23-001/23-001.html) (GeoJSON encoding sections)
 - [GeoJSON RFC 7946](https://tools.ietf.org/html/rfc7946)
 - [CSAPI Implementation Guide](../../../planning/csapi-implementation-guide.md) (GeoJSON handler extensions)
 
 **Supporting Resources:**
+
 - Section 8: [CSAPI Specification Reference](08-csapi-specification-test-requirements.md) (reclassified from test requirements — spec property catalog, not test generator)
 - [Part 1 Requirements Analysis](../../requirements/csapi-part1-requirements.md) (property definitions)
 - [Format Requirements Analysis](../../requirements/csapi-format-requirements.md) (GeoJSON requirements)
@@ -87,6 +89,7 @@
 ### 1.1 Core Testing Philosophy
 
 **DO Test (CSAPI-Specific):**
+
 - ✅ CSAPI property extraction from `properties` object
 - ✅ CSAPI property validation (URI format, vocabulary values, temporal periods)
 - ✅ Resource type differentiation via `featureType` property
@@ -97,6 +100,7 @@
 - ✅ CSAPI-specific error conditions
 
 **DON'T Test (Inherited from Existing Parser):**
+
 - ❌ RFC 7946 geometry validation (Point, LineString, Polygon, etc.)
 - ❌ Coordinate validation (longitude [-180,180], latitude [-90,90])
 - ❌ Polygon ring closure and right-hand rule
@@ -127,6 +131,7 @@
 ```
 
 **Implementation Approach:**
+
 - Extend existing GeoJSON parser with CSAPI property recognizers
 - Add CSAPI-specific validation layer on top of RFC 7946 parsing
 - Reuse existing geometry handling WITHOUT modification
@@ -137,21 +142,25 @@
 **5 CSAPI Part 1 Resource Types:**
 
 1. **Systems** (`sosa:System`)
+
    - Sensors, platforms, actuators, samplers
    - Spatial (geometry required or null)
    - Temporal validity (validTime optional)
 
 2. **Deployments** (`sosa:Deployment`)
+
    - System deployment events
    - Spatial (geometry optional but typical)
    - Temporal validity (validTime REQUIRED - deployment period)
 
 3. **Procedures** (`sosa:Procedure`)
+
    - Observation/sampling/actuation methods
    - **Non-spatial** (geometry must be null)
    - No temporal validity
 
 4. **Sampling Features** (`sosa:Sample`)
+
    - Sampling geometry/methodology
    - Spatial (geometry required)
    - System-specific (always has parentSystem)
@@ -170,6 +179,7 @@
 **From ogc-client library analysis:**
 
 **Existing Functionality:**
+
 - Parses GeoJSON Feature and FeatureCollection structures
 - Handles all 7 RFC 7946 geometry types:
   - Point, MultiPoint
@@ -183,6 +193,7 @@
 - WFS GeoJSON parsing (`parseFeaturePropsGeojson`)
 
 **Test Coverage Examples:**
+
 ```typescript
 // From src/wfs/featureprops.spec.ts
 describe('parseFeatureProps and parseFeaturePropsGeojson', () => {
@@ -197,6 +208,7 @@ describe('parseFeatureProps and parseFeaturePropsGeojson', () => {
 ### 2.2 What CSAPI Can Assume
 
 **Validated by Existing Tests:**
+
 - ✅ Geometry type validation (valid type values)
 - ✅ Coordinate structure (arrays of correct depth)
 - ✅ Coordinate ranges (lon [-180,180], lat [-90,90])
@@ -206,6 +218,7 @@ describe('parseFeatureProps and parseFeaturePropsGeojson', () => {
 - ✅ CRS handling (WGS 84 default)
 
 **CSAPI Tests Can Skip:**
+
 - ❌ Re-testing geometry coordinate validation
 - ❌ Re-testing polygon ring rules
 - ❌ Re-testing basic Feature structure
@@ -214,12 +227,14 @@ describe('parseFeatureProps and parseFeaturePropsGeojson', () => {
 ### 2.3 Reuse Strategy
 
 **Integration Points:**
+
 1. **Geometry Handling**: Call existing geometry parser, no additional validation
 2. **Feature Structure**: Assume valid Feature structure, focus on `properties` object
 3. **Coordinate Validation**: Trust existing validator, test CSAPI semantics
 4. **Type Definitions**: Extend `@types/geojson` with CSAPI property interfaces
 
 **Example Integration:**
+
 ```typescript
 // CSAPI parser extends existing GeoJSON parser
 import { Feature, FeatureCollection, Geometry } from 'geojson';
@@ -240,12 +255,12 @@ type SystemFeature = Feature<Geometry | null, SystemGeoJSONProperties>;
 function parseCSAPISystemFeature(feature: SystemFeature): System {
   // Geometry already validated by existing parser
   const { geometry } = feature;
-  
+
   // CSAPI-specific validation
   validateCSAPIProperties(feature.properties);
   validateSystemType(feature.properties.systemType);
   validateValidTime(feature.properties.validTime);
-  
+
   // Extract CSAPI properties
   return extractSystemProperties(feature);
 }
@@ -260,6 +275,7 @@ function parseCSAPISystemFeature(feature: SystemFeature): System {
 **From GeoJSON Feature to CSAPI Resource:**
 
 **Input (GeoJSON Feature):**
+
 ```json
 {
   "type": "Feature",
@@ -287,6 +303,7 @@ function parseCSAPISystemFeature(feature: SystemFeature): System {
 ```
 
 **Output (CSAPI System Resource):**
+
 ```typescript
 {
   id: "sensor123",
@@ -314,6 +331,7 @@ function parseCSAPISystemFeature(feature: SystemFeature): System {
 ```
 
 **Extraction Requirements:**
+
 1. Extract `properties` object from GeoJSON Feature
 2. Map CSAPI properties to resource object
 3. Validate property types (string, URI, array, etc.)
@@ -327,51 +345,65 @@ function parseCSAPISystemFeature(feature: SystemFeature): System {
 **Feature Type Identification:**
 
 **Via `featureType` Property:**
+
 ```typescript
 // Systems
-properties.featureType = "sosa:System" | "sosa:Sensor" | "sosa:Platform" | "sosa:Actuator" | "sosa:Sampler"
+properties.featureType =
+  'sosa:System' |
+  'sosa:Sensor' |
+  'sosa:Platform' |
+  'sosa:Actuator' |
+  'sosa:Sampler';
 
 // Deployments
-properties.featureType = "sosa:Deployment"
+properties.featureType = 'sosa:Deployment';
 
 // Procedures
-properties.featureType = "sosa:Procedure" | "sosa:ObservingProcedure" | "sosa:SamplingProcedure" | "sosa:ActuatingProcedure"
+properties.featureType =
+  'sosa:Procedure' |
+  'sosa:ObservingProcedure' |
+  'sosa:SamplingProcedure' |
+  'sosa:ActuatingProcedure';
 
 // Sampling Features
-properties.featureType = "sosa:Sample"
+properties.featureType = 'sosa:Sample';
 ```
 
 **Via `itemType` Property (Properties Resource):**
+
 ```typescript
 // Properties (collection-level, not feature-level)
-itemType = "sosa:Property"
+itemType = 'sosa:Property';
 ```
 
 **Recognition Logic:**
+
 ```typescript
 function identifyResourceType(feature: Feature): ResourceType {
   const { featureType } = feature.properties;
-  
-  if (featureType.includes('sosa:System') || 
-      featureType.includes('sosa:Sensor') ||
-      featureType.includes('sosa:Platform') ||
-      featureType.includes('sosa:Actuator') ||
-      featureType.includes('sosa:Sampler')) {
+
+  if (
+    featureType.includes('sosa:System') ||
+    featureType.includes('sosa:Sensor') ||
+    featureType.includes('sosa:Platform') ||
+    featureType.includes('sosa:Actuator') ||
+    featureType.includes('sosa:Sampler')
+  ) {
     return 'System';
   }
-  
+
   if (featureType.includes('sosa:Deployment')) {
     return 'Deployment';
   }
-  
+
   if (featureType.includes('sosa:Procedure')) {
     return 'Procedure';
   }
-  
+
   if (featureType.includes('sosa:Sample')) {
     return 'SamplingFeature';
   }
-  
+
   throw new Error(`Unknown CSAPI feature type: ${featureType}`);
 }
 ```
@@ -389,22 +421,26 @@ function identifyResourceType(feature: Feature): ResourceType {
 **Property Validation Rules:**
 
 1. **URI Validation**:
+
    - `uid` must be valid URI (preferably URN per RFC 8141)
    - `systemType`, `procedureType`, `featureType` must be valid URIs
    - Vocabulary URIs must match SOSA/SSN namespace
 
 2. **Vocabulary Validation**:
+
    - `systemType` values from SOSA vocabulary
    - `procedureType` values from Table 16 (CSAPI Part 1)
    - `assetType` values: Equipment | Human | Simulation
 
 3. **Temporal Validation**:
+
    - `validTime` must be ISO 8601 period or instant
    - Support open-ended intervals: `[start, null]`
    - Support closed intervals: `[start, end]`
    - Validate start ≤ end for closed intervals
 
 4. **Required Property Validation**:
+
    - Per resource type (see Section 4)
    - Fail if required property missing
    - Warn for unknown properties (forward compatibility)
@@ -420,7 +456,7 @@ function identifyResourceType(feature: Feature): ResourceType {
 
 > **⚠️ REVIEW NOTICE (M3):** The property tables below catalog every property
 > across 5 resource types with detailed validation rules. This is valuable as
-> a *specification reference* for what properties exist, which are required,
+> a _specification reference_ for what properties exist, which are required,
 > and what their types are. However, these 150+ validation rules should NOT
 > become 150+ individual test cases. Parser tests should be structured as:
 > `parseSystemFeature(fullFixture) → assert all typed properties extracted`
@@ -454,11 +490,13 @@ function identifyResourceType(feature: Feature): ResourceType {
 | `controlstreams` | array | No | Array of Controlstream links | Valid link structure |
 
 **Geometry Requirements:**
+
 - Geometry: Point, MultiPoint, LineString, Polygon, or null
 - Typically Point for fixed sensors, LineString for mobile platforms
 - null geometry allowed (non-localized systems)
 
 **Test Requirements:**
+
 - ✅ Parse all common + system-specific properties
 - ✅ Validate systemType vocabulary (if present)
 - ✅ Validate assetType enum values (if present)
@@ -487,11 +525,13 @@ function identifyResourceType(feature: Feature): ResourceType {
 | `subdeployments` | array | No | Nested subdeployments | Valid link structure |
 
 **Geometry Requirements:**
+
 - Geometry: Any RFC 7946 type or null
 - Typically Polygon for spatial extent, Point for fixed location
 - null for non-spatial deployments
 
 **Test Requirements:**
+
 - ✅ Validate validTime is present (required for Deployments)
 - ✅ Validate deployedSystems is present and non-empty
 - ✅ Parse deployment period (closed or open-ended)
@@ -513,10 +553,12 @@ function identifyResourceType(feature: Feature): ResourceType {
 | `implementingSystems` | array | No | Systems implementing this procedure | Valid link structure |
 
 **Geometry Requirements:**
+
 - **Geometry MUST be null** (Procedures are non-spatial)
 - Parser MUST reject non-null geometry for Procedures
 
 **Test Requirements:**
+
 - ✅ Validate procedureType vocabulary
 - ✅ Parse implementingSystems array
 - ✅ Validate geometry is null
@@ -540,10 +582,12 @@ function identifyResourceType(feature: Feature): ResourceType {
 | `controlstreams` | array | No | Controlstreams from this sampling feature | Valid link structure |
 
 **Geometry Requirements:**
+
 - Geometry: Any RFC 7946 type (typically NOT null)
 - Represents sampling geometry (point, trajectory, footprint, etc.)
 
 **Test Requirements:**
+
 - ✅ Validate parentSystem is present
 - ✅ Validate sampledFeature is present
 - ✅ Parse sub-sampling relationships (sampleOf)
@@ -564,11 +608,13 @@ function identifyResourceType(feature: Feature): ResourceType {
 | `objectType` | URI (string) | No | Kind of object/feature | Valid URI format |
 
 **Geometry Requirements:**
+
 - **Geometry MUST be null** (Properties are non-spatial)
 - Properties resource does NOT use `featureType` property
 - Uses `itemType = "sosa:Property"` at collection level
 
 **Test Requirements:**
+
 - ✅ Validate geometry is null
 - ✅ Handle absence of featureType property
 - ✅ Parse baseProperty (inline or link)
@@ -583,8 +629,8 @@ function identifyResourceType(feature: Feature): ResourceType {
 > `validateUID()`, `validateName()`, and `validateFeatureType()` functions
 > that test whether server-provided values conform to URI format rules and
 > SOSA vocabulary membership. These are server data validation concerns —
-> our parser should *extract* these values into typed properties, not
-> *validate* them against the spec.
+> our parser should _extract_ these values into typed properties, not
+> _validate_ them against the spec.
 >
 > **What to keep:** The property descriptions, types, and examples are useful
 > reference for building TypeScript interfaces and understanding what the
@@ -600,6 +646,7 @@ function identifyResourceType(feature: Feature): ResourceType {
 **All CSAPI Resources (except Properties):**
 
 **uid (Unique Identifier):**
+
 ```typescript
 // Required: Yes
 // Type: URI (string)
@@ -631,6 +678,7 @@ function validateUID(uid: string): boolean {
 ```
 
 **name (Human-Readable Name):**
+
 ```typescript
 // Required: Yes
 // Type: string (non-empty)
@@ -653,6 +701,7 @@ function validateName(name: string): boolean {
 ```
 
 **featureType (Resource Ontology Type):**
+
 ```typescript
 // Required: Yes (except Properties resource)
 // Type: URI (string) from SOSA/SSN vocabulary
@@ -693,6 +742,7 @@ function validateFeatureType(featureType: string): boolean {
 ### 5.2 Optional Common Properties
 
 **description (Detailed Description):**
+
 ```typescript
 // Required: No
 // Type: string
@@ -706,6 +756,7 @@ function validateFeatureType(featureType: string): boolean {
 ```
 
 **links (HATEOAS Navigation Links):**
+
 ```typescript
 // Required: No
 // Type: array of Link objects
@@ -722,8 +773,8 @@ interface Link {
 function validateLinks(links: unknown): boolean {
   if (links === undefined || links === null) return true; // Optional
   if (!Array.isArray(links)) return false;
-  
-  return links.every(link => 
+
+  return links.every(link =>
     typeof link.rel === 'string' &&
     typeof link.href === 'string' &&
     (link.type === undefined || typeof link.type === 'string') &&
@@ -748,6 +799,7 @@ function validateLinks(links: unknown): boolean {
 ### 6.1 Systems Resource Validation
 
 **systemType (System Type URI):**
+
 ```typescript
 // Required: No
 // Type: URI (string) from SOSA vocabulary
@@ -771,6 +823,7 @@ const SYSTEM_TYPES = [
 ```
 
 **assetType (Asset Type Enum):**
+
 ```typescript
 // Required: No
 // Type: enum (string)
@@ -787,6 +840,7 @@ const SYSTEM_TYPES = [
 ```
 
 **subsystems (Subsystem Links/Features):**
+
 ```typescript
 // Required: No
 // Type: array of Links or inline System features
@@ -804,6 +858,7 @@ const SYSTEM_TYPES = [
 ### 6.2 Deployments Resource Validation
 
 **validTime (Deployment Period - REQUIRED):**
+
 ```typescript
 // Required: YES (unique to Deployments)
 // Type: [ISO 8601 string, ISO 8601 string | null]
@@ -812,18 +867,18 @@ const SYSTEM_TYPES = [
 // Validation:
 function validateDeploymentValidTime(validTime: unknown): boolean {
   if (!Array.isArray(validTime) || validTime.length !== 2) return false;
-  
+
   const [start, end] = validTime;
-  
+
   // Start must be valid ISO 8601
   if (!isValidISO8601(start)) return false;
-  
+
   // End must be valid ISO 8601 or null
   if (end !== null && !isValidISO8601(end)) return false;
-  
+
   // If both defined, start <= end
   if (end !== null && new Date(start) > new Date(end)) return false;
-  
+
   return true;
 }
 
@@ -838,6 +893,7 @@ function validateDeploymentValidTime(validTime: unknown): boolean {
 ```
 
 **deployedSystems (Deployed System Links - REQUIRED):**
+
 ```typescript
 // Required: YES
 // Type: array of Links (non-empty)
@@ -857,6 +913,7 @@ function validateDeploymentValidTime(validTime: unknown): boolean {
 ### 6.3 Procedures Resource Validation
 
 **procedureType (Procedure Type URI - REQUIRED):**
+
 ```typescript
 // Required: YES
 // Type: URI (string) from Table 16 (CSAPI Part 1)
@@ -879,6 +936,7 @@ const PROCEDURE_TYPES = [
 ```
 
 **Geometry Constraint (MUST be null):**
+
 ```typescript
 // Procedures are non-spatial
 // Geometry MUST be null
@@ -892,6 +950,7 @@ const PROCEDURE_TYPES = [
 ### 6.4 Sampling Features Resource Validation
 
 **parentSystem (Parent System Link - REQUIRED):**
+
 ```typescript
 // Required: YES
 // Type: Link or inline System feature
@@ -906,6 +965,7 @@ const PROCEDURE_TYPES = [
 ```
 
 **sampledFeature (Feature of Interest Link - REQUIRED):**
+
 ```typescript
 // Required: YES
 // Type: Link or inline Feature
@@ -921,6 +981,7 @@ const PROCEDURE_TYPES = [
 ### 6.5 Properties Resource Validation
 
 **Geometry Constraint (MUST be null):**
+
 ```typescript
 // Properties are non-spatial
 // Geometry MUST be null
@@ -932,6 +993,7 @@ const PROCEDURE_TYPES = [
 ```
 
 **featureType Absence:**
+
 ```typescript
 // Properties resource does NOT use featureType property
 // Uses itemType at collection level instead
@@ -946,7 +1008,7 @@ const PROCEDURE_TYPES = [
 ## 7. Vocabulary Validation Requirements
 
 > **⚠️ REVIEW NOTICE (H3):** The vocabulary lists below are useful as
-> *reference material* for understanding CSAPI resource type ontology.
+> _reference material_ for understanding CSAPI resource type ontology.
 > However, testing whether the parser rejects values outside these lists
 > (`validateSystemType()`, `validateAssetType()`) is server data validation.
 > Our parser extracts `systemType` as a string — it does not need to check
@@ -959,6 +1021,7 @@ const PROCEDURE_TYPES = [
 **Namespace:** `http://www.w3.org/ns/sosa/`
 
 **System Types:**
+
 - `sosa:System` - Generic system
 - `sosa:Sensor` - Observing system
 - `sosa:Platform` - Hosting system
@@ -966,18 +1029,22 @@ const PROCEDURE_TYPES = [
 - `sosa:Sampler` - Sampling system
 
 **Deployment Types:**
+
 - `sosa:Deployment`
 
 **Procedure Types:**
+
 - `sosa:Procedure` - Generic procedure
 - `sosa:ObservingProcedure` - Observation method
 - `sosa:SamplingProcedure` - Sampling method
 - `sosa:ActuatingProcedure` - Actuation method
 
 **Sampling Feature Types:**
+
 - `sosa:Sample`
 
 **Property Types:**
+
 - `sosa:Property` (used as itemType, not featureType)
 - `sosa:ObservableProperty` - Observable
 - `sosa:ActuatableProperty` - Controllable
@@ -987,53 +1054,55 @@ const PROCEDURE_TYPES = [
 **Namespace:** CSAPI-specific (not SOSA)
 
 **Allowed Values:**
+
 - `Equipment` - Physical hardware
 - `Human` - Human observer/operator
 - `Simulation` - Simulated system
 
 **Validation:**
+
 - Exact case-sensitive match
 - No variations or extensions
 
 ### 7.3 Vocabulary Testing Strategy
 
 **DO Test:**
+
 - ✅ Valid SOSA URI recognition (full URI and shorthand)
 - ✅ Invalid URI rejection (non-SOSA namespace)
 - ✅ Case-sensitive enum matching (assetType)
 - ✅ Vocabulary completeness (all expected values)
 
 **DON'T Test:**
+
 - ❌ SOSA ontology semantics (reasoning, inference)
 - ❌ URI dereferenceability (network calls)
 - ❌ Vocabulary versioning (assume current)
 
 **Test Implementation:**
+
 ```typescript
 describe('SOSA Vocabulary Validation', () => {
   describe('systemType', () => {
     it('accepts valid SOSA system type URIs', () => {
-      const validTypes = [
-        'http://www.w3.org/ns/sosa/Sensor',
-        'sosa:Platform'
-      ];
-      validTypes.forEach(type => {
+      const validTypes = ['http://www.w3.org/ns/sosa/Sensor', 'sosa:Platform'];
+      validTypes.forEach((type) => {
         expect(validateSystemType(type)).toBe(true);
       });
     });
-    
+
     it('rejects non-SOSA URIs', () => {
       expect(validateSystemType('http://example.com/Sensor')).toBe(false);
     });
   });
-  
+
   describe('assetType', () => {
     it('accepts valid asset type enums', () => {
       expect(validateAssetType('Equipment')).toBe(true);
       expect(validateAssetType('Human')).toBe(true);
       expect(validateAssetType('Simulation')).toBe(true);
     });
-    
+
     it('rejects invalid values', () => {
       expect(validateAssetType('equipment')).toBe(false); // case-sensitive
       expect(validateAssetType('Robot')).toBe(false); // not in vocab
@@ -1051,6 +1120,7 @@ describe('SOSA Vocabulary Validation', () => {
 **Format:** Array of two ISO 8601 strings: `[startTime, endTime]`
 
 **ISO 8601 Temporal Formats:**
+
 ```
 Date-time:     2024-01-15T10:30:00Z
                2024-01-15T10:30:00+00:00
@@ -1066,6 +1136,7 @@ Instant:       [2024-06-15T12:00:00Z, 2024-06-15T12:00:00Z]
 ### 8.2 Temporal Validation Rules
 
 **Rule 1: Array Structure**
+
 ```typescript
 // validTime must be array of length 2
 validTime: [string, string | null]
@@ -1078,6 +1149,7 @@ validTime: [string, string | null]
 ```
 
 **Rule 2: ISO 8601 Format**
+
 ```typescript
 // Both elements must be valid ISO 8601 strings (or null for end)
 
@@ -1090,6 +1162,7 @@ validTime: [string, string | null]
 ```
 
 **Rule 3: Temporal Ordering**
+
 ```typescript
 // If end is not null, start <= end
 
@@ -1102,6 +1175,7 @@ validTime: [string, string | null]
 ### 8.3 Temporal Parsing Requirements
 
 **Parse to Date Objects:**
+
 ```typescript
 interface TemporalExtent {
   begin: Date;
@@ -1123,29 +1197,30 @@ function parseValidTime(validTime: [string, string | null]): TemporalExtent {
 ### 8.4 Temporal Property Test Cases
 
 **Valid Cases:**
+
 ```typescript
 describe('validTime parsing', () => {
   it('parses open-ended periods', () => {
-    const validTime: [string, null] = ["2024-01-01T00:00:00Z", null];
+    const validTime: [string, null] = ['2024-01-01T00:00:00Z', null];
     const result = parseValidTime(validTime);
-    expect(result.begin).toEqual(new Date("2024-01-01T00:00:00Z"));
+    expect(result.begin).toEqual(new Date('2024-01-01T00:00:00Z'));
     expect(result.end).toBeNull();
   });
-  
+
   it('parses closed periods', () => {
     const validTime: [string, string] = [
-      "2024-01-01T00:00:00Z",
-      "2024-12-31T23:59:59Z"
+      '2024-01-01T00:00:00Z',
+      '2024-12-31T23:59:59Z',
     ];
     const result = parseValidTime(validTime);
-    expect(result.begin).toEqual(new Date("2024-01-01T00:00:00Z"));
-    expect(result.end).toEqual(new Date("2024-12-31T23:59:59Z"));
+    expect(result.begin).toEqual(new Date('2024-01-01T00:00:00Z'));
+    expect(result.end).toEqual(new Date('2024-12-31T23:59:59Z'));
   });
-  
+
   it('parses temporal instants', () => {
     const validTime: [string, string] = [
-      "2024-06-15T12:00:00Z",
-      "2024-06-15T12:00:00Z"
+      '2024-06-15T12:00:00Z',
+      '2024-06-15T12:00:00Z',
     ];
     const result = parseValidTime(validTime);
     expect(result.begin).toEqual(result.end);
@@ -1154,23 +1229,23 @@ describe('validTime parsing', () => {
 ```
 
 **Invalid Cases:**
+
 ```typescript
 describe('validTime validation errors', () => {
   it('rejects invalid array structure', () => {
-    expect(() => parseValidTime("2024-01-01T00:00:00Z")).toThrow();
-    expect(() => parseValidTime(["2024-01-01T00:00:00Z"])).toThrow();
+    expect(() => parseValidTime('2024-01-01T00:00:00Z')).toThrow();
+    expect(() => parseValidTime(['2024-01-01T00:00:00Z'])).toThrow();
   });
-  
+
   it('rejects invalid ISO 8601 format', () => {
-    expect(() => parseValidTime(["01/01/2024", null])).toThrow();
-    expect(() => parseValidTime(["2024-01-01T00:00:00Z", "invalid"])).toThrow();
+    expect(() => parseValidTime(['01/01/2024', null])).toThrow();
+    expect(() => parseValidTime(['2024-01-01T00:00:00Z', 'invalid'])).toThrow();
   });
-  
+
   it('rejects start > end', () => {
-    expect(() => parseValidTime([
-      "2024-12-31T23:59:59Z",
-      "2024-01-01T00:00:00Z"
-    ])).toThrow();
+    expect(() =>
+      parseValidTime(['2024-12-31T23:59:59Z', '2024-01-01T00:00:00Z'])
+    ).toThrow();
   });
 });
 ```
@@ -1182,16 +1257,18 @@ describe('validTime validation errors', () => {
 ### 9.1 CSAPI Link Object Structure
 
 **Standard Link Object:**
+
 ```typescript
 interface Link {
-  rel: string;      // Link relationship (REQUIRED)
-  href: string;     // Target URL (REQUIRED)
-  type?: string;    // Media type (OPTIONAL)
-  title?: string;   // Human-readable title (OPTIONAL)
+  rel: string; // Link relationship (REQUIRED)
+  href: string; // Target URL (REQUIRED)
+  type?: string; // Media type (OPTIONAL)
+  title?: string; // Human-readable title (OPTIONAL)
 }
 ```
 
 **Example Links:**
+
 ```json
 {
   "links": [
@@ -1218,11 +1295,13 @@ interface Link {
 **CSAPI-Specific rel Values:**
 
 **Navigation Links:**
+
 - `self` - Canonical resource URL
 - `collection` - Parent collection
 - `item` - Collection item
 
 **Association Links (Systems):**
+
 - `subsystems` - Child systems
 - `deployments` - System deployments
 - `procedures` - Implemented procedures
@@ -1231,12 +1310,14 @@ interface Link {
 - `controlstreams` - Control input streams
 
 **Association Links (Deployments):**
+
 - `deployedSystems` - Deployed system(s)
 - `subdeployments` - Nested subdeployments
 - `platform` - Deployment platform
 - `featuresOfInterest` - Observed/controlled features
 
 **Association Links (Sampling Features):**
+
 - `parentSystem` - Creating system
 - `sampledFeature` - Ultimate feature of interest
 - `sampleOf` - Parent sampling feature (sub-sampling)
@@ -1244,6 +1325,7 @@ interface Link {
 ### 9.3 Link Validation Rules
 
 **Required Properties:**
+
 ```typescript
 // rel and href are REQUIRED
 ✅ { rel: "self", href: "/systems/123" }
@@ -1252,6 +1334,7 @@ interface Link {
 ```
 
 **Optional Properties:**
+
 ```typescript
 // type and title are OPTIONAL
 ✅ { rel: "self", href: "/systems/123", type: "application/geo+json" }
@@ -1260,6 +1343,7 @@ interface Link {
 ```
 
 **href Format:**
+
 ```typescript
 // href can be relative or absolute URL
 ✅ "/systems/123" (relative)
@@ -1271,6 +1355,7 @@ interface Link {
 ### 9.4 Association Link Arrays
 
 **Array Validation:**
+
 ```typescript
 // Association properties (subsystems, deployments, etc.) can be:
 // 1. Array of Link objects
@@ -1288,29 +1373,34 @@ interface Link {
 ```
 
 **Link Array Test Cases:**
+
 ```typescript
 describe('Association link arrays', () => {
   it('parses link-only arrays', () => {
     const subsystems = [
-      { rel: "subsystem", href: "/systems/child1" },
-      { rel: "subsystem", href: "/systems/child2" }
+      { rel: 'subsystem', href: '/systems/child1' },
+      { rel: 'subsystem', href: '/systems/child2' },
     ];
     expect(parseAssociationLinks(subsystems)).toHaveLength(2);
   });
-  
+
   it('parses inline feature arrays', () => {
     const subsystems = [
-      { type: "Feature", geometry: null, properties: { uid: "...", name: "Child" } }
+      {
+        type: 'Feature',
+        geometry: null,
+        properties: { uid: '...', name: 'Child' },
+      },
     ];
     expect(parseAssociationLinks(subsystems)).toHaveLength(1);
   });
-  
+
   it('handles empty arrays', () => {
     expect(parseAssociationLinks([])).toHaveLength(0);
   });
-  
+
   it('rejects invalid link structures', () => {
-    const invalid = [{ rel: "subsystem" }]; // missing href
+    const invalid = [{ rel: 'subsystem' }]; // missing href
     expect(() => parseAssociationLinks(invalid)).toThrow();
   });
 });
@@ -1323,6 +1413,7 @@ describe('Association link arrays', () => {
 ### 10.1 CSAPI FeatureCollection Structure
 
 **Standard Structure:**
+
 ```json
 {
   "type": "FeatureCollection",
@@ -1353,10 +1444,12 @@ describe('Association link arrays', () => {
 ### 10.2 FeatureCollection Properties
 
 **Required Properties:**
+
 - `type`: "FeatureCollection" (required)
 - `features`: Array of Feature objects (required, can be empty)
 
 **Optional Properties:**
+
 - `links`: Pagination and navigation links
 - `timeStamp`: When collection was generated (ISO 8601)
 - `numberMatched`: Total matching features (before pagination)
@@ -1366,72 +1459,79 @@ describe('Association link arrays', () => {
 ### 10.3 FeatureCollection Validation
 
 **Structure Validation:**
+
 ```typescript
 describe('FeatureCollection structure', () => {
   it('parses valid feature collections', () => {
     const collection = {
-      type: "FeatureCollection",
+      type: 'FeatureCollection',
       features: [
-        { type: "Feature", geometry: null, properties: { uid: "...", name: "..." } }
-      ]
+        {
+          type: 'Feature',
+          geometry: null,
+          properties: { uid: '...', name: '...' },
+        },
+      ],
     };
     expect(parseFeatureCollection(collection)).toBeDefined();
   });
-  
+
   it('handles empty feature arrays', () => {
     const collection = {
-      type: "FeatureCollection",
-      features: []
+      type: 'FeatureCollection',
+      features: [],
     };
     expect(parseFeatureCollection(collection).features).toHaveLength(0);
   });
-  
+
   it('rejects invalid type', () => {
-    const invalid = { type: "Collection", features: [] };
+    const invalid = { type: 'Collection', features: [] };
     expect(() => parseFeatureCollection(invalid)).toThrow();
   });
 });
 ```
 
 **Pagination Links:**
+
 ```typescript
 describe('Pagination links', () => {
   it('extracts pagination links', () => {
     const collection = {
-      type: "FeatureCollection",
+      type: 'FeatureCollection',
       features: [],
       links: [
-        { rel: "self", href: "/systems" },
-        { rel: "next", href: "/systems?offset=20" },
-        { rel: "prev", href: "/systems?offset=0" }
-      ]
+        { rel: 'self', href: '/systems' },
+        { rel: 'next', href: '/systems?offset=20' },
+        { rel: 'prev', href: '/systems?offset=0' },
+      ],
     };
     const result = parseFeatureCollection(collection);
     expect(result.links).toHaveLength(3);
-    expect(result.links.find(l => l.rel === 'next')).toBeDefined();
+    expect(result.links.find((l) => l.rel === 'next')).toBeDefined();
   });
 });
 ```
 
 **Metadata Properties:**
+
 ```typescript
 describe('Collection metadata', () => {
   it('parses timeStamp', () => {
     const collection = {
-      type: "FeatureCollection",
+      type: 'FeatureCollection',
       features: [],
-      timeStamp: "2024-01-15T10:00:00Z"
+      timeStamp: '2024-01-15T10:00:00Z',
     };
     const result = parseFeatureCollection(collection);
-    expect(result.timeStamp).toEqual(new Date("2024-01-15T10:00:00Z"));
+    expect(result.timeStamp).toEqual(new Date('2024-01-15T10:00:00Z'));
   });
-  
+
   it('parses pagination counts', () => {
     const collection = {
-      type: "FeatureCollection",
+      type: 'FeatureCollection',
       features: [],
       numberMatched: 250,
-      numberReturned: 20
+      numberReturned: 20,
     };
     const result = parseFeatureCollection(collection);
     expect(result.numberMatched).toBe(250);
@@ -1447,6 +1547,7 @@ describe('Collection metadata', () => {
 ### 11.1 Geometry Reuse Policy
 
 **DO NOT Re-test Geometry Validation:**
+
 - ❌ Coordinate validation (lon [-180,180], lat [-90,90])
 - ❌ Polygon ring closure (first = last coordinate)
 - ❌ Polygon right-hand rule
@@ -1455,6 +1556,7 @@ describe('Collection metadata', () => {
 - ❌ CRS encoding
 
 **DO Test Geometry Semantics:**
+
 - ✅ Null geometry handling (per resource type)
 - ✅ Geometry presence requirements
   - Procedures: MUST be null
@@ -1466,88 +1568,95 @@ describe('Collection metadata', () => {
 ### 11.2 Geometry Presence Tests
 
 **Procedures (Must be null):**
+
 ```typescript
 describe('Procedure geometry constraints', () => {
   it('accepts null geometry for Procedures', () => {
     const feature = {
-      type: "Feature",
+      type: 'Feature',
       geometry: null,
       properties: {
-        uid: "urn:example:procedure:1",
-        name: "Temperature Measurement",
-        featureType: "sosa:Procedure",
-        procedureType: "sosa:ObservingProcedure"
-      }
+        uid: 'urn:example:procedure:1',
+        name: 'Temperature Measurement',
+        featureType: 'sosa:Procedure',
+        procedureType: 'sosa:ObservingProcedure',
+      },
     };
     expect(parseProcedureFeature(feature)).toBeDefined();
   });
-  
+
   it('rejects non-null geometry for Procedures', () => {
     const feature = {
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [-122.08, 37.42] },
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [-122.08, 37.42] },
       properties: {
-        uid: "urn:example:procedure:1",
-        name: "Temperature Measurement",
-        featureType: "sosa:Procedure",
-        procedureType: "sosa:ObservingProcedure"
-      }
+        uid: 'urn:example:procedure:1',
+        name: 'Temperature Measurement',
+        featureType: 'sosa:Procedure',
+        procedureType: 'sosa:ObservingProcedure',
+      },
     };
-    expect(() => parseProcedureFeature(feature)).toThrow(/Procedures cannot have geometry/);
+    expect(() => parseProcedureFeature(feature)).toThrow(
+      /Procedures cannot have geometry/
+    );
   });
 });
 ```
 
 **Properties (Must be null):**
+
 ```typescript
 describe('Property geometry constraints', () => {
   it('accepts null geometry for Properties', () => {
     const feature = {
-      type: "Feature",
+      type: 'Feature',
       geometry: null,
       properties: {
-        uid: "urn:example:property:temperature",
-        name: "Air Temperature"
-      }
+        uid: 'urn:example:property:temperature',
+        name: 'Air Temperature',
+      },
     };
     expect(parsePropertyFeature(feature)).toBeDefined();
   });
-  
+
   it('rejects non-null geometry for Properties', () => {
     const feature = {
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [-122.08, 37.42] },
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [-122.08, 37.42] },
       properties: {
-        uid: "urn:example:property:temperature",
-        name: "Air Temperature"
-      }
+        uid: 'urn:example:property:temperature',
+        name: 'Air Temperature',
+      },
     };
-    expect(() => parsePropertyFeature(feature)).toThrow(/Properties cannot have geometry/);
+    expect(() => parsePropertyFeature(feature)).toThrow(
+      /Properties cannot have geometry/
+    );
   });
 });
 ```
 
 **Systems/Deployments (null or valid):**
+
 ```typescript
 describe('System geometry handling', () => {
   it('accepts null geometry', () => {
     const feature = {
-      type: "Feature",
+      type: 'Feature',
       geometry: null,
-      properties: { uid: "...", name: "...", featureType: "sosa:System" }
+      properties: { uid: '...', name: '...', featureType: 'sosa:System' },
     };
     expect(parseSystemFeature(feature).geometry).toBeNull();
   });
-  
+
   it('accepts Point geometry', () => {
     const feature = {
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [-122.08, 37.42] },
-      properties: { uid: "...", name: "...", featureType: "sosa:System" }
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [-122.08, 37.42] },
+      properties: { uid: '...', name: '...', featureType: 'sosa:System' },
     };
-    expect(parseSystemFeature(feature).geometry.type).toBe("Point");
+    expect(parseSystemFeature(feature).geometry.type).toBe('Point');
   });
-  
+
   // Coordinate validation inherited from existing parser - DON'T re-test
 });
 ```
@@ -1559,6 +1668,7 @@ describe('System geometry handling', () => {
 ### 12.1 Error Categories
 
 **Category 1: Missing Required Property**
+
 ```typescript
 // Error when required property absent
 // Applies to: uid, name, featureType, validTime (Deployments), etc.
@@ -1573,6 +1683,7 @@ HTTP Status: 400 Bad Request
 ```
 
 **Category 2: Invalid Property Type**
+
 ```typescript
 // Error when property has wrong type
 // Applies to: string properties, arrays, objects
@@ -1623,6 +1734,7 @@ HTTP Status: 400 Bad Request
 ```
 
 **Category 5: Invalid Temporal Format**
+
 ```typescript
 // Error when validTime has invalid format or ordering
 // Applies to: validTime property
@@ -1637,6 +1749,7 @@ HTTP Status: 400 Bad Request
 ```
 
 **Category 6: Invalid Geometry Constraint**
+
 ```typescript
 // Error when geometry violates resource type constraints
 // Applies to: Procedures, Properties (must be null)
@@ -1650,6 +1763,7 @@ HTTP Status: 400 Bad Request
 ```
 
 **Category 7: Invalid Association Structure**
+
 ```typescript
 // Error when association array has invalid items
 // Applies to: subsystems, deployments, datastreams, etc.
@@ -1665,90 +1779,105 @@ HTTP Status: 400 Bad Request
 ### 12.2 Error Handling Test Cases
 
 **Missing Required Properties:**
+
 ```typescript
 describe('Missing required property errors', () => {
   it('throws error for missing uid', () => {
     const feature = {
-      type: "Feature",
+      type: 'Feature',
       geometry: null,
-      properties: { name: "System 1", featureType: "sosa:System" }
+      properties: { name: 'System 1', featureType: 'sosa:System' },
     };
-    expect(() => parseSystemFeature(feature)).toThrow(/Missing required property: uid/);
+    expect(() => parseSystemFeature(feature)).toThrow(
+      /Missing required property: uid/
+    );
   });
-  
+
   it('throws error for missing name', () => {
     const feature = {
-      type: "Feature",
+      type: 'Feature',
       geometry: null,
-      properties: { uid: "urn:example:1", featureType: "sosa:System" }
+      properties: { uid: 'urn:example:1', featureType: 'sosa:System' },
     };
-    expect(() => parseSystemFeature(feature)).toThrow(/Missing required property: name/);
+    expect(() => parseSystemFeature(feature)).toThrow(
+      /Missing required property: name/
+    );
   });
-  
+
   it('throws error for missing validTime on Deployment', () => {
     const feature = {
-      type: "Feature",
+      type: 'Feature',
       geometry: null,
       properties: {
-        uid: "urn:example:deployment:1",
-        name: "Deployment 1",
-        featureType: "sosa:Deployment",
-        deployedSystems: [{ rel: "system", href: "/systems/1" }]
-      }
+        uid: 'urn:example:deployment:1',
+        name: 'Deployment 1',
+        featureType: 'sosa:Deployment',
+        deployedSystems: [{ rel: 'system', href: '/systems/1' }],
+      },
     };
-    expect(() => parseDeploymentFeature(feature)).toThrow(/Missing required property: validTime/);
+    expect(() => parseDeploymentFeature(feature)).toThrow(
+      /Missing required property: validTime/
+    );
   });
 });
 ```
 
 **Invalid Vocabulary Values:**
+
 ```typescript
 describe('Vocabulary validation errors', () => {
   it('throws error for invalid systemType', () => {
     const feature = {
-      type: "Feature",
+      type: 'Feature',
       geometry: null,
       properties: {
-        uid: "urn:example:1",
-        name: "System 1",
-        featureType: "sosa:System",
-        systemType: "http://example.com/CustomSensor"
-      }
+        uid: 'urn:example:1',
+        name: 'System 1',
+        featureType: 'sosa:System',
+        systemType: 'http://example.com/CustomSensor',
+      },
     };
-    expect(() => parseSystemFeature(feature)).toThrow(/Invalid systemType value/);
+    expect(() => parseSystemFeature(feature)).toThrow(
+      /Invalid systemType value/
+    );
   });
-  
+
   it('throws error for invalid assetType', () => {
     const feature = {
-      type: "Feature",
+      type: 'Feature',
       geometry: null,
       properties: {
-        uid: "urn:example:1",
-        name: "System 1",
-        featureType: "sosa:System",
-        assetType: "Robot"
-      }
+        uid: 'urn:example:1',
+        name: 'System 1',
+        featureType: 'sosa:System',
+        assetType: 'Robot',
+      },
     };
-    expect(() => parseSystemFeature(feature)).toThrow(/Invalid assetType value.*Equipment, Human, Simulation/);
+    expect(() => parseSystemFeature(feature)).toThrow(
+      /Invalid assetType value.*Equipment, Human, Simulation/
+    );
   });
 });
 ```
 
 **Geometry Constraint Violations:**
+
 ```typescript
 describe('Geometry constraint errors', () => {
   it('throws error for non-null Procedure geometry', () => {
     const feature = {
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [-122.08, 37.42] },
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [-122.08, 37.42] },
       properties: {
-        uid: "urn:example:procedure:1",
-        name: "Procedure 1",
-        featureType: "sosa:Procedure",
-        procedureType: "sosa:ObservingProcedure"
-      }
+        uid: 'urn:example:procedure:1',
+        name: 'Procedure 1',
+        featureType: 'sosa:Procedure',
+        procedureType: 'sosa:ObservingProcedure',
+      },
     };
-    expect(() => parseProcedureFeature(feature)).toThrow(/cannot have non-null geometry/);
+    expect(() => parseProcedureFeature(feature)).toThrow(
+      /cannot have non-null geometry/
+    );
   });
 });
 ```
@@ -1760,18 +1889,21 @@ describe('Geometry constraint errors', () => {
 ### 13.1 Fixture Sources
 
 **Source 1: CSAPI Part 1 Specification Examples**
+
 - Extract GeoJSON examples from specification document
 - Cover all 5 resource types
 - Include common property examples
 - Estimated: 10-15 fixtures
 
 **Source 2: OpenSensorHub Example Responses**
+
 - Real-world GeoJSON from OSH implementation
 - Focus on Systems and Deployments (most common)
 - Include complex hierarchies (subsystems, subdeployments)
 - Estimated: 10-15 fixtures
 
 **Source 3: Hand-Crafted Test Cases**
+
 - Edge cases: null geometry, open-ended validTime
 - Error cases: missing required properties, invalid vocabularies
 - Minimal examples: only required properties
@@ -1783,6 +1915,7 @@ describe('Geometry constraint errors', () => {
 ### 13.2 Fixture Organization
 
 **Directory Structure:**
+
 ```
 fixtures/csapi-geojson/
 ├── systems/
@@ -1828,6 +1961,7 @@ fixtures/csapi-geojson/
 ### 13.3 Fixture Requirements by Resource Type
 
 **Systems Fixtures (8 total):**
+
 - ✅ Minimal (required properties only)
 - ✅ Full (all optional properties)
 - ✅ Each system type (Sensor, Platform, Actuator, Sampler)
@@ -1837,6 +1971,7 @@ fixtures/csapi-geojson/
 - ✅ Error: Invalid systemType vocabulary
 
 **Deployments Fixtures (6 total):**
+
 - ✅ Minimal (required: validTime, deployedSystems)
 - ✅ Full (all optional properties)
 - ✅ Open-ended validTime
@@ -1845,6 +1980,7 @@ fixtures/csapi-geojson/
 - ✅ Error: Missing deployedSystems
 
 **Procedures Fixtures (5 total):**
+
 - ✅ ObservingProcedure
 - ✅ SamplingProcedure
 - ✅ ActuatingProcedure
@@ -1852,6 +1988,7 @@ fixtures/csapi-geojson/
 - ✅ Error: Non-null geometry
 
 **Sampling Features Fixtures (5 total):**
+
 - ✅ Point sampling
 - ✅ Trajectory sampling
 - ✅ Sub-sampling (sampleOf)
@@ -1859,12 +1996,14 @@ fixtures/csapi-geojson/
 - ✅ Error: Missing sampledFeature
 
 **Properties Fixtures (4 total):**
+
 - ✅ ObservableProperty
 - ✅ ActuatableProperty
 - ✅ Null geometry (valid)
 - ✅ Error: Non-null geometry
 
 **Collections Fixtures (4 total):**
+
 - ✅ Systems FeatureCollection
 - ✅ Deployments FeatureCollection
 - ✅ Paginated collection (with links)
@@ -1888,6 +2027,7 @@ fixtures/csapi-geojson/
 **Single Test File:** `geojson-csapi.spec.ts`
 
 **File Organization:**
+
 ```typescript
 // geojson-csapi.spec.ts
 import { describe, it, expect } from '@jest/globals';
@@ -1897,7 +2037,7 @@ import {
   parseProcedureFeature,
   parseSamplingFeatureFeature,
   parsePropertyFeature,
-  parseFeatureCollection
+  parseFeatureCollection,
 } from '../src/csapi/geojson-parser';
 
 // Import fixtures
@@ -1906,64 +2046,123 @@ import deploymentFull from '../../fixtures/csapi-geojson/deployments/deployment-
 // ... other fixtures
 
 describe('CSAPI GeoJSON Parser', () => {
-  
   describe('Common Property Parsing', () => {
-    describe('uid (Unique Identifier)', () => { /* ... */ });
-    describe('name', () => { /* ... */ });
-    describe('featureType', () => { /* ... */ });
-    describe('description (optional)', () => { /* ... */ });
-    describe('links (optional)', () => { /* ... */ });
+    describe('uid (Unique Identifier)', () => {
+      /* ... */
+    });
+    describe('name', () => {
+      /* ... */
+    });
+    describe('featureType', () => {
+      /* ... */
+    });
+    describe('description (optional)', () => {
+      /* ... */
+    });
+    describe('links (optional)', () => {
+      /* ... */
+    });
   });
-  
+
   describe('Systems Resource', () => {
-    describe('Property Extraction', () => { /* ... */ });
-    describe('systemType Validation', () => { /* ... */ });
-    describe('assetType Validation', () => { /* ... */ });
-    describe('validTime Parsing', () => { /* ... */ });
-    describe('Association Arrays', () => { /* ... */ });
-    describe('Geometry Handling', () => { /* ... */ });
-    describe('Error Cases', () => { /* ... */ });
+    describe('Property Extraction', () => {
+      /* ... */
+    });
+    describe('systemType Validation', () => {
+      /* ... */
+    });
+    describe('assetType Validation', () => {
+      /* ... */
+    });
+    describe('validTime Parsing', () => {
+      /* ... */
+    });
+    describe('Association Arrays', () => {
+      /* ... */
+    });
+    describe('Geometry Handling', () => {
+      /* ... */
+    });
+    describe('Error Cases', () => {
+      /* ... */
+    });
   });
-  
+
   describe('Deployments Resource', () => {
-    describe('Required validTime', () => { /* ... */ });
-    describe('Required deployedSystems', () => { /* ... */ });
-    describe('Temporal Period Parsing', () => { /* ... */ });
-    describe('Subdeployments Hierarchy', () => { /* ... */ });
-    describe('Error Cases', () => { /* ... */ });
+    describe('Required validTime', () => {
+      /* ... */
+    });
+    describe('Required deployedSystems', () => {
+      /* ... */
+    });
+    describe('Temporal Period Parsing', () => {
+      /* ... */
+    });
+    describe('Subdeployments Hierarchy', () => {
+      /* ... */
+    });
+    describe('Error Cases', () => {
+      /* ... */
+    });
   });
-  
+
   describe('Procedures Resource', () => {
-    describe('procedureType Validation', () => { /* ... */ });
-    describe('Geometry Constraint (must be null)', () => { /* ... */ });
-    describe('Error Cases', () => { /* ... */ });
+    describe('procedureType Validation', () => {
+      /* ... */
+    });
+    describe('Geometry Constraint (must be null)', () => {
+      /* ... */
+    });
+    describe('Error Cases', () => {
+      /* ... */
+    });
   });
-  
+
   describe('Sampling Features Resource', () => {
-    describe('Required parentSystem', () => { /* ... */ });
-    describe('Required sampledFeature', () => { /* ... */ });
-    describe('Sub-sampling (sampleOf)', () => { /* ... */ });
-    describe('Error Cases', () => { /* ... */ });
+    describe('Required parentSystem', () => {
+      /* ... */
+    });
+    describe('Required sampledFeature', () => {
+      /* ... */
+    });
+    describe('Sub-sampling (sampleOf)', () => {
+      /* ... */
+    });
+    describe('Error Cases', () => {
+      /* ... */
+    });
   });
-  
+
   describe('Properties Resource', () => {
-    describe('Geometry Constraint (must be null)', () => { /* ... */ });
-    describe('featureType Absence', () => { /* ... */ });
-    describe('Error Cases', () => { /* ... */ });
+    describe('Geometry Constraint (must be null)', () => {
+      /* ... */
+    });
+    describe('featureType Absence', () => {
+      /* ... */
+    });
+    describe('Error Cases', () => {
+      /* ... */
+    });
   });
-  
+
   describe('FeatureCollection Parsing', () => {
-    describe('Structure Validation', () => { /* ... */ });
-    describe('Pagination Links', () => { /* ... */ });
-    describe('Metadata Properties', () => { /* ... */ });
+    describe('Structure Validation', () => {
+      /* ... */
+    });
+    describe('Pagination Links', () => {
+      /* ... */
+    });
+    describe('Metadata Properties', () => {
+      /* ... */
+    });
   });
-  
 });
 ```
 
 ### 14.2 Test Block Organization
 
 **Describe Block Hierarchy:**
+
 ```
 geojson-csapi.spec.ts
 ├── Common Property Parsing (shared across all resources)
@@ -1993,21 +2192,40 @@ geojson-csapi.spec.ts
 ### 14.3 Test Naming Conventions
 
 **it() Block Naming:**
+
 ```typescript
 // Positive tests: "parses/accepts/extracts..."
-it('parses valid uid URN', () => { /* ... */ });
-it('accepts null geometry for Systems', () => { /* ... */ });
-it('extracts systemType from properties', () => { /* ... */ });
+it('parses valid uid URN', () => {
+  /* ... */
+});
+it('accepts null geometry for Systems', () => {
+  /* ... */
+});
+it('extracts systemType from properties', () => {
+  /* ... */
+});
 
 // Negative tests: "throws/rejects/fails..."
-it('throws error for missing uid', () => { /* ... */ });
-it('rejects invalid systemType vocabulary', () => { /* ... */ });
-it('fails for Procedure with non-null geometry', () => { /* ... */ });
+it('throws error for missing uid', () => {
+  /* ... */
+});
+it('rejects invalid systemType vocabulary', () => {
+  /* ... */
+});
+it('fails for Procedure with non-null geometry', () => {
+  /* ... */
+});
 
 // Edge cases: "handles..."
-it('handles open-ended validTime periods', () => { /* ... */ });
-it('handles empty association arrays', () => { /* ... */ });
-it('handles unknown properties (forward compatibility)', () => { /* ... */ });
+it('handles open-ended validTime periods', () => {
+  /* ... */
+});
+it('handles empty association arrays', () => {
+  /* ... */
+});
+it('handles unknown properties (forward compatibility)', () => {
+  /* ... */
+});
 ```
 
 ---
@@ -2019,6 +2237,7 @@ it('handles unknown properties (forward compatibility)', () => { /* ... */ });
 **From Section 6: "Meaningful vs Trivial" Definition:**
 
 **MEANINGFUL Tests (DO write):**
+
 - ✅ Parser extracts correct properties from nested JSON
 - ✅ Vocabulary values validated against allowed lists
 - ✅ Temporal periods parsed to Date objects correctly
@@ -2028,6 +2247,7 @@ it('handles unknown properties (forward compatibility)', () => { /* ... */ });
 - ✅ Geometry constraints enforced (null for Procedures/Properties)
 
 **TRIVIAL Tests (DON'T write):**
+
 - ❌ TypeScript type checking (compiler does this)
 - ❌ RFC 7946 geometry validation (existing parser)
 - ❌ JSON.parse() functionality
@@ -2038,6 +2258,7 @@ it('handles unknown properties (forward compatibility)', () => { /* ... */ });
 ### 15.2 Priority Levels
 
 **CRITICAL (P0) - Must Pass for Release:**
+
 - Required property extraction (uid, name, featureType)
 - Resource type recognition (featureType → System/Deployment/etc.)
 - Vocabulary validation (systemType, procedureType, assetType)
@@ -2048,6 +2269,7 @@ it('handles unknown properties (forward compatibility)', () => { /* ... */ });
 - Missing required property errors
 
 **HIGH (P1) - Important but not blocking:**
+
 - Optional property extraction (description, validTime for Systems)
 - Association array parsing (subsystems, deployments, etc.)
 - Link structure validation (rel, href required)
@@ -2057,6 +2279,7 @@ it('handles unknown properties (forward compatibility)', () => { /* ... */ });
 - Invalid URI format errors
 
 **MEDIUM (P2) - Nice to have:**
+
 - Unknown property preservation (forward compatibility)
 - Inline feature parsing (vs links)
 - Sub-sampling relationships (sampleOf)
@@ -2065,6 +2288,7 @@ it('handles unknown properties (forward compatibility)', () => { /* ... */ });
 - Empty association array handling
 
 **LOW (P3) - Edge cases:**
+
 - Temporal instant handling (start = end)
 - Mixed link/inline feature arrays
 - Optional link properties (type, title)
@@ -2074,12 +2298,14 @@ it('handles unknown properties (forward compatibility)', () => { /* ... */ });
 ### 15.3 Test Coverage Goals
 
 **Target Coverage:**
+
 - ✅ 100% of CRITICAL (P0) tests
 - ✅ 90% of HIGH (P1) tests
 - ✅ 70% of MEDIUM (P2) tests
 - ✅ 30% of LOW (P3) tests
 
 **Coverage Metrics:**
+
 - Code coverage: >80% for GeoJSON parser module
 - Feature coverage: All 5 resource types tested
 - Property coverage: All required properties tested
@@ -2092,6 +2318,7 @@ it('handles unknown properties (forward compatibility)', () => { /* ... */ });
 ### 16.1 What NOT to Test
 
 **DON'T Re-test RFC 7946 Geometry:**
+
 ```typescript
 // ❌ BAD: Re-testing coordinate validation
 it('rejects invalid longitude', () => {
@@ -2111,6 +2338,7 @@ it('rejects non-null geometry for Procedures', () => {
 ```
 
 **DON'T Test TypeScript Type System:**
+
 ```typescript
 // ❌ BAD: Testing type checking
 it('uid is a string', () => {
@@ -2128,42 +2356,49 @@ it('throws error for invalid uid format', () => {
 ```
 
 **DON'T Test JSON Parsing:**
+
 ```typescript
 // ❌ BAD: Testing JSON.parse()
 it('parses JSON string to object', () => {
   const json = '{"type":"Feature","properties":{}}';
   const obj = JSON.parse(json);
-  expect(obj.type).toBe("Feature");
+  expect(obj.type).toBe('Feature');
 });
 
 // ✅ GOOD: Test CSAPI property extraction from parsed object
 it('extracts uid from properties object', () => {
   const feature = {
-    type: "Feature",
-    properties: { uid: "urn:example:1", name: "...", featureType: "..." }
+    type: 'Feature',
+    properties: { uid: 'urn:example:1', name: '...', featureType: '...' },
   };
   const result = parseSystemFeature(feature);
-  expect(result.uid).toBe("urn:example:1");
+  expect(result.uid).toBe('urn:example:1');
 });
 ```
 
 **DON'T Test Framework Behavior:**
+
 ```typescript
 // ❌ BAD: Testing Jest/expect behavior
 it('expect().toThrow() catches errors', () => {
-  expect(() => { throw new Error("test"); }).toThrow();
+  expect(() => {
+    throw new Error('test');
+  }).toThrow();
 });
 
 // ✅ GOOD: Test parser error handling
 it('throws error for missing required property', () => {
-  const feature = { properties: { name: "..." } }; // missing uid
-  expect(() => parseSystemFeature(feature)).toThrow(/Missing required property: uid/);
+  const feature = { properties: { name: '...' } }; // missing uid
+  expect(() => parseSystemFeature(feature)).toThrow(
+    /Missing required property: uid/
+  );
 });
 ```
 
 ### 16.2 Duplication Anti-Patterns
 
 **DON'T Duplicate Test Logic:**
+
 ```typescript
 // ❌ BAD: Duplicating validation logic in tests
 it('validates uid format', () => {
@@ -2179,15 +2414,24 @@ it('accepts valid uid URN', () => {
 ```
 
 **DON'T Duplicate Across Resource Types:**
+
 ```typescript
 // ❌ BAD: Repeating common property tests for each resource
 describe('Systems', () => {
-  it('validates uid', () => { /* ... */ });
-  it('validates name', () => { /* ... */ });
+  it('validates uid', () => {
+    /* ... */
+  });
+  it('validates name', () => {
+    /* ... */
+  });
 });
 describe('Deployments', () => {
-  it('validates uid', () => { /* same test logic ... */ });
-  it('validates name', () => { /* same test logic ... */ });
+  it('validates uid', () => {
+    /* same test logic ... */
+  });
+  it('validates name', () => {
+    /* same test logic ... */
+  });
 });
 
 // ✅ GOOD: Test common properties once
@@ -2207,34 +2451,42 @@ describe('Common Property Parsing', () => {
 ### 16.3 Over-Testing Anti-Patterns
 
 **DON'T Over-Specify Implementation:**
+
 ```typescript
 // ❌ BAD: Testing internal implementation details
 it('uses Date constructor for temporal parsing', () => {
   const spy = jest.spyOn(global, 'Date');
-  parseValidTime(["2024-01-01T00:00:00Z", null]);
+  parseValidTime(['2024-01-01T00:00:00Z', null]);
   expect(spy).toHaveBeenCalled();
 });
 
 // ✅ GOOD: Test observable behavior
 it('parses validTime to Date objects', () => {
-  const result = parseValidTime(["2024-01-01T00:00:00Z", null]);
-  expect(result.begin).toEqual(new Date("2024-01-01T00:00:00Z"));
+  const result = parseValidTime(['2024-01-01T00:00:00Z', null]);
+  expect(result.begin).toEqual(new Date('2024-01-01T00:00:00Z'));
   expect(result.end).toBeNull();
 });
 ```
 
 **DON'T Test Every Permutation:**
+
 ```typescript
 // ❌ BAD: Testing every vocabulary value individually
-it('accepts sosa:Sensor', () => { /* ... */ });
-it('accepts sosa:Platform', () => { /* ... */ });
-it('accepts sosa:Actuator', () => { /* ... */ });
+it('accepts sosa:Sensor', () => {
+  /* ... */
+});
+it('accepts sosa:Platform', () => {
+  /* ... */
+});
+it('accepts sosa:Actuator', () => {
+  /* ... */
+});
 // ... 20 more tests for each vocabulary value
 
 // ✅ GOOD: Test representative cases + edge cases
 it('accepts valid SOSA system types', () => {
   const validTypes = ['sosa:Sensor', 'sosa:Platform', 'sosa:Actuator'];
-  validTypes.forEach(type => {
+  validTypes.forEach((type) => {
     expect(validateSystemType(type)).toBe(true);
   });
 });
@@ -2250,6 +2502,7 @@ it('rejects non-SOSA URIs', () => {
 ### 17.1 TypeScript Integration
 
 **Extend @types/geojson:**
+
 ```typescript
 import { Feature, FeatureCollection, Geometry } from 'geojson';
 
@@ -2284,6 +2537,7 @@ type SystemCollection = FeatureCollection<Geometry | null, SystemProperties>;
 ### 17.2 Parser Architecture
 
 **Layered Parsing:**
+
 ```typescript
 // Layer 1: RFC 7946 parsing (existing)
 function parseGeoJSONFeature(json: unknown): Feature {
@@ -2302,20 +2556,25 @@ function parseCSAPIFeature(feature: Feature): CSAPIResource {
   // - Temporal parsing
   // - Link structure validation
   const resourceType = identifyResourceType(feature);
-  
+
   switch (resourceType) {
-    case 'System': return parseSystemFeature(feature);
-    case 'Deployment': return parseDeploymentFeature(feature);
-    case 'Procedure': return parseProcedureFeature(feature);
-    case 'SamplingFeature': return parseSamplingFeatureFeature(feature);
-    case 'Property': return parsePropertyFeature(feature);
+    case 'System':
+      return parseSystemFeature(feature);
+    case 'Deployment':
+      return parseDeploymentFeature(feature);
+    case 'Procedure':
+      return parseProcedureFeature(feature);
+    case 'SamplingFeature':
+      return parseSamplingFeatureFeature(feature);
+    case 'Property':
+      return parsePropertyFeature(feature);
   }
 }
 
 // Combined parser
 function parseCSAPIGeoJSON(json: unknown): CSAPIResource {
   const feature = parseGeoJSONFeature(json); // RFC 7946 layer
-  return parseCSAPIFeature(feature);         // CSAPI layer
+  return parseCSAPIFeature(feature); // CSAPI layer
 }
 ```
 
@@ -2330,18 +2589,19 @@ function parseCSAPIGeoJSON(json: unknown): CSAPIResource {
 > properties exist) and Step 4 (extract) are directly usable.
 
 **Progressive Validation:**
+
 ```typescript
 function parseSystemFeature(feature: Feature): System {
   // Step 1: Validate required common properties
   validateRequiredProperty(feature.properties, 'uid');
   validateRequiredProperty(feature.properties, 'name');
   validateRequiredProperty(feature.properties, 'featureType');
-  
+
   // Step 2: Validate property types
   validateURI(feature.properties.uid);
   validateString(feature.properties.name);
   validateFeatureType(feature.properties.featureType);
-  
+
   // Step 3: Validate resource-specific properties
   if (feature.properties.systemType) {
     validateSystemTypeVocabulary(feature.properties.systemType);
@@ -2352,7 +2612,7 @@ function parseSystemFeature(feature: Feature): System {
   if (feature.properties.validTime) {
     validateTemporalPeriod(feature.properties.validTime);
   }
-  
+
   // Step 4: Extract and return resource
   return extractSystemProperties(feature);
 }
@@ -2361,6 +2621,7 @@ function parseSystemFeature(feature: Feature): System {
 ### 17.4 Error Handling Pattern
 
 **Descriptive Error Messages:**
+
 ```typescript
 class CSAPIValidationError extends Error {
   constructor(
@@ -2368,7 +2629,9 @@ class CSAPIValidationError extends Error {
     public reason: string,
     public value?: unknown
   ) {
-    super(`Invalid ${propertyName}: ${reason}${value ? ` (value: ${value})` : ''}`);
+    super(
+      `Invalid ${propertyName}: ${reason}${value ? ` (value: ${value})` : ''}`
+    );
     this.name = 'CSAPIValidationError';
   }
 }
@@ -2392,6 +2655,7 @@ function validateSystemType(systemType: string): void {
 ### 18.1 Specifications
 
 **CSAPI:**
+
 - [OGC Connected Systems API - Part 1: Feature Resources](https://docs.ogc.org/is/23-001/23-001.html)
   - Section 7: Systems Resource
   - Section 8: Deployments Resource
@@ -2401,6 +2665,7 @@ function validateSystemType(systemType: string): void {
   - Annex B: GeoJSON Encoding
 
 **GeoJSON:**
+
 - [RFC 7946: The GeoJSON Format](https://datatracker.ietf.org/doc/html/rfc7946)
   - Section 3: GeoJSON Object Structure
   - Section 3.2: Feature Object
@@ -2408,15 +2673,18 @@ function validateSystemType(systemType: string): void {
   - Section 4: CRS (Coordinate Reference System)
 
 **URIs:**
+
 - [RFC 8141: URN Syntax](https://datatracker.ietf.org/doc/html/rfc8141)
 - [RFC 3986: URI Generic Syntax](https://datatracker.ietf.org/doc/html/rfc3986)
 
 **Temporal:**
+
 - [ISO 8601: Date and Time Format](https://www.iso.org/iso-8601-date-and-time-format.html)
 
 ### 18.2 Ontologies
 
 **SOSA/SSN:**
+
 - [SOSA/SSN Ontology](https://www.w3.org/TR/vocab-ssn/)
   - sosa:System, sosa:Sensor, sosa:Platform, sosa:Actuator, sosa:Sampler
   - sosa:Deployment
@@ -2427,22 +2695,26 @@ function validateSystemType(systemType: string): void {
 ### 18.3 CSAPI Project Documents
 
 **Testing:**
+
 - Section 8: CSAPI Specification Test Requirements (test philosophy, fixtures approach)
 - Section 6: "Meaningful vs Trivial" Definition (test depth criteria)
 - Section 1: Upstream Parser Analysis - GeoJSON Capabilities
 - Section 2: Upstream Test Blueprint - EDR Testing Patterns
 
 **Requirements:**
+
 - CSAPI Part 1 Requirements Analysis (property definitions)
 - CSAPI Format Requirements Analysis (GeoJSON structure)
 
 **Implementation:**
+
 - CSAPI Implementation Guide (GeoJSON Handler extension strategy)
 - CSAPI Functional Specification (TypeScript types)
 
 ### 18.4 Upstream Resources
 
 **ogc-client Library:**
+
 - WFS GeoJSON Parser: `src/wfs/featureprops.ts` (parseFeaturePropsGeojson)
 - Type Definitions: `@types/geojson` package
 - WFS Feature Tests: `src/wfs/featureprops.spec.ts`
@@ -2468,15 +2740,14 @@ import systemSensorFull from '../../fixtures/csapi-geojson/systems/system-sensor
 import systemInvalidUID from '../../fixtures/csapi-geojson/systems/system-invalid-uid.json';
 
 describe('Systems Resource GeoJSON Parsing', () => {
-  
   describe('Property Extraction', () => {
     it('extracts required properties from minimal fixture', () => {
       const result = parseSystemFeature(systemSensorMinimal);
-      expect(result.uid).toBe("urn:x-sensor:id:sensor123");
-      expect(result.name).toBe("Temperature Sensor TS-001");
-      expect(result.featureType).toBe("http://www.w3.org/ns/sosa/Sensor");
+      expect(result.uid).toBe('urn:x-sensor:id:sensor123');
+      expect(result.name).toBe('Temperature Sensor TS-001');
+      expect(result.featureType).toBe('http://www.w3.org/ns/sosa/Sensor');
     });
-    
+
     it('extracts all properties from full fixture', () => {
       const result = parseSystemFeature(systemSensorFull);
       expect(result.uid).toBeDefined();
@@ -2484,163 +2755,167 @@ describe('Systems Resource GeoJSON Parsing', () => {
       expect(result.featureType).toBeDefined();
       expect(result.description).toBeDefined();
       expect(result.systemType).toBeDefined();
-      expect(result.assetType).toBe("Equipment");
+      expect(result.assetType).toBe('Equipment');
       expect(result.validTime).toBeDefined();
       expect(result.subsystems).toBeDefined();
     });
   });
-  
+
   describe('systemType Validation', () => {
     it('accepts valid SOSA system type', () => {
       const feature = {
-        type: "Feature",
+        type: 'Feature',
         geometry: null,
         properties: {
-          uid: "urn:example:1",
-          name: "System 1",
-          featureType: "http://www.w3.org/ns/sosa/System",
-          systemType: "http://www.w3.org/ns/sosa/Sensor"
-        }
+          uid: 'urn:example:1',
+          name: 'System 1',
+          featureType: 'http://www.w3.org/ns/sosa/System',
+          systemType: 'http://www.w3.org/ns/sosa/Sensor',
+        },
       };
       const result = parseSystemFeature(feature);
-      expect(result.systemType).toBe("http://www.w3.org/ns/sosa/Sensor");
+      expect(result.systemType).toBe('http://www.w3.org/ns/sosa/Sensor');
     });
-    
+
     it('accepts shorthand SOSA syntax', () => {
       const feature = {
-        type: "Feature",
+        type: 'Feature',
         geometry: null,
         properties: {
-          uid: "urn:example:1",
-          name: "System 1",
-          featureType: "sosa:System",
-          systemType: "sosa:Platform"
-        }
+          uid: 'urn:example:1',
+          name: 'System 1',
+          featureType: 'sosa:System',
+          systemType: 'sosa:Platform',
+        },
       };
       const result = parseSystemFeature(feature);
-      expect(result.systemType).toBe("sosa:Platform");
+      expect(result.systemType).toBe('sosa:Platform');
     });
-    
+
     it('throws error for invalid systemType vocabulary', () => {
       const feature = {
-        type: "Feature",
+        type: 'Feature',
         geometry: null,
         properties: {
-          uid: "urn:example:1",
-          name: "System 1",
-          featureType: "sosa:System",
-          systemType: "http://example.com/CustomSensor"
-        }
+          uid: 'urn:example:1',
+          name: 'System 1',
+          featureType: 'sosa:System',
+          systemType: 'http://example.com/CustomSensor',
+        },
       };
-      expect(() => parseSystemFeature(feature))
-        .toThrow(/Invalid systemType value.*SOSA/);
+      expect(() => parseSystemFeature(feature)).toThrow(
+        /Invalid systemType value.*SOSA/
+      );
     });
   });
-  
+
   describe('assetType Validation', () => {
     it.each(['Equipment', 'Human', 'Simulation'])(
       'accepts valid assetType: %s',
       (assetType) => {
         const feature = {
-          type: "Feature",
+          type: 'Feature',
           geometry: null,
           properties: {
-            uid: "urn:example:1",
-            name: "System 1",
-            featureType: "sosa:System",
-            assetType
-          }
+            uid: 'urn:example:1',
+            name: 'System 1',
+            featureType: 'sosa:System',
+            assetType,
+          },
         };
         const result = parseSystemFeature(feature);
         expect(result.assetType).toBe(assetType);
       }
     );
-    
+
     it('throws error for invalid assetType', () => {
       const feature = {
-        type: "Feature",
+        type: 'Feature',
         geometry: null,
         properties: {
-          uid: "urn:example:1",
-          name: "System 1",
-          featureType: "sosa:System",
-          assetType: "Robot"
-        }
+          uid: 'urn:example:1',
+          name: 'System 1',
+          featureType: 'sosa:System',
+          assetType: 'Robot',
+        },
       };
-      expect(() => parseSystemFeature(feature))
-        .toThrow(/Invalid assetType.*Equipment, Human, Simulation/);
+      expect(() => parseSystemFeature(feature)).toThrow(
+        /Invalid assetType.*Equipment, Human, Simulation/
+      );
     });
   });
-  
+
   describe('validTime Parsing', () => {
     it('parses open-ended validTime period', () => {
       const feature = {
-        type: "Feature",
+        type: 'Feature',
         geometry: null,
         properties: {
-          uid: "urn:example:1",
-          name: "System 1",
-          featureType: "sosa:System",
-          validTime: ["2024-01-01T00:00:00Z", null]
-        }
+          uid: 'urn:example:1',
+          name: 'System 1',
+          featureType: 'sosa:System',
+          validTime: ['2024-01-01T00:00:00Z', null],
+        },
       };
       const result = parseSystemFeature(feature);
-      expect(result.validTime?.begin).toEqual(new Date("2024-01-01T00:00:00Z"));
+      expect(result.validTime?.begin).toEqual(new Date('2024-01-01T00:00:00Z'));
       expect(result.validTime?.end).toBeNull();
     });
-    
+
     it('parses closed validTime period', () => {
       const feature = {
-        type: "Feature",
+        type: 'Feature',
         geometry: null,
         properties: {
-          uid: "urn:example:1",
-          name: "System 1",
-          featureType: "sosa:System",
-          validTime: ["2024-01-01T00:00:00Z", "2024-12-31T23:59:59Z"]
-        }
+          uid: 'urn:example:1',
+          name: 'System 1',
+          featureType: 'sosa:System',
+          validTime: ['2024-01-01T00:00:00Z', '2024-12-31T23:59:59Z'],
+        },
       };
       const result = parseSystemFeature(feature);
-      expect(result.validTime?.begin).toEqual(new Date("2024-01-01T00:00:00Z"));
-      expect(result.validTime?.end).toEqual(new Date("2024-12-31T23:59:59Z"));
+      expect(result.validTime?.begin).toEqual(new Date('2024-01-01T00:00:00Z'));
+      expect(result.validTime?.end).toEqual(new Date('2024-12-31T23:59:59Z'));
     });
-    
+
     it('throws error for start > end', () => {
       const feature = {
-        type: "Feature",
+        type: 'Feature',
         geometry: null,
         properties: {
-          uid: "urn:example:1",
-          name: "System 1",
-          featureType: "sosa:System",
-          validTime: ["2024-12-31T23:59:59Z", "2024-01-01T00:00:00Z"]
-        }
+          uid: 'urn:example:1',
+          name: 'System 1',
+          featureType: 'sosa:System',
+          validTime: ['2024-12-31T23:59:59Z', '2024-01-01T00:00:00Z'],
+        },
       };
-      expect(() => parseSystemFeature(feature))
-        .toThrow(/start time must be before or equal to end time/);
+      expect(() => parseSystemFeature(feature)).toThrow(
+        /start time must be before or equal to end time/
+      );
     });
   });
-  
+
   describe('Error Cases', () => {
     it('throws error for missing uid', () => {
       const feature = {
-        type: "Feature",
+        type: 'Feature',
         geometry: null,
         properties: {
-          name: "System 1",
-          featureType: "sosa:System"
-        }
+          name: 'System 1',
+          featureType: 'sosa:System',
+        },
       };
-      expect(() => parseSystemFeature(feature))
-        .toThrow(/Missing required property: uid/);
+      expect(() => parseSystemFeature(feature)).toThrow(
+        /Missing required property: uid/
+      );
     });
-    
+
     it('throws error for invalid uid format', () => {
-      expect(() => parseSystemFeature(systemInvalidUID))
-        .toThrow(/Invalid URI format.*uid/);
+      expect(() => parseSystemFeature(systemInvalidUID)).toThrow(
+        /Invalid URI format.*uid/
+      );
     });
   });
-  
 });
 ```
 
@@ -2656,6 +2931,7 @@ describe('Systems Resource GeoJSON Parsing', () => {
 **Implementation Effort:** 3-5 days (parsing + tests)
 
 **Review Checklist:**
+
 - ✅ All 74 research questions answered
 - ✅ All 5 resource types covered comprehensively
 - ✅ Reuse strategy clear (extend existing, don't duplicate)
@@ -2672,6 +2948,7 @@ describe('Systems Resource GeoJSON Parsing', () => {
 - ✅ Example test implementation provided
 
 **Next Steps:**
+
 1. Review document with team
 2. Create fixture directory structure
 3. Implement GeoJSON parser extensions

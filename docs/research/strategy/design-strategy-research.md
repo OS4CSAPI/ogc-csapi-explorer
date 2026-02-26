@@ -25,12 +25,14 @@ Everything else is secondary. This research answers that question definitively.
 The object returned by `endpoint.edr()` is called **`EDRQueryBuilder`** (not "navigator").
 
 **Answers:**
+
 - [x] What does PR #114 call the object returned by `endpoint.edr()`? → **`EDRQueryBuilder`**
 - [x] Is "navigator" the correct upstream term? → **No, "QueryBuilder" is the pattern**
 - [x] What's the actual class name in PR #114? → **`EDRQueryBuilder`**
 - [x] What terminology should CSAPI use? → **`CSAPIQueryBuilder`**
 
 **Confirmed Pattern:**
+
 ```typescript
 // EDR implementation:
 endpoint.edr() → returns EDRQueryBuilder
@@ -39,7 +41,8 @@ endpoint.edr() → returns EDRQueryBuilder
 endpoint.csapi() → returns CSAPIQueryBuilder
 ```
 
-**Impact:** 
+**Impact:**
+
 - Previous "navigator" terminology was incorrect
 - CSAPI implementation must use "QueryBuilder" pattern
 - Minimal documentation updates needed (terminology wasn't widely used in committed docs yet)
@@ -55,6 +58,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 **RESOLUTION (from PR #114 analysis):**
 
 **PR #114 Metrics:**
+
 - **Total:** 2858 additions, 54 deletions
 - **Implementation code:** ~750 lines (26%)
 - **Test code:** ~2050 lines (72%)
@@ -63,12 +67,14 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 - **Core modifications:** ~115 lines to existing files
 
 **CSAPI Projection:**
+
 - EDR has 5 query types, CSAPI has 9 resources
 - Estimated **~3500 total lines** (~975 implementation, ~2450 tests, ~75 other)
 - This is **~25% larger than EDR** (reasonable for 80% more resources)
 - **NOT 2x the size of entire repo** - that was over-engineering in previous attempts
 
 **Answers:**
+
 - [x] How large is PR #114? → **2858 total lines, 750 implementation**
 - [x] Typical size? → **~750 implementation per API family**
 - [x] EDR resources vs CSAPI? → **5 query types vs 9 resources**
@@ -89,6 +95,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 **Analysis:** [docs/research/upstream/pr114-analysis.md](../upstream/pr114-analysis.md)
 
 **Answers:**
+
 - [x] **PRIORITY: What is the object returned by endpoint.edr() actually called?** → **`EDRQueryBuilder`** (Analysis Section 2)
 - [x] **PRIORITY: How many lines of code / files did PR #114 add?** → **2858 additions, 54 deletions, 18 files** (Section 1)
 - [x] What files were added? → **18 files documented in complete structure** (Section 3.1)
@@ -113,6 +120,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 ### 2. ✅ Existing ogc-client Architecture Patterns (COMPLETED)
 
 **Files studied:**
+
 - `src/ogc-api/endpoint.ts` - Main endpoint class
 - `src/ogc-api/info.ts` - Conformance and capability checking
 - `src/index.ts` - Public API exports
@@ -122,6 +130,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 **Analysis:** [docs/research/upstream/architecture-patterns-analysis.md](../upstream/architecture-patterns-analysis.md)
 
 **Answers:**
+
 - [x] What's the consistent pattern for adding new API support? → **5-step pattern: conformance check (info.ts) + capability getter (endpoint.ts) + collection filter + factory method + exports** (Analysis Section 2)
 - [x] How do implementations extend OgcApiEndpoint? → **They DON'T - QueryBuilder pattern via composition, not inheritance** (Section 3)
 - [x] How are collection-specific capabilities determined? → **Two-level: endpoint conformance + collection metadata via getCollectionInfo()** (Section 4)
@@ -146,6 +155,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 **Analysis:** [docs/research/upstream/querybuilder-pattern-analysis.md](../upstream/querybuilder-pattern-analysis.md)
 
 **Answers:**
+
 - [x] **What is the correct terminology?** → **QueryBuilder (not "navigator" - that was invented term from previous attempt)** (Analysis Section 1)
 - [x] What is a "QueryBuilder" in ogc-client context? → **Standalone class that encapsulates collection metadata and provides query methods** (Section 2)
 - [x] What's the lifecycle of a QueryBuilder instance? → **4 phases: instantiation (via endpoint) → configuration (constructor) → usage (method calls) → reuse (caching)** (Section 3)
@@ -169,6 +179,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 **Analysis:** [docs/research/upstream/url-building-analysis.md](../upstream/url-building-analysis.md)
 
 **Answers:**
+
 - [x] Should there be a base URL builder class? → **No - native URL API + link relations are sufficient** (Analysis Section 2)
 - [x] How are query parameters assembled? → **Via URL.searchParams.set() for each parameter** (Section 3)
 - [x] How is URL encoding handled? → **Automatic via URL API - no manual encoding needed** (Section 4)
@@ -191,6 +202,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 **Analysis:** [docs/research/upstream/typescript-types-analysis.md](../upstream/typescript-types-analysis.md)
 
 **Answers:**
+
 - [x] How should query parameter types be defined? → **Optional parameters interface pattern with all fields optional** (Analysis Section 3)
 - [x] Should each resource have its own query interface? → **Base QueryOptions + extended interfaces for resource-specific params** (Section 3, Pattern 4)
 - [x] How to model shared parameters (bbox, datetime, limit)? → **Reuse from shared/models.ts - already defined** (Section 5)
@@ -213,6 +225,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 **Analysis:** [docs/research/upstream/file-organization-analysis.md](../upstream/file-organization-analysis.md)
 
 **Answers:**
+
 - [x] What files go in `src/ogc-api/csapi/`? → **5 core files: model.ts, url_builder.ts, helpers.ts, + 2 test files** (Analysis Section 10)
 - [x] Should there be subdirectories? → **No - flat structure like EDR (5 files doesn't need subdirs)** (Section 10)
 - [x] How to organize 9 resource types? → **All in single model.ts file (~350-400 lines)** (Section 10)
@@ -234,6 +247,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 **Analysis:** [docs/research/upstream/integration-analysis.md](../upstream/integration-analysis.md)
 
 **Answers:**
+
 - [x] Exactly what changes to `endpoint.ts`? → **5 additions: import, cache field, collections getter, conformance getter, factory method (~35 lines)** (Analysis Section 3)
 - [x] Exactly what changes to `info.ts`? → **1 function: checkHasConnectedSystems (~12 lines)** (Section 4)
 - [x] Exactly what changes to `index.ts`? → **Export 9 resources + 3 option types + 2 helpers (~17 lines)** (Section 5)
@@ -253,6 +267,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 **Analysis:** [docs/research/upstream/format-negotiation-analysis.md](../upstream/format-negotiation-analysis.md)
 
 **Answers:**
+
 - [x] Where does format negotiation logic live? → **Inline in url_builder.ts, no separate module** (Analysis Section 1)
 - [x] How are Accept headers set? → **Not used - CSAPI uses query parameter instead** (Section 3)
 - [x] How is Content-Type detected? → **Not validated - trust server compliance** (Section 6)
@@ -268,6 +283,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 ### 9. Error Handling Design ✅
 
 **Questions to answer:**
+
 - [x] What errors should the library throw? → **Only conformance check, collection not found, required links missing** (Section 9)
 - [x] What errors should be left to user? → **Resource IDs, parameter values, formats - all server-validated** (Section 8)
 - [x] How to handle invalid parameters? → **Trust TypeScript types, no runtime validation** (Section 3, 4)
@@ -283,6 +299,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 ### 10. CSAPI-Specific Architectural Decisions
 
 **Questions to answer:**
+
 - [x] How to handle 9 different resource types cleanly? → **Single QueryBuilder with helper methods, ~70-80 methods** (Section 3, 6)
 - [x] Should resources share base implementation? → **No inheritance - use private helpers like buildResourceUrl** (Section 6)
 - [x] How to model Part 1 vs Part 2 resources? → **Single class, logical sections via comments** (Section 4)
@@ -300,6 +317,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 ### 11. Code Reuse vs Duplication ✅
 
 **Questions to answer:**
+
 - [x] When to reuse upstream utilities vs duplicate? → **Reuse types, errors, OGC API utils; duplicate simple helpers (<15 lines)** (Section 4, 6)
 - [x] What shared models exist for bbox, datetime, pagination? → **BoundingBox, DateTimeParameter in shared/models.ts - always import** (Section 2, 5)
 - [x] Should we create abstraction base classes? → **No - duplicate CSAPI-specific logic instead** (Section 6)
@@ -315,6 +333,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 ### 12. Lessons from Previous Iterations ✅
 
 **From [ogc-client-CSAPI](https://github.com/OS4CSAPI/ogc-client-CSAPI):**
+
 - [x] What architectural decisions worked well? → **URL building pattern, resource coverage, isolation in own directory** (Section 3)
 - [x] What was over-engineered? → **Format parsing (~2000-4000 lines), validation, domain types, abstractions - saved ~3000-6000 lines** (Section 4)
 - [x] What was under-engineered? → **Test quality (trivial tests), documentation, incremental planning** (Section 5)
@@ -332,16 +351,19 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 ## Research Deliverables
 
 ### Phase 1: Pattern Discovery (Do these first)
+
 1. **PR #114 Architecture Document** - Complete file-by-file breakdown
 2. **Upstream Pattern Catalog** - Common patterns across WFS/STAC/EDR
 3. **Navigator Pattern Specification** - Exact pattern to follow
 
 ### Phase 2: Design Decisions
+
 4. **File Organization Plan** - Exact file structure for CSAPI
 5. **Type System Design** - Complete TypeScript interface definitions
 6. **Integration Point Specification** - Exact changes to endpoint.ts, info.ts, index.ts
 
 ### Phase 3: Implementation Blueprint
+
 7. **Architecture Diagram** - Visual representation of module structure
 8. **Class/Interface Reference** - What needs to be created
 9. **Implementation Checklist** - Step-by-step build order
@@ -351,6 +373,7 @@ endpoint.csapi() → returns CSAPIQueryBuilder
 ## Success Criteria
 
 Research is complete when we can answer:
+
 1. ✅ "What exact files do we need to create?"
 2. ✅ "What exact changes do we make to existing files?"
 3. ✅ "How do we structure the navigator class?"
@@ -363,6 +386,7 @@ Research is complete when we can answer:
 ## Critical Constraints (From Governance)
 
 **Must follow these when designing:**
+
 - ✅ Additive only - minimize modifications to existing files
 - ✅ No refactoring of upstream code
 - ✅ Follow existing patterns exactly
@@ -385,20 +409,15 @@ Research is complete when we can answer:
 ## Investigation Priority Order
 
 **Week 1: Foundation (CRITICAL)**
+
 1. **FIRST:** Resolve terminology question - what is the correct term for the object returned by endpoint methods?
 2. PR #114 complete file-by-file analysis
 3. Existing endpoint.ts patterns
 4. [CORRECT_TERM] pattern deep dive
 
-**Week 2: Details**
-4. URL building patterns
-5. Type system design
-6. File organization
+**Week 2: Details** 4. URL building patterns 5. Type system design 6. File organization
 
-**Week 3: Integration**
-7. Integration points specification
-8. Format negotiation architecture
-9. Final architecture document
+**Week 3: Integration** 7. Integration points specification 8. Format negotiation architecture 9. Final architecture document
 
 ---
 
@@ -407,11 +426,13 @@ Research is complete when we can answer:
 _(Add research findings here as we investigate)_
 
 ### PR #114 Analysis
+
 - [ ] TODO: Pull PR and analyze
 
 ### Upstream Patterns
+
 - [ ] TODO: Study existing implementations
 
 ### Key Architectural Decisions
-- [ ] TODO: Document decisions as they're made
 
+- [ ] TODO: Document decisions as they're made

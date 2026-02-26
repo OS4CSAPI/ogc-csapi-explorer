@@ -62,7 +62,7 @@ Neither OSH nor 52North advertises `/properties` through link relations in their
 
 2. **`scanCsapiLinks()` already scans for it.** The function is convention-aware, not resource-type-aware. It doesn't skip properties — it checks every link against all three conventions. The issue is that no link matches, not that our scanner ignores properties.
 
-3. **Documented the workaround.** The `scanCsapiLinks()` JSDoc explicitly states: *"Servers that do not use any of these three conventions will produce an empty map. In that case, consumers should supply explicit resource URLs via the `resourceUrls` constructor parameter of CSAPIQueryBuilder."*
+3. **Documented the workaround.** The `scanCsapiLinks()` JSDoc explicitly states: _"Servers that do not use any of these three conventions will produce an empty map. In that case, consumers should supply explicit resource URLs via the `resourceUrls` constructor parameter of CSAPIQueryBuilder."_
 
 4. **The QueryBuilder already supports direct URL construction.** A consumer can call `builder.getProperties()` directly — it builds the URL from the base path. Discovery via links is a convenience, not a requirement.
 
@@ -98,6 +98,7 @@ This finding generated the most confusion across multiple reviews, so this secti
 1. **Reported upstream:** Filed as [Issue #16](https://github.com/52North/connected-systems-pygeoapi/issues/16) on `52North/connected-systems-pygeoapi`. The root cause is the server putting the wrong `featureType` value on procedure resources. Ball is in their court.
 
 2. **Built a robust fallback path:** [Issue #50](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/50) added `classifyFeature()` in `classification.ts`, which accepts an optional endpoint-context hint. When our code fetches from `/procedures`, it provides that hint. The two-step logic:
+
    - First: try `getCSAPIResourceType()` (featureType-based classification)
    - If that returns non-null, trust it
    - If that returns null (e.g., 52North's null-featureType features), fall back to the endpoint hint
@@ -122,13 +123,13 @@ Adding server-specific workarounds (e.g., "if server is 52North then do X") woul
 
 ## Summary Table
 
-| Finding | Verdict | Action Required |
-|---------|---------|-----------------|
-| **P4-F1** | Phase 4.2 scope | Timeout/SSE strategy for command POST |
-| **P4-F2** | Phase 4.2 scope | Preserve server-assigned uid on PUT |
-| **F82** | Already mitigated | None |
-| **F5** | Out of scope | None — upstream concern |
-| **F14** | Already handled | None — server-side gap, scanner is spec-correct, workaround exists |
-| **F84** | Already handled | None — upstream bug, reported, fallback works |
+| Finding   | Verdict           | Action Required                                                    |
+| --------- | ----------------- | ------------------------------------------------------------------ |
+| **P4-F1** | Phase 4.2 scope   | Timeout/SSE strategy for command POST                              |
+| **P4-F2** | Phase 4.2 scope   | Preserve server-assigned uid on PUT                                |
+| **F82**   | Already mitigated | None                                                               |
+| **F5**    | Out of scope      | None — upstream concern                                            |
+| **F14**   | Already handled   | None — server-side gap, scanner is spec-correct, workaround exists |
+| **F84**   | Already handled   | None — upstream bug, reported, fallback works                      |
 
 **Net result:** Of the 6 deferred findings, 2 are real Phase 4.2 work (P4-F1, P4-F2), and 4 require no further action from our CSAPI contribution (F82 mitigated, F5 out of scope, F14 complete, F84 complete).

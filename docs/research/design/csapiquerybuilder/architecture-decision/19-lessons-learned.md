@@ -11,11 +11,13 @@
 ## Research Objectives
 
 1. **Failure Analysis:**
+
    - What architectural choices led to rejection?
    - Over-engineering vs under-engineering
    - Code organization issues
 
 2. **Success Patterns:**
+
    - What worked well in previous attempts?
    - What was praised by reviewers?
    - What should be preserved?
@@ -41,6 +43,7 @@
 ## Expected Findings
 
 **Critical insights from failures:**
+
 - Patterns that led to rejection
 - Architectural red flags
 - Success criteria

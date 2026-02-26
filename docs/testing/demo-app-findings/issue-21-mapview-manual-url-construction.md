@@ -1,8 +1,7 @@
 # Findings Report: Issue #21 — Replace Manual URL Construction in MapViewPage with CSAPIQueryBuilder Methods
 
 > **Date**: 2026-02-18
-> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#21](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/21)
-> **Labels on source issue**: `enhancement`
+> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#21](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/21) > **Labels on source issue**: `enhancement`
 
 ---
 
@@ -30,21 +29,21 @@ Issue #21 reports that `MapViewPage.vue` in the demo app (`ogc-csapi-explorer`) 
 
 Three locations in the demo app's `MapViewPage.vue` construct API URLs as raw strings instead of using the query builder:
 
-| Manual URL | Location | Purpose |
-|---|---|---|
-| `` `/datastreams/${id}/observations?limit=1` `` | `MapViewPage.vue` ~L352 | Fetch latest observation for system location |
+| Manual URL                                           | Location                | Purpose                                          |
+| ---------------------------------------------------- | ----------------------- | ------------------------------------------------ |
+| `` `/datastreams/${id}/observations?limit=1` ``      | `MapViewPage.vue` ~L352 | Fetch latest observation for system location     |
 | `` `/systems/${sysId}/samplingFeatures?limit=100` `` | `MapViewPage.vue` ~L544 | Enrich sampling features with parent system data |
-| `` `/datastreams/${id}/observations?limit=500` `` | `MapViewPage.vue` ~L670 | Load observation tracks for map layer |
+| `` `/datastreams/${id}/observations?limit=500` ``    | `MapViewPage.vue` ~L670 | Load observation tracks for map layer            |
 
 ### What the issue proposes
 
 Replace each manual `fetch()` call with the corresponding builder method call:
 
-| Manual URL | Builder Method |
-|---|---|
-| `/datastreams/{id}/observations?limit=1` | `getDataStreamObservations(id, { limit: 1 })` |
+| Manual URL                                    | Builder Method                                     |
+| --------------------------------------------- | -------------------------------------------------- |
+| `/datastreams/{id}/observations?limit=1`      | `getDataStreamObservations(id, { limit: 1 })`      |
 | `/systems/{sysId}/samplingFeatures?limit=100` | `getSystemSamplingFeatures(sysId, { limit: 100 })` |
-| `/datastreams/{id}/observations?limit=500` | `getDataStreamObservations(id, { limit: 500 })` |
+| `/datastreams/{id}/observations?limit=500`    | `getDataStreamObservations(id, { limit: 500 })`    |
 
 ### Affected files (per the issue)
 
@@ -88,6 +87,7 @@ Both methods have complete JSDoc documentation with `@example` blocks and `@see`
 ### This is a demo app code quality issue, not a library issue
 
 The issue is labeled `enhancement` and its scope is entirely within the demo app:
+
 - The code producing hardcoded URLs is in `MapViewPage.vue` (demo app)
 - The proposed fix adds helpers in `csapi-bridge.ts` (demo app)
 - The library's builder methods are already complete and correct
@@ -101,6 +101,7 @@ The [query parameter coverage recommendations](https://github.com/OS4CSAPI/ogc-c
 ### No library source changes are proposed or needed
 
 The issue does not propose any changes to:
+
 - `url_builder.ts` — the builder methods are already correct
 - `model.ts` — the type definitions are already correct
 - `helpers.ts` — no helper changes needed
@@ -133,20 +134,20 @@ This follows the established pattern from Issues #18, #19, and the majority of p
 
 ## Cross-References
 
-| Document | Relevance |
-|---|---|
-| [AI Operational Constraints §2.1, §2.2](../../governance/AI_OPERATIONAL_CONSTRAINTS.md) | No scope expansion; minimal diffs; do not infer unstated requirements |
-| [query-parameter-demonstration-coverage.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/query-parameter-demonstration-coverage.md) | Primary source: lists `getDataStreamObservations()` and `getSystemSamplingFeatures()` as "Not Demonstrated" in demo app |
-| [query-parameter-coverage-recommendations.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/query-parameter-coverage-recommendations.md) | Recommendation 1 (Priority 1) IS Issue #21 — demo app improvement plan |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | Establishes the pattern of replacing manual URLs with builder calls (for CRUD components; MapViewPage was not part of that integration) |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Confirms builder methods work correctly; assesses library contribution goal accuracy |
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | Finding #7 mentions `getObservationsForDatastream()` as missing — but `getDataStreamObservations()` exists (different name) |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | Finding #7 confirms cross-server context; builder methods are functional |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | Documents F-2 (missing nested create methods) — separate issue from #21 |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | Explains demo architecture bypassing `OgcApiEndpoint` — context for why MapViewPage uses direct builder |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | Phase 1 findings context (F-15, F-16) — unrelated to Issue #21 |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | Write operation context — unrelated to Issue #21 |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | EndpointError refactor context — unrelated to Issue #21 |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | Confirms one library source change (e73cff8); no changes related to these methods |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | Schema method findings — unrelated to Issue #21 |
-| [url_builder.ts](../../src/ogc-api/csapi/url_builder.ts) | `getDataStreamObservations()` at L1348; `getSystemSamplingFeatures()` at L484 — both fully implemented |
+| Document                                                                                                                                                             | Relevance                                                                                                                               |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| [AI Operational Constraints §2.1, §2.2](../../governance/AI_OPERATIONAL_CONSTRAINTS.md)                                                                              | No scope expansion; minimal diffs; do not infer unstated requirements                                                                   |
+| [query-parameter-demonstration-coverage.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/query-parameter-demonstration-coverage.md)     | Primary source: lists `getDataStreamObservations()` and `getSystemSamplingFeatures()` as "Not Demonstrated" in demo app                 |
+| [query-parameter-coverage-recommendations.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/query-parameter-coverage-recommendations.md) | Recommendation 1 (Priority 1) IS Issue #21 — demo app improvement plan                                                                  |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                             | Establishes the pattern of replacing manual URLs with builder calls (for CRUD components; MapViewPage was not part of that integration) |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md)       | Confirms builder methods work correctly; assesses library contribution goal accuracy                                                    |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                           | Finding #7 mentions `getObservationsForDatastream()` as missing — but `getDataStreamObservations()` exists (different name)             |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                                   | Finding #7 confirms cross-server context; builder methods are functional                                                                |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                       | Documents F-2 (missing nested create methods) — separate issue from #21                                                                 |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md)       | Explains demo architecture bypassing `OgcApiEndpoint` — context for why MapViewPage uses direct builder                                 |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                                 | Phase 1 findings context (F-15, F-16) — unrelated to Issue #21                                                                          |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                           | Write operation context — unrelated to Issue #21                                                                                        |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)                   | EndpointError refactor context — unrelated to Issue #21                                                                                 |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                         | Confirms one library source change (e73cff8); no changes related to these methods                                                       |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                                   | Schema method findings — unrelated to Issue #21                                                                                         |
+| [url_builder.ts](../../src/ogc-api/csapi/url_builder.ts)                                                                                                             | `getDataStreamObservations()` at L1348; `getSystemSamplingFeatures()` at L484 — both fully implemented                                  |

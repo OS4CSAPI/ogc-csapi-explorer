@@ -7,6 +7,7 @@
 **Purpose:** Validate the 6 new Properties methods and verify no regressions after Issue #40 (code review findings fix) and Issue #41 (Phase 2.5 review findings fix).
 
 > This is smoke test #5 in the series. See also:
+>
 > - [Post Phase 2.4](live-server-smoke-test-post-phase-2.4.md) — validated 36 methods, SamplingFeatures focus
 > - [Post Phase 2.3](live-server-smoke-test-post-phase-2.3.md) — validated Procedures
 > - [Post Phase 2.2](live-server-smoke-test-post-phase-2.2.md) — confirmed F1/F2 fixes
@@ -30,86 +31,86 @@ No code changes were made. All tests were run from the terminal using raw HTTP c
 
 ### OpenSensorHub (OSH)
 
-| Property | Value |
-|----------|-------|
-| URL | `http://45.55.99.236:8080/sensorhub/api` |
-| Auth | Basic (credentials not stored in repo) |
-| Root status | ✅ 200 — 10 links in root document |
-| Conformance classes | 33 |
+| Property            | Value                                    |
+| ------------------- | ---------------------------------------- |
+| URL                 | `http://45.55.99.236:8080/sensorhub/api` |
+| Auth                | Basic (credentials not stored in repo)   |
+| Root status         | ✅ 200 — 10 links in root document       |
+| Conformance classes | 33                                       |
 
 **Top-level resource links in root document (Convention 2):**
 
-| Resource Type | Present | Link |
-|--------------|---------|------|
-| systems | ✅ | `.../systems` |
-| deployments | ✅ | `.../deployments` |
-| procedures | ✅ | `.../procedures` |
-| samplingFeatures | ✅ | `.../samplingFeatures` |
-| datastreams | ✅ | `.../datastreams` |
-| observations | ✅ | `.../observations` |
-| properties | ❌ | **Not in root document** |
-| controlstreams | ❌ | Not in root document |
+| Resource Type    | Present | Link                     |
+| ---------------- | ------- | ------------------------ |
+| systems          | ✅      | `.../systems`            |
+| deployments      | ✅      | `.../deployments`        |
+| procedures       | ✅      | `.../procedures`         |
+| samplingFeatures | ✅      | `.../samplingFeatures`   |
+| datastreams      | ✅      | `.../datastreams`        |
+| observations     | ✅      | `.../observations`       |
+| properties       | ❌      | **Not in root document** |
+| controlstreams   | ❌      | Not in root document     |
 
 **Collections (Convention 3):**
 
-| Collection | `rel: "items"` href |
-|-----------|---------------------|
-| `all_systems` | `systems` |
-| `all_datastreams` | `datastreams` |
-| `all_fois` | `samplingFeatures` |
-| `all_procedures` | `procedures` |
+| Collection        | `rel: "items"` href |
+| ----------------- | ------------------- |
+| `all_systems`     | `systems`           |
+| `all_datastreams` | `datastreams`       |
+| `all_fois`        | `samplingFeatures`  |
+| `all_procedures`  | `procedures`        |
 
 No `properties` collection exists in OSH.
 
 **Server resource inventory:**
 
-| Resource Type | Count | Status | Change from Phase 2.4 |
-|--------------|-------|--------|----------------------|
-| Systems | 12 | ✅ Has data | Unchanged |
-| Deployments | 0 | ✅ Endpoint functional | Unchanged |
-| Procedures | 0 | ✅ Endpoint functional | Unchanged |
-| SamplingFeatures | 51+ | ✅ Has data | Unchanged |
-| Datastreams | 100+ | ✅ Has data | Unchanged |
-| Observations | 100+ | ✅ Has data | Unchanged |
-| ControlStreams | 8 | ✅ Has data | Unchanged |
-| **Properties** | **0** | **✅ Endpoint functional** | **Unchanged** |
+| Resource Type    | Count | Status                     | Change from Phase 2.4 |
+| ---------------- | ----- | -------------------------- | --------------------- |
+| Systems          | 12    | ✅ Has data                | Unchanged             |
+| Deployments      | 0     | ✅ Endpoint functional     | Unchanged             |
+| Procedures       | 0     | ✅ Endpoint functional     | Unchanged             |
+| SamplingFeatures | 51+   | ✅ Has data                | Unchanged             |
+| Datastreams      | 100+  | ✅ Has data                | Unchanged             |
+| Observations     | 100+  | ✅ Has data                | Unchanged             |
+| ControlStreams   | 8     | ✅ Has data                | Unchanged             |
+| **Properties**   | **0** | **✅ Endpoint functional** | **Unchanged**         |
 
 ### 52North CSA Demo
 
-| Property | Value |
-|----------|-------|
-| URL | `https://csa.demo.52north.org` |
-| Auth | None required |
-| SSL | Expired certificate — requires `-SkipCertificateCheck` |
-| Root status | ✅ 200 — 7 links in root document |
-| Conformance classes | 1 (`ogcapi-common-1/1.0/conf/core`) |
+| Property            | Value                                                  |
+| ------------------- | ------------------------------------------------------ |
+| URL                 | `https://csa.demo.52north.org`                         |
+| Auth                | None required                                          |
+| SSL                 | Expired certificate — requires `-SkipCertificateCheck` |
+| Root status         | ✅ 200 — 7 links in root document                      |
+| Conformance classes | 1 (`ogcapi-common-1/1.0/conf/core`)                    |
 
 **Top-level resource links:** No CSAPI-specific resource links (only `conformance`, `data`, `service-desc`, etc.)
 
 **Collections (Convention 3):**
 
-| Collection | `rel: "items"` href |
-|-----------|---------------------|
-| `all_systems` | `/systems?f=application/json` |
-| `all_datastreams` | `/datastreams?f=application/json` |
-| `all_fois` | `/featuresOfInterest?f=application/json` |
-| `all_procedures` | `procedures?f=application/json` |
-| `all_deployments` | `deployments?f=application/json` |
+| Collection        | `rel: "items"` href                      |
+| ----------------- | ---------------------------------------- |
+| `all_systems`     | `/systems?f=application/json`            |
+| `all_datastreams` | `/datastreams?f=application/json`        |
+| `all_fois`        | `/featuresOfInterest?f=application/json` |
+| `all_procedures`  | `procedures?f=application/json`          |
+| `all_deployments` | `deployments?f=application/json`         |
 
 No `properties` collection exists in 52North.
 
 **Server resource inventory:**
 
-| Resource Type | Count | Status | Change from Phase 2.4 |
-|--------------|-------|--------|----------------------|
-| Systems | **3** | ✅ Has data | **+1** (new: `5300-909` — SMARTGUARD Platform) |
-| Deployments | 1 | ✅ Has data | Unchanged |
-| Procedures | 1 | ✅ Has data | Unchanged |
-| SamplingFeatures | 0 | ✅ Endpoint functional | Unchanged |
-| Datastreams | — | ❌ 500 Server Error | Unchanged |
-| Observations | — | ❌ 500 Server Error | Unchanged |
-| ControlStreams | — | ❌ 404 Not Found | Unchanged |
-| **Properties** | **0** | **✅ Endpoint functional** | **Unchanged** |
+| Resource Type    | Count | Status                     | Change from Phase 2.4                          |
+| ---------------- | ----- | -------------------------- | ---------------------------------------------- |
+| Systems          | **3** | ✅ Has data                | **+1** (new: `5300-909` — SMARTGUARD Platform) |
+| Deployments      | 1     | ✅ Has data                | Unchanged                                      |
+| Procedures       | 1     | ✅ Has data                | Unchanged                                      |
+| SamplingFeatures | 0     | ✅ Endpoint functional     | Unchanged                                      |
+| Datastreams      | —     | ❌ 500 Server Error        | Unchanged                                      |
+| Observations     | —     | ❌ 500 Server Error        | Unchanged                                      |
+| ControlStreams   | —     | ❌ 404 Not Found           | Unchanged                                      |
+| **Properties**   | **0** | **✅ Endpoint functional** | **Unchanged**                                  |
 
 ---
 
@@ -117,21 +118,21 @@ No `properties` collection exists in 52North.
 
 ### Prior Findings — Regression Check
 
-| Finding | Status | Evidence |
-|---------|--------|----------|
-| **F1: Link relation prefix mismatch** (Critical) | **Still Fixed** ✅ | `scanCsapiLinks` detects 6 resource types from OSH root via Convention 2 |
-| **F2: Top-level vs. collection-scoped URLs** (Critical) | **Still Fixed** ✅ | `extractRootResourceUrls` returns correct mappings |
-| **F3: Response envelope uses `items`** (Moderate) | **Still deferred** | Both servers still use `{ items: [...] }` envelope. Phase 3 concern. |
-| **F4: `validTime` is an array** (Moderate) | **Still deferred** | Phase 3 concern — no changes to response shape. |
-| **F5: Missing pagination metadata** (Low) | **Still deferred** | Link-based pagination still the only method. Phase 3 concern. |
-| **F6: OSH rejects `systems/{id}/deployments`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F7: OSH rejects `systems/{id}/procedures`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F8: OSH rejects `samplingFeatures/{id}/systems`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F9: OSH rejects `samplingFeatures/{id}/history`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F10: 52North now has real data** | **Still true** ✅ | Now 3 systems (+1), 1 deployment, 1 procedure |
-| **F11: 52North uses SensorML format** | **Still true** ✅ | New system `5300-909` also returns SensorML `PhysicalSystem` |
-| **F12: 52North `systems/{id}/deployments` works** | **Still true** ✅ | 200 — 1 deployment for `5400-526` |
-| **F13: Both servers use `items` envelope** | **Still true** ✅ | Confirmed for all resource types including properties |
+| Finding                                                 | Status               | Evidence                                                                 |
+| ------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------ |
+| **F1: Link relation prefix mismatch** (Critical)        | **Still Fixed** ✅   | `scanCsapiLinks` detects 6 resource types from OSH root via Convention 2 |
+| **F2: Top-level vs. collection-scoped URLs** (Critical) | **Still Fixed** ✅   | `extractRootResourceUrls` returns correct mappings                       |
+| **F3: Response envelope uses `items`** (Moderate)       | **Still deferred**   | Both servers still use `{ items: [...] }` envelope. Phase 3 concern.     |
+| **F4: `validTime` is an array** (Moderate)              | **Still deferred**   | Phase 3 concern — no changes to response shape.                          |
+| **F5: Missing pagination metadata** (Low)               | **Still deferred**   | Link-based pagination still the only method. Phase 3 concern.            |
+| **F6: OSH rejects `systems/{id}/deployments`**          | **Still present** ✅ | 400 — server limitation unchanged                                        |
+| **F7: OSH rejects `systems/{id}/procedures`**           | **Still present** ✅ | 400 — server limitation unchanged                                        |
+| **F8: OSH rejects `samplingFeatures/{id}/systems`**     | **Still present** ✅ | 400 — server limitation unchanged                                        |
+| **F9: OSH rejects `samplingFeatures/{id}/history`**     | **Still present** ✅ | 400 — server limitation unchanged                                        |
+| **F10: 52North now has real data**                      | **Still true** ✅    | Now 3 systems (+1), 1 deployment, 1 procedure                            |
+| **F11: 52North uses SensorML format**                   | **Still true** ✅    | New system `5300-909` also returns SensorML `PhysicalSystem`             |
+| **F12: 52North `systems/{id}/deployments` works**       | **Still true** ✅    | 200 — 1 deployment for `5400-526`                                        |
+| **F13: Both servers use `items` envelope**              | **Still true** ✅    | Confirmed for all resource types including properties                    |
 
 **No regressions.** All prior fixes remain working. All prior server limitations remain unchanged.
 
@@ -143,84 +144,84 @@ No `properties` collection exists in 52North.
 
 **OSH** (System ID: `03bc5ofvvstg`):
 
-| Method | Result |
-|--------|--------|
-| `getSystems({ limit: 1 })` | ✅ 200 |
-| `getSystem('03bc5ofvvstg')` | ✅ 200 |
-| `createSystem()` | ✅ URL valid |
-| `updateSystem(id)` | ✅ URL valid |
-| `deleteSystem(id)` | ✅ URL valid |
-| `getSystemHistory(id)` | ✅ 200 — 1 item |
-| `getSubsystems(id)` | ✅ 200 — 0 items |
-| `getSystemDatastreams(id)` | ✅ 200 — 2 items |
-| `getSystemControlstreams(id)` | ✅ 200 — 0 items |
-| `getSystemSamplingFeatures(id)` | ✅ 200 — 0 items |
-| `getSystemDeployments(id)` | ❌ 400 (known F6) |
-| `getSystemProcedures(id)` | ❌ 400 (known F7) |
+| Method                          | Result            |
+| ------------------------------- | ----------------- |
+| `getSystems({ limit: 1 })`      | ✅ 200            |
+| `getSystem('03bc5ofvvstg')`     | ✅ 200            |
+| `createSystem()`                | ✅ URL valid      |
+| `updateSystem(id)`              | ✅ URL valid      |
+| `deleteSystem(id)`              | ✅ URL valid      |
+| `getSystemHistory(id)`          | ✅ 200 — 1 item   |
+| `getSubsystems(id)`             | ✅ 200 — 0 items  |
+| `getSystemDatastreams(id)`      | ✅ 200 — 2 items  |
+| `getSystemControlstreams(id)`   | ✅ 200 — 0 items  |
+| `getSystemSamplingFeatures(id)` | ✅ 200 — 0 items  |
+| `getSystemDeployments(id)`      | ❌ 400 (known F6) |
+| `getSystemProcedures(id)`       | ❌ 400 (known F7) |
 
 **52North** (System ID: `5400-526`):
 
-| Method | Result |
-|--------|--------|
-| `getSystems({ limit: 1 })` | ✅ 200 |
-| `getSystem('5400-526')` | ✅ 200 |
-| `createSystem()` | ✅ URL valid |
-| `updateSystem(id)` | ✅ URL valid |
-| `deleteSystem(id)` | ✅ URL valid |
-| `getSystemHistory(id)` | ❌ 400 (server limitation) |
-| `getSubsystems(id)` | ✅ 200 — 0 items |
-| `getSystemDatastreams(id)` | ❌ 500 (server error) |
-| `getSystemControlstreams(id)` | ❌ 400 (server limitation) |
-| `getSystemSamplingFeatures(id)` | ✅ 200 — 0 items |
-| `getSystemDeployments(id)` | ✅ 200 — 1 item |
-| `getSystemProcedures(id)` | ❌ 400 (server limitation) |
+| Method                          | Result                     |
+| ------------------------------- | -------------------------- |
+| `getSystems({ limit: 1 })`      | ✅ 200                     |
+| `getSystem('5400-526')`         | ✅ 200                     |
+| `createSystem()`                | ✅ URL valid               |
+| `updateSystem(id)`              | ✅ URL valid               |
+| `deleteSystem(id)`              | ✅ URL valid               |
+| `getSystemHistory(id)`          | ❌ 400 (server limitation) |
+| `getSubsystems(id)`             | ✅ 200 — 0 items           |
+| `getSystemDatastreams(id)`      | ❌ 500 (server error)      |
+| `getSystemControlstreams(id)`   | ❌ 400 (server limitation) |
+| `getSystemSamplingFeatures(id)` | ✅ 200 — 0 items           |
+| `getSystemDeployments(id)`      | ✅ 200 — 1 item            |
+| `getSystemProcedures(id)`       | ❌ 400 (server limitation) |
 
 #### Deployments Methods (8 methods) — No changes, regression only
 
 **OSH:** 0 deployments — top-level list ✅ 200 (empty).  
 **52North** (Deployment ID: `af41f84f-2492-40e2-a154-17df67119271`):
 
-| Method | Result |
-|--------|--------|
-| `getDeployments({ limit: 1 })` | ✅ 200 — 1 item |
-| `getDeployment(id)` | ✅ 200 |
-| `createDeployment()` | ✅ URL valid |
-| `updateDeployment(id)` | ✅ URL valid |
-| `deleteDeployment(id)` | ✅ URL valid |
+| Method                            | Result                     |
+| --------------------------------- | -------------------------- |
+| `getDeployments({ limit: 1 })`    | ✅ 200 — 1 item            |
+| `getDeployment(id)`               | ✅ 200                     |
+| `createDeployment()`              | ✅ URL valid               |
+| `updateDeployment(id)`            | ✅ URL valid               |
+| `deleteDeployment(id)`            | ✅ URL valid               |
 | `getDeploymentSubdeployments(id)` | ❌ 400 (server limitation) |
-| `getDeploymentSystems(id)` | ❌ 400 (server limitation) |
-| `getDeploymentHistory(id)` | ❌ 400 (server limitation) |
+| `getDeploymentSystems(id)`        | ❌ 400 (server limitation) |
+| `getDeploymentHistory(id)`        | ❌ 400 (server limitation) |
 
 #### Procedures Methods (8 methods) — No changes, regression only
 
 **OSH:** 0 procedures — top-level list ✅ 200 (empty).  
 **52North** (Procedure ID: `4e09de42-674d-4e03-a620-2d219b030a50`):
 
-| Method | Result |
-|--------|--------|
-| `getProcedures({ limit: 1 })` | ✅ 200 — 1 item |
-| `getProcedure(id)` | ✅ 200 |
-| `createProcedure()` | ✅ URL valid |
-| `updateProcedure(id)` | ✅ URL valid |
-| `deleteProcedure(id)` | ✅ URL valid |
-| `getProcedureSystems(id)` | ❌ 400 (server limitation) |
+| Method                        | Result                     |
+| ----------------------------- | -------------------------- |
+| `getProcedures({ limit: 1 })` | ✅ 200 — 1 item            |
+| `getProcedure(id)`            | ✅ 200                     |
+| `createProcedure()`           | ✅ URL valid               |
+| `updateProcedure(id)`         | ✅ URL valid               |
+| `deleteProcedure(id)`         | ✅ URL valid               |
+| `getProcedureSystems(id)`     | ❌ 400 (server limitation) |
 | `getProcedureDatastreams(id)` | ❌ 400 (server limitation) |
-| `getProcedureHistory(id)` | ❌ 400 (server limitation) |
+| `getProcedureHistory(id)`     | ❌ 400 (server limitation) |
 
 #### SamplingFeatures Methods (8 methods) — No changes, regression only
 
 **OSH** (SF ID: `040g`):
 
-| Method | Result |
-|--------|--------|
-| `getSamplingFeatures({ limit: 2 })` | ✅ 200 — 2 items |
-| `getSamplingFeature('040g')` | ✅ 200 |
-| `createSamplingFeature()` | ✅ URL valid |
-| `updateSamplingFeature(id)` | ✅ URL valid |
-| `deleteSamplingFeature(id)` | ✅ URL valid |
-| `getSamplingFeatureSystems(id)` | ❌ 400 (known F8) |
+| Method                               | Result            |
+| ------------------------------------ | ----------------- |
+| `getSamplingFeatures({ limit: 2 })`  | ✅ 200 — 2 items  |
+| `getSamplingFeature('040g')`         | ✅ 200            |
+| `createSamplingFeature()`            | ✅ URL valid      |
+| `updateSamplingFeature(id)`          | ✅ URL valid      |
+| `deleteSamplingFeature(id)`          | ✅ URL valid      |
+| `getSamplingFeatureSystems(id)`      | ❌ 400 (known F8) |
 | `getSamplingFeatureObservations(id)` | ✅ 200 — 2+ items |
-| `getSamplingFeatureHistory(id)` | ❌ 400 (known F9) |
+| `getSamplingFeatureHistory(id)`      | ❌ 400 (known F9) |
 
 **52North:** 0 samplingFeatures — top-level list ✅ 200 (empty).
 
@@ -228,45 +229,45 @@ No `properties` collection exists in 52North.
 
 **OSH:** Properties endpoint functional but 0 items. No `properties` link in root, no properties collection.
 
-| Method | URL Pattern | Result |
-|--------|------------|--------|
-| `getProperties()` | `.../properties` | ✅ 200 — 0 items |
-| `getProperties({ limit: 5 })` | `.../properties?limit=5` | ✅ 200 — 0 items |
-| `getProperties({ q: 'temp' })` | `.../properties?q=temp` | ✅ 200 — 0 items |
-| `getProperties({ offset: 0 })` | `.../properties?offset=0` | ✅ 200 — 0 items |
-| `getProperties({ f: 'json' })` | `.../properties?f=json` | ✅ 200 — 0 items |
-| `getProperty(id)` | N/A — no property data | N/A (no data) |
-| `getPropertySystems(id)` | N/A — no property data | N/A (no data) |
-| `getPropertyDataStreams(id)` | N/A — no property data | N/A (no data) |
-| `getPropertyControlStreams(id)` | N/A — no property data | N/A (no data) |
-| `getPropertyHistory(id)` | N/A — no property data | N/A (no data) |
+| Method                          | URL Pattern               | Result           |
+| ------------------------------- | ------------------------- | ---------------- |
+| `getProperties()`               | `.../properties`          | ✅ 200 — 0 items |
+| `getProperties({ limit: 5 })`   | `.../properties?limit=5`  | ✅ 200 — 0 items |
+| `getProperties({ q: 'temp' })`  | `.../properties?q=temp`   | ✅ 200 — 0 items |
+| `getProperties({ offset: 0 })`  | `.../properties?offset=0` | ✅ 200 — 0 items |
+| `getProperties({ f: 'json' })`  | `.../properties?f=json`   | ✅ 200 — 0 items |
+| `getProperty(id)`               | N/A — no property data    | N/A (no data)    |
+| `getPropertySystems(id)`        | N/A — no property data    | N/A (no data)    |
+| `getPropertyDataStreams(id)`    | N/A — no property data    | N/A (no data)    |
+| `getPropertyControlStreams(id)` | N/A — no property data    | N/A (no data)    |
+| `getPropertyHistory(id)`        | N/A — no property data    | N/A (no data)    |
 
 **52North:** Properties endpoint functional but 0 items. No properties collection.
 
-| Method | URL Pattern | Result |
-|--------|------------|--------|
-| `getProperties()` | `.../properties` | ✅ 200 — 0 items |
-| `getProperties({ limit: 5 })` | `.../properties?limit=5` | ✅ 200 — 0 items |
-| `getProperties({ q: 'temp' })` | `.../properties?q=temp` | ✅ 200 — 0 items |
-| `getProperties({ offset: 0 })` | `.../properties?offset=0` | ✅ 200 — 0 items |
-| `getProperties({ f: 'json' })` | `.../properties?f=json` | ✅ 200 — 0 items |
-| `getProperty(id)` | N/A — no property data | N/A (no data) |
-| `getPropertySystems(id)` | N/A — no property data | N/A (no data) |
-| `getPropertyDataStreams(id)` | N/A — no property data | N/A (no data) |
-| `getPropertyControlStreams(id)` | N/A — no property data | N/A (no data) |
-| `getPropertyHistory(id)` | N/A — no property data | N/A (no data) |
+| Method                          | URL Pattern               | Result           |
+| ------------------------------- | ------------------------- | ---------------- |
+| `getProperties()`               | `.../properties`          | ✅ 200 — 0 items |
+| `getProperties({ limit: 5 })`   | `.../properties?limit=5`  | ✅ 200 — 0 items |
+| `getProperties({ q: 'temp' })`  | `.../properties?q=temp`   | ✅ 200 — 0 items |
+| `getProperties({ offset: 0 })`  | `.../properties?offset=0` | ✅ 200 — 0 items |
+| `getProperties({ f: 'json' })`  | `.../properties?f=json`   | ✅ 200 — 0 items |
+| `getProperty(id)`               | N/A — no property data    | N/A (no data)    |
+| `getPropertySystems(id)`        | N/A — no property data    | N/A (no data)    |
+| `getPropertyDataStreams(id)`    | N/A — no property data    | N/A (no data)    |
+| `getPropertyControlStreams(id)` | N/A — no property data    | N/A (no data)    |
+| `getPropertyHistory(id)`        | N/A — no property data    | N/A (no data)    |
 
 ---
 
 ### Query Parameter Acceptance — Properties (NEW)
 
-| Parameter | OSH | 52North |
-|-----------|-----|---------|
-| No params | ✅ 200 | ✅ 200 |
-| `limit=5` | ✅ 200 | ✅ 200 |
-| `q=temp` | ✅ 200 | ✅ 200 |
-| `offset=0` | ✅ 200 | ✅ 200 |
-| `f=json` | ✅ 200 | ✅ 200 |
+| Parameter  | OSH    | 52North |
+| ---------- | ------ | ------- |
+| No params  | ✅ 200 | ✅ 200  |
+| `limit=5`  | ✅ 200 | ✅ 200  |
+| `q=temp`   | ✅ 200 | ✅ 200  |
+| `offset=0` | ✅ 200 | ✅ 200  |
+| `f=json`   | ✅ 200 | ✅ 200  |
 
 All query parameters accepted by both servers for the properties endpoint.
 
@@ -283,12 +284,12 @@ All query parameters accepted by both servers for the properties endpoint.
 
 **Evidence:**
 
-| Discovery Method | OSH | 52North |
-|-----------------|-----|---------|
-| Convention 1 (ogc-cs: prefix) | ❌ No `ogc-cs:properties` link | ❌ No `ogc-cs:properties` link |
-| Convention 2 (plain rel) | ❌ No `rel: "properties"` in root | ❌ No CSAPI links in root |
-| Convention 3 (collection items) | ❌ No properties collection | ❌ No properties collection |
-| Direct URL | ✅ `/properties` returns 200 | ✅ `/properties` returns 200 |
+| Discovery Method                | OSH                               | 52North                        |
+| ------------------------------- | --------------------------------- | ------------------------------ |
+| Convention 1 (ogc-cs: prefix)   | ❌ No `ogc-cs:properties` link    | ❌ No `ogc-cs:properties` link |
+| Convention 2 (plain rel)        | ❌ No `rel: "properties"` in root | ❌ No CSAPI links in root      |
+| Convention 3 (collection items) | ❌ No properties collection       | ❌ No properties collection    |
+| Direct URL                      | ✅ `/properties` returns 200      | ✅ `/properties` returns 200   |
 
 Both servers implement the `/properties` endpoint (returns 200 with empty `items`), but neither server advertises properties through any of the three link detection conventions our `scanCsapiLinks()` function supports. This means:
 
@@ -313,6 +314,7 @@ OSH root document has links for 6 resource types (`systems`, `deployments`, `pro
 **Ownership:** Upstream
 
 52North now has 3 systems (was 2 in Phase 2.4):
+
 - `5400-526` — Doppler Current Profiler Sensor (existing)
 - `YSI599503-00-1` — EXO3 Sonde (**new**)
 - `5300-909` — SMARTGUARD Platform (**new**)
@@ -325,57 +327,57 @@ The new system `5300-909` returns a SensorML `PhysicalSystem` with `definition: 
 
 ## Cross-Server Comparison
 
-| Dimension | OpenSensorHub | 52North | Match? |
-|-----------|--------------|---------|--------|
-| Root API status | ✅ 200 | ✅ 200 | ✅ |
-| Conformance classes | 33 | 1 | ❌ |
-| Convention 2 links | 6 resource types | 0 | ❌ |
-| Convention 3 collections | 4 | 5 | ❌ |
-| Properties discoverable | ❌ (no link) | ❌ (no link) | ✅ (both hidden) |
-| Properties endpoint works | ✅ 200 (empty) | ✅ 200 (empty) | ✅ |
-| Properties query params | All accepted | All accepted | ✅ |
-| Properties data | 0 items | 0 items | ✅ (both empty) |
-| Systems count | 12 | 3 (+1 new) | ❌ |
-| Collection envelope | `{ items: [...] }` | `{ items: [...] }` | ✅ |
-| Individual resource format | GeoJSON Feature | SensorML PhysicalSystem | ❌ |
+| Dimension                  | OpenSensorHub      | 52North                 | Match?           |
+| -------------------------- | ------------------ | ----------------------- | ---------------- |
+| Root API status            | ✅ 200             | ✅ 200                  | ✅               |
+| Conformance classes        | 33                 | 1                       | ❌               |
+| Convention 2 links         | 6 resource types   | 0                       | ❌               |
+| Convention 3 collections   | 4                  | 5                       | ❌               |
+| Properties discoverable    | ❌ (no link)       | ❌ (no link)            | ✅ (both hidden) |
+| Properties endpoint works  | ✅ 200 (empty)     | ✅ 200 (empty)          | ✅               |
+| Properties query params    | All accepted       | All accepted            | ✅               |
+| Properties data            | 0 items            | 0 items                 | ✅ (both empty)  |
+| Systems count              | 12                 | 3 (+1 new)              | ❌               |
+| Collection envelope        | `{ items: [...] }` | `{ items: [...] }`      | ✅               |
+| Individual resource format | GeoJSON Feature    | SensorML PhysicalSystem | ❌               |
 
 ---
 
 ## What WORKS (Verified)
 
-| Capability | Status |
-|------------|--------|
-| All 42 builder methods generate valid URLs | ✅ |
-| Properties list endpoint accepted on both servers | ✅ |
-| Properties query parameters accepted (limit, q, offset, f) | ✅ |
-| Prior F1/F2 fixes still working | ✅ |
-| Convention 3 normalization (featuresOfInterest, query params) | ✅ |
-| All prior server limitations unchanged | ✅ |
-| Both servers use `items` envelope | ✅ |
+| Capability                                                    | Status |
+| ------------------------------------------------------------- | ------ |
+| All 42 builder methods generate valid URLs                    | ✅     |
+| Properties list endpoint accepted on both servers             | ✅     |
+| Properties query parameters accepted (limit, q, offset, f)    | ✅     |
+| Prior F1/F2 fixes still working                               | ✅     |
+| Convention 3 normalization (featuresOfInterest, query params) | ✅     |
+| All prior server limitations unchanged                        | ✅     |
+| Both servers use `items` envelope                             | ✅     |
 
 ## What Remains (Phase 3 Concerns)
 
-| Issue | Severity | Component | Target Phase |
-|-------|----------|-----------|-------------|
-| Response envelope parsing (`items` vs `features`) | Moderate | Response parser | Phase 3 |
-| Dual format handling (GeoJSON vs SensorML) | Moderate | Response parser | Phase 3 |
-| `validTime` array format | Moderate | Type mapping | Phase 3 |
-| Link-based pagination | Low | Pagination helper | Phase 3 |
-| Properties not discoverable via links | Moderate | Fallback/probing strategy | Phase 3 |
-| Nested endpoint graceful degradation | Moderate | Error handling | Phase 3 |
+| Issue                                             | Severity | Component                 | Target Phase |
+| ------------------------------------------------- | -------- | ------------------------- | ------------ |
+| Response envelope parsing (`items` vs `features`) | Moderate | Response parser           | Phase 3      |
+| Dual format handling (GeoJSON vs SensorML)        | Moderate | Response parser           | Phase 3      |
+| `validTime` array format                          | Moderate | Type mapping              | Phase 3      |
+| Link-based pagination                             | Low      | Pagination helper         | Phase 3      |
+| Properties not discoverable via links             | Moderate | Fallback/probing strategy | Phase 3      |
+| Nested endpoint graceful degradation              | Moderate | Error handling            | Phase 3      |
 
 ---
 
 ## Comparison: Phase 2.4 → Phase 2.5
 
-| Dimension | Phase 2.4 | Phase 2.5 |
-|-----------|----------|----------|
-| Methods implemented | 36 | **42** (+6 Properties) |
-| CSAPI unit tests | 186 | **209** (+23 from Issues #40, #9, #41) |
-| Endpoint tests passed | 69 | **75** (+6 Properties endpoints tested) |
-| Server limitations found | 4 (F6–F9) | 4 (unchanged) |
-| New code bugs found | 0 | **0** |
-| New interop findings | 0 | **1** (F14 — properties discovery) |
+| Dimension                | Phase 2.4 | Phase 2.5                               |
+| ------------------------ | --------- | --------------------------------------- |
+| Methods implemented      | 36        | **42** (+6 Properties)                  |
+| CSAPI unit tests         | 186       | **209** (+23 from Issues #40, #9, #41)  |
+| Endpoint tests passed    | 69        | **75** (+6 Properties endpoints tested) |
+| Server limitations found | 4 (F6–F9) | 4 (unchanged)                           |
+| New code bugs found      | 0         | **0**                                   |
+| New interop findings     | 0         | **1** (F14 — properties discovery)      |
 
 ---
 
@@ -383,40 +385,40 @@ The new system `5300-909` returns a SensorML `PhysicalSystem` with `definition: 
 
 ### Test Coverage
 
-| Category | Tested | Passed | Failed | N/A |
-|----------|--------|--------|--------|-----|
-| **OSH — Systems (12)** | 12 | 10 | 2 (F6/F7) | 0 |
-| **OSH — Deployments (8)** | 1 | 1 | 0 | 7 (no data) |
-| **OSH — Procedures (8)** | 1 | 1 | 0 | 7 (no data) |
-| **OSH — SamplingFeatures (8)** | 8 | 6 | 2 (F8/F9) | 0 |
-| **OSH — Properties (6)** | 6 | 6 | 0 | 0 |
-| **52N — Systems (12)** | 8 | 5 | 3 (server limits) | 4 (write ops) |
-| **52N — Deployments (8)** | 5 | 2 | 3 (server limits) | 3 (write ops) |
-| **52N — Procedures (8)** | 5 | 2 | 3 (server limits) | 3 (write ops) |
-| **52N — SamplingFeatures (8)** | 1 | 1 | 0 | 7 (no data) |
-| **52N — Properties (6)** | 6 | 6 | 0 | 0 |
-| **Query params** | 10 | 10 | 0 | 0 |
-| **Total** | **63** | **50** | **13** | **31** |
+| Category                       | Tested | Passed | Failed            | N/A           |
+| ------------------------------ | ------ | ------ | ----------------- | ------------- |
+| **OSH — Systems (12)**         | 12     | 10     | 2 (F6/F7)         | 0             |
+| **OSH — Deployments (8)**      | 1      | 1      | 0                 | 7 (no data)   |
+| **OSH — Procedures (8)**       | 1      | 1      | 0                 | 7 (no data)   |
+| **OSH — SamplingFeatures (8)** | 8      | 6      | 2 (F8/F9)         | 0             |
+| **OSH — Properties (6)**       | 6      | 6      | 0                 | 0             |
+| **52N — Systems (12)**         | 8      | 5      | 3 (server limits) | 4 (write ops) |
+| **52N — Deployments (8)**      | 5      | 2      | 3 (server limits) | 3 (write ops) |
+| **52N — Procedures (8)**       | 5      | 2      | 3 (server limits) | 3 (write ops) |
+| **52N — SamplingFeatures (8)** | 1      | 1      | 0                 | 7 (no data)   |
+| **52N — Properties (6)**       | 6      | 6      | 0                 | 0             |
+| **Query params**               | 10     | 10     | 0                 | 0             |
+| **Total**                      | **63** | **50** | **13**            | **31**        |
 
 ### Findings Ledger (Cumulative)
 
-| ID | Description | Severity | Status | Owner |
-|----|-------------|----------|--------|-------|
-| F1 | Link relation prefix mismatch | Critical | **Fixed** (Issue #34) | Client |
-| F2 | Top-level vs. collection-scoped URLs | Critical | **Fixed** (Issue #35) | Client |
-| F3 | Response envelope uses `items` | Moderate | Deferred to Phase 3 | Client |
-| F4 | `validTime` is an array | Moderate | Deferred to Phase 3 | Client |
-| F5 | Missing pagination metadata | Low | Deferred to Phase 3 | Client |
-| F6 | OSH rejects `systems/{id}/deployments` | Moderate | Server limitation | Server |
-| F7 | OSH rejects `systems/{id}/procedures` | Moderate | Server limitation | Server |
-| F8 | OSH rejects `samplingFeatures/{id}/systems` | Moderate | Server limitation | Server |
-| F9 | OSH rejects `samplingFeatures/{id}/history` | Moderate | Server limitation | Server |
-| F10 | 52North now has real data | Informational | Positive change | — |
-| F11 | 52North uses SensorML format | Moderate | Phase 3 concern | Client |
-| F12 | 52North `systems/{id}/deployments` works | Informational | Positive finding | — |
-| F13 | Both servers use `items` envelope | Informational | Confirms F3 | — |
-| **F14** | **Properties not discoverable via links** | **Moderate** | **Phase 3 concern** | **Shared** |
-| **F15** | **52North adds third system** | **Informational** | **Positive change** | **—** |
+| ID      | Description                                 | Severity          | Status                | Owner      |
+| ------- | ------------------------------------------- | ----------------- | --------------------- | ---------- |
+| F1      | Link relation prefix mismatch               | Critical          | **Fixed** (Issue #34) | Client     |
+| F2      | Top-level vs. collection-scoped URLs        | Critical          | **Fixed** (Issue #35) | Client     |
+| F3      | Response envelope uses `items`              | Moderate          | Deferred to Phase 3   | Client     |
+| F4      | `validTime` is an array                     | Moderate          | Deferred to Phase 3   | Client     |
+| F5      | Missing pagination metadata                 | Low               | Deferred to Phase 3   | Client     |
+| F6      | OSH rejects `systems/{id}/deployments`      | Moderate          | Server limitation     | Server     |
+| F7      | OSH rejects `systems/{id}/procedures`       | Moderate          | Server limitation     | Server     |
+| F8      | OSH rejects `samplingFeatures/{id}/systems` | Moderate          | Server limitation     | Server     |
+| F9      | OSH rejects `samplingFeatures/{id}/history` | Moderate          | Server limitation     | Server     |
+| F10     | 52North now has real data                   | Informational     | Positive change       | —          |
+| F11     | 52North uses SensorML format                | Moderate          | Phase 3 concern       | Client     |
+| F12     | 52North `systems/{id}/deployments` works    | Informational     | Positive finding      | —          |
+| F13     | Both servers use `items` envelope           | Informational     | Confirms F3           | —          |
+| **F14** | **Properties not discoverable via links**   | **Moderate**      | **Phase 3 concern**   | **Shared** |
+| **F15** | **52North adds third system**               | **Informational** | **Positive change**   | **—**      |
 
 ---
 

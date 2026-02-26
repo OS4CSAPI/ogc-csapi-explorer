@@ -12,6 +12,7 @@ This implementation adds Connected Systems API (CSAPI) support to the Camptocamp
 > **📊 RESEARCH FOUNDATION**
 >
 > This implementation guide is built on **10 completed research plans** (Plans 01-04, 10-16) with **⭐⭐⭐⭐⭐ confidence ratings (100%)** for all architectural decisions. Every design choice documented here has been validated through systematic analysis of:
+>
 > - Upstream library patterns (100% consistency with existing code)
 > - CSAPI specification requirements (complete Parts 1 & 2 coverage)
 > - Real-world usage scenarios (validated workflows)
@@ -21,10 +22,12 @@ This implementation adds Connected Systems API (CSAPI) support to the Camptocamp
 > **See:** [Architecture Decision Documents](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/tree/main/docs/research/design/csapiquerybuilder/architecture-decision/results) for complete research foundation.
 
 **What We're Building:**
+
 - **9 components extending existing code** - Small, targeted enhancements to conformance checking, collection parsing, format detection, validation, and worker infrastructure (~50 lines of modifications total)
 - **3 components building new code** - CSAPIQueryBuilder class for URL construction, SensorML 3.0 parser, and SWE Common 3.0 parser
 
 **Key Architectural Facts:**
+
 - **Integration Footprint:** ~39 lines across 2-3 files (`endpoint.ts`, `info.ts`, `index.ts`)
 - **QueryBuilder Pattern:** Single `CSAPIQueryBuilder` class accessed via `endpoint.csapi(collectionId)` (follows upstream EDR pattern from PR #114)
 - **9 Resource Types:** Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands - all as methods within one QueryBuilder class
@@ -91,6 +94,7 @@ This implementation adds Connected Systems API (CSAPI) support to the Camptocamp
 This document describes every component needed to implement CSAPI support in the Camptocamp OGC Client Library, explaining which components extend existing code versus which require building new code from scratch.
 
 **What This Document Provides:**
+
 - Complete component inventory for CSAPI implementation
 - Clear identification of "extend" vs "build" work
 - Integration points with existing library code
@@ -100,6 +104,7 @@ This document describes every component needed to implement CSAPI support in the
 
 **Scope Statement:**
 This implementation provides **COMPLETE CSAPI Parts 1 & 2 support** including:
+
 - ✅ All query parameters (spatial, temporal, hierarchical, relationship-based, property-based)
 - ✅ Full filtering capabilities (bbox, datetime, recursive, parent, system, foi, observedProperty, etc.)
 - ✅ Both pagination modes (offset-based and cursor-based)
@@ -111,6 +116,7 @@ This implementation provides **COMPLETE CSAPI Parts 1 & 2 support** including:
 **This is NOT an MVP** - this is a production-ready, specification-complete implementation suitable for enterprise use.
 
 **References:**
+
 - [OGC API - Connected Systems Part 1: Feature Resources](https://docs.ogc.org/is/23-001/23-001.html) - Standard defining Systems, Deployments, Procedures, Sampling Features, Properties
 - [OGC API - Connected Systems Part 2: Dynamic Data](https://docs.ogc.org/is/23-002/23-002.html) - Standard defining DataStreams, Observations, Control Streams, Commands
 - [Full Implementation Scope Definition](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/requirements/contribution-definition.md) - Complete vs partial implementation rationale
@@ -233,19 +239,19 @@ This implementation is built on extensive research with 100% confidence levels:
 
 **Completed Research Plans (10 of 22):**
 
-| Plan | Title | Confidence | Key Finding |
-|------|-------|------------|-------------|
-| 01 | PR#114 EDR Pattern | ⭐⭐⭐⭐⭐ | Factory method template, caching pattern |
-| 02 | QueryBuilder Pattern | ⭐⭐⭐⭐⭐ | Single builder class per API |
-| 03 | CSAPI Architecture | ⭐⭐⭐⭐⭐ | 9 resources, format handling required |
-| 04 | Architecture Patterns | ⭐⭐⭐⭐⭐ | 100% use helper methods, 0% inheritance |
-| 10 | Upstream Expectations | ⭐⭐⭐⭐⭐ | Minimal validation, trust server |
-| 11 | Integration Requirements | ⭐⭐⭐⭐⭐ | OgcApiCollectionInfo usage patterns |
-| 12 | File Organization | ⭐⭐⭐⭐⭐ | Flat structure + formats/ subfolder |
-| 13 | TypeScript Types | ⭐⭐⭐⭐⭐ | Complete type system design |
-| 14 | Usage Scenarios | ⭐⭐⭐⭐⭐ | 100% multi-resource workflows |
-| 15 | Query Parameters | ⭐⭐⭐⭐⭐ | 47% shared, type-based clustering |
-| 16 | Subresource Navigation | ⭐⭐⭐⭐⭐ | 100% cross-boundary navigation |
+| Plan | Title                    | Confidence | Key Finding                              |
+| ---- | ------------------------ | ---------- | ---------------------------------------- |
+| 01   | PR#114 EDR Pattern       | ⭐⭐⭐⭐⭐ | Factory method template, caching pattern |
+| 02   | QueryBuilder Pattern     | ⭐⭐⭐⭐⭐ | Single builder class per API             |
+| 03   | CSAPI Architecture       | ⭐⭐⭐⭐⭐ | 9 resources, format handling required    |
+| 04   | Architecture Patterns    | ⭐⭐⭐⭐⭐ | 100% use helper methods, 0% inheritance  |
+| 10   | Upstream Expectations    | ⭐⭐⭐⭐⭐ | Minimal validation, trust server         |
+| 11   | Integration Requirements | ⭐⭐⭐⭐⭐ | OgcApiCollectionInfo usage patterns      |
+| 12   | File Organization        | ⭐⭐⭐⭐⭐ | Flat structure + formats/ subfolder      |
+| 13   | TypeScript Types         | ⭐⭐⭐⭐⭐ | Complete type system design              |
+| 14   | Usage Scenarios          | ⭐⭐⭐⭐⭐ | 100% multi-resource workflows            |
+| 15   | Query Parameters         | ⭐⭐⭐⭐⭐ | 47% shared, type-based clustering        |
+| 16   | Subresource Navigation   | ⭐⭐⭐⭐⭐ | 100% cross-boundary navigation           |
 
 **Key Decisions Validated:**
 
@@ -256,12 +262,14 @@ This implementation is built on extensive research with 100% confidence levels:
 - **Integration Pattern:** Copy EDR factory method exactly (~39 lines)
 
 **References:**
+
 - [Architecture Decision - Part 1](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md) - Structural design with confidence ratings
 - [Architecture Decision - Part 2](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md) - Implementation details
 - [Architecture Decision - Part 3](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part3-validation.md) - Usage scenario validation
 - [Lessons Learned](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/LESSONS-LEARNED-multi-class-failure.md) - Why previous multi-class attempts failed
 
 **References (Architecture Patterns):**
+
 - [Architecture Patterns Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/architecture-patterns-analysis.md) - Consistent patterns used in ogc-client for adding new OGC API support
 - [PR #114 (EDR Implementation) Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/pr114-analysis.md) - Direct blueprint for CSAPI implementation, factory method pattern
 - [QueryBuilder Pattern Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/querybuilder-pattern-analysis.md) - Core pattern for CSAPIQueryBuilder implementation
@@ -278,6 +286,7 @@ This implementation is built on extensive research with 100% confidence levels:
 The conformance reader is existing code in `OgcApiEndpoint` that checks which OGC API standards a server implements by reading its conformance document. For CSAPI support, we will extend this reader by adding new conformance class checks that detect CSAPI Part 1 (Systems, Deployments, Procedures, Sampling Features, Properties) and Part 2 (DataStreams, Observations, Control Streams, Commands) capabilities. This follows the exact pattern already used for EDR detection - adding a `hasConnectedSystems` method similar to the existing `hasEnvironmentalDataRetrieval` method. The extension integrates seamlessly into the upstream repository's architecture without breaking existing functionality for Features, Tiles, Records, or EDR. This approach aligns with the project goal of making CSAPI support feel like a natural part of the existing library rather than a bolt-on addition.
 
 **CSAPI Conformance Classes to Detect:**
+
 - Part 1 Core: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/core`
 - Part 1 Systems: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/system`
 - Part 1 Deployments: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/deployment`
@@ -292,6 +301,7 @@ The conformance reader is existing code in `OgcApiEndpoint` that checks which OG
 **Implementation Type:** EXTENDING EXISTING CODE (~7 lines in `info.ts`)
 
 **References:**
+
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - Conformance classes for Part 1 resources
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) - Machine-readable API definition for Part 1
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html) - Conformance classes for Part 2 resources
@@ -306,6 +316,7 @@ The conformance reader is existing code in `OgcApiEndpoint` that checks which OG
 The collections reader is existing code that fetches and parses the `/collections` endpoint to discover what data is available on a server. For CSAPI, we will extend this parser to recognize and extract CSAPI-specific metadata that indicates whether a collection contains Systems, DataStreams, Observations, or other CSAPI resources. This is primarily an extension of existing parsing logic rather than building something entirely new - we're adding new properties to the collection info objects and new filter methods like `csapiSystemCollections`, `csapiDataStreamCollections`, and `csapiObservationCollections` alongside the existing `featureCollections` and `edrCollections` getters. The extension reuses the upstream repository's established patterns for handling different resource types within the unified collections framework. This approach supports the project goal of providing developers a consistent experience across all OGC API standards through one endpoint class.
 
 **CSAPI Collection Properties to Parse:**
+
 - `featureType` property indicating resource type (e.g., `sosa:System`, `sosa:Deployment`, `sosa:ObservationCollection`)
 - Links to CSAPI-specific operations (create, update, delete, schema endpoints for Part 2 resources)
 - Temporal extent for observation collections
@@ -317,6 +328,7 @@ The collections reader is existing code that fetches and parses the `/collection
 **Implementation Type:** EXTENDING EXISTING CODE (~6 lines in `endpoint.ts`)
 
 **References:**
+
 - [SOSA/SSN Ontology](https://www.w3.org/TR/vocab-ssn/) - Semantic foundation for featureType values (sosa:System, sosa:Deployment, etc.)
 - [OGC API - Features](https://docs.ogc.org/is/17-069r4/17-069r4.html) - Collections endpoint patterns CSAPI extends
 - [Architecture Patterns Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/architecture-patterns-analysis.md) - Collection capability determination patterns
@@ -330,16 +342,19 @@ The OgcApiEndpoint integration adds the CSAPI factory method to the main `OgcApi
 **Integration Points in OgcApiEndpoint:**
 
 **1. Import Statement (1 line in `endpoint.ts`):**
+
 ```typescript
 import CSAPIQueryBuilder from './csapi/url_builder.js';
 ```
 
 **2. Cache Field (2 lines in `endpoint.ts`):**
+
 ```typescript
 private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Map();
 ```
 
 **3. Collections Getter (~6 lines in `endpoint.ts`):**
+
 ```typescript
 get csapiCollections(): Promise<string[]> {
   return Promise.all([this.data, this.hasConnectedSystems])
@@ -350,6 +365,7 @@ get csapiCollections(): Promise<string[]> {
 ```
 
 **4. Conformance Getter (~7 lines in `info.ts`):**
+
 ```typescript
 get hasConnectedSystems(): Promise<boolean> {
   return Promise.all([this.conformanceClasses]).then(checkHasConnectedSystems);
@@ -357,6 +373,7 @@ get hasConnectedSystems(): Promise<boolean> {
 ```
 
 **5. Factory Method (~17 lines in `endpoint.ts`):**
+
 ```typescript
 public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
   if (!this.hasConnectedSystems) {
@@ -374,14 +391,16 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
 ```
 
 **6. Export Additions (~6 lines in `index.ts`):**
+
 ```typescript
 export { CSAPIQueryBuilder } from './ogc-api/csapi/url_builder.js';
-export type { /* CSAPI types */ } from './ogc-api/csapi/types.js';
+export type {} from /* CSAPI types */ './ogc-api/csapi/types.js';
 ```
 
 **Total Integration Code:** ~39 lines (1 + 2 + 6 + 7 + 17 + 6)
 
 **Developer Usage Pattern:**
+
 ```typescript
 import { OgcApiEndpoint } from '@camptocamp/ogc-client';
 
@@ -392,7 +411,7 @@ await endpoint.isReady();
 if (await endpoint.hasConnectedSystems) {
   // Get CSAPI query builder for a collection
   const csapi = await endpoint.csapi('sensors-collection');
-  
+
   // Use builder methods to construct URLs for all 9 resource types
   const systemsUrl = csapi.getSystems({ bbox: [...], recursive: true });
   const observationsUrl = csapi.getObservations(datastreamId, { phenomenonTime: '2024-01-01/..' });
@@ -402,6 +421,7 @@ if (await endpoint.hasConnectedSystems) {
 **Implementation Type:** EXTENDING EXISTING CODE (~39 lines total across 2-3 files)
 
 **References:**
+
 - [PR #114 (EDR Implementation) Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/pr114-analysis.md) - **PRIMARY REFERENCE** - Direct blueprint for factory method pattern
 - [Integration with Existing Code](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/integration-analysis.md) - Line-by-line integration requirements for endpoint.ts, info.ts, index.ts
 - [QueryBuilder Pattern Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/querybuilder-pattern-analysis.md) - Factory method lifecycle, caching strategy, state management
@@ -415,16 +435,17 @@ if (await endpoint.hasConnectedSystems) {
 ### CSAPIQueryBuilder: Building New Query Construction Class
 
 > **📋 STRUCTURE NOTE**
-> 
+>
 > The following sections (Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands) are **methods within this single CSAPIQueryBuilder class**, not separate components.
-> 
+>
 > This follows the upstream EDR pattern where `EDRQueryBuilder` contains methods like `getCubeUrl()`, `getCorridorUrl()`, etc. Similarly, `CSAPIQueryBuilder` contains methods like `getSystems()`, `getObservations()`, `getCommands()`, etc.
-> 
+>
 > Each subsection below describes a **method group** within the QueryBuilder class.
 
 The CSAPIQueryBuilder is new code we need to build as a single comprehensive class containing URL-building methods for all 9 CSAPI resource types, following the pattern established by the existing `EDRQueryBuilder` class. This QueryBuilder class is instantiated by the `OgcApiEndpoint.csapi()` factory method and provides developers with all the methods needed to construct URLs for CSAPI operations: querying Systems with spatial/temporal filters, creating Observations in DataStreams, retrieving historical observations with temporal ranges, sending Commands to Control Streams, and accessing all other CSAPI resources. The class consolidates URL construction for approximately 60-70 unique URL patterns across Part 1 resources (Systems, Deployments, Procedures, Sampling Features, Properties) and Part 2 resources (DataStreams, Observations, Control Streams, Commands), including canonical endpoints, nested resource endpoints, schema endpoints, and special-purpose endpoints like command status/result tracking. This single-class design follows the upstream repository's architecture pattern where one QueryBuilder per API family handles all URL construction for that API, keeping the implementation focused and maintainable rather than splitting across multiple handler classes. The following sections detail the URL construction requirements for each of the 9 resource types as methods within this one CSAPIQueryBuilder class.
 
 **URL Construction Requirements:**
+
 - Canonical resource endpoints: `/systems`, `/deployments`, `/procedures`, `/samplingFeatures`, `/properties`, `/datastreams`, `/observations`, `/controlstreams`, `/commands`
 - Nested resource endpoints: `/systems/{id}/subsystems`, `/systems/{id}/datastreams`, `/datastreams/{id}/observations`, `/controlstreams/{id}/commands`
 - Schema endpoints: `/datastreams/{id}/schema`, `/controlstreams/{id}/schema`
@@ -434,6 +455,7 @@ The CSAPIQueryBuilder is new code we need to build as a single comprehensive cla
 **Implementation Type:** BUILDING NEW CODE (following EDRQueryBuilder pattern, ~890-1,260 lines core + ~3,300-4,650 lines formats)
 
 **References:**
+
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) - Machine-readable API definition for Part 1 endpoints
 - [OGC API - Connected Systems Part 2: OpenAPI Specification](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml) - Machine-readable API definition for Part 2 endpoints
 - [QueryBuilder Pattern Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/querybuilder-pattern-analysis.md) - Core pattern for implementation
@@ -456,32 +478,36 @@ This decision differs from the upstream EDR pattern (which has no validation) bu
 export default class CSAPIQueryBuilder {
   // Public property for users to check available resources
   public readonly availableResources: Set<string>;
-  
+
   constructor(private collection_: OgcApiCollectionInfo) {
     this.availableResources = this.extractAvailableResources();
   }
-  
+
   // Validate in ALL 70-80 methods before building URLs
   async getSystems(options?: QueryOptions): Promise<string> {
     if (!this.availableResources.has('systems')) {
       throw new EndpointError(
         `Collection '${this.collection_.id}' does not support 'systems' resource. ` +
-        `Available resources: ${Array.from(this.availableResources).join(', ')}`
+          `Available resources: ${Array.from(this.availableResources).join(
+            ', '
+          )}`
       );
     }
     return this.buildResourceUrl('systems', undefined, undefined, options);
   }
-  
+
   async getDeployments(options?: QueryOptions): Promise<string> {
     if (!this.availableResources.has('deployments')) {
       throw new EndpointError(
         `Collection '${this.collection_.id}' does not support 'deployments' resource. ` +
-        `Available resources: ${Array.from(this.availableResources).join(', ')}`
+          `Available resources: ${Array.from(this.availableResources).join(
+            ', '
+          )}`
       );
     }
     return this.buildResourceUrl('deployments', undefined, undefined, options);
   }
-  
+
   // ... validation in all 70-80 methods (~2 lines per method = ~140-160 lines total)
 }
 ```
@@ -522,6 +548,7 @@ try {
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - User mandate, clear UX benefit
 
 **References:**
+
 - [Architecture Decision - Part 1: Resource Validation](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#decision-4-resource-validation-user-mandate) - Complete rationale and implementation pattern
 
 ---
@@ -539,7 +566,7 @@ export default class CSAPIQueryBuilder {
   // ========================================
   // PRIVATE HELPERS (2-3 methods)
   // ========================================
-  
+
   /**
    * Core URL construction helper
    * Handles canonical and nested resource endpoints
@@ -560,7 +587,7 @@ export default class CSAPIQueryBuilder {
     if (subPath) url += `/${subPath}`;
     return url + this.buildQueryString(options);
   }
-  
+
   /**
    * Query parameter serialization helper
    * Handles encoding, arrays, special characters
@@ -570,7 +597,7 @@ export default class CSAPIQueryBuilder {
   private buildQueryString(options?: QueryOptions): string {
     if (!options) return '';
     const params = new URLSearchParams();
-    
+
     for (const [key, value] of Object.entries(options)) {
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
@@ -581,11 +608,11 @@ export default class CSAPIQueryBuilder {
         }
       }
     }
-    
+
     const queryString = params.toString();
     return queryString ? `?${queryString}` : '';
   }
-  
+
   /**
    * Resource discovery helper
    * Extracts available resources from collection links
@@ -593,7 +620,7 @@ export default class CSAPIQueryBuilder {
    */
   private extractAvailableResources(): Set<string> {
     const resources = new Set<string>();
-    
+
     // Parse collection links to find CSAPI resources
     for (const link of this.collection_.links) {
       const match = link.rel?.match(/^ogc-cs:(.+)$/);
@@ -601,14 +628,14 @@ export default class CSAPIQueryBuilder {
         resources.add(match[1]); // e.g., 'systems', 'datastreams'
       }
     }
-    
+
     return resources;
   }
-  
+
   // ========================================
   // PUBLIC METHODS (70-80 methods)
   // ========================================
-  
+
   // All public methods use the helpers above for code reuse
 }
 ```
@@ -631,6 +658,7 @@ export default class CSAPIQueryBuilder {
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Zero inheritance precedent in codebase
 
 **References:**
+
 - [Architecture Decision - Part 1: Helper Methods](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#decision-2-helper-methods-not-inheritance) - Complete analysis of helper methods vs inheritance
 - [Architecture Patterns Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/architecture-patterns-analysis.md) - 0% inheritance usage in upstream
 
@@ -730,19 +758,20 @@ import { parseSWECommon30 } from '@camptocamp/ogc-client/csapi/formats/swecommon
 
 **Code Volume Breakdown:**
 
-| Component | Lines | Percentage |
-|-----------|-------|------------|
-| url_builder.ts | 640-860 | 15-16% |
-| model.ts | 200-300 | 5% |
-| helpers.ts | 50-100 | 1% |
-| formats/sensorml/ | 1,600-2,200 | 37-38% |
-| formats/swecommon/ | 1,600-2,250 | 37-39% |
-| formats/ (other) | 100-200 | 2-3% |
-| **TOTAL** | **4,190-5,910** | **100%** |
+| Component          | Lines           | Percentage |
+| ------------------ | --------------- | ---------- |
+| url_builder.ts     | 640-860         | 15-16%     |
+| model.ts           | 200-300         | 5%         |
+| helpers.ts         | 50-100          | 1%         |
+| formats/sensorml/  | 1,600-2,200     | 37-38%     |
+| formats/swecommon/ | 1,600-2,250     | 37-39%     |
+| formats/ (other)   | 100-200         | 2-3%       |
+| **TOTAL**          | **4,190-5,910** | **100%**   |
 
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Research Plan 12 validated structure
 
 **References:**
+
 - [Architecture Decision - Part 2: File Organization](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-2-file-organization) - Complete file structure analysis
 - [File Organization Strategy](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/file-organization-analysis.md) - Upstream file organization patterns
 
@@ -757,6 +786,7 @@ import { parseSWECommon30 } from '@camptocamp/ogc-client/csapi/formats/swecommon
 This URL builder implements FULL query parameter support for CSAPI Parts 1 and 2, including all standard OGC API parameters and all CSAPI-specific extensions. This is NOT an MVP - we support the complete filtering and pagination capabilities defined in the CSAPI specifications.
 
 **Standard OGC API Parameters:**
+
 - `bbox`: Spatial bounding box filter (2D and 3D) for Systems, Deployments, Sampling Features
 - `datetime`: Temporal filter using ISO 8601 intervals for validTime filtering
 - `limit`: Maximum results per page (1 to 10,000 for Part 2)
@@ -764,17 +794,20 @@ This URL builder implements FULL query parameter support for CSAPI Parts 1 and 2
 - `f`: Format negotiation (json, geojson, sml+json, swe+json, swe+text)
 
 **CSAPI Common Parameters (Part 1):**
+
 - `id`: Filter by resource ID (multiple IDs supported as comma-separated list)
 - `uid`: Filter by unique identifier (URN-based filtering)
 - `q`: Full-text search across resource properties
 - `{propertyName}`: Filter by any resource property (e.g., `name=Weather%20Station`, `systemType=sosa:Sensor`)
 
 **CSAPI Hierarchical Parameters:**
+
 - `recursive`: Boolean flag for hierarchical queries (subsystems, subdeployments)
   - `recursive=false`: Direct children only (default)
   - `recursive=true`: All descendants at all nesting levels
 
 **CSAPI Relationship Parameters (Part 1):**
+
 - `parent`: Filter by parent system/deployment ID
 - `procedure`: Filter resources by associated procedure
 - `foi`: Filter by feature of interest
@@ -785,28 +818,33 @@ This URL builder implements FULL query parameter support for CSAPI Parts 1 and 2
 - `objectType`: Filter by resource type
 
 **CSAPI Temporal Parameters (Part 2):**
+
 - `phenomenonTime`: When observation was made (ISO 8601 interval, primary temporal filter for observations)
 - `resultTime`: When observation result became available
 - `executionTime`: When command should be/was executed
 - `issueTime`: When command was issued
 
 **Pagination Modes:**
+
 - **Offset-based** (Part 1): `limit` + `offset` for predictable page navigation
 - **Cursor-based** (Part 2): `limit` + `cursor` for efficient large dataset streaming
 - **Temporal windowing** (Part 2): `phenomenonTime` intervals for time-series data
 
 **Advanced Filtering Capabilities:**
+
 - **Multiple ID filtering**: `id=sys1,sys2,sys3` (OR logic)
 - **Property-based filtering**: Any resource property can be used as query parameter
 - **Combined filters**: All parameters can be combined (AND logic between different parameter types)
 - **Nested endpoint filtering**: All query parameters work on nested endpoints (e.g., `/systems/{id}/subsystems?bbox=...&recursive=true`)
 
 **Format Negotiation:**
+
 - Query parameter: `f=json|geojson|sml+json|swe+json|swe+text|html`
 - HTTP Accept header: `application/json`, `application/geo+json`, `application/sml+json`, `application/swe+json`, `application/swe+text`
 - Format-specific parameters for Part 2: `obsFormat` (observation encoding), `cmdFormat` (command encoding)
 
 **References:**
+
 - [Query Parameter Requirements](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/requirements/csapi-query-parameters.md) - Complete catalog of all CSAPI query parameters
 - [OGC API - Common](https://docs.ogc.org/is/19-072/19-072.html) - Standard OGC API parameters (bbox, datetime, limit, offset, f)
 - [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html) - Temporal parameter format specification
@@ -816,7 +854,7 @@ This URL builder implements FULL query parameter support for CSAPI Parts 1 and 2
 
 ---
 
-*[Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands resource methods sections remain unchanged from v1 - they are already comprehensive and accurate]*
+_[Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands resource methods sections remain unchanged from v1 - they are already comprehensive and accurate]_
 
 ---
 
@@ -834,22 +872,26 @@ This URL builder implements FULL query parameter support for CSAPI Parts 1 and 2
 **Why CSAPI is Different:**
 
 1. **CSAPI-Specific Complexity:** SensorML 3.0 and SWE Common 3.0 are CORE to CSAPI functionality (not optional formats like WMS GetFeatureInfo XML or WFS DescribeFeatureType)
+
    - **Systems/Procedures:** Encoded in SensorML 3.0 (no simpler alternative)
    - **Observation Results:** Encoded in SWE Common 3.0 (binary/text/JSON - no alternatives)
    - **DataStream Schemas:** SWE Common DataComponents (complex type system)
 
 2. **User Experience:** Manual parsing creates significant friction
+
    - Developers would need to implement 1,600+ lines of SensorML parser themselves
    - Developers would need to implement 1,600+ lines of SWE Common parser themselves
    - No mature TypeScript libraries exist for SensorML 3.0 / SWE Common 3.0
    - CSAPI adoption severely limited without format support
 
 3. **Type Safety:** TypeScript interfaces provide strong typing
+
    - Parsed objects have full IntelliSense support
    - Compiler catches type errors
    - Better developer experience than raw JSON
 
 4. **Ecosystem Gap:** No mature TypeScript libraries for these formats
+
    - SensorML 3.0: Published 2024, no existing TypeScript parsers
    - SWE Common 3.0: Published 2024, no existing TypeScript parsers
    - Library fills critical ecosystem gap
@@ -886,15 +928,16 @@ const system = parseSensorML30(await response.text());
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - User mandate, clear ecosystem gap
 
 **References:**
+
 - [Architecture Decision - Part 1: Full Format Handling](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#decision-3-full-format-handling) - Complete rationale with research evolution
 
 ---
 
-*[GeoJSON Handler, SensorML Handler, SWE Common Handler, Format Detector, Validator sections remain unchanged from v1 - they are already comprehensive]*
+_[GeoJSON Handler, SensorML Handler, SWE Common Handler, Format Detector, Validator sections remain unchanged from v1 - they are already comprehensive]_
 
 ---
 
-*[Worker Components, Testing Components, Documentation Components sections remain unchanged from v1 - they are already comprehensive]*
+_[Worker Components, Testing Components, Documentation Components sections remain unchanged from v1 - they are already comprehensive]_
 
 ---
 
@@ -904,53 +947,53 @@ const system = parseSensorML30(await response.text());
 
 ### QueryBuilder Implementation
 
-| Component | Lines | Notes |
-|-----------|-------|-------|
-| url_builder.ts | 640-860 | Base methods + validation |
-| - Methods (base) | 500-700 | URL building logic |
-| - Validation | 140-160 | Resource validation (~2 lines/method) |
-| model.ts | 200-300 | TypeScript types/interfaces |
-| helpers.ts | 50-100 | Shared utilities |
-| **Core Subtotal** | **890-1,260** | **QueryBuilder core** |
+| Component         | Lines         | Notes                                 |
+| ----------------- | ------------- | ------------------------------------- |
+| url_builder.ts    | 640-860       | Base methods + validation             |
+| - Methods (base)  | 500-700       | URL building logic                    |
+| - Validation      | 140-160       | Resource validation (~2 lines/method) |
+| model.ts          | 200-300       | TypeScript types/interfaces           |
+| helpers.ts        | 50-100        | Shared utilities                      |
+| **Core Subtotal** | **890-1,260** | **QueryBuilder core**                 |
 
 ### Format Parsing Implementation
 
-| Component | Lines | Notes |
-|-----------|-------|-------|
-| formats/sensorml/ | 1,600-2,200 | SensorML 3.0 parser |
-| formats/swecommon/ | 1,600-2,250 | SWE Common 3.0 parser |
-| formats/geojson.ts | 50-100 | CSAPI GeoJSON extensions |
-| formats/constants.ts | 50-100 | Constants and vocabularies |
-| **Format Subtotal** | **3,300-4,650** | **Format parsers** |
+| Component            | Lines           | Notes                      |
+| -------------------- | --------------- | -------------------------- |
+| formats/sensorml/    | 1,600-2,200     | SensorML 3.0 parser        |
+| formats/swecommon/   | 1,600-2,250     | SWE Common 3.0 parser      |
+| formats/geojson.ts   | 50-100          | CSAPI GeoJSON extensions   |
+| formats/constants.ts | 50-100          | Constants and vocabularies |
+| **Format Subtotal**  | **3,300-4,650** | **Format parsers**         |
 
 ### Integration
 
-| Component | Lines | Notes |
-|-----------|-------|-------|
-| endpoint.ts additions | 23 | Import + cache + getter + factory |
-| info.ts additions | 7 | Conformance getter |
-| index.ts additions | 6 | Exports |
-| **Integration Subtotal** | **36-39** | **Upstream integration** |
+| Component                | Lines     | Notes                             |
+| ------------------------ | --------- | --------------------------------- |
+| endpoint.ts additions    | 23        | Import + cache + getter + factory |
+| info.ts additions        | 7         | Conformance getter                |
+| index.ts additions       | 6         | Exports                           |
+| **Integration Subtotal** | **36-39** | **Upstream integration**          |
 
 ### Tests
 
-| Component | Lines | Notes |
-|-----------|-------|-------|
-| QueryBuilder tests | 2,000-2,500 | URL construction, validation |
-| Format parser tests | 3,500-4,700 | All formats, all encodings |
-| Integration tests | 500-700 | End-to-end workflows |
-| **Test Subtotal** | **6,000-7,900** | **>80% coverage** |
+| Component           | Lines           | Notes                        |
+| ------------------- | --------------- | ---------------------------- |
+| QueryBuilder tests  | 2,000-2,500     | URL construction, validation |
+| Format parser tests | 3,500-4,700     | All formats, all encodings   |
+| Integration tests   | 500-700         | End-to-end workflows         |
+| **Test Subtotal**   | **6,000-7,900** | **>80% coverage**            |
 
 ### Grand Total
 
-| Category | Lines | Percentage |
-|----------|-------|------------|
-| **Implementation** | **4,226-5,949** | **100%** |
-| - QueryBuilder core | 890-1,260 | 21% |
-| - Format parsers | 3,300-4,650 | 76-78% |
-| - Integration | 36-39 | 1% |
-| **Tests** | **6,000-7,900** | **N/A** |
-| **TOTAL** | **10,226-13,849** | **N/A** |
+| Category            | Lines             | Percentage |
+| ------------------- | ----------------- | ---------- |
+| **Implementation**  | **4,226-5,949**   | **100%**   |
+| - QueryBuilder core | 890-1,260         | 21%        |
+| - Format parsers    | 3,300-4,650       | 76-78%     |
+| - Integration       | 36-39             | 1%         |
+| **Tests**           | **6,000-7,900**   | **N/A**    |
+| **TOTAL**           | **10,226-13,849** | **N/A**    |
 
 **Key Insights:**
 
@@ -969,6 +1012,7 @@ const system = parseSensorML30(await response.text());
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Based on 10 research plans
 
 **References:**
+
 - [Architecture Decision - Part 1: Code Volume Summary](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#code-volume-summary) - Detailed breakdown with component-level estimates
 
 ---
@@ -976,6 +1020,7 @@ const system = parseSensorML30(await response.text());
 ## Summary: Build vs Extend Breakdown
 
 ### Components Extending Existing Code (9 components):
+
 1. **Conformance Reader** - Add CSAPI conformance class checks (`hasConnectedSystems` getter, ~7 lines in `info.ts`)
 2. **Collections Reader** - Parse CSAPI collection metadata (`csapiCollections` getter, ~6 lines in `endpoint.ts`)
 3. **OgcApiEndpoint Integration** - Add `csapi(collectionId)` factory method (~39 lines total across 2-3 files: 1 import + 2 cache + 6 getter + 7 conformance + 17 factory + 6 exports)
@@ -987,7 +1032,9 @@ const system = parseSensorML30(await response.text());
 9. **API Documentation** - Add CSAPI docs to TypeDoc (extend existing documentation)
 
 ### Components Building New Code (3 components):
+
 1. **CSAPIQueryBuilder** - New query builder class (~890-1,260 lines)
+
    - url_builder.ts: ~640-860 lines (500-700 base + 140-160 validation)
    - model.ts: ~200-300 lines (types/interfaces)
    - helpers.ts: ~50-100 lines (utilities)
@@ -997,6 +1044,7 @@ const system = parseSensorML30(await response.text());
    - **60-70 unique URL patterns** (CRUD, nested, schema, status endpoints)
 
 2. **SensorML Handler** - New format parser for SensorML 3.0 (~1,600-2,200 lines)
+
    - types.ts: ~400-600 lines
    - parser.ts: ~600-800 lines
    - simple-process.ts, aggregate-process.ts, physical-system.ts: ~550-700 lines
@@ -1023,6 +1071,7 @@ const system = parseSensorML30(await response.text());
 **File Organization:** Flat core (url_builder.ts, model.ts, helpers.ts) + formats/ subfolder (sensorml/, swecommon/, geojson.ts, constants.ts) for tree-shaking and maintainability.
 
 **Scope Understanding:** While the summary lists "3 components building new code" (architecturally accurate), the implementation totals ~4,226-5,949 lines:
+
 - QueryBuilder core: ~890-1,260 lines (21%)
 - Format parsers: ~3,300-4,650 lines (76-78%)
 - Integration: ~36-39 lines (1%)
@@ -1030,6 +1079,7 @@ const system = parseSensorML30(await response.text());
 The format parsers represent ~76-78% of new code because CSAPI requires full parsing of SensorML 3.0 and SWE Common 3.0 (unlike other OGC APIs that only build URLs). This consolidated single-class architecture follows the upstream EDR pattern (one QueryBuilder per API family) but delivers functionally extensive capabilities across all CSAPI resources. Clients evaluating scope should understand that while architecturally elegant (3 new classes), the functional scope is substantial - implementing complete CSAPI Part 1 and Part 2 specifications with full query, filter, and pagination support across all resource types.
 
 ### Estimated Scope:
+
 - **Extending existing code:** ~20% of effort (9 small extensions, ~50 total lines modified in existing files + ~6,000-7,900 test lines)
 - **Building new code:** ~80% of effort (CSAPIQueryBuilder: ~890-1,260 lines + Format parsers: ~3,300-4,650 lines)
 - **Total estimated lines of code:** ~10,226-13,849 lines (implementation + tests)
@@ -1038,6 +1088,7 @@ The format parsers represent ~76-78% of new code because CSAPI requires full par
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - All estimates validated through 10 research plans
 
 **References:**
+
 - [Architecture Decision - Part 1: Code Volume](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#code-volume-summary) - Component-level breakdown
 
 ---
@@ -1059,6 +1110,7 @@ Every component described above aligns with these core project goals:
 ## Development Standards
 
 **Recommended Development Workflow:**
+
 1. Write method signatures before implementation
 2. Add comprehensive JSDoc comments with parameters, return types, examples
 3. Implement functionality with inline documentation for complex logic
@@ -1068,15 +1120,17 @@ Every component described above aligns with these core project goals:
 7. Update as you go - don't defer documentation
 
 **Code Quality Standards:**
+
 - TypeScript strict mode enabled
 - 100% public API JSDoc coverage
-- >80% test coverage (statement and branch)
+- > 80% test coverage (statement and branch)
 - Lint-clean code (ESLint configuration)
 - No magic numbers or strings (use constants)
 - Consistent error handling patterns
 - Performance profiling for heavy operations
 
 **Documentation Standards:**
+
 - Clear, concise method descriptions
 - Parameter descriptions with types and constraints
 - Return type documentation
@@ -1086,6 +1140,7 @@ Every component described above aligns with these core project goals:
 - Performance characteristics noted where relevant
 
 **Research-Validated Standards:**
+
 - All architectural decisions backed by research (⭐⭐⭐⭐⭐ confidence)
 - Follow upstream patterns (100% consistency)
 - Helper methods for code reuse (0% inheritance)

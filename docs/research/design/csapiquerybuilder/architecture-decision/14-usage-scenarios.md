@@ -11,11 +11,13 @@
 ## Research Objectives
 
 1. **Scenario Analysis:**
+
    - Review 15 core usage scenarios
    - Identify multi-resource workflows
    - Note single-resource focused operations
 
 2. **API Convenience:**
+
    - Which pattern provides better API for common scenarios?
    - Method discoverability considerations
    - Workflow optimization
@@ -41,11 +43,13 @@
 ## Expected Findings
 
 **If scenarios favor single class:**
+
 - Multi-resource workflows are common
 - Unified API improves usability
 - Consolidation benefits users
 
 **If scenarios favor separate classes:**
+
 - Resource-specific operations dominate
 - Clear separation improves clarity
 - Separate clients more intuitive
@@ -63,22 +67,26 @@
 Record key findings here for final synthesis document:
 
 **Multi-resource scenarios:** 15/15 (100%)
+
 - All scenarios require 2-9 resource types
 - Average 3.4 resources per scenario
 - Dashboard monitoring uses 9 resource types (most complex)
 - Simplest scenario (track history) still uses 2 resource types
 
 **Single-resource scenarios:** 0/15 (0%)
+
 - ZERO scenarios work with single resource type in isolation
 - Even "list systems" typically proceeds to access datastreams/observations
 
 **Pattern suitability:** Single-class STRONGLY favored
+
 - Single-class: Excellent fit for 15/15 scenarios (100%)
 - Multi-class: Poor fit for 15/15 scenarios (100%)
 - Single-class reduces user code by ~40%
 - Multi-class creates API fragmentation requiring 3-9 builder classes
 
 **User experience assessment:**
+
 - Single-class: 1 import, 1 object, all methods visible in IntelliSense
 - Multi-class: 3-9 imports, 3-9 objects, fragmented API surface
 - Single-class enables 17 convenience methods
@@ -86,6 +94,7 @@ Record key findings here for final synthesis document:
 - Method bloat NOT a concern: Clear naming + IntelliSense = excellent discoverability
 
 **Cross-resource navigation patterns:**
+
 - Required in 100% of workflows
 - Every resource has 2-6 relationship types
 - Navigation is core CSAPI pattern (not exception)
@@ -93,6 +102,7 @@ Record key findings here for final synthesis document:
 - Multi-class fragments navigation across multiple builders
 
 **Essential workflows analysis:**
+
 - All 6 workflows navigate 2-9 resource types
 - Average 3.5 builder classes needed with multi-class approach
 - Real-time monitoring: 3 resources (Systems → Datastreams → Observations)

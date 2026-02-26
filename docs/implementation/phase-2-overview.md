@@ -6,7 +6,7 @@ Phase 1 built the **plumbing** — the type system, helper utilities, a stub Que
 
 By the end of Phase 2, you can construct the correct URL for **any** operation on **any** CSAPI resource — querying collections with filters, retrieving individual resources, creating/updating/deleting, navigating associations, fetching schemas, tracking command status — all with proper query parameter encoding and resource validation.
 
-Phase 2 doesn't fetch or parse server responses. It produces *the right URL string* for each operation. Phase 3 will add the response-handling layer that actually calls those URLs and turns the JSON into typed objects.
+Phase 2 doesn't fetch or parse server responses. It produces _the right URL string_ for each operation. Phase 3 will add the response-handling layer that actually calls those URLs and turns the JSON into typed objects.
 
 ---
 
@@ -26,17 +26,17 @@ Every method validates that the server actually supports the requested resource 
 
 ### The 9 Resource Types
 
-| Resource Type | Methods | What It Represents |
-|---|---|---|
-| **Systems** | 12 | Physical things: sensors, platforms, vehicles, weather stations. The anchors that everything else connects to. |
-| **Deployments** | 8 | When and where a system was deployed. A weather station might have been at Site A in 2023 and Site B in 2024. |
-| **Procedures** | 8 | How a system operates — its methodology, calibration, processing steps. Multiple systems can share one procedure. |
-| **SamplingFeatures** | 8 | The real-world thing being measured — a river cross-section, a soil sample point, an air quality monitoring zone. |
-| **Properties** | 6 | Observable properties like temperature, humidity, wind speed. Shared vocabulary across systems and datastreams. |
-| **DataStreams** | 11 | A continuous flow of observations from a system. Links a system + procedure + sampling feature → observations. Has a schema describing the data format. |
-| **Observations** | 8 | Individual measurement results within a datastream. The actual data: "42.3°C at 2024-01-15T12:00:00Z." |
-| **ControlStreams** | 8 | The control counterpart of DataStreams — channels for sending commands *to* a system (e.g., "rotate camera 30° left"). Has a schema describing the command format. |
-| **Commands** | 10 | Instructions sent through a control stream. The control counterpart of Observations — data that flows *to* systems rather than *from* them. Includes status tracking and result retrieval. |
+| Resource Type        | Methods | What It Represents                                                                                                                                                                         |
+| -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Systems**          | 12      | Physical things: sensors, platforms, vehicles, weather stations. The anchors that everything else connects to.                                                                             |
+| **Deployments**      | 8       | When and where a system was deployed. A weather station might have been at Site A in 2023 and Site B in 2024.                                                                              |
+| **Procedures**       | 8       | How a system operates — its methodology, calibration, processing steps. Multiple systems can share one procedure.                                                                          |
+| **SamplingFeatures** | 8       | The real-world thing being measured — a river cross-section, a soil sample point, an air quality monitoring zone.                                                                          |
+| **Properties**       | 6       | Observable properties like temperature, humidity, wind speed. Shared vocabulary across systems and datastreams.                                                                            |
+| **DataStreams**      | 11      | A continuous flow of observations from a system. Links a system + procedure + sampling feature → observations. Has a schema describing the data format.                                    |
+| **Observations**     | 8       | Individual measurement results within a datastream. The actual data: "42.3°C at 2024-01-15T12:00:00Z."                                                                                     |
+| **ControlStreams**   | 8       | The control counterpart of DataStreams — channels for sending commands _to_ a system (e.g., "rotate camera 30° left"). Has a schema describing the command format.                         |
+| **Commands**         | 10      | Instructions sent through a control stream. The control counterpart of Observations — data that flows _to_ systems rather than _from_ them. Includes status tracking and result retrieval. |
 
 ### How a Method Works (Example)
 
@@ -45,7 +45,7 @@ Every method validates that the server actually supports the requested resource 
 const url = builder.getObservations({
   resultTime: 'latest',
   limit: 5,
-  f: 'application/geo+json'
+  f: 'application/geo+json',
 });
 
 // Internally:
@@ -54,24 +54,24 @@ const url = builder.getObservations({
 //    "https://server.com/api/observations?resultTime=latest&limit=5&f=application%2Fgeo%2Bjson"
 ```
 
-Every method follows this two-step pattern: **validate**, then **build**. The private `buildResourceUrl()` and `buildQueryString()` helpers handle all the URL construction, encoding, and temporal formatting. Public methods are thin wrappers that express *intent*.
+Every method follows this two-step pattern: **validate**, then **build**. The private `buildResourceUrl()` and `buildQueryString()` helpers handle all the URL construction, encoding, and temporal formatting. Public methods are thin wrappers that express _intent_.
 
 ### Query Parameter Support
 
 The builder handles sophisticated filtering across all resource types:
 
-| Parameter Category | Examples | Used By |
-|---|---|---|
-| **Pagination** | `limit`, `offset`, `cursor` | All resource types |
-| **Keyword search** | `q` | All resource types |
-| **ID filtering** | `id` (single or array) | All resource types |
-| **Format selection** | `f` (media type) | All resource types |
-| **Spatial filtering** | `bbox` (bounding box) | Systems, SamplingFeatures, Observations |
-| **Temporal filtering** | `datetime`, `phenomenonTime`, `resultTime` | DataStreams, Observations |
-| **Temporal (Part 2)** | `issueTime`, `executionTime` | Commands |
-| **Status filtering** | `currentStatus` | Commands |
-| **Association filtering** | `systemId`, `controlledPropertyId` | ControlStreams |
-| **Schema format** | `obsFormat`, `cmdFormat` (via `f`) | DataStream/ControlStream schema endpoints |
+| Parameter Category        | Examples                                   | Used By                                   |
+| ------------------------- | ------------------------------------------ | ----------------------------------------- |
+| **Pagination**            | `limit`, `offset`, `cursor`                | All resource types                        |
+| **Keyword search**        | `q`                                        | All resource types                        |
+| **ID filtering**          | `id` (single or array)                     | All resource types                        |
+| **Format selection**      | `f` (media type)                           | All resource types                        |
+| **Spatial filtering**     | `bbox` (bounding box)                      | Systems, SamplingFeatures, Observations   |
+| **Temporal filtering**    | `datetime`, `phenomenonTime`, `resultTime` | DataStreams, Observations                 |
+| **Temporal (Part 2)**     | `issueTime`, `executionTime`               | Commands                                  |
+| **Status filtering**      | `currentStatus`                            | Commands                                  |
+| **Association filtering** | `systemId`, `controlledPropertyId`         | ControlStreams                            |
+| **Schema format**         | `obsFormat`, `cmdFormat` (via `f`)         | DataStream/ControlStream schema endpoints |
 
 Temporal parameters are particularly nuanced — they support single instants, closed intervals, open-start, and open-end ranges, all properly ISO 8601 encoded.
 
@@ -89,17 +89,17 @@ This wasn't planned from the start — it **evolved** from lessons learned. The 
 
 ### The 9 Sub-Phases
 
-| Sub-Phase | Issue | Resource Type | Methods | New Tests | Cumulative Tests |
-|---|---|---|---|---|---|
-| 2.1 | #5 | Systems | 12 | 19 | 100 |
-| 2.2 | #6, #34, #35 | Deployments + link convention fixes | 8 | 28 | 128 |
-| 2.3 | #7 | Procedures | 8 | 20 | 156 |
-| 2.4 | #8, #40 | SamplingFeatures + review backfill | 8 | 30 | 186 |
-| 2.5 | #9, #41 | Properties + review fixes | 6 | 17 | 203 |
-| 2.6 | #10, #42 | DataStreams + test backfill | 11 | 39 | 242 |
-| 2.7 | #11, #43, #44 | Observations + resultTime=latest | 8 | 29 | 271 |
-| 2.8 | #12, #45 | ControlStreams + test backfill | 8 | 19 | 290 |
-| 2.9 | #13, #46 | Commands + test backfill | 10 | 24 | 314 |
+| Sub-Phase | Issue         | Resource Type                       | Methods | New Tests | Cumulative Tests |
+| --------- | ------------- | ----------------------------------- | ------- | --------- | ---------------- |
+| 2.1       | #5            | Systems                             | 12      | 19        | 100              |
+| 2.2       | #6, #34, #35  | Deployments + link convention fixes | 8       | 28        | 128              |
+| 2.3       | #7            | Procedures                          | 8       | 20        | 156              |
+| 2.4       | #8, #40       | SamplingFeatures + review backfill  | 8       | 30        | 186              |
+| 2.5       | #9, #41       | Properties + review fixes           | 6       | 17        | 203              |
+| 2.6       | #10, #42      | DataStreams + test backfill         | 11      | 39        | 242              |
+| 2.7       | #11, #43, #44 | Observations + resultTime=latest    | 8       | 29        | 271              |
+| 2.8       | #12, #45      | ControlStreams + test backfill      | 8       | 19        | 290              |
+| 2.9       | #13, #46      | Commands + test backfill            | 10      | 24        | 314              |
 
 ### Bug Fixes Along the Way
 
@@ -117,20 +117,20 @@ Phase 2 wasn't just "add methods." Several issues arose from live server testing
 
 One of Phase 2's defining features was **testing against real servers after every resource type**. Two servers were used:
 
-| Server | URL | Auth | What It Has |
-|---|---|---|---|
+| Server                  | URL                                      | Auth            | What It Has                                                                                              |
+| ----------------------- | ---------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------- |
 | **OpenSensorHub (OSH)** | `http://45.55.99.236:8080/sensorhub/api` | Basic (ogc/ogc) | 12 systems, 100+ datastreams, 100+ observations, 8 control streams, 200+ commands. Heavy Part 2 support. |
-| **52North** | `https://csa.demo.52north.org/` | None | 3 systems, 1 deployment, 1 procedure. Part 1 only; Part 2 endpoints broken or missing. |
+| **52North**             | `https://csa.demo.52north.org/`          | None            | 3 systems, 1 deployment, 1 procedure. Part 1 only; Part 2 endpoints broken or missing.                   |
 
 ### 9 Smoke Tests, 39 Findings
 
 Each smoke test ran raw HTTP calls against both servers, checked every new method's URL, and cataloged findings:
 
-| Category | Count | Examples |
-|---|---|---|
-| **Critical (fixed)** | 2 | F1: link relation mismatch, F2: top-level vs collection-scoped URLs |
-| **Server limitations** | 15 | OSH rejects various nested sub-resource endpoints (400), 52North DataStreams/Observations return 500 |
-| **Informational / Phase 3** | 22 | `items` envelope, `@id` cross-references, schema duality, `validTime` arrays |
+| Category                    | Count | Examples                                                                                             |
+| --------------------------- | ----- | ---------------------------------------------------------------------------------------------------- |
+| **Critical (fixed)**        | 2     | F1: link relation mismatch, F2: top-level vs collection-scoped URLs                                  |
+| **Server limitations**      | 15    | OSH rejects various nested sub-resource endpoints (400), 52North DataStreams/Observations return 500 |
+| **Informational / Phase 3** | 22    | `items` envelope, `@id` cross-references, schema duality, `validTime` arrays                         |
 
 **Zero code bugs found across 9 consecutive smoke tests.** The 2 critical findings (F1, F2) were architectural discoveries from the very first smoke test — the URL construction patterns needed adjustment for how real servers work versus what we assumed from the spec alone. Once fixed, no further code bugs were found.
 
@@ -144,29 +144,29 @@ The final smoke test (Phase 2.9) revealed that OSH doesn't support `/commands` a
 
 **8 code reviews** were performed (Phases 2.2 through 2.9), each following a standardized template:
 
-| Metric | Result |
-|---|---|
-| Code reviews performed | 8 |
+| Metric                          | Result                    |
+| ------------------------------- | ------------------------- |
+| Code reviews performed          | 8                         |
 | Consecutive zero-defect reviews | 7 (from Phase 2.3 onward) |
-| Total review findings | ~70 (across all reviews) |
-| Findings requiring code fixes | 8 (all in Phases 2.2–2.5) |
-| Positive/informational findings | ~62 |
+| Total review findings           | ~70 (across all reviews)  |
+| Findings requiring code fixes   | 8 (all in Phases 2.2–2.5) |
+| Positive/informational findings | ~62                       |
 
 The reviews validated JSDoc quality, method signatures, test coverage heatmaps, and adherence to lessons learned. By Phase 2.6, the implementation had reached a steady state where each new resource type was clean on first implementation.
 
 ### Test Coverage Heatmap (Final State)
 
-| Resource Type | Coverage | Notes |
-|---|---|---|
-| Systems | ~95% | Comprehensive: all 12 methods, pagination, filtering, validation |
-| Deployments | ~90% | All 8 methods, subdeployment navigation |
-| Procedures | ~90% | All 8 methods, association queries |
-| SamplingFeatures | ~92% | All 8 methods, spatial filtering, bbox |
-| Properties | ~88% | All 6 methods, association queries |
-| DataStreams | ~92% | All 11 methods, schema retrieval, temporal filtering |
-| Observations | ~90% | All 8 methods, resultTime=latest, temporal |
-| ControlStreams | ~90% | All 8 methods, schema, feasibility, commands sub-resource |
-| Commands | ~92% | All 10 methods, status, result, cancel, create validation |
+| Resource Type    | Coverage | Notes                                                            |
+| ---------------- | -------- | ---------------------------------------------------------------- |
+| Systems          | ~95%     | Comprehensive: all 12 methods, pagination, filtering, validation |
+| Deployments      | ~90%     | All 8 methods, subdeployment navigation                          |
+| Procedures       | ~90%     | All 8 methods, association queries                               |
+| SamplingFeatures | ~92%     | All 8 methods, spatial filtering, bbox                           |
+| Properties       | ~88%     | All 6 methods, association queries                               |
+| DataStreams      | ~92%     | All 11 methods, schema retrieval, temporal filtering             |
+| Observations     | ~90%     | All 8 methods, resultTime=latest, temporal                       |
+| ControlStreams   | ~90%     | All 8 methods, schema, feasibility, commands sub-resource        |
+| Commands         | ~92%     | All 10 methods, status, result, cancel, create validation        |
 
 ---
 
@@ -174,13 +174,13 @@ The reviews validated JSDoc quality, method signatures, test coverage heatmaps, 
 
 Phase 2 produced several governance artifacts that didn't exist at the start:
 
-| Document | Purpose |
-|---|---|
-| [Code Review Prompt Template](../governance/code-review-prompt-template.md) | Standardized AI-driven code review process |
-| [Smoke Test Prompt Template](../governance/smoke-test-prompt-template.md) | Standardized live server testing process |
+| Document                                                                          | Purpose                                                |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [Code Review Prompt Template](../governance/code-review-prompt-template.md)       | Standardized AI-driven code review process             |
+| [Smoke Test Prompt Template](../governance/smoke-test-prompt-template.md)         | Standardized live server testing process               |
 | [Issue Creation Prompt Template](../governance/issue-creation-prompt-template.md) | Standardized GitHub issue format for scope containment |
-| [AI Operational Constraints](../governance/AI_OPERATIONAL_CONSTRAINTS.md) | Rules preventing AI scope creep |
-| [Phase 2 Lessons Learned](../governance/phase-2-lessons-learned.md) | 10 lessons (v1.2) from implementation experience |
+| [AI Operational Constraints](../governance/AI_OPERATIONAL_CONSTRAINTS.md)         | Rules preventing AI scope creep                        |
+| [Phase 2 Lessons Learned](../governance/phase-2-lessons-learned.md)               | 10 lessons (v1.2) from implementation experience       |
 
 The **lessons learned** document was particularly valuable — it captured patterns like "test every method with exact `toBe` assertions" (Lesson 1), "test against both servers every time" (Lesson 8), and "smoke tests are read-only observation" (Lesson 10). These became enforced checkpoints in later sub-phases.
 
@@ -190,51 +190,51 @@ The **lessons learned** document was particularly valuable — it captured patte
 
 ### Code
 
-| File | Lines | Purpose |
-|---|---|---|
-| `url_builder.ts` | 1,863 | 79 public methods, private helpers, resource validation |
-| `url_builder.spec.ts` | 2,118 | 314 tests across all 9 resource types |
-| `model.ts` | 560 | Type interfaces (unchanged from Phase 1) |
-| `helpers.ts` | 191 | Utility functions (unchanged from Phase 1) |
-| **Total CSAPI source** | **2,614** | |
-| **Total CSAPI tests** | **2,763** | |
+| File                   | Lines     | Purpose                                                 |
+| ---------------------- | --------- | ------------------------------------------------------- |
+| `url_builder.ts`       | 1,863     | 79 public methods, private helpers, resource validation |
+| `url_builder.spec.ts`  | 2,118     | 314 tests across all 9 resource types                   |
+| `model.ts`             | 560       | Type interfaces (unchanged from Phase 1)                |
+| `helpers.ts`           | 191       | Utility functions (unchanged from Phase 1)              |
+| **Total CSAPI source** | **2,614** |                                                         |
+| **Total CSAPI tests**  | **2,763** |                                                         |
 
 ### GitHub Issues
 
-| Issue | Type | Description |
-|---|---|---|
-| #5 | Feature | Systems methods (12) |
-| #6 | Feature | Deployments methods (8) |
-| #7 | Feature | Procedures methods (8) |
-| #8 | Feature | SamplingFeatures methods (8) |
-| #9 | Feature | Properties methods (6) |
-| #10 | Feature | DataStreams methods (11) |
-| #11 | Feature | Observations methods (8) |
-| #12 | Feature | ControlStreams methods (8) |
-| #13 | Feature | Commands methods (10) |
-| #34 | Fix | Link relation convention support |
-| #35 | Fix | Top-level resource URL support |
-| #38 | Fix | Phase 2.2 code review findings |
-| #40 | Fix | Accumulated review findings backfill |
-| #41 | Fix | Phase 2.5 code review findings |
-| #42 | Fix | DataStreams test backfill |
-| #43 | Fix | `resultTime=latest` type support |
-| #44 | Fix | Observations test backfill |
-| #45 | Fix | ControlStreams test backfill |
-| #46 | Fix | Commands test backfill |
-| **Total** | **19 issues** | **9 features + 10 fixes** |
+| Issue     | Type          | Description                          |
+| --------- | ------------- | ------------------------------------ |
+| #5        | Feature       | Systems methods (12)                 |
+| #6        | Feature       | Deployments methods (8)              |
+| #7        | Feature       | Procedures methods (8)               |
+| #8        | Feature       | SamplingFeatures methods (8)         |
+| #9        | Feature       | Properties methods (6)               |
+| #10       | Feature       | DataStreams methods (11)             |
+| #11       | Feature       | Observations methods (8)             |
+| #12       | Feature       | ControlStreams methods (8)           |
+| #13       | Feature       | Commands methods (10)                |
+| #34       | Fix           | Link relation convention support     |
+| #35       | Fix           | Top-level resource URL support       |
+| #38       | Fix           | Phase 2.2 code review findings       |
+| #40       | Fix           | Accumulated review findings backfill |
+| #41       | Fix           | Phase 2.5 code review findings       |
+| #42       | Fix           | DataStreams test backfill            |
+| #43       | Fix           | `resultTime=latest` type support     |
+| #44       | Fix           | Observations test backfill           |
+| #45       | Fix           | ControlStreams test backfill         |
+| #46       | Fix           | Commands test backfill               |
+| **Total** | **19 issues** | **9 features + 10 fixes**            |
 
 ### Documentation
 
-| Category | Files | Total Lines |
-|---|---|---|
-| Smoke test reports | 12 | ~5,600 |
-| Code review reports | 8 | ~4,000 |
-| Sub-phase overviews | 3 | ~400 |
-| Cross-server analysis | 1 | ~300 |
-| Governance templates | 3 | ~700 |
-| Lessons learned | 1 | ~220 |
-| **Total implementation docs** | **28** | **~7,000** |
+| Category                      | Files  | Total Lines |
+| ----------------------------- | ------ | ----------- |
+| Smoke test reports            | 12     | ~5,600      |
+| Code review reports           | 8      | ~4,000      |
+| Sub-phase overviews           | 3      | ~400        |
+| Cross-server analysis         | 1      | ~300        |
+| Governance templates          | 3      | ~700        |
+| Lessons learned               | 1      | ~220        |
+| **Total implementation docs** | **28** | **~7,000**  |
 
 ### Commits
 

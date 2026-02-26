@@ -70,6 +70,7 @@ Define testing strategy for complete command lifecycle (submission → status tr
 **Objective:** Extract command lifecycle requirements from CSAPI
 
 **Tasks:**
+
 1. Identify all command lifecycle states
 2. Document state transition diagram
 3. Extract submission requirements
@@ -83,6 +84,7 @@ Define testing strategy for complete command lifecycle (submission → status tr
 **Objective:** Understand synchronous vs asynchronous command execution
 
 **Tasks:**
+
 1. Document synchronous command behavior
 2. Document asynchronous command behavior
 3. Identify when sync vs async is used
@@ -95,6 +97,7 @@ Define testing strategy for complete command lifecycle (submission → status tr
 **Objective:** Analyze command lifecycle testing in upstream
 
 **Tasks:**
+
 1. Identify command lifecycle tests in upstream
 2. Extract state transition test patterns
 3. Extract status polling test patterns
@@ -106,6 +109,7 @@ Define testing strategy for complete command lifecycle (submission → status tr
 **Objective:** Design test scenarios for command lifecycle
 
 **Tasks:**
+
 1. Design command submission test scenarios
 2. Design state transition test scenarios
 3. Design status tracking test scenarios
@@ -121,6 +125,7 @@ Define testing strategy for complete command lifecycle (submission → status tr
 **Objective:** Design state machine testing approach
 
 **Tasks:**
+
 1. Identify valid state transitions
 2. Identify invalid state transitions
 3. Design state transition validation tests
@@ -132,6 +137,7 @@ Define testing strategy for complete command lifecycle (submission → status tr
 **Objective:** Design fixtures for command lifecycle testing
 
 **Tasks:**
+
 1. Design command submission fixtures
 2. Design status response fixtures (all states)
 3. Design result response fixtures
@@ -144,6 +150,7 @@ Define testing strategy for complete command lifecycle (submission → status tr
 **Objective:** Create comprehensive command lifecycle testing strategy
 
 **Tasks:**
+
 1. Consolidate lifecycle scenarios
 2. Create command lifecycle test templates
 3. Document fixture requirements
@@ -173,6 +180,7 @@ This research is complete when:
 **Command lifecycle testing strategy with state transition scenarios**
 
 Content includes:
+
 - Complete command lifecycle state diagram
 - Command lifecycle states (pending, accepted, executing, completed, failed, cancelled)
 - State transition rules and test patterns
@@ -192,6 +200,7 @@ Content includes:
 - Implementation estimates
 
 **Command Lifecycle States:**
+
 1. **Pending**: Command submitted, awaiting execution
 2. **Accepted**: Command validated and queued
 3. **Executing**: Command currently running
@@ -200,6 +209,7 @@ Content includes:
 6. **Cancelled**: Command cancelled before completion
 
 **Example State Transitions:**
+
 - Pending → Accepted → Executing → Completed (successful sync)
 - Pending → Accepted → Executing → Failed (execution error)
 - Pending → Cancelled (cancelled before execution)
@@ -210,11 +220,13 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 13: Resource Method Testing Patterns (command operation patterns)
 - Section 27: Schema-Driven Validation Testing (command parameter validation)
 - Section 14: Integration Test Workflow Design (command workflow)
 
 **Blocks:**
+
 - Command submission implementation
 - Command status tracking implementation
 - Command cancellation implementation
@@ -241,6 +253,7 @@ Content includes:
 ### Research Findings (February 6, 2026)
 
 **Command Lifecycle States Identified (6 total):**
+
 - **PENDING** - Command accepted, waiting for execution
 - **ACCEPTED** - Command validated and queued for processing
 - **EXECUTING** - Command currently running
@@ -249,6 +262,7 @@ Content includes:
 - **CANCELED** - Command canceled before completion
 
 **Lifecycle Endpoints Identified (4 total):**
+
 - `POST /controlstreams/{id}/commands` - Submit command
 - `GET /commands/{id}` - Get command with current status
 - `GET /commands/{id}/result` - Get command result (when completed)
@@ -257,6 +271,7 @@ Content includes:
 **State Transition Rules:**
 
 **Valid Transitions:**
+
 ```
 PENDING → ACCEPTED → EXECUTING → COMPLETED
                                → FAILED
@@ -268,6 +283,7 @@ Terminal states: COMPLETED, FAILED, CANCELED
 ```
 
 **Invalid Transitions:**
+
 ```
 COMPLETED → *    (terminal state, cannot transition)
 FAILED → *       (terminal state, cannot transition)
@@ -275,22 +291,26 @@ CANCELED → *     (terminal state, cannot transition)
 ```
 
 **Synchronous vs Asynchronous Execution:**
+
 - **Async (typical)**: Command returns 201 Created, client polls status until terminal state
 - **Sync (rare)**: Command returns 200 OK with result in response
 - Determined by ControlStream `async` property (boolean)
 
 **Polling Strategy (Async Commands):**
+
 - Initial poll: Immediately after submission
 - Subsequent polls: Exponential backoff (1s, 2s, 4s, 8s, max 30s)
 - Stop polling: Terminal state reached (COMPLETED, FAILED, CANCELED)
 - Timeout: Configurable (default 5 minutes)
 
 **Cancellation Rules:**
+
 - **Can cancel**: PENDING, ACCEPTED, EXECUTING (non-terminal states)
 - **Cannot cancel**: COMPLETED, FAILED, CANCELED (terminal states)
 - **Error response**: 409 Conflict if trying to cancel terminal state
 
 **Key Testing Challenges:**
+
 1. **Async complexity**: Status polling requires time-based testing, mock delays
 2. **State machine validation**: All transitions must be tested (valid and invalid)
 3. **Time-sensitive operations**: Cancellation only valid for non-terminal states
@@ -298,6 +318,7 @@ CANCELED → *     (terminal state, cannot transition)
 5. **No upstream tests**: No existing command lifecycle tests to reference
 
 **Fixture Requirements Identified:**
+
 - Command submission fixtures: ~10 fixtures (various parameters)
 - Status response fixtures: ~12 fixtures (all 6 states + transitions)
 - Result response fixtures: ~8 fixtures (success, failure, various result types)
@@ -305,6 +326,7 @@ CANCELED → *     (terminal state, cannot transition)
 - **Total: ~35 fixtures**
 
 **Test Implementation Estimates:**
+
 - Command submission tests: 100-150 lines (6-8 tests)
 - Status tracking tests: 150-200 lines (8-10 tests)
 - Result retrieval tests: 100-150 lines (6-8 tests)
@@ -314,6 +336,7 @@ CANCELED → *     (terminal state, cannot transition)
 
 **Highest Rejection Risk:**
 Command lifecycle testing is **HIGH RISK** because:
+
 - State machine complexity (6 states with multiple valid/invalid transitions)
 - Async patterns (status polling adds complexity and timing dependencies)
 - Time-sensitive cancellation (can only cancel non-terminal states)

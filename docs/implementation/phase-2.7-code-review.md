@@ -11,12 +11,12 @@
 
 ## Verification Gates
 
-| Gate | Status | Details |
-|------|--------|---------|
-| `tsc --noEmit` | ✅ Clean | No type errors |
-| CSAPI unit tests | ✅ 262 passing | 3 suites, 0 failures |
-| Endpoint tests | ✅ 82/83 | 1 pre-existing failure (non-JSON parse test at endpoint.spec.ts line 1789) |
-| Uncommitted changes | ✅ Clean | Working tree clean at review start |
+| Gate                | Status         | Details                                                                    |
+| ------------------- | -------------- | -------------------------------------------------------------------------- |
+| `tsc --noEmit`      | ✅ Clean       | No type errors                                                             |
+| CSAPI unit tests    | ✅ 262 passing | 3 suites, 0 failures                                                       |
+| Endpoint tests      | ✅ 82/83       | 1 pre-existing failure (non-JSON parse test at endpoint.spec.ts line 1789) |
+| Uncommitted changes | ✅ Clean       | Working tree clean at review start                                         |
 
 ---
 
@@ -26,15 +26,15 @@
 
 ### Codebase Metrics
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `model.ts` | 600 | Type definitions, constants, 9 resource interfaces |
-| `model.spec.ts` | 407 | Type compatibility + constant validation tests |
-| `helpers.ts` | 218 | 7 utility functions (encoding, validation, link scanning) |
-| `helpers.spec.ts` | 313 | Helper function tests |
-| `url_builder.ts` | 1,553 | CSAPIQueryBuilder — 61 public methods + 4 private helpers |
-| `url_builder.spec.ts` | 1,985 | url_builder tests |
-| **Total** | **5,076** | **262 tests** |
+| File                  | Lines     | Purpose                                                   |
+| --------------------- | --------- | --------------------------------------------------------- |
+| `model.ts`            | 600       | Type definitions, constants, 9 resource interfaces        |
+| `model.spec.ts`       | 407       | Type compatibility + constant validation tests            |
+| `helpers.ts`          | 218       | 7 utility functions (encoding, validation, link scanning) |
+| `helpers.spec.ts`     | 313       | Helper function tests                                     |
+| `url_builder.ts`      | 1,553     | CSAPIQueryBuilder — 61 public methods + 4 private helpers |
+| `url_builder.spec.ts` | 1,985     | url_builder tests                                         |
+| **Total**             | **5,076** | **262 tests**                                             |
 
 Delta from Phase 2.6: +290 lines, +24 tests
 
@@ -47,12 +47,15 @@ Test distribution: 41 model + 43 helpers + 178 url_builder = 262 total
 ### Phase 2.2 Findings (resolved in earlier phases — no change)
 
 #### [P2-F1] RESOLVED: Dead `encodeArrayParameter` function
+
 No change. Fixed in Issue #38.
 
 #### [P2-F2] RESOLVED: DRY violation in link-scanning logic
+
 No change. Fixed in Issue #38.
 
 #### [P2-F3] RESOLVED: Strict-mode type safety in `buildResourceUrl`
+
 No change. Fixed in Issue #38.
 
 ---
@@ -60,18 +63,23 @@ No change. Fixed in Issue #38.
 ### Phase 2.2→2.4 Findings (all resolved — no change)
 
 #### [P2-F4] RESOLVED: Weak datetime test for `getDeployments`
+
 No change.
 
 #### [P2-F5] RESOLVED: Missing `parent` and `recursive` tests for `getDeployments`
+
 No change.
 
 #### [P2-F6] RESOLVED: Missing pagination test for `getDeploymentSubdeployments`
+
 No change.
 
 #### [P2-F7] RESOLVED: No test for cursor-based pagination
+
 No change.
 
 #### [P2-F8] RESOLVED: No test for `offset` with actual value
+
 No change. Resolved by Issue #41.
 
 ---
@@ -79,9 +87,11 @@ No change. Resolved by Issue #41.
 ### Phase 1 Findings (resolved — no change)
 
 #### [P1-F4] RESOLVED: Missing exports from `index.ts`
+
 No change.
 
 #### [P1-F6] RESOLVED: Hardcoded temporal parameter keys
+
 No change. `TEMPORAL_KEYS` Set covers all temporal keys including `phenomenonTime` and `resultTime`.
 
 ---
@@ -89,44 +99,51 @@ No change. `TEMPORAL_KEYS` Set covers all temporal keys including `phenomenonTim
 ### Phase 2.4 Findings (status check)
 
 #### [F1] UNCHANGED: SamplingFeatures tests are the most thorough yet
+
 Still the gold standard alongside Properties. Observations follows these patterns.
 
 #### [F2] UNCHANGED: Convention 3 link detection is robust
+
 No changes to `helpers.ts` link-scanning logic. Observations uses `ogc-cs:observations` rel convention per the existing pattern.
 
 #### [F3] RESOLVED: JSDoc documents `uid` but type system didn't include it
+
 No change. Fixed by Issue #40.
 
 #### [F4] UNCHANGED: Spec links correctly differentiated
+
 Observations methods correctly reference Part 2 spec (`23-002`). See new finding F7 below.
 
 #### [F5] UNCHANGED: Correct method set — no sub-resource nesting
+
 Observations follows the same principle: direct association endpoints, no deep nesting.
 
 #### [F6] UNCHANGED: SamplingFeatures datetime uses exact interval assertion
+
 No regression. Observations temporal tests follow the same exact `toBe()` pattern.
 
 #### [F7] UNCHANGED: Factory pattern consistency
+
 Observations tests introduce `makeObsBuilder()` following the established pattern.
 
 #### [F8] UPDATED: Test count distribution across resource types
 
 Updated distribution in `url_builder.spec.ts` (178 tests in url_builder, 262 total across all suites):
 
-| Section | describe blocks | Tests | Notes |
-|---------|----------------|-------|-------|
-| Constructor & discovery | 1 | 8 | Shared infrastructure |
-| Resource validation | 1 | 4 | Shared |
-| Top-level URLs | 1 | 7 | Shared |
-| **Systems** | **14** | **40** | Unchanged |
-| **Deployments** | **6** | **24** | Unchanged |
-| **Procedures** | **6** | **20** | Unchanged |
-| **SamplingFeatures** | **7** | **22** | Unchanged |
-| **Properties** | **5** | **21** | Unchanged |
-| **DataStreams** | **9** | **35** | +6 (4 from Issue #42 backfill, 2 `resultTime=latest` from Issue #43) |
-| **Observations** | **6** | **17** | **New** — 8 methods, 6 describe blocks |
-| **Infra total** | 3 | 19 | |
-| **Resource total** | 53 | 179 | |
+| Section                 | describe blocks | Tests  | Notes                                                                |
+| ----------------------- | --------------- | ------ | -------------------------------------------------------------------- |
+| Constructor & discovery | 1               | 8      | Shared infrastructure                                                |
+| Resource validation     | 1               | 4      | Shared                                                               |
+| Top-level URLs          | 1               | 7      | Shared                                                               |
+| **Systems**             | **14**          | **40** | Unchanged                                                            |
+| **Deployments**         | **6**           | **24** | Unchanged                                                            |
+| **Procedures**          | **6**           | **20** | Unchanged                                                            |
+| **SamplingFeatures**    | **7**           | **22** | Unchanged                                                            |
+| **Properties**          | **5**           | **21** | Unchanged                                                            |
+| **DataStreams**         | **9**           | **35** | +6 (4 from Issue #42 backfill, 2 `resultTime=latest` from Issue #43) |
+| **Observations**        | **6**           | **17** | **New** — 8 methods, 6 describe blocks                               |
+| **Infra total**         | 3               | 19     |                                                                      |
+| **Resource total**      | 53              | 179    |                                                                      |
 
 Note: model.spec.ts (41 tests) and helpers.spec.ts (43 tests) bring total from 178 to 262.
 
@@ -135,33 +152,43 @@ Note: model.spec.ts (41 tests) and helpers.spec.ts (43 tests) bring total from 1
 ### Phase 2.5 Findings (status check)
 
 #### [F1] UNCHANGED: Issue #40 resolves all 8 open findings systematically
+
 No change. Positive finding.
 
 #### [F2] UNCHANGED: Properties correctly models read-only semantics
+
 No change. Observations has full CRUD, contrasting with read-only Properties.
 
 #### [F3] UNCHANGED: Properties documents non-Feature response format
+
 No change.
 
 #### [F4] UNCHANGED: Spec links are correctly differentiated in Properties
+
 No change. Observations continues the Part 2 convention — see new finding F7.
 
 #### [F5] RESOLVED: Properties test coverage below gold standard
+
 No change. Resolved by Issue #41.
 
 #### [F6] RESOLVED: `PropertyQueryOptions` does not include property-specific parameters
+
 No change. Resolved by Issue #41.
 
 #### [F7] RESOLVED: Systems still missing standalone `offset` test
+
 No change. Resolved by Issue #41.
 
 #### [F8] UNCHANGED: TEMPORAL_KEYS extraction is clean and well-documented
+
 No change.
 
 #### [F9] UNCHANGED: Index.ts exports are comprehensive
+
 No change. Observations types (`ObservationQueryOptions`) were already exported from Phase 2.6.
 
 #### [F10] UNCHANGED: Deployment validation covers all 8 methods
+
 No change. Observations follows the same pattern with 8/8 method validation (see F3 below).
 
 ---
@@ -169,18 +196,23 @@ No change. Observations follows the same pattern with 8/8 method validation (see
 ### Phase 2.6 Findings (status check)
 
 #### [F1] UNCHANGED: Issue #41 resolves all 3 Phase 2.5 gap findings in a single commit
+
 No change. Positive finding.
 
 #### [F2] UNCHANGED: DataStreams spec links correctly reference Part 2
+
 No change. Observations extends this pattern — see new finding F7.
 
 #### [F3] UNCHANGED: DataStreams resource validation is comprehensive — 11/11 methods
+
 No change. Observations achieves 8/8 (see new finding F3).
 
 #### [F4] NOW RESOLVED: DataStreams test coverage has minor heatmap gaps
+
 **Resolved by:** Issue #42 (DataStreams backfill) + Issue #43 (`resultTime=latest`)
 
 Issue #42 added 4 standalone tests:
+
 - `offset: 20` → exact `toBe()`
 - `id: 'ds-001'` → exact `toBe()` (single)
 - `id: ['ds-001', 'ds-002']` → exact `toBe()` (array)
@@ -191,12 +223,15 @@ Issue #43 added 2 `resultTime=latest` tests.
 DataStreams now has 35 tests and **13/13 applicable heatmap dimensions (100%)** — the first resource type to achieve full compliance.
 
 #### [F5] Retracted — not a finding
+
 No change. `id` and `uid` are inherited from `QueryOptions`.
 
 #### [F6] NOW RESOLVED: `resultTime: 'latest'` not representable in type system
+
 **Resolved by:** Issue #43 (commit `052860b`)
 
 **Evidence:**
+
 1. `model.ts` line 13: `CsapiDateTimeParameter = DateTimeParameter | 'latest'` — CSAPI-local type alias, does not modify shared `DateTimeParameter` used by EDR.
 2. `helpers.ts` line 28: `if (param === 'latest') return 'latest';` — pass-through as first check before Date operations.
 3. `DatastreamQueryOptions.resultTime` and `ObservationQueryOptions.resultTime` both use `CsapiDateTimeParameter`.
@@ -206,15 +241,19 @@ No change. `id` and `uid` are inherited from `QueryOptions`.
 This was the **only informational finding from Phase 2.6** and it is now fully resolved. The CSAPI module has zero open informational or gap findings from Phase 2.6.
 
 #### [F7] UNCHANGED: DataStreams introduces observation-specific patterns cleanly
+
 No change. Observations standalone methods build on these patterns.
 
 #### [F8] UNCHANGED: Temporal filtering tested with exact `toBe()` assertions
+
 No change. Observations temporal tests follow the same exact assertion pattern.
 
 #### [F9] UNCHANGED: DataStreams JSDoc quality matches or exceeds prior resource types
+
 No change. Observations JSDoc follows the same standard (see new finding F2).
 
 #### [F10] UNCHANGED: DataStreams method count is correct per spec
+
 No change.
 
 ---
@@ -239,11 +278,11 @@ This is the cleanest possible fix — one type alias, one guard clause, zero sha
 
 All 3 Observations association methods include domain-specific guidance that explains the 1:1 relationship:
 
-| Method | JSDoc key phrase |
-|--------|-----------------|
-| `getObservationDatastream` | "Each observation belongs to exactly one datastream, so this endpoint returns a single resource (not a collection)." |
+| Method                          | JSDoc key phrase                                                                                                        |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `getObservationDatastream`      | "Each observation belongs to exactly one datastream, so this endpoint returns a single resource (not a collection)."    |
 | `getObservationSamplingFeature` | "Each observation targets at most one sampling feature, so this endpoint returns a single resource (not a collection)." |
-| `getObservationSystem` | "Each observation is produced by exactly one system, so this endpoint returns a single resource (not a collection)." |
+| `getObservationSystem`          | "Each observation is produced by exactly one system, so this endpoint returns a single resource (not a collection)."    |
 
 This is particularly important because DataStreams association methods (`getDataStreamSystems`, `getDataStreamProcedures`) use **plural** sub-paths for many-to-many relationships, while Observations uses **singular** sub-paths (`/datastream`, `/samplingFeature`, `/system`) for 1:1 relationships. The JSDoc makes this design distinction explicit for future maintainers.
 
@@ -266,15 +305,15 @@ expect(() => builder.getObservationHistory('x')).toThrow(EndpointError);
 
 Resource validation coverage is now complete for all post-Phase 2.2 resource types:
 
-| Resource | Coverage |
-|----------|----------|
-| Systems | ❌ (scattered — not all methods verified in one block) |
-| Deployments | ✅ (8/8) |
-| Procedures | ✅ (8/8) |
-| SamplingFeatures | ✅ (8/8) |
-| Properties | ✅ (6/6) |
-| DataStreams | ✅ (11/11) |
-| Observations | ✅ (8/8) |
+| Resource         | Coverage                                               |
+| ---------------- | ------------------------------------------------------ |
+| Systems          | ❌ (scattered — not all methods verified in one block) |
+| Deployments      | ✅ (8/8)                                               |
+| Procedures       | ✅ (8/8)                                               |
+| SamplingFeatures | ✅ (8/8)                                               |
+| Properties       | ✅ (6/6)                                               |
+| DataStreams      | ✅ (11/11)                                             |
+| Observations     | ✅ (8/8)                                               |
 
 Systems remains the only resource type without consolidated validation coverage.
 
@@ -284,17 +323,18 @@ Systems remains the only resource type without consolidated validation coverage.
 
 Issue #42 (backfill) + Issue #43 (`resultTime=latest`) bring DataStreams from 69% to **100%** of applicable heatmap dimensions:
 
-| Dimension | Phase 2.6 | Phase 2.7 | Change |
-|-----------|-----------|-----------|--------|
-| `offset` standalone | ❌ (combo only) | ✅ | Issue #42 |
-| `id` (single) | ❌ | ✅ | Issue #42 |
-| `id` (array) | ❌ | ✅ | Issue #42 |
-| `f` (format) | ❌ | ✅ | Issue #42 |
-| `resultTime: 'latest'` | — | ✅ | Issue #43 |
+| Dimension              | Phase 2.6       | Phase 2.7 | Change    |
+| ---------------------- | --------------- | --------- | --------- |
+| `offset` standalone    | ❌ (combo only) | ✅        | Issue #42 |
+| `id` (single)          | ❌              | ✅        | Issue #42 |
+| `id` (array)           | ❌              | ✅        | Issue #42 |
+| `f` (format)           | ❌              | ✅        | Issue #42 |
+| `resultTime: 'latest'` | —               | ✅        | Issue #43 |
 
 DataStreams now has 35 tests across 9 describe blocks — the most thoroughly tested resource type after Systems (40 tests).
 
 This is the third consecutive "review → backfill → 90%+" cycle:
+
 1. Phase 2.5: Properties gap identified → Issue #41 → Properties 92%
 2. Phase 2.6: DataStreams gap identified → Issue #42 → DataStreams 100%
 3. Phase 2.7: Observations gap identified (see F5) → deferred to backfill issue
@@ -305,13 +345,13 @@ This is the third consecutive "review → backfill → 90%+" cycle:
 
 Observations tests cover 7 of 12 applicable heatmap dimensions (58%). The missing standalone tests:
 
-| Missing dimension | Notes |
-|-------------------|-------|
-| `offset` standalone | No test for `getObservations({ offset: 20 })` |
-| `q` | No test for `getObservations({ q: 'temperature' })` |
-| `id` (single) | No test for `getObservations({ id: 'obs-001' })` |
-| `id` (array) | No test for `getObservations({ id: ['obs-001', 'obs-002'] })` |
-| Multiple shared options | No test combining limit + offset + q or similar |
+| Missing dimension       | Notes                                                         |
+| ----------------------- | ------------------------------------------------------------- |
+| `offset` standalone     | No test for `getObservations({ offset: 20 })`                 |
+| `q`                     | No test for `getObservations({ q: 'temperature' })`           |
+| `id` (single)           | No test for `getObservations({ id: 'obs-001' })`              |
+| `id` (array)            | No test for `getObservations({ id: ['obs-001', 'obs-002'] })` |
+| Multiple shared options | No test combining limit + offset + q or similar               |
 
 **Severity:** GAP  
 **Impact:** Low — all missing dimensions flow through `buildQueryString`'s shared parameter serialization, already exercised by 200+ tests across 6 other resource types. No unique Observations code path goes untested.
@@ -323,10 +363,12 @@ Observations tests cover 7 of 12 applicable heatmap dimensions (58%). The missin
 ### [F6] INFORMATIONAL: Observation singular association paths are a deliberate design departure
 
 DataStreams uses **plural** sub-paths for its associations:
+
 - `getDataStreamSystems(id)` → `/datastreams/{id}/systems`
 - `getDataStreamProcedures(id)` → `/datastreams/{id}/procedures`
 
 Observations uses **singular** sub-paths:
+
 - `getObservationDatastream(id)` → `/observations/{id}/datastream`
 - `getObservationSamplingFeature(id)` → `/observations/{id}/samplingFeature`
 - `getObservationSystem(id)` → `/observations/{id}/system`
@@ -339,16 +381,16 @@ Future resource types (ControlStreams, Commands) may have a mix of singular and 
 
 ### [F7] POSITIVE: All 8 Observations spec links correctly reference Part 2
 
-| Method | `@see` target | Correct? |
-|--------|--------------|----------|
-| `getObservations` | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
-| `getObservation` | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
-| `updateObservation` | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
-| `deleteObservation` | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
-| `getObservationDatastream` | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
+| Method                          | `@see` target                               | Correct?  |
+| ------------------------------- | ------------------------------------------- | --------- |
+| `getObservations`               | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
+| `getObservation`                | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
+| `updateObservation`             | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
+| `deleteObservation`             | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
+| `getObservationDatastream`      | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
 | `getObservationSamplingFeature` | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
-| `getObservationSystem` | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
-| `getObservationHistory` | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
+| `getObservationSystem`          | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
+| `getObservationHistory`         | `23-002/23-002.html#_observation_resources` | ✅ Part 2 |
 
 Like DataStreams, Observations is entirely Part 2 — all 8 methods correctly reference `23-002`.
 
@@ -369,6 +411,7 @@ The "fix before implement" workflow (Issue #43 resolved before Issue #11 started
 ### [F9] POSITIVE: Observations method set correctly excludes `createObservation`
 
 Issue #11 implements 8 methods for standalone Observations:
+
 - Collection: `getObservations`
 - Single resource: `getObservation`
 - CRUD: `updateObservation`, `deleteObservation`
@@ -388,7 +431,9 @@ The format test uses `f: 'application/swe+json'` rather than the simple `'applic
 ```typescript
 it('returns correct URL with obsFormat parameter', () => {
   const url = makeObsBuilder().getObservations({ f: 'application/swe+json' });
-  expect(url).toBe('https://example.com/collections/iot/observations?f=application%2Fswe%2Bjson');
+  expect(url).toBe(
+    'https://example.com/collections/iot/observations?f=application%2Fswe%2Bjson'
+  );
 });
 ```
 
@@ -398,24 +443,25 @@ This verifies that the `+` character in SWE-specific MIME types is correctly URL
 
 ## Test Quality Heatmap
 
-| Dimension | Systems | Deployments | Procedures | SamplingFeatures | Properties | DataStreams | Observations |
-|-----------|---------|-------------|------------|------------------|------------|------------|--------------|
-| No options (base URL) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `limit` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (combo) |
-| `offset` (standalone) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `q` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `id` (single) | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `id` (array) | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `bbox` | ✅ | ✅ | N/A | ✅ | N/A | N/A | N/A |
-| `datetime` / temporal (exact) | ✅ (instant) | ✅ (interval) | N/A | ✅ (interval) | N/A | ✅ (both + latest) | ✅ (interval + latest) |
-| `f` (format) | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `cursor` | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Multiple options | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Type-specific params | ✅ (6/6) | ✅ (3/3) | N/A | N/A | ✅ (2/2) | ✅ (4/4) | ✅ (2/2) |
-| Resource validation (all methods) | ❌ (scattered) | ✅ (8/8) | ✅ (8/8) | ✅ (8/8) | ✅ (6/6) | ✅ (11/11) | ✅ (8/8) |
-| Association pagination | Partial | ✅ | ✅ | ✅ | ✅ | ✅ | N/A (singular) |
+| Dimension                         | Systems        | Deployments   | Procedures | SamplingFeatures | Properties | DataStreams        | Observations           |
+| --------------------------------- | -------------- | ------------- | ---------- | ---------------- | ---------- | ------------------ | ---------------------- |
+| No options (base URL)             | ✅             | ✅            | ✅         | ✅               | ✅         | ✅                 | ✅                     |
+| `limit`                           | ✅             | ✅            | ✅         | ✅               | ✅         | ✅                 | ✅ (combo)             |
+| `offset` (standalone)             | ✅             | ✅            | ✅         | ✅               | ✅         | ✅                 | ❌                     |
+| `q`                               | ✅             | ✅            | ✅         | ✅               | ✅         | ✅                 | ❌                     |
+| `id` (single)                     | ❌             | ❌            | ✅         | ✅               | ✅         | ✅                 | ❌                     |
+| `id` (array)                      | ✅             | ❌            | ✅         | ✅               | ✅         | ✅                 | ❌                     |
+| `bbox`                            | ✅             | ✅            | N/A        | ✅               | N/A        | N/A                | N/A                    |
+| `datetime` / temporal (exact)     | ✅ (instant)   | ✅ (interval) | N/A        | ✅ (interval)    | N/A        | ✅ (both + latest) | ✅ (interval + latest) |
+| `f` (format)                      | ❌             | ✅            | ✅         | ✅               | ✅         | ✅                 | ✅                     |
+| `cursor`                          | ✅             | ❌            | ❌         | ❌               | ❌         | ✅                 | ✅                     |
+| Multiple options                  | ✅             | ❌            | ✅         | ✅               | ✅         | ✅                 | ❌                     |
+| Type-specific params              | ✅ (6/6)       | ✅ (3/3)      | N/A        | N/A              | ✅ (2/2)   | ✅ (4/4)           | ✅ (2/2)               |
+| Resource validation (all methods) | ❌ (scattered) | ✅ (8/8)      | ✅ (8/8)   | ✅ (8/8)         | ✅ (6/6)   | ✅ (11/11)         | ✅ (8/8)               |
+| Association pagination            | Partial        | ✅            | ✅         | ✅               | ✅         | ✅                 | N/A (singular)         |
 
 **Checklist compliance score:**
+
 - Systems: 10/14 (71%) — unchanged
 - Deployments: 10/14 (71%) — unchanged
 - Procedures: 10/11 (91%) — unchanged (3 N/A: bbox, temporal, type-specific)
@@ -425,6 +471,7 @@ This verifies that the `+` character in SWE-specific MIME types is correctly URL
 - Observations: **7/12 (58%)** — new (2 N/A: bbox, association pagination)
 
 **Notable changes from Phase 2.6:**
+
 - DataStreams jumped from 69% → **100%** (first resource type to achieve full compliance)
 - Observations enters at 58% — lowest initial score, but follows the expected gap pattern
 - Observations has cursor ✅, temporal ✅, and format ✅ from Day 1
@@ -434,21 +481,21 @@ This verifies that the `+` character in SWE-specific MIME types is correctly URL
 
 ## Summary
 
-| Category | Count | Items |
-|----------|-------|-------|
-| Phase 2.2 findings (no change) | **3** | P2-F1, P2-F2, P2-F3 |
-| Phase 2.2→2.4 findings (no change) | **5** | P2-F4, P2-F5, P2-F6, P2-F7, P2-F8 |
-| Phase 1 findings (no change) | **2** | P1-F4 (exports), P1-F6 (temporal keys) |
-| Phase 2.4 findings unchanged | **6** | F1, F2, F4, F5, F6, F7 + F3 resolved |
-| Phase 2.4 findings updated | **1** | F8 (test counts — Observations added) |
-| Phase 2.5 findings no change | **7** | F1, F2, F3, F4, F8, F9, F10 |
-| Phase 2.5 findings already resolved | **3** | F5, F6, F7 (resolved by Issue #41) |
-| Phase 2.6 findings unchanged | **6** | F1, F2, F3, F7, F8, F9, F10 (all positive) |
-| Phase 2.6 findings now resolved | **2** | F4 (DataStreams heatmap → 100%), F6 (resultTime 'latest') |
-| **New — positive findings** | **7** | F1 (Issue #43 clean fix), F2 (singular JSDoc), F3 (validation 8/8), F4 (DataStreams 100%), F7 (spec links), F8 (latest from day 1), F9 (no createObservation dup), F10 (format encoding) |
-| **New — gap findings** | **1** | F5 (Observations heatmap gaps — 58%) |
-| **New — informational** | **1** | F6 (singular vs plural association paths) |
-| **New bugs or design issues** | **0** | — |
+| Category                            | Count | Items                                                                                                                                                                                    |
+| ----------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 2.2 findings (no change)      | **3** | P2-F1, P2-F2, P2-F3                                                                                                                                                                      |
+| Phase 2.2→2.4 findings (no change)  | **5** | P2-F4, P2-F5, P2-F6, P2-F7, P2-F8                                                                                                                                                        |
+| Phase 1 findings (no change)        | **2** | P1-F4 (exports), P1-F6 (temporal keys)                                                                                                                                                   |
+| Phase 2.4 findings unchanged        | **6** | F1, F2, F4, F5, F6, F7 + F3 resolved                                                                                                                                                     |
+| Phase 2.4 findings updated          | **1** | F8 (test counts — Observations added)                                                                                                                                                    |
+| Phase 2.5 findings no change        | **7** | F1, F2, F3, F4, F8, F9, F10                                                                                                                                                              |
+| Phase 2.5 findings already resolved | **3** | F5, F6, F7 (resolved by Issue #41)                                                                                                                                                       |
+| Phase 2.6 findings unchanged        | **6** | F1, F2, F3, F7, F8, F9, F10 (all positive)                                                                                                                                               |
+| Phase 2.6 findings now resolved     | **2** | F4 (DataStreams heatmap → 100%), F6 (resultTime 'latest')                                                                                                                                |
+| **New — positive findings**         | **7** | F1 (Issue #43 clean fix), F2 (singular JSDoc), F3 (validation 8/8), F4 (DataStreams 100%), F7 (spec links), F8 (latest from day 1), F9 (no createObservation dup), F10 (format encoding) |
+| **New — gap findings**              | **1** | F5 (Observations heatmap gaps — 58%)                                                                                                                                                     |
+| **New — informational**             | **1** | F6 (singular vs plural association paths)                                                                                                                                                |
+| **New bugs or design issues**       | **0** | —                                                                                                                                                                                        |
 
 ---
 
@@ -477,11 +524,13 @@ Phase 2.7 is the **fifth consecutive phase** with zero new defects or design iss
 ### Why both changes were clean
 
 **Issue #43 (CsapiDateTimeParameter):**
+
 1. **Gap was exactly documented**: Phase 2.6 F6 described the problem, and the implementation guide §6 had a 3-step fix plan. The implementation followed the plan exactly.
 2. **CSAPI-local scoping**: Rather than modifying the shared `DateTimeParameter` (which would affect EDR and other modules), a local type alias was created. This is the minimal-impact approach.
 3. **Guard clause ordering**: `if (param === 'latest') return 'latest'` is the first check in `formatDateTimeParameter`, executing before any Date operations. This prevents the runtime error described in Phase 2.6 F6 without changing the happy path for Date-based parameters.
 
 **Issue #11 (Observations Methods):**
+
 1. **Pattern maturity**: Observations is the 7th resource type. The `assertResourceAvailable` → `buildResourceUrl` → return pipeline has now been exercised by ~260 tests across 7 resource types. Every method follows the identical 3-line pattern.
 2. **Copy-adapt from DataStreams**: Observations methods were implemented using the same patterns proven by DataStreams. The only meaningful additions were singular association sub-paths — which use infrastructure already tested by plural association paths.
 3. **Fix-before-implement workflow**: Issue #43 (`resultTime=latest`) was resolved before Issue #11 started. This prevented the same type gap from appearing in Observations and demonstrates that the "review → fix → implement" cycle catches issues at the right phase boundary.
@@ -490,6 +539,7 @@ Phase 2.7 is the **fifth consecutive phase** with zero new defects or design iss
 ### Why the heatmap gap persists
 
 Observations enters at 58% checklist compliance — the lowest initial score yet, but following the established pattern. The root cause is unchanged: when implementing a new resource type, the developer focuses on:
+
 - Type-specific features: temporal filtering (phenomenonTime interval, resultTime latest)
 - Unique patterns: singular association paths, cursor pagination, SWE MIME type format
 - Domain validation: 8/8 resource validation assertions
@@ -511,6 +561,7 @@ Rather than re-testing generic dimensions (offset, q, id) that are proven to wor
 The CSAPI module now implements **7 resource types** — all 5 Part 1 (Systems, Deployments, Procedures, SamplingFeatures, Properties) and 2 Part 2 (DataStreams, Observations) — with **61 public methods** and **262 tests**. The only new gap is the expected Observations heatmap shortfall (58%), which follows the established pattern and should be resolved by a backfill issue before the next feature implementation.
 
 **Cumulative project stats:**
+
 - **61 public methods** across 7 resource types
 - **262 tests** across 3 suites (41 model + 43 helpers + 178 url_builder)
 - **5,076 lines** of production + test code

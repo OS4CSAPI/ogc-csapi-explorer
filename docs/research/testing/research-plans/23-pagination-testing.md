@@ -63,6 +63,7 @@ Define comprehensive testing strategy for both offset-based (Part 1) and cursor-
 **Objective:** Understand pagination requirements from CSAPI specifications
 
 **Tasks:**
+
 1. Extract offset-based pagination spec from Part 1
 2. Extract cursor-based pagination spec from Part 2
 3. Document pagination parameters (limit, offset, cursor)
@@ -75,6 +76,7 @@ Define comprehensive testing strategy for both offset-based (Part 1) and cursor-
 **Objective:** Analyze pagination testing in upstream implementations
 
 **Tasks:**
+
 1. Identify pagination tests in upstream codebase
 2. Extract pagination test patterns
 3. Document pagination mocking approaches
@@ -86,6 +88,7 @@ Define comprehensive testing strategy for both offset-based (Part 1) and cursor-
 **Objective:** Identify all pagination scenarios requiring testing
 
 **Tasks:**
+
 1. Define offset-based pagination scenarios
 2. Define cursor-based pagination scenarios
 3. Identify edge cases (empty pages, boundaries, invalid params)
@@ -99,6 +102,7 @@ Define comprehensive testing strategy for both offset-based (Part 1) and cursor-
 **Objective:** Design fixtures for multi-page test scenarios
 
 **Tasks:**
+
 1. Design large dataset fixtures for pagination
 2. Create multi-page response fixtures
 3. Design edge case fixtures (empty, single page, boundary)
@@ -110,6 +114,7 @@ Define comprehensive testing strategy for both offset-based (Part 1) and cursor-
 **Objective:** Design test patterns for pagination testing
 
 **Tasks:**
+
 1. Design offset pagination test patterns
 2. Design cursor pagination test patterns
 3. Design link parsing test patterns
@@ -121,6 +126,7 @@ Define comprehensive testing strategy for both offset-based (Part 1) and cursor-
 **Objective:** Create comprehensive pagination testing strategy
 
 **Tasks:**
+
 1. Consolidate pagination scenarios
 2. Create pagination test templates
 3. Document fixture requirements
@@ -148,6 +154,7 @@ This research is complete when:
 **Pagination testing strategy covering both pagination modes with edge cases**
 
 Content includes:
+
 - Offset-based pagination specification and test patterns
 - Cursor-based pagination specification and test patterns
 - Pagination parameter matrix (limit, offset, cursor)
@@ -164,11 +171,13 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis (pagination patterns)
 - Section 2: Existing Upstream Test Pattern Survey (pagination testing)
 - Section 13: Resource Method Testing Patterns (resource pagination)
 
 **Blocks:**
+
 - Pagination implementation (tests guide pagination logic)
 - Section 19: Test Organization and File Structure (pagination test organization)
 
@@ -194,6 +203,7 @@ Content includes:
 ## 10. Notes and Open Questions
 
 **Research Insights:**
+
 - ✅ CSAPI uses TWO distinct pagination modes: offset-based (Part 1) and cursor-based (Part 2)
 - ✅ Part 2 has strict limit maximum of 10,000 (Part 1 is implementation-dependent)
 - ✅ Cursor values are opaque - clients MUST extract from links, not construct
@@ -203,11 +213,13 @@ Content includes:
 - ✅ Designed 20 fixtures for multi-page testing
 
 **Pagination Parameters:**
+
 - `limit` - Maximum items per page (both modes, Part 2 max: 10,000)
 - `offset` - Start position for offset-based (Part 1, 0-based index)
 - `cursor` - Opaque cursor for cursor-based (Part 2, extracted from links)
 
 **Key Findings:**
+
 1. Offset pagination: Predictable, can jump pages, inefficient for large datasets
 2. Cursor pagination: Efficient, stable, sequential only, requires link following
 3. Link relations: next, prev (offset only), first (offset only), last (offset only)
@@ -216,6 +228,7 @@ Content includes:
 6. Test organization: 5 test files, ~1,500 LOC, 53 test scenarios
 
 **Implementation Estimates:**
+
 - Fixture creation: 5-8 hours
 - Test implementation: 11-16 hours
 - Utility functions: 2 hours

@@ -9,10 +9,12 @@
 **Research Time:** 2 hours (February 6, 2026)
 
 **Primary Source(s):**
+
 - [CSAPI Implementation Guide](../../../planning/csapi-implementation-guide.md) (Integration Tests section - 4 workflows)
 - [CSAPI Usage Scenarios Requirements](../../requirements/csapi-usage-scenarios.md)
 
 **Supporting Resources:**
+
 - Section 1: [EDR Test Blueprint](01-edr-test-blueprint.md) (upstream integration patterns)
 - Section 2: [Upstream Test Consistency](02-upstream-test-consistency.md) (ogc-api-js-edr integration examples)
 - Section 7: [End-to-End Testing Scope](07-end-to-end-testing-scope.md) (workflow vs e2e distinction)
@@ -50,6 +52,7 @@
 **Definition:** Integration tests validate multi-component interactions through the public API, testing realistic workflows from connection through data retrieval using mocked HTTP responses.
 
 **Key Characteristics:**
+
 - ✅ **Multi-component:** Tests 2+ components interacting (endpoint → conformance → collections → builder → URL construction)
 - ✅ **Public API:** Goes through OgcApiEndpoint, not directly instantiating internal classes
 - ✅ **Fixture-driven:** Uses realistic HTTP response fixtures from spec examples
@@ -57,34 +60,38 @@
 - ✅ **State validation:** Checks state transitions across workflow steps
 
 **What Integration Tests Are NOT:**
+
 - ❌ Not unit tests (those test single functions in isolation)
 - ❌ Not end-to-end tests (those use real servers, no mocking)
 - ❌ Not just "bigger unit tests" (must validate component interactions)
 
 ### 1.2 The 4 CSAPI Workflows
 
-| Workflow | Components | Steps | Test Scenarios | Lines | Priority |
-|----------|-----------|-------|----------------|-------|----------|
-| **Discovery** | Endpoint, Conformance, Collections, QueryBuilder | Connect → Check conformance → List collections → Get builder | 6 scenarios | 120-180 | CRITICAL |
-| **Observation** | Endpoint, QueryBuilder, URL Construction, Pagination | Systems → DataStreams → Observations → Paginate → Parse | 8 scenarios | 160-240 | CRITICAL |
-| **Command** | Endpoint, QueryBuilder, URL Construction, Status Tracking | Systems → ControlStreams → Feasibility → Submit → Status → Result | 7 scenarios | 140-210 | HIGH |
-| **Cross-Resource** | Endpoint, QueryBuilder, Navigation Methods | System → Deployments → Procedures → Features → DataStreams → Observations | 5 scenarios | 100-150 | HIGH |
-| **TOTAL** | All components | 22+ steps | **26 scenarios** | **520-780 lines** | - |
+| Workflow           | Components                                                | Steps                                                                     | Test Scenarios   | Lines             | Priority |
+| ------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------- | ----------------- | -------- |
+| **Discovery**      | Endpoint, Conformance, Collections, QueryBuilder          | Connect → Check conformance → List collections → Get builder              | 6 scenarios      | 120-180           | CRITICAL |
+| **Observation**    | Endpoint, QueryBuilder, URL Construction, Pagination      | Systems → DataStreams → Observations → Paginate → Parse                   | 8 scenarios      | 160-240           | CRITICAL |
+| **Command**        | Endpoint, QueryBuilder, URL Construction, Status Tracking | Systems → ControlStreams → Feasibility → Submit → Status → Result         | 7 scenarios      | 140-210           | HIGH     |
+| **Cross-Resource** | Endpoint, QueryBuilder, Navigation Methods                | System → Deployments → Procedures → Features → DataStreams → Observations | 5 scenarios      | 100-150           | HIGH     |
+| **TOTAL**          | All components                                            | 22+ steps                                                                 | **26 scenarios** | **520-780 lines** | -        |
 
 ### 1.3 Testing Approach
 
 **Mocking Strategy:**
+
 - **Library:** Jest's built-in `jest.fn()` and `globalThis.fetch` mocking
 - **Pattern:** Mock `fetch()` to return fixtures based on URL patterns
 - **State Management:** Use fixture sequences for multi-step workflows (e.g., submit command → poll status → get result)
 
 **Assertion Patterns:**
+
 - **Structural Validation:** Parse responses as objects, validate structure
 - **Type Safety:** TypeScript type assertions for all responses
 - **URL Correctness:** Validate all constructed URLs match expected patterns
 - **State Transitions:** Verify workflow state changes correctly
 
 **Fixture Strategy:**
+
 - **Organization:** Organized by workflow (discovery/, observations/, commands/, navigation/)
 - **Quality:** Real spec examples from CSAPI Parts 1 & 2
 - **Coverage:** ~25-30 fixture files covering all workflows
@@ -92,6 +99,7 @@
 ### 1.4 Success Criteria
 
 **Coverage Targets:**
+
 - ✅ All 4 workflows have complete test scenarios (26 scenarios)
 - ✅ All workflow steps have passing tests
 - ✅ All error conditions tested (unavailable resources, malformed responses, network errors)
@@ -107,20 +115,24 @@
 **✅ Integration Test Characteristics:**
 
 1. **Multi-Component Interaction:**
+
    - Tests at least 2 components working together
    - Example: `OgcApiEndpoint` + `ConformanceReader` + `CSAPIQueryBuilder`
 
 2. **Public API Entry:**
+
    - Enters through public API (`new OgcApiEndpoint()`)
    - Does NOT directly instantiate internal classes
    - Example: `await endpoint.csapi('sensors')` NOT `new CSAPIQueryBuilder(...)`
 
 3. **Fixture-Driven Workflows:**
+
    - Uses realistic HTTP response fixtures
    - Mocks `fetch()` to return fixtures based on URL patterns
    - Example: GET `/` → root fixture, GET `/collections` → collections fixture
 
 4. **State Validation:**
+
    - Validates state changes across multiple steps
    - Example: After conformance check, `endpoint.hasConnectedSystems` should be true
 
@@ -131,10 +143,12 @@
 **❌ NOT Integration Tests:**
 
 1. **Unit Tests:**
+
    - Test single function in isolation
    - Example: Testing `buildResourceUrl()` helper function directly
 
 2. **Trivial Integration:**
+
    - Just calling 2 functions doesn't make it integration
    - Must validate meaningful interaction and state changes
 
@@ -149,7 +163,7 @@
 ```typescript
 describe('OgcApiEndpoint with EDR', () => {
   let endpoint: OgcApiEndpoint;
-  
+
   beforeEach(() => {
     // Integration: Uses public API entry point
     endpoint = new OgcApiEndpoint('http://local/edr/sample-data-hub');
@@ -177,16 +191,19 @@ describe('OgcApiEndpoint with EDR', () => {
   it('can produce EDR area queries with/without optional parameters', async () => {
     // Integration: builder creation → URL construction → parameter validation
     const builder = await endpoint.edr('reservoir-api');
-    
+
     const url1 = builder.buildAreaDownloadUrl(
       'POLYGON((-1.0 50.0, -1.0 51.0, 0.0 51.0, 0.0 50.0, -1.0 50.0))'
     );
-    expect(url1).toEqual('https://dummy.edr.app/collections/reservoir-api/area?coords=...');
+    expect(url1).toEqual(
+      'https://dummy.edr.app/collections/reservoir-api/area?coords=...'
+    );
   });
 });
 ```
 
 **Key Integration Patterns:**
+
 - Public API entry (`OgcApiEndpoint` constructor)
 - Multi-step workflows (conformance → collections → builder → URL construction)
 - State validation (hasEnvironmentalDataRetrieval, edrCollections)
@@ -197,17 +214,18 @@ describe('OgcApiEndpoint with EDR', () => {
 **Test File:** `src/ogc-api/endpoint.spec.ts` (extend existing file)
 
 **Structure:**
+
 ```typescript
 describe('OgcApiEndpoint with CSAPI', () => {
   // Discovery workflow tests
   describe('CSAPI Discovery', () => { ... });
-  
+
   // Observation workflow tests
   describe('CSAPI Observation Retrieval', () => { ... });
-  
+
   // Command workflow tests
   describe('CSAPI Command Submission', () => { ... });
-  
+
   // Cross-resource navigation tests
   describe('CSAPI Cross-Resource Navigation', () => { ... });
 });
@@ -224,6 +242,7 @@ describe('OgcApiEndpoint with CSAPI', () => {
 **User Story:** "As a developer, I want to connect to a CSAPI endpoint, check if it supports CSAPI, list available sensor collections, and create a query builder for a specific collection."
 
 **Workflow Steps:**
+
 1. Connect to endpoint URL
 2. Check CSAPI conformance (`hasConnectedSystems`)
 3. List CSAPI collections (`csapiCollections`)
@@ -231,6 +250,7 @@ describe('OgcApiEndpoint with CSAPI', () => {
 5. Check available resources (`builder.availableResources`)
 
 **Components Tested:**
+
 - `OgcApiEndpoint` (connection, factory methods)
 - `ConformanceReader` (CSAPI conformance detection)
 - `CollectionsReader` (CSAPI collection filtering)
@@ -243,7 +263,7 @@ describe('OgcApiEndpoint with CSAPI', () => {
 ```typescript
 describe('CSAPI Discovery', () => {
   let endpoint: OgcApiEndpoint;
-  
+
   beforeEach(() => {
     // Mock fetch to return CSAPI fixtures
     globalThis.fetch = jest.fn().mockImplementation(async (url) => {
@@ -255,25 +275,27 @@ describe('CSAPI Discovery', () => {
         return { ok: true, json: async () => conformanceFixture };
       }
     });
-    
+
     endpoint = new OgcApiEndpoint('https://api.example.com/csapi');
   });
 
   it('detects CSAPI conformance', async () => {
     // Integration: endpoint → conformance reader → CSAPI detection
     const hasCSAPI = await endpoint.hasConnectedSystems;
-    
+
     expect(hasCSAPI).toBe(true);
   });
 });
 ```
 
 **Assertions:**
+
 - ✅ `hasConnectedSystems` returns true
 - ✅ Conformance fixture includes `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/api-common`
 - ✅ Conformance fixture includes `http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/conf/datastream`
 
 **Fixtures:**
+
 - `fixtures/csapi/root.json` (landing page)
 - `fixtures/csapi/conformance.json` (conformance classes)
 
@@ -285,18 +307,20 @@ describe('CSAPI Discovery', () => {
 it('lists CSAPI collections', async () => {
   // Integration: endpoint → collections reader → CSAPI filtering
   const collections = await endpoint.csapiCollections;
-  
+
   expect(collections).toEqual(['sensors', 'weather-stations', 'ocean-buoys']);
   expect(collections.length).toBe(3);
 });
 ```
 
 **Assertions:**
+
 - ✅ `csapiCollections` returns array of collection IDs
 - ✅ Only collections with CSAPI links included (filter out non-CSAPI collections)
 - ✅ Collections have `/systems` or `/datastreams` links
 
 **Fixtures:**
+
 - `fixtures/csapi/collections.json` (3 CSAPI collections + 2 non-CSAPI collections)
 
 ---
@@ -307,7 +331,7 @@ it('lists CSAPI collections', async () => {
 it('creates query builder for CSAPI collection', async () => {
   // Integration: endpoint → collection info → builder creation
   const builder = await endpoint.csapi('sensors');
-  
+
   expect(builder).toBeTruthy();
   expect(builder).toBeInstanceOf(CSAPIQueryBuilder);
   expect(builder.collectionId).toBe('sensors');
@@ -315,11 +339,13 @@ it('creates query builder for CSAPI collection', async () => {
 ```
 
 **Assertions:**
+
 - ✅ `csapi()` returns CSAPIQueryBuilder instance
 - ✅ Builder has correct collection ID
 - ✅ Builder is properly initialized
 
 **Fixtures:**
+
 - `fixtures/csapi/collections/sensors.json` (collection info with CSAPI links)
 
 ---
@@ -330,19 +356,27 @@ it('creates query builder for CSAPI collection', async () => {
 it('discovers available resources from collection links', async () => {
   // Integration: builder creation → link parsing → resource discovery
   const builder = await endpoint.csapi('sensors');
-  
+
   expect(builder.availableResources).toEqual(
-    new Set(['systems', 'deployments', 'samplingFeatures', 'datastreams', 'observations'])
+    new Set([
+      'systems',
+      'deployments',
+      'samplingFeatures',
+      'datastreams',
+      'observations',
+    ])
   );
 });
 ```
 
 **Assertions:**
+
 - ✅ `availableResources` Set contains all linked resources
 - ✅ Resources parsed from collection's `links` array
 - ✅ Only CSAPI resources included (not features, tiles, etc.)
 
 **Fixtures:**
+
 - `fixtures/csapi/collections/sensors.json` (links to systems, deployments, datastreams, observations)
 
 ---
@@ -359,11 +393,13 @@ it('throws error when requesting builder for non-CSAPI collection', async () => 
 ```
 
 **Assertions:**
+
 - ✅ Error thrown for collection without CSAPI links
 - ✅ Error message is descriptive
 - ✅ No builder created
 
 **Fixtures:**
+
 - `fixtures/csapi/collections/non-csapi-collection.json` (features collection, no CSAPI links)
 
 ---
@@ -378,21 +414,23 @@ it('returns false when CSAPI conformance classes missing', async () => {
       return { ok: true, json: async () => nonCSAPIConformanceFixture };
     }
   });
-  
+
   endpoint = new OgcApiEndpoint('https://api.example.com');
-  
+
   const hasCSAPI = await endpoint.hasConnectedSystems;
-  
+
   expect(hasCSAPI).toBe(false);
 });
 ```
 
 **Assertions:**
+
 - ✅ `hasConnectedSystems` returns false
 - ✅ Conformance without CSAPI classes handled gracefully
 - ✅ No errors thrown
 
 **Fixtures:**
+
 - `fixtures/csapi/conformance-no-csapi.json` (conformance without CSAPI classes)
 
 ---
@@ -413,6 +451,7 @@ it('returns false when CSAPI conformance classes missing', async () => {
 **User Story:** "As a data analyst, I want to find sensors in a geographic area, list their datastreams, query observations over a time range with pagination, and parse the results."
 
 **Workflow Steps:**
+
 1. Connect to endpoint and create builder
 2. Query systems with spatial filter (`getSystems({ bbox })`)
 3. Navigate to datastreams (`getSystemDataStreams(systemId)`)
@@ -421,6 +460,7 @@ it('returns false when CSAPI conformance classes missing', async () => {
 6. Parse GeoJSON observation collection
 
 **Components Tested:**
+
 - `CSAPIQueryBuilder` (systems, datastreams, observations methods)
 - URL construction (spatial, temporal, pagination parameters)
 - Pagination handling (offset-based)
@@ -434,7 +474,7 @@ it('returns false when CSAPI conformance classes missing', async () => {
 describe('CSAPI Observation Retrieval', () => {
   let endpoint: OgcApiEndpoint;
   let builder: CSAPIQueryBuilder;
-  
+
   beforeEach(async () => {
     // Setup endpoint and builder
     endpoint = new OgcApiEndpoint('https://api.example.com/csapi');
@@ -444,9 +484,9 @@ describe('CSAPI Observation Retrieval', () => {
   it('queries systems with spatial bbox filter', async () => {
     // Integration: builder → URL construction → spatial parameter encoding
     const url = builder.getSystems({
-      bbox: { minLon: -122.5, minLat: 37.5, maxLon: -122.0, maxLat: 38.0 }
+      bbox: { minLon: -122.5, minLat: 37.5, maxLon: -122.0, maxLat: 38.0 },
     });
-    
+
     const parsed = new URL(url);
     expect(parsed.pathname).toBe('/systems');
     expect(parsed.searchParams.get('bbox')).toBe('-122.5,37.5,-122.0,38.0');
@@ -455,11 +495,13 @@ describe('CSAPI Observation Retrieval', () => {
 ```
 
 **Assertions:**
+
 - ✅ URL contains `/systems` path
 - ✅ `bbox` parameter correctly formatted as `minLon,minLat,maxLon,maxLat`
 - ✅ Coordinates properly encoded
 
 **Fixtures:**
+
 - `fixtures/csapi/observations/systems-collection.json` (systems in San Francisco Bay Area)
 
 ---
@@ -471,17 +513,19 @@ it('navigates from system to datastreams', async () => {
   // Integration: builder → nested URL construction → resource validation
   const systemId = 'sensor-sf-001';
   const url = builder.getSystemDataStreams(systemId);
-  
+
   expect(new URL(url).pathname).toBe(`/systems/${systemId}/datastreams`);
 });
 ```
 
 **Assertions:**
+
 - ✅ URL contains nested path `/systems/{id}/datastreams`
 - ✅ System ID properly encoded
 - ✅ Resource availability validated
 
 **Fixtures:**
+
 - `fixtures/csapi/observations/system-datastreams.json` (datastreams for sensor-sf-001)
 
 ---
@@ -492,21 +536,25 @@ it('navigates from system to datastreams', async () => {
 it('queries observations with phenomenonTime filter', async () => {
   // Integration: builder → URL construction → temporal parameter encoding
   const url = builder.getDataStreamObservations('ds-temp-001', {
-    phenomenonTime: '2024-01-01T00:00:00Z/2024-01-31T23:59:59Z'
+    phenomenonTime: '2024-01-01T00:00:00Z/2024-01-31T23:59:59Z',
   });
-  
+
   const parsed = new URL(url);
   expect(parsed.pathname).toBe('/datastreams/ds-temp-001/observations');
-  expect(parsed.searchParams.get('phenomenonTime')).toBe('2024-01-01T00:00:00Z/2024-01-31T23:59:59Z');
+  expect(parsed.searchParams.get('phenomenonTime')).toBe(
+    '2024-01-01T00:00:00Z/2024-01-31T23:59:59Z'
+  );
 });
 ```
 
 **Assertions:**
+
 - ✅ URL contains nested path `/datastreams/{id}/observations`
 - ✅ `phenomenonTime` parameter properly encoded (ISO 8601 interval)
 - ✅ Special characters encoded (`:` → `%3A`, `/` → `%2F`)
 
 **Fixtures:**
+
 - `fixtures/csapi/observations/datastream-observations-january.json` (January 2024 observations)
 
 ---
@@ -519,20 +567,20 @@ it('paginates observation results', async () => {
   const url1 = builder.getDataStreamObservations('ds-temp-001', {
     phenomenonTime: '2024-01-01T00:00:00Z/2024-01-31T23:59:59Z',
     limit: 100,
-    offset: 0
+    offset: 0,
   });
-  
+
   const parsed1 = new URL(url1);
   expect(parsed1.searchParams.get('limit')).toBe('100');
   expect(parsed1.searchParams.get('offset')).toBe('0');
-  
+
   // Second page
   const url2 = builder.getDataStreamObservations('ds-temp-001', {
     phenomenonTime: '2024-01-01T00:00:00Z/2024-01-31T23:59:59Z',
     limit: 100,
-    offset: 100
+    offset: 100,
   });
-  
+
   const parsed2 = new URL(url2);
   expect(parsed2.searchParams.get('limit')).toBe('100');
   expect(parsed2.searchParams.get('offset')).toBe('100');
@@ -540,11 +588,13 @@ it('paginates observation results', async () => {
 ```
 
 **Assertions:**
+
 - ✅ `limit` and `offset` parameters properly encoded
 - ✅ Pagination parameters combined with temporal filter
 - ✅ Multiple pages constructable
 
 **Fixtures:**
+
 - `fixtures/csapi/observations/observations-page1.json` (first 100 observations)
 - `fixtures/csapi/observations/observations-page2.json` (next 100 observations)
 
@@ -552,23 +602,23 @@ it('paginates observation results', async () => {
 
 **Test 5: Parse GeoJSON Observation Collection**
 
-> **⚠️ AP4 Note (Asserting Data Shape vs. Testing Transformation):** The assertions below validate response structure. These are only meaningful if the client has parsing/transformation logic (e.g., a GeoJSON parser that restructures, filters, or enriches the raw API response). If the client passes through the JSON unchanged, these assertions merely validate the fixture's own shape — the mock returns this exact data, so the test would be tautological. When implementing, ensure these assertions verify the *output of client parsing logic*, not the raw fixture content.
+> **⚠️ AP4 Note (Asserting Data Shape vs. Testing Transformation):** The assertions below validate response structure. These are only meaningful if the client has parsing/transformation logic (e.g., a GeoJSON parser that restructures, filters, or enriches the raw API response). If the client passes through the JSON unchanged, these assertions merely validate the fixture's own shape — the mock returns this exact data, so the test would be tautological. When implementing, ensure these assertions verify the _output of client parsing logic_, not the raw fixture content.
 
 ```typescript
 it('parses GeoJSON observation collection', async () => {
   // Mock fetch to return observation fixture
   globalThis.fetch = jest.fn().mockResolvedValue({
     ok: true,
-    json: async () => observationCollectionFixture
+    json: async () => observationCollectionFixture,
   });
-  
+
   const url = builder.getDataStreamObservations('ds-temp-001');
   const response = await fetch(url);
   // IMPORTANT: In implementation, 'geojson' should be the output of a
   // client parsing/transformation function, NOT raw response.json().
   // e.g.: const geojson = parseObservationCollection(await response.json());
   const geojson = await response.json();
-  
+
   // Integration: Response parsing → GeoJSON validation
   // These assertions test that client parsing logic produces correct output.
   // They would be an AP4 anti-pattern if testing raw passthrough responses.
@@ -581,11 +631,13 @@ it('parses GeoJSON observation collection', async () => {
 ```
 
 **Assertions:**
-- ✅ Response is valid GeoJSON FeatureCollection *(only meaningful if client transforms the response)*
+
+- ✅ Response is valid GeoJSON FeatureCollection _(only meaningful if client transforms the response)_
 - ✅ Features have correct structure (type, properties, geometry)
 - ✅ Observation properties present (phenomenonTime, result, resultTime)
 
 **Fixtures:**
+
 - `fixtures/csapi/observations/observation-collection-geojson.json` (100 temperature observations)
 
 ---
@@ -599,12 +651,14 @@ it('queries observations with phenomenonTime, resultTime, and limit', async () =
     phenomenonTime: '2024-01-01T00:00:00Z/2024-01-31T23:59:59Z',
     resultTime: '2024-01-01T00:00:00Z/..',
     datastream: 'ds-temp-001',
-    limit: 50
+    limit: 50,
   });
-  
+
   const parsed = new URL(url);
   expect(parsed.pathname).toBe('/observations');
-  expect(parsed.searchParams.get('phenomenonTime')).toBe('2024-01-01T00:00:00Z/2024-01-31T23:59:59Z');
+  expect(parsed.searchParams.get('phenomenonTime')).toBe(
+    '2024-01-01T00:00:00Z/2024-01-31T23:59:59Z'
+  );
   expect(parsed.searchParams.get('resultTime')).toBe('2024-01-01T00:00:00Z/..');
   expect(parsed.searchParams.get('datastream')).toBe('ds-temp-001');
   expect(parsed.searchParams.get('limit')).toBe('50');
@@ -612,11 +666,13 @@ it('queries observations with phenomenonTime, resultTime, and limit', async () =
 ```
 
 **Assertions:**
+
 - ✅ Multiple query parameters properly combined
 - ✅ All parameters properly encoded
 - ✅ Parameter order doesn't matter (URL parsing validates)
 
 **Fixtures:**
+
 - `fixtures/csapi/observations/observations-multi-filter.json` (filtered results)
 
 ---
@@ -632,27 +688,29 @@ it('handles empty observation collection', async () => {
       type: 'FeatureCollection',
       features: [],
       numberMatched: 0,
-      numberReturned: 0
-    })
+      numberReturned: 0,
+    }),
   });
-  
+
   const url = builder.getDataStreamObservations('ds-temp-001', {
-    phenomenonTime: '1900-01-01T00:00:00Z/1900-01-31T23:59:59Z'
+    phenomenonTime: '1900-01-01T00:00:00Z/1900-01-31T23:59:59Z',
   });
   const response = await fetch(url);
   const geojson = await response.json();
-  
+
   expect(geojson.features).toEqual([]);
   expect(geojson.numberMatched).toBe(0);
 });
 ```
 
 **Assertions:**
+
 - ✅ Empty FeatureCollection handled gracefully
 - ✅ `numberMatched` and `numberReturned` are 0
 - ✅ No errors thrown
 
 **Fixtures:**
+
 - `fixtures/csapi/observations/empty-collection.json` (empty FeatureCollection)
 
 ---
@@ -663,26 +721,32 @@ it('handles empty observation collection', async () => {
 it('navigates from observation back to system', async () => {
   // Integration: builder → multiple nested URL constructions
   const observationUrl = builder.getObservations({ limit: 1 });
-  
+
   // Get first observation ID (from mocked response)
   const observationId = 'obs-001';
-  
+
   // Navigate to datastream
   const datastreamUrl = builder.getObservationDataStream(observationId);
-  expect(new URL(datastreamUrl).pathname).toBe(`/observations/${observationId}/datastream`);
-  
+  expect(new URL(datastreamUrl).pathname).toBe(
+    `/observations/${observationId}/datastream`
+  );
+
   // Navigate to system
   const systemUrl = builder.getObservationSystem(observationId);
-  expect(new URL(systemUrl).pathname).toBe(`/observations/${observationId}/system`);
+  expect(new URL(systemUrl).pathname).toBe(
+    `/observations/${observationId}/system`
+  );
 });
 ```
 
 **Assertions:**
+
 - ✅ Reverse navigation URLs correct
 - ✅ Nested paths properly constructed
 - ✅ IDs properly encoded
 
 **Fixtures:**
+
 - `fixtures/csapi/observations/observation-item.json` (single observation)
 - `fixtures/csapi/observations/observation-datastream.json` (parent datastream)
 - `fixtures/csapi/observations/observation-system.json` (parent system)
@@ -705,6 +769,7 @@ it('navigates from observation back to system', async () => {
 **User Story:** "As a system operator, I want to find controllable systems, check command feasibility, submit a command, monitor its execution status, and retrieve the result."
 
 **Workflow Steps:**
+
 1. Connect to endpoint and create builder
 2. Query systems with controlStreams (`getSystemControlStreams(systemId)`)
 3. Check command feasibility (`checkCommandFeasibility(controlStreamId, parameters)`)
@@ -713,6 +778,7 @@ it('navigates from observation back to system', async () => {
 6. Retrieve command result (`getCommandResult(commandId)`)
 
 **Components Tested:**
+
 - `CSAPIQueryBuilder` (control streams, commands methods)
 - Command submission (POST)
 - Status polling (GET with state transitions)
@@ -726,7 +792,7 @@ it('navigates from observation back to system', async () => {
 describe('CSAPI Command Submission', () => {
   let endpoint: OgcApiEndpoint;
   let builder: CSAPIQueryBuilder;
-  
+
   beforeEach(async () => {
     endpoint = new OgcApiEndpoint('https://api.example.com/csapi');
     builder = await endpoint.csapi('sensors');
@@ -736,17 +802,19 @@ describe('CSAPI Command Submission', () => {
     // Integration: builder → nested URL construction
     const systemId = 'camera-ptz-001';
     const url = builder.getSystemControlStreams(systemId);
-    
+
     expect(new URL(url).pathname).toBe(`/systems/${systemId}/controlstreams`);
   });
 });
 ```
 
 **Assertions:**
+
 - ✅ URL contains nested path `/systems/{id}/controlstreams`
 - ✅ System ID properly encoded
 
 **Fixtures:**
+
 - `fixtures/csapi/commands/system-controlstreams.json` (control streams for PTZ camera)
 
 ---
@@ -757,19 +825,21 @@ describe('CSAPI Command Submission', () => {
 it('checks command feasibility before submission', async () => {
   // Integration: builder → POST URL construction → parameter validation
   const url = builder.checkCommandFeasibility('cs-pan-001', {
-    parameters: { pan: 45, tilt: 0, zoom: 2 }
+    parameters: { pan: 45, tilt: 0, zoom: 2 },
   });
-  
+
   expect(new URL(url).pathname).toBe('/controlstreams/cs-pan-001/feasibility');
 });
 ```
 
 **Assertions:**
+
 - ✅ URL contains `/controlstreams/{id}/feasibility` path
 - ✅ POST method implied
 - ✅ Parameters validated against schema
 
 **Fixtures:**
+
 - `fixtures/csapi/commands/feasibility-request.json` (feasibility check request body)
 - `fixtures/csapi/commands/feasibility-response.json` (feasibility result)
 
@@ -781,39 +851,43 @@ it('checks command feasibility before submission', async () => {
 it('submits command with parameters', async () => {
   // Integration: builder → POST URL construction → Location header handling
   const url = builder.createCommand('cs-pan-001', {
-    parameters: { pan: 45, tilt: 0, zoom: 2 }
+    parameters: { pan: 45, tilt: 0, zoom: 2 },
   });
-  
+
   expect(new URL(url).pathname).toBe('/controlstreams/cs-pan-001/commands');
-  
+
   // Mock fetch to return 201 Created with Location header
   globalThis.fetch = jest.fn().mockResolvedValue({
     ok: true,
     status: 201,
-    headers: new Headers({ 'Location': 'https://api.example.com/commands/cmd-001' }),
+    headers: new Headers({
+      Location: 'https://api.example.com/commands/cmd-001',
+    }),
     json: async () => ({
       id: 'cmd-001',
-      status: 'PENDING'
-    })
+      status: 'PENDING',
+    }),
   });
-  
+
   const response = await fetch(url, {
     method: 'POST',
-    body: JSON.stringify({ parameters: { pan: 45, tilt: 0, zoom: 2 } })
+    body: JSON.stringify({ parameters: { pan: 45, tilt: 0, zoom: 2 } }),
   });
-  
+
   expect(response.status).toBe(201);
   expect(response.headers.get('Location')).toContain('/commands/cmd-001');
 });
 ```
 
 **Assertions:**
+
 - ✅ URL contains `/controlstreams/{id}/commands` path
 - ✅ Response status is 201 Created
 - ✅ Location header contains new command URL
 - ✅ Response body includes command ID and initial status
 
 **Fixtures:**
+
 - `fixtures/csapi/commands/command-created.json` (201 response with command ID)
 
 ---
@@ -824,35 +898,36 @@ it('submits command with parameters', async () => {
 it('polls command status until completion', async () => {
   // Integration: builder → status URL construction → state transitions
   const commandId = 'cmd-001';
-  
+
   // First poll: PENDING
-  globalThis.fetch = jest.fn()
+  globalThis.fetch = jest
+    .fn()
     .mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ id: commandId, status: 'PENDING' })
+      json: async () => ({ id: commandId, status: 'PENDING' }),
     })
     // Second poll: RUNNING
     .mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ id: commandId, status: 'RUNNING', progress: 50 })
+      json: async () => ({ id: commandId, status: 'RUNNING', progress: 50 }),
     })
     // Third poll: COMPLETED
     .mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ id: commandId, status: 'COMPLETED', progress: 100 })
+      json: async () => ({ id: commandId, status: 'COMPLETED', progress: 100 }),
     });
-  
+
   // Poll 1
   const url1 = builder.getCommandStatus(commandId);
   expect(new URL(url1).pathname).toBe(`/commands/${commandId}/status`);
   const status1 = await (await fetch(url1)).json();
   expect(status1.status).toBe('PENDING');
-  
+
   // Poll 2
   const status2 = await (await fetch(url1)).json();
   expect(status2.status).toBe('RUNNING');
   expect(status2.progress).toBe(50);
-  
+
   // Poll 3
   const status3 = await (await fetch(url1)).json();
   expect(status3.status).toBe('COMPLETED');
@@ -861,12 +936,14 @@ it('polls command status until completion', async () => {
 ```
 
 **Assertions:**
+
 - ✅ Status URL correct (`/commands/{id}/status`)
 - ✅ State transitions validated (PENDING → RUNNING → COMPLETED)
 - ✅ Progress tracking works
 - ✅ Multiple polls handled
 
 **Fixtures:**
+
 - `fixtures/csapi/commands/status-pending.json`
 - `fixtures/csapi/commands/status-running.json`
 - `fixtures/csapi/commands/status-completed.json`
@@ -880,32 +957,34 @@ it('retrieves command result after completion', async () => {
   // Integration: builder → result URL construction
   const commandId = 'cmd-001';
   const url = builder.getCommandResult(commandId);
-  
+
   expect(new URL(url).pathname).toBe(`/commands/${commandId}/result`);
-  
+
   // Mock fetch to return result
   globalThis.fetch = jest.fn().mockResolvedValue({
     ok: true,
     json: async () => ({
       id: commandId,
-      result: { success: true, position: { pan: 45, tilt: 0, zoom: 2 } }
-    })
+      result: { success: true, position: { pan: 45, tilt: 0, zoom: 2 } },
+    }),
   });
-  
+
   const response = await fetch(url);
   const result = await response.json();
-  
+
   expect(result.result.success).toBe(true);
   expect(result.result.position).toEqual({ pan: 45, tilt: 0, zoom: 2 });
 });
 ```
 
 **Assertions:**
+
 - ✅ Result URL correct (`/commands/{id}/result`)
 - ✅ Result structure validated
 - ✅ Command completed successfully
 
 **Fixtures:**
+
 - `fixtures/csapi/commands/command-result.json` (successful command result)
 
 ---
@@ -916,19 +995,22 @@ it('retrieves command result after completion', async () => {
 it('handles command failure gracefully', async () => {
   // Integration: builder → status check → error handling
   const commandId = 'cmd-002';
-  
+
   globalThis.fetch = jest.fn().mockResolvedValue({
     ok: true,
     json: async () => ({
       id: commandId,
       status: 'FAILED',
-      error: { code: 'POSITION_UNREACHABLE', message: 'Pan position 180 exceeds maximum 170' }
-    })
+      error: {
+        code: 'POSITION_UNREACHABLE',
+        message: 'Pan position 180 exceeds maximum 170',
+      },
+    }),
   });
-  
+
   const url = builder.getCommandStatus(commandId);
   const status = await (await fetch(url)).json();
-  
+
   expect(status.status).toBe('FAILED');
   expect(status.error.code).toBe('POSITION_UNREACHABLE');
   expect(status.error.message).toContain('exceeds maximum');
@@ -936,11 +1018,13 @@ it('handles command failure gracefully', async () => {
 ```
 
 **Assertions:**
+
 - ✅ FAILED status handled
 - ✅ Error structure validated
 - ✅ Error message descriptive
 
 **Fixtures:**
+
 - `fixtures/csapi/commands/status-failed.json` (failed command with error)
 
 ---
@@ -952,32 +1036,34 @@ it('cancels running command', async () => {
   // Integration: builder → cancel URL construction
   const commandId = 'cmd-003';
   const url = builder.cancelCommand(commandId);
-  
+
   expect(new URL(url).pathname).toBe(`/commands/${commandId}/cancel`);
-  
+
   // Mock fetch to return cancellation confirmation
   globalThis.fetch = jest.fn().mockResolvedValue({
     ok: true,
     status: 200,
     json: async () => ({
       id: commandId,
-      status: 'CANCELLED'
-    })
+      status: 'CANCELLED',
+    }),
   });
-  
+
   const response = await fetch(url, { method: 'POST' });
   const result = await response.json();
-  
+
   expect(result.status).toBe('CANCELLED');
 });
 ```
 
 **Assertions:**
+
 - ✅ Cancel URL correct (`/commands/{id}/cancel`)
 - ✅ POST method used
 - ✅ Status changes to CANCELLED
 
 **Fixtures:**
+
 - `fixtures/csapi/commands/command-cancelled.json` (cancelled command)
 
 ---
@@ -998,6 +1084,7 @@ it('cancels running command', async () => {
 **User Story:** "As a system administrator, I want to navigate from a system through its deployment, procedures, sampling features, datastreams, and observations to understand the complete sensing workflow."
 
 **Workflow Steps:**
+
 1. Start with system (`getSystem(systemId)`)
 2. Navigate to deployments (`getSystemDeployments(systemId)`)
 3. Navigate to procedures (`getSystemProcedures(systemId)`)
@@ -1006,6 +1093,7 @@ it('cancels running command', async () => {
 6. Navigate to observations (`getDataStreamObservations(datastreamId)`)
 
 **Components Tested:**
+
 - `CSAPIQueryBuilder` (all navigation methods)
 - URL construction for nested resources
 - Resource relationship validation
@@ -1018,7 +1106,7 @@ it('cancels running command', async () => {
 describe('CSAPI Cross-Resource Navigation', () => {
   let endpoint: OgcApiEndpoint;
   let builder: CSAPIQueryBuilder;
-  
+
   beforeEach(async () => {
     endpoint = new OgcApiEndpoint('https://api.example.com/csapi');
     builder = await endpoint.csapi('sensors');
@@ -1028,17 +1116,19 @@ describe('CSAPI Cross-Resource Navigation', () => {
     // Integration: builder → nested URL construction
     const systemId = 'weather-station-001';
     const url = builder.getSystemDeployments(systemId);
-    
+
     expect(new URL(url).pathname).toBe(`/systems/${systemId}/deployments`);
   });
 });
 ```
 
 **Assertions:**
+
 - ✅ URL contains nested path
 - ✅ System ID encoded
 
 **Fixtures:**
+
 - `fixtures/csapi/navigation/system-deployments.json` (deployments for weather station)
 
 ---
@@ -1049,16 +1139,18 @@ describe('CSAPI Cross-Resource Navigation', () => {
 it('navigates from system to procedures', async () => {
   const systemId = 'weather-station-001';
   const url = builder.getSystemProcedures(systemId);
-  
+
   expect(new URL(url).pathname).toBe(`/systems/${systemId}/procedures`);
 });
 ```
 
 **Assertions:**
+
 - ✅ URL contains nested path
 - ✅ Procedures linked to system
 
 **Fixtures:**
+
 - `fixtures/csapi/navigation/system-procedures.json` (procedures for weather station)
 
 ---
@@ -1069,16 +1161,18 @@ it('navigates from system to procedures', async () => {
 it('navigates from system to sampling features', async () => {
   const systemId = 'weather-station-001';
   const url = builder.getSystemSamplingFeatures(systemId);
-  
+
   expect(new URL(url).pathname).toBe(`/systems/${systemId}/samplingFeatures`);
 });
 ```
 
 **Assertions:**
+
 - ✅ URL contains nested path
 - ✅ Sampling features linked to system
 
 **Fixtures:**
+
 - `fixtures/csapi/navigation/system-samplingfeatures.json` (sampling features for weather station)
 
 ---
@@ -1088,26 +1182,32 @@ it('navigates from system to sampling features', async () => {
 ```typescript
 it('navigates from system through datastreams to observations', async () => {
   const systemId = 'weather-station-001';
-  
+
   // System → DataStreams
   const datastreamsUrl = builder.getSystemDataStreams(systemId);
-  expect(new URL(datastreamsUrl).pathname).toBe(`/systems/${systemId}/datastreams`);
-  
+  expect(new URL(datastreamsUrl).pathname).toBe(
+    `/systems/${systemId}/datastreams`
+  );
+
   // Assume first datastream ID from mocked response
   const datastreamId = 'ds-temperature-001';
-  
+
   // DataStream → Observations
   const observationsUrl = builder.getDataStreamObservations(datastreamId);
-  expect(new URL(observationsUrl).pathname).toBe(`/datastreams/${datastreamId}/observations`);
+  expect(new URL(observationsUrl).pathname).toBe(
+    `/datastreams/${datastreamId}/observations`
+  );
 });
 ```
 
 **Assertions:**
+
 - ✅ Multi-step navigation works
 - ✅ URLs correct at each step
 - ✅ IDs properly encoded
 
 **Fixtures:**
+
 - `fixtures/csapi/navigation/system-datastreams.json` (datastreams for weather station)
 - `fixtures/csapi/navigation/datastream-observations.json` (observations for temperature datastream)
 
@@ -1118,22 +1218,29 @@ it('navigates from system through datastreams to observations', async () => {
 ```typescript
 it('navigates backward from observation to system', async () => {
   const observationId = 'obs-001';
-  
+
   // Observation → SamplingFeature
-  const samplingFeatureUrl = builder.getObservationSamplingFeature(observationId);
-  expect(new URL(samplingFeatureUrl).pathname).toBe(`/observations/${observationId}/samplingFeature`);
-  
+  const samplingFeatureUrl =
+    builder.getObservationSamplingFeature(observationId);
+  expect(new URL(samplingFeatureUrl).pathname).toBe(
+    `/observations/${observationId}/samplingFeature`
+  );
+
   // Observation → System
   const systemUrl = builder.getObservationSystem(observationId);
-  expect(new URL(systemUrl).pathname).toBe(`/observations/${observationId}/system`);
+  expect(new URL(systemUrl).pathname).toBe(
+    `/observations/${observationId}/system`
+  );
 });
 ```
 
 **Assertions:**
+
 - ✅ Reverse navigation URLs correct
 - ✅ Relationships preserved
 
 **Fixtures:**
+
 - `fixtures/csapi/navigation/observation-samplingfeature.json` (sampling feature for observation)
 - `fixtures/csapi/navigation/observation-system.json` (system for observation)
 
@@ -1155,6 +1262,7 @@ it('navigates backward from observation to system', async () => {
 **Library:** Jest's built-in `jest.fn()` and `globalThis.fetch` mocking
 
 **Why This Approach:**
+
 - ✅ No additional dependencies (Jest already in project)
 - ✅ Simple URL pattern matching
 - ✅ Easy fixture sequencing for multi-step workflows
@@ -1168,7 +1276,7 @@ beforeEach(() => {
   globalThis.fetch = jest.fn().mockImplementation(async (url) => {
     const urlObj = new URL(url);
     const path = urlObj.pathname;
-    
+
     // Match URL patterns to fixtures
     if (path === '/') {
       return { ok: true, json: async () => rootFixture };
@@ -1182,7 +1290,7 @@ beforeEach(() => {
     if (path.startsWith('/systems')) {
       return { ok: true, json: async () => systemsFixture };
     }
-    
+
     // Default: 404
     return { ok: false, status: 404 };
   });
@@ -1233,26 +1341,27 @@ if (commandStatusPattern.test(path)) {
 
 ```typescript
 // Command status polling: PENDING → RUNNING → COMPLETED
-globalThis.fetch = jest.fn()
+globalThis.fetch = jest
+  .fn()
   .mockResolvedValueOnce({
     ok: true,
-    json: async () => ({ id: 'cmd-001', status: 'PENDING' })
+    json: async () => ({ id: 'cmd-001', status: 'PENDING' }),
   })
   .mockResolvedValueOnce({
     ok: true,
-    json: async () => ({ id: 'cmd-001', status: 'RUNNING', progress: 50 })
+    json: async () => ({ id: 'cmd-001', status: 'RUNNING', progress: 50 }),
   })
   .mockResolvedValueOnce({
     ok: true,
-    json: async () => ({ id: 'cmd-001', status: 'COMPLETED', progress: 100 })
+    json: async () => ({ id: 'cmd-001', status: 'COMPLETED', progress: 100 }),
   });
 
 // First call returns PENDING
-const status1 = await (await fetch('/commands/cmd-001/status')).json();
+const status1 = await(await fetch('/commands/cmd-001/status')).json();
 // Second call returns RUNNING
-const status2 = await (await fetch('/commands/cmd-001/status')).json();
+const status2 = await(await fetch('/commands/cmd-001/status')).json();
 // Third call returns COMPLETED
-const status3 = await (await fetch('/commands/cmd-001/status')).json();
+const status3 = await(await fetch('/commands/cmd-001/status')).json();
 ```
 
 ### 7.4 State Management for POST/PUT/DELETE
@@ -1267,9 +1376,9 @@ globalThis.fetch = jest.fn().mockImplementation(async (url, options) => {
       ok: true,
       status: 201,
       headers: new Headers({
-        'Location': 'https://api.example.com/commands/cmd-001'
+        Location: 'https://api.example.com/commands/cmd-001',
       }),
-      json: async () => ({ id: 'cmd-001', status: 'PENDING' })
+      json: async () => ({ id: 'cmd-001', status: 'PENDING' }),
     };
   }
 });
@@ -1283,7 +1392,7 @@ if (url.includes('/systems/sys-001') && options?.method === 'PUT') {
   return {
     ok: true,
     status: 200,
-    json: async () => updatedSystemFixture
+    json: async () => updatedSystemFixture,
   };
 }
 ```
@@ -1296,7 +1405,7 @@ if (url.includes('/systems/sys-001') && options?.method === 'DELETE') {
   return {
     ok: true,
     status: 204,
-    body: null
+    body: null,
   };
 }
 ```
@@ -1317,8 +1426,8 @@ globalThis.fetch = jest.fn().mockResolvedValue({
   status: 404,
   json: async () => ({
     code: 'ResourceNotFound',
-    description: 'System sys-999 not found'
-  })
+    description: 'System sys-999 not found',
+  }),
 });
 ```
 
@@ -1327,7 +1436,9 @@ globalThis.fetch = jest.fn().mockResolvedValue({
 ```typescript
 globalThis.fetch = jest.fn().mockResolvedValue({
   ok: true,
-  json: async () => { throw new Error('Invalid JSON'); }
+  json: async () => {
+    throw new Error('Invalid JSON');
+  },
 });
 ```
 
@@ -1363,7 +1474,7 @@ expect(url).toContain('limit=10');
 
 ### 8.2 Response Structure Validation
 
-> **⚠️ AP4 Clarification:** Response structure assertions are only meaningful when the client *transforms, parses, or enriches* the raw API response. If the client is a passthrough (returns the JSON as-is), these assertions test the fixture shape, not client behavior. Always assert against the *output of client logic*, not the raw response.
+> **⚠️ AP4 Clarification:** Response structure assertions are only meaningful when the client _transforms, parses, or enriches_ the raw API response. If the client is a passthrough (returns the JSON as-is), these assertions test the fixture shape, not client behavior. Always assert against the _output of client logic_, not the raw response.
 
 **✅ DO: Validate Client Parsing Output**
 
@@ -1387,15 +1498,15 @@ expect(typeof feature.properties.result).toBe('number');
 ```typescript
 // If client just does: return await response.json()
 // then these assertions test the fixture, not client code
-expect(response.type).toBe('FeatureCollection');  // Tautological
-expect(response.features).toHaveLength(10);  // Tests fixture setup
+expect(response.type).toBe('FeatureCollection'); // Tautological
+expect(response.features).toHaveLength(10); // Tests fixture setup
 ```
 
 **❌ DON'T: Just Check Truthiness**
 
 ```typescript
-expect(response).toBeTruthy();  // Too shallow
-expect(response.features).toBeDefined();  // Doesn't validate structure
+expect(response).toBeTruthy(); // Too shallow
+expect(response.features).toBeDefined(); // Doesn't validate structure
 ```
 
 ### 8.3 State Transition Validation
@@ -1420,7 +1531,7 @@ expect(status3.status).toBe('COMPLETED');
 
 ```typescript
 // Missing intermediate states
-expect(finalStatus.status).toBe('COMPLETED');  // What about PENDING and RUNNING?
+expect(finalStatus.status).toBe('COMPLETED'); // What about PENDING and RUNNING?
 ```
 
 ### 8.4 Error Condition Validation
@@ -1475,7 +1586,7 @@ expect(new URL(url).pathname).toBe('/systems');
 
 ```typescript
 // Only checking final result - doesn't validate workflow
-const url = await (await endpoint.csapi('sensors')).getSystems();
+const url = await(await endpoint.csapi('sensors')).getSystems();
 expect(url).toContain('/systems');
 ```
 
@@ -1496,7 +1607,7 @@ fixtures/csapi/
     sensors.json                             # CSAPI collection with all resource links
     weather-stations.json                    # Another CSAPI collection
     non-csapi-collection.json                # Non-CSAPI collection (for error testing)
-  
+
   # Observation workflow fixtures
   observations/
     systems-collection.json                  # Systems in SF Bay Area
@@ -1510,7 +1621,7 @@ fixtures/csapi/
     observation-item.json                    # Single observation
     observation-datastream.json              # Parent datastream for observation
     observation-system.json                  # Parent system for observation
-  
+
   # Command workflow fixtures
   commands/
     system-controlstreams.json               # Control streams for PTZ camera
@@ -1523,7 +1634,7 @@ fixtures/csapi/
     status-failed.json                       # Command status: FAILED with error
     command-result.json                      # Successful command result
     command-cancelled.json                   # Cancelled command
-  
+
   # Cross-resource navigation fixtures
   navigation/
     system-deployments.json                  # Deployments for weather station
@@ -1537,33 +1648,37 @@ fixtures/csapi/
 
 ### 9.2 Fixture Count Summary
 
-| Category | Fixtures | Purpose |
-|----------|----------|---------|
-| **Discovery** | 6 | Conformance, collections, error cases |
-| **Observations** | 10 | Systems, datastreams, observations, pagination, reverse navigation |
-| **Commands** | 9 | Control streams, feasibility, command lifecycle (pending → completed/failed) |
-| **Navigation** | 8 | Cross-resource relationships |
-| **TOTAL** | **33** | Complete workflow coverage |
+| Category         | Fixtures | Purpose                                                                      |
+| ---------------- | -------- | ---------------------------------------------------------------------------- |
+| **Discovery**    | 6        | Conformance, collections, error cases                                        |
+| **Observations** | 10       | Systems, datastreams, observations, pagination, reverse navigation           |
+| **Commands**     | 9        | Control streams, feasibility, command lifecycle (pending → completed/failed) |
+| **Navigation**   | 8        | Cross-resource relationships                                                 |
+| **TOTAL**        | **33**   | Complete workflow coverage                                                   |
 
 > **Fixture Count Cross-Reference:** This document's 33 fixtures cover integration workflow tests only. Section 13 specifies 23 fixtures for resource method unit tests (5 universal + 18 resource-specific). Section 19 reports ~280 total fixtures across the entire test suite (sourced from Section 15), which includes these 33 plus unit test, format parsing, and error condition fixtures. The 23 + 33 = 56 fixtures from Sections 13 and 14 account for ~20% of the total; the remainder covers format parsers (SensorML, SWE Common, GeoJSON), worker extensions, and error/edge case scenarios.
 
 ### 9.3 Fixture Quality Standards
 
 **✅ Real Spec Examples:**
+
 - Source fixtures from CSAPI Parts 1 & 2 specification examples
 - Use realistic values (not "foo", "bar", "test123")
 - Include all required properties
 
 **✅ Complete Structures:**
+
 - Full GeoJSON Features with geometry, properties, id
 - Complete observation properties (phenomenonTime, result, resultTime)
 - Full system properties (name, description, properties)
 
 **✅ Consistent IDs:**
+
 - Use meaningful IDs across fixtures (sensor-sf-001, ds-temperature-001, obs-001)
 - Maintain ID relationships (observation references datastream, datastream references system)
 
 **✅ Variation Coverage:**
+
 - Success cases (200 OK, 201 Created)
 - Empty cases (empty FeatureCollection)
 - Error cases (404, 500, malformed responses)
@@ -1579,36 +1694,37 @@ fixtures/csapi/
 describe('CSAPI [Workflow Name]', () => {
   let endpoint: OgcApiEndpoint;
   let builder: CSAPIQueryBuilder;
-  
+
   beforeEach(async () => {
     // Setup mock fetch with fixtures
     globalThis.fetch = jest.fn().mockImplementation(async (url) => {
       const urlObj = new URL(url);
       const path = urlObj.pathname;
-      
+
       // URL pattern matching to fixtures
       if (path === '/') return { ok: true, json: async () => rootFixture };
-      if (path === '/conformance') return { ok: true, json: async () => conformanceFixture };
+      if (path === '/conformance')
+        return { ok: true, json: async () => conformanceFixture };
       // ... more patterns ...
-      
+
       return { ok: false, status: 404 };
     });
-    
+
     // Create endpoint and builder
     endpoint = new OgcApiEndpoint('https://api.example.com/csapi');
     builder = await endpoint.csapi('sensors');
   });
-  
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
-  
+
   it('[scenario description]', async () => {
     // Integration: [components involved] → [interactions]
-    
+
     // ACT: Perform workflow step
     const result = builder.someMethod(params);
-    
+
     // ASSERT: Validate result
     expect(result).toMatchExpectedStructure();
     expect(result).toHaveCorrectValues();
@@ -1624,12 +1740,12 @@ it('completes multi-step workflow', async () => {
   // Integration: [components] → [interaction]
   const step1Result = builder.step1Method();
   expect(step1Result).toBe(expectedValue1);
-  
+
   // Step 2: [Description]
   // Integration: [components] → [interaction]
   const step2Result = builder.step2Method(step1Result);
   expect(step2Result).toBe(expectedValue2);
-  
+
   // Step 3: [Description]
   // Integration: [components] → [interaction]
   const step3Result = builder.step3Method(step2Result);
@@ -1644,12 +1760,12 @@ it('validates state transitions', async () => {
   // Initial state
   let state = builder.getInitialState();
   expect(state.status).toBe('INITIAL');
-  
+
   // Transition 1: INITIAL → PROCESSING
   await builder.triggerTransition1();
   state = builder.getState();
   expect(state.status).toBe('PROCESSING');
-  
+
   // Transition 2: PROCESSING → COMPLETED
   await builder.triggerTransition2();
   state = builder.getState();
@@ -1662,15 +1778,13 @@ it('validates state transitions', async () => {
 ```typescript
 it('handles [error condition] gracefully', async () => {
   // Setup error condition
-  globalThis.fetch = jest.fn().mockRejectedValue(
-    new Error('[error type]')
-  );
-  
+  globalThis.fetch = jest.fn().mockRejectedValue(new Error('[error type]'));
+
   // Expect error to be thrown
   await expect(builder.methodThatFails()).rejects.toThrow(
     /expected error message pattern/i
   );
-  
+
   // OR: Expect error to be caught and handled
   const result = builder.methodWithFallback();
   expect(result).toBe(fallbackValue);
@@ -1687,10 +1801,10 @@ it('handles [error condition] gracefully', async () => {
 
 ```typescript
 it('handles network timeout gracefully', async () => {
-  globalThis.fetch = jest.fn().mockRejectedValue(
-    new Error('Network timeout after 30s')
-  );
-  
+  globalThis.fetch = jest
+    .fn()
+    .mockRejectedValue(new Error('Network timeout after 30s'));
+
   await expect(builder.getSystems()).rejects.toThrow(/timeout/i);
 });
 ```
@@ -1699,13 +1813,13 @@ it('handles network timeout gracefully', async () => {
 
 ```typescript
 it('handles DNS resolution failure', async () => {
-  globalThis.fetch = jest.fn().mockRejectedValue(
-    new Error('getaddrinfo ENOTFOUND api.invalid.com')
+  globalThis.fetch = jest
+    .fn()
+    .mockRejectedValue(new Error('getaddrinfo ENOTFOUND api.invalid.com'));
+
+  await expect(new OgcApiEndpoint('https://api.invalid.com')).rejects.toThrow(
+    /ENOTFOUND/
   );
-  
-  await expect(
-    new OgcApiEndpoint('https://api.invalid.com')
-  ).rejects.toThrow(/ENOTFOUND/);
 });
 ```
 
@@ -1720,10 +1834,10 @@ it('handles 404 resource not found', async () => {
     status: 404,
     json: async () => ({
       code: 'ResourceNotFound',
-      description: 'System sys-999 does not exist'
-    })
+      description: 'System sys-999 does not exist',
+    }),
   });
-  
+
   await expect(builder.getSystem('sys-999')).rejects.toThrow(
     /sys-999.*not found/i
   );
@@ -1739,10 +1853,10 @@ it('handles 500 internal server error', async () => {
     status: 500,
     json: async () => ({
       code: 'InternalServerError',
-      description: 'Database connection failed'
-    })
+      description: 'Database connection failed',
+    }),
   });
-  
+
   await expect(builder.getSystems()).rejects.toThrow(/server error/i);
 });
 ```
@@ -1756,10 +1870,10 @@ it('handles 401 unauthorized access', async () => {
     status: 401,
     json: async () => ({
       code: 'Unauthorized',
-      description: 'Authentication required'
-    })
+      description: 'Authentication required',
+    }),
   });
-  
+
   await expect(builder.getSystem('sys-001')).rejects.toThrow(/unauthorized/i);
 });
 ```
@@ -1772,9 +1886,11 @@ it('handles 401 unauthorized access', async () => {
 it('handles malformed JSON response', async () => {
   globalThis.fetch = jest.fn().mockResolvedValue({
     ok: true,
-    json: async () => { throw new SyntaxError('Unexpected token < in JSON'); }
+    json: async () => {
+      throw new SyntaxError('Unexpected token < in JSON');
+    },
   });
-  
+
   await expect(builder.getSystems()).rejects.toThrow(/JSON/i);
 });
 ```
@@ -1787,15 +1903,15 @@ it('handles response missing required properties', async () => {
     ok: true,
     json: async () => ({
       // Missing 'type' property
-      features: []
-    })
+      features: [],
+    }),
   });
-  
+
   const response = await (await fetch('/systems')).json();
-  
+
   // Should have type property
   expect(response).not.toHaveProperty('type');
-  
+
   // Validation should fail
   // (Actual validation logic would be in GeoJSON parser)
 });
@@ -1815,16 +1931,16 @@ it('throws error when method called for unavailable resource', async () => {
         json: async () => ({
           id: 'sensors',
           links: [
-            { rel: 'systems', href: '/systems' }
+            { rel: 'systems', href: '/systems' },
             // No observations link
-          ]
-        })
+          ],
+        }),
       };
     }
   });
-  
+
   const builder = await endpoint.csapi('sensors');
-  
+
   await expect(builder.getObservations()).rejects.toThrow(
     /collection.*sensors.*does not support.*observations/i
   );
@@ -1844,14 +1960,14 @@ it('handles command feasibility check failure', async () => {
       status: 'COMPLETED',
       result: {
         feasible: false,
-        reason: 'Target position conflicts with scheduled maintenance window'
-      }
-    })
+        reason: 'Target position conflicts with scheduled maintenance window',
+      },
+    }),
   });
-  
+
   const url = builder.checkCommandFeasibility('cs-001', { pan: 90 });
   const response = await (await fetch(url, { method: 'POST' })).json();
-  
+
   expect(response.result.feasible).toBe(false);
   expect(response.result.reason).toContain('conflicts');
 });
@@ -1866,13 +1982,13 @@ it('handles command submission rejection', async () => {
     status: 400,
     json: async () => ({
       code: 'InvalidParameter',
-      description: 'Pan value 180 exceeds maximum allowed 170'
-    })
+      description: 'Pan value 180 exceeds maximum allowed 170',
+    }),
   });
-  
-  await expect(
-    builder.createCommand('cs-001', { pan: 180 })
-  ).rejects.toThrow(/exceeds maximum/i);
+
+  await expect(builder.createCommand('cs-001', { pan: 180 })).rejects.toThrow(
+    /exceeds maximum/i
+  );
 });
 ```
 
@@ -1887,7 +2003,7 @@ it('handles command submission rejection', async () => {
 ```typescript
 it('endpoint state before conformance check', () => {
   const endpoint = new OgcApiEndpoint('https://api.example.com');
-  
+
   // hasConnectedSystems not yet resolved
   expect(endpoint.hasConnectedSystems).toBeInstanceOf(Promise);
 });
@@ -1898,15 +2014,15 @@ it('endpoint state before conformance check', () => {
 ```typescript
 it('endpoint state after conformance check', async () => {
   const endpoint = new OgcApiEndpoint('https://api.example.com');
-  
+
   const hasCSAPI = await endpoint.hasConnectedSystems;
-  
+
   expect(hasCSAPI).toBe(true);
-  
+
   // Subsequent calls should return cached value
   const hasCSAPI2 = await endpoint.hasConnectedSystems;
   expect(hasCSAPI2).toBe(true);
-  
+
   // fetch should only be called once (caching)
   expect(globalThis.fetch).toHaveBeenCalledTimes(2); // root + conformance
 });
@@ -1919,14 +2035,14 @@ it('endpoint state after conformance check', async () => {
 ```typescript
 it('builder state after creation', async () => {
   const builder = await endpoint.csapi('sensors');
-  
+
   // Builder should have collection info
   expect(builder.collectionId).toBe('sensors');
-  
+
   // Builder should have parsed available resources
   expect(builder.availableResources).toBeInstanceOf(Set);
   expect(builder.availableResources.size).toBeGreaterThan(0);
-  
+
   // Builder should be ready for method calls
   expect(typeof builder.getSystems).toBe('function');
 });
@@ -1939,7 +2055,7 @@ it('builder state after creation', async () => {
 ```typescript
 it('validates command state transitions', async () => {
   const commandId = 'cmd-001';
-  
+
   // Mock state sequence
   let callCount = 0;
   globalThis.fetch = jest.fn().mockImplementation(async (url) => {
@@ -1949,22 +2065,28 @@ it('validates command state transitions', async () => {
         return { ok: true, json: async () => ({ status: 'PENDING' }) };
       }
       if (callCount === 2) {
-        return { ok: true, json: async () => ({ status: 'RUNNING', progress: 50 }) };
+        return {
+          ok: true,
+          json: async () => ({ status: 'RUNNING', progress: 50 }),
+        };
       }
-      return { ok: true, json: async () => ({ status: 'COMPLETED', progress: 100 }) };
+      return {
+        ok: true,
+        json: async () => ({ status: 'COMPLETED', progress: 100 }),
+      };
     }
   });
-  
+
   // Poll 1: PENDING
   const status1 = await (await fetch(`/commands/${commandId}/status`)).json();
   expect(status1.status).toBe('PENDING');
   expect(status1).not.toHaveProperty('progress');
-  
+
   // Poll 2: RUNNING
   const status2 = await (await fetch(`/commands/${commandId}/status`)).json();
   expect(status2.status).toBe('RUNNING');
   expect(status2.progress).toBe(50);
-  
+
   // Poll 3: COMPLETED
   const status3 = await (await fetch(`/commands/${commandId}/status`)).json();
   expect(status3.status).toBe('COMPLETED');
@@ -1980,13 +2102,13 @@ it('validates command state transitions', async () => {
 it('validates first page state', async () => {
   const url = builder.getObservations({ limit: 100, offset: 0 });
   const response = await (await fetch(url)).json();
-  
+
   expect(response.features).toHaveLength(100);
   expect(response.numberMatched).toBe(500); // Total results
   expect(response.numberReturned).toBe(100); // This page
-  
+
   // Should have 'next' link
-  const nextLink = response.links?.find(l => l.rel === 'next');
+  const nextLink = response.links?.find((l) => l.rel === 'next');
   expect(nextLink).toBeDefined();
   expect(nextLink.href).toContain('offset=100');
 });
@@ -1998,17 +2120,17 @@ it('validates first page state', async () => {
 it('validates last page state', async () => {
   const url = builder.getObservations({ limit: 100, offset: 400 });
   const response = await (await fetch(url)).json();
-  
+
   expect(response.features).toHaveLength(100);
   expect(response.numberMatched).toBe(500);
   expect(response.numberReturned).toBe(100);
-  
+
   // Should NOT have 'next' link
-  const nextLink = response.links?.find(l => l.rel === 'next');
+  const nextLink = response.links?.find((l) => l.rel === 'next');
   expect(nextLink).toBeUndefined();
-  
+
   // Should have 'prev' link
-  const prevLink = response.links?.find(l => l.rel === 'prev');
+  const prevLink = response.links?.find((l) => l.rel === 'prev');
   expect(prevLink).toBeDefined();
 });
 ```
@@ -2019,15 +2141,16 @@ it('validates last page state', async () => {
 
 ### 13.1 Lines of Code Estimates
 
-| Workflow | Test Scenarios | Lines per Test | Total Lines | Priority |
-|----------|----------------|----------------|-------------|----------|
-| **Discovery** | 6 | 20-30 | 120-180 | CRITICAL |
-| **Observation** | 8 | 20-30 | 160-240 | CRITICAL |
-| **Command** | 7 | 20-30 | 140-210 | HIGH |
-| **Cross-Resource** | 5 | 20-30 | 100-150 | HIGH |
-| **TOTAL** | **26** | **~22 avg** | **520-780** | - |
+| Workflow           | Test Scenarios | Lines per Test | Total Lines | Priority |
+| ------------------ | -------------- | -------------- | ----------- | -------- |
+| **Discovery**      | 6              | 20-30          | 120-180     | CRITICAL |
+| **Observation**    | 8              | 20-30          | 160-240     | CRITICAL |
+| **Command**        | 7              | 20-30          | 140-210     | HIGH     |
+| **Cross-Resource** | 5              | 20-30          | 100-150     | HIGH     |
+| **TOTAL**          | **26**         | **~22 avg**    | **520-780** | -        |
 
 **Additional Code:**
+
 - Setup/teardown: ~50-100 lines
 - Helper functions: ~30-50 lines
 - Mock fixtures loading: ~20-30 lines
@@ -2036,34 +2159,36 @@ it('validates last page state', async () => {
 
 ### 13.2 Time Estimates
 
-| Task | Time | Priority |
-|------|------|----------|
-| **Setup test structure** | 0.5-1 hour | CRITICAL |
-| **Create fixtures** | 1-2 hours | CRITICAL |
-| **Discovery workflow tests** | 1-1.5 hours | CRITICAL |
-| **Observation workflow tests** | 1.5-2 hours | CRITICAL |
-| **Command workflow tests** | 1-1.5 hours | HIGH |
-| **Cross-resource navigation tests** | 0.5-1 hour | HIGH |
-| **Error handling tests** | 0.5-1 hour | HIGH |
-| **Debugging and refinement** | 0.5-1 hour | - |
-| **TOTAL** | **6.5-10 hours** | - |
+| Task                                | Time             | Priority |
+| ----------------------------------- | ---------------- | -------- |
+| **Setup test structure**            | 0.5-1 hour       | CRITICAL |
+| **Create fixtures**                 | 1-2 hours        | CRITICAL |
+| **Discovery workflow tests**        | 1-1.5 hours      | CRITICAL |
+| **Observation workflow tests**      | 1.5-2 hours      | CRITICAL |
+| **Command workflow tests**          | 1-1.5 hours      | HIGH     |
+| **Cross-resource navigation tests** | 0.5-1 hour       | HIGH     |
+| **Error handling tests**            | 0.5-1 hour       | HIGH     |
+| **Debugging and refinement**        | 0.5-1 hour       | -        |
+| **TOTAL**                           | **6.5-10 hours** | -        |
 
 **Alignment with ROADMAP:**
+
 - ROADMAP Phase 4 Task 2: Integration Tests (~4-6 hours, 500-800 lines)
 - This estimate: 6.5-10 hours, 620-960 lines
 - **Within range** ✅
 
 ### 13.3 Fixture Creation Estimates
 
-| Category | Fixtures | Time per Fixture | Total Time |
-|----------|----------|------------------|------------|
-| Discovery | 6 | 5-10 min | 0.5-1 hour |
-| Observations | 10 | 5-10 min | 0.8-1.7 hours |
-| Commands | 9 | 5-10 min | 0.8-1.5 hours |
-| Navigation | 8 | 5-10 min | 0.7-1.3 hours |
-| **TOTAL** | **33** | **~7 min avg** | **2.8-5.5 hours** |
+| Category     | Fixtures | Time per Fixture | Total Time        |
+| ------------ | -------- | ---------------- | ----------------- |
+| Discovery    | 6        | 5-10 min         | 0.5-1 hour        |
+| Observations | 10       | 5-10 min         | 0.8-1.7 hours     |
+| Commands     | 9        | 5-10 min         | 0.8-1.5 hours     |
+| Navigation   | 8        | 5-10 min         | 0.7-1.3 hours     |
+| **TOTAL**    | **33**   | **~7 min avg**   | **2.8-5.5 hours** |
 
 **Fixture Sourcing:**
+
 - ~60% from CSAPI spec examples (copy directly)
 - ~30% modified from spec examples (adapt for test scenarios)
 - ~10% created new (error cases, edge cases)
@@ -2075,6 +2200,7 @@ it('validates last page state', async () => {
 ### 14.1 Coverage Complementarity
 
 **Unit Tests (Sections 12-13):**
+
 - Test individual methods in isolation
 - Mock minimal dependencies
 - Focus on URL construction correctness
@@ -2082,6 +2208,7 @@ it('validates last page state', async () => {
 - Test error conditions for single methods
 
 **Integration Tests (This Section):**
+
 - Test multi-component interactions
 - Use realistic fixtures
 - Focus on workflow completeness
@@ -2089,6 +2216,7 @@ it('validates last page state', async () => {
 - Test end-to-end scenarios
 
 **Overlap Prevention:**
+
 - Unit tests: URL correctness, parameter validation, encoding
 - Integration tests: Component interactions, workflow completion, state changes
 - **No duplication** - different testing goals
@@ -2106,7 +2234,7 @@ src/ogc-api/
     └─ CSAPI Observation Retrieval (8 tests)
     └─ CSAPI Command Submission (7 tests)
     └─ CSAPI Cross-Resource Navigation (5 tests)
-  
+
   csapi/
     url_builder.spec.ts               # Unit tests - shared utilities
     url_builder-systems.spec.ts       # Unit tests - Systems resource
@@ -2115,8 +2243,9 @@ src/ogc-api/
 ```
 
 **Benefits:**
-- Clear separation (endpoint.spec.ts = integration, url_builder*.spec.ts = unit)
-- Easy to run separately (jest endpoint.spec.ts vs jest url_builder*.spec.ts)
+
+- Clear separation (endpoint.spec.ts = integration, url_builder\*.spec.ts = unit)
+- Easy to run separately (jest endpoint.spec.ts vs jest url_builder\*.spec.ts)
 - Different fixture organization (integration uses full workflows, unit uses minimal)
 
 ### 14.3 Running Integration Tests Separately
@@ -2127,7 +2256,7 @@ src/ogc-api/
 // jest.integration.config.js
 module.exports = {
   testMatch: ['**/endpoint.spec.ts'],
-  testTimeout: 10000,  // Longer timeout for integration tests
+  testTimeout: 10000, // Longer timeout for integration tests
 };
 
 // jest.unit.config.js
@@ -2157,6 +2286,7 @@ module.exports = {
 ### 15.1 Test Completion Checklist
 
 **Discovery Workflow:**
+
 - [x] ✅ Detect CSAPI conformance
 - [x] ✅ List CSAPI collections
 - [x] ✅ Create query builder
@@ -2165,6 +2295,7 @@ module.exports = {
 - [x] ✅ Handle missing conformance
 
 **Observation Workflow:**
+
 - [x] ✅ Query systems with spatial filter
 - [x] ✅ Navigate to datastreams
 - [x] ✅ Query observations with temporal filter
@@ -2175,6 +2306,7 @@ module.exports = {
 - [x] ✅ Reverse navigation (observation → datastream → system)
 
 **Command Workflow:**
+
 - [x] ✅ Navigate to control streams
 - [x] ✅ Check command feasibility
 - [x] ✅ Submit command
@@ -2184,6 +2316,7 @@ module.exports = {
 - [x] ✅ Cancel running command
 
 **Cross-Resource Navigation:**
+
 - [x] ✅ System → Deployments
 - [x] ✅ System → Procedures
 - [x] ✅ System → Sampling Features
@@ -2191,6 +2324,7 @@ module.exports = {
 - [x] ✅ Observation → SamplingFeature/System (reverse)
 
 **Error Handling:**
+
 - [x] ✅ Network errors
 - [x] ✅ HTTP error responses (404, 500, 401)
 - [x] ✅ Malformed responses
@@ -2200,16 +2334,19 @@ module.exports = {
 ### 15.2 Coverage Validation
 
 **Code Coverage Targets:**
+
 - ✅ >80% statement coverage for integration paths
 - ✅ 100% coverage of public API methods used in workflows
 - ✅ All error conditions tested
 
 **Fixture Coverage:**
+
 - ✅ All 4 workflows have complete fixture sets
 - ✅ All state transitions have fixtures
 - ✅ All error conditions have fixtures
 
 **Assertion Coverage:**
+
 - ✅ All URL structures validated
 - ✅ All response structures validated
 - ✅ All state transitions validated
@@ -2219,15 +2356,15 @@ module.exports = {
 
 **Cross-References:**
 
-| Implementation Guide Section | Integration Test Coverage | Status |
-|------------------------------|---------------------------|--------|
-| **Service Discovery** | Discovery workflow (6 tests) | ✅ Complete |
-| **Query Builder - Systems** | Observation workflow (system queries) | ✅ Complete |
-| **Query Builder - DataStreams** | Observation workflow (datastream queries) | ✅ Complete |
-| **Query Builder - Observations** | Observation workflow (observation queries) | ✅ Complete |
-| **Query Builder - ControlStreams** | Command workflow (control stream queries) | ✅ Complete |
-| **Query Builder - Commands** | Command workflow (command submission/status) | ✅ Complete |
-| **Navigation Methods** | Cross-resource navigation (5 tests) | ✅ Complete |
+| Implementation Guide Section       | Integration Test Coverage                    | Status      |
+| ---------------------------------- | -------------------------------------------- | ----------- |
+| **Service Discovery**              | Discovery workflow (6 tests)                 | ✅ Complete |
+| **Query Builder - Systems**        | Observation workflow (system queries)        | ✅ Complete |
+| **Query Builder - DataStreams**    | Observation workflow (datastream queries)    | ✅ Complete |
+| **Query Builder - Observations**   | Observation workflow (observation queries)   | ✅ Complete |
+| **Query Builder - ControlStreams** | Command workflow (control stream queries)    | ✅ Complete |
+| **Query Builder - Commands**       | Command workflow (command submission/status) | ✅ Complete |
+| **Navigation Methods**             | Cross-resource navigation (5 tests)          | ✅ Complete |
 
 **All Implementation Guide workflows covered** ✅
 
@@ -2235,15 +2372,15 @@ module.exports = {
 
 **Alignment with EDR Integration Tests:**
 
-| Pattern | EDR Tests | CSAPI Tests | Aligned? |
-|---------|-----------|-------------|----------|
-| **Public API entry** | ✅ OgcApiEndpoint constructor | ✅ OgcApiEndpoint constructor | ✅ Yes |
-| **Conformance detection** | ✅ hasEnvironmentalDataRetrieval | ✅ hasConnectedSystems | ✅ Yes |
-| **Collections filtering** | ✅ edrCollections | ✅ csapiCollections | ✅ Yes |
-| **Builder creation** | ✅ endpoint.edr(collectionId) | ✅ endpoint.csapi(collectionId) | ✅ Yes |
-| **URL construction** | ✅ builder.buildAreaDownloadUrl() | ✅ builder.getSystems() | ✅ Yes |
-| **Fixture-driven** | ✅ Mock fetch returns EDR fixtures | ✅ Mock fetch returns CSAPI fixtures | ✅ Yes |
-| **Multi-step workflows** | ✅ Conformance → collections → builder | ✅ Same + query → paginate | ✅ Yes |
+| Pattern                   | EDR Tests                              | CSAPI Tests                          | Aligned? |
+| ------------------------- | -------------------------------------- | ------------------------------------ | -------- |
+| **Public API entry**      | ✅ OgcApiEndpoint constructor          | ✅ OgcApiEndpoint constructor        | ✅ Yes   |
+| **Conformance detection** | ✅ hasEnvironmentalDataRetrieval       | ✅ hasConnectedSystems               | ✅ Yes   |
+| **Collections filtering** | ✅ edrCollections                      | ✅ csapiCollections                  | ✅ Yes   |
+| **Builder creation**      | ✅ endpoint.edr(collectionId)          | ✅ endpoint.csapi(collectionId)      | ✅ Yes   |
+| **URL construction**      | ✅ builder.buildAreaDownloadUrl()      | ✅ builder.getSystems()              | ✅ Yes   |
+| **Fixture-driven**        | ✅ Mock fetch returns EDR fixtures     | ✅ Mock fetch returns CSAPI fixtures | ✅ Yes   |
+| **Multi-step workflows**  | ✅ Conformance → collections → builder | ✅ Same + query → paginate           | ✅ Yes   |
 
 **All upstream patterns followed** ✅
 
@@ -2253,6 +2390,7 @@ module.exports = {
 
 **Status:** Complete  
 **Deliverable:** Integration test workflow specifications with:
+
 - 4 workflow designs (Discovery, Observation, Command, Cross-Resource Navigation)
 - 26 test scenarios with complete specifications
 - HTTP response mocking strategy using Jest
@@ -2268,6 +2406,7 @@ module.exports = {
 **Lines:** ~6,200 words covering complete integration test strategy
 
 **Research Foundation:**
+
 - Section 1-2: Upstream EDR integration test patterns (public API entry, fixture-driven, multi-component)
 - Section 12: QueryBuilder testing strategy (URL validation, encoding, resource availability)
 - Section 13: Resource method testing patterns (CRUD operations, navigation methods)
@@ -2275,6 +2414,7 @@ module.exports = {
 - ROADMAP Phase 4: Integration test implementation plan
 
 **Key Insights:**
+
 1. **Integration = Multi-Component + Public API + Fixtures:** Integration tests must test component interactions through public API with realistic fixtures, not just "bigger unit tests"
 2. **4 Distinct Workflows:** Discovery (conformance → collections → builder), Observation (systems → datastreams → observations → pagination), Command (control streams → feasibility → submit → status → result), Cross-Resource (system → deployments → procedures → features → datastreams → observations)
 3. **Jest Mocking is Sufficient:** No need for additional mocking libraries - Jest's built-in `jest.fn()` and `globalThis.fetch` mocking handles all scenarios including fixture sequencing for multi-step workflows
@@ -2282,6 +2422,7 @@ module.exports = {
 5. **State Validation is Key:** Integration tests must validate state changes across workflow steps (endpoint state, builder state, command state transitions, pagination state)
 
 **Next Steps:**
+
 1. Create fixture files (33 files organized by workflow)
 2. Implement test structure in `endpoint.spec.ts`
 3. Write Discovery workflow tests (6 scenarios, 120-180 lines)

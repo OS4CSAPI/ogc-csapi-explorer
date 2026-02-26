@@ -66,6 +66,7 @@ Define comprehensive testing strategy for all temporal query parameters (datetim
 **Objective:** Extract temporal parameter requirements from CSAPI
 
 **Tasks:**
+
 1. Identify all temporal parameters (datetime, phenomenonTime, resultTime, executionTime, issueTime)
 2. Document temporal parameter semantics (what each represents)
 3. Map temporal parameters to resource types
@@ -78,6 +79,7 @@ Define comprehensive testing strategy for all temporal query parameters (datetim
 **Objective:** Identify all ISO 8601 formats requiring testing
 
 **Tasks:**
+
 1. Document instant formats (date, datetime, timezone variations)
 2. Document interval formats (start/end, start/duration, duration/end)
 3. Document open-ended interval formats (`..`)
@@ -90,6 +92,7 @@ Define comprehensive testing strategy for all temporal query parameters (datetim
 **Objective:** Analyze temporal query testing in upstream
 
 **Tasks:**
+
 1. Identify temporal query tests in upstream
 2. Extract ISO 8601 parsing test patterns
 3. Extract temporal validation patterns
@@ -101,6 +104,7 @@ Define comprehensive testing strategy for all temporal query parameters (datetim
 **Objective:** Design test scenarios for temporal queries
 
 **Tasks:**
+
 1. Design instant query test scenarios
 2. Design interval query test scenarios (bounded and unbounded)
 3. Design duration query test scenarios
@@ -115,6 +119,7 @@ Define comprehensive testing strategy for all temporal query parameters (datetim
 **Objective:** Design fixtures for temporal query testing
 
 **Tasks:**
+
 1. Design temporal query string fixtures (all ISO 8601 formats)
 2. Design temporal response fixtures
 3. Design temporal error fixtures
@@ -126,6 +131,7 @@ Define comprehensive testing strategy for all temporal query parameters (datetim
 **Objective:** Create comprehensive temporal query testing strategy
 
 **Tasks:**
+
 1. Consolidate temporal scenarios
 2. Create temporal query test templates
 3. Document fixture requirements
@@ -154,6 +160,7 @@ This research is complete when:
 **Temporal query testing strategy with ISO 8601 format coverage**
 
 Content includes:
+
 - Complete temporal parameter inventory and semantics
 - Temporal parameter mapping to resource types
 - ISO 8601 instant format test patterns (date, datetime, timezone)
@@ -169,6 +176,7 @@ Content includes:
 - Implementation estimates
 
 **Example Temporal Formats:**
+
 - **Instants**: `2024-01-15`, `2024-01-15T10:30:00Z`, `2024-01-15T10:30:00+05:00`
 - **Intervals**: `2024-01-01/2024-12-31`, `2024-01-01/P1M`, `P1Y/2024-12-31`
 - **Open-ended**: `../2024-12-31`, `2024-01-01/..`, `../..`
@@ -179,11 +187,13 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 24: Query Parameter Combination Testing (parameter interaction patterns)
 - Section 8: CSAPI Specification Review (temporal parameter definitions)
 - Section 23: Pagination Testing Strategy (temporal + pagination)
 
 **Blocks:**
+
 - Temporal query implementation
 - ISO 8601 parsing implementation
 - Temporal validation logic
@@ -214,7 +224,9 @@ Content includes:
 **Research Completed:** February 6, 2026
 
 **Key Findings:**
+
 1. **Five Temporal Parameters Identified:**
+
    - `datetime` - Generic temporal filter (OGC API - Common) for validTime
    - `phenomenonTime` - When observation was made (Part 2)
    - `resultTime` - When observation result was produced (Part 2)
@@ -222,24 +234,28 @@ Content includes:
    - `issueTime` - When command was issued (Part 2)
 
 2. **ISO 8601 Format Complexity:**
+
    - **Instants:** 7+ format variations (date-only, datetime, timezones, fractional seconds)
    - **Intervals:** 4 types (closed, open-start, open-end, fully open)
    - **Durations:** 7+ formats (P1Y, P1M, P1D, PT1H, PT30M, combined)
    - **Special Values:** `latest` (resultTime only)
 
 3. **Open-Ended Intervals Critical:**
+
    - `../..` - All data (no temporal bounds)
    - `2024-01-01/..` - All data from 2024 onwards
    - `../2024-12-31` - All data up to end of 2024
    - **Use Case:** Streaming/real-time queries ("all observations after time X")
 
 4. **Timezone Handling:**
+
    - Z notation (UTC): `2024-01-15T12:00:00Z`
    - Offset notation: `2024-01-15T12:00:00+05:30`
    - Valid range: -12:00 to +14:00
    - Default: Assume UTC if omitted
 
 5. **Temporal Parameter Semantics Matter:**
+
    - `phenomenonTime` vs `resultTime` captures sampling/processing delay
    - `issueTime` vs `executionTime` captures command scheduling delay
    - `latest` special value only for `resultTime` (real-time dashboards)
@@ -252,12 +268,14 @@ Content includes:
    - Antimeridian crossing (date line)
 
 **Test Coverage:**
+
 - **72 tests** across 9 test categories
 - **~950-1,300 lines** of test code
 - **55 fixtures** (query strings, responses, errors, edge cases)
 - **Priority:** 53 CRITICAL tests, 9 HIGH, 10 MEDIUM
 
 **Implementation Estimates:**
+
 - **Test Development:** 25-36 hours
 - **Fixture Creation:** 6-8 hours
 - **Total Effort:** 31-44 hours

@@ -11,11 +11,13 @@
 ## Research Objectives
 
 1. **Integration Complexity:**
+
    - Lines of code required for single-class pattern
    - Lines of code if using multiple classes
    - File modification count
 
 2. **Pattern Comparison:**
+
    - EDR integration approach (single class)
    - Hypothetical multi-class integration
    - Complexity differences
@@ -41,12 +43,14 @@
 ## Expected Findings
 
 **If single-class is simpler:**
+
 - Lower integration LOC
 - Fewer exports to manage
 - Cleaner integration
 - Favors consolidated approach
 
 **If difference is minimal:**
+
 - Integration complexity not a deciding factor
 - Focus on other criteria
 - Both approaches viable from integration perspective

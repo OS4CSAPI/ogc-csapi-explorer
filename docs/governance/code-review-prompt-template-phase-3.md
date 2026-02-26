@@ -13,15 +13,15 @@
 
 Phase 3 code differs fundamentally from Phase 2 code:
 
-| Dimension | Phase 2 (URL Builder) | Phase 3 (Format Handlers) |
-|-----------|----------------------|--------------------------|
-| Primary output | URL strings | Typed objects from raw JSON/XML |
-| Correctness check | "Is the URL right?" | "Does the parser produce the right typed output?" |
-| Test strategy | Exact `toBe()` URL assertions | Fixture-based input → typed output assertions |
-| Pattern reference | Procedures/SamplingFeatures gold standard | Varies per component (see below) |
+| Dimension          | Phase 2 (URL Builder)                       | Phase 3 (Format Handlers)                                          |
+| ------------------ | ------------------------------------------- | ------------------------------------------------------------------ |
+| Primary output     | URL strings                                 | Typed objects from raw JSON/XML                                    |
+| Correctness check  | "Is the URL right?"                         | "Does the parser produce the right typed output?"                  |
+| Test strategy      | Exact `toBe()` URL assertions               | Fixture-based input → typed output assertions                      |
+| Pattern reference  | Procedures/SamplingFeatures gold standard   | Varies per component (see below)                                   |
 | Validation concern | `assertResourceAvailable()` on every method | Input validation before parsing (null, wrong type, missing fields) |
-| Heatmap dimensions | Query parameter coverage | Parser behavior coverage |
-| Spec references | OGC API Part 1/Part 2 endpoint sections | SWE Common 3.0, SensorML 3.0, GeoJSON encoding rules |
+| Heatmap dimensions | Query parameter coverage                    | Parser behavior coverage                                           |
+| Spec references    | OGC API Part 1/Part 2 endpoint sections     | SWE Common 3.0, SensorML 3.0, GeoJSON encoding rules               |
 
 The Phase 2 test checklist (Lesson 1) would produce false positives if applied to parser code — every item would be "N/A" and real gaps would go undetected.
 
@@ -49,7 +49,7 @@ Copy the prompt below and paste it into the conversation after completing coding
 
 ## Prompt
 
-```
+````
 Please perform a code review of the work completed since the last review.
 
 ### Scope
@@ -294,9 +294,10 @@ Use this exact structure (matching prior reviews):
 
 ## Overall Assessment
 {{2-3 paragraph assessment of code quality, patterns, and trajectory}}
-```
+````
 
 Then commit the report, push, and confirm the file is at the expected path.
+
 ```
 
 ---
@@ -332,7 +333,9 @@ Every Phase 3 code review report MUST include:
 Reports follow the same naming pattern as Phase 2:
 
 ```
+
 docs/implementation/phase-{major}.{minor}-code-review.md
+
 ```
 
 Where:
@@ -364,3 +367,4 @@ When performing a Phase 3 code review, the reviewer should have access to:
 | OGC SWE Common 3.0 Spec | `docs/research/standards/` (if available) | SWE Common type/parser reference |
 | OGC SensorML 3.0 Spec | `docs/research/standards/` (if available) | SensorML parser reference |
 | OGC API Connected Systems | `docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml` | GeoJSON encoding, featureType vocabularies |
+```

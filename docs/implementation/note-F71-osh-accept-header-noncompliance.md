@@ -10,7 +10,7 @@ OSH ignores all HTTP `Accept` headers for content negotiation. The `?f=` query p
 
 ## Spec Alignment Argument
 
-**OGC API - Common Part 1 (Core)** requires servers to support content negotiation via the HTTP `Accept` header. The `?f=` query parameter is defined as a *convenience alternative* (for browsers, link sharing, etc.) — not a replacement. Both mechanisms are supposed to work. OSH only implementing `?f=` while ignoring `Accept` headers entirely violates:
+**OGC API - Common Part 1 (Core)** requires servers to support content negotiation via the HTTP `Accept` header. The `?f=` query parameter is defined as a _convenience alternative_ (for browsers, link sharing, etc.) — not a replacement. Both mechanisms are supposed to work. OSH only implementing `?f=` while ignoring `Accept` headers entirely violates:
 
 - **HTTP/1.1 (RFC 7231 §5.3.2)** — `Accept` header is the standard content negotiation mechanism
 - **OGC API - Common §7.8** — servers SHALL support content negotiation via `Accept` header
@@ -18,16 +18,16 @@ OSH ignores all HTTP `Accept` headers for content negotiation. The `?f=` query p
 
 ## Evidence
 
-| Request | Expected Behavior | Actual Behavior |
-|---------|-------------------|-----------------|
-| `Accept: application/sml+json` | Returns SML data | Returns `application/json` (GeoJSON) |
-| `Accept: application/geo+json` | Returns GeoJSON | Returns `application/json` (GeoJSON) |
-| `Accept: application/json` | Returns JSON | Returns `application/json` ✅ (coincidental) |
-| `?f=sml3` | Returns SML data | Returns `application/sml+json` ✅ |
-| `?f=geojson` | Returns GeoJSON | Returns `application/geo+json` ✅ |
-| `?f=json` | Returns JSON | Returns `application/json` ✅ |
+| Request                        | Expected Behavior | Actual Behavior                              |
+| ------------------------------ | ----------------- | -------------------------------------------- |
+| `Accept: application/sml+json` | Returns SML data  | Returns `application/json` (GeoJSON)         |
+| `Accept: application/geo+json` | Returns GeoJSON   | Returns `application/json` (GeoJSON)         |
+| `Accept: application/json`     | Returns JSON      | Returns `application/json` ✅ (coincidental) |
+| `?f=sml3`                      | Returns SML data  | Returns `application/sml+json` ✅            |
+| `?f=geojson`                   | Returns GeoJSON   | Returns `application/geo+json` ✅            |
+| `?f=json`                      | Returns JSON      | Returns `application/json` ✅                |
 
-The fact that `?f=sml3` works proves OSH *has* the SML serializer — it just doesn't wire it to Accept header routing. This is likely a configuration or routing bug rather than a missing capability, which makes it very actionable for them.
+The fact that `?f=sml3` works proves OSH _has_ the SML serializer — it just doesn't wire it to Accept header routing. This is likely a configuration or routing bug rather than a missing capability, which makes it very actionable for them.
 
 ## Recommendation
 

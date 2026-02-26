@@ -11,6 +11,7 @@
 ## Research Objectives
 
 1. **Scope Assessment:**
+
    - Count Part 1 resource types and operations
    - Analyze operation similarity across resources
    - Identify code reuse opportunities

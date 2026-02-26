@@ -22,11 +22,13 @@
 **Research Time:** 120 minutes (February 6, 2026)
 
 **Primary Source(s):**
+
 - [Error Handling Design Analysis](../../upstream/error-handling-analysis.md)
 - [CSAPI Part 1 OpenAPI Specification](../../standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) (error schemas)
 - [CSAPI Part 2 OpenAPI Specification](../../standards/ogcapi-connectedsystems-2.bundled.oas31.yaml) (error schemas)
 
 **Supporting Resources:**
+
 - Section 1: [EDR Test Blueprint](01-edr-test-blueprint.md) (upstream error test patterns)
 - Section 2: [Upstream Test Consistency](02-upstream-test-consistency.md) (error handling patterns)
 - Section 12: [QueryBuilder Testing Strategy](12-querybuilder-testing-strategy.md) (validation error scenarios)
@@ -57,19 +59,20 @@ This research establishes a comprehensive error testing strategy for the CSAPI c
 
 Based on upstream analysis, CSAPI errors fall into 5 primary categories:
 
-| Category | Description | Responsibility | Examples |
-|----------|-------------|----------------|----------|
-| **Validation** | Client-side parameter validation before API calls | Library | Invalid bbox (minLon > maxLon), malformed ISO 8601 datetime, missing required ID |
-| **Conformance** | Endpoint capabilities vs requested operations | Library | Calling `getDataStreams()` when endpoint doesn't support Part 2 CSAPI |
-| **Network** | HTTP connection failures, timeouts, CORS | User/Browser (propagate) | DNS resolution failure, connection timeout, CORS policy violation |
-| **Parse** | Response parsing failures | Library | Malformed GeoJSON, invalid SensorML XML, SWE Common schema violations |
-| **HTTP** | Server-side errors via HTTP status codes | Server (propagate) | 404 Not Found, 400 Bad Request, 500 Internal Server Error |
+| Category        | Description                                       | Responsibility           | Examples                                                                         |
+| --------------- | ------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------- |
+| **Validation**  | Client-side parameter validation before API calls | Library                  | Invalid bbox (minLon > maxLon), malformed ISO 8601 datetime, missing required ID |
+| **Conformance** | Endpoint capabilities vs requested operations     | Library                  | Calling `getDataStreams()` when endpoint doesn't support Part 2 CSAPI            |
+| **Network**     | HTTP connection failures, timeouts, CORS          | User/Browser (propagate) | DNS resolution failure, connection timeout, CORS policy violation                |
+| **Parse**       | Response parsing failures                         | Library                  | Malformed GeoJSON, invalid SensorML XML, SWE Common schema violations            |
+| **HTTP**        | Server-side errors via HTTP status codes          | Server (propagate)       | 404 Not Found, 400 Bad Request, 500 Internal Server Error                        |
 
 ### 1.2 Error Handling Philosophy
 
 **From [Error Handling Design Analysis](../../upstream/error-handling-analysis.md):**
 
 > ogc-client uses **minimal, targeted error handling**:
+>
 > 1. Throw errors for library-detectable problems
 > 2. Let HTTP errors propagate naturally
 > 3. Use specific error types for different categories
@@ -79,12 +82,14 @@ Based on upstream analysis, CSAPI errors fall into 5 primary categories:
 **CSAPI follows this philosophy:**
 
 ✅ **Library throws when:**
+
 - Endpoint doesn't support requested CSAPI feature (conformance check)
 - Parameter values are logically invalid (e.g., minLon > maxLon, start > end)
 - Required links are missing from collection/resource metadata
 - Response parsing fails (malformed GeoJSON, invalid SensorML)
 
 ❌ **Library does NOT throw for:**
+
 - Resource ID format validation (trust TypeScript types)
 - Server-side constraint validation (limit ranges, field existence)
 - Optional parameter validation beyond type checking
@@ -92,26 +97,27 @@ Based on upstream analysis, CSAPI errors fall into 5 primary categories:
 
 ### 1.3 Error Taxonomy Matrix
 
-| Error Type | Subtype | Where Thrown | Error Class | HTTP Status | Test Priority |
-|------------|---------|--------------|-------------|-------------|---------------|
-| **Validation** | Invalid bbox | QueryBuilder | Error | N/A (client-side) | CRITICAL |
-| **Validation** | Invalid temporal interval | QueryBuilder | Error | N/A (client-side) | CRITICAL |
-| **Validation** | Missing required parameter | QueryBuilder | Error | N/A (client-side) | HIGH |
-| **Conformance** | CSAPI not supported | Endpoint | EndpointError | N/A (client-side) | CRITICAL |
-| **Conformance** | Resource type unavailable | QueryBuilder | EndpointError | N/A (client-side) | CRITICAL |
-| **Conformance** | Required link missing | QueryBuilder | EndpointError | N/A (client-side) | HIGH |
-| **Parse** | Malformed GeoJSON | Parser | Error | N/A (parsing) | HIGH |
-| **Parse** | Invalid SensorML | Parser | Error | N/A (parsing) | HIGH |
-| **Parse** | SWE Common schema violation | Parser | Error | N/A (parsing) | HIGH |
-| **Network** | Connection timeout | fetch | Native Error | 0 | LOW (user handles) |
-| **Network** | DNS resolution failure | fetch | Native Error | 0 | LOW (user handles) |
-| **Network** | CORS violation | fetch | Native Error | 0 | MEDIUM (detectable) |
-| **HTTP** | 404 Not Found | Server | N/A (propagate) | 404 | LOW (server handles) |
-| **HTTP** | 400 Bad Request | Server | N/A (propagate) | 400 | LOW (server handles) |
-| **HTTP** | 500 Internal Server Error | Server | N/A (propagate) | 500 | LOW (server handles) |
+| Error Type      | Subtype                     | Where Thrown | Error Class     | HTTP Status       | Test Priority        |
+| --------------- | --------------------------- | ------------ | --------------- | ----------------- | -------------------- |
+| **Validation**  | Invalid bbox                | QueryBuilder | Error           | N/A (client-side) | CRITICAL             |
+| **Validation**  | Invalid temporal interval   | QueryBuilder | Error           | N/A (client-side) | CRITICAL             |
+| **Validation**  | Missing required parameter  | QueryBuilder | Error           | N/A (client-side) | HIGH                 |
+| **Conformance** | CSAPI not supported         | Endpoint     | EndpointError   | N/A (client-side) | CRITICAL             |
+| **Conformance** | Resource type unavailable   | QueryBuilder | EndpointError   | N/A (client-side) | CRITICAL             |
+| **Conformance** | Required link missing       | QueryBuilder | EndpointError   | N/A (client-side) | HIGH                 |
+| **Parse**       | Malformed GeoJSON           | Parser       | Error           | N/A (parsing)     | HIGH                 |
+| **Parse**       | Invalid SensorML            | Parser       | Error           | N/A (parsing)     | HIGH                 |
+| **Parse**       | SWE Common schema violation | Parser       | Error           | N/A (parsing)     | HIGH                 |
+| **Network**     | Connection timeout          | fetch        | Native Error    | 0                 | LOW (user handles)   |
+| **Network**     | DNS resolution failure      | fetch        | Native Error    | 0                 | LOW (user handles)   |
+| **Network**     | CORS violation              | fetch        | Native Error    | 0                 | MEDIUM (detectable)  |
+| **HTTP**        | 404 Not Found               | Server       | N/A (propagate) | 404               | LOW (server handles) |
+| **HTTP**        | 400 Bad Request             | Server       | N/A (propagate) | 400               | LOW (server handles) |
+| **HTTP**        | 500 Internal Server Error   | Server       | N/A (propagate) | 500               | LOW (server handles) |
 
 **Total Error Categories:** 15 error types  
 **Test Priority Distribution:**
+
 - CRITICAL: 4 error types (~40% of error tests)
 - HIGH: 4 error types (~35% of error tests)
 - MEDIUM: 1 error type (~10% of error tests)
@@ -140,10 +146,7 @@ export class EndpointError extends Error {
 
 // Error Class 2: OWS XML exception reports (WMS/WFS only)
 export class ServiceExceptionError extends Error {
-  constructor(
-    message: string,
-    public readonly httpStatus: number
-  ) {
+  constructor(message: string, public readonly httpStatus: number) {
     super(message);
     this.name = 'ServiceExceptionError';
   }
@@ -167,6 +170,7 @@ public async edr(collection_id: string): Promise<EDRQueryBuilder> {
 ```
 
 **Test Pattern:**
+
 ```typescript
 it('throws error when EDR not supported', async () => {
   await expect(endpoint.edr('test-collection')).rejects.toThrow(
@@ -207,29 +211,35 @@ buildPositionDownloadUrl(
       );
     }
   }
-  
+
   return url.toString();
 }
 ```
 
 **Test Pattern:**
+
 ```typescript
 describe('Parameter validation', () => {
   it('throws error when query type not supported', () => {
-    expect(() => builder.buildPositionDownloadUrl('POINT(0 0)'))
-      .toThrow(/does not support position queries/);
+    expect(() => builder.buildPositionDownloadUrl('POINT(0 0)')).toThrow(
+      /does not support position queries/
+    );
   });
 
   it('throws error when parameter name invalid', () => {
-    expect(() => builder.buildAreaDownloadUrl('POLYGON(...)', {
-      parameter_name: ['invalid_param']
-    })).toThrow(/parameter name does not exist.*'invalid_param'/);
+    expect(() =>
+      builder.buildAreaDownloadUrl('POLYGON(...)', {
+        parameter_name: ['invalid_param'],
+      })
+    ).toThrow(/parameter name does not exist.*'invalid_param'/);
   });
 
   it('throws error when CRS not supported', () => {
-    expect(() => builder.buildAreaDownloadUrl('POLYGON(...)', {
-      crs: 'EPSG:9999'
-    })).toThrow(/crs does not exist.*'EPSG:9999'/);
+    expect(() =>
+      builder.buildAreaDownloadUrl('POLYGON(...)', {
+        crs: 'EPSG:9999',
+      })
+    ).toThrow(/crs does not exist.*'EPSG:9999'/);
   });
 });
 ```
@@ -249,11 +259,13 @@ export function assertHasLinks(
 ```
 
 **Test Pattern:**
+
 ```typescript
 it('throws error when required link missing', () => {
   const doc = { links: [] };
-  expect(() => assertHasLinks(doc, 'service-doc'))
-    .toThrow(/Could not find link with type: service-doc/);
+  expect(() => assertHasLinks(doc, 'service-doc')).toThrow(
+    /Could not find link with type: service-doc/
+  );
 });
 ```
 
@@ -271,17 +283,18 @@ if (options?.outputFormat && !linkWithFormat) {
 ```
 
 **Test Pattern:**
+
 ```typescript
 it('warns but continues when optional format not found', async () => {
   const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-  
+
   const url = builder.getSystems({ f: 'invalid-format' });
-  
+
   expect(consoleSpy).toHaveBeenCalledWith(
     expect.stringContaining('output format type was not found')
   );
-  expect(url).toContain('f=invalid-format');  // Still added to URL
-  
+  expect(url).toContain('f=invalid-format'); // Still added to URL
+
   consoleSpy.mockRestore();
 });
 ```
@@ -291,6 +304,7 @@ it('warns but continues when optional format not found', async () => {
 **From upstream analysis:**
 
 ✅ **GOOD Error Messages:**
+
 - Clear and actionable
 - Include context (collection ID, parameter name, etc.)
 - Suggest resolution when possible
@@ -299,10 +313,13 @@ it('warns but continues when optional format not found', async () => {
 // Good examples:
 throw new EndpointError('Endpoint does not support Connected Systems API');
 throw new EndpointError(`Collection not found: ${collectionId}`);
-throw new Error(`The following parameter name does not exist on this collection: '${parameter}'.`);
+throw new Error(
+  `The following parameter name does not exist on this collection: '${parameter}'.`
+);
 ```
 
 ❌ **BAD Error Messages:**
+
 - Too vague
 - Too prescriptive
 - No context
@@ -311,7 +328,9 @@ throw new Error(`The following parameter name does not exist on this collection:
 // Bad examples:
 throw new Error('Invalid input');
 throw new Error('Operation failed');
-throw new Error('The systemId parameter must be a valid UUID matching RFC 4122');
+throw new Error(
+  'The systemId parameter must be a valid UUID matching RFC 4122'
+);
 ```
 
 ---
@@ -338,19 +357,20 @@ responses:
 
 **HTTP Status Code Matrix:**
 
-| Status Code | Meaning | When | Library Action | Test Priority |
-|-------------|---------|------|----------------|---------------|
-| **200** | Success | Valid request, resource found | Parse response | HIGH (happy path) |
-| **201** | Created | POST/PUT successful | Return Location header | HIGH (creation) |
-| **400** | Bad Request | Invalid query parameters or body | Propagate (server error) | LOW (server validates) |
-| **401** | Unauthorized | Missing authentication | Propagate (user handles) | LOW (auth out of scope) |
-| **403** | Forbidden | Insufficient permissions | Propagate (user handles) | LOW (auth out of scope) |
-| **404** | Not Found | Resource doesn't exist | Propagate (server error) | MEDIUM (integration tests) |
-| **500** | Internal Server Error | Server failure | Propagate (server error) | LOW (server issue) |
-| **502** | Bad Gateway | Upstream server error | Propagate (retry possible) | LOW (infrastructure) |
-| **503** | Service Unavailable | Server overloaded | Propagate (retry possible) | LOW (infrastructure) |
+| Status Code | Meaning               | When                             | Library Action             | Test Priority              |
+| ----------- | --------------------- | -------------------------------- | -------------------------- | -------------------------- |
+| **200**     | Success               | Valid request, resource found    | Parse response             | HIGH (happy path)          |
+| **201**     | Created               | POST/PUT successful              | Return Location header     | HIGH (creation)            |
+| **400**     | Bad Request           | Invalid query parameters or body | Propagate (server error)   | LOW (server validates)     |
+| **401**     | Unauthorized          | Missing authentication           | Propagate (user handles)   | LOW (auth out of scope)    |
+| **403**     | Forbidden             | Insufficient permissions         | Propagate (user handles)   | LOW (auth out of scope)    |
+| **404**     | Not Found             | Resource doesn't exist           | Propagate (server error)   | MEDIUM (integration tests) |
+| **500**     | Internal Server Error | Server failure                   | Propagate (server error)   | LOW (server issue)         |
+| **502**     | Bad Gateway           | Upstream server error            | Propagate (retry possible) | LOW (infrastructure)       |
+| **503**     | Service Unavailable   | Server overloaded                | Propagate (retry possible) | LOW (infrastructure)       |
 
 **Testing Strategy:**
+
 - **200/201**: Test extensively (success cases)
 - **404**: Test in integration tests (resource not found scenarios)
 - **400/401/403/500/502/503**: Low priority (server/infrastructure responsibility)
@@ -375,16 +395,16 @@ The CSAPI specification does NOT define custom error response schemas (e.g., RFC
 
 **From [Section 12: QueryBuilder Testing Strategy](./12-querybuilder-testing-strategy.md):**
 
-| Error Condition | Test Scenario | Expected Behavior | Test Count | Priority |
-|-----------------|---------------|-------------------|------------|----------|
-| **Resource unavailable** | Call method when resource type not in conformance | Throw EndpointError: "Collection does not support '{resource}' resource" | 9 (1 per resource) | CRITICAL |
-| **Invalid bbox** | Pass bbox with minLon > maxLon or minLat > maxLat | Throw Error: "Invalid bbox: min must be < max" | 2 | HIGH |
-| **Invalid temporal interval** | Pass datetime with start > end | Throw Error: "Invalid datetime: start must be before end" | 2 | HIGH |
-| **Missing required ID** | Omit required ID parameter (e.g., `getSystem()` with no ID) | TypeScript compile error (caught at compile time) | 0 (TS only) | N/A |
-| **Null/undefined optional params** | Pass null or undefined for optional parameters | Omit from URL (no error) | 9 (1 per resource) | MEDIUM |
-| **Already encoded value** | Pass double-encoded value (e.g., `%2520` for space) | Handle gracefully (no double-encoding) | 3 | LOW |
-| **Very long URL** | Construct URL with 100+ query parameters | Handle gracefully (browser handles length limits) | 1 | LOW |
-| **Part 2 method when Part 1 only** | Call Part 2 method (e.g., `getDataStreams()`) when endpoint only supports Part 1 | Throw EndpointError: "Endpoint does not support Part 2" | 4 (DataStreams, Observations, ControlStreams, Commands) | CRITICAL |
+| Error Condition                    | Test Scenario                                                                    | Expected Behavior                                                        | Test Count                                              | Priority |
+| ---------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------- | -------- |
+| **Resource unavailable**           | Call method when resource type not in conformance                                | Throw EndpointError: "Collection does not support '{resource}' resource" | 9 (1 per resource)                                      | CRITICAL |
+| **Invalid bbox**                   | Pass bbox with minLon > maxLon or minLat > maxLat                                | Throw Error: "Invalid bbox: min must be < max"                           | 2                                                       | HIGH     |
+| **Invalid temporal interval**      | Pass datetime with start > end                                                   | Throw Error: "Invalid datetime: start must be before end"                | 2                                                       | HIGH     |
+| **Missing required ID**            | Omit required ID parameter (e.g., `getSystem()` with no ID)                      | TypeScript compile error (caught at compile time)                        | 0 (TS only)                                             | N/A      |
+| **Null/undefined optional params** | Pass null or undefined for optional parameters                                   | Omit from URL (no error)                                                 | 9 (1 per resource)                                      | MEDIUM   |
+| **Already encoded value**          | Pass double-encoded value (e.g., `%2520` for space)                              | Handle gracefully (no double-encoding)                                   | 3                                                       | LOW      |
+| **Very long URL**                  | Construct URL with 100+ query parameters                                         | Handle gracefully (browser handles length limits)                        | 1                                                       | LOW      |
+| **Part 2 method when Part 1 only** | Call Part 2 method (e.g., `getDataStreams()`) when endpoint only supports Part 1 | Throw EndpointError: "Endpoint does not support Part 2"                  | 4 (DataStreams, Observations, ControlStreams, Commands) | CRITICAL |
 
 **Total QueryBuilder Error Tests:** ~30 tests
 
@@ -394,13 +414,13 @@ The CSAPI specification does NOT define custom error response schemas (e.g., RFC
 
 #### 4.2.1 GeoJSON Parser Errors
 
-| Error Condition | Test Scenario | Expected Error | Test Count | Priority |
-|-----------------|---------------|----------------|------------|----------|
-| **Malformed JSON** | Parse invalid JSON string | SyntaxError (from JSON.parse) | 1 | HIGH |
-| **Missing type** | Parse object without `type: "Feature"` or `type: "FeatureCollection"` | Error: "Invalid GeoJSON: missing type" | 2 | HIGH |
-| **Invalid geometry type** | Parse geometry with unknown type (e.g., `type: "InvalidType"`) | Error: "Invalid geometry type: InvalidType" | 1 | MEDIUM |
-| **Null geometry** | Parse Feature with `geometry: null` | Accept (valid GeoJSON, represents non-spatial features) | 1 (negative test) | MEDIUM |
-| **Missing properties** | Parse Feature without `properties` | Accept (valid GeoJSON, `properties` is optional) | 1 (negative test) | LOW |
+| Error Condition           | Test Scenario                                                         | Expected Error                                          | Test Count        | Priority |
+| ------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------- | ----------------- | -------- |
+| **Malformed JSON**        | Parse invalid JSON string                                             | SyntaxError (from JSON.parse)                           | 1                 | HIGH     |
+| **Missing type**          | Parse object without `type: "Feature"` or `type: "FeatureCollection"` | Error: "Invalid GeoJSON: missing type"                  | 2                 | HIGH     |
+| **Invalid geometry type** | Parse geometry with unknown type (e.g., `type: "InvalidType"`)        | Error: "Invalid geometry type: InvalidType"             | 1                 | MEDIUM   |
+| **Null geometry**         | Parse Feature with `geometry: null`                                   | Accept (valid GeoJSON, represents non-spatial features) | 1 (negative test) | MEDIUM   |
+| **Missing properties**    | Parse Feature without `properties`                                    | Accept (valid GeoJSON, `properties` is optional)        | 1 (negative test) | LOW      |
 
 **Total GeoJSON Error Tests:** ~5 tests
 
@@ -408,13 +428,13 @@ The CSAPI specification does NOT define custom error response schemas (e.g., RFC
 
 **From [Section 9: SensorML Testing Requirements](./09-sensorml-testing-requirements.md):**
 
-| Error Condition | Test Scenario | Expected Error | Test Count | Priority |
-|-----------------|---------------|----------------|------------|----------|
-| **Malformed XML** | Parse invalid XML string | Error: "Invalid XML" (from XML parser) | 1 | HIGH |
-| **Missing required element** | Parse PhysicalSystem without `<sml:identification>` | Error: "Missing required element: identification" | 4 (1 per structure) | HIGH |
-| **Invalid namespace** | Parse with wrong namespace (e.g., `<sml2:PhysicalSystem>` instead of `<sml:PhysicalSystem>`) | Error: "Invalid namespace" | 2 | MEDIUM |
-| **Recursive structure too deep** | Parse with 10+ nested levels | Error: "Maximum recursion depth exceeded" | 1 | MEDIUM |
-| **Empty document** | Parse empty string or whitespace-only | Error: "Empty document" | 1 | LOW |
+| Error Condition                  | Test Scenario                                                                                | Expected Error                                    | Test Count          | Priority |
+| -------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------------- | -------- |
+| **Malformed XML**                | Parse invalid XML string                                                                     | Error: "Invalid XML" (from XML parser)            | 1                   | HIGH     |
+| **Missing required element**     | Parse PhysicalSystem without `<sml:identification>`                                          | Error: "Missing required element: identification" | 4 (1 per structure) | HIGH     |
+| **Invalid namespace**            | Parse with wrong namespace (e.g., `<sml2:PhysicalSystem>` instead of `<sml:PhysicalSystem>`) | Error: "Invalid namespace"                        | 2                   | MEDIUM   |
+| **Recursive structure too deep** | Parse with 10+ nested levels                                                                 | Error: "Maximum recursion depth exceeded"         | 1                   | MEDIUM   |
+| **Empty document**               | Parse empty string or whitespace-only                                                        | Error: "Empty document"                           | 1                   | LOW      |
 
 **Total SensorML Error Tests:** ~8-10 tests
 
@@ -426,23 +446,23 @@ The CSAPI specification does NOT define custom error response schemas (e.g., RFC
 
 **From [Section 10: SWE Common Testing Requirements](./10-swe-common-testing-requirements.md):**
 
-| Error Condition | Test Scenario | Expected Error | Test Count | Priority |
-|-----------------|---------------|----------------|------------|----------|
-| **JSON Encoding Errors** | | | | |
-| - Malformed JSON | Parse invalid JSON | SyntaxError | 1 | HIGH |
-| - Missing DataRecord fields | Parse DataRecord without `name` or `definition` | Error: "Missing required field" | 3 | HIGH |
-| - Invalid field type | Parse with wrong type (number instead of string) | Error: "Invalid field type" | 2 | MEDIUM |
-| **Text Encoding Errors** | | | | |
-| - Incorrect delimiter | Parse CSV with wrong delimiter | Error: "Unexpected delimiter" | 2 | HIGH |
-| - Field count mismatch | Parse row with wrong number of fields | Error: "Field count mismatch" | 2 | HIGH |
-| - Invalid numeric value | Parse non-numeric value in Quantity field | Error: "Invalid numeric value" | 2 | MEDIUM |
-| **Binary Encoding Errors** | | | | |
-| - Insufficient data | Parse truncated binary buffer | Error: "Unexpected end of buffer" | 3 | HIGH |
-| - Wrong endianness | Parse little-endian as big-endian | Silent error (wrong values) | 2 (verify correct values) | HIGH |
-| - Invalid data type | Parse with undefined data type code | Error: "Unknown data type" | 2 | MEDIUM |
-| **Schema Validation Errors** | | | | |
-| - Schema mismatch | Parse data with schema that doesn't match structure | Error: "Schema validation failed" | 3 | HIGH |
-| - Missing schema | Attempt to parse without schema | Error: "Schema required" | 1 | MEDIUM |
+| Error Condition              | Test Scenario                                       | Expected Error                    | Test Count                | Priority |
+| ---------------------------- | --------------------------------------------------- | --------------------------------- | ------------------------- | -------- |
+| **JSON Encoding Errors**     |                                                     |                                   |                           |          |
+| - Malformed JSON             | Parse invalid JSON                                  | SyntaxError                       | 1                         | HIGH     |
+| - Missing DataRecord fields  | Parse DataRecord without `name` or `definition`     | Error: "Missing required field"   | 3                         | HIGH     |
+| - Invalid field type         | Parse with wrong type (number instead of string)    | Error: "Invalid field type"       | 2                         | MEDIUM   |
+| **Text Encoding Errors**     |                                                     |                                   |                           |          |
+| - Incorrect delimiter        | Parse CSV with wrong delimiter                      | Error: "Unexpected delimiter"     | 2                         | HIGH     |
+| - Field count mismatch       | Parse row with wrong number of fields               | Error: "Field count mismatch"     | 2                         | HIGH     |
+| - Invalid numeric value      | Parse non-numeric value in Quantity field           | Error: "Invalid numeric value"    | 2                         | MEDIUM   |
+| **Binary Encoding Errors**   |                                                     |                                   |                           |          |
+| - Insufficient data          | Parse truncated binary buffer                       | Error: "Unexpected end of buffer" | 3                         | HIGH     |
+| - Wrong endianness           | Parse little-endian as big-endian                   | Silent error (wrong values)       | 2 (verify correct values) | HIGH     |
+| - Invalid data type          | Parse with undefined data type code                 | Error: "Unknown data type"        | 2                         | MEDIUM   |
+| **Schema Validation Errors** |                                                     |                                   |                           |          |
+| - Schema mismatch            | Parse data with schema that doesn't match structure | Error: "Schema validation failed" | 3                         | HIGH     |
+| - Missing schema             | Attempt to parse without schema                     | Error: "Schema required"          | 1                         | MEDIUM   |
 
 **Total SWE Common Error Tests:** ~23-25 tests
 
@@ -450,13 +470,13 @@ The CSAPI specification does NOT define custom error response schemas (e.g., RFC
 
 **From [Section 13: Resource Method Testing Patterns](./13-resource-method-testing-patterns.md):**
 
-| Error Condition | Test Scenario | Expected Behavior | Test Count | Priority |
-|-----------------|---------------|-------------------|------------|----------|
-| **Resource unavailable** | Call resource method when resource not in conformance | Throw EndpointError | 9 (1 per resource type) | CRITICAL |
-| **Empty resource ID** | Call `getSystem('')` with empty string | Throw Error: "ID is required" | 9 | HIGH |
-| **Create without required fields** | Call `createSystem({})` with empty body | Propagate 400 from server (server validates) | 0 (server-side) | LOW |
-| **Update non-existent resource** | Call `updateSystem('non-existent-id', {...})` | Propagate 404 from server | 0 (integration test) | MEDIUM |
-| **Delete non-existent resource** | Call `deleteSystem('non-existent-id')` | Propagate 404 from server | 0 (integration test) | MEDIUM |
+| Error Condition                    | Test Scenario                                         | Expected Behavior                            | Test Count              | Priority |
+| ---------------------------------- | ----------------------------------------------------- | -------------------------------------------- | ----------------------- | -------- |
+| **Resource unavailable**           | Call resource method when resource not in conformance | Throw EndpointError                          | 9 (1 per resource type) | CRITICAL |
+| **Empty resource ID**              | Call `getSystem('')` with empty string                | Throw Error: "ID is required"                | 9                       | HIGH     |
+| **Create without required fields** | Call `createSystem({})` with empty body               | Propagate 400 from server (server validates) | 0 (server-side)         | LOW      |
+| **Update non-existent resource**   | Call `updateSystem('non-existent-id', {...})`         | Propagate 404 from server                    | 0 (integration test)    | MEDIUM   |
+| **Delete non-existent resource**   | Call `deleteSystem('non-existent-id')`                | Propagate 404 from server                    | 0 (integration test)    | MEDIUM   |
 
 **Total Resource Method Error Tests:** ~18 tests (2 per resource type × 9 resources)
 
@@ -464,13 +484,13 @@ The CSAPI specification does NOT define custom error response schemas (e.g., RFC
 
 **From [Section 14: Integration Test Workflow Design](./14-integration-test-workflow-design.md):**
 
-| Error Condition | Test Scenario | Expected Behavior | Test Count | Priority |
-|-----------------|---------------|-------------------|------------|----------|
-| **Missing collection** | Initialize endpoint with non-existent collection | Propagate 404 from server | 1 | HIGH |
-| **Network timeout** | Simulate slow server (5s+ response time) | Propagate timeout error | 1 | MEDIUM |
-| **CORS error** | Call from browser without CORS headers | Detect CORS error (if possible) | 1 | MEDIUM |
-| **Partial workflow failure** | Create system → Create deployment (fails) → Rollback | Verify first operation succeeds, second fails cleanly | 2 | HIGH |
-| **Invalid nested resource** | Create system → Create datastream with invalid systemId | Propagate 400 from server | 1 | MEDIUM |
+| Error Condition              | Test Scenario                                           | Expected Behavior                                     | Test Count | Priority |
+| ---------------------------- | ------------------------------------------------------- | ----------------------------------------------------- | ---------- | -------- |
+| **Missing collection**       | Initialize endpoint with non-existent collection        | Propagate 404 from server                             | 1          | HIGH     |
+| **Network timeout**          | Simulate slow server (5s+ response time)                | Propagate timeout error                               | 1          | MEDIUM   |
+| **CORS error**               | Call from browser without CORS headers                  | Detect CORS error (if possible)                       | 1          | MEDIUM   |
+| **Partial workflow failure** | Create system → Create deployment (fails) → Rollback    | Verify first operation succeeds, second fails cleanly | 2          | HIGH     |
+| **Invalid nested resource**  | Create system → Create datastream with invalid systemId | Propagate 400 from server                             | 1          | MEDIUM   |
 
 **Total Integration Error Tests:** ~6 tests
 
@@ -482,28 +502,28 @@ The CSAPI specification does NOT define custom error response schemas (e.g., RFC
 
 **From [Section 16: Worker Extensions Testing Strategy](./16-worker-extensions-testing-strategy.md):**
 
-| Error Condition | Test Scenario | Expected Behavior | Test Count | Priority |
-|-----------------|---------------|-------------------|------------|----------|
-| **Worker initialization failure** | Fail to create Worker (e.g., script not found) | Throw Error: "Worker initialization failed" | 1 | HIGH |
-| **Parse error in worker** | Send malformed data to parser worker | Propagate error from worker to main thread | 3 (1 per parser) | HIGH |
-| **Worker timeout** | Worker doesn't respond within timeout | Throw Error: "Worker timeout" | 1 | MEDIUM |
-| **Worker terminated prematurely** | Terminate worker mid-operation | Throw Error: "Worker terminated" | 1 | MEDIUM |
-| **Message serialization error** | Send non-serializable data to worker | Throw Error: "Failed to serialize message" | 1 | LOW |
+| Error Condition                   | Test Scenario                                  | Expected Behavior                           | Test Count       | Priority |
+| --------------------------------- | ---------------------------------------------- | ------------------------------------------- | ---------------- | -------- |
+| **Worker initialization failure** | Fail to create Worker (e.g., script not found) | Throw Error: "Worker initialization failed" | 1                | HIGH     |
+| **Parse error in worker**         | Send malformed data to parser worker           | Propagate error from worker to main thread  | 3 (1 per parser) | HIGH     |
+| **Worker timeout**                | Worker doesn't respond within timeout          | Throw Error: "Worker timeout"               | 1                | MEDIUM   |
+| **Worker terminated prematurely** | Terminate worker mid-operation                 | Throw Error: "Worker terminated"            | 1                | MEDIUM   |
+| **Message serialization error**   | Send non-serializable data to worker           | Throw Error: "Failed to serialize message"  | 1                | LOW      |
 
 **Total Worker Error Tests:** ~7 tests
 
 ### 4.6 Error Test Count Summary
 
-| Component | Error Test Count | % of Total Error Tests |
-|-----------|------------------|------------------------|
-| QueryBuilder (URL Builder) | ~30 | 10% |
-| GeoJSON Parser | ~5 | 2% |
-| SensorML Parser | ~10 | 3% |
-| SWE Common Parser | ~25 | 8% |
-| Resource Methods | ~18 | 6% |
-| Integration Workflows | ~6 | 2% |
-| Worker Extensions | ~7 | 2% |
-| **TOTAL** | **~100** | **33%** |
+| Component                  | Error Test Count | % of Total Error Tests |
+| -------------------------- | ---------------- | ---------------------- |
+| QueryBuilder (URL Builder) | ~30              | 10%                    |
+| GeoJSON Parser             | ~5               | 2%                     |
+| SensorML Parser            | ~10              | 3%                     |
+| SWE Common Parser          | ~25              | 8%                     |
+| Resource Methods           | ~18              | 6%                     |
+| Integration Workflows      | ~6               | 2%                     |
+| Worker Extensions          | ~7               | 2%                     |
+| **TOTAL**                  | **~100**         | **33%**                |
 
 **Note:** These are EXPLICIT error tests. Additional error scenarios are tested implicitly in happy path tests (e.g., null/undefined parameter handling).
 
@@ -533,9 +553,9 @@ describe('Error Conditions', () => {
 ```typescript
 describe('Error Conditions', () => {
   it('throws error when [condition]', async () => {
-    await expect(
-      builder.getResourceAsync('invalid-id')
-    ).rejects.toThrow(/Expected error message/);
+    await expect(builder.getResourceAsync('invalid-id')).rejects.toThrow(
+      /Expected error message/
+    );
   });
 });
 ```
@@ -545,13 +565,13 @@ describe('Error Conditions', () => {
 ```typescript
 describe('Error Conditions', () => {
   it('throws EndpointError with clear message', async () => {
-    await expect(
-      endpoint.csapi('test-collection')
-    ).rejects.toThrow(EndpointError);
-    
-    await expect(
-      endpoint.csapi('test-collection')
-    ).rejects.toThrow(/Endpoint does not support.*CSAPI/);
+    await expect(endpoint.csapi('test-collection')).rejects.toThrow(
+      EndpointError
+    );
+
+    await expect(endpoint.csapi('test-collection')).rejects.toThrow(
+      /Endpoint does not support.*CSAPI/
+    );
   });
 });
 ```
@@ -562,10 +582,8 @@ describe('Error Conditions', () => {
 describe('Error Conditions', () => {
   it('includes context in error message', async () => {
     const collectionId = 'test-collection';
-    
-    await expect(
-      builder.getObservations()
-    ).rejects.toThrow(
+
+    await expect(builder.getObservations()).rejects.toThrow(
       new RegExp(`Collection does not support.*observations.*${collectionId}`)
     );
   });
@@ -583,7 +601,7 @@ describe('Error Conditions', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(EndpointError);
       expect(error.message).toMatch(/does not support/);
-      expect(error.httpStatus).toBeUndefined();  // Client-side error
+      expect(error.httpStatus).toBeUndefined(); // Client-side error
       expect(error.isCrossOriginRelated).toBe(false);
     }
   });
@@ -610,11 +628,7 @@ function assertThrows(
 }
 
 // Usage:
-assertThrows(
-  () => builder.getSystem(''),
-  /ID.*required/,
-  Error
-);
+assertThrows(() => builder.getSystem(''), /ID.*required/, Error);
 ```
 
 **Helper 2: Assert Async Error**
@@ -674,24 +688,30 @@ expect(error.isCrossOriginRelated).toBe(false);
 **Validation Levels:**
 
 1. **Level 1: Error Thrown (Basic)**
+
    ```typescript
    expect(() => fn()).toThrow();
    ```
+
    ✅ Verifies error is thrown  
    ❌ Doesn't verify error type or message
 
 2. **Level 2: Error Pattern Match (Good)**
+
    ```typescript
    expect(() => fn()).toThrow(/pattern/);
    ```
+
    ✅ Verifies error message content  
    ❌ Doesn't verify error class
 
 3. **Level 3: Error Class and Pattern (Better)**
+
    ```typescript
    expect(() => fn()).toThrow(EndpointError);
    expect(() => fn()).toThrow(/pattern/);
    ```
+
    ✅ Verifies error class AND message  
    ❌ Requires two assertions
 
@@ -721,7 +741,7 @@ describe('Error recovery', () => {
   it('continues operation after recoverable error', async () => {
     // First operation fails
     await expect(builder.getSystem('invalid')).rejects.toThrow();
-    
+
     // Second operation succeeds
     const url = builder.getSystem('valid-id');
     expect(url).toBeDefined();
@@ -738,11 +758,11 @@ describe('Error isolation', () => {
     await expect(builder.getObservations()).rejects.toThrow(
       /does not support observations/
     );
-    
+
     // Operation 2 succeeds (different resource)
     const url = builder.getSystems();
     expect(url).toBeDefined();
-    
+
     // Operation 3 fails again (same error)
     await expect(builder.getObservations()).rejects.toThrow();
   });
@@ -758,6 +778,7 @@ describe('Error isolation', () => {
 **Strategy:** Embed error tests within component test files (NOT separate error test files)
 
 **Rationale:**
+
 - Errors are specific to components
 - Error tests provide context for happy path tests
 - Easier to maintain (error tests co-located with related code)
@@ -783,25 +804,25 @@ src/ogc-api/csapi/
 describe('ComponentName', () => {
   // 1. Setup
   let builder: CSAPIQueryBuilder;
-  
+
   beforeEach(async () => {
     // Common setup
   });
-  
+
   // 2. Happy Path Tests (~70% of tests)
   describe('Happy Path', () => {
     it('test 1', ...);
     it('test 2', ...);
     // ...
   });
-  
+
   // 3. Error Condition Tests (~20% of tests)
   describe('Error Conditions', () => {
     it('throws error when [condition 1]', ...);
     it('throws error when [condition 2]', ...);
     // ...
   });
-  
+
   // 4. Edge Case Tests (~10% of tests)
   describe('Edge Cases', () => {
     it('handles empty collection', ...);
@@ -812,6 +833,7 @@ describe('ComponentName', () => {
 ```
 
 **Test Distribution:**
+
 - Happy Path: ~70% of tests
 - Error Conditions: ~20% of tests
 - Edge Cases: ~10% of tests
@@ -821,6 +843,7 @@ describe('ComponentName', () => {
 **Pattern: `throws [error class] when [condition]`**
 
 ✅ **GOOD:**
+
 ```typescript
 it('throws EndpointError when CSAPI not supported', ...);
 it('throws Error when bbox coordinates invalid', ...);
@@ -829,6 +852,7 @@ it('throws Error when temporal interval has start > end', ...);
 ```
 
 ❌ **BAD (too vague):**
+
 ```typescript
 it('handles error', ...);
 it('error test', ...);
@@ -836,6 +860,7 @@ it('throws', ...);
 ```
 
 ❌ **BAD (too prescriptive):**
+
 ```typescript
 it('should throw an EndpointError with message "Endpoint does not support CSAPI" when calling csapi() on a non-CSAPI endpoint', ...);
 ```
@@ -854,26 +879,29 @@ it('handles empty collection gracefully', ...);
 
 ### 7.1 Priority Matrix
 
-| Priority | Error Type | Test Count | % of Error Tests | Why |
-|----------|-----------|------------|------------------|-----|
-| **CRITICAL** | Conformance errors (CSAPI not supported, resource unavailable) | ~20 | 20% | Block library usage if not detected |
-| **HIGH** | Validation errors (invalid bbox, temporal interval), Parse errors (malformed data) | ~50 | 50% | Common developer mistakes, data quality issues |
-| **MEDIUM** | Edge cases (null params, empty IDs), Integration errors (network timeout) | ~20 | 20% | Less common but still important |
-| **LOW** | HTTP errors (404, 500), Infrastructure errors (DNS, CORS) | ~10 | 10% | Server/browser responsibility |
+| Priority     | Error Type                                                                         | Test Count | % of Error Tests | Why                                            |
+| ------------ | ---------------------------------------------------------------------------------- | ---------- | ---------------- | ---------------------------------------------- |
+| **CRITICAL** | Conformance errors (CSAPI not supported, resource unavailable)                     | ~20        | 20%              | Block library usage if not detected            |
+| **HIGH**     | Validation errors (invalid bbox, temporal interval), Parse errors (malformed data) | ~50        | 50%              | Common developer mistakes, data quality issues |
+| **MEDIUM**   | Edge cases (null params, empty IDs), Integration errors (network timeout)          | ~20        | 20%              | Less common but still important                |
+| **LOW**      | HTTP errors (404, 500), Infrastructure errors (DNS, CORS)                          | ~10        | 10%              | Server/browser responsibility                  |
 
 ### 7.2 Implementation Phases
 
 **Phase 1: CRITICAL Error Tests (Week 1)**
+
 - Conformance check errors (~20 tests)
 - Resource unavailability errors (~10 tests)
 - **Total:** ~30 tests, ~450-600 lines
 
 **Phase 2: HIGH Priority Error Tests (Week 2)**
+
 - Parameter validation errors (~25 tests)
 - Parse errors (GeoJSON, SensorML, SWE) (~25 tests)
 - **Total:** ~50 tests, ~750-1,000 lines
 
 **Phase 3: MEDIUM/LOW Priority Error Tests (Week 3)**
+
 - Edge case handling (~20 tests)
 - Integration error scenarios (~10 tests)
 - **Total:** ~30 tests, ~450-600 lines
@@ -940,7 +968,7 @@ it('handles empty collection gracefully', ...);
   "type": "Feature",
   "geometry": {
     "type": "Point",
-    "coordinates": [0]  // Invalid: Point requires [lon, lat]
+    "coordinates": [0] // Invalid: Point requires [lon, lat]
   },
   "properties": {}
 }
@@ -966,7 +994,7 @@ it('handles empty collection gracefully', ...);
     { "name": "temperature", "type": "Quantity" },
     { "name": "humidity", "type": "Quantity" }
   ],
-  "values": [25.3]  // Error: 2 fields but only 1 value
+  "values": [25.3] // Error: 2 fields but only 1 value
 }
 ```
 
@@ -976,41 +1004,44 @@ it('handles empty collection gracefully', ...);
 
 ### 9.1 Test Line Estimates by Component
 
-| Component | Error Tests | Lines per Test | Total Lines | Time Estimate |
-|-----------|-------------|----------------|-------------|---------------|
-| QueryBuilder (URL Builder) | 30 | 15-20 | 450-600 | 2-3 hours |
-| GeoJSON Parser | 5 | 15-20 | 75-100 | 30 min |
-| SensorML Parser | 10 | 15-20 | 150-200 | 1 hour |
-| SWE Common Parser | 25 | 15-20 | 375-500 | 2 hours |
-| Resource Methods | 18 | 15-20 | 270-360 | 1.5 hours |
-| Integration Workflows | 6 | 20-25 | 120-150 | 1 hour |
-| Worker Extensions | 7 | 15-20 | 105-140 | 1 hour |
-| **TOTAL** | **101** | **~16 avg** | **~1,545-2,050** | **~9-10 hours** |
+| Component                  | Error Tests | Lines per Test | Total Lines      | Time Estimate   |
+| -------------------------- | ----------- | -------------- | ---------------- | --------------- |
+| QueryBuilder (URL Builder) | 30          | 15-20          | 450-600          | 2-3 hours       |
+| GeoJSON Parser             | 5           | 15-20          | 75-100           | 30 min          |
+| SensorML Parser            | 10          | 15-20          | 150-200          | 1 hour          |
+| SWE Common Parser          | 25          | 15-20          | 375-500          | 2 hours         |
+| Resource Methods           | 18          | 15-20          | 270-360          | 1.5 hours       |
+| Integration Workflows      | 6           | 20-25          | 120-150          | 1 hour          |
+| Worker Extensions          | 7           | 15-20          | 105-140          | 1 hour          |
+| **TOTAL**                  | **101**     | **~16 avg**    | **~1,545-2,050** | **~9-10 hours** |
 
 ### 9.2 Fixture Creation Estimates
 
-| Fixture Type | Count | Lines per Fixture | Total Lines | Time Estimate |
-|--------------|-------|-------------------|-------------|---------------|
-| Conformance (error scenarios) | 3 | 10-20 | 30-60 | 30 min |
-| Collection (missing links) | 2 | 15-25 | 30-50 | 30 min |
-| GeoJSON (malformed) | 3 | 10-20 | 30-60 | 30 min |
-| SensorML (invalid) | 4 | 20-40 | 80-160 | 1 hour |
-| SWE Common (schema violations) | 5 | 15-30 | 75-150 | 1 hour |
-| **TOTAL** | **17** | **~18 avg** | **~245-480** | **~3.5 hours** |
+| Fixture Type                   | Count  | Lines per Fixture | Total Lines  | Time Estimate  |
+| ------------------------------ | ------ | ----------------- | ------------ | -------------- |
+| Conformance (error scenarios)  | 3      | 10-20             | 30-60        | 30 min         |
+| Collection (missing links)     | 2      | 15-25             | 30-50        | 30 min         |
+| GeoJSON (malformed)            | 3      | 10-20             | 30-60        | 30 min         |
+| SensorML (invalid)             | 4      | 20-40             | 80-160       | 1 hour         |
+| SWE Common (schema violations) | 5      | 15-30             | 75-150       | 1 hour         |
+| **TOTAL**                      | **17** | **~18 avg**       | **~245-480** | **~3.5 hours** |
 
 ### 9.3 Total Error Testing Implementation
 
 **Total Error Test Code:**
+
 - Error tests: ~1,545-2,050 lines
 - Error fixtures: ~245-480 lines
 - **TOTAL: ~1,790-2,530 lines**
 
 **Total Time:**
+
 - Error test implementation: ~9-10 hours
 - Error fixture creation: ~3.5 hours
 - **TOTAL: ~12.5-13.5 hours** (~2 developer-days)
 
 **% of Total Testing Effort:**
+
 - Total test lines (from all sections): ~13,000-17,000 lines
 - Error test lines: ~1,790-2,530 lines
 - **Error tests = ~13-15% of total testing effort**
@@ -1022,22 +1053,26 @@ it('handles empty collection gracefully', ...);
 This error testing strategy is complete when:
 
 ✅ **Error Taxonomy:**
+
 - [x] All error categories documented (Validation, Conformance, Network, Parse, HTTP)
 - [x] Error responsibility clearly assigned (Library vs Server vs Browser)
 - [x] Error handling philosophy documented (minimal, targeted)
 
 ✅ **Upstream Patterns:**
+
 - [x] Upstream error patterns analyzed and documented
 - [x] Upstream error classes identified (EndpointError, ServiceExceptionError)
 - [x] Upstream error message guidelines extracted
 - [x] Upstream test patterns documented (4 patterns identified)
 
 ✅ **CSAPI Specification:**
+
 - [x] CSAPI error schemas analyzed (HTTP status codes, no custom schemas)
 - [x] HTTP error responses documented (400, 401, 403, 404, 500, 502, 503)
 - [x] Error handling strategy aligns with specification
 
 ✅ **Component Scenarios:**
+
 - [x] QueryBuilder error scenarios defined (~30 tests)
 - [x] Parser error scenarios defined (~40 tests)
 - [x] Resource method error scenarios defined (~18 tests)
@@ -1046,18 +1081,21 @@ This error testing strategy is complete when:
 - [x] Total ~101 error tests estimated
 
 ✅ **Test Patterns:**
+
 - [x] Error test structure templates defined (5 patterns)
 - [x] Error assertion helpers documented (3 helpers)
 - [x] Error message validation approach defined (4 levels)
 - [x] Error recovery test patterns documented
 
 ✅ **Organization:**
+
 - [x] Error test placement strategy defined (embed in component files)
 - [x] Error test organization pattern documented (20% of tests)
 - [x] Error test naming conventions established
 - [x] Error test priorities defined (CRITICAL, HIGH, MEDIUM, LOW)
 
 ✅ **Implementation:**
+
 - [x] Implementation phases defined (3 phases, ~12.5 hours total)
 - [x] Test line estimates calculated (~1,545-2,050 lines)
 - [x] Fixture requirements documented (17 fixtures, ~245-480 lines)
@@ -1069,15 +1107,15 @@ This error testing strategy is complete when:
 
 ### 11.1 Alignment with Upstream Error Handling
 
-| Upstream Pattern | CSAPI Implementation | Status |
-|------------------|----------------------|--------|
-| **Minimal error handling** | Throw only when library can't proceed | ✅ ALIGNED |
-| **Reuse EndpointError** | Use EndpointError for conformance/availability errors | ✅ ALIGNED |
-| **No custom error classes** | No CSAPI-specific error classes | ✅ ALIGNED |
-| **Clear error messages** | Include context (collection ID, resource type, parameter name) | ✅ ALIGNED |
-| **Validate at use** | Check parameters in QueryBuilder methods | ✅ ALIGNED |
-| **Trust server validation** | Let HTTP errors propagate, don't validate server constraints | ✅ ALIGNED |
-| **Warn for optional features** | Use console.warn for optional format not found | ✅ ALIGNED |
+| Upstream Pattern               | CSAPI Implementation                                           | Status     |
+| ------------------------------ | -------------------------------------------------------------- | ---------- |
+| **Minimal error handling**     | Throw only when library can't proceed                          | ✅ ALIGNED |
+| **Reuse EndpointError**        | Use EndpointError for conformance/availability errors          | ✅ ALIGNED |
+| **No custom error classes**    | No CSAPI-specific error classes                                | ✅ ALIGNED |
+| **Clear error messages**       | Include context (collection ID, resource type, parameter name) | ✅ ALIGNED |
+| **Validate at use**            | Check parameters in QueryBuilder methods                       | ✅ ALIGNED |
+| **Trust server validation**    | Let HTTP errors propagate, don't validate server constraints   | ✅ ALIGNED |
+| **Warn for optional features** | Use console.warn for optional format not found                 | ✅ ALIGNED |
 
 ### 11.2 Deviations from Upstream (None)
 
@@ -1085,11 +1123,11 @@ CSAPI error handling fully aligns with upstream patterns. No deviations.
 
 ### 11.3 Enhancements to Upstream
 
-| Enhancement | Description | Justification |
-|-------------|-------------|---------------|
-| **Bbox validation** | Validate minLon < maxLon, minLat < maxLat | Logical error detectable client-side, prevents wasted server requests |
-| **Temporal interval validation** | Validate start < end for datetime intervals | Logical error detectable client-side, common developer mistake |
-| **Part 2 method validation** | Throw error when Part 2 method called without Part 2 conformance | CSAPI-specific conformance check, prevents confusing server errors |
+| Enhancement                      | Description                                                      | Justification                                                         |
+| -------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **Bbox validation**              | Validate minLon < maxLon, minLat < maxLat                        | Logical error detectable client-side, prevents wasted server requests |
+| **Temporal interval validation** | Validate start < end for datetime intervals                      | Logical error detectable client-side, common developer mistake        |
+| **Part 2 method validation**     | Throw error when Part 2 method called without Part 2 conformance | CSAPI-specific conformance check, prevents confusing server errors    |
 
 **All enhancements follow upstream philosophy:** Validate only logical errors detectable client-side, trust server for constraints.
 
@@ -1122,13 +1160,13 @@ describe('OgcApiEndpoint.csapi()', () => {
     it('throws EndpointError when CSAPI not supported', async () => {
       const endpoint = new OgcApiEndpoint(
         'http://example.com',
-        { conformance: conformanceNoCSAPI }  // Fixture without CSAPI
+        { conformance: conformanceNoCSAPI } // Fixture without CSAPI
       );
-      
+
       await expect(endpoint.csapi('test-collection')).rejects.toThrow(
         EndpointError
       );
-      
+
       await expect(endpoint.csapi('test-collection')).rejects.toThrow(
         /Endpoint does not support.*Connected Systems API/
       );
@@ -1145,15 +1183,15 @@ describe('Systems - Error Conditions', () => {
   it('throws Error when bbox has minLon > maxLon', () => {
     expect(() => {
       builder.getSystems({
-        bbox: { minLon: 180, minLat: -90, maxLon: -180, maxLat: 90 }
+        bbox: { minLon: 180, minLat: -90, maxLon: -180, maxLat: 90 },
       });
     }).toThrow(/Invalid bbox.*minLon.*maxLon/);
   });
-  
+
   it('throws Error when temporal interval has start > end', () => {
     expect(() => {
       builder.getSystems({
-        datetime: '2024-12-31T23:59:59Z/2024-01-01T00:00:00Z'
+        datetime: '2024-12-31T23:59:59Z/2024-01-01T00:00:00Z',
       });
     }).toThrow(/Invalid datetime.*start.*before.*end/);
   });
@@ -1167,17 +1205,17 @@ describe('Systems - Error Conditions', () => {
 describe('SensorML Parser - Error Conditions', () => {
   it('throws Error when XML is malformed', () => {
     const malformedXml = '<sml:PhysicalSystem><invalid>';
-    
+
     expect(() => parseSensorML(malformedXml)).toThrow(/Invalid XML/);
   });
-  
+
   it('throws Error when required element missing', () => {
     const invalidSystem = `
       <sml:PhysicalSystem xmlns:sml="http://www.opengis.net/sensorml/2.0">
         <sml:description>Missing identification</sml:description>
       </sml:PhysicalSystem>
     `;
-    
+
     expect(() => parseSensorML(invalidSystem)).toThrow(
       /Missing required element.*identification/
     );
@@ -1192,12 +1230,12 @@ describe('SensorML Parser - Error Conditions', () => {
 describe('CSAPI Integration - Error Scenarios', () => {
   it('handles missing collection gracefully', async () => {
     const endpoint = new OgcApiEndpoint('http://example.com');
-    
+
     // Should propagate 404 from server
     await expect(
       endpoint.getCollectionInfo('non-existent-collection')
     ).rejects.toThrow();
-    
+
     // Subsequent operations should still work
     const collections = await endpoint.getCollectionList();
     expect(collections).toBeDefined();
@@ -1209,6 +1247,7 @@ describe('CSAPI Integration - Error Scenarios', () => {
 
 **Document Status:** ✅ COMPLETE  
 **Next Steps:**
+
 1. Implement CRITICAL error tests (conformance, resource availability) - ~30 tests, ~450-600 lines
 2. Implement HIGH priority error tests (validation, parsing) - ~50 tests, ~750-1,000 lines
 3. Implement MEDIUM/LOW priority error tests - ~30 tests, ~450-600 lines

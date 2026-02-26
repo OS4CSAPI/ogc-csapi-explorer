@@ -66,6 +66,7 @@ Define strategy for maintaining tests as CSAPI spec evolves and upstream library
 **Objective:** Identify maintenance challenges and scenarios
 
 **Tasks:**
+
 1. Review lessons learned from previous iteration
 2. Identify spec evolution scenarios
 3. Identify upstream change scenarios
@@ -78,6 +79,7 @@ Define strategy for maintaining tests as CSAPI spec evolves and upstream library
 **Objective:** Define how to detect when tests need updates
 
 **Tasks:**
+
 1. Design spec version tracking
 2. Design dependency version tracking
 3. Design test-to-spec traceability system
@@ -90,6 +92,7 @@ Define strategy for maintaining tests as CSAPI spec evolves and upstream library
 **Objective:** Define test update and refactoring process
 
 **Tasks:**
+
 1. Define spec update process
 2. Define dependency update process
 3. Define test refactoring process
@@ -102,6 +105,7 @@ Define strategy for maintaining tests as CSAPI spec evolves and upstream library
 **Objective:** Define maintenance roles and responsibilities
 
 **Tasks:**
+
 1. Define test owner responsibilities
 2. Define component maintainer responsibilities
 3. Define release manager responsibilities
@@ -113,6 +117,7 @@ Define strategy for maintaining tests as CSAPI spec evolves and upstream library
 **Objective:** Design strategies to prevent test rot
 
 **Tasks:**
+
 1. Define test rot indicators
 2. Design regular test health checks
 3. Design test quality monitoring
@@ -125,6 +130,7 @@ Define strategy for maintaining tests as CSAPI spec evolves and upstream library
 **Objective:** Create comprehensive test maintenance strategy
 
 **Tasks:**
+
 1. Consolidate maintenance workflows
 2. Create maintenance documentation
 3. Document responsibility assignments
@@ -153,6 +159,7 @@ This research is complete when:
 **Test maintenance strategy and update workflow**
 
 Content includes:
+
 - Test maintenance scenarios (spec updates, dependency changes, refactoring)
 - Spec evolution handling strategy
 - Spec version tracking approach
@@ -180,6 +187,7 @@ Content includes:
 - Implementation estimates
 
 **Maintenance Triggers:**
+
 - **Spec Update**: CSAPI specification new version published
 - **Dependency Update**: Upstream library version bump
 - **Implementation Change**: Code refactoring affects test assumptions
@@ -190,6 +198,7 @@ Content includes:
 **Update Workflows:**
 
 **Spec Update Workflow:**
+
 1. Review spec change log
 2. Identify affected tests (via traceability)
 3. Update test scenarios
@@ -199,6 +208,7 @@ Content includes:
 7. Sign off on updates
 
 **Dependency Update Workflow:**
+
 1. Review dependency release notes
 2. Update dependency version
 3. Run test suite
@@ -207,6 +217,7 @@ Content includes:
 6. Document changes
 
 **Test Rot Prevention:**
+
 - Regular test health checks (monthly)
 - Automated coverage tracking
 - Test performance monitoring
@@ -219,12 +230,14 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 15: Fixture Sourcing and Organization (fixture maintenance)
 - Section 35: Test Documentation Standards (maintenance documentation)
 - Section 36: Test Quality Checklist (quality maintenance)
 - Lessons Learned Analysis document
 
 **Blocks:**
+
 - Long-term test sustainability
 - Test maintenance execution
 - Technical debt management
@@ -249,18 +262,21 @@ Content includes:
 **Maintenance Strategy Delivered:**
 
 **Four Maintenance Pillars:**
+
 1. **Proactive Prevention** - Health checks, rot detection, fixture validation
 2. **Reactive Response** - Update workflows, prioritized tracking
 3. **Clear Ownership** - RACI matrix, component maintainers
 4. **Tool Support** - Traceability, rot detection, validation tools
 
 **Maintenance Scenarios (4 Categories):**
+
 1. **Spec Evolution** (5 scenarios: new features, changed requirements, deprecations, removals, conformance classes)
 2. **Upstream Library Changes** (4 scenarios: non-breaking updates, breaking API changes, deprecations, new features)
 3. **Implementation Refactoring** (4 scenarios: internal refactoring, public API changes, test utility changes, fixture structure changes)
 4. **Test Rot** (4 scenarios: trivial tests, over-mocked tests, outdated fixtures, documentation drift)
 
 **Change Detection Strategy:**
+
 - **Spec Version Tracking** in package.json, test files, fixtures, README
 - **Dependency Tracking** via npm + Dependabot automated PRs
 - **Test-to-Spec Traceability** using @specification JSDoc tags + tooling
@@ -268,6 +284,7 @@ Content includes:
 - **Manual Reviews** via monthly health checks
 
 **Five Update Workflows:**
+
 1. **Spec Update Workflow** (9 steps, 2-4 weeks, 16-32 hours)
 2. **Dependency Update Workflow** (6 steps, 1-2 hours non-breaking, 4-8 hours breaking)
 3. **Test Refactoring Workflow** (5 steps, 2-8 hours)
@@ -275,9 +292,11 @@ Content includes:
 5. **Test Retirement Workflow** (6 steps, 1-3 hours)
 
 **RACI Matrix:** 5 roles across 15 activities
+
 - Test Owner, Component Maintainer, Release Manager, Tech Lead, Documentation Maintainer
 
 **Test Rot Prevention:**
+
 - **9 Rot Indicators** (always passes, tests mocks, no assertions, trivial checks, outdated fixtures, broken spec refs, coverage drop, flaky tests, slow tests, documentation drift)
 - **Monthly Health Checks** (automated + manual review, 2-4 hours/month)
 - **Quality Monitoring** (coverage tracking, flaky test detection, performance monitoring)
@@ -286,22 +305,26 @@ Content includes:
 - **Prevention Checklist** (pre-commit, PR review, post-merge)
 
 **Maintenance Tooling:**
+
 - **Essential:** Traceability tool, rot detection tool, fixture validation tool, health report generator (33.5-46.5 hours to build)
 - **Nice-to-Have:** Spec version updater, fixture migration tool, web dashboard
 - **CI/CD:** GitHub Actions workflows (test suite, monthly health checks, Dependabot)
 
 **Annual Maintenance Effort:**
+
 - **Regular:** ~84 hours/year (health checks, spec updates, dependency updates, documentation)
 - **Reactive:** ~36-100 hours/year (bug fixes, refactoring, fixture updates, rot remediation)
 - **Total:** ~120-184 hours/year (~8-10% of initial test development time)
 
 **ROI:**
+
 - **Prevention:** Monthly health checks (24-48 hrs/year) prevent major issues
 - **Automation:** Tools reduce manual effort (traceability, rot detection, fixture validation)
 - **Clear Ownership:** Prevents neglect, ensures accountability
 - **Proactive > Reactive:** Early detection prevents costly fixes
 
 **Success Metrics:**
+
 - Test Health Score > 90%
 - Coverage Stability ±2%
 - Flaky Test Rate < 1%
@@ -311,11 +334,13 @@ Content includes:
 - Maintenance Time ~10%
 
 **Key Recommendations:**
+
 - **MUST:** Traceability tool, monthly health checks, component maintainers, spec version tracking, Dependabot
 - **SHOULD:** Rot detection tool, fixture validation tool, health dashboard, migration guides, test changelog
 - **MAY:** Spec version updater, fixture migration tool, web dashboard, advanced flaky test detection
 
 **What This Unblocks:**
+
 - ✅ Long-term test sustainability (tests remain valuable as project evolves)
 - ✅ Test maintenance execution (clear workflows for all change types)
 - ✅ Technical debt management (tracking and prevention strategies)

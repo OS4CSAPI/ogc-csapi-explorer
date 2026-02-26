@@ -13,14 +13,14 @@
 
 Phase 3 smoke tests differ fundamentally from Phase 2:
 
-| Dimension | Phase 2 (URL Builder) | Phase 3 (Format Handlers) |
-|-----------|----------------------|--------------------------|
-| What we test | URLs we generate → server accepts? | Server responses → our parser produces correct output? |
-| Direction of data | Outbound (our code → server) | Inbound (server → our code) |
-| Core question | "Is the URL right?" | "Does the parser handle real data?" |
-| Key risk | URL malformation | Vocabulary gaps, format surprises, missing fields |
-| Test method | HTTP GET, check status code | HTTP GET, pipe response through handler functions |
-| Write operations | None (read-only URLs) | None (read-only parsing) |
+| Dimension         | Phase 2 (URL Builder)              | Phase 3 (Format Handlers)                              |
+| ----------------- | ---------------------------------- | ------------------------------------------------------ |
+| What we test      | URLs we generate → server accepts? | Server responses → our parser produces correct output? |
+| Direction of data | Outbound (our code → server)       | Inbound (server → our code)                            |
+| Core question     | "Is the URL right?"                | "Does the parser handle real data?"                    |
+| Key risk          | URL malformation                   | Vocabulary gaps, format surprises, missing fields      |
+| Test method       | HTTP GET, check status code        | HTTP GET, pipe response through handler functions      |
+| Write operations  | None (read-only URLs)              | None (read-only parsing)                               |
 
 The Phase 2 template's core steps (3–5: discovery, URL generation, query parameters) are irrelevant for Phase 3. Step 6 (data shape observation) needs to become active validation, not passive observation.
 
@@ -48,7 +48,7 @@ Copy the prompt below and paste it into the conversation after completing coding
 
 ## Prompt
 
-```
+````
 Please perform a live server smoke test of the Phase 3 format handler work completed since the last smoke test.
 
 ### Scope
@@ -72,7 +72,8 @@ We test against TWO servers. Both must be tested in every smoke test.
   $cred = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("{{username}}:{{password}}"))
   $headers = @{ Authorization = "Basic $cred" }
   Invoke-RestMethod -Uri "http://45.55.99.236:8080/sensorhub/api" -Headers $headers
-  ```
+````
+
 - **Known response characteristics:**
   - Envelope: `{ items: [...], links: [...] }` (non-standard — NOT GeoJSON FeatureCollection)
   - featureType values: SOSA vocabulary (`sosa:Sensor`, `sosa:Platform`, etc.)
@@ -110,6 +111,7 @@ Follow this exact sequence. Do NOT modify any code during the smoke test (Lesson
 #### Step 1: Document Prior Findings
 
 Read the previous smoke test report and list ALL prior findings with their current status. For each:
+
 - If it was marked "Fixed" — re-verify it's still fixed
 - If it was marked "Deferred" — confirm it's still deferred, note if anything changed
 - If it was marked "Server limitation" — confirm it's still present
@@ -118,6 +120,7 @@ Read the previous smoke test report and list ALL prior findings with their curre
 #### Step 2: Test Server Connectivity
 
 For EACH server:
+
 1. Fetch the root API document — confirm both servers are reachable
 2. Fetch one resource collection endpoint (e.g., `/systems`) to confirm data is available
 3. Record which resource types have data (non-empty collections) on each server
@@ -133,6 +136,7 @@ For EACH server, for EACH resource type with data (Systems, Deployments, Procedu
 **3b. Test recognition on each feature:**
 
 For each feature in the response:
+
 ```
 isCSAPIFeature(feature)          → expected: true
 getCSAPIResourceType(feature)    → expected: matches the resource type endpoint
@@ -141,7 +145,7 @@ getCSAPIResourceType(feature)    → expected: matches the resource type endpoin
 Record results in a table:
 
 | Server | Resource Type | Feature ID | featureType Value | isCSAPIFeature | getCSAPIResourceType | Match? |
-|--------|--------------|------------|-------------------|----------------|---------------------|--------|
+| ------ | ------------- | ---------- | ----------------- | -------------- | -------------------- | ------ |
 
 **3c. ~~Test validation on each feature~~ — REMOVED**
 
@@ -154,6 +158,7 @@ extractCSAPIFeature(feature)     → expected: typed object with all properties 
 ```
 
 For each extracted resource, verify:
+
 - `id` is populated
 - `properties.featureType` matches the raw feature
 - `properties.uid` is a valid URI
@@ -162,25 +167,26 @@ For each extracted resource, verify:
 - `geometry` is correct (null for Procedures, present/absent as expected for others)
 - `links` array preserved
 
-| Server | Resource Type | Feature ID | Extraction | id | uid | name | validTime | geometry | links |
-|--------|--------------|------------|------------|-----|-----|------|-----------|----------|-------|
+| Server | Resource Type | Feature ID | Extraction | id  | uid | name | validTime | geometry | links |
+| ------ | ------------- | ---------- | ---------- | --- | --- | ---- | --------- | -------- | ----- |
 
 **3e. Test parseValidTime specifically:**
 
 For features with `validTime` data, extract the raw `validTime` value and test:
+
 ```
 parseValidTime(rawValidTime)     → expected: { start: Date, end: Date|undefined }
 ```
 
 | Server | Feature ID | Raw validTime | Parsed start | Parsed end | Correct? |
-|--------|-----------|---------------|--------------|------------|----------|
+| ------ | ---------- | ------------- | ------------ | ---------- | -------- |
 
 #### Step 4: Response Envelope Observations
 
 For each server, document the response envelope structure for each tested endpoint:
 
 | Server | Endpoint | Envelope Type | Feature Array Key | Pagination | Links |
-|--------|----------|--------------|-------------------|------------|-------|
+| ------ | -------- | ------------- | ----------------- | ---------- | ----- |
 
 Note any new envelope patterns not seen in prior smoke tests. These observations inform the response parser (later Phase 3 task).
 
@@ -189,7 +195,7 @@ Note any new envelope patterns not seen in prior smoke tests. These observations
 Compile a complete inventory of `featureType` values observed across both servers:
 
 | featureType Value | Server(s) | Resource Type Endpoint | SOSA? | Recognized? | Handler Classification |
-|-------------------|-----------|----------------------|-------|-------------|----------------------|
+| ----------------- | --------- | ---------------------- | ----- | ----------- | ---------------------- |
 
 This table is critical for identifying vocabulary gaps (findings like F10 from Phase 2.8).
 
@@ -197,21 +203,22 @@ This table is critical for identifying vocabulary gaps (findings like F10 from P
 
 For each server, probe which content types are available for future parser work:
 
-| Content-Type | Endpoint Tested | OSH Available? | 52North Available? |
-|-------------|-----------------|----------------|--------------------|
-| `application/geo+json` | /systems | | |
-| `application/sml+json` | /systems?f=application/sml%2Bjson | | |
-| `application/swe+json` | /datastreams/{id}/schema | | |
-| `application/json` | /systems | | |
+| Content-Type           | Endpoint Tested                   | OSH Available? | 52North Available? |
+| ---------------------- | --------------------------------- | -------------- | ------------------ |
+| `application/geo+json` | /systems                          |                |                    |
+| `application/sml+json` | /systems?f=application/sml%2Bjson |                |                    |
+| `application/swe+json` | /datastreams/{id}/schema          |                |                    |
+| `application/json`     | /systems                          |                |                    |
 
 This informs whether SensorML and SWE Common parsers can be smoke-tested when they're built.
 
 #### Step 7: Cross-Server Comparison
 
 | Dimension | OpenSensorHub | 52North | Match? |
-|-----------|--------------|---------|--------|
+| --------- | ------------- | ------- | ------ |
 
 Include handler-specific dimensions:
+
 - featureType vocabulary
 - validTime format
 - Presence of uid, name, description fields
@@ -222,6 +229,7 @@ Include handler-specific dimensions:
 #### Step 8: Classify New Findings
 
 For each new finding, classify with:
+
 - **Severity:** Critical / Moderate / Low / Informational
 - **Category:** Handler bug / Vocabulary gap / Server limitation / Interoperability concern / Spec ambiguity
 - **Affects:** Which function in which file
@@ -231,6 +239,7 @@ For each new finding, classify with:
 #### Step 9: Generate Impact Assessment
 
 For any findings classified as "Ours" or "Shared":
+
 1. Identify the specific file and function affected
 2. Assess whether the fix requires changing validation rules, vocabulary sets, or parsing logic
 3. Estimate fix complexity
@@ -254,6 +263,7 @@ Use this exact structure:
 **Components tested:** {{List handler/parser modules tested}}
 
 > This is smoke test #{{N}} in the series. See also:
+>
 > - [Previous smoke test](link)
 
 ## Test Methodology
@@ -277,14 +287,14 @@ Resource inventory: {{table}}
 ### Prior Findings — Regression Check
 
 | Finding | Prior Status | Current Status | Evidence |
-|---------|-------------|----------------|----------|
-| ... | ... | ... | ... |
+| ------- | ------------ | -------------- | -------- |
+| ...     | ...          | ...            | ...      |
 
 ### GeoJSON Handler — Recognition
 
 | Server | Resource Type | Features Tested | All Recognized? | Failures |
-|--------|--------------|-----------------|-----------------|----------|
-| ... | ... | ... | ✅/❌ | ... |
+| ------ | ------------- | --------------- | --------------- | -------- |
+| ...    | ...           | ...             | ✅/❌           | ...      |
 
 ### ~~GeoJSON Handler — Validation~~ — N/A
 
@@ -293,26 +303,26 @@ Resource inventory: {{table}}
 ### GeoJSON Handler — Extraction
 
 | Server | Resource Type | Features Tested | All Extracted? | Issues |
-|--------|--------------|-----------------|----------------|--------|
-| ... | ... | ... | ✅/❌ | ... |
+| ------ | ------------- | --------------- | -------------- | ------ |
+| ...    | ...           | ...             | ✅/❌          | ...    |
 
 ### parseValidTime — Live Data
 
 | Server | Features With validTime | All Parsed? | Format Observed | Issues |
-|--------|------------------------|-------------|-----------------|--------|
-| ... | ... | ✅/❌ | ... | ... |
+| ------ | ----------------------- | ----------- | --------------- | ------ |
+| ...    | ...                     | ✅/❌       | ...             | ...    |
 
 ### Vocabulary Inventory
 
 | featureType Value | Server(s) | Recognized? | Classification |
-|-------------------|-----------|-------------|----------------|
-| ... | ... | ✅/❌ | ... |
+| ----------------- | --------- | ----------- | -------------- |
+| ...               | ...       | ✅/❌       | ...            |
 
 ### Content-Type Availability
 
-| Content-Type | OSH | 52North |
-|-------------|-----|---------|
-| ... | ✅/❌ | ✅/❌ |
+| Content-Type | OSH   | 52North |
+| ------------ | ----- | ------- |
+| ...          | ✅/❌ | ✅/❌   |
 
 ## New Findings
 
@@ -328,8 +338,8 @@ Resource inventory: {{table}}
 ## Cross-Server Comparison
 
 | Dimension | OpenSensorHub | 52North | Match? |
-|-----------|--------------|---------|--------|
-| ... | ... | ... | ✅/❌ |
+| --------- | ------------- | ------- | ------ |
+| ...       | ...           | ...     | ✅/❌  |
 
 ## Response Envelope Observations (Phase 3 Reference)
 
@@ -338,14 +348,14 @@ Resource inventory: {{table}}
 ## What WORKS (Verified Against Live Data)
 
 | Capability | OSH | 52North |
-|------------|-----|---------|
-| ... | ✅ | ✅ |
+| ---------- | --- | ------- |
+| ...        | ✅  | ✅      |
 
 ## What Remains (Later Phase 3 Concerns)
 
 | Issue | Severity | Component | Target Task |
-|-------|----------|-----------|------------|
-| ... | ... | ... | ... |
+| ----- | -------- | --------- | ----------- |
+| ...   | ...      | ...       | ...         |
 
 ## Verdict
 
@@ -357,6 +367,7 @@ Then commit the report, push, and confirm the file is at the expected path.
 **STOP.** Do NOT create GitHub issues automatically. Instead, present
 all new findings to the user in a structured summary (see Step 10 below)
 and wait for discussion before taking any further action.
+
 ```
 
 ---
@@ -372,16 +383,19 @@ After the smoke test report is committed and pushed:
 Present ALL new findings in a structured summary with recommendations:
 
 ```
+
 ### New Findings Summary
 
-| # | Finding | Severity | Category | Ownership | Recommendation |
-|---|---------|----------|----------|-----------|----------------|
-| F{{N}} | {{Title}} | {{Sev}} | {{Cat}} | {{Own}} | {{Your recommendation: create issue / defer / informational only}} |
+| #      | Finding   | Severity | Category | Ownership | Recommendation                                                     |
+| ------ | --------- | -------- | -------- | --------- | ------------------------------------------------------------------ |
+| F{{N}} | {{Title}} | {{Sev}}  | {{Cat}}  | {{Own}}   | {{Your recommendation: create issue / defer / informational only}} |
 
 For each finding where you recommend creating an issue:
+
 - State what the issue would contain (1-2 sentences)
 - State which existing ROADMAP task or Phase 3 issue it relates to
 - State whether it blocks the next task or can be addressed later
+
 ```
 
 Then **STOP and wait for the user to respond**. The user will:
@@ -447,7 +461,9 @@ When a new parser component is ready, add a new step section to the smoke test f
 Reports follow the same naming pattern as Phase 2:
 
 ```
+
 docs/implementation/live-server-smoke-test-post-phase-{X.Y}.md
+
 ```
 
 The Phase 3 smoke tests continue the numbering sequence from Phase 2. They appear in the same directory and the same series.
@@ -482,3 +498,4 @@ The Phase 3 smoke tests continue the numbering sequence from Phase 2. They appea
 | featureType vocabulary | SOSA (`sosa:Sensor`, etc.) | May differ |
 | validTime format | Array `["ISO", "now"]` | Unknown until tested |
 | Data availability | Rich (systems, datastreams, etc.) | Rich via SML; empty via GeoJSON |
+```

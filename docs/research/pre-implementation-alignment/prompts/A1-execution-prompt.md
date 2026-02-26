@@ -70,6 +70,7 @@ Then execute **only Checks 5-8** with full depth.
 **Review Reports:** Phase 0-4 reports in `docs/research/testing/review/` — these are the primary sources for reverse checks
 
 **Key Test Research Docs for this pass:**
+
 - Phase 0 report — client responsibilities (5), anti-patterns (AP1-AP5)
 - Phase 1-4 reports — scope decisions, corrections
 - Doc 08 — CSAPI spec test requirements
@@ -117,6 +118,7 @@ Execute **Pass 3 of 3** for research plan A1: **Test Research ↔ Implementation
 The research plan is at: `docs/research/pre-implementation-alignment/A1-research-plan-test-research-vs-implementation-guide.md`
 
 Read both interim findings first:
+
 - `docs/research/pre-implementation-alignment/findings/A1-pass-1-forward-checks.md`
 - `docs/research/pre-implementation-alignment/findings/A1-pass-2-reverse-checks.md`
 
@@ -127,6 +129,7 @@ Then execute **Checks 9-12** with full depth, and assemble the final consolidate
 **Anchor:** `docs/planning/csapi-implementation-guide.md` (v7.0, ~4,200 lines) — focus on §9, §16
 
 **Key Test Research Docs for this pass:**
+
 - Phase 0 report — AP1-AP5 anti-pattern definitions
 - Doc 06 — meaningful vs trivial test standard
 - Doc 15 §5.2 — revised fixture structure

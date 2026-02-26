@@ -4,6 +4,7 @@
 **Reviewer:** GitHub Copilot (Claude Opus 4.6)
 **Scope:** Issues #57, #58, #59, #61, #63, #64, #65, #66, #68, #69 — all commits since Smoke Test #17 (`6d06170`)
 **Commits:**
+
 - `6f7ec23` — `feat: add 5 nested create methods to CSAPIQueryBuilder (F-1, F-2, F-83)`
 - `e66f2c3` — `feat: add CSAPI_CONTENT_TYPES constant map and getContentTypeForResource() helper (F-10)`
 - `c3e3673` — `test: add CSAPI_CONTENT_TYPES and getContentTypeForResource tests to url_builder.spec.ts`
@@ -22,11 +23,11 @@
 
 ## Verification Status
 
-| Check | Result |
-|-------|--------|
-| tsc --noEmit | ✅ Clean (zero errors) |
-| CSAPI unit tests (all) | ✅ 1139 passing, 25 suites |
-| CSAPI format tests | ✅ 617 passing, 17 suites |
+| Check                      | Result                                                          |
+| -------------------------- | --------------------------------------------------------------- |
+| tsc --noEmit               | ✅ Clean (zero errors)                                          |
+| CSAPI unit tests (all)     | ✅ 1139 passing, 25 suites                                      |
+| CSAPI format tests         | ✅ 617 passing, 17 suites                                       |
 | Endpoint integration tests | ⚠️ 82/83 passing (1 pre-existing upstream failure at line 1789) |
 
 **Test delta from Phase 3.12:** +224 CSAPI tests, +217 format tests (via constants.spec.ts), +6 suites (command-routing.spec.ts, integration/discovery.spec.ts, integration/observation.spec.ts, integration/navigation.spec.ts, integration/command.spec.ts, constants.spec.ts)
@@ -37,90 +38,90 @@
 
 ### Issue #57 — Nested Create Methods
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `csapi/url_builder.ts` | +258 | 5 new methods: `createSubsystem()`, `createSubdeployment()`, `createDataStreamForSystem()`, `createControlStreamForSystem()`, `createSamplingFeatureForSystem()` with full JSDoc |
+| File                   | Lines Changed | Scope                                                                                                                                                                            |
+| ---------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `csapi/url_builder.ts` | +258          | 5 new methods: `createSubsystem()`, `createSubdeployment()`, `createDataStreamForSystem()`, `createControlStreamForSystem()`, `createSamplingFeatureForSystem()` with full JSDoc |
 
 ### Issue #58 — CSAPI Content-Type Constants
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `csapi/formats/constants.ts` | +102 | `CSAPI_CONTENT_TYPES` constant map, `getContentTypeForResource()` helper, full JSDoc |
-| `csapi/formats/index.ts` | +2 | Re-export `CSAPI_CONTENT_TYPES` and `getContentTypeForResource` |
+| File                         | Lines Changed | Scope                                                                                |
+| ---------------------------- | ------------- | ------------------------------------------------------------------------------------ |
+| `csapi/formats/constants.ts` | +102          | `CSAPI_CONTENT_TYPES` constant map, `getContentTypeForResource()` helper, full JSDoc |
+| `csapi/formats/index.ts`     | +2            | Re-export `CSAPI_CONTENT_TYPES` and `getContentTypeForResource`                      |
 
 ### Issue #59 — Content-Type Tests
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `csapi/formats/constants.spec.ts` | +48 (NEW) | 8 tests: Part 1 → geo+json, Part 2 → json, unknown → json default |
+| File                              | Lines Changed | Scope                                                             |
+| --------------------------------- | ------------- | ----------------------------------------------------------------- |
+| `csapi/formats/constants.spec.ts` | +48 (NEW)     | 8 tests: Part 1 → geo+json, Part 2 → json, unknown → json default |
 
 ### Issue #61 — JSDoc Enhancement (extractCSAPIFeature)
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `csapi/formats/geojson.ts` | +49/−7 | Enhanced JSDoc for `extractCSAPIFeature()` and `getCSAPIResourceType()` Part 1 limitations |
+| File                       | Lines Changed | Scope                                                                                      |
+| -------------------------- | ------------- | ------------------------------------------------------------------------------------------ |
+| `csapi/formats/geojson.ts` | +49/−7        | Enhanced JSDoc for `extractCSAPIFeature()` and `getCSAPIResourceType()` Part 1 limitations |
 
 ### Issue #63 — EndpointError Fix
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `ogc-api/endpoint.ts` | +1/−1 | Changed `throw new Error(...)` → `throw new EndpointError(...)` in root getter |
+| File                  | Lines Changed | Scope                                                                          |
+| --------------------- | ------------- | ------------------------------------------------------------------------------ |
+| `ogc-api/endpoint.ts` | +1/−1         | Changed `throw new Error(...)` → `throw new EndpointError(...)` in root getter |
 
 ### Issue #64 — Constructor Parameter Narrowing
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `csapi/url_builder.ts` | +1/−1 | Constructor parameter type `OgcApiCollectionInfo` → `Pick<OgcApiCollectionInfo, 'id' \| 'title' \| 'links'>` |
+| File                   | Lines Changed | Scope                                                                                                        |
+| ---------------------- | ------------- | ------------------------------------------------------------------------------------------------------------ |
+| `csapi/url_builder.ts` | +1/−1         | Constructor parameter type `OgcApiCollectionInfo` → `Pick<OgcApiCollectionInfo, 'id' \| 'title' \| 'links'>` |
 
 ### Issue #65 — JSDoc Enhancement (Resource Discovery)
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `csapi/url_builder.ts` | +41 | Enhanced JSDoc for `availableResources`, `extractAvailableResources()`, `assertResourceAvailable()`, and constructor — documenting link scanning conventions and `resourceUrls` workaround |
+| File                   | Lines Changed | Scope                                                                                                                                                                                      |
+| ---------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `csapi/url_builder.ts` | +41           | Enhanced JSDoc for `availableResources`, `extractAvailableResources()`, `assertResourceAvailable()`, and constructor — documenting link scanning conventions and `resourceUrls` workaround |
 
 ### Issue #66 — JSDoc Fix (Schema Parameter Confusion)
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `csapi/url_builder.ts` | +24/−15 | Corrected `f` → `obsFormat`/`cmdFormat` in JSDoc for `getDataStreamSchema()` and `getControlStreamSchema()` |
+| File                   | Lines Changed | Scope                                                                                                       |
+| ---------------------- | ------------- | ----------------------------------------------------------------------------------------------------------- |
+| `csapi/url_builder.ts` | +24/−15       | Corrected `f` → `obsFormat`/`cmdFormat` in JSDoc for `getDataStreamSchema()` and `getControlStreamSchema()` |
 
 ### Issue #68 — controlStreams URL Path Casing Fix
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `csapi/url_builder.ts` | +10/−2 | Added `RESOURCE_PATH_OVERRIDES` map and `toUrlPathSegment()` helper; `buildResourceUrl()` uses lowercase `/controlstreams` |
-| `csapi/url_builder.spec.ts` | +25/−23 | Updated 24 URL path expectations from `/controlStreams/` → `/controlstreams/` |
+| File                        | Lines Changed | Scope                                                                                                                      |
+| --------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `csapi/url_builder.ts`      | +10/−2        | Added `RESOURCE_PATH_OVERRIDES` map and `toUrlPathSegment()` helper; `buildResourceUrl()` uses lowercase `/controlstreams` |
+| `csapi/url_builder.spec.ts` | +25/−23       | Updated 24 URL path expectations from `/controlStreams/` → `/controlstreams/`                                              |
 
 ### Issue #68 Follow-Up — Cascading Test Fix
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `csapi/command-routing.spec.ts` | +10/−10 | Updated 10 URL expectations to lowercase `/controlstreams/` |
-| `csapi/integration/navigation.spec.ts` | +1/−1 | Updated 1 URL expectation |
-| `csapi/integration/command.spec.ts` | +7/−7 | Updated 7 URL expectations including `.not.toContain()` assertion |
+| File                                   | Lines Changed | Scope                                                             |
+| -------------------------------------- | ------------- | ----------------------------------------------------------------- |
+| `csapi/command-routing.spec.ts`        | +10/−10       | Updated 10 URL expectations to lowercase `/controlstreams/`       |
+| `csapi/integration/navigation.spec.ts` | +1/−1         | Updated 1 URL expectation                                         |
+| `csapi/integration/command.spec.ts`    | +7/−7         | Updated 7 URL expectations including `.not.toContain()` assertion |
 
 ### Issue #69 — Procedure/SensorML JSDoc Cross-References
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `csapi/formats/sensorml/types.ts` | +12 | Added `@see` cross-references linking `SensorMLProcess` types to Procedure resources |
-| `csapi/formats/swecommon/types.ts` | +12 | Added `@see` cross-references linking SWE Common types to DataStream/ControlStream schemas |
+| File                               | Lines Changed | Scope                                                                                      |
+| ---------------------------------- | ------------- | ------------------------------------------------------------------------------------------ |
+| `csapi/formats/sensorml/types.ts`  | +12           | Added `@see` cross-references linking `SensorMLProcess` types to Procedure resources       |
+| `csapi/formats/swecommon/types.ts` | +12           | Added `@see` cross-references linking SWE Common types to DataStream/ControlStream schemas |
 
 ### Additional Files (Pre-Baseline Integration Tests and Edge Cases)
 
 These files were added between smoke test #17 and the current review — they were committed before issues #57–#69 but after the Phase 3.12 review baseline:
 
-| File | Lines | Scope |
-|------|------:|-------|
-| `csapi/command-routing.ts` | 144 (NEW) | Command fallback routing (#47): `isCommandRouteRejection()`, `getCommandRoutingPreference()`, `setCommandRoutingPreference()`, `buildNestedCommandUrl()` |
-| `csapi/command-routing.spec.ts` | 230 (NEW) | 21 command routing tests |
-| `csapi/helpers.spec.ts` | +195 | ~195 new edge case tests for helpers (#33) |
-| `csapi/url_builder.spec.ts` | +787 | ~300 edge case tests for URL builder (#33) |
-| `csapi/integration/discovery.spec.ts` | 339 (NEW) | 14 integration tests (#31) |
-| `csapi/integration/observation.spec.ts` | 322 (NEW) | 17 integration tests (#31) |
-| `csapi/integration/navigation.spec.ts` | 428 (NEW) | 30 integration tests (#31) |
-| `csapi/integration/command.spec.ts` | 359 (NEW) | 20 integration tests (#31) |
-| `src/index.ts` | +113 | CSAPI barrel exports — TypeDoc/documentation (#32) |
+| File                                    |     Lines | Scope                                                                                                                                                    |
+| --------------------------------------- | --------: | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `csapi/command-routing.ts`              | 144 (NEW) | Command fallback routing (#47): `isCommandRouteRejection()`, `getCommandRoutingPreference()`, `setCommandRoutingPreference()`, `buildNestedCommandUrl()` |
+| `csapi/command-routing.spec.ts`         | 230 (NEW) | 21 command routing tests                                                                                                                                 |
+| `csapi/helpers.spec.ts`                 |      +195 | ~195 new edge case tests for helpers (#33)                                                                                                               |
+| `csapi/url_builder.spec.ts`             |      +787 | ~300 edge case tests for URL builder (#33)                                                                                                               |
+| `csapi/integration/discovery.spec.ts`   | 339 (NEW) | 14 integration tests (#31)                                                                                                                               |
+| `csapi/integration/observation.spec.ts` | 322 (NEW) | 17 integration tests (#31)                                                                                                                               |
+| `csapi/integration/navigation.spec.ts`  | 428 (NEW) | 30 integration tests (#31)                                                                                                                               |
+| `csapi/integration/command.spec.ts`     | 359 (NEW) | 20 integration tests (#31)                                                                                                                               |
+| `src/index.ts`                          |      +113 | CSAPI barrel exports — TypeDoc/documentation (#32)                                                                                                       |
 
 ---
 
@@ -128,98 +129,98 @@ These files were added between smoke test #17 and the current review — they we
 
 ### Production Files
 
-| File | Lines | Purpose |
-|------|------:|---------|
-| `csapi/url_builder.ts` | 2,088 | URL construction for 9 resource types + 5 nested create methods |
-| `csapi/formats/swecommon/parser.ts` | 1,274 | Main SWE Common parser — 16 component types |
-| `csapi/formats/sensorml/types.ts` | 863 | SensorML 3.0 type definitions |
-| `csapi/formats/swecommon/components.ts` | 744 | 10 simple SWE Common component parsers |
-| `csapi/formats/swecommon/types.ts` | 669 | SWE Common 3.0 type definitions |
-| `csapi/formats/sensorml/physical-system.ts` | 667 | PhysicalSystem/PhysicalComponent sub-parser |
-| `csapi/model.ts` | 573 | CSAPI type definitions and constants |
-| `csapi/formats/swecommon/data-array.ts` | 510 | DataArray parser with encoding support |
-| `csapi/formats/sensorml/parser.ts` | 410 | Main SensorML parser |
-| `csapi/formats/geojson.ts` | 384 | GeoJSON handler extensions |
-| `csapi/formats/constants.ts` | 292 | Media types, resource URIs, Content-Type map |
-| `csapi/formats/sensorml/aggregate-process.ts` | 286 | AggregateProcess sub-parser |
-| `csapi/formats/index.ts` | 276 | Top-level format barrel file |
-| `csapi/formats/sensorml/_helpers.ts` | 207 | SensorML shared helpers |
-| `csapi/helpers.ts` | 200 | CSAPI shared extraction helpers |
-| `csapi/formats/swecommon/data-record.ts` | 194 | DataRecord parser |
-| `csapi/command-routing.ts` | 144 | Command fallback routing |
-| `csapi/formats/swecommon/index.ts` | 135 | SWE Common barrel file |
-| `csapi/formats/sensorml/simple-process.ts` | 135 | SimpleProcess sub-parser |
-| `csapi/formats/sensorml/index.ts` | 122 | SensorML barrel file |
-| `csapi/formats/classification.ts` | 118 | Endpoint-context classification fallback |
-| `csapi/formats/response.ts` | 115 | Collection response envelope normalization |
-| `csapi/formats/swecommon/_helpers.ts` | 51 | SWE Common shared helpers (`isRecord`, `parseBaseProperties`) |
-| `csapi/formats/sensorml/errors.ts` | 40 | SensorMLParseError class |
-| **Production Total** | **10,497** | **24 files** |
+| File                                          |      Lines | Purpose                                                         |
+| --------------------------------------------- | ---------: | --------------------------------------------------------------- |
+| `csapi/url_builder.ts`                        |      2,088 | URL construction for 9 resource types + 5 nested create methods |
+| `csapi/formats/swecommon/parser.ts`           |      1,274 | Main SWE Common parser — 16 component types                     |
+| `csapi/formats/sensorml/types.ts`             |        863 | SensorML 3.0 type definitions                                   |
+| `csapi/formats/swecommon/components.ts`       |        744 | 10 simple SWE Common component parsers                          |
+| `csapi/formats/swecommon/types.ts`            |        669 | SWE Common 3.0 type definitions                                 |
+| `csapi/formats/sensorml/physical-system.ts`   |        667 | PhysicalSystem/PhysicalComponent sub-parser                     |
+| `csapi/model.ts`                              |        573 | CSAPI type definitions and constants                            |
+| `csapi/formats/swecommon/data-array.ts`       |        510 | DataArray parser with encoding support                          |
+| `csapi/formats/sensorml/parser.ts`            |        410 | Main SensorML parser                                            |
+| `csapi/formats/geojson.ts`                    |        384 | GeoJSON handler extensions                                      |
+| `csapi/formats/constants.ts`                  |        292 | Media types, resource URIs, Content-Type map                    |
+| `csapi/formats/sensorml/aggregate-process.ts` |        286 | AggregateProcess sub-parser                                     |
+| `csapi/formats/index.ts`                      |        276 | Top-level format barrel file                                    |
+| `csapi/formats/sensorml/_helpers.ts`          |        207 | SensorML shared helpers                                         |
+| `csapi/helpers.ts`                            |        200 | CSAPI shared extraction helpers                                 |
+| `csapi/formats/swecommon/data-record.ts`      |        194 | DataRecord parser                                               |
+| `csapi/command-routing.ts`                    |        144 | Command fallback routing                                        |
+| `csapi/formats/swecommon/index.ts`            |        135 | SWE Common barrel file                                          |
+| `csapi/formats/sensorml/simple-process.ts`    |        135 | SimpleProcess sub-parser                                        |
+| `csapi/formats/sensorml/index.ts`             |        122 | SensorML barrel file                                            |
+| `csapi/formats/classification.ts`             |        118 | Endpoint-context classification fallback                        |
+| `csapi/formats/response.ts`                   |        115 | Collection response envelope normalization                      |
+| `csapi/formats/swecommon/_helpers.ts`         |         51 | SWE Common shared helpers (`isRecord`, `parseBaseProperties`)   |
+| `csapi/formats/sensorml/errors.ts`            |         40 | SensorMLParseError class                                        |
+| **Production Total**                          | **10,497** | **24 files**                                                    |
 
 ### Test Files
 
-| File | Lines | Tests | Purpose |
-|------|------:|------:|---------|
-| `csapi/url_builder.spec.ts` | 2,755 | ~560 | URL builder tests (incl. #33 edge cases) |
-| `csapi/formats/sensorml/physical-system.spec.ts` | 1,070 | 100 | PhysicalSystem tests |
-| `csapi/formats/sensorml/aggregate-process.spec.ts` | 646 | 67 | AggregateProcess tests |
-| `csapi/formats/swecommon/components.spec.ts` | 600 | 73 | SWE Common component tests |
-| `csapi/formats/swecommon/parser.spec.ts` | 569 | 57 | SWE Common parser tests |
-| `csapi/formats/swecommon/data-array.spec.ts` | 507 | 49 | DataArray tests |
-| `csapi/helpers.spec.ts` | 463 | ~65 | Helper tests (incl. #33 edge cases) |
-| `csapi/formats/sensorml/simple-process.spec.ts` | 438 | 41 | SimpleProcess tests |
-| `csapi/formats/geojson.spec.ts` | 431 | 19 | GeoJSON tests |
-| `csapi/integration/navigation.spec.ts` | 428 | 30 | Integration: cross-resource navigation |
-| `csapi/formats/swecommon/types.spec.ts` | 375 | 17 | SWE Common type tests |
-| `csapi/model.spec.ts` | 377 | 44 | Model tests |
-| `csapi/formats/sensorml/types.spec.ts` | 369 | 20 | SensorML type tests |
-| `csapi/integration/command.spec.ts` | 359 | 20 | Integration: command workflows |
-| `csapi/formats/sensorml/parser.spec.ts` | 343 | 46 | SensorML parser tests |
-| `csapi/integration/discovery.spec.ts` | 339 | 14 | Integration: discovery lifecycle |
-| `csapi/integration/observation.spec.ts` | 322 | 17 | Integration: observation workflows |
-| `csapi/formats/index.spec.ts` | 242 | 22 | Format barrel file tests |
-| `csapi/formats/swecommon/data-record.spec.ts` | 237 | 20 | DataRecord tests |
-| `csapi/command-routing.spec.ts` | 230 | 21 | Command routing tests |
-| `csapi/formats/response.spec.ts` | 193 | 18 | Response parser tests |
-| `csapi/formats/classification.spec.ts` | 168 | 22 | Classification fallback tests |
-| `csapi/formats/swecommon/index.spec.ts` | 167 | 21 | SWE Common barrel tests |
-| `csapi/formats/sensorml/index.spec.ts` | 82 | 9 | SensorML barrel tests |
-| `csapi/formats/constants.spec.ts` | 40 | 8 | Content-Type constant tests |
-| **Test Total** | **11,750** | **1,139** | **25 suites** |
+| File                                               |      Lines |     Tests | Purpose                                  |
+| -------------------------------------------------- | ---------: | --------: | ---------------------------------------- |
+| `csapi/url_builder.spec.ts`                        |      2,755 |      ~560 | URL builder tests (incl. #33 edge cases) |
+| `csapi/formats/sensorml/physical-system.spec.ts`   |      1,070 |       100 | PhysicalSystem tests                     |
+| `csapi/formats/sensorml/aggregate-process.spec.ts` |        646 |        67 | AggregateProcess tests                   |
+| `csapi/formats/swecommon/components.spec.ts`       |        600 |        73 | SWE Common component tests               |
+| `csapi/formats/swecommon/parser.spec.ts`           |        569 |        57 | SWE Common parser tests                  |
+| `csapi/formats/swecommon/data-array.spec.ts`       |        507 |        49 | DataArray tests                          |
+| `csapi/helpers.spec.ts`                            |        463 |       ~65 | Helper tests (incl. #33 edge cases)      |
+| `csapi/formats/sensorml/simple-process.spec.ts`    |        438 |        41 | SimpleProcess tests                      |
+| `csapi/formats/geojson.spec.ts`                    |        431 |        19 | GeoJSON tests                            |
+| `csapi/integration/navigation.spec.ts`             |        428 |        30 | Integration: cross-resource navigation   |
+| `csapi/formats/swecommon/types.spec.ts`            |        375 |        17 | SWE Common type tests                    |
+| `csapi/model.spec.ts`                              |        377 |        44 | Model tests                              |
+| `csapi/formats/sensorml/types.spec.ts`             |        369 |        20 | SensorML type tests                      |
+| `csapi/integration/command.spec.ts`                |        359 |        20 | Integration: command workflows           |
+| `csapi/formats/sensorml/parser.spec.ts`            |        343 |        46 | SensorML parser tests                    |
+| `csapi/integration/discovery.spec.ts`              |        339 |        14 | Integration: discovery lifecycle         |
+| `csapi/integration/observation.spec.ts`            |        322 |        17 | Integration: observation workflows       |
+| `csapi/formats/index.spec.ts`                      |        242 |        22 | Format barrel file tests                 |
+| `csapi/formats/swecommon/data-record.spec.ts`      |        237 |        20 | DataRecord tests                         |
+| `csapi/command-routing.spec.ts`                    |        230 |        21 | Command routing tests                    |
+| `csapi/formats/response.spec.ts`                   |        193 |        18 | Response parser tests                    |
+| `csapi/formats/classification.spec.ts`             |        168 |        22 | Classification fallback tests            |
+| `csapi/formats/swecommon/index.spec.ts`            |        167 |        21 | SWE Common barrel tests                  |
+| `csapi/formats/sensorml/index.spec.ts`             |         82 |         9 | SensorML barrel tests                    |
+| `csapi/formats/constants.spec.ts`                  |         40 |         8 | Content-Type constant tests              |
+| **Test Total**                                     | **11,750** | **1,139** | **25 suites**                            |
 
 ### Aggregate
 
-| Metric | Value |
-|--------|------:|
-| Production lines | 10,497 |
-| Test lines | 11,750 |
-| Total lines | 22,247 |
-| Production files | 24 |
-| Test files (suites) | 25 |
-| Test count | 1,139 |
-| Test-to-production ratio | 1.12:1 |
-| Additional: `src/index.ts` (barrel) | 113 lines added for CSAPI exports |
-| Additional: `ogc-api/endpoint.ts` (CSAPI) | ~63 lines of CSAPI integration |
+| Metric                                    |                             Value |
+| ----------------------------------------- | --------------------------------: |
+| Production lines                          |                            10,497 |
+| Test lines                                |                            11,750 |
+| Total lines                               |                            22,247 |
+| Production files                          |                                24 |
+| Test files (suites)                       |                                25 |
+| Test count                                |                             1,139 |
+| Test-to-production ratio                  |                            1.12:1 |
+| Additional: `src/index.ts` (barrel)       | 113 lines added for CSAPI exports |
+| Additional: `ogc-api/endpoint.ts` (CSAPI) |    ~63 lines of CSAPI integration |
 
 ---
 
 ## Phase 3 Lessons Learned Check
 
-| # | Lesson | Status | Evidence |
-|---|--------|--------|----------|
-| **L1** | Audit upstream before building new layers | ✅ PASS | All issues extend existing modules — no new architectural layers introduced. `command-routing.ts` is a response-layer concern, not a new builder layer. `constants.ts` additions (`CSAPI_CONTENT_TYPES`) extend existing data module. |
-| **L2** | Postel's Law governs client libraries | ✅ PASS | `getContentTypeForResource()` accepts any string and falls back to `application/json` for unrecognized types. `RESOURCE_PATH_OVERRIDES` silently corrects server path casing without throwing. |
-| **L3** | Don't couple validation to extraction | ✅ PASS | No validation-extraction coupling introduced. Content-Type map is purely informational. |
-| **L4** | Don't build parallel systems | ✅ PASS | No parallel systems. `RESOURCE_PATH_OVERRIDES` in `url_builder.ts` is the only mechanism for path segment mapping — no competing approach. |
-| **L5** | Verify upstream claims by reading source | ✅ N/A | No upstream claims. |
-| **L6** | Real-world server data diverges from spec | ✅ PASS | Issue #68 directly addresses OSH's lowercase `/controlstreams` requirement identified in smoke tests. Issue #63 ensures consistent `EndpointError` usage. |
-| **L7** | Phase 3 smoke tests are essential | ✅ PASS | Issues #57, #58, #63, #68 address findings from prior smoke tests. |
-| **L8** | Layered architecture enables clean extension | ✅ PASS | `command-routing.ts` adds routing logic without modifying `url_builder.ts`. Nested create methods follow the established delegation pattern. `RESOURCE_PATH_OVERRIDES` is a minimal, isolated concern. |
-| **L9** | Content negotiation cannot be assumed | ✅ N/A | No content negotiation logic. |
-| **L10** | Type naming must avoid built-in collisions | ✅ PASS | `CommandRoutingPreference` — no built-in collisions. |
-| **L11** | Document architectural decisions formally | ✅ PASS | All JSDoc enhancements (issues #61, #65, #66, #69) add spec references. `RESOURCE_PATH_OVERRIDES` is documented with `@see` link to issue #68. |
-| **L12** | "Build it right, but should we build it at all?" | ✅ PASS | All issues address code review findings or smoke test gaps — no unnecessary scope. |
-| **L13** | AI drift can fabricate findings | ✅ N/A | No external server interaction. |
+| #       | Lesson                                           | Status  | Evidence                                                                                                                                                                                                                              |
+| ------- | ------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **L1**  | Audit upstream before building new layers        | ✅ PASS | All issues extend existing modules — no new architectural layers introduced. `command-routing.ts` is a response-layer concern, not a new builder layer. `constants.ts` additions (`CSAPI_CONTENT_TYPES`) extend existing data module. |
+| **L2**  | Postel's Law governs client libraries            | ✅ PASS | `getContentTypeForResource()` accepts any string and falls back to `application/json` for unrecognized types. `RESOURCE_PATH_OVERRIDES` silently corrects server path casing without throwing.                                        |
+| **L3**  | Don't couple validation to extraction            | ✅ PASS | No validation-extraction coupling introduced. Content-Type map is purely informational.                                                                                                                                               |
+| **L4**  | Don't build parallel systems                     | ✅ PASS | No parallel systems. `RESOURCE_PATH_OVERRIDES` in `url_builder.ts` is the only mechanism for path segment mapping — no competing approach.                                                                                            |
+| **L5**  | Verify upstream claims by reading source         | ✅ N/A  | No upstream claims.                                                                                                                                                                                                                   |
+| **L6**  | Real-world server data diverges from spec        | ✅ PASS | Issue #68 directly addresses OSH's lowercase `/controlstreams` requirement identified in smoke tests. Issue #63 ensures consistent `EndpointError` usage.                                                                             |
+| **L7**  | Phase 3 smoke tests are essential                | ✅ PASS | Issues #57, #58, #63, #68 address findings from prior smoke tests.                                                                                                                                                                    |
+| **L8**  | Layered architecture enables clean extension     | ✅ PASS | `command-routing.ts` adds routing logic without modifying `url_builder.ts`. Nested create methods follow the established delegation pattern. `RESOURCE_PATH_OVERRIDES` is a minimal, isolated concern.                                |
+| **L9**  | Content negotiation cannot be assumed            | ✅ N/A  | No content negotiation logic.                                                                                                                                                                                                         |
+| **L10** | Type naming must avoid built-in collisions       | ✅ PASS | `CommandRoutingPreference` — no built-in collisions.                                                                                                                                                                                  |
+| **L11** | Document architectural decisions formally        | ✅ PASS | All JSDoc enhancements (issues #61, #65, #66, #69) add spec references. `RESOURCE_PATH_OVERRIDES` is documented with `@see` link to issue #68.                                                                                        |
+| **L12** | "Build it right, but should we build it at all?" | ✅ PASS | All issues address code review findings or smoke test gaps — no unnecessary scope.                                                                                                                                                    |
+| **L13** | AI drift can fabricate findings                  | ✅ N/A  | No external server interaction.                                                                                                                                                                                                       |
 
 **Result:** 10/13 applicable lessons PASS, 3 N/A, 0 WORSENED
 
@@ -277,11 +278,11 @@ These files were added between smoke test #17 and the current review — they we
 
 When Issue #68 changed `buildResourceUrl()` to produce lowercase `/controlstreams` paths via `RESOURCE_PATH_OVERRIDES`, only `url_builder.spec.ts` was updated (24 expectations). Three additional test files were NOT updated:
 
-| File | Failures | Lines |
-|------|------:|-------|
-| `command-routing.spec.ts` | 10 | Lines 157, 164, 171, 178, 185, 195, 202, 210, 252, 265 |
-| `integration/navigation.spec.ts` | 1 | Line 227 |
-| `integration/command.spec.ts` | 6 | Lines 185, 200, 207, 315, 328, 339 |
+| File                             | Failures | Lines                                                  |
+| -------------------------------- | -------: | ------------------------------------------------------ |
+| `command-routing.spec.ts`        |       10 | Lines 157, 164, 171, 178, 185, 195, 202, 210, 252, 265 |
+| `integration/navigation.spec.ts` |        1 | Line 227                                               |
+| `integration/command.spec.ts`    |        6 | Lines 185, 200, 207, 315, 328, 339                     |
 
 **Total:** 17 test failures, all with the same root cause — expected URLs contained camelCase `/controlStreams/` but received lowercase `/controlstreams/` from the updated `buildResourceUrl()`.
 
@@ -318,6 +319,7 @@ This keeps the internal resource type names (`controlStreams`) consistent with t
 ### [F3] POSITIVE: Nested create methods follow established delegation pattern
 
 Issue #57's 5 new methods (`createSubsystem`, `createSubdeployment`, `createDataStreamForSystem`, `createControlStreamForSystem`, `createSamplingFeatureForSystem`) all:
+
 - Delegate to `buildResourceUrl()` — no custom URL logic
 - Call `assertResourceAvailable()` first — consistent error surface
 - Include full JSDoc with `@param`, `@returns`, `@throws`, `@example`, `@see` spec links
@@ -342,6 +344,7 @@ The `getContentTypeForResource()` helper safely falls back to `application/json`
 ### [F5] POSITIVE: Constructor parameter narrowing follows TypeScript best practices
 
 Issue #64's `Pick<OgcApiCollectionInfo, 'id' | 'title' | 'links'>` narrowing:
+
 - Documents the builder's actual data requirements — consumers don't need to provide a full `OgcApiCollectionInfo`
 - Is backward-compatible — existing code passing full objects still compiles
 - Improves testability — test fixtures need only 3 properties, not the full collection interface
@@ -353,6 +356,7 @@ Issue #64's `Pick<OgcApiCollectionInfo, 'id' | 'title' | 'links'>` narrowing:
 ### [F6] POSITIVE: Command fallback routing module is well-isolated
 
 `command-routing.ts` (144 lines) implements dual-path resolution for servers rejecting top-level `/commands` without modifying `url_builder.ts`. The module:
+
 - Imports `CSAPIQueryBuilder` as a type-only dependency (import type)
 - Uses `builder.getControlStreamCommands()` for URL construction — no path building duplication
 - Provides detection (`isCommandRouteRejection`), caching (`getCommandRoutingPreference`/`setCommandRoutingPreference`), and URL construction (`buildNestedCommandUrl`) as separate exported functions
@@ -366,6 +370,7 @@ Issue #64's `Pick<OgcApiCollectionInfo, 'id' | 'title' | 'links'>` narrowing:
 ### [F7] POSITIVE: Integration tests verify cross-module composition
 
 The 4 integration test files (Issues #31, #33) add 81 tests verifying end-to-end workflows that compose multiple CSAPI modules:
+
 - `discovery.spec.ts` (14 tests): full lifecycle, GeoJSON parsing, classification fallback
 - `observation.spec.ts` (17 tests): system-to-datastream discovery, temporal queries, SWE Common schema parsing
 - `command.spec.ts` (20 tests): control stream discovery, feasibility, fallback routing
@@ -408,6 +413,7 @@ However, these constants are exercised indirectly through the barrel file tests 
 ### [F11] POSITIVE: `src/index.ts` barrel exports are comprehensive
 
 The 113 lines added to `src/index.ts` export all public CSAPI symbols:
+
 - `CSAPIQueryBuilder` (default export)
 - `CSAPIResourceTypes`, `CommandStatusCodes`, `SystemTypeUris` (const values)
 - 30+ type exports covering all query options, resource interfaces, and collection types
@@ -423,77 +429,77 @@ The 113 lines added to `src/index.ts` export all public CSAPI symbols:
 
 ### Phase 2 (URL Builder) — Carried Forward
 
-| Dimension | Systems | Deployments | Procedures | SF | Properties | DataStreams | Observations | ControlStreams | Commands |
-|-----------|:-------:|:-----------:|:----------:|:--:|:----------:|:-----------:|:------------:|:--------------:|:--------:|
-| Exact URL assertion | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Per-field query params | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| CRUD URLs | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Nested methods | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Nested create methods | ✅ | ✅ | N/A | N/A | N/A | ✅ | N/A | ✅ | N/A |
-| Pagination | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Resource validation | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Temporal params | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Content-Type mapping | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Command fallback routing | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ✅ | ✅ |
-| Edge cases (#33) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Dimension                | Systems | Deployments | Procedures | SF  | Properties | DataStreams | Observations | ControlStreams | Commands |
+| ------------------------ | :-----: | :---------: | :--------: | :-: | :--------: | :---------: | :----------: | :------------: | :------: |
+| Exact URL assertion      |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Per-field query params   |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| CRUD URLs                |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Nested methods           |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Nested create methods    |   ✅    |     ✅      |    N/A     | N/A |    N/A     |     ✅      |     N/A      |       ✅       |   N/A    |
+| Pagination               |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Resource validation      |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Temporal params          |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Content-Type mapping     |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Command fallback routing |   N/A   |     N/A     |    N/A     | N/A |    N/A     |     N/A     |     N/A      |       ✅       |    ✅    |
+| Edge cases (#33)         |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
 
 ### Phase 3 (Format Handlers) — Current
 
-| Dimension | GeoJSON | Constants | Response | Classification | SML Types | SML Errors | SML Helpers | SimpleProcess | AggProcess | PhysSys | SML Parser | SML Barrel | SWE Types | SWE Comps | SWE DataRec | SWE DataArr | SWE Parser | SWE Barrel | SWE Helpers | Formats Barrel |
-|-----------|:-------:|:---------:|:--------:|:--------------:|:---------:|:----------:|:-----------:|:-------------:|:----------:|:-------:|:----------:|:----------:|:---------:|:---------:|:-----------:|:-----------:|:----------:|:----------:|:-----------:|:--------------:|
-| Valid input → output | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Invalid input → rejection | ✅ | N/A | ✅ | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | ✅ | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| All spec variants | ✅ | ✅ | ✅ | N/A | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | ✅ | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| All branches/types | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Error specificity | ✅ | N/A | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| Edge cases | ✅ | N/A | ✅ | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | ✅ | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| Nested structures | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ✅ | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| Type discrimination | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | N/A | N/A |
-| Encoding variants | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ✅ | N/A | N/A | N/A | N/A |
+| Dimension                 | GeoJSON | Constants | Response | Classification | SML Types | SML Errors | SML Helpers | SimpleProcess | AggProcess | PhysSys | SML Parser | SML Barrel | SWE Types | SWE Comps | SWE DataRec | SWE DataArr | SWE Parser | SWE Barrel | SWE Helpers | Formats Barrel |
+| ------------------------- | :-----: | :-------: | :------: | :------------: | :-------: | :--------: | :---------: | :-----------: | :--------: | :-----: | :--------: | :--------: | :-------: | :-------: | :---------: | :---------: | :--------: | :--------: | :---------: | :------------: |
+| Valid input → output      |   ✅    |    ✅     |    ✅    |       ✅       |    ✅     |     ✅     |     ✅      |      ✅       |     ✅     |   ✅    |     ✅     |     ✅     |    ✅     |    ✅     |     ✅      |     ✅      |     ✅     |     ✅     |     ✅      |       ✅       |
+| Invalid input → rejection |   ✅    |    N/A    |    ✅    |       ✅       |    ✅     |    N/A     |     N/A     |      ✅       |     ✅     |   ✅    |     ✅     |    N/A     |    ✅     |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| All spec variants         |   ✅    |    ✅     |    ✅    |      N/A       |    ✅     |    N/A     |     N/A     |      ✅       |     ✅     |   ✅    |     ✅     |    N/A     |    ✅     |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| All branches/types        |   ✅    |    ✅     |    ✅    |       ✅       |    ✅     |     ✅     |     ✅      |      ✅       |     ✅     |   ✅    |     ✅     |     ✅     |    ✅     |    ✅     |     ✅      |     ✅      |     ✅     |     ✅     |     ✅      |       ✅       |
+| Error specificity         |   ✅    |    N/A    |    ✅    |      N/A       |    N/A    |     ✅     |     ✅      |      ✅       |     ✅     |   ✅    |     ✅     |    N/A     |    N/A    |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| Edge cases                |   ✅    |    N/A    |    ✅    |       ✅       |    ✅     |    N/A     |     N/A     |      ✅       |     ✅     |   ✅    |     ✅     |    N/A     |    ✅     |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| Nested structures         |   N/A   |    N/A    |   N/A    |      N/A       |    N/A    |    N/A     |     N/A     |      N/A      |     ✅     |   ✅    |     ✅     |    N/A     |    N/A    |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| Type discrimination       |   N/A   |    N/A    |   N/A    |      N/A       |    N/A    |    N/A     |     N/A     |      N/A      |    N/A     |   ✅    |     ✅     |    N/A     |    N/A    |    ✅     |     ✅      |     ✅      |     ✅     |    N/A     |     N/A     |      N/A       |
+| Encoding variants         |   N/A   |    N/A    |   N/A    |      N/A       |    N/A    |    N/A     |     N/A     |      N/A      |    N/A     |   N/A   |    N/A     |    N/A     |    N/A    |    N/A    |     N/A     |     ✅      |    N/A     |    N/A     |     N/A     |      N/A       |
 
 ### Integration Tests — New Dimension
 
-| Dimension | Discovery | Observation | Command | Navigation |
-|-----------|:---------:|:-----------:|:-------:|:----------:|
-| End-to-end workflow | ✅ | ✅ | ✅ | ✅ |
-| Cross-module composition | ✅ | ✅ | ✅ | ✅ |
-| Temporal queries | N/A | ✅ | ✅ | N/A |
-| Pagination | N/A | ✅ | N/A | ✅ |
-| Fallback routing | N/A | N/A | ✅ | N/A |
-| Error scenarios | ✅ | ✅ | ✅ | ✅ |
-| Format negotiation | ✅ | N/A | N/A | ✅ |
-| GeoJSON round-trip | ✅ | N/A | N/A | ✅ |
+| Dimension                | Discovery | Observation | Command | Navigation |
+| ------------------------ | :-------: | :---------: | :-----: | :--------: |
+| End-to-end workflow      |    ✅     |     ✅      |   ✅    |     ✅     |
+| Cross-module composition |    ✅     |     ✅      |   ✅    |     ✅     |
+| Temporal queries         |    N/A    |     ✅      |   ✅    |    N/A     |
+| Pagination               |    N/A    |     ✅      |   N/A   |     ✅     |
+| Fallback routing         |    N/A    |     N/A     |   ✅    |    N/A     |
+| Error scenarios          |    ✅     |     ✅      |   ✅    |     ✅     |
+| Format negotiation       |    ✅     |     N/A     |   N/A   |     ✅     |
+| GeoJSON round-trip       |    ✅     |     N/A     |   N/A   |     ✅     |
 
 ---
 
 ## Smoke Test Findings Integration
 
-| Finding | Status | Evidence |
-|---------|--------|----------|
-| F1 (nested create methods) | ✅ Addressed | Issue #57 adds `createSubsystem()`, `createSubdeployment()`, `createDataStreamForSystem()`, `createControlStreamForSystem()`, `createSamplingFeatureForSystem()` |
-| F2 (nested create methods) | ✅ Addressed | Same as F1 — Issue #57 |
-| F3 (items envelope) | ✅ Previously addressed | `parseCollectionResponse` in `response.ts` — Phase 3.12 |
-| F4 (validTime array format) | ✅ Previously addressed | `parseValidTime` in `geojson.ts` — prior phase |
-| F5 (EndpointError consistency) | ✅ Addressed | Issue #63: `throw new Error(...)` → `throw new EndpointError(...)` in endpoint.ts root getter |
-| F10 (Content-Type guidance) | ✅ Addressed | Issue #58: `CSAPI_CONTENT_TYPES` map + `getContentTypeForResource()` |
-| F17 (controlstreams path casing) | ✅ Addressed | Issue #68: `RESOURCE_PATH_OVERRIDES` + `toUrlPathSegment()` in url_builder.ts |
-| F33 (commandFormat vs observationFormat) | ⏳ Deferred | Schema-level variant handling deferred |
-| F34 (Commands fallback routing) | ✅ Addressed | Issue #47: `command-routing.ts` implements dual-path resolution |
-| F41 (featureType: null on 52North) | ✅ Previously addressed | `classifyFeature` with `inferResourceTypeFromPath` — Phase 3.12 |
-| F83 (nested create methods) | ✅ Addressed | Same as F1 — Issue #57 |
+| Finding                                  | Status                  | Evidence                                                                                                                                                         |
+| ---------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1 (nested create methods)               | ✅ Addressed            | Issue #57 adds `createSubsystem()`, `createSubdeployment()`, `createDataStreamForSystem()`, `createControlStreamForSystem()`, `createSamplingFeatureForSystem()` |
+| F2 (nested create methods)               | ✅ Addressed            | Same as F1 — Issue #57                                                                                                                                           |
+| F3 (items envelope)                      | ✅ Previously addressed | `parseCollectionResponse` in `response.ts` — Phase 3.12                                                                                                          |
+| F4 (validTime array format)              | ✅ Previously addressed | `parseValidTime` in `geojson.ts` — prior phase                                                                                                                   |
+| F5 (EndpointError consistency)           | ✅ Addressed            | Issue #63: `throw new Error(...)` → `throw new EndpointError(...)` in endpoint.ts root getter                                                                    |
+| F10 (Content-Type guidance)              | ✅ Addressed            | Issue #58: `CSAPI_CONTENT_TYPES` map + `getContentTypeForResource()`                                                                                             |
+| F17 (controlstreams path casing)         | ✅ Addressed            | Issue #68: `RESOURCE_PATH_OVERRIDES` + `toUrlPathSegment()` in url_builder.ts                                                                                    |
+| F33 (commandFormat vs observationFormat) | ⏳ Deferred             | Schema-level variant handling deferred                                                                                                                           |
+| F34 (Commands fallback routing)          | ✅ Addressed            | Issue #47: `command-routing.ts` implements dual-path resolution                                                                                                  |
+| F41 (featureType: null on 52North)       | ✅ Previously addressed | `classifyFeature` with `inferResourceTypeFromPath` — Phase 3.12                                                                                                  |
+| F83 (nested create methods)              | ✅ Addressed            | Same as F1 — Issue #57                                                                                                                                           |
 
 ---
 
 ## Summary
 
-| Category | Count | Details |
-|----------|------:|---------|
-| POSITIVE | 8 | F2 (RESOURCE_PATH_OVERRIDES), F3 (nested create pattern), F4 (Content-Type map), F5 (constructor narrowing), F6 (command routing isolation), F7 (integration tests), F8 (EndpointError consistency), F11 (barrel exports) |
-| BUG (resolved) | 1 | F1 (17 test failures from #68 — fixed in same session) |
-| DESIGN (low) | 1 | F9 (hardcoded controlstreams in JSDoc examples) |
-| GAP (low) | 1 | F10 (constants.spec.ts coverage limited) |
-| INFORMATIONAL | 0 | — |
-| CONSISTENCY | 0 | — |
+| Category       | Count | Details                                                                                                                                                                                                                   |
+| -------------- | ----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POSITIVE       |     8 | F2 (RESOURCE_PATH_OVERRIDES), F3 (nested create pattern), F4 (Content-Type map), F5 (constructor narrowing), F6 (command routing isolation), F7 (integration tests), F8 (EndpointError consistency), F11 (barrel exports) |
+| BUG (resolved) |     1 | F1 (17 test failures from #68 — fixed in same session)                                                                                                                                                                    |
+| DESIGN (low)   |     1 | F9 (hardcoded controlstreams in JSDoc examples)                                                                                                                                                                           |
+| GAP (low)      |     1 | F10 (constants.spec.ts coverage limited)                                                                                                                                                                                  |
+| INFORMATIONAL  |     0 | —                                                                                                                                                                                                                         |
+| CONSISTENCY    |     0 | —                                                                                                                                                                                                                         |
 
 ---
 
@@ -529,6 +535,7 @@ The 113 lines added to `src/index.ts` export all public CSAPI symbols:
 **Why it wasn't caught:** The tests were likely not run against the full suite after the fix. Running only `url_builder.spec.ts` would have passed, but running all CSAPI tests would have revealed the 17 failures.
 
 **Prevention:** When changing a core URL generation mechanism:
+
 1. Run `npx jest "src/ogc-api/csapi"` (the full suite), not just the colocated spec
 2. Search ALL spec files for the affected URL pattern: `grep -r "controlStreams" src/ogc-api/csapi/**/*.spec.ts`
 

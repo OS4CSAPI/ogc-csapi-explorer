@@ -31,7 +31,7 @@ Copy the **Prompt** section below and paste it into the conversation after compl
 
 ## Prompt
 
-```
+````
 Please perform a Phase 4 live server smoke test of the work completed since the last smoke test.
 
 ### Scope
@@ -68,7 +68,8 @@ We test against TWO servers. Both must be tested in every smoke test.
   $cred = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("{{username}}:{{password}}"))
   $headers = @{ Authorization = "Basic $cred" }
   Invoke-RestMethod -Uri "http://45.55.99.236:8080/sensorhub/api" -Headers $headers
-  ```
+````
+
 - **Key quirks (read `known-server-quirks.md` for full details):**
   - **Ignores Accept headers entirely** — use `?f=json`, `?f=geojson`, `?f=sml3` for content negotiation
   - Full CRUD works (POST → 201 empty body + Location header; PUT requires `uid` in body)
@@ -109,6 +110,7 @@ Follow this exact sequence. Record EVERYTHING — every HTTP request, every resp
 #### Step 1: Document Prior Findings (Regression Check)
 
 Read the previous smoke test report and list ALL prior findings with their current status. For each:
+
 - If it was marked **"Fixed"** — re-verify it's still fixed with a live request
 - If it was marked **"Deferred"** — confirm it's still deferred, note if anything changed
 - If it was marked **"Server limitation"** — confirm it's still present
@@ -129,17 +131,17 @@ For EACH server:
 4. Document root document links (resource type → URL mappings)
 5. **Build the full resource inventory:**
 
-| Endpoint | Accept Header Used | HTTP Status | Item Count | Notes |
-|----------|-------------------|-------------|-----------|-------|
-| /systems | | | | |
-| /deployments | | | | |
-| /procedures | | | | |
-| /samplingFeatures | | | | |
-| /properties | | | | |
-| /datastreams | | | | |
-| /observations | | | | |
-| /controlstreams | | | | |
-| /commands | | | | |
+| Endpoint          | Accept Header Used | HTTP Status | Item Count | Notes |
+| ----------------- | ------------------ | ----------- | ---------- | ----- |
+| /systems          |                    |             |            |       |
+| /deployments      |                    |             |            |       |
+| /procedures       |                    |             |            |       |
+| /samplingFeatures |                    |             |            |       |
+| /properties       |                    |             |            |       |
+| /datastreams      |                    |             |            |       |
+| /observations     |                    |             |            |       |
+| /controlstreams   |                    |             |            |       |
+| /commands         |                    |             |            |       |
 
 6. Record specific resource IDs that will be used in subsequent steps (at least 2 per resource type if available)
 
@@ -164,20 +166,20 @@ Record how many resource types are discovered per convention per server.
 
 Test parent-child navigation for both servers (where endpoints work):
 
-| Navigation | URL Pattern | OSH Status | 52N Status | Notes |
-|------------|-------------|-----------|-----------|-------|
-| System → subsystems | `/systems/{id}/subsystems` | | | |
-| Subsystem → parent system | Verify parent link exists | | | |
-| Deployment → subdeployments | `/deployments/{id}/subdeployments` | | | |
-| System → deployments | `/systems/{id}/deployments` | | | |
-| System → procedures | `/systems/{id}/procedures` | | | |
-| System → datastreams | `/systems/{id}/datastreams` | | | |
-| System → controlstreams | `/systems/{id}/controlstreams` | | | |
-| System → samplingFeatures | `/systems/{id}/samplingFeatures` | | | |
-| SF → systems | `/samplingFeatures/{id}/systems` | | | |
-| Datastream → system | `/datastreams/{id}/systems` | | | |
-| Datastream → observations | `/datastreams/{id}/observations` | | | |
-| ControlStream → commands | `/controlstreams/{id}/commands` | | | |
+| Navigation                  | URL Pattern                        | OSH Status | 52N Status | Notes |
+| --------------------------- | ---------------------------------- | ---------- | ---------- | ----- |
+| System → subsystems         | `/systems/{id}/subsystems`         |            |            |       |
+| Subsystem → parent system   | Verify parent link exists          |            |            |       |
+| Deployment → subdeployments | `/deployments/{id}/subdeployments` |            |            |       |
+| System → deployments        | `/systems/{id}/deployments`        |            |            |       |
+| System → procedures         | `/systems/{id}/procedures`         |            |            |       |
+| System → datastreams        | `/systems/{id}/datastreams`        |            |            |       |
+| System → controlstreams     | `/systems/{id}/controlstreams`     |            |            |       |
+| System → samplingFeatures   | `/systems/{id}/samplingFeatures`   |            |            |       |
+| SF → systems                | `/samplingFeatures/{id}/systems`   |            |            |       |
+| Datastream → system         | `/datastreams/{id}/systems`        |            |            |       |
+| Datastream → observations   | `/datastreams/{id}/observations`   |            |            |       |
+| ControlStream → commands    | `/controlstreams/{id}/commands`    |            |            |       |
 
 For endpoints that return 400 (OSH known limitation), confirm they still return 400 (regression check, not a new finding).
 
@@ -188,7 +190,7 @@ For endpoints that return 400 (OSH known limitation), confirm they still return 
 For EACH server, test every implemented builder method. Use real resource IDs from Step 2. Record:
 
 | Method | Generated URL | Server | HTTP Status | Notes |
-|--------|--------------|--------|-------------|-------|
+| ------ | ------------- | ------ | ----------- | ----- |
 
 For methods that require a resource ID but the server has zero entries for that type, mark as **N/A (no data)** — the URL pattern is still validated by confirming the list endpoint works.
 
@@ -198,26 +200,26 @@ For methods that require a resource ID but the server has zero entries for that 
 
 Test each of these parameters against both servers (using a resource type with data where possible):
 
-| Parameter | Method Used | URL | OSH Result | 52North Result |
-|-----------|-------------|-----|------------|----------------|
-| limit | | | | |
-| offset | | | | |
-| q | | | | |
-| bbox | | | | |
-| datetime (single) | | | | |
-| datetime (interval) | | | | |
-| id (single) | | | | |
-| id (array) | | | | |
-| recursive | | | | |
-| f (format) | | | | |
-| cursor | | | | |
-| parent | | | | |
+| Parameter           | Method Used | URL | OSH Result | 52North Result |
+| ------------------- | ----------- | --- | ---------- | -------------- |
+| limit               |             |     |            |                |
+| offset              |             |     |            |                |
+| q                   |             |     |            |                |
+| bbox                |             |     |            |                |
+| datetime (single)   |             |     |            |                |
+| datetime (interval) |             |     |            |                |
+| id (single)         |             |     |            |                |
+| id (array)          |             |     |            |                |
+| recursive           |             |     |            |                |
+| f (format)          |             |     |            |                |
+| cursor              |             |     |            |                |
+| parent              |             |     |            |                |
 
 ---
 
 #### Step 7: DataStreams, Observations, and Schemas (Part 2)
 
-*This step targets OSH only (52N Part 2 is completely broken).*
+_This step targets OSH only (52N Part 2 is completely broken)._
 
 1. **List datastreams** — record count, sample IDs
 2. **Fetch individual datastream** by ID — verify response shape
@@ -238,7 +240,7 @@ Test each of these parameters against both servers (using a resource type with d
 
 #### Step 8: ControlStreams, Commands, and Command Status (Part 2)
 
-*This step targets OSH only.*
+_This step targets OSH only._
 
 1. **List controlstreams** (lowercase path!) — record count, sample IDs
 2. **Fetch individual controlstream** by ID — verify response shape
@@ -271,6 +273,7 @@ For EACH server:
 #### Step 10: FULL CRUD Testing — Write Operations
 
 **⚠️ CRITICAL RULES:**
+
 - **Only delete what you create during this test.** Do NOT delete any pre-existing data.
 - **Create test data first**, use it for subsequent verification, then clean up at the end.
 - **Record every write operation** with request body, response status, and response headers.
@@ -281,43 +284,52 @@ For EACH server:
 Create one resource of each type in this order (parent resources first):
 
 1. **Create a System** (`POST /systems`)
+
    - Body: minimal valid GeoJSON Feature with `featureType: "http://www.w3.org/ns/sosa/Sensor"`
    - Content-Type: `application/geo+json`
    - Record: Location header → new system ID
    - **Do NOT include Accept header on POST**
 
 2. **Create a Procedure** (`POST /procedures`)
+
    - Body: minimal valid GeoJSON Feature with `featureType: "http://www.w3.org/ns/sosa/Procedure"`
    - Record: new procedure ID
 
 3. **Create a Deployment** (`POST /deployments`)
+
    - Body: minimal valid GeoJSON Feature with `featureType: "http://www.w3.org/ns/sosa/Deployment"`
    - Record: new deployment ID
 
 4. **Create a SamplingFeature** (`POST /samplingFeatures`)
+
    - Body: minimal valid GeoJSON Feature with `featureType: "http://www.w3.org/ns/sosa/Sample"`
    - Record: new SF ID
 
 5. **Create a Subsystem** (`POST /systems/{parentId}/subsystems`)
+
    - Use the system created in step 1 as parent
    - Record: new subsystem ID
 
 6. **Create a Subdeployment** (`POST /deployments/{parentId}/subdeployments`)
+
    - Use the deployment created in step 3 as parent
    - Record: new subdeployment ID
 
 7. **Create a Datastream** (`POST /systems/{id}/datastreams`)
+
    - Must use nested path (top-level POST returns 405)
    - Content-Type: `application/json`
    - Body: include schema (DataRecord with at least one Quantity field)
    - Record: new datastream ID
 
 8. **Create a ControlStream** (`POST /systems/{id}/controlstreams`)
+
    - Must use nested path
    - Body: include schema
    - Record: new controlstream ID
 
 9. **Create an Observation** (`POST /datastreams/{id}/observations`)
+
    - Use the datastream created in step 7
    - Body: result matching the datastream schema
    - Content-Type: `application/json`
@@ -330,22 +342,23 @@ Create one resource of each type in this order (parent resources first):
 
 **Record all created resource IDs in a cleanup table:**
 
-| Resource Type | ID | Parent | Created At |
-|--------------|-----|--------|------------|
-| System | | — | |
-| Procedure | | — | |
-| Deployment | | — | |
-| SamplingFeature | | — | |
-| Subsystem | | System {id} | |
-| Subdeployment | | Deployment {id} | |
-| Datastream | | System {id} | |
-| ControlStream | | System {id} | |
-| Observation | | Datastream {id} | |
-| Command | | ControlStream {id} | |
+| Resource Type   | ID  | Parent             | Created At |
+| --------------- | --- | ------------------ | ---------- |
+| System          |     | —                  |            |
+| Procedure       |     | —                  |            |
+| Deployment      |     | —                  |            |
+| SamplingFeature |     | —                  |            |
+| Subsystem       |     | System {id}        |            |
+| Subdeployment   |     | Deployment {id}    |            |
+| Datastream      |     | System {id}        |            |
+| ControlStream   |     | System {id}        |            |
+| Observation     |     | Datastream {id}    |            |
+| Command         |     | ControlStream {id} |            |
 
 ##### 10b: Read-Back Verification
 
 For each created resource, immediately fetch it by ID and verify:
+
 - HTTP status is 200
 - Response contains the fields you sent
 - `uid` matches what was assigned
@@ -361,12 +374,12 @@ For each Part 1 resource created (system, procedure, deployment, samplingFeature
 2. **GET** the resource again — verify the update took effect
 3. Record: request body, response status, response body diff
 
-| Resource | PUT Status | Field Changed | Verified via GET? |
-|----------|-----------|---------------|-------------------|
-| System | | | |
-| Procedure | | | |
-| Deployment | | | |
-| SamplingFeature | | | |
+| Resource        | PUT Status | Field Changed | Verified via GET? |
+| --------------- | ---------- | ------------- | ----------------- |
+| System          |            |               |                   |
+| Procedure       |            |               |                   |
+| Deployment      |            |               |                   |
+| SamplingFeature |            |               |                   |
 
 ##### 10d: Delete Test Resources (Cleanup)
 
@@ -384,28 +397,30 @@ Delete resources in **reverse creation order** (children first, parents last):
 10. Delete System
 
 For each deletion:
+
 - Record HTTP status (expect 204 or 200)
 - Verify the resource is no longer accessible (GET returns 404)
 - Verify the resource no longer appears in the parent's list endpoint
 
-| Resource | DELETE Status | GET After Delete | Cleaned Up? |
-|----------|-------------|-----------------|-------------|
-| Command | | | |
-| Observation | | | |
-| ControlStream | | | |
-| Datastream | | | |
-| Subdeployment | | | |
-| Subsystem | | | |
-| SamplingFeature | | | |
-| Deployment | | | |
-| Procedure | | | |
-| System | | | |
+| Resource        | DELETE Status | GET After Delete | Cleaned Up? |
+| --------------- | ------------- | ---------------- | ----------- |
+| Command         |               |                  |             |
+| Observation     |               |                  |             |
+| ControlStream   |               |                  |             |
+| Datastream      |               |                  |             |
+| Subdeployment   |               |                  |             |
+| Subsystem       |               |                  |             |
+| SamplingFeature |               |                  |             |
+| Deployment      |               |                  |             |
+| Procedure       |               |                  |             |
+| System          |               |                  |             |
 
 **⚠️ If any deletion fails, document it as a finding and manually verify the resource still exists. Do NOT attempt to delete other pre-existing resources to "clean up."**
 
 ##### 10e: 52North Write Operations (If Supported)
 
 If write capabilities have been added to 52N since the last test:
+
 1. Attempt a system create (`POST /systems`)
 2. Record result — if 405/500/501, note as "52N write not supported" and move on
 3. If successful, perform the same create/read/update/delete cycle as OSH
@@ -417,12 +432,14 @@ If write capabilities have been added to 52N since the last test:
 **Carried forward from Phase 3 — these tests are NOT dropped.**
 
 1. **`classifyFeature` recognition:** For each resource fetched in Steps 2–4, verify that the library's `classifyFeature` function correctly identifies the resource type from `featureType`
+
    - Test full URI forms (OSH)
    - Test CURIE forms (52N)
    - Test null featureType (52N systems)
    - Test misclassified featureType (52N procedure with `sosa:Sensor`)
 
 2. **`parseValidTime` extraction:** For resources with `validTime`:
+
    - Array format: `["ISO", "now"]` (OSH)
    - Null value (52N)
    - Absent field (some OSH resources)
@@ -457,22 +474,22 @@ For OSH datastream and controlstream schemas:
 
 Produce a comprehensive comparison table:
 
-| Dimension | OpenSensorHub | 52North | Match? |
-|-----------|--------------|---------|--------|
-| Conformance classes advertised | | | |
-| Discovery convention(s) used | | | |
-| Default content type | | | |
-| Content negotiation mechanism | | | |
-| Response envelope format | | | |
-| featureType vocabulary | | | |
-| validTime format | | | |
-| SensorML access method | | | |
-| SensorML richness | | | |
-| Part 2 endpoint availability | | | |
-| Write operation support | | | |
-| Sub-resource endpoint support | | | |
-| SSL/TLS status | | | |
-| Auth requirement | | | |
+| Dimension                      | OpenSensorHub | 52North | Match? |
+| ------------------------------ | ------------- | ------- | ------ |
+| Conformance classes advertised |               |         |        |
+| Discovery convention(s) used   |               |         |        |
+| Default content type           |               |         |        |
+| Content negotiation mechanism  |               |         |        |
+| Response envelope format       |               |         |        |
+| featureType vocabulary         |               |         |        |
+| validTime format               |               |         |        |
+| SensorML access method         |               |         |        |
+| SensorML richness              |               |         |        |
+| Part 2 endpoint availability   |               |         |        |
+| Write operation support        |               |         |        |
+| Sub-resource endpoint support  |               |         |        |
+| SSL/TLS status                 |               |         |        |
+| Auth requirement               |               |         |        |
 
 ---
 
@@ -493,6 +510,7 @@ For each new finding (using **P4-F{N}** numbering), classify with:
 #### Step 15: Generate Impact Assessment
 
 For any findings classified as "Ours" or "Shared":
+
 1. Identify the specific file and function affected
 2. Assess upstream impact (does the fix touch any upstream file?)
 3. Estimate fix complexity (one-line, small, medium, architectural)
@@ -530,6 +548,7 @@ Use this exact structure:
 **Finding Series:** Phase 4 (P4-F1, P4-F2, ...)
 
 > This is smoke test #{{N}} in the series. See also:
+>
 > - [Previous smoke test](link)
 
 ## Test Methodology
@@ -539,44 +558,46 @@ Use this exact structure:
 ## Server Profiles
 
 ### OpenSensorHub
+
 | Spec Part | Conformance Classes |
-|-----------|-------------------|
-| ... | ... |
+| --------- | ------------------- |
+| ...       | ...                 |
 
 Resource Inventory: {{table with counts per endpoint}}
 Top-level resource links: {{table}}
 
 ### 52North
+
 {{Same structure}}
 
 ## Results
 
 ### Prior Findings — Regression Check
 
-| Finding | Original Phase | Status | Evidence |
-|---------|---------------|--------|----------|
-| F1 | Phase 2 | Still Fixed ✅ / Changed ⚠️ | ... |
-| ... | ... | ... | ... |
+| Finding | Original Phase | Status                      | Evidence |
+| ------- | -------------- | --------------------------- | -------- |
+| F1      | Phase 2        | Still Fixed ✅ / Changed ⚠️ | ...      |
+| ...     | ...            | ...                         | ...      |
 
 ### URL Generation — All {{N}} Methods
 
 #### {{Resource Type}} Methods ({{N}} methods) {{— NEW if applicable}}
 
-| Method Call | URL Pattern | OSH | 52North |
-|-------------|------------|-----|---------|
-| ... | ... | ✅/❌/N/A | ✅/❌/N/A |
+| Method Call | URL Pattern | OSH       | 52North   |
+| ----------- | ----------- | --------- | --------- |
+| ...         | ...         | ✅/❌/N/A | ✅/❌/N/A |
 
 ### Query Parameter Acceptance
 
-| Parameter | Method | URL | OSH | 52North |
-|-----------|--------|-----|-----|---------|
-| ... | ... | ... | ✅/❌ | ✅/❌ |
+| Parameter | Method | URL | OSH   | 52North |
+| --------- | ------ | --- | ----- | ------- |
+| ...       | ...    | ... | ✅/❌ | ✅/❌   |
 
 ### Hierarchical Navigation
 
 | Navigation | OSH | 52N | Notes |
-|------------|-----|-----|-------|
-| ... | ... | ... | ... |
+| ---------- | --- | --- | ----- |
+| ...        | ... | ... | ...   |
 
 ### Part 2 — DataStreams & Observations (OSH)
 
@@ -588,30 +609,30 @@ Top-level resource links: {{table}}
 
 ### SensorML Content Negotiation
 
-| Aspect | OSH | 52N |
-|--------|-----|-----|
+| Aspect        | OSH     | 52N                          |
+| ------------- | ------- | ---------------------------- |
 | Access method | ?f=sml3 | Accept: application/sml+json |
-| ... | ... | ... |
+| ...           | ...     | ...                          |
 
 ### CRUD Operations
 
 #### Create Results
 
 | Resource Type | Server | POST Status | Location Header | Read-Back OK? |
-|---------------|--------|-------------|-----------------|---------------|
-| ... | ... | ... | ... | ... |
+| ------------- | ------ | ----------- | --------------- | ------------- |
+| ...           | ...    | ...         | ...             | ...           |
 
 #### Update Results
 
 | Resource Type | Server | PUT Status | Change Verified? |
-|---------------|--------|-----------|-----------------|
-| ... | ... | ... | ... |
+| ------------- | ------ | ---------- | ---------------- |
+| ...           | ...    | ...        | ...              |
 
 #### Delete Results
 
 | Resource Type | Server | DELETE Status | 404 After Delete? | List Removed? |
-|---------------|--------|-------------|-------------------|---------------|
-| ... | ... | ... | ... | ... |
+| ------------- | ------ | ------------- | ----------------- | ------------- |
+| ...           | ...    | ...           | ...               | ...           |
 
 ### Recognition, Extraction, and Parsing
 
@@ -639,39 +660,39 @@ Top-level resource links: {{table}}
 ## Cross-Server Comparison
 
 | Dimension | OpenSensorHub | 52North | Match? |
-|-----------|--------------|---------|--------|
-| ... | ... | ... | ✅/❌ |
+| --------- | ------------- | ------- | ------ |
+| ...       | ...           | ...     | ✅/❌  |
 
 ## What WORKS (Verified)
 
 | Capability | Status |
-|------------|--------|
-| ... | ✅ |
+| ---------- | ------ |
+| ...        | ✅     |
 
 ## CRUD Summary
 
 | Operation | Systems | Deployments | Procedures | SFs | Datastreams | Observations | ControlStreams | Commands |
-|-----------|---------|-------------|------------|-----|-------------|-------------|----------------|----------|
-| Create | | | | | | | | |
-| Read | | | | | | | | |
-| Update | | | | | | | | |
-| Delete | | | | | | | | |
+| --------- | ------- | ----------- | ---------- | --- | ----------- | ------------ | -------------- | -------- |
+| Create    |         |             |            |     |             |              |                |          |
+| Read      |         |             |            |     |             |              |                |          |
+| Update    |         |             |            |     |             |              |                |          |
+| Delete    |         |             |            |     |             |              |                |          |
 
 ## What Remains (Phase 4 Concerns)
 
 | Issue | Severity | Component | Target Phase |
-|-------|----------|-----------|-------------|
-| ... | ... | ... | ... |
+| ----- | -------- | --------- | ------------ |
+| ...   | ...      | ...       | ...          |
 
 ## Comparison: Phase {{prev}} → Phase {{current}}
 
-| Dimension | Phase {{prev}} | Phase {{current}} |
-|-----------|---------------|------------------|
-| Methods implemented | {{N}} | {{N}} |
-| CRUD tested | No | Yes |
-| Part 2 coverage | {{status}} | {{status}} |
-| Findings total | {{N}} | {{N}} |
-| ... | ... | ... |
+| Dimension           | Phase {{prev}} | Phase {{current}} |
+| ------------------- | -------------- | ----------------- |
+| Methods implemented | {{N}}          | {{N}}             |
+| CRUD tested         | No             | Yes               |
+| Part 2 coverage     | {{status}}     | {{status}}        |
+| Findings total      | {{N}}          | {{N}}             |
+| ...                 | ...            | ...               |
 
 ## Verdict
 
@@ -681,6 +702,7 @@ Top-level resource links: {{table}}
 Then commit the report, push, and confirm the file is at the expected path.
 
 If any new findings are classified as "Ours — Needs fix", create a GitHub issue for each using `docs/governance/issue-creation-prompt-template.md`.
+
 ```
 
 ---
@@ -723,10 +745,12 @@ These rules come from Phase 2 + Phase 3 lessons learned, plus Phase 4 CRUD requi
 Reports follow these naming patterns:
 
 ```
-docs/implementation/live-server-smoke-test-post-phase-{X.Y}.md     — Standard post-phase smoke test
-docs/implementation/live-server-smoke-test-{server-name}.md         — New server comparative test
-docs/implementation/cross-server-interoperability-analysis.md       — Cross-server synthesis
-docs/implementation/live-server-retest-post-issues-{N}-{M}.md      — Targeted retest after fixes
+
+docs/implementation/live-server-smoke-test-post-phase-{X.Y}.md — Standard post-phase smoke test
+docs/implementation/live-server-smoke-test-{server-name}.md — New server comparative test
+docs/implementation/cross-server-interoperability-analysis.md — Cross-server synthesis
+docs/implementation/live-server-retest-post-issues-{N}-{M}.md — Targeted retest after fixes
+
 ```
 
 ---
@@ -763,3 +787,4 @@ docs/implementation/live-server-retest-post-issues-{N}-{M}.md      — Targeted 
 | Write operations | ✅ Full CRUD | ❓ Not tested |
 | SML access | `?f=sml3` | `Accept: application/sml+json` |
 | Response envelope | `{items}` or `{FeatureCollection}` | `{items}` or `{FeatureCollection}` depending on Accept |
+```

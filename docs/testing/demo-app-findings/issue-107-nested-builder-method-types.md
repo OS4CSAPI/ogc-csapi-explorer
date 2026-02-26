@@ -29,12 +29,12 @@ Issue #107 reports that 12 nested-resource methods in `url_builder.ts` accept `Q
 
 After verifying every claim against the source code:
 
-| Category | Count | Details |
-|---|---|---|
-| **Issue's claimed affected methods** | 12 | All 12 verified — each accepts `QueryOptions` when it should accept a narrower subtype |
-| **Issue's "already correct" methods** | 2 | Both verified — `getDataStreamObservations` and `getControlStreamCommands` already use correct types |
-| **Additional affected methods not in issue** | 5 | Found during verification — same pattern, same gap, not mentioned in the issue |
-| **Singular navigation methods (borderline)** | 2 | `getObservationSamplingFeature` and `getObservationSystem` — return one resource, not a filterable collection |
+| Category                                     | Count | Details                                                                                                       |
+| -------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------- |
+| **Issue's claimed affected methods**         | 12    | All 12 verified — each accepts `QueryOptions` when it should accept a narrower subtype                        |
+| **Issue's "already correct" methods**        | 2     | Both verified — `getDataStreamObservations` and `getControlStreamCommands` already use correct types          |
+| **Additional affected methods not in issue** | 5     | Found during verification — same pattern, same gap, not mentioned in the issue                                |
+| **Singular navigation methods (borderline)** | 2     | `getObservationSamplingFeature` and `getObservationSystem` — return one resource, not a filterable collection |
 
 **Recommendation**: Fix the 12 methods identified in the issue. The fix is strictly a TypeScript parameter type narrowing — changing `options?: QueryOptions` to `options?: DatastreamQueryOptions` (etc.) — with **zero runtime behavior change**. Every specific type extends `QueryOptions`, so:
 
@@ -58,6 +58,7 @@ Discovered during [ogc-csapi-explorer#35](https://github.com/OS4CSAPI/ogc-csapi-
 ### What it IS
 
 A **TypeScript developer-experience (DX) gap**. The `options` parameter on 12 nested methods uses the base `QueryOptions` type, which means:
+
 - No autocomplete for type-specific fields (e.g., `phenomenonTime`, `observedPropertyId`, `recursive`)
 - No compile-time type checking when callers pass resource-specific filter options
 - Callers must use type assertions to get proper typing
@@ -75,27 +76,27 @@ A **TypeScript developer-experience (DX) gap**. The `options` parameter on 12 ne
 
 ### 12 Affected Methods (all verified ✅)
 
-| # | Method | Line | Current Type | Should Accept | Verified |
-|---|---|---|---|---|---|
-| 1 | `getSystemDataStreams` | L555 | `QueryOptions` | `DatastreamQueryOptions` | ✅ |
-| 2 | `getSystemControlStreams` | L600 | `QueryOptions` | `ControlStreamQueryOptions` | ✅ |
-| 3 | `getSystemDeployments` | L688 | `QueryOptions` | `DeploymentQueryOptions` | ✅ |
-| 4 | `getDeploymentSystems` | L887 | `QueryOptions` | `SystemQueryOptions` | ✅ |
-| 5 | `getProcedureSystems` | L1043 | `QueryOptions` | `SystemQueryOptions` | ✅ |
-| 6 | `getProcedureDataStreams` | L1064 | `QueryOptions` | `DatastreamQueryOptions` | ✅ |
-| 7 | `getSamplingFeatureSystems` | L1220 | `QueryOptions` | `SystemQueryOptions` | ✅ |
-| 8 | `getSamplingFeatureObservations` | L1244 | `QueryOptions` | `ObservationQueryOptions` | ✅ |
-| 9 | `getPropertySystems` | L1345 | `QueryOptions` | `SystemQueryOptions` | ✅ |
-| 10 | `getPropertyDataStreams` | L1369 | `QueryOptions` | `DatastreamQueryOptions` | ✅ |
-| 11 | `getPropertyControlStreams` | L1393 | `QueryOptions` | `ControlStreamQueryOptions` | ✅ |
-| 12 | `getDataStreamSystems` | L1635 | `QueryOptions` | `SystemQueryOptions` | ✅ |
+| #   | Method                           | Line  | Current Type   | Should Accept               | Verified |
+| --- | -------------------------------- | ----- | -------------- | --------------------------- | -------- |
+| 1   | `getSystemDataStreams`           | L555  | `QueryOptions` | `DatastreamQueryOptions`    | ✅       |
+| 2   | `getSystemControlStreams`        | L600  | `QueryOptions` | `ControlStreamQueryOptions` | ✅       |
+| 3   | `getSystemDeployments`           | L688  | `QueryOptions` | `DeploymentQueryOptions`    | ✅       |
+| 4   | `getDeploymentSystems`           | L887  | `QueryOptions` | `SystemQueryOptions`        | ✅       |
+| 5   | `getProcedureSystems`            | L1043 | `QueryOptions` | `SystemQueryOptions`        | ✅       |
+| 6   | `getProcedureDataStreams`        | L1064 | `QueryOptions` | `DatastreamQueryOptions`    | ✅       |
+| 7   | `getSamplingFeatureSystems`      | L1220 | `QueryOptions` | `SystemQueryOptions`        | ✅       |
+| 8   | `getSamplingFeatureObservations` | L1244 | `QueryOptions` | `ObservationQueryOptions`   | ✅       |
+| 9   | `getPropertySystems`             | L1345 | `QueryOptions` | `SystemQueryOptions`        | ✅       |
+| 10  | `getPropertyDataStreams`         | L1369 | `QueryOptions` | `DatastreamQueryOptions`    | ✅       |
+| 11  | `getPropertyControlStreams`      | L1393 | `QueryOptions` | `ControlStreamQueryOptions` | ✅       |
+| 12  | `getDataStreamSystems`           | L1635 | `QueryOptions` | `SystemQueryOptions`        | ✅       |
 
 ### 2 Already-Correct Methods (verified ✅)
 
-| # | Method | Line | Current Type | Verified |
-|---|---|---|---|---|
-| 13 | `getDataStreamObservations` | L1591 | `ObservationQueryOptions` | ✅ Already correct |
-| 14 | `getControlStreamCommands` | L2043 | `CommandQueryOptions` | ✅ Already correct |
+| #   | Method                      | Line  | Current Type              | Verified           |
+| --- | --------------------------- | ----- | ------------------------- | ------------------ |
+| 13  | `getDataStreamObservations` | L1591 | `ObservationQueryOptions` | ✅ Already correct |
+| 14  | `getControlStreamCommands`  | L2043 | `CommandQueryOptions`     | ✅ Already correct |
 
 ### Pattern: Why Some Were Correct and Others Were Not
 
@@ -107,13 +108,13 @@ The 2 already-correct methods (`getDataStreamObservations` and `getControlStream
 
 During verification, 5 additional nested collection methods were found with the same `QueryOptions` base type pattern:
 
-| # | Method | Line | Current Type | Target Type | Practical Benefit |
-|---|---|---|---|---|---|
-| 1 | `getSystemSamplingFeatures` | L644 | `QueryOptions` | `SamplingFeatureQueryOptions` | **None** — `SamplingFeatureQueryOptions` is a type alias for `QueryOptions` |
-| 2 | `getSystemProcedures` | L709 | `QueryOptions` | `ProcedureQueryOptions` | **None** — `ProcedureQueryOptions` is a type alias for `QueryOptions` |
-| 3 | `getDataStreamProcedures` | L1656 | `QueryOptions` | `ProcedureQueryOptions` | **None** — type alias |
-| 4 | `getControlStreamSystems` | L2092 | `QueryOptions` | `SystemQueryOptions` | **Yes** — `SystemQueryOptions` has `foiId`, `recursive`, etc. |
-| 5 | `getControlStreamProcedures` | L2117 | `QueryOptions` | `ProcedureQueryOptions` | **None** — type alias |
+| #   | Method                       | Line  | Current Type   | Target Type                   | Practical Benefit                                                           |
+| --- | ---------------------------- | ----- | -------------- | ----------------------------- | --------------------------------------------------------------------------- |
+| 1   | `getSystemSamplingFeatures`  | L644  | `QueryOptions` | `SamplingFeatureQueryOptions` | **None** — `SamplingFeatureQueryOptions` is a type alias for `QueryOptions` |
+| 2   | `getSystemProcedures`        | L709  | `QueryOptions` | `ProcedureQueryOptions`       | **None** — `ProcedureQueryOptions` is a type alias for `QueryOptions`       |
+| 3   | `getDataStreamProcedures`    | L1656 | `QueryOptions` | `ProcedureQueryOptions`       | **None** — type alias                                                       |
+| 4   | `getControlStreamSystems`    | L2092 | `QueryOptions` | `SystemQueryOptions`          | **Yes** — `SystemQueryOptions` has `foiId`, `recursive`, etc.               |
+| 5   | `getControlStreamProcedures` | L2117 | `QueryOptions` | `ProcedureQueryOptions`       | **None** — type alias                                                       |
 
 **Analysis of additional methods:**
 
@@ -124,10 +125,10 @@ During verification, 5 additional nested collection methods were found with the 
 
 Additionally, 2 **singular navigation methods** were found:
 
-| # | Method | Line | Current Type | Notes |
-|---|---|---|---|---|
-| 6 | `getObservationSamplingFeature` | L1822 | `QueryOptions` | Returns a single resource via `.../observations/{id}/samplingFeature` |
-| 7 | `getObservationSystem` | L1846 | `QueryOptions` | Returns a single resource via `.../observations/{id}/system` |
+| #   | Method                          | Line  | Current Type   | Notes                                                                 |
+| --- | ------------------------------- | ----- | -------------- | --------------------------------------------------------------------- |
+| 6   | `getObservationSamplingFeature` | L1822 | `QueryOptions` | Returns a single resource via `.../observations/{id}/samplingFeature` |
+| 7   | `getObservationSystem`          | L1846 | `QueryOptions` | Returns a single resource via `.../observations/{id}/system`          |
 
 These return a single resource (not a filterable collection), so the base `QueryOptions` (which provides `f` for format negotiation) is arguably appropriate. These should **not** be changed.
 
@@ -135,11 +136,11 @@ These return a single resource (not a filterable collection), so the base `Query
 
 For completeness, these nested methods are already correctly typed and were not mentioned:
 
-| Method | Line | Type Used |
-|---|---|---|
-| `getSystemSubsystems` | L512 | `SystemQueryOptions` ✅ |
-| `getDeploymentSubdeployments` | L844 | `DeploymentQueryOptions` ✅ |
-| `getCommandStatus` | L2341 | `CommandStatusQueryOptions` ✅ |
+| Method                        | Line  | Type Used                      |
+| ----------------------------- | ----- | ------------------------------ |
+| `getSystemSubsystems`         | L512  | `SystemQueryOptions` ✅        |
+| `getDeploymentSubdeployments` | L844  | `DeploymentQueryOptions` ✅    |
+| `getCommandStatus`            | L2341 | `CommandStatusQueryOptions` ✅ |
 
 ---
 
@@ -176,6 +177,7 @@ For completeness, these nested methods are already correctly typed and were not 
 **Is this a bug?** No. It is a TypeScript type precision gap. The library is functionally correct at runtime.
 
 **Does it degrade library integrity?** No. The change narrows parameter types from parent to child, which:
+
 - Cannot break any existing caller
 - Does not change any runtime behavior
 - Does not change any URL output
@@ -184,6 +186,7 @@ For completeness, these nested methods are already correctly typed and were not 
 **Is it within scope?** Yes. The library's purpose is to provide a **typed TypeScript client** for the OGC API — Connected Systems specification. Type-specific query options on resource-specific methods are core to that purpose. The `getDataStreamObservations` and `getControlStreamCommands` methods already demonstrate the intended pattern — the remaining 12 methods simply weren't brought to the same standard.
 
 **Is it consistent with AI Operational Constraints?**
+
 - **§2.1 (Scope)**: The fix addresses exactly what the issue describes — nothing more.
 - **§2.2 (Architectural Alignment)**: The fix aligns with the existing pattern (`getDataStreamObservations` and `getControlStreamCommands` already use specific types).
 - **§2.3 (Minimal Diffs)**: Each change is a single type annotation replacement per method. No code restructuring.
@@ -199,32 +202,32 @@ For completeness, these nested methods are already correctly typed and were not 
 
 Change the `options` parameter type on the 12 methods identified in the issue, plus `getControlStreamSystems`, from `QueryOptions` to the appropriate child type:
 
-| # | Method | Change To | File |
-|---|---|---|---|
-| 1 | `getSystemDataStreams` | `DatastreamQueryOptions` | url_builder.ts |
-| 2 | `getSystemControlStreams` | `ControlStreamQueryOptions` | url_builder.ts |
-| 3 | `getSystemDeployments` | `DeploymentQueryOptions` | url_builder.ts |
-| 4 | `getDeploymentSystems` | `SystemQueryOptions` | url_builder.ts |
-| 5 | `getProcedureSystems` | `SystemQueryOptions` | url_builder.ts |
-| 6 | `getProcedureDataStreams` | `DatastreamQueryOptions` | url_builder.ts |
-| 7 | `getSamplingFeatureSystems` | `SystemQueryOptions` | url_builder.ts |
-| 8 | `getSamplingFeatureObservations` | `ObservationQueryOptions` | url_builder.ts |
-| 9 | `getPropertySystems` | `SystemQueryOptions` | url_builder.ts |
-| 10 | `getPropertyDataStreams` | `DatastreamQueryOptions` | url_builder.ts |
-| 11 | `getPropertyControlStreams` | `ControlStreamQueryOptions` | url_builder.ts |
-| 12 | `getDataStreamSystems` | `SystemQueryOptions` | url_builder.ts |
-| 13 | `getControlStreamSystems` | `SystemQueryOptions` | url_builder.ts |
+| #   | Method                           | Change To                   | File           |
+| --- | -------------------------------- | --------------------------- | -------------- |
+| 1   | `getSystemDataStreams`           | `DatastreamQueryOptions`    | url_builder.ts |
+| 2   | `getSystemControlStreams`        | `ControlStreamQueryOptions` | url_builder.ts |
+| 3   | `getSystemDeployments`           | `DeploymentQueryOptions`    | url_builder.ts |
+| 4   | `getDeploymentSystems`           | `SystemQueryOptions`        | url_builder.ts |
+| 5   | `getProcedureSystems`            | `SystemQueryOptions`        | url_builder.ts |
+| 6   | `getProcedureDataStreams`        | `DatastreamQueryOptions`    | url_builder.ts |
+| 7   | `getSamplingFeatureSystems`      | `SystemQueryOptions`        | url_builder.ts |
+| 8   | `getSamplingFeatureObservations` | `ObservationQueryOptions`   | url_builder.ts |
+| 9   | `getPropertySystems`             | `SystemQueryOptions`        | url_builder.ts |
+| 10  | `getPropertyDataStreams`         | `DatastreamQueryOptions`    | url_builder.ts |
+| 11  | `getPropertyControlStreams`      | `ControlStreamQueryOptions` | url_builder.ts |
+| 12  | `getDataStreamSystems`           | `SystemQueryOptions`        | url_builder.ts |
+| 13  | `getControlStreamSystems`        | `SystemQueryOptions`        | url_builder.ts |
 
 ### DO NOT Change
 
-| # | Method | Reason |
-|---|---|---|
-| 1 | `getSystemSamplingFeatures` | `SamplingFeatureQueryOptions` = `QueryOptions` (type alias, zero benefit) |
-| 2 | `getSystemProcedures` | `ProcedureQueryOptions` = `QueryOptions` (type alias, zero benefit) |
-| 3 | `getDataStreamProcedures` | `ProcedureQueryOptions` = `QueryOptions` (type alias, zero benefit) |
-| 4 | `getControlStreamProcedures` | `ProcedureQueryOptions` = `QueryOptions` (type alias, zero benefit) |
-| 5 | `getObservationSamplingFeature` | Singular navigation — base `QueryOptions` is sufficient |
-| 6 | `getObservationSystem` | Singular navigation — base `QueryOptions` is sufficient |
+| #   | Method                          | Reason                                                                    |
+| --- | ------------------------------- | ------------------------------------------------------------------------- |
+| 1   | `getSystemSamplingFeatures`     | `SamplingFeatureQueryOptions` = `QueryOptions` (type alias, zero benefit) |
+| 2   | `getSystemProcedures`           | `ProcedureQueryOptions` = `QueryOptions` (type alias, zero benefit)       |
+| 3   | `getDataStreamProcedures`       | `ProcedureQueryOptions` = `QueryOptions` (type alias, zero benefit)       |
+| 4   | `getControlStreamProcedures`    | `ProcedureQueryOptions` = `QueryOptions` (type alias, zero benefit)       |
+| 5   | `getObservationSamplingFeature` | Singular navigation — base `QueryOptions` is sufficient                   |
+| 6   | `getObservationSystem`          | Singular navigation — base `QueryOptions` is sufficient                   |
 
 ### Testing Impact
 
@@ -235,8 +238,8 @@ Change the `options` parameter type on the 12 methods identified in the issue, p
 
 ## Files Affected
 
-| File | Action | Est. Lines Changed | Purpose |
-|---|---|---|---|
+| File                               | Action | Est. Lines Changed     | Purpose                                        |
+| ---------------------------------- | ------ | ---------------------- | ---------------------------------------------- |
 | `src/ogc-api/csapi/url_builder.ts` | Modify | ~13 (one-word changes) | Narrow `options` parameter types on 13 methods |
 
 No new files, no new imports, no test file changes, no model changes.
@@ -245,12 +248,12 @@ No new files, no new imports, no test file changes, no model changes.
 
 ## References
 
-| # | Document | What It Provides |
-|---|---|---|
-| 1 | [Issue #107 — DX: 12 nested builder methods accept base QueryOptions](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/107) | Issue description with affected methods table |
-| 2 | [`docs/governance/AI_OPERATIONAL_CONSTRAINTS.md`](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | Mandatory operational constraints — §2.1 (scope), §2.2 (architectural alignment), §2.3 (minimal diffs) |
-| 3 | [`src/ogc-api/csapi/url_builder.ts`](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/src/ogc-api/csapi/url_builder.ts) | Source file containing all affected methods |
-| 4 | [`src/ogc-api/csapi/model.ts`](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/src/ogc-api/csapi/model.ts) | QueryOptions type hierarchy — all child types extend `QueryOptions` |
-| 5 | [ogc-csapi-explorer#35](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/35) | Demo app issue where the typing gap was discovered via bridge layer casts |
-| 6 | [Issue #106 — Missing Part 2 query option fields](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/106) | Related: recently added `foiId`, `sender`, `issueTime`, `executionTime` to Part 2 interfaces — these new fields are exactly the kind that callers would want autocomplete for on nested methods |
-| 7 | [Issue #105 — Query parameter name mismatches](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/105) | Related: `PARAM_NAME_MAP` ensures type-specific fields serialize to correct wire names regardless of the TypeScript parameter type |
+| #   | Document                                                                                                                                                  | What It Provides                                                                                                                                                                                |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | [Issue #107 — DX: 12 nested builder methods accept base QueryOptions](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/107)                          | Issue description with affected methods table                                                                                                                                                   |
+| 2   | [`docs/governance/AI_OPERATIONAL_CONSTRAINTS.md`](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | Mandatory operational constraints — §2.1 (scope), §2.2 (architectural alignment), §2.3 (minimal diffs)                                                                                          |
+| 3   | [`src/ogc-api/csapi/url_builder.ts`](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/src/ogc-api/csapi/url_builder.ts)                           | Source file containing all affected methods                                                                                                                                                     |
+| 4   | [`src/ogc-api/csapi/model.ts`](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/src/ogc-api/csapi/model.ts)                                       | QueryOptions type hierarchy — all child types extend `QueryOptions`                                                                                                                             |
+| 5   | [ogc-csapi-explorer#35](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/35)                                                                         | Demo app issue where the typing gap was discovered via bridge layer casts                                                                                                                       |
+| 6   | [Issue #106 — Missing Part 2 query option fields](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/106)                                              | Related: recently added `foiId`, `sender`, `issueTime`, `executionTime` to Part 2 interfaces — these new fields are exactly the kind that callers would want autocomplete for on nested methods |
+| 7   | [Issue #105 — Query parameter name mismatches](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/105)                                                 | Related: `PARAM_NAME_MAP` ensures type-specific fields serialize to correct wire names regardless of the TypeScript parameter type                                                              |

@@ -32,11 +32,13 @@
 **ogc-client follows the OGC API hypermedia principle:**
 
 ✅ **Do:** Extract URLs from link relations
+
 ```typescript
 const url = getLinkUrl(collection, 'items', baseUrl);
 ```
 
 ❌ **Don't:** Construct URLs manually
+
 ```typescript
 const url = `${baseUrl}/collections/${id}/items`; // Fragile, non-standard
 ```
@@ -55,7 +57,6 @@ const url = `${baseUrl}/collections/${id}/items`; // Fragile, non-standard
 1. **Endpoint Class** (`src/ogc-api/endpoint.ts`)
    - Builds URLs for collection metadata, items, tilesets
    - Uses link-utils extensively
-   
 2. **QueryBuilder Classes** (e.g., `src/ogc-api/edr/url_builder.ts`)
    - Builds API-specific query URLs
    - Gets base URLs from collection metadata
@@ -70,6 +71,7 @@ const url = `${baseUrl}/collections/${id}/items`; // Fragile, non-standard
 **Finding:** There is **NO** base URL builder class in ogc-client.
 
 **Why?**
+
 - Native JavaScript `URL` API is sufficient
 - Link-based navigation eliminates most URL construction
 - Each QueryBuilder handles its own URL building inline
@@ -79,11 +81,13 @@ const url = `${baseUrl}/collections/${id}/items`; // Fragile, non-standard
 **URLs come from three sources:**
 
 1. **Constructor Parameter** (endpoint base URL)
+
    ```typescript
    const endpoint = new OgcApiEndpoint('https://api.example.com');
    ```
 
 2. **Link Relations** (most common)
+
    ```typescript
    const itemsUrl = getLinkUrl(collection, 'items', baseUrl);
    ```
@@ -157,31 +161,32 @@ url.searchParams.set('bbox', '-180,-90,180,90');
 ```typescript
 getCollectionItemsUrl(collectionId: string, options: {...}): Promise<string> {
   // ... get base URL
-  
+
   // Add only provided parameters
   if (options.limit !== undefined)
     url.searchParams.set('limit', options.limit.toString());
-    
+
   if (options.offset !== undefined)
     url.searchParams.set('offset', options.offset.toString());
-    
+
   if (options.skipGeometry !== undefined)
     url.searchParams.set('skipGeometry', options.skipGeometry.toString());
-    
+
   if (options.sortBy !== undefined)
     url.searchParams.set('sortby', options.sortBy.join(','));
-    
+
   if (options.properties !== undefined)
     url.searchParams.set('properties', options.properties.join(','));
-    
+
   if (options.extent?.length > 0)
     url.searchParams.set('bbox', options.extent.join(','));
-    
+
   return url.toString();
 }
 ```
 
 **Key points:**
+
 - Check `!== undefined` (not just truthiness)
 - Convert to string explicitly
 - Join arrays with comma
@@ -205,14 +210,13 @@ url.searchParams.set('properties', options.properties.join(','));
 url.searchParams.set('datetime', dateTime.toISOString());
 
 // Range to ISO interval
-url.searchParams.set('datetime', 
-  `${start.toISOString()}/${end.toISOString()}`
-);
+url.searchParams.set('datetime', `${start.toISOString()}/${end.toISOString()}`);
 ```
 
 ### Special Cases: DateTime
 
 **Single datetime:**
+
 ```typescript
 if (options.dateTime instanceof Date) {
   url.searchParams.set('datetime', options.dateTime.toISOString());
@@ -220,6 +224,7 @@ if (options.dateTime instanceof Date) {
 ```
 
 **DateTime range:**
+
 ```typescript
 if (options.dateTime !== undefined) {
   const dateTime = options.dateTime;
@@ -235,6 +240,7 @@ if (options.dateTime !== undefined) {
 ```
 
 **Results:**
+
 - Single: `datetime=2024-01-01T00:00:00.000Z`
 - Range: `datetime=2024-01-01T00:00:00.000Z/2024-12-31T23:59:59.999Z`
 - Open start: `datetime=../2024-12-31T23:59:59.999Z`
@@ -247,16 +253,16 @@ if (options.dateTime !== undefined) {
 ```typescript
 getCollectionItemsUrl(collectionId, options): Promise<string> {
   const itemLinks = getLinks(collectionDoc, 'items', undefined, true);
-  
+
   let url: URL;
-  
+
   if (options.asJson) {
     // Try JSON-FG, GeoJSON, or JSON
     const linkWithFormat =
       itemLinks.find((link) => isMimeTypeJsonFg(link.type)) ||
       itemLinks.find((link) => isMimeTypeGeoJson(link.type)) ||
       itemLinks.find((link) => isMimeTypeJson(link.type));
-      
+
     if (linkWithFormat) {
       url = new URL(linkWithFormat.href, baseUrl);
     } else {
@@ -267,7 +273,7 @@ getCollectionItemsUrl(collectionId, options): Promise<string> {
     const linkWithFormat = itemLinks.find(
       (link) => link.type === options.outputFormat
     );
-    
+
     if (linkWithFormat) {
       url = new URL(linkWithFormat.href, baseUrl);
     } else {
@@ -278,14 +284,15 @@ getCollectionItemsUrl(collectionId, options): Promise<string> {
   } else {
     url = new URL(itemLinks[0].href, baseUrl);
   }
-  
+
   // ... add other parameters
-  
+
   return url.toString();
 }
 ```
 
 **Strategy:**
+
 1. Look for link with desired format type
 2. If found, use that link's URL
 3. If not found, use default link and add `f` parameter
@@ -335,8 +342,9 @@ if (options.query !== undefined)
 **Why manual?** `options.query` is already a query string, not a single parameter.
 
 **Example:**
+
 ```typescript
-options.query = 'foo=bar&baz=qux'
+options.query = 'foo=bar&baz=qux';
 // Becomes: ?limit=10&foo=bar&baz=qux
 ```
 
@@ -363,6 +371,7 @@ buildPositionDownloadUrl(
 ```
 
 **Endpoint example:**
+
 ```typescript
 getCollectionItems(
   collectionId: string,      // REQUIRED
@@ -378,6 +387,7 @@ getCollectionItems(
 ```
 
 **Modern endpoint pattern:**
+
 ```typescript
 getCollectionItemsUrl(
   collectionId: string,      // REQUIRED - always needed
@@ -432,6 +442,7 @@ export interface optionalCubeParams {
 ```
 
 **Benefits:**
+
 - Type safety at compile time
 - IDE autocomplete
 - Documentation via types
@@ -482,6 +493,7 @@ if (optional_params.parameter_name) {
 ```
 
 **Results:**
+
 - `properties=name,description,geometry`
 - `sortby=name,date`
 - `parameter-name=temperature,humidity,pressure`
@@ -540,7 +552,7 @@ if (optional_params.parameter_name) {
       );
     }
   }
-  
+
   // Only add if validation passes
   url.searchParams.set(
     'parameter-name',
@@ -566,11 +578,7 @@ const collectionsUrl = getLinkUrl(
 );
 
 // From collection
-const itemsUrl = getLinkUrl(
-  collectionDoc,
-  'items',
-  this.baseUrl
-);
+const itemsUrl = getLinkUrl(collectionDoc, 'items', this.baseUrl);
 
 // From collection with format preference
 const itemsUrl = getLinkUrl(
@@ -587,10 +595,10 @@ const itemsUrl = getLinkUrl(
 
 ```typescript
 // Get parent path
-export function getParentPath(url: string): string | null
+export function getParentPath(url: string): string | null;
 
 // Get child path
-export function getChildPath(url: string, childFragment: string): string
+export function getChildPath(url: string, childFragment: string): string;
 ```
 
 **Usage example:**
@@ -618,10 +626,10 @@ async getCollectionItem(
         getLinkUrl(collectionDoc, 'items', this.baseUrl),
         getBaseUrl()
       );
-      
+
       // Append item ID
       url.pathname += `/${itemId}`;
-      
+
       return url.toString();
     })
     .then(fetchDocument<OgcApiCollectionItem>);
@@ -672,7 +680,7 @@ collection.data_queries = {
   position: { link: { href: '.../collections/temp/position' } },
   area: { link: { href: '.../collections/temp/area' } },
   // ...
-}
+};
 ```
 
 ### CSAPI Path Structure
@@ -712,13 +720,13 @@ collection.data_queries = {
 
 ```typescript
 // Get base URL
-export function getBaseUrl(url?: string): string | URL
+export function getBaseUrl(url?: string): string | URL;
 
 // Navigate up
-export function getParentPath(url: string): string | null
+export function getParentPath(url: string): string | null;
 
 // Navigate down
-export function getChildPath(url: string, childFragment: string): string
+export function getChildPath(url: string, childFragment: string): string;
 ```
 
 ### What Doesn't Exist
@@ -738,7 +746,7 @@ export function fetchLink(
   rels: string | string[],
   baseUrl: string,
   type?: MimeType
-): Promise<OgcApiDocument>
+): Promise<OgcApiDocument>;
 
 // Extract URL from link
 export function getLinkUrl(
@@ -747,7 +755,7 @@ export function getLinkUrl(
   baseUrl: string,
   type?: MimeType,
   ignoreErrors?: boolean
-): string | null
+): string | null;
 
 // Get all matching links
 export function getLinks(
@@ -755,13 +763,10 @@ export function getLinks(
   rels: string | string[],
   type?: MimeType,
   ignoreErrors?: boolean
-): Array<{ rel: string; href: string; type?: string }>
+): Array<{ rel: string; href: string; type?: string }>;
 
 // Check if links exist
-export function hasLinks(
-  doc: OgcApiDocument,
-  rels: string | string[]
-): boolean
+export function hasLinks(doc: OgcApiDocument, rels: string | string[]): boolean;
 ```
 
 **These are the primary URL building tools.**
@@ -775,6 +780,7 @@ export function hasLinks(
 - Native `URL` class for query parameters
 
 **Only add helpers if:**
+
 - Specific parameter encoding logic needed (e.g., datetime formatting)
 - Multiple methods share complex URL building code
 
@@ -785,6 +791,7 @@ export function hasLinks(
 ### Challenge: 9 Resources in CSAPI
 
 **Each resource needs:**
+
 - List method (`getSystems()`)
 - Get by ID method (`getSystem(id)`)
 - URL building
@@ -830,6 +837,7 @@ buildAreaDownloadUrl(coords, optional_params): string {
 **EDR chose to duplicate** rather than abstract.
 
 **Why?**
+
 - Each query type has slightly different requirements
 - Abstractions would add complexity
 - Code is straightforward and maintainable
@@ -841,16 +849,19 @@ buildAreaDownloadUrl(coords, optional_params): string {
 
 ```typescript
 class EDRQueryBuilder {
-  private addOptionalParams(
-    url: URL,
-    optional_params: optionalParams
-  ): void {
+  private addOptionalParams(url: URL, optional_params: optionalParams): void {
     if (optional_params.datetime) {
-      url.searchParams.set('datetime', this.formatDatetime(optional_params.datetime));
+      url.searchParams.set(
+        'datetime',
+        this.formatDatetime(optional_params.datetime)
+      );
     }
     if (optional_params.parameter_name) {
       this.validateParameters(optional_params.parameter_name);
-      url.searchParams.set('parameter-name', optional_params.parameter_name.join(','));
+      url.searchParams.set(
+        'parameter-name',
+        optional_params.parameter_name.join(',')
+      );
     }
     if (optional_params.crs) {
       this.validateCrs(optional_params.crs);
@@ -860,7 +871,7 @@ class EDRQueryBuilder {
       url.searchParams.set('f', optional_params.f);
     }
   }
-  
+
   buildPositionDownloadUrl(coords, optional_params): string {
     this.checkSupported('position');
     const url = new URL(this.collection.data_queries?.position?.link.href);
@@ -887,6 +898,7 @@ class EDRQueryBuilder {
 5. **Keep methods readable** - prefer explicit over DRY
 
 **Acceptable duplication:**
+
 ```typescript
 async getSystems(options: QueryOptions = {}): Promise<System[]> {
   // This pattern repeated 9 times is OK
@@ -899,25 +911,25 @@ async getSystems(options: QueryOptions = {}): Promise<System[]> {
 ```
 
 **Extract if helpers make it clearer:**
+
 ```typescript
 class CSAPIQueryBuilder {
-  private buildListUrl(
-    resource: string,
-    options: QueryOptions
-  ): string {
+  private buildListUrl(resource: string, options: QueryOptions): string {
     const baseUrl = getLinkUrl(this.collection, resource, '');
     const url = new URL(baseUrl);
     this.addQueryParams(url, options);
     return url.toString();
   }
-  
+
   private addQueryParams(url: URL, options: QueryOptions): void {
     if (options.limit) url.searchParams.set('limit', options.limit.toString());
-    if (options.offset) url.searchParams.set('offset', options.offset.toString());
+    if (options.offset)
+      url.searchParams.set('offset', options.offset.toString());
     if (options.bbox) url.searchParams.set('bbox', options.bbox.join(','));
-    if (options.datetime) url.searchParams.set('datetime', this.formatDatetime(options.datetime));
+    if (options.datetime)
+      url.searchParams.set('datetime', this.formatDatetime(options.datetime));
   }
-  
+
   async getSystems(options: QueryOptions = {}): Promise<System[]> {
     this.checkResource('systems');
     const url = this.buildListUrl('systems', options);
@@ -956,14 +968,14 @@ async getDatastreams(
 ): Promise<Datastream[]> {
   // 1. Get systems base URL
   const systemsUrl = getLinkUrl(this.collection, 'systems', '');
-  
+
   // 2. Build path to specific system's datastreams
   const url = new URL(`${systemsUrl}/${systemId}/datastreams`);
-  
+
   // 3. Add query params
   if (options.limit) url.searchParams.set('limit', options.limit.toString());
   if (options.offset) url.searchParams.set('offset', options.offset.toString());
-  
+
   // 4. Fetch
   const response = await fetch(url.toString());
   const data = await response.json();
@@ -981,15 +993,15 @@ async getDatastreams(
   options: QueryOptions = {}
 ): Promise<Datastream[]> {
   const systemsUrl = getLinkUrl(this.collection, 'systems', '');
-  
+
   // Build nested path
   let url = getChildPath(systemsUrl, systemId);
   url = getChildPath(url, 'datastreams');
-  
+
   // Convert to URL object for params
   const finalUrl = new URL(url);
   if (options.limit) finalUrl.searchParams.set('limit', options.limit.toString());
-  
+
   const response = await fetch(finalUrl.toString());
   const data = await response.json();
   return data.items as Datastream[];
@@ -1007,19 +1019,19 @@ async getObservations(
   options: QueryOptions = {}
 ): Promise<Observation[]> {
   const systemsUrl = getLinkUrl(this.collection, 'systems', '');
-  
+
   // Build deeply nested path
   const url = new URL(
     `${systemsUrl}/${systemId}/datastreams/${datastreamId}/observations`
   );
-  
+
   // Add query params (important for observations - could be large)
   if (options.limit) url.searchParams.set('limit', options.limit.toString());
   if (options.offset) url.searchParams.set('offset', options.offset.toString());
   if (options.datetime) {
     url.searchParams.set('datetime', this.formatDatetime(options.datetime));
   }
-  
+
   const response = await fetch(url.toString());
   const data = await response.json();
   return data.items as Observation[];
@@ -1036,7 +1048,7 @@ If the parent resource provides links:
 async getDatastreams(systemId: string): Promise<Datastream[]> {
   // 1. Get the system
   const system = await this.getSystem(systemId);
-  
+
   // 2. Check if system has datastreams link
   if (system.links) {
     const datastreamsUrl = getLinkUrl(system, 'datastreams', '');
@@ -1046,7 +1058,7 @@ async getDatastreams(systemId: string): Promise<Datastream[]> {
       return data.items as Datastream[];
     }
   }
-  
+
   // 3. Fallback to path construction
   const systemsUrl = getLinkUrl(this.collection, 'systems', '');
   const url = `${systemsUrl}/${systemId}/datastreams`;
@@ -1079,17 +1091,17 @@ async getDatastreams(systemId: string): Promise<Datastream[]> {
 
 ### URL Sources by Resource Type
 
-| Resource | URL Source | Example |
-|----------|------------|---------|
-| Systems | Collection link | `getLinkUrl(collection, 'systems')` |
-| Deployments | Collection link | `getLinkUrl(collection, 'deployments')` |
-| Sampling Features | Collection link | `getLinkUrl(collection, 'samplingFeatures')` |
-| Procedures | Collection link | `getLinkUrl(collection, 'procedures')` |
-| Datastreams | Parent system path | `{systemsUrl}/{systemId}/datastreams` |
-| Observations | Parent datastream path | `{systemsUrl}/{systemId}/datastreams/{datastreamId}/observations` |
-| Controls | Parent system path | `{systemsUrl}/{systemId}/controls` |
-| Control Streams | Parent system path | `{systemsUrl}/{systemId}/controlStreams` |
-| Commands | Parent stream path | `{systemsUrl}/{systemId}/controlStreams/{streamId}/commands` |
+| Resource          | URL Source             | Example                                                           |
+| ----------------- | ---------------------- | ----------------------------------------------------------------- |
+| Systems           | Collection link        | `getLinkUrl(collection, 'systems')`                               |
+| Deployments       | Collection link        | `getLinkUrl(collection, 'deployments')`                           |
+| Sampling Features | Collection link        | `getLinkUrl(collection, 'samplingFeatures')`                      |
+| Procedures        | Collection link        | `getLinkUrl(collection, 'procedures')`                            |
+| Datastreams       | Parent system path     | `{systemsUrl}/{systemId}/datastreams`                             |
+| Observations      | Parent datastream path | `{systemsUrl}/{systemId}/datastreams/{datastreamId}/observations` |
+| Controls          | Parent system path     | `{systemsUrl}/{systemId}/controls`                                |
+| Control Streams   | Parent system path     | `{systemsUrl}/{systemId}/controlStreams`                          |
+| Commands          | Parent stream path     | `{systemsUrl}/{systemId}/controlStreams/{streamId}/commands`      |
 
 ### Common Query Parameters
 
@@ -1097,10 +1109,10 @@ async getDatastreams(systemId: string): Promise<Datastream[]> {
 
 ```typescript
 interface QueryOptions {
-  limit?: number;          // Pagination
-  offset?: number;         // Pagination
-  bbox?: BoundingBox;      // Spatial filter
-  datetime?: DateTimeParameter;  // Temporal filter
+  limit?: number; // Pagination
+  offset?: number; // Pagination
+  bbox?: BoundingBox; // Spatial filter
+  datetime?: DateTimeParameter; // Temporal filter
 }
 ```
 
@@ -1138,12 +1150,12 @@ class CSAPIQueryBuilder {
     const end = 'end' in datetime ? datetime.end.toISOString() : '..';
     return `${start}/${end}`;
   }
-  
+
   // Add common query parameters
   private addCommonParams(url: URL, options: QueryOptions): void {
     // ... as shown above
   }
-  
+
   // Build list URL for a resource
   private buildListUrl(resource: string, options: QueryOptions): string {
     const baseUrl = getLinkUrl(this.collection, resource, '');
@@ -1151,13 +1163,13 @@ class CSAPIQueryBuilder {
     this.addCommonParams(url, options);
     return url.toString();
   }
-  
+
   // Build URL for specific resource item
   private buildItemUrl(resource: string, itemId: string): string {
     const baseUrl = getLinkUrl(this.collection, resource, '');
     return `${baseUrl}/${itemId}`;
   }
-  
+
   // Build nested resource URL
   private buildNestedUrl(
     parentResource: string,
@@ -1172,7 +1184,7 @@ class CSAPIQueryBuilder {
     }
     return url.toString();
   }
-  
+
   // Validate resource is available
   private checkResource(resource: string): void {
     if (!this.supported_resources.has(resource)) {
@@ -1181,7 +1193,7 @@ class CSAPIQueryBuilder {
       );
     }
   }
-  
+
   // Generic fetch for items
   private async fetchItems<T>(url: string): Promise<T[]> {
     const response = await fetch(url);
@@ -1191,7 +1203,7 @@ class CSAPIQueryBuilder {
     const data = await response.json();
     return data.items as T[];
   }
-  
+
   // Generic fetch for single item
   private async fetchItem<T>(url: string): Promise<T> {
     const response = await fetch(url);
@@ -1211,30 +1223,35 @@ class CSAPIQueryBuilder {
 ```typescript
 class CSAPIQueryBuilder {
   // ... helpers above
-  
+
   // Top-level resource
   async getSystems(options: QueryOptions = {}): Promise<System[]> {
     this.checkResource('systems');
     const url = this.buildListUrl('systems', options);
     return this.fetchItems<System>(url);
   }
-  
+
   async getSystem(systemId: string): Promise<System> {
     this.checkResource('systems');
     const url = this.buildItemUrl('systems', systemId);
     return this.fetchItem<System>(url);
   }
-  
+
   // Nested resource (one level)
   async getDatastreams(
     systemId: string,
     options: QueryOptions = {}
   ): Promise<Datastream[]> {
     this.checkResource('systems'); // Parent must be available
-    const url = this.buildNestedUrl('systems', systemId, 'datastreams', options);
+    const url = this.buildNestedUrl(
+      'systems',
+      systemId,
+      'datastreams',
+      options
+    );
     return this.fetchItems<Datastream>(url);
   }
-  
+
   async getDatastream(
     systemId: string,
     datastreamId: string
@@ -1244,7 +1261,7 @@ class CSAPIQueryBuilder {
     const url = `${baseUrl}/${systemId}/datastreams/${datastreamId}`;
     return this.fetchItem<Datastream>(url);
   }
-  
+
   // Nested resource (two levels)
   async getObservations(
     systemId: string,
@@ -1296,7 +1313,7 @@ class CSAPIQueryBuilder {
   private checkResource(...)
   private fetchItems(...)
   private fetchItem(...)
-  
+
   // Public resource methods (~10 lines each × 18 methods = 180 lines)
   async getSystems(...)
   async getSystem(...)

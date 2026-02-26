@@ -17,6 +17,7 @@ Research industry-standard testing practices for TypeScript client libraries ind
 **Why This Research Third:**
 
 After understanding upstream patterns (Sections 1-2), validate those patterns against industry standards. This ensures:
+
 - **Upstream patterns are sound** (not just internal conventions)
 - **Best practices are followed** (mature TypeScript testing)
 - **Gaps are identified** (where upstream could improve)
@@ -43,92 +44,37 @@ This research provides external validation and prevents "cargo cult" testing whe
 ### Detailed Questions
 
 **Production-Quality Definition (4 questions):**
+
 1. What defines "production-quality" testing for TypeScript client libraries?
 2. What characteristics separate mature vs immature test suites?
 3. What do TypeScript testing guides recommend?
 4. What do popular client libraries achieve?
 
-**Coverage Standards (5 questions):**
-5. What coverage % is industry standard for TypeScript client libraries?
-6. What coverage metrics matter (statement, branch, function, line)?
-7. How does coverage vary by component type?
-8. What's considered "good enough" vs "excellent"?
-9. What coverage targets do popular libraries achieve?
+**Coverage Standards (5 questions):** 5. What coverage % is industry standard for TypeScript client libraries? 6. What coverage metrics matter (statement, branch, function, line)? 7. How does coverage vary by component type? 8. What's considered "good enough" vs "excellent"? 9. What coverage targets do popular libraries achieve?
 
-**Testing Without HTTP (5 questions):**
-10. How do client libraries test without actual HTTP calls?
-11. What mocking strategies are standard?
-12. What HTTP mocking libraries are popular (jest.mock, nock, msw)?
-13. How to test URL construction without making requests?
-14. What's the balance of mocked vs real network tests?
+**Testing Without HTTP (5 questions):** 10. How do client libraries test without actual HTTP calls? 11. What mocking strategies are standard? 12. What HTTP mocking libraries are popular (jest.mock, nock, msw)? 13. How to test URL construction without making requests? 14. What's the balance of mocked vs real network tests?
 
-**URL Validation Depth (5 questions):**
-15. How deeply should URLs be validated in tests?
-16. What URL parsing libraries are standard for testing?
-17. What URL assertions are considered thorough?
-18. How to test URL encoding edge cases?
-19. How to test query parameter combinations?
+**URL Validation Depth (5 questions):** 15. How deeply should URLs be validated in tests? 16. What URL parsing libraries are standard for testing? 17. What URL assertions are considered thorough? 18. How to test URL encoding edge cases? 19. How to test query parameter combinations?
 
-**TypeScript Type Testing (6 questions):**
-20. How are TypeScript interfaces tested?
-21. How are type definitions validated?
-22. What tools exist for type testing (tsd, dtslint)?
-23. Are compilation tests sufficient or runtime tests needed?
-24. How to test type inference?
-25. How to test generic types?
+**TypeScript Type Testing (6 questions):** 20. How are TypeScript interfaces tested? 21. How are type definitions validated? 22. What tools exist for type testing (tsd, dtslint)? 23. Are compilation tests sufficient or runtime tests needed? 24. How to test type inference? 25. How to test generic types?
 
-**Test Pyramid for Client Libraries (4 questions):**
-26. What's the test pyramid distribution for client libraries (unit/integration/e2e)?
-27. What's considered "unit" vs "integration" vs "e2e" for a URL-building library?
-28. What's the recommended ratio?
-29. How do popular libraries structure their test pyramid?
+**Test Pyramid for Client Libraries (4 questions):** 26. What's the test pyramid distribution for client libraries (unit/integration/e2e)? 27. What's considered "unit" vs "integration" vs "e2e" for a URL-building library? 28. What's the recommended ratio? 29. How do popular libraries structure their test pyramid?
 
-**Error Condition Testing (5 questions):**
-30. How should error conditions be tested comprehensively?
-31. What error types must be covered?
-32. How to test error messages?
-33. How to test error recovery?
-34. What's the standard depth for error testing?
+**Error Condition Testing (5 questions):** 30. How should error conditions be tested comprehensively? 31. What error types must be covered? 32. How to test error messages? 33. How to test error recovery? 34. What's the standard depth for error testing?
 
-**Test Structure Best Practices (5 questions):**
-35. What describe/it block conventions are standard in TypeScript?
-36. What naming conventions for test files?
-37. What naming conventions for test cases?
-38. How to structure setup/teardown?
-39. What's the recommended test file organization?
+**Test Structure Best Practices (5 questions):** 35. What describe/it block conventions are standard in TypeScript? 36. What naming conventions for test files? 37. What naming conventions for test cases? 38. How to structure setup/teardown? 39. What's the recommended test file organization?
 
-**Fixture Best Practices (4 questions):**
-40. How should test fixtures be organized?
-41. What fixture formats are standard (JSON, TypeScript objects)?
-42. How to manage fixture maintenance?
-43. What's the balance of real vs synthetic fixtures?
+**Fixture Best Practices (4 questions):** 40. How should test fixtures be organized? 41. What fixture formats are standard (JSON, TypeScript objects)? 42. How to manage fixture maintenance? 43. What's the balance of real vs synthetic fixtures?
 
-**Test Documentation (4 questions):**
-44. What test documentation is standard?
-45. How are tests self-documenting?
-46. What comments are needed vs redundant?
-47. How to document test intent?
+**Test Documentation (4 questions):** 44. What test documentation is standard? 45. How are tests self-documenting? 46. What comments are needed vs redundant? 47. How to document test intent?
 
-**Performance Testing (2 questions):**
-48. How should performance be tested in client libraries?
-49. What performance metrics matter?
-50. Are benchmarks standard?
+**Performance Testing (2 questions):** 48. How should performance be tested in client libraries? 49. What performance metrics matter? 50. Are benchmarks standard?
 
-**Test Maintainability (4 questions):**
-51. What makes tests maintainable long-term?
-52. How to prevent test rot?
-53. What refactoring patterns exist for tests?
-54. How to reduce test duplication?
+**Test Maintainability (4 questions):** 51. What makes tests maintainable long-term? 52. How to prevent test rot? 53. What refactoring patterns exist for tests? 54. How to reduce test duplication?
 
-**Test-to-Code Ratio (3 questions):**
-55. What's a healthy test-to-code ratio?
-56. How does it vary by library type?
-57. What do popular libraries achieve?
+**Test-to-Code Ratio (3 questions):** 55. What's a healthy test-to-code ratio? 56. How does it vary by library type? 57. What do popular libraries achieve?
 
-**CI/CD Integration (3 questions):**
-58. What CI/CD practices are standard for TypeScript libraries?
-59. What test commands are standard (test, test:watch, test:coverage)?
-60. What coverage reporting is standard?
+**CI/CD Integration (3 questions):** 58. What CI/CD practices are standard for TypeScript libraries? 59. What test commands are standard (test, test:watch, test:coverage)? 60. What coverage reporting is standard?
 
 ---
 
@@ -163,6 +109,7 @@ This research provides external validation and prevents "cargo cult" testing whe
 **Objective:** Extract recommended practices from authoritative sources
 
 **Tasks:**
+
 1. Review official TypeScript testing documentation
 2. Review Jest best practices documentation
 3. Review testing guides from TypeScript community
@@ -178,6 +125,7 @@ This research provides external validation and prevents "cargo cult" testing whe
 Analyze test suites from 3-5 popular TypeScript client libraries (@octokit/rest, axios, @aws-sdk/client-s3, stripe, node-fetch):
 
 For each library:
+
 1. Examine test file structure and organization
 2. Measure coverage % (statement, branch, function, line)
 3. Identify mocking strategies (HTTP mocking approach)
@@ -192,6 +140,7 @@ For each library:
 **Objective:** Synthesize findings into industry consensus
 
 **Tasks:**
+
 1. Identify patterns consistent across documentation + libraries (universal industry standards)
 2. Document industry consensus patterns with quantified metrics
 3. Identify variations and their rationale (context-specific adaptations)
@@ -204,6 +153,7 @@ For each library:
 **Objective:** Create comprehensive deliverable document
 
 **Tasks:**
+
 1. Synthesize findings into best practices guide
 2. Create comparison table: Industry vs Upstream patterns
 3. Document validation (where upstream matches industry)
@@ -242,24 +192,28 @@ This research is complete when:
 Content includes:
 
 1. **Executive Summary**
+
    - Industry consensus on testing standards
    - Key metrics from popular libraries (coverage %, ratios)
    - Comparison with upstream patterns (validation vs gaps)
    - High-level recommendations for CSAPI
 
 2. **Production-Quality Characteristics**
+
    - What defines "production-quality" testing
    - Maturity indicators for test suites
    - Quality gates recommended by industry
    - Examples from popular libraries
 
 3. **Coverage Standards**
+
    - Industry-standard coverage targets (% by metric type)
    - Coverage by metric type (statement, branch, function, line)
    - Coverage by component type (QueryBuilder, parsers, types)
    - Examples from popular libraries with actual metrics
 
 4. **Mocking Strategies**
+
    - HTTP mocking approaches (jest.mock, nock, MSW)
    - Pros/cons of each approach
    - Popular mocking libraries and usage patterns
@@ -267,30 +221,35 @@ Content includes:
    - Recommended strategy for CSAPI
 
 5. **URL Validation Best Practices**
+
    - URL assertion depth standards
    - URL parsing libraries for testing (url-parse, URL API)
    - Query parameter validation approaches
    - Examples from client libraries
 
 6. **TypeScript Type Testing**
+
    - Type testing approaches (compilation vs runtime)
    - Tools available (tsd, dtslint, expect-type)
    - Type assertion patterns
    - Recommended approach for CSAPI
 
 7. **Test Pyramid Standards**
+
    - Unit/integration/e2e definitions for client libraries
    - Recommended distribution (ratios)
    - Examples from popular libraries with counts
    - Application to CSAPI context
 
 8. **Error Testing Best Practices**
+
    - Error condition coverage standards
    - Error message validation approaches
    - Error recovery testing patterns
    - Examples from popular libraries
 
 9. **Test Structure Standards**
+
    - Describe/it block conventions (industry patterns)
    - Naming conventions (test files and test cases)
    - File organization patterns
@@ -298,24 +257,28 @@ Content includes:
    - Examples from popular libraries
 
 10. **Fixture Best Practices**
+
     - Fixture organization patterns
     - Fixture quality (real vs synthetic)
     - Fixture maintenance strategies
     - Examples from popular libraries
 
 11. **Test-to-Code Ratios**
+
     - Industry benchmarks
     - Ratios from popular libraries (quantified)
     - Factors affecting ratio
     - Recommended ratio for CSAPI
 
 12. **CI/CD Integration Standards**
+
     - Standard CI/CD practices for TypeScript libraries
     - Standard test commands (test, test:watch, test:coverage)
     - Coverage reporting standards
     - Examples from popular libraries
 
 13. **Validation Against Upstream**
+
     - Where upstream matches industry standards ✅
     - Where upstream differs from industry standards ⚠️
     - Gaps to address in CSAPI
@@ -330,12 +293,12 @@ Content includes:
 **Comparison Table Format:**
 
 ```markdown
-| Practice | Industry Standard | Upstream (ogc-client) | Gap? | CSAPI Action |
-|----------|-------------------|----------------------|------|--------------|
-| Coverage target | 80-90% | ~80% | ✅ Match | Continue |
-| URL parsing in tests | url-parse, URL API | String matching | ⚠️ Gap | Enhance |
-| Type testing | tsd, dtslint | Compilation only | ⚠️ Gap | Consider tsd |
-| Mocking strategy | MSW, nock | jest.mock | ✅ Match | Continue |
+| Practice             | Industry Standard  | Upstream (ogc-client) | Gap?     | CSAPI Action |
+| -------------------- | ------------------ | --------------------- | -------- | ------------ |
+| Coverage target      | 80-90%             | ~80%                  | ✅ Match | Continue     |
+| URL parsing in tests | url-parse, URL API | String matching       | ⚠️ Gap   | Enhance      |
+| Type testing         | tsd, dtslint       | Compilation only      | ⚠️ Gap   | Consider tsd |
+| Mocking strategy     | MSW, nock          | jest.mock             | ✅ Match | Continue     |
 ```
 
 ---
@@ -343,10 +306,12 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis (PR #114) - provides EDR baseline
 - Section 2: Upstream Test Consistency - provides library-wide pattern inventory
 
 **Blocks:**
+
 - Section 6: "Meaningful vs Trivial" Definition (uses industry context)
 - Section 17: Coverage Targets Definition (uses industry benchmarks)
 - Section 21: TypeScript Type Testing (uses type testing tools research)
@@ -372,6 +337,7 @@ Content includes:
 <!-- Add notes and unresolved questions here as research progresses -->
 
 **Initial Observations:**
+
 - Industry validation provides external credibility for testing approach
 - Prevents "cargo cult" adoption of upstream patterns without understanding merit
 - Identifies opportunities for CSAPI to lead with industry best practices
@@ -391,6 +357,7 @@ Content includes:
 **Mitigation:** Focus on consensus patterns across multiple sources; note emerging trends separately; document recommendation confidence levels
 
 **Validation Strategy:**
+
 - Findings must be sourced (documentation + library examples)
 - Metrics must be quantified (coverage %, ratios, counts)
 - Comparisons must be objective (not subjective opinion)
@@ -398,6 +365,7 @@ Content includes:
 - Gaps must be specific and actionable
 
 **Next Steps After Completion:**
+
 1. Compare findings with Sections 1-2 deliverables
 2. Validate upstream patterns against industry standards
 3. Identify gaps where CSAPI can improve on upstream
@@ -409,29 +377,34 @@ Content includes:
 **Research Execution Summary:**
 
 **Phase 1: Documentation Survey (25 minutes):**
+
 - Fetched Jest getting started documentation
 - Documented TypeScript + Jest integration (ts-jest recommended)
 - Confirmed Jest as industry standard framework
 - TypeScript testing types documentation not available (404)
 
 **Phase 2: Popular Library Analysis (45 minutes):**
+
 - **@octokit/rest.js analyzed:** Vitest (Jest-compatible), nock for HTTP mocking, 100% coverage target, comprehensive type testing
 - **axios analyzed:** Jasmine (browser) + Node assert, jasmine.Ajax for HTTP mocking, browser + Node testing, comprehensive type testing
 - **Industry patterns identified:** describe/it/beforeEach structure universal, HTTP mocking standard, type testing first-class concern
 
 **Phase 3: Best Practices Synthesis (20 minutes):**
+
 - Identified universal patterns (100% consistency): describe/it structure, HTTP mocking, type testing
 - Compared against upstream ogc-client patterns
 - Created Industry vs Upstream validation table
 - Documented gaps (minor enhancements only)
 
 **Phase 4: Documentation (20 minutes):**
+
 - Created comprehensive deliverable (2,100 lines)
 - Documented 14 required sections
 - Answered all 60 research questions
 - Created comparison table with recommendations
 
 **Key Findings:**
+
 1. ✅ **Upstream patterns validated** - ogc-client aligns with industry leaders (@octokit/rest, axios)
 2. ✅ **Test-to-code ratio confirmed** - 1.44× average matches industry range (1.0-2.0×)
 3. ⚠️ **Minor enhancements identified** - URL parsing, type testing are "nice to have" not critical
@@ -439,6 +412,7 @@ Content includes:
 5. ✅ **No fundamental changes needed** - Continue upstream patterns with confidence
 
 **Libraries Analyzed:**
+
 - @octokit/rest.js (GitHub API client) - Vitest + nock pattern
 - axios (HTTP client) - Jasmine + jasmine.Ajax pattern
 

@@ -9,12 +9,14 @@
 **Research Time:** 45 minutes – February 6, 2026
 
 **Primary Source(s):**
+
 - ALL previous section deliverables (Sections 1-37)
 - [ROADMAP](../../../planning/ROADMAP.md)
 - [Implementation Guide](../../../planning/csapi-implementation-guide.md)
 - Section 36 deliverable: Test Quality Checklist
 
 **Supporting Resources:**
+
 - Section 35: [JSDoc Testing Documentation Standards](35-jsdoc-testing-documentation-standards.md) (test documentation)
 - Section 37: [Test Maintenance and Evolution Strategy](37-test-maintenance-evolution-strategy.md) (maintenance)
 - Sections 8-31: All component testing specifications
@@ -28,6 +30,7 @@
 > **⚠️ Phase 3 Review Notice (February 14, 2026)**
 >
 > This playbook was written February 6, 2026. Phase 2A-2F review corrections (February 12-13, 2026) take precedence where they conflict with this document. Key conflicts:
+>
 > - **Performance testing is OUT OF SCOPE** (Doc 33) — Parts 3.4, 6.4, and 8.3 contain performance content that should be disregarded
 > - **Phase 3 task count:** This document references "15 subtasks" but ROADMAP v3.0 specifies 17 tasks — refer to ROADMAP v3.0 for authoritative task list
 > - **Coverage targets:** This document's targets (90/85/88%) are stretch goals; ROADMAP v3.0 minimum is >80% statement and branch
@@ -42,6 +45,7 @@
 This playbook transforms 37 research sections into **step-by-step testing workflows** you can follow during CSAPI implementation.
 
 **Structure:**
+
 - **Part 1:** Setup (one-time)
 - **Part 2:** Phase-by-phase workflows (follow during implementation)
 - **Part 3:** Component patterns (reference when writing tests)
@@ -54,6 +58,7 @@ This playbook transforms 37 research sections into **step-by-step testing workfl
 - **Part 10:** Maintenance (ongoing)
 
 **Quick Start:**
+
 1. Complete Part 1 (Setup) once
 2. Go to Part 2 for your current ROADMAP phase
 3. Follow step-by-step workflow
@@ -70,22 +75,26 @@ This playbook transforms 37 research sections into **step-by-step testing workfl
 **Before starting any testing:**
 
 ✅ **Dependencies Installed:**
+
 ```bash
 npm install
 ```
 
 ✅ **Test Framework Configured:**
+
 - Jest 29.7.0+ installed
 - TypeScript 5.3.3+ configured
 - Coverage reporting enabled
 
 ✅ **Knowledge Requirements:**
+
 - TypeScript fundamentals
 - Jest testing basics
 - CSAPI specification familiarity (read Parts 1-3 overview)
 - ogc-client architecture (read existing Features/Tiles implementations)
 
 ✅ **Research Sections Read:**
+
 - Section 1: EDR Test Blueprint (upstream patterns)
 - Section 12: QueryBuilder Testing Strategy (core approach)
 - Section 34: Test Utility Design (helper functions)
@@ -144,7 +153,7 @@ export function parseAndValidateUrl(url: string): {
   return {
     pathname: parsed.pathname,
     searchParams: parsed.searchParams,
-    segments: parsed.pathname.split('/').filter(Boolean)
+    segments: parsed.pathname.split('/').filter(Boolean),
   };
 }
 
@@ -161,7 +170,7 @@ export function loadFixture(path: string): any {
 export function createMockEndpoint(collectionInfo: any): any {
   return {
     apiUrl: 'https://example.com/api',
-    _collections: [collectionInfo]
+    _collections: [collectionInfo],
   };
 }
 ```
@@ -207,12 +216,14 @@ fixtures/
 **Fixture Naming Convention:**
 
 Follow existing project pattern - use descriptive filenames:
+
 - `system-{type}-{identifier}.json` (e.g., `system-weather-station-001.json`)
 - `deployment-{purpose}-{identifier}.json` (e.g., `deployment-arctic-mission-2025.json`)
 - `datastream-{property}-{identifier}.json` (e.g., `datastream-temperature-001.json`)
 - Include spec section in comments at top of fixture files based on OGC 23-001 v1.0.0
 
 Example fixture header comment:
+
 ```json
 {
   "_comment": "Based on OGC 23-001 v1.0.0 Section 19.1.5 - System Feature in GeoJSON",
@@ -230,11 +241,13 @@ Example fixture header comment:
 ### 1.4 Tool Installation
 
 **VSCode Extensions (Recommended):**
+
 - Jest Runner (run individual tests)
 - Test Explorer UI (view test tree)
 - Coverage Gutters (inline coverage)
 
 **Global Tools:**
+
 ```bash
 npm install -g npm-check-updates  # Dependency updates
 ```
@@ -342,14 +355,14 @@ describe('CSAPI Type System', () => {
         id: 'sys-001',
         geometry: {
           type: 'Point',
-          coordinates: [-117.123, 34.567]
+          coordinates: [-117.123, 34.567],
         },
         properties: {
           name: 'Weather Station Alpha',
           description: 'Rooftop weather monitoring station',
           systemType: 'WeatherStation',
-          status: 'active'
-        }
+          status: 'active',
+        },
       };
 
       expect(system.type).toBe('Feature');
@@ -368,8 +381,8 @@ describe('CSAPI Type System', () => {
         id: 'sys-002',
         geometry: null,
         properties: {
-          name: 'Virtual System'
-        }
+          name: 'Virtual System',
+        },
       };
 
       expect(system.geometry).toBeNull();
@@ -385,8 +398,8 @@ describe('CSAPI Type System', () => {
         id: 'sys-003',
         geometry: null,
         properties: {
-          name: 'Minimal System'
-        }
+          name: 'Minimal System',
+        },
       };
 
       expect(system.properties.name).toBe('Minimal System');
@@ -402,9 +415,9 @@ describe('CSAPI Type System', () => {
             type: 'Feature',
             id: 'sys-001',
             geometry: null,
-            properties: { name: 'System 1' }
-          }
-        ]
+            properties: { name: 'System 1' },
+          },
+        ],
       };
 
       expect(collection.type).toBe('FeatureCollection');
@@ -476,13 +489,15 @@ describe('DataStream Interface', () => {
         name: 'Temperature Stream',
         observedProperty: {
           href: 'http://example.com/properties/temperature',
-          rel: 'observedProperty'
-        }
-      }
+          rel: 'observedProperty',
+        },
+      },
     };
 
     expect(datastream.properties.observedProperty).toBeDefined();
-    expect(datastream.properties.observedProperty.href).toContain('temperature');
+    expect(datastream.properties.observedProperty.href).toContain(
+      'temperature'
+    );
   });
 });
 
@@ -495,7 +510,7 @@ describe('Observation Interface', () => {
     const obs: Observation = {
       type: 'Feature',
       phenomenonTime: '2024-01-15T12:00:00Z',
-      result: 23.5
+      result: 23.5,
     };
 
     expect(typeof obs.phenomenonTime).toBe('string');
@@ -505,7 +520,7 @@ describe('Observation Interface', () => {
     const obs: Observation = {
       type: 'Feature',
       phenomenonTime: ['2024-01-15T00:00:00Z', '2024-01-15T23:59:59Z'],
-      result: [20.1, 22.3, 23.5, 21.8]
+      result: [20.1, 22.3, 23.5, 21.8],
     };
 
     expect(Array.isArray(obs.phenomenonTime)).toBe(true);
@@ -560,7 +575,7 @@ describe('Query Options', () => {
       limit: 10,
       systemType: 'WeatherStation',
       status: 'active',
-      bbox: [-118, 34, -117, 35]
+      bbox: [-118, 34, -117, 35],
     };
 
     expect(options.systemType).toBe('WeatherStation');
@@ -614,22 +629,22 @@ npm test -- model.spec.ts
 
 /**
  * Build resource URL with optional ID and sub-path.
- * 
+ *
  * @param baseUrl - API base URL
  * @param collectionId - Collection identifier
  * @param resourceType - Resource type (systems, datastreams, etc.)
  * @param id - Optional resource ID
  * @param subPath - Optional sub-path (e.g., 'datastreams', 'observations')
  * @returns Complete resource URL
- * 
+ *
  * @example
  * buildResourceUrl('https://api.com', 'col1', 'systems')
  * // => 'https://api.com/collections/col1/systems'
- * 
+ *
  * @example
  * buildResourceUrl('https://api.com', 'col1', 'systems', 'sys-001')
  * // => 'https://api.com/collections/col1/systems/sys-001'
- * 
+ *
  * @example
  * buildResourceUrl('https://api.com', 'col1', 'systems', 'sys-001', 'datastreams')
  * // => 'https://api.com/collections/col1/systems/sys-001/datastreams'
@@ -642,15 +657,15 @@ export function buildResourceUrl(
   subPath?: string
 ): string {
   let url = `${baseUrl}/collections/${collectionId}/${resourceType}`;
-  
+
   if (id) {
     url += `/${id}`;
   }
-  
+
   if (subPath) {
     url += `/${subPath}`;
   }
-  
+
   return url;
 }
 ```
@@ -678,11 +693,16 @@ describe('CSAPI Helper Utilities', () => {
      */
     it('builds collection resource URL', () => {
       const url = buildResourceUrl(baseUrl, collectionId, 'systems');
-      
+
       const { pathname, segments } = parseAndValidateUrl(url);
-      
+
       expect(pathname).toBe('/api/collections/weather-sensors/systems');
-      expect(segments).toEqual(['api', 'collections', 'weather-sensors', 'systems']);
+      expect(segments).toEqual([
+        'api',
+        'collections',
+        'weather-sensors',
+        'systems',
+      ]);
     });
 
     /**
@@ -690,10 +710,16 @@ describe('CSAPI Helper Utilities', () => {
      */
     it('builds individual resource URL with ID', () => {
       const url = buildResourceUrl(baseUrl, collectionId, 'systems', 'sys-001');
-      
+
       const { segments } = parseAndValidateUrl(url);
-      
-      expect(segments).toEqual(['api', 'collections', 'weather-sensors', 'systems', 'sys-001']);
+
+      expect(segments).toEqual([
+        'api',
+        'collections',
+        'weather-sensors',
+        'systems',
+        'sys-001',
+      ]);
     });
 
     /**
@@ -707,16 +733,16 @@ describe('CSAPI Helper Utilities', () => {
         'sys-001',
         'datastreams'
       );
-      
+
       const { segments } = parseAndValidateUrl(url);
-      
+
       expect(segments).toEqual([
         'api',
         'collections',
         'weather-sensors',
         'systems',
         'sys-001',
-        'datastreams'
+        'datastreams',
       ]);
     });
 
@@ -729,9 +755,11 @@ describe('CSAPI Helper Utilities', () => {
         collectionId,
         'systems'
       );
-      
+
       expect(url).not.toContain('//collections');
-      expect(url).toBe('https://example.com/api/collections/weather-sensors/systems');
+      expect(url).toBe(
+        'https://example.com/api/collections/weather-sensors/systems'
+      );
     });
   });
 });
@@ -744,14 +772,14 @@ Add to `helpers.ts`:
 ```typescript
 /**
  * Build query string from options object.
- * 
+ *
  * @param options - Query options
  * @returns URL query string (without leading '?')
- * 
+ *
  * @example
  * buildQueryString({ limit: 10, status: 'active' })
  * // => 'limit=10&status=active'
- * 
+ *
  * @example
  * buildQueryString({ bbox: [-118, 34, -117, 35] })
  * // => 'bbox=-118,34,-117,35'
@@ -789,7 +817,7 @@ describe('buildQueryString', () => {
    */
   it('builds query string from simple parameters', () => {
     const qs = buildQueryString({ limit: 10, offset: 20 });
-    
+
     expect(qs).toBe('limit=10&offset=20');
   });
 
@@ -798,7 +826,7 @@ describe('buildQueryString', () => {
    */
   it('encodes bbox as comma-separated values', () => {
     const qs = buildQueryString({ bbox: [-118, 34, -117, 35] });
-    
+
     expect(qs).toBe('bbox=-118%2C34%2C-117%2C35');
   });
 
@@ -807,7 +835,7 @@ describe('buildQueryString', () => {
    */
   it('omits undefined and null values', () => {
     const qs = buildQueryString({ limit: 10, offset: undefined, foo: null });
-    
+
     expect(qs).toBe('limit=10');
   });
 
@@ -824,7 +852,7 @@ describe('buildQueryString', () => {
    */
   it('encodes special characters', () => {
     const qs = buildQueryString({ name: 'Weather Station #1' });
-    
+
     expect(qs).toContain('Weather%20Station%20%231');
   });
 });
@@ -835,14 +863,14 @@ describe('buildQueryString', () => {
 ```typescript
 /**
  * Parse datetime parameter to ISO 8601 format.
- * 
+ *
  * @param datetime - Datetime string (instant or interval)
  * @returns Normalized datetime string
- * 
+ *
  * @example
  * parseDatetime('2024-01-15')
  * // => '2024-01-15T00:00:00Z'
- * 
+ *
  * @example
  * parseDatetime('2024-01-15/2024-01-16')
  * // => '2024-01-15T00:00:00Z/2024-01-16T23:59:59Z'
@@ -933,7 +961,7 @@ import { SystemQueryOptions, DataStreamQueryOptions } from './model';
 
 /**
  * Query builder for CSAPI resources.
- * 
+ *
  * @example
  * const builder = new CSAPIQueryBuilder(collectionInfo, endpoint);
  * const url = builder.getSystems({ limit: 10 });
@@ -951,13 +979,13 @@ export class CSAPIQueryBuilder {
 
   /**
    * Extract available resource types from collection links.
-   * 
+   *
    * @param collectionInfo - Collection metadata
    * @returns Set of available resource types
    */
   private extractAvailableResources(collectionInfo: any): Set<string> {
     const resources = new Set<string>();
-    
+
     if (collectionInfo.links) {
       for (const link of collectionInfo.links) {
         if (link.rel && link.rel.includes('systems')) {
@@ -969,13 +997,13 @@ export class CSAPIQueryBuilder {
         // ... (check other resource types)
       }
     }
-    
+
     return resources;
   }
 
   /**
    * Validate resource is available in collection.
-   * 
+   *
    * @throws Error if resource not available
    */
   private validateResource(resourceType: string): void {
@@ -988,36 +1016,36 @@ export class CSAPIQueryBuilder {
 
   /**
    * Get systems collection URL.
-   * 
+   *
    * @param options - Query options
    * @returns Systems URL
-   * 
+   *
    * @example
    * builder.getSystems({ limit: 10, systemType: 'WeatherStation' })
    * // => 'https://api.com/collections/col1/systems?limit=10&systemType=WeatherStation'
    */
   getSystems(options?: SystemQueryOptions): string {
     this.validateResource('systems');
-    
+
     const url = buildResourceUrl(this.apiUrl, this.collectionId, 'systems');
     const qs = buildQueryString(options);
-    
+
     return qs ? `${url}?${qs}` : url;
   }
 
   /**
    * Get individual system URL.
-   * 
+   *
    * @param id - System ID
    * @returns System URL
-   * 
+   *
    * @example
    * builder.getSystem('sys-001')
    * // => 'https://api.com/collections/col1/systems/sys-001'
    */
   getSystem(id: string): string {
     this.validateResource('systems');
-    
+
     return buildResourceUrl(this.apiUrl, this.collectionId, 'systems', id);
   }
 }
@@ -1038,15 +1066,21 @@ import { parseAndValidateUrl } from './test-utils';
 
 describe('CSAPIQueryBuilder', () => {
   const mockEndpoint = {
-    apiUrl: 'https://example.com/api'
+    apiUrl: 'https://example.com/api',
   };
 
   const mockCollection = {
     id: 'weather-sensors',
     links: [
-      { rel: 'systems', href: 'https://example.com/api/collections/weather-sensors/systems' },
-      { rel: 'datastreams', href: 'https://example.com/api/collections/weather-sensors/datastreams' }
-    ]
+      {
+        rel: 'systems',
+        href: 'https://example.com/api/collections/weather-sensors/systems',
+      },
+      {
+        rel: 'datastreams',
+        href: 'https://example.com/api/collections/weather-sensors/datastreams',
+      },
+    ],
   };
 
   let builder: CSAPIQueryBuilder;
@@ -1070,7 +1104,7 @@ describe('CSAPIQueryBuilder', () => {
     it('extracts available resources from collection links', () => {
       // Access private property for testing (use type assertion)
       const resources = (builder as any).availableResources;
-      
+
       expect(resources.has('systems')).toBe(true);
       expect(resources.has('datastreams')).toBe(true);
     });
@@ -1083,11 +1117,16 @@ describe('CSAPIQueryBuilder', () => {
      */
     it('builds systems collection URL', () => {
       const url = builder.getSystems();
-      
+
       const { pathname, segments } = parseAndValidateUrl(url);
-      
+
       expect(pathname).toBe('/api/collections/weather-sensors/systems');
-      expect(segments).toEqual(['api', 'collections', 'weather-sensors', 'systems']);
+      expect(segments).toEqual([
+        'api',
+        'collections',
+        'weather-sensors',
+        'systems',
+      ]);
     });
 
     /**
@@ -1095,10 +1134,13 @@ describe('CSAPIQueryBuilder', () => {
      * @specification OGC 23-001 §7.2.2
      */
     it('adds query parameters', () => {
-      const url = builder.getSystems({ limit: 10, systemType: 'WeatherStation' });
-      
+      const url = builder.getSystems({
+        limit: 10,
+        systemType: 'WeatherStation',
+      });
+
       const { searchParams } = parseAndValidateUrl(url);
-      
+
       expect(searchParams.get('limit')).toBe('10');
       expect(searchParams.get('systemType')).toBe('WeatherStation');
     });
@@ -1109,8 +1151,10 @@ describe('CSAPIQueryBuilder', () => {
     it('throws error if systems not available', () => {
       const emptyCollection = { id: 'empty', links: [] };
       const emptyBuilder = new CSAPIQueryBuilder(emptyCollection, mockEndpoint);
-      
-      expect(() => emptyBuilder.getSystems()).toThrow('Resource type "systems" not available');
+
+      expect(() => emptyBuilder.getSystems()).toThrow(
+        'Resource type "systems" not available'
+      );
     });
   });
 
@@ -1121,10 +1165,16 @@ describe('CSAPIQueryBuilder', () => {
      */
     it('builds individual system URL', () => {
       const url = builder.getSystem('sys-001');
-      
+
       const { segments } = parseAndValidateUrl(url);
-      
-      expect(segments).toEqual(['api', 'collections', 'weather-sensors', 'systems', 'sys-001']);
+
+      expect(segments).toEqual([
+        'api',
+        'collections',
+        'weather-sensors',
+        'systems',
+        'sys-001',
+      ]);
     });
 
     /**
@@ -1133,8 +1183,10 @@ describe('CSAPIQueryBuilder', () => {
     it('throws error if systems not available', () => {
       const emptyCollection = { id: 'empty', links: [] };
       const emptyBuilder = new CSAPIQueryBuilder(emptyCollection, mockEndpoint);
-      
-      expect(() => emptyBuilder.getSystem('sys-001')).toThrow('Resource type "systems" not available');
+
+      expect(() => emptyBuilder.getSystem('sys-001')).toThrow(
+        'Resource type "systems" not available'
+      );
     });
   });
 });
@@ -1169,6 +1221,7 @@ npm test -- url_builder.spec.ts
 #### Task 1.4: OgcApiEndpoint Integration (3-4 hours)
 
 **Implementation Files:**
+
 - `src/ogc-api/endpoint.ts` (+35 lines)
 - `src/ogc-api/shared/info.ts` (+12 lines)
 - `src/ogc-api/index.ts` (+17 lines)
@@ -1182,25 +1235,27 @@ Modify `src/ogc-api/shared/info.ts`:
 ```typescript
 /**
  * Check if endpoint supports Connected Systems API.
- * 
+ *
  * @param endpoint - OGC API endpoint
  * @returns True if Connected Systems support detected
  */
 export function checkHasConnectedSystems(endpoint: OgcApiEndpoint): boolean {
   const conformance = endpoint.conformance;
-  
+
   // Check for CSAPI Part 1 Core conformance
-  const hasPart1 = conformance.some(uri => 
-    uri.includes('connected-systems/part1/core') ||
-    uri.includes('ogcapi-connectedsystems-1')
+  const hasPart1 = conformance.some(
+    (uri) =>
+      uri.includes('connected-systems/part1/core') ||
+      uri.includes('ogcapi-connectedsystems-1')
   );
-  
+
   // Check for CSAPI Part 2 Dynamic Data conformance
-  const hasPart2 = conformance.some(uri =>
-    uri.includes('connected-systems/part2/dynamic-data') ||
-    uri.includes('ogcapi-connectedsystems-2')
+  const hasPart2 = conformance.some(
+    (uri) =>
+      uri.includes('connected-systems/part2/dynamic-data') ||
+      uri.includes('ogcapi-connectedsystems-2')
   );
-  
+
   return hasPart1 && hasPart2;
 }
 ```
@@ -1219,8 +1274,8 @@ describe('checkHasConnectedSystems', () => {
       conformance: [
         'http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/api-common',
         'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/api-common',
-        'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/conf/datastream'
-      ]
+        'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/conf/datastream',
+      ],
     };
 
     expect(checkHasConnectedSystems(endpoint)).toBe(true);
@@ -1232,8 +1287,8 @@ describe('checkHasConnectedSystems', () => {
   it('returns false if Part 1 missing', () => {
     const endpoint = {
       conformance: [
-        'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/conf/datastream'
-      ]
+        'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/conf/datastream',
+      ],
     };
 
     expect(checkHasConnectedSystems(endpoint)).toBe(false);
@@ -1245,8 +1300,8 @@ describe('checkHasConnectedSystems', () => {
   it('returns false if Part 2 missing', () => {
     const endpoint = {
       conformance: [
-        'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/api-common'
-      ]
+        'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/api-common',
+      ],
     };
 
     expect(checkHasConnectedSystems(endpoint)).toBe(false);
@@ -1268,18 +1323,18 @@ export class OgcApiEndpoint {
 
   /**
    * Get collections that support Connected Systems API.
-   * 
+   *
    * @returns Array of CSAPI-enabled collection IDs
    */
   get csapiCollections(): string[] {
     return this._collections
-      .filter(col => this.isCSAPICollection(col))
-      .map(col => col.id);
+      .filter((col) => this.isCSAPICollection(col))
+      .map((col) => col.id);
   }
 
   /**
    * Check if endpoint has Connected Systems API support.
-   * 
+   *
    * @returns True if CSAPI supported
    */
   get hasConnectedSystems(): boolean {
@@ -1288,11 +1343,11 @@ export class OgcApiEndpoint {
 
   /**
    * Get CSAPI query builder for a collection.
-   * 
+   *
    * @param collectionId - Collection identifier
    * @returns CSAPI query builder instance
    * @throws Error if collection doesn't support CSAPI
-   * 
+   *
    * @example
    * const builder = endpoint.csapi('weather-sensors');
    * const url = builder.getSystems();
@@ -1304,29 +1359,33 @@ export class OgcApiEndpoint {
     }
 
     // Find collection
-    const collection = this._collections.find(c => c.id === collectionId);
+    const collection = this._collections.find((c) => c.id === collectionId);
     if (!collection) {
       throw new Error(`Collection "${collectionId}" not found`);
     }
 
     // Validate CSAPI support
     if (!this.isCSAPICollection(collection)) {
-      throw new Error(`Collection "${collectionId}" does not support Connected Systems API`);
+      throw new Error(
+        `Collection "${collectionId}" does not support Connected Systems API`
+      );
     }
 
     // Create and cache builder
     const builder = new CSAPIQueryBuilder(collection, this);
     this.csapiBuilderCache.set(collectionId, builder);
-    
+
     return builder;
   }
 
   private isCSAPICollection(collection: any): boolean {
     // Check collection links for CSAPI resources
-    return collection.links?.some((link: any) => 
-      link.rel?.includes('systems') ||
-      link.rel?.includes('datastreams')
-    ) ?? false;
+    return (
+      collection.links?.some(
+        (link: any) =>
+          link.rel?.includes('systems') || link.rel?.includes('datastreams')
+      ) ?? false
+    );
   }
 }
 ```
@@ -1342,13 +1401,12 @@ describe('OgcApiEndpoint - CSAPI Integration', () => {
      * Detects CSAPI support from endpoint conformance.
      */
     it('detects CSAPI support from conformance', async () => {
-      const endpoint = new OgcApiEndpoint(
-        'http://example.com/api',
-        { conformance: [
+      const endpoint = new OgcApiEndpoint('http://example.com/api', {
+        conformance: [
           'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/api-common',
-          'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/conf/datastream'
-        ]}
-      );
+          'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/conf/datastream',
+        ],
+      });
 
       expect(endpoint.hasConnectedSystems).toBe(true);
     });
@@ -1359,25 +1417,28 @@ describe('OgcApiEndpoint - CSAPI Integration', () => {
      * Returns collections with CSAPI support.
      */
     it('returns collections with CSAPI support', async () => {
-      const endpoint = new OgcApiEndpoint(
-        'http://example.com/api',
-        {
-          collections: [
-            {
-              id: 'weather-sensors',
-              links: [
-                { rel: 'systems', href: 'http://example.com/api/collections/weather-sensors/systems' }
-              ]
-            },
-            {
-              id: 'features-only',
-              links: [
-                { rel: 'items', href: 'http://example.com/api/collections/features-only/items' }
-              ]
-            }
-          ]
-        }
-      );
+      const endpoint = new OgcApiEndpoint('http://example.com/api', {
+        collections: [
+          {
+            id: 'weather-sensors',
+            links: [
+              {
+                rel: 'systems',
+                href: 'http://example.com/api/collections/weather-sensors/systems',
+              },
+            ],
+          },
+          {
+            id: 'features-only',
+            links: [
+              {
+                rel: 'items',
+                href: 'http://example.com/api/collections/features-only/items',
+              },
+            ],
+          },
+        ],
+      });
 
       expect(endpoint.csapiCollections).toEqual(['weather-sensors']);
     });
@@ -1388,15 +1449,14 @@ describe('OgcApiEndpoint - CSAPI Integration', () => {
      * Returns cached QueryBuilder instance.
      */
     it('returns cached QueryBuilder instance', async () => {
-      const endpoint = new OgcApiEndpoint(
-        'http://example.com/api',
-        {
-          collections: [{
+      const endpoint = new OgcApiEndpoint('http://example.com/api', {
+        collections: [
+          {
             id: 'weather-sensors',
-            links: [{ rel: 'systems', href: '...' }]
-          }]
-        }
-      );
+            links: [{ rel: 'systems', href: '...' }],
+          },
+        ],
+      });
 
       const builder1 = endpoint.csapi('weather-sensors');
       const builder2 = endpoint.csapi('weather-sensors');
@@ -1410,24 +1470,27 @@ describe('OgcApiEndpoint - CSAPI Integration', () => {
     it('throws error for non-existent collection', async () => {
       const endpoint = new OgcApiEndpoint('http://example.com/api', {});
 
-      expect(() => endpoint.csapi('nonexistent')).toThrow('Collection "nonexistent" not found');
+      expect(() => endpoint.csapi('nonexistent')).toThrow(
+        'Collection "nonexistent" not found'
+      );
     });
 
     /**
      * Throws error for non-CSAPI collection.
      */
     it('throws error for non-CSAPI collection', async () => {
-      const endpoint = new OgcApiEndpoint(
-        'http://example.com/api',
-        {
-          collections: [{
+      const endpoint = new OgcApiEndpoint('http://example.com/api', {
+        collections: [
+          {
             id: 'features-only',
-            links: [{ rel: 'items', href: '...' }]
-          }]
-        }
-      );
+            links: [{ rel: 'items', href: '...' }],
+          },
+        ],
+      });
 
-      expect(() => endpoint.csapi('features-only')).toThrow('does not support Connected Systems API');
+      expect(() => endpoint.csapi('features-only')).toThrow(
+        'does not support Connected Systems API'
+      );
     });
   });
 });
@@ -1446,7 +1509,7 @@ export {
   Observation,
   QueryOptions,
   SystemQueryOptions,
-  DataStreamQueryOptions
+  DataStreamQueryOptions,
 } from './csapi/model';
 
 // Export CSAPI QueryBuilder
@@ -1456,7 +1519,7 @@ export { CSAPIQueryBuilder } from './csapi/url_builder';
 export {
   buildResourceUrl,
   buildQueryString,
-  parseDatetime
+  parseDatetime,
 } from './csapi/helpers';
 ```
 
@@ -1489,6 +1552,7 @@ npm test -- csapi
 **When to Test:** Write tests for each resource type immediately after implementing methods
 
 **Pattern:** Each task follows same workflow:
+
 1. Add methods to QueryBuilder (45-60 min per resource type)
 2. Write tests immediately (60-90 min per resource type)
 3. Run tests and validate (15 min)
@@ -1503,20 +1567,20 @@ npm test -- csapi
 ```typescript
 /**
  * Get system's datastreams.
- * 
+ *
  * @param systemId - System ID
  * @param options - Query options
  * @returns DataStreams URL
- * 
+ *
  * @specification OGC 23-001 §7.2.3
- * 
+ *
  * @example
  * builder.getSystemDataStreams('sys-001', { limit: 10 })
  * // => 'https://api.com/collections/col1/systems/sys-001/datastreams?limit=10'
  */
 getSystemDataStreams(systemId: string, options?: DataStreamQueryOptions): string {
   this.validateResource('systems');
-  
+
   const url = buildResourceUrl(
     this.apiUrl,
     this.collectionId,
@@ -1524,23 +1588,23 @@ getSystemDataStreams(systemId: string, options?: DataStreamQueryOptions): string
     systemId,
     'datastreams'
   );
-  
+
   const qs = buildQueryString(options);
   return qs ? `${url}?${qs}` : url;
 }
 
 /**
  * Get system's subsystems.
- * 
+ *
  * @param systemId - System ID
  * @param options - Query options
  * @returns Subsystems URL
- * 
+ *
  * @specification OGC 23-001 §7.2.4
  */
 getSystemSubsystems(systemId: string, options?: SystemQueryOptions): string {
   this.validateResource('systems');
-  
+
   const url = buildResourceUrl(
     this.apiUrl,
     this.collectionId,
@@ -1548,23 +1612,23 @@ getSystemSubsystems(systemId: string, options?: SystemQueryOptions): string {
     systemId,
     'subsystems'
   );
-  
+
   const qs = buildQueryString(options);
   return qs ? `${url}?${qs}` : url;
 }
 
 /**
  * Get system's sampling features.
- * 
+ *
  * @param systemId - System ID
  * @param options - Query options
  * @returns SamplingFeatures URL
- * 
+ *
  * @specification OGC 23-001 §7.2.5
  */
 getSystemSamplingFeatures(systemId: string, options?: QueryOptions): string {
   this.validateResource('systems');
-  
+
   const url = buildResourceUrl(
     this.apiUrl,
     this.collectionId,
@@ -1572,7 +1636,7 @@ getSystemSamplingFeatures(systemId: string, options?: QueryOptions): string {
     systemId,
     'samplingFeatures'
   );
-  
+
   const qs = buildQueryString(options);
   return qs ? `${url}?${qs}` : url;
 }
@@ -1591,24 +1655,24 @@ describe('System Methods', () => {
      */
     it('builds system datastreams URL', () => {
       const url = builder.getSystemDataStreams('sys-001');
-      
+
       const { segments } = parseAndValidateUrl(url);
-      
+
       expect(segments).toEqual([
         'api',
         'collections',
         'weather-sensors',
         'systems',
         'sys-001',
-        'datastreams'
+        'datastreams',
       ]);
     });
 
     it('adds query parameters', () => {
       const url = builder.getSystemDataStreams('sys-001', { limit: 10 });
-      
+
       const { searchParams } = parseAndValidateUrl(url);
-      
+
       expect(searchParams.get('limit')).toBe('10');
     });
   });
@@ -1616,9 +1680,9 @@ describe('System Methods', () => {
   describe('getSystemSubsystems', () => {
     it('builds system subsystems URL', () => {
       const url = builder.getSystemSubsystems('sys-001');
-      
+
       const { segments } = parseAndValidateUrl(url);
-      
+
       expect(segments[segments.length - 1]).toBe('subsystems');
     });
   });
@@ -1636,6 +1700,7 @@ describe('System Methods', () => {
 > **Note:** For complete method lists per resource type (including all CRUD, navigation, and temporal methods), see [ROADMAP v3.0 Phase 2 tasks](../../../planning/ROADMAP.md).
 
 **Follow same pattern for:**
+
 - Task 2.2: DataStreams Methods (2-3 hours, ~10 methods)
 - Task 2.3: Observations Methods (3-4 hours, ~12 methods - most complex)
 - Task 2.4: Deployments Methods (2-3 hours, ~8 methods)
@@ -1646,6 +1711,7 @@ describe('System Methods', () => {
 - Task 2.9: Commands Methods (2-3 hours, ~8 methods)
 
 **Each task:**
+
 1. Implement methods (~45-60 min)
 2. Write tests (~60-90 min)
 3. Run tests (~15 min)
@@ -1723,9 +1789,9 @@ describe('SWE Common Parser', () => {
      */
     it('parses simple DataRecord', () => {
       const fixture = loadFixture('swe-common/datarecord-simple.json');
-      
+
       const result = parseDataRecord(fixture);
-      
+
       expect(result.type).toBe('DataRecord');
       expect(result.fields).toHaveLength(3);
       expect(result.fields[0].name).toBe('temperature');
@@ -1738,9 +1804,9 @@ describe('SWE Common Parser', () => {
      */
     it('parses nested DataRecord', () => {
       const fixture = loadFixture('swe-common/datarecord-nested.json');
-      
+
       const result = parseDataRecord(fixture);
-      
+
       expect(result.fields[0].type).toBe('DataRecord');
       expect(result.fields[0].fields).toHaveLength(2);
     });
@@ -1755,6 +1821,7 @@ describe('SWE Common Parser', () => {
 #### Subtask 3.6-3.10: SensorML Parser (6-10 hours)
 
 **Same incremental pattern:**
+
 - Subtask 3.6: SimpleProcess (2-3 hours)
 - Subtask 3.7: PhysicalSystem (2-3 hours)
 - Subtask 3.8: PhysicalComponent (2-3 hours)
@@ -1786,7 +1853,7 @@ npm test -- parsers
 #     parseVector (4 tests)
 #     parseMatrix (4 tests)
 #     parseChoice (4 tests)
-# 
+#
 # PASS src/ogc-api/csapi/parsers/sensorml-parser.spec.ts
 #   SensorML Parser
 #     parseSimpleProcess (6 tests)
@@ -1830,7 +1897,7 @@ describe('Worker - CSAPI Support', () => {
   it('handles SWE Common parsing', async () => {
     const message = {
       type: 'PARSE_SWE_COMMON',
-      data: sweCommonFixture
+      data: sweCommonFixture,
     };
 
     const result = await worker.handleMessage(message);
@@ -1845,7 +1912,7 @@ describe('Worker - CSAPI Support', () => {
   it('handles SensorML parsing', async () => {
     const message = {
       type: 'PARSE_SENSORML',
-      data: sensorMLFixture
+      data: sensorMLFixture,
     };
 
     const result = await worker.handleMessage(message);
@@ -1880,7 +1947,7 @@ describe('Worker - CSAPI Support', () => {
 describe('CSAPI Integration - Discovery Workflow', () => {
   /**
    * Complete discovery workflow: endpoint → collection → systems → datastreams → observations.
-   * 
+   *
    * @specification OGC 23-001 (all parts)
    * @fixture csapi/collections/collection-weather-sensors.json
    * @fixture csapi/systems/system-weather-station-001.json
@@ -1914,7 +1981,7 @@ describe('CSAPI Integration - Discovery Workflow', () => {
 
     // Step 6: Get datastream observations
     const obsUrl = builder.getDataStreamObservations('ds-temp-001', {
-      datetime: '2024-01-15/2024-01-16'
+      datetime: '2024-01-15/2024-01-16',
     });
     expect(obsUrl).toContain('/datastreams/ds-temp-001/observations');
     expect(obsUrl).toContain('datetime=2024-01-15');
@@ -1922,7 +1989,7 @@ describe('CSAPI Integration - Discovery Workflow', () => {
 
   /**
    * Observation query workflow with temporal filtering.
-   * 
+   *
    * @specification OGC 23-002 §8.2
    */
   it('queries observations with temporal filters', async () => {
@@ -1937,7 +2004,7 @@ describe('CSAPI Integration - Discovery Workflow', () => {
     const url = builder.getObservations({
       datetime: '2024-01-15T00:00:00Z/2024-01-15T23:59:59Z',
       observedProperty: 'temperature',
-      limit: 100
+      limit: 100,
     });
 
     const { searchParams } = parseAndValidateUrl(url);
@@ -1950,6 +2017,7 @@ describe('CSAPI Integration - Discovery Workflow', () => {
 ```
 
 **Create 8-10 integration tests covering:**
+
 - Discovery workflow
 - Observation query workflow
 - Command execution workflow
@@ -1964,6 +2032,7 @@ describe('CSAPI Integration - Discovery Workflow', () => {
 #### Task 4.3: Documentation (2-3 hours)
 
 **Create:**
+
 - `docs/CSAPI.md` - User guide
 - `docs/API.md` - API reference (update)
 - README updates
@@ -1992,6 +2061,7 @@ npm run test:coverage
 ```
 
 **Manual validation:**
+
 - All ROADMAP tasks checked off
 - All research section recommendations implemented
 - Quality checklist passed
@@ -2058,6 +2128,7 @@ describe('[ResourceType] Methods', () => {
 ```
 
 **Key Points:**
+
 - ✅ Use `parseAndValidateUrl()` in every test
 - ✅ Test collection URL (no params)
 - ✅ Test with query parameters
@@ -2083,7 +2154,7 @@ describe('[ParserName] Parser', () => {
     it('parses simple [type]', () => {
       const fixture = loadFixture('[fixture-path]');
       const result = parse[Type](fixture);
-      
+
       expect(result.type).toBe('[ExpectedType]');
       expect(result.fields).toHaveLength(expectedCount);
       expect(result.fields[0].name).toBe('expectedName');
@@ -2092,7 +2163,7 @@ describe('[ParserName] Parser', () => {
     it('parses nested [type] (1-2 levels)', () => {
       const fixture = loadFixture('[nested-fixture]');
       const result = parse[Type](fixture);
-      
+
       expect(result.fields[0].type).toBe('[NestedType]');
       expect(result.fields[0].fields).toHaveLength(expectedCount);
     });
@@ -2100,7 +2171,7 @@ describe('[ParserName] Parser', () => {
     it('infers TypeScript types from [type]', () => {
       const fixture = loadFixture('[fixture-path]');
       const result = parse[Type](fixture);
-      
+
       expect(result.fields[0].typeInfo.tsType).toBe('number');
       expect(result.fields[1].typeInfo.tsType).toBe('string');
     });
@@ -2108,7 +2179,7 @@ describe('[ParserName] Parser', () => {
     it('handles missing optional fields', () => {
       const minimal = { ...minimalFixture };
       const result = parse[Type](minimal);
-      
+
       expect(result).toBeDefined();
       expect(result.optionalField).toBeUndefined();
     });
@@ -2122,6 +2193,7 @@ describe('[ParserName] Parser', () => {
 ```
 
 **Key Points:**
+
 - ✅ Test simple structures
 - ✅ Test nested structures (1-2 levels minimum)
 - ✅ Test type inference
@@ -2140,7 +2212,7 @@ describe('[ParserName] Parser', () => {
 describe('Integration - [Workflow Name]', () => {
   /**
    * Complete [workflow] workflow: step1 → step2 → step3 → step4.
-   * 
+   *
    * @specification [specs involved]
    * @fixture [fixture1]
    * @fixture [fixture2]
@@ -2178,6 +2250,7 @@ describe('Integration - [Workflow Name]', () => {
 ```
 
 **Key Points:**
+
 - ✅ Test complete workflows (3+ operations)
 - ✅ Use realistic fixtures
 - ✅ Validate each step
@@ -2226,6 +2299,7 @@ describe('[UtilityName] Utility', () => {
 > The original pattern included a performance timing test (`performance.now()` with `expect(duration).toBeLessThan(100)`). Per Doc 33 and project-wide decision, **performance testing will NOT be implemented**. Upstream `ogc-client` has ZERO performance tests. Do not add performance assertions to test utilities.
 
 **Key Points:**
+
 - ✅ Test typical case
 - ✅ Test empty input
 - ✅ Test null/undefined
@@ -2245,7 +2319,7 @@ describe('Worker - [Feature]', () => {
   it('handles [message type] message', async () => {
     const message = {
       type: '[MESSAGE_TYPE]',
-      data: testData
+      data: testData,
     };
 
     const result = await worker.handleMessage(message);
@@ -2257,7 +2331,7 @@ describe('Worker - [Feature]', () => {
   it('handles async operations', async () => {
     const message = {
       type: 'ASYNC_OPERATION',
-      data: testData
+      data: testData,
     };
 
     const promise = worker.handleMessage(message);
@@ -2272,7 +2346,7 @@ describe('Worker - [Feature]', () => {
   it('propagates errors correctly', async () => {
     const message = {
       type: '[MESSAGE_TYPE]',
-      data: invalidData
+      data: invalidData,
     };
 
     const result = await worker.handleMessage(message);
@@ -2285,6 +2359,7 @@ describe('Worker - [Feature]', () => {
 ```
 
 **Key Points:**
+
 - ✅ Test message handling
 - ✅ Test async operations
 - ✅ Test error propagation
@@ -2313,14 +2388,17 @@ import { parseAndValidateUrl } from './test-utils';
 describe('CSAPIQueryBuilder', () => {
   // Setup mock data
   const mockEndpoint = {
-    apiUrl: 'https://example.com/api'
+    apiUrl: 'https://example.com/api',
   };
 
   const mockCollection = {
     id: 'weather-sensors',
     links: [
-      { rel: 'systems', href: 'https://example.com/api/collections/weather-sensors/systems' }
-    ]
+      {
+        rel: 'systems',
+        href: 'https://example.com/api/collections/weather-sensors/systems',
+      },
+    ],
   };
 
   let builder: CSAPIQueryBuilder;
@@ -2337,12 +2415,17 @@ describe('CSAPIQueryBuilder', () => {
     it('builds systems collection URL', () => {
       // ACT: Call the method
       const url = builder.getSystems();
-      
+
       // ASSERT: Validate URL structure using parseAndValidateUrl
       const { pathname, segments } = parseAndValidateUrl(url);
-      
+
       expect(pathname).toBe('/api/collections/weather-sensors/systems');
-      expect(segments).toEqual(['api', 'collections', 'weather-sensors', 'systems']);
+      expect(segments).toEqual([
+        'api',
+        'collections',
+        'weather-sensors',
+        'systems',
+      ]);
     });
   });
 });
@@ -2406,7 +2489,7 @@ Create `src/ogc-api/csapi/parsers/swe-common-parser.ts`:
 ```typescript
 /**
  * Parse SWE Common DataRecord.
- * 
+ *
  * @param data - DataRecord JSON
  * @returns Parsed DataRecord structure
  */
@@ -2419,8 +2502,8 @@ export function parseDataRecord(data: any): any {
       name: f.name,
       type: f.type,
       definition: f.definition,
-      uom: f.uom
-    }))
+      uom: f.uom,
+    })),
   };
 }
 ```
@@ -2448,10 +2531,10 @@ describe('SWE Common Parser', () => {
     it('parses simple DataRecord', () => {
       // ARRANGE: Load fixture
       const fixture = loadFixture('swe-common/datarecord-simple.json');
-      
+
       // ACT: Parse fixture
       const result = parseDataRecord(fixture);
-      
+
       // ASSERT: Validate structure
       expect(result.type).toBe('DataRecord');
       expect(result.label).toBe('Weather Observation');
@@ -2526,22 +2609,21 @@ import { loadFixture } from '../test-utils';
 describe('CSAPI Integration - Discovery Workflow', () => {
   /**
    * Complete discovery workflow: endpoint → collection → systems → datastreams.
-   * 
+   *
    * @specification OGC 23-001 (Part 1), OGC 23-002 (Part 2)
    * @fixture collections/collection-weather-sensors.json
    * @coverage Discovery and navigation workflow
    */
   it('discovers CSAPI capabilities and navigates resources', async () => {
     // STEP 1: Load endpoint with CSAPI collection
-    const collectionFixture = loadFixture('collections/collection-weather-sensors.json');
-    
-    const endpoint = new OgcApiEndpoint(
-      'https://example.com/api',
-      {
-        conformance: collectionFixture.conformance,
-        collections: [collectionFixture]
-      }
+    const collectionFixture = loadFixture(
+      'collections/collection-weather-sensors.json'
     );
+
+    const endpoint = new OgcApiEndpoint('https://example.com/api', {
+      conformance: collectionFixture.conformance,
+      collections: [collectionFixture],
+    });
 
     // STEP 2: Validate CSAPI detection
     expect(endpoint.hasConnectedSystems).toBe(true);
@@ -2562,7 +2644,9 @@ describe('CSAPI Integration - Discovery Workflow', () => {
     // STEP 5: Build datastreams URL
     const datastreamsUrl = builder.getDataStreams();
 
-    expect(datastreamsUrl).toContain('/collections/weather-sensors/datastreams');
+    expect(datastreamsUrl).toContain(
+      '/collections/weather-sensors/datastreams'
+    );
 
     // STEP 6: Build nested URL (system → datastreams)
     const systemDatastreamsUrl = builder.getSystemDataStreams('sys-001');
@@ -2601,6 +2685,7 @@ npm test -- integration/discovery.spec.ts
 ## Test Quality Self-Review
 
 ### Meaningful Tests (5 items)
+
 - [ ] Tests validate real behavior (not mocks)
 - [ ] Tests use `parseAndValidateUrl()` for URL validation
 - [ ] Tests check URL structure (segments, parameters)
@@ -2608,12 +2693,14 @@ npm test -- integration/discovery.spec.ts
 - [ ] Tests have clear purpose documented in JSDoc
 
 ### Useful Tests (4 items)
+
 - [ ] Tests would catch real bugs
 - [ ] Validated by intentionally breaking code
 - [ ] Tests fail when implementation is wrong
 - [ ] Tests cover edge cases
 
 ### Deep Coverage (6 items)
+
 - [ ] Statement coverage >85%
 - [ ] Branch coverage >80%
 - [ ] All public methods tested
@@ -2622,18 +2709,21 @@ npm test -- integration/discovery.spec.ts
 - [ ] Nested structures tested (if applicable)
 
 ### End-to-End Workflows (4 items)
+
 - [ ] Integration tests cover 3+ operations
 - [ ] Tests use real fixtures from spec
 - [ ] Tests validate complete workflows
 - [ ] Tests demonstrate value to users
 
 ### Documentation (4 items)
+
 - [ ] @specification tags present
 - [ ] @fixture tags present (if using fixtures)
 - [ ] JSDoc describes test purpose
 - [ ] Complex logic explained
 
 ### Code Quality (4 items)
+
 - [ ] No trivial assertions (toBeTruthy, toBeDefined alone)
 - [ ] Clear test names
 - [ ] Proper arrange/act/assert structure
@@ -2670,6 +2760,7 @@ npm run test:coverage
 **Issue 1: Trivial Test**
 
 ❌ **BAD:**
+
 ```typescript
 it('returns URL', () => {
   const url = builder.getSystems();
@@ -2678,35 +2769,43 @@ it('returns URL', () => {
 ```
 
 ✅ **GOOD:**
+
 ```typescript
 it('builds systems collection URL with correct structure', () => {
   const url = builder.getSystems();
   const { pathname, segments } = parseAndValidateUrl(url);
-  
+
   expect(pathname).toBe('/api/collections/weather-sensors/systems');
-  expect(segments).toEqual(['api', 'collections', 'weather-sensors', 'systems']);
+  expect(segments).toEqual([
+    'api',
+    'collections',
+    'weather-sensors',
+    'systems',
+  ]);
 });
 ```
 
 **Issue 2: Testing Mocks Instead of Behavior**
 
 ❌ **BAD:**
+
 ```typescript
 it('calls parser', () => {
   const mockParser = jest.fn().mockReturnValue({ type: 'DataRecord' });
   const result = processData(data, mockParser);
-  
+
   expect(mockParser).toHaveBeenCalled();
   expect(result.type).toBe('DataRecord');
 });
 ```
 
 ✅ **GOOD:**
+
 ```typescript
 it('parses DataRecord and extracts fields', () => {
   const fixture = loadFixture('swe-common/datarecord-simple.json');
   const result = parseDataRecord(fixture);
-  
+
   expect(result.type).toBe('DataRecord');
   expect(result.fields).toHaveLength(2);
   expect(result.fields[0].name).toBe('temperature');
@@ -2716,6 +2815,7 @@ it('parses DataRecord and extracts fields', () => {
 **Issue 3: Missing Edge Cases**
 
 ❌ **BAD:**
+
 ```typescript
 it('builds query string', () => {
   const qs = buildQueryString({ limit: 10 });
@@ -2724,6 +2824,7 @@ it('builds query string', () => {
 ```
 
 ✅ **GOOD:**
+
 ```typescript
 describe('buildQueryString', () => {
   it('builds query string from parameters', () => {
@@ -2751,6 +2852,7 @@ describe('buildQueryString', () => {
 **Issue 4: Missing @specification Tags**
 
 ❌ **BAD:**
+
 ```typescript
 it('gets systems', () => {
   const url = builder.getSystems();
@@ -2759,6 +2861,7 @@ it('gets systems', () => {
 ```
 
 ✅ **GOOD:**
+
 ```typescript
 /**
  * Builds systems collection URL per spec.
@@ -2820,36 +2923,43 @@ npm test -- url_builder.spec.ts
 ### 6.1 Daily Commands
 
 **Run all tests:**
+
 ```bash
 npm test
 ```
 
 **Run specific test file:**
+
 ```bash
 npm test -- url_builder.spec.ts
 ```
 
 **Run tests matching pattern:**
+
 ```bash
 npm test -- --testNamePattern="getSystems"
 ```
 
 **Run tests for specific folder:**
+
 ```bash
 npm test -- csapi/
 ```
 
 **Watch mode (re-run on file changes):**
+
 ```bash
 npm test -- --watch
 ```
 
 **Run tests with coverage:**
+
 ```bash
 npm run test:coverage
 ```
 
 **View coverage report:**
+
 ```bash
 # Open in browser
 start coverage/lcov-report/index.html  # Windows
@@ -2859,21 +2969,25 @@ open coverage/lcov-report/index.html   # Mac
 ### 6.2 Debugging Commands
 
 **Debug specific test:**
+
 ```bash
 node --inspect-brk node_modules/.bin/jest --runInBand url_builder.spec.ts
 ```
 
 **Run single test:**
+
 ```bash
 npm test -- url_builder.spec.ts --testNamePattern="builds systems collection URL"
 ```
 
 **Verbose output:**
+
 ```bash
 npm test -- --verbose
 ```
 
 **Show test timing:**
+
 ```bash
 npm test -- --verbose --testTimeout=10000
 ```
@@ -2881,6 +2995,7 @@ npm test -- --verbose --testTimeout=10000
 ### 6.3 Coverage Commands
 
 **Check coverage thresholds:**
+
 ```bash
 npm run test:coverage
 
@@ -2894,11 +3009,13 @@ npm run test:coverage
 ```
 
 **Generate coverage for specific files:**
+
 ```bash
 npm test -- --coverage --collectCoverageFrom="src/ogc-api/csapi/**/*.ts"
 ```
 
 **Coverage by file:**
+
 ```bash
 npm test -- --coverage --verbose
 ```
@@ -2910,11 +3027,13 @@ npm test -- --coverage --verbose
 > Per Doc 33, performance testing will NOT be implemented. Upstream `ogc-client` has ZERO performance tests. The commands below are retained for reference only — do not implement performance test infrastructure.
 
 **Profile test execution:**
+
 ```bash
 npm test -- --logHeapUsage
 ```
 
 **Check slow tests:**
+
 ```bash
 npm test -- --verbose | grep "ms)" | sort -rn
 ```
@@ -2922,11 +3041,13 @@ npm test -- --verbose | grep "ms)" | sort -rn
 ### 6.5 Fixture Commands
 
 **Validate all fixtures:**
+
 ```bash
 npm run fixtures:validate
 ```
 
 **Validate specific fixtures:**
+
 ```bash
 npm run fixtures:validate -- --resource systems
 ```
@@ -2974,18 +3095,21 @@ npm run fixtures:validate -- --resource systems
 **Phase 1: Core Structure** _(example of completed format)_
 
 - [ ] Task 1.1: Type System ✅
+
   - [x] model.ts created (~350-400 lines)
   - [x] model.spec.ts created (~200-300 lines)
   - [x] All tests passing
   - [x] Coverage >80% (ROADMAP minimum)
 
 - [ ] Task 1.2: Helper Utilities ✅
+
   - [x] helpers.ts created (~50-80 lines)
   - [x] helpers.spec.ts created (~150-200 lines)
   - [x] All tests passing
   - [x] Coverage >80% (ROADMAP minimum)
 
 - [ ] Task 1.3: Stub QueryBuilder ✅
+
   - [x] url_builder.ts created (~100-150 lines)
   - [x] url_builder.spec.ts created (~100-150 lines)
   - [x] All tests passing
@@ -3001,6 +3125,7 @@ npm run fixtures:validate -- --resource systems
 **Phase 2: QueryBuilder**
 
 - [ ] 9 resource types completed
+
   - [ ] Systems (12 methods, 24 tests)
   - [ ] DataStreams (10 methods, 22 tests)
   - [ ] Observations (14 methods, 28 tests)
@@ -3035,13 +3160,13 @@ npm run fixtures:validate -- --resource systems
 
 > **Note:** ROADMAP v3.0 specifies **>80% statement and branch coverage** as the minimum requirement. The targets below are stretch goals — meeting the ROADMAP minimum is sufficient for completion.
 
-| Component | Minimum (ROADMAP) | Stretch Goal |
-|-----------|-------------------|---------------|
-| QueryBuilder | >80% stmt, >80% branch | 92% stmt, 88% branch |
-| Parsers | >80% stmt, >80% branch | 88% stmt, 82% branch |
-| Integration | >80% stmt, >80% branch | 90% stmt, 85% branch |
-| Utilities | >80% stmt, >80% branch | 95% stmt, 90% branch |
-| **Overall** | **>80% stmt, >80% branch** | **90% stmt, 85% branch** |
+| Component    | Minimum (ROADMAP)          | Stretch Goal             |
+| ------------ | -------------------------- | ------------------------ |
+| QueryBuilder | >80% stmt, >80% branch     | 92% stmt, 88% branch     |
+| Parsers      | >80% stmt, >80% branch     | 88% stmt, 82% branch     |
+| Integration  | >80% stmt, >80% branch     | 90% stmt, 85% branch     |
+| Utilities    | >80% stmt, >80% branch     | 95% stmt, 90% branch     |
+| **Overall**  | **>80% stmt, >80% branch** | **90% stmt, 85% branch** |
 
 **Measuring Progress:**
 
@@ -3077,21 +3202,25 @@ open coverage/lcov-report/index.html
 ## Phase Status
 
 ### ✅ Phase 1: Core Structure (COMPLETE)
+
 - Duration: 14 hours actual / 12-16 estimated
 - Tests: 35 passing
 - Coverage: 91%
 
 ### ✅ Phase 2: QueryBuilder (COMPLETE)
+
 - Duration: 24 hours actual / 20-28 estimated
 - Tests: 184 passing
 - Coverage: 92%
 
 ### ✅ Phase 3: Format Handling (COMPLETE)
+
 - Duration: 22 hours actual / 16-28 estimated
 - Tests: 54 passing
 - Coverage: 88%
 
 ### 🔄 Phase 4: Worker & Tests (IN PROGRESS)
+
 - Duration: 8 hours / 12-16 estimated
 - Tests: 47 / 57 target
 - Coverage: 86%
@@ -3119,6 +3248,7 @@ Received: ['api', 'collections', 'weather-sensors', 'systems', '']
 
 **Cause:** Trailing slash in URL
 **Fix:**
+
 ```typescript
 // Remove trailing slash from baseUrl
 const url = baseUrl.replace(/\/$/, '');
@@ -3130,13 +3260,14 @@ const url = baseUrl.replace(/\/$/, '');
 
 **Cause:** Collection links don't include systems resource
 **Fix:**
+
 ```typescript
 // Check collection fixture has correct links
 const mockCollection = {
   id: 'weather-sensors',
   links: [
-    { rel: 'systems', href: '...' }  // ← Add this
-  ]
+    { rel: 'systems', href: '...' }, // ← Add this
+  ],
 };
 ```
 
@@ -3150,6 +3281,7 @@ Error: Cannot find module '../../../../fixtures/csapi/systems/system-001.json'
 
 **Cause:** Fixture file missing or incorrect path
 **Fix:**
+
 ```bash
 # Check fixture exists
 ls fixtures/csapi/sample-server/systems/
@@ -3187,7 +3319,7 @@ console.log('Fixture:', JSON.stringify(fixture, null, 2));
 // Ensure mocks match real data structure
 const mockCollection = {
   id: 'test',
-  links: [{ rel: 'systems', href: 'http://example.com/systems' }]
+  links: [{ rel: 'systems', href: 'http://example.com/systems' }],
 };
 console.log('Mock:', mockCollection);
 ```
@@ -3202,10 +3334,11 @@ console.log('Mock:', mockCollection);
 
 **Cause:** Loading too many fixtures or inefficient tests
 **Fix:**
+
 ```typescript
 // Cache fixtures
 const fixtures = {
-  system: loadFixture('systems/system-001.json')
+  system: loadFixture('systems/system-001.json'),
 };
 
 // Use beforeAll instead of beforeEach
@@ -3218,6 +3351,7 @@ beforeAll(() => {
 
 **Cause:** Not cleaning up after tests
 **Fix:**
+
 ```typescript
 afterEach(() => {
   // Clear caches
@@ -3229,6 +3363,7 @@ afterEach(() => {
 ### 8.4 Where to Get Help
 
 **Documentation:**
+
 - Section 1: EDR Test Blueprint (patterns)
 - Section 12: QueryBuilder Testing (URL validation)
 - Section 34: Test Utilities (helper functions)
@@ -3236,16 +3371,19 @@ afterEach(() => {
 - Section 36: Quality Checklist (validation)
 
 **Code Examples:**
+
 - `src/ogc-api/features/` (upstream patterns)
 - `src/ogc-api/edr/` (EDR implementation)
 - `src/ogc-api/csapi/` (CSAPI tests)
 
 **Team Resources:**
+
 - Tech lead: Architecture questions
 - Component maintainer: Component-specific questions
 - Documentation maintainer: Documentation questions
 
 **External Resources:**
+
 - Jest documentation: https://jestjs.io/docs/getting-started
 - TypeScript testing: https://www.typescriptlang.org/docs/handbook/testing.html
 - CSAPI spec: https://docs.ogc.org/is/23-001/23-001.html
@@ -3283,6 +3421,7 @@ const endpoint = createMockEndpoint({ id: 'col1', links: [] });
 ### 9.2 JSDoc Templates
 
 **Test File Header:**
+
 ```typescript
 /**
  * @fileoverview Tests for [component name]
@@ -3292,10 +3431,11 @@ const endpoint = createMockEndpoint({ id: 'col1', links: [] });
 ```
 
 **Test Case:**
+
 ```typescript
 /**
  * [Test description].
- * 
+ *
  * @specification OGC [spec] §[section]
  * @fixture [fixture-path] (if using fixture)
  * @coverage [coverage area]
@@ -3308,6 +3448,7 @@ it('[test name]', () => {
 ### 9.3 Quality Checklist (Quick Reference)
 
 **Minimum Requirements:**
+
 - ✅ Tests validate behavior (not mocks)
 - ✅ URL tests use parseAndValidateUrl()
 - ✅ Tests catch bugs (validated by breaking code)
@@ -3362,6 +3503,7 @@ it('[test name]', () => {
 > **Reference:** See [Section 20: Regression Testing Strategy](20-regression-testing-strategy.md) for comprehensive regression prevention approaches.
 
 **Before adding CSAPI code:**
+
 1. Run full existing test suite (`npm test`) — all existing tests must pass
 2. After adding CSAPI code, run full suite again — no existing tests should break
 3. If existing tests fail, the CSAPI addition has introduced a regression — fix before proceeding
@@ -3400,6 +3542,7 @@ npm run fixtures:validate
 ```
 
 **Review:**
+
 - All tests passing?
 - Coverage maintained?
 - No test rot detected?
@@ -3421,9 +3564,10 @@ npm run fixtures:validate
 ✅ **Progress tracking** mechanisms and completion criteria  
 ✅ **Troubleshooting** guides and debugging strategies  
 ✅ **Quick reference** for specifications, utilities, templates  
-✅ **Maintenance** workflows for ongoing test health  
+✅ **Maintenance** workflows for ongoing test health
 
 **How to use:**
+
 1. Start with Phase 1 (Part 2)
 2. Follow step-by-step workflows
 3. Reference component patterns (Part 3) as needed
@@ -3434,6 +3578,7 @@ npm run fixtures:validate
 8. Maintain (Part 10) long-term
 
 **Next Steps:**
+
 - Begin Phase 1, Task 1.1 (Type System)
 - Create first test file
 - Follow step-by-step workflow
@@ -3441,6 +3586,7 @@ npm run fixtures:validate
 - Move to next task
 
 **Testing Principles:**
+
 - **Meaningful:** Validate real behavior, not mocks
 - **Useful:** Catch real bugs (validated by breaking code)
 - **Deep:** Comprehensive coverage (>80% statement, >80% branch per ROADMAP)

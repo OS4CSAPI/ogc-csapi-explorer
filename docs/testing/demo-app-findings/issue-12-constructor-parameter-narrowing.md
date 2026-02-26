@@ -34,7 +34,7 @@ Per the [AI Operational Constraints](https://github.com/OS4CSAPI/ogc-client-CSAP
 
 This report does not propose behavioral modifications to the library without approval. All recommendations distinguish between **fact** (verified), **inference** (reasoned), and **proposal** (requires approval), per Section 3 of the constraints.
 
-**Key constraint assessment for this issue:** Section 2.2 of the AI Operational Constraints states: *"Do not introduce new abstractions, layers, or dependencies without approval."* Issue #12 proposes narrowing an existing parameter type using TypeScript's built-in `Pick<>` utility. This does **not** introduce a new abstraction, layer, or dependency — it tightens an existing type signature. Section 2.2 is **not triggered** by this change. However, Section 2.2 also states: *"Prefer minimal diffs over idealized rewrites."* This is relevant — the change should be minimal and targeted.
+**Key constraint assessment for this issue:** Section 2.2 of the AI Operational Constraints states: _"Do not introduce new abstractions, layers, or dependencies without approval."_ Issue #12 proposes narrowing an existing parameter type using TypeScript's built-in `Pick<>` utility. This does **not** introduce a new abstraction, layer, or dependency — it tightens an existing type signature. Section 2.2 is **not triggered** by this change. However, Section 2.2 also states: _"Prefer minimal diffs over idealized rewrites."_ This is relevant — the change should be minimal and targeted.
 
 ---
 
@@ -42,17 +42,17 @@ This report does not propose behavioral modifications to the library without app
 
 **Issue #12 proposes narrowing the `CSAPIQueryBuilder` constructor's `collection_` parameter from the full `OgcApiCollectionInfo` interface (25+ fields) to `Pick<OgcApiCollectionInfo, 'id' | 'title' | 'links'>` (3 fields). This is a type-only change with zero behavioral impact that improves the library's API ergonomics for consumers who construct builders outside of `OgcApiEndpoint`.**
 
-| Aspect | Assessment |
-|--------|------------|
-| **Change type** | Type signature narrowing — no behavioral change |
-| **Scope** | 1 line in `url_builder.ts` (constructor parameter type annotation) |
-| **Production behavior modified** | **No** — zero runtime impact; the constructor's logic does not change |
-| **Existing tests affected** | **None** — all existing tests pass without modification (they pass full `OgcApiCollectionInfo` objects, which satisfy the narrower type) |
-| **Risk to library integrity** | **None** — fully backward-compatible; `OgcApiCollectionInfo` is a supertype of `Pick<OgcApiCollectionInfo, 'id' | 'title' | 'links'>`, so existing callers compile without change |
-| **New abstraction introduced** | **No** — uses TypeScript's built-in `Pick<>` utility type, not a new interface |
-| **Upstream pattern precedent** | **Positive** — narrowing parameter types is standard TypeScript practice; no upstream module requires broader types than it uses |
-| **AI Constraints trigger** | **No** — Section 2.2 ("no new abstractions") does not apply to type narrowing |
-| **Priority ranking** | #8 in upstream-findings.md (Medium severity, Low effort) — "Should Address" category |
+| Aspect                           | Assessment                                                                                                                               |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------- |
+| **Change type**                  | Type signature narrowing — no behavioral change                                                                                          |
+| **Scope**                        | 1 line in `url_builder.ts` (constructor parameter type annotation)                                                                       |
+| **Production behavior modified** | **No** — zero runtime impact; the constructor's logic does not change                                                                    |
+| **Existing tests affected**      | **None** — all existing tests pass without modification (they pass full `OgcApiCollectionInfo` objects, which satisfy the narrower type) |
+| **Risk to library integrity**    | **None** — fully backward-compatible; `OgcApiCollectionInfo` is a supertype of `Pick<OgcApiCollectionInfo, 'id'                          | 'title' | 'links'>`, so existing callers compile without change |
+| **New abstraction introduced**   | **No** — uses TypeScript's built-in `Pick<>` utility type, not a new interface                                                           |
+| **Upstream pattern precedent**   | **Positive** — narrowing parameter types is standard TypeScript practice; no upstream module requires broader types than it uses         |
+| **AI Constraints trigger**       | **No** — Section 2.2 ("no new abstractions") does not apply to type narrowing                                                            |
+| **Priority ranking**             | #8 in upstream-findings.md (Medium severity, Low effort) — "Should Address" category                                                     |
 
 **Key findings from this review:**
 
@@ -221,11 +221,11 @@ private assertResourceAvailable(resourceType: string): void {
 
 ### 4.5 Complete `collection_` Usage Inventory
 
-| Location | Field Accessed | Purpose |
-|----------|---------------|---------|
-| L139 (`extractBaseUrl`) | `.links` | Scans for `self` link to determine base URL |
-| L176 (`extractAvailableResources`) | `.links` | Passes to `scanCsapiLinks()` for resource discovery |
-| L273 (`assertResourceAvailable`) | `.id` | Error message: "Collection '{id}' does not support..." |
+| Location                           | Field Accessed | Purpose                                                |
+| ---------------------------------- | -------------- | ------------------------------------------------------ |
+| L139 (`extractBaseUrl`)            | `.links`       | Scans for `self` link to determine base URL            |
+| L176 (`extractAvailableResources`) | `.links`       | Passes to `scanCsapiLinks()` for resource discovery    |
+| L273 (`assertResourceAvailable`)   | `.id`          | Error message: "Collection '{id}' does not support..." |
 
 **Total fields actually accessed: 2** (`id` and `links`). The field `title` is **never accessed**.
 
@@ -256,18 +256,18 @@ function makeCollection(
   return {
     links: [],
     title: 'Test Collection',
-    description: 'A test collection',  // ← dummy
+    description: 'A test collection', // ← dummy
     id: 'test-collection',
-    itemFormats: [],                    // ← dummy
-    bulkDownloadLinks: {},              // ← dummy
-    jsonDownloadLink: '',               // ← dummy
-    crs: [],                            // ← dummy
-    itemCount: 0,                       // ← dummy
-    queryables: [],                     // ← dummy
-    sortables: [],                      // ← dummy
-    mapTileFormats: [],                 // ← dummy
-    vectorTileFormats: [],              // ← dummy
-    supportedTileMatrixSets: [],        // ← dummy
+    itemFormats: [], // ← dummy
+    bulkDownloadLinks: {}, // ← dummy
+    jsonDownloadLink: '', // ← dummy
+    crs: [], // ← dummy
+    itemCount: 0, // ← dummy
+    queryables: [], // ← dummy
+    sortables: [], // ← dummy
+    mapTileFormats: [], // ← dummy
+    vectorTileFormats: [], // ← dummy
+    supportedTileMatrixSets: [], // ← dummy
     ...overrides,
   };
 }
@@ -285,11 +285,11 @@ All 12 linked reference documents from the ogc-csapi-explorer repository were re
 
 Finding **F-8** is defined here:
 
-> *"`CSAPIQueryBuilder`'s constructor requires an `OgcApiCollectionInfo` object (from `src/ogc-api/model.ts`), which is a large interface with many fields (`id`, `title`, `links`, `extent`, etc.). The constructor only uses `id`, `title`, and `links`."*
+> _"`CSAPIQueryBuilder`'s constructor requires an `OgcApiCollectionInfo` object (from `src/ogc-api/model.ts`), which is a large interface with many fields (`id`, `title`, `links`, `extent`, etc.). The constructor only uses `id`, `title`, and `links`."_
 >
 > Priority rank: **#8** (Medium severity, Low effort)
 
-F-8 is categorized under **Category 2: Library Design Improvements (Should Address)** — notably NOT Category 1 (Must Fix). The recommended solution matches the issue: *"Accept `Pick<OgcApiCollectionInfo, 'id' | 'title' | 'links'>` or create a dedicated `CSAPIBuilderOptions` interface."*
+F-8 is categorized under **Category 2: Library Design Improvements (Should Address)** — notably NOT Category 1 (Must Fix). The recommended solution matches the issue: _"Accept `Pick<OgcApiCollectionInfo, 'id' | 'title' | 'links'>` or create a dedicated `CSAPIBuilderOptions` interface."_
 
 **Note:** The upstream findings document (and the issue) incorrectly state that `title` is used. Source code review confirms only `id` and `links` are accessed.
 
@@ -297,7 +297,7 @@ F-8 is categorized under **Category 2: Library Design Improvements (Should Addre
 
 **Library Finding #3** is where F-8 was first identified:
 
-> *"The `OgcApiCollectionInfo` type (from `src/ogc-api/model.ts`) is a large interface with many required fields. [...] The `CSAPIQueryBuilder` only actually uses `id`, `title`, and `links`. We had to cast our minimal object with `as OgcApiCollectionInfo` to satisfy the type system."*
+> _"The `OgcApiCollectionInfo` type (from `src/ogc-api/model.ts`) is a large interface with many required fields. [...] The `CSAPIQueryBuilder` only actually uses `id`, `title`, and `links`. We had to cast our minimal object with `as OgcApiCollectionInfo` to satisfy the type system."_
 
 The report documents the synthetic collection pattern used in the bridge module — constructing a minimal object with only the needed fields and using `as OgcApiCollectionInfo` to bypass TypeScript. This is the exact consumer friction that Issue #12 would eliminate.
 
@@ -305,17 +305,17 @@ The report documents the synthetic collection pattern used in the bridge module 
 
 F-8 actionability assessment:
 
-| Finding | Actionable? | Effort | Priority |
-|---------|------------|--------|----------|
-| F-8 | Yes — type narrowing | Low | 5 (Medium) |
+| Finding | Actionable?          | Effort | Priority   |
+| ------- | -------------------- | ------ | ---------- |
+| F-8     | Yes — type narrowing | Low    | 5 (Medium) |
 
-The document notes: *"Would clean up the synthetic collection creation code slightly. No visible UI change."*
+The document notes: _"Would clean up the synthetic collection creation code slightly. No visible UI change."_
 
 ### 5.4 E2E Write Operations Report (`e2e-write-operations-report.md`)
 
 The test environment section documents the same pattern:
 
-> *"Construct a synthetic `OgcApiCollectionInfo` with resource links"*
+> _"Construct a synthetic `OgcApiCollectionInfo` with resource links"_
 
 This confirms the synthetic collection workaround is used across multiple test artifacts, not just the demo app.
 
@@ -325,41 +325,41 @@ Confirms the library is a URL builder, not an HTTP client. The constructor's typ
 
 ### 5.6 AI Operational Constraints (`AI_OPERATIONAL_CONSTRAINTS.md`)
 
-**Section 2.2** — *"Do not introduce new abstractions, layers, or dependencies without approval."*
+**Section 2.2** — _"Do not introduce new abstractions, layers, or dependencies without approval."_
 
 The `Pick<>` approach does **not** introduce a new abstraction. It uses TypeScript's built-in utility type to narrow an existing parameter. No new interfaces, classes, or modules are created. This constraint is **not triggered**.
 
-**Section 2.2** also states: *"Prefer minimal diffs over idealized rewrites."*
+**Section 2.2** also states: _"Prefer minimal diffs over idealized rewrites."_
 
 This is relevant. The change is exactly 1 line modified (the constructor parameter type annotation). This is the minimal possible diff for the improvement. Option B from the issue (creating a new `CSAPIBuilderOptions` interface) and Option C (union type) would both increase the diff surface unnecessarily.
 
 ### 5.7 Other Documents Reviewed
 
-| Document | Location | Relevance to Issue #12 |
-|----------|----------|----------------------|
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | ogc-csapi-explorer | Context — the upstream PR diff is documented; a 1-line type change adds negligible surface |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app architecture |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | ogc-csapi-explorer | Not relevant — covers CRUD smoke testing |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | ogc-csapi-explorer | Not relevant — covers cross-server interoperability |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | ogc-csapi-explorer | Not relevant — covers SWE Common schema display |
+| Document                                                                                                                                                       | Location           | Relevance to Issue #12                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------ |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring                                            |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | ogc-csapi-explorer | Context — the upstream PR diff is documented; a 1-line type change adds negligible surface |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app architecture                                                |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | ogc-csapi-explorer | Not relevant — covers CRUD smoke testing                                                   |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | ogc-csapi-explorer | Not relevant — covers cross-server interoperability                                        |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | ogc-csapi-explorer | Not relevant — covers SWE Common schema display                                            |
 
 ---
 
 ## 6. Risk Assessment
 
-| Risk Category | Level | Rationale |
-|---------------|-------|-----------|
-| **Regression risk** | **None** | No behavioral change; no existing code paths are modified |
-| **Backward compatibility** | **Full** | `OgcApiCollectionInfo` satisfies `Pick<OgcApiCollectionInfo, 'id' | 'title' | 'links'>` via structural typing — existing callers compile without change |
-| **Runtime impact** | **None** | TypeScript types are erased at compile time; zero runtime effect |
-| **Test impact** | **None** | Existing tests pass unmodified. Test helpers _could_ be simplified but do not _need_ to be changed. |
-| **Type safety impact** | **Positive** | Current code forces double casts (`as unknown as OgcApiCollectionInfo` in `endpoint.ts`). Narrowing the parameter type eliminates the need for unsafe casts. |
-| **Scope creep** | **None** | 1-line change; no new modules, interfaces, or abstractions |
-| **Upstream acceptance** | **High likelihood** | Narrowing parameter types is a standard TypeScript best practice. No upstream reviewer would object to accepting a subtype where only a subset of fields is used. |
-| **CSAPI contribution impact** | **Positive** | Improves the API's developer experience with zero cost |
-| **Diff size impact** | **Negligible** | 1 line modified in `url_builder.ts`. Optional: simplify test helpers (~10 lines each across 6 files), but this is not required. |
-| **AI Constraints compliance** | **Compliant** | Section 2.2 does not apply (no new abstraction). Section 2.1 is satisfied (within issue scope). Section 2.2 preference for "minimal diffs" is satisfied (1 line). |
+| Risk Category                 | Level               | Rationale                                                                                                                                                         |
+| ----------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------- |
+| **Regression risk**           | **None**            | No behavioral change; no existing code paths are modified                                                                                                         |
+| **Backward compatibility**    | **Full**            | `OgcApiCollectionInfo` satisfies `Pick<OgcApiCollectionInfo, 'id'                                                                                                 | 'title' | 'links'>` via structural typing — existing callers compile without change |
+| **Runtime impact**            | **None**            | TypeScript types are erased at compile time; zero runtime effect                                                                                                  |
+| **Test impact**               | **None**            | Existing tests pass unmodified. Test helpers _could_ be simplified but do not _need_ to be changed.                                                               |
+| **Type safety impact**        | **Positive**        | Current code forces double casts (`as unknown as OgcApiCollectionInfo` in `endpoint.ts`). Narrowing the parameter type eliminates the need for unsafe casts.      |
+| **Scope creep**               | **None**            | 1-line change; no new modules, interfaces, or abstractions                                                                                                        |
+| **Upstream acceptance**       | **High likelihood** | Narrowing parameter types is a standard TypeScript best practice. No upstream reviewer would object to accepting a subtype where only a subset of fields is used. |
+| **CSAPI contribution impact** | **Positive**        | Improves the API's developer experience with zero cost                                                                                                            |
+| **Diff size impact**          | **Negligible**      | 1 line modified in `url_builder.ts`. Optional: simplify test helpers (~10 lines each across 6 files), but this is not required.                                   |
+| **AI Constraints compliance** | **Compliant**       | Section 2.2 does not apply (no new abstraction). Section 2.1 is satisfied (within issue scope). Section 2.2 preference for "minimal diffs" is satisfied (1 line). |
 
 ---
 
@@ -367,11 +367,11 @@ This is relevant. The change is exactly 1 line modified (the constructor paramet
 
 ### 7.1 The Three Options from the Issue
 
-| Option | Approach | Pros | Cons |
-|--------|----------|------|------|
-| **A (preferred)** | `Pick<OgcApiCollectionInfo, 'id' \| 'title' \| 'links'>` | 1-line change; uses built-in utility type; fully backward-compatible; no new type to learn | Includes `title` even though it's not used (harmless) |
-| **B** | New `CSAPIBuilderOptions` interface | Explicit; self-documenting | Creates a new type consumers must discover; 2+ files modified; violates "prefer minimal diffs" |
-| **C** | Union: `OgcApiCollectionInfo \| CSAPIBuilderOptions` | Supports both patterns explicitly | Requires Option B's new interface; adds union complexity; `private collection_` field type is the union, requiring type guards internally |
+| Option            | Approach                                                 | Pros                                                                                       | Cons                                                                                                                                      |
+| ----------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **A (preferred)** | `Pick<OgcApiCollectionInfo, 'id' \| 'title' \| 'links'>` | 1-line change; uses built-in utility type; fully backward-compatible; no new type to learn | Includes `title` even though it's not used (harmless)                                                                                     |
+| **B**             | New `CSAPIBuilderOptions` interface                      | Explicit; self-documenting                                                                 | Creates a new type consumers must discover; 2+ files modified; violates "prefer minimal diffs"                                            |
+| **C**             | Union: `OgcApiCollectionInfo \| CSAPIBuilderOptions`     | Supports both patterns explicitly                                                          | Requires Option B's new interface; adds union complexity; `private collection_` field type is the union, requiring type guards internally |
 
 ### 7.2 Why Option A Is Correct
 
@@ -400,7 +400,7 @@ The current factory method in `endpoint.ts` (L405-407):
 
 ```typescript
 const result = new CSAPIQueryBuilder(
-  collectionDoc as unknown as OgcApiCollectionInfo,  // ← unsafe double cast
+  collectionDoc as unknown as OgcApiCollectionInfo, // ← unsafe double cast
   resourceUrls
 );
 ```
@@ -409,7 +409,7 @@ After narrowing the constructor parameter, this could become:
 
 ```typescript
 const result = new CSAPIQueryBuilder(
-  collectionDoc as Pick<OgcApiCollectionInfo, 'id' | 'title' | 'links'>,  // ← single safe cast
+  collectionDoc as Pick<OgcApiCollectionInfo, 'id' | 'title' | 'links'>, // ← single safe cast
   resourceUrls
 );
 ```
@@ -422,24 +422,34 @@ Or, if the raw document has `id`, `title`, and `links` properties (which it does
 
 The `makeCollection()` helper pattern exists in 6 test files:
 
-| File | Helper Location |
-|------|----------------|
-| `url_builder.spec.ts` | L8-28 |
-| `command-routing.spec.ts` | L27-32 |
-| `integration/command.spec.ts` | L34-35 |
-| `integration/discovery.spec.ts` | L38-39 |
-| `integration/navigation.spec.ts` | L49-50 |
-| `integration/observation.spec.ts` | L27-28 |
+| File                              | Helper Location |
+| --------------------------------- | --------------- |
+| `url_builder.spec.ts`             | L8-28           |
+| `command-routing.spec.ts`         | L27-32          |
+| `integration/command.spec.ts`     | L34-35          |
+| `integration/discovery.spec.ts`   | L38-39          |
+| `integration/navigation.spec.ts`  | L49-50          |
+| `integration/observation.spec.ts` | L27-28          |
 
 After the type narrowing, these helpers could optionally be simplified from:
 
 ```typescript
 function makeCollection(overrides = {}): OgcApiCollectionInfo {
   return {
-    links: [], title: 'Test', description: '', id: 'test',
-    itemFormats: [], bulkDownloadLinks: {}, jsonDownloadLink: '',
-    crs: [], itemCount: 0, queryables: [], sortables: [],
-    mapTileFormats: [], vectorTileFormats: [], supportedTileMatrixSets: [],
+    links: [],
+    title: 'Test',
+    description: '',
+    id: 'test',
+    itemFormats: [],
+    bulkDownloadLinks: {},
+    jsonDownloadLink: '',
+    crs: [],
+    itemCount: 0,
+    queryables: [],
+    sortables: [],
+    mapTileFormats: [],
+    vectorTileFormats: [],
+    supportedTileMatrixSets: [],
     ...overrides,
   };
 }
@@ -471,21 +481,22 @@ Issue #12 describes the **lowest-risk, highest-certainty improvement** among all
 
 ### 8.2 Options
 
-| Option | Pros | Cons |
-|--------|------|------|
-| **A. Include in CSAPI PR** | Improves API ergonomics; eliminates unsafe cast in `endpoint.ts`; 1-line diff; fully backward-compatible | None identified |
-| **B. Defer to follow-up PR** | Keeps initial PR unchanged | Leaves an unsafe double cast in `endpoint.ts`; consumers continue needing dummy values or type assertions |
+| Option                       | Pros                                                                                                     | Cons                                                                                                      |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **A. Include in CSAPI PR**   | Improves API ergonomics; eliminates unsafe cast in `endpoint.ts`; 1-line diff; fully backward-compatible | None identified                                                                                           |
+| **B. Defer to follow-up PR** | Keeps initial PR unchanged                                                                               | Leaves an unsafe double cast in `endpoint.ts`; consumers continue needing dummy values or type assertions |
 
 ### 8.3 Recommended Path: Option A (Include in CSAPI PR)
 
 **This change should be included in the initial CSAPI upstream PR.**
 
 Rationale:
+
 - The diff is 1 line — it adds negligible reviewer burden.
 - It **improves** the library's own code quality by eliminating a double cast in `endpoint.ts`.
 - It improves consumer DX with zero risk.
 - Unlike Issue #11 (generic CRUD methods), this does not introduce a new abstraction or establish a new API pattern. It is a type correction — the existing type was broader than necessary.
-- It is the kind of change an upstream reviewer would flag themselves during PR review: *"Why does the constructor require `OgcApiCollectionInfo` when it only uses 2 fields?"*
+- It is the kind of change an upstream reviewer would flag themselves during PR review: _"Why does the constructor require `OgcApiCollectionInfo` when it only uses 2 fields?"_
 
 ### 8.4 Proposed Implementation (1-Line Change)
 
@@ -520,33 +531,33 @@ constructor(
 
 ## Appendix A: Authority Precedence Analysis
 
-| Authority Level | Source | Says About This Change | Weight |
-|----------------|--------|----------------------|--------|
-| 1 (Highest) | OGC specifications | Silent — specs define resource semantics, not TypeScript type signatures | N/A |
-| 2 | AI Operational Constraints | Section 2.2: "Prefer minimal diffs over idealized rewrites" — **supports Option A** (1-line change). "Do not introduce new abstractions" — **not triggered** (no new abstraction). | Supportive |
-| 2 | AI Operational Constraints | Section 2.1: "Do not expand scope beyond the issue description" — the proposed change matches the issue exactly. | Compliant |
-| 3 | Issue description | Clearly defines the problem, three options, and recommends Option A (`Pick<>`) | Scoping |
-| 4 | Existing code patterns | `endpoint.ts` already uses `as unknown as OgcApiCollectionInfo` — proving the type is too broad even for the library's own use | Strongly supportive |
-| 5 | Reference documents | F-8 priority #8 "Should Address" (Low effort, Medium severity); Library Finding #3 documents the consumer friction | Supportive |
+| Authority Level | Source                     | Says About This Change                                                                                                                                                             | Weight              |
+| --------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| 1 (Highest)     | OGC specifications         | Silent — specs define resource semantics, not TypeScript type signatures                                                                                                           | N/A                 |
+| 2               | AI Operational Constraints | Section 2.2: "Prefer minimal diffs over idealized rewrites" — **supports Option A** (1-line change). "Do not introduce new abstractions" — **not triggered** (no new abstraction). | Supportive          |
+| 2               | AI Operational Constraints | Section 2.1: "Do not expand scope beyond the issue description" — the proposed change matches the issue exactly.                                                                   | Compliant           |
+| 3               | Issue description          | Clearly defines the problem, three options, and recommends Option A (`Pick<>`)                                                                                                     | Scoping             |
+| 4               | Existing code patterns     | `endpoint.ts` already uses `as unknown as OgcApiCollectionInfo` — proving the type is too broad even for the library's own use                                                     | Strongly supportive |
+| 5               | Reference documents        | F-8 priority #8 "Should Address" (Low effort, Medium severity); Library Finding #3 documents the consumer friction                                                                 | Supportive          |
 
 ---
 
 ## Appendix B: Cross-Reference Matrix
 
-| Document | Location | Relevance to Issue #12 |
-|----------|----------|-----------------------|
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | ogc-csapi-explorer | F-8 definition; priority #8; Category 2 "Library Design Improvements (Should Address)" |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | ogc-csapi-explorer | Library Finding #3 — where F-8 was first identified during the synthetic collection workaround; documents `as OgcApiCollectionInfo` cast |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | ogc-csapi-explorer | F-8 actionability: "type narrowing", Low effort, priority 5 |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Confirms the library is a URL builder; type narrowing is within design improvement scope |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | ogc-csapi-explorer | Context: a 1-line type change adds negligible diff surface to the upstream PR |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | ogc-csapi-explorer | Documents the synthetic collection constructor pattern used in E2E tests |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app conformance architecture |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | ogc-csapi-explorer | Not relevant — covers CRUD smoke testing |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | ogc-csapi-explorer | Not relevant — covers cross-server interoperability |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | ogc-csapi-explorer | Not relevant — covers SWE Common schema display |
-| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | ogc-client-CSAPI_2 | Section 2.2 not triggered (no new abstraction); "minimal diffs" preference supports Option A |
+| Document                                                                                                                                                       | Location           | Relevance to Issue #12                                                                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | ogc-csapi-explorer | F-8 definition; priority #8; Category 2 "Library Design Improvements (Should Address)"                                                   |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                       | ogc-csapi-explorer | Library Finding #3 — where F-8 was first identified during the synthetic collection workaround; documents `as OgcApiCollectionInfo` cast |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | ogc-csapi-explorer | F-8 actionability: "type narrowing", Low effort, priority 5                                                                              |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | Confirms the library is a URL builder; type narrowing is within design improvement scope                                                 |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | ogc-csapi-explorer | Context: a 1-line type change adds negligible diff surface to the upstream PR                                                            |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | ogc-csapi-explorer | Documents the synthetic collection constructor pattern used in E2E tests                                                                 |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | ogc-csapi-explorer | Not relevant — covers EndpointError refactoring                                                                                          |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Not relevant — covers demo app conformance architecture                                                                                  |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | ogc-csapi-explorer | Not relevant — covers CRUD smoke testing                                                                                                 |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | ogc-csapi-explorer | Not relevant — covers cross-server interoperability                                                                                      |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | ogc-csapi-explorer | Not relevant — covers SWE Common schema display                                                                                          |
+| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)                        | ogc-client-CSAPI_2 | Section 2.2 not triggered (no new abstraction); "minimal diffs" preference supports Option A                                             |
 
 ---
 

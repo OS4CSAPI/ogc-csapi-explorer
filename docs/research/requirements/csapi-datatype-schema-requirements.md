@@ -12,6 +12,7 @@
 This document defines the TypeScript type system requirements for the ogc-client CSAPI library based on comprehensive analysis of the OpenAPI 3.1 schema definitions from both Part 1 (Feature Resources) and Part 2 (Dynamic Data). The analysis covers 100+ schema definitions spanning resource types, data components, encodings, geometries, and supporting structures.
 
 **Key Findings:**
+
 - **50+ Resource and Data Types** requiring TypeScript interfaces
 - **Hierarchical Type System** with inheritance (System → AbstractProcess → DescribedObject)
 - **Union Types** for polymorphic structures (AnyComponent, geometryGeoJSON, etc.)
@@ -44,27 +45,32 @@ This document defines the TypeScript type system requirements for the ogc-client
 ### 1.1 Design Principles
 
 **Principle 1: Type Safety Without Runtime Overhead**
+
 - All types compile away - zero runtime cost
 - Catch errors at compile time, not production
 - Autocomplete and IntelliSense for developer experience
 
 **Principle 2: Follow OpenAPI Schema Exactly**
+
 - One-to-one mapping from OpenAPI schemas to TypeScript interfaces
 - Preserve required/optional distinctions
 - Honor enum values, format constraints, and validation rules
 
 **Principle 3: Composition Over Duplication**
+
 - Use extends for inheritance relationships
 - Use union types (|) for oneOf schemas
 - Use intersection types (&) for allOf schemas
 - Extract common patterns into reusable utility types
 
 **Principle 4: Progressive Disclosure**
+
 - Export simple types for common use cases
 - Provide detailed types for advanced scenarios
 - Allow users to opt into stricter types when needed
 
 **Principle 5: Flexibility at Boundaries**
+
 - Strict types for client library internals
 - Flexible types for user-provided data (accept broader input types)
 - Narrow types for library outputs (guarantee specific return types)
@@ -116,6 +122,7 @@ Supporting Types (50+)
 #### 2.1.1 System
 
 **Base Interface:**
+
 ```typescript
 interface System extends GeoJSONFeature {
   type: 'Feature';
@@ -129,12 +136,12 @@ interface SystemProperties {
   featureType: SystemType;
   uid: string; // URI format
   name: string; // min length: 1
-  
+
   // Optional
   description?: string;
   assetType?: AssetType;
   validTime?: TimePeriod;
-  
+
   // Associations (links to related resources)
   'systemKind@link'?: Link;
   'subsystems@link'?: Link;
@@ -145,7 +152,7 @@ interface SystemProperties {
   'procedures@link'?: Link;
 }
 
-type SystemType = 
+type SystemType =
   | 'http://www.w3.org/ns/sosa/Sensor'
   | 'sosa:Sensor'
   | 'http://www.w3.org/ns/sosa/Actuator'
@@ -157,7 +164,7 @@ type SystemType =
   | 'http://www.w3.org/ns/sosa/System'
   | 'sosa:System';
 
-type AssetType = 
+type AssetType =
   | 'Equipment'
   | 'Human'
   | 'LivingThing'
@@ -168,14 +175,19 @@ type AssetType =
 ```
 
 **SensorML Representation:**
+
 ```typescript
 interface SystemSensorML extends DescribedObject {
-  type: 'SimpleProcess' | 'AggregateProcess' | 'PhysicalComponent' | 'PhysicalSystem';
+  type:
+    | 'SimpleProcess'
+    | 'AggregateProcess'
+    | 'PhysicalComponent'
+    | 'PhysicalSystem';
   uniqueId: string; // URI
   label: string;
   description?: string;
   validTime?: TimePeriod;
-  
+
   // Process-specific
   definition?: string; // URI
   typeOf?: Link;
@@ -185,13 +197,13 @@ interface SystemSensorML extends DescribedObject {
   outputs?: OutputList;
   parameters?: ParameterList;
   modes?: Mode[];
-  
+
   // Physical-specific (PhysicalComponent, PhysicalSystem)
   attachedTo?: Link;
   localReferenceFrames?: SpatialFrame[];
   localTimeFrames?: TemporalFrame[];
   position?: Position;
-  
+
   // Aggregate-specific (AggregateProcess, PhysicalSystem)
   components?: ComponentList;
   connections?: ConnectionList;
@@ -199,6 +211,7 @@ interface SystemSensorML extends DescribedObject {
 ```
 
 **Client Type Strategy:**
+
 - **Accept:** `System | SystemSensorML` (union of both representations)
 - **Return:** Format-specific based on Accept header negotiation
 - **Query:** Both representations queryable, format indicated in response
@@ -219,11 +232,11 @@ interface DeploymentProperties {
   uid: string;
   name: string;
   validTime: TimePeriod; // Required for deployments
-  
+
   // Optional
   description?: string;
   deploymentType?: string; // URI
-  
+
   // Associations
   'deployedSystems@link'?: Link[];
   'subdeployments@link'?: Link;
@@ -234,7 +247,7 @@ interface DeploymentProperties {
   'controlstreams@link'?: Link;
 }
 
-type DeploymentType = 
+type DeploymentType =
   | 'http://www.w3.org/ns/sosa/Deployment'
   | 'sosa:Deployment';
 ```
@@ -254,15 +267,15 @@ interface ProcedureProperties {
   featureType: ProcedureType;
   uid: string;
   name: string;
-  
+
   // Optional
   description?: string;
-  
+
   // Associations
   'implementingSystems@link'?: Link[];
 }
 
-type ProcedureType = 
+type ProcedureType =
   | SystemType // Includes all system types (datasheets)
   | 'http://www.w3.org/ns/sosa/Procedure'
   | 'sosa:Procedure'
@@ -289,13 +302,13 @@ interface SamplingFeatureProperties {
   featureType: string; // URI - type of sampling feature
   uid: string;
   name: string;
-  
+
   // Optional
   description?: string;
   validTime?: TimePeriod;
   samplingTime?: string; // date-time
   materialClass?: string; // URI
-  
+
   // Associations
   'sampledFeature@link': Link; // Required
   'parentSystem@link': Link; // Required
@@ -330,18 +343,20 @@ interface PropertyResource {
 ```typescript
 // Type guard example
 function isSystem(resource: Resource): resource is System {
-  return 'geometry' in resource && 
-         'properties' in resource &&
-         'featureType' in resource.properties &&
-         resource.properties.featureType.includes('System');
+  return (
+    'geometry' in resource &&
+    'properties' in resource &&
+    'featureType' in resource.properties &&
+    resource.properties.featureType.includes('System')
+  );
 }
 
 // Resource union type
-type Part1Resource = 
-  | System 
-  | Deployment 
-  | Procedure 
-  | SamplingFeature 
+type Part1Resource =
+  | System
+  | Deployment
+  | Procedure
+  | SamplingFeature
   | PropertyResource;
 
 // Generic feature type
@@ -363,37 +378,37 @@ interface DataStream {
   id: string;
   name: string;
   formats: string[]; // Available encoding formats
-  
+
   // Metadata (optional)
   description?: string;
   validTime?: TimePeriod;
-  
+
   // Associations (required, read-only)
   'system@link': Link;
-  
+
   // Associations (optional, read-only)
   outputName?: string;
   'procedure@link'?: Link;
   'deployment@link'?: Link;
   'featureOfInterest@link'?: Link;
   'samplingFeature@link'?: Link;
-  
+
   // Observed properties
   observedProperties?: ObservedProperty[] | null;
-  
+
   // Temporal extent (read-only)
   phenomenonTime?: TimePeriod | null;
   phenomenonTimeInterval?: string; // ISO 8601 duration
   resultTime?: TimePeriod | null;
   resultTimeInterval?: string; // ISO 8601 duration
-  
+
   // Classification
   type?: 'status' | 'observation';
   resultType?: ResultType | null;
-  
+
   // Live streaming
   live?: boolean | null;
-  
+
   // Schema (write-only for create/update)
   schema?: ObservationSchema;
 }
@@ -404,12 +419,12 @@ interface ObservedProperty {
   description?: string;
 }
 
-type ResultType = 
-  | 'measure'     // Single quantity
-  | 'vector'      // Array of quantities
-  | 'record'      // Structured data
-  | 'coverage'    // Spatial/temporal coverage
-  | 'complex';    // Any other type
+type ResultType =
+  | 'measure' // Single quantity
+  | 'vector' // Array of quantities
+  | 'record' // Structured data
+  | 'coverage' // Spatial/temporal coverage
+  | 'complex'; // Any other type
 ```
 
 ### 3.2 Observation
@@ -418,18 +433,18 @@ type ResultType =
 interface Observation {
   // Identity (read-only)
   id?: string;
-  
+
   // Required temporal properties
   phenomenonTime: string | TimePeriod; // When observed
   resultTime: string; // date-time - When result produced
-  
+
   // Optional references
   'procedure@id'?: string;
   'foi@id'?: string;
-  
+
   // Optional parameters
   parameters?: Record<string, any>;
-  
+
   // Result (varies by type)
   result: ObservationResult;
 }
@@ -464,7 +479,7 @@ interface ObservationCollection {
 
 ```typescript
 // Union of all observation schema types
-type ObservationSchema = 
+type ObservationSchema =
   | ObservationSchemaJson
   | ObservationSchemaSwe
   | ObservationSchemaProtobuf
@@ -477,7 +492,10 @@ interface ObservationSchemaJson {
 }
 
 interface ObservationSchemaSwe {
-  obsFormat: 'application/swe+json' | 'application/swe+binary' | 'application/swe+text';
+  obsFormat:
+    | 'application/swe+json'
+    | 'application/swe+binary'
+    | 'application/swe+text';
   observationStructure: DataRecord; // Must contain: phenomenonTime, resultTime, foi, result
   observationEncoding?: Encoding;
 }
@@ -502,31 +520,31 @@ interface ControlStream {
   id: string;
   name: string;
   formats: string[];
-  
+
   // Metadata
   description?: string;
   validTime?: TimePeriod;
-  
+
   // Associations (required, read-only)
   'system@link': Link;
-  
+
   // Associations (optional, read-only)
   inputName?: string;
   'procedure@link'?: Link;
   'deployment@link'?: Link;
   'featureOfInterest@link'?: Link;
   'samplingFeature@link'?: Link;
-  
+
   // Controlled properties
   controlledProperties?: ControlledProperty[] | null;
-  
+
   // Temporal extent (read-only)
   issueTime?: TimePeriod | null;
   executionTime?: TimePeriod | null;
-  
+
   // Live control
   live?: boolean | null;
-  
+
   // Schema (write-only)
   schema?: CommandSchema;
 }
@@ -544,14 +562,14 @@ interface ControlledProperty {
 interface Command {
   // Identity (read-only)
   id?: string;
-  
+
   // Required temporal properties
   issueTime: string; // date-time
   executionTime: string | TimePeriod; // When to execute
-  
+
   // Optional metadata
   sender?: string;
-  
+
   // Parameters (required)
   params: Record<string, any> | any[];
 }
@@ -565,7 +583,7 @@ interface CommandCollection {
 ### 3.6 Command Schema
 
 ```typescript
-type CommandSchema = 
+type CommandSchema =
   | CommandSchemaJson
   | CommandSchemaSwe
   | CommandSchemaProtobuf
@@ -577,7 +595,10 @@ interface CommandSchemaJson {
 }
 
 interface CommandSchemaSwe {
-  cmdFormat: 'application/swe+json' | 'application/swe+binary' | 'application/swe+text';
+  cmdFormat:
+    | 'application/swe+json'
+    | 'application/swe+binary'
+    | 'application/swe+text';
   commandStructure: DataRecord; // Must contain: issueTime, executionTime, params
   commandEncoding?: Encoding;
 }
@@ -597,7 +618,7 @@ interface CommandSchemaCustom {
 ### 3.7 CommandStatus
 
 ```typescript
-type CommandStatusCode = 
+type CommandStatusCode =
   | 'pending'
   | 'queued'
   | 'executing'
@@ -609,11 +630,11 @@ type CommandStatusCode =
 interface CommandStatus {
   // Identity (read-only)
   id?: string;
-  
+
   // Required
   reportTime: string; // date-time
   statusCode: CommandStatusCode;
-  
+
   // Optional
   executionTime?: string; // date-time - actual execution time
   percentCompletion?: number; // 0-100
@@ -633,7 +654,7 @@ interface CommandStatusCollection {
 interface CommandResult {
   // Identity (read-only)
   id?: string;
-  
+
   // Required
   resultTime: string; // date-time
   result: CommandResultData;
@@ -654,15 +675,15 @@ interface CommandResultCollection {
 interface SystemEvent extends Event {
   // Identity (read-only)
   id?: string;
-  
+
   // Required (from Event)
   label: string;
   time: string | TimePeriod; // Event occurrence time
-  
+
   // Required (SystemEvent-specific)
   reportTime: string; // date-time
   relatedSystems: Link[]; // Affected systems
-  
+
   // Optional (from Event)
   definition?: string; // URI
   identifiers?: Term[];
@@ -862,7 +883,15 @@ interface GeometryComponent extends AbstractSimpleComponent {
   label: string; // Required
   srs: string; // URI - required
   constraint?: {
-    geomTypes?: ('Point' | 'MultiPoint' | 'LineString' | 'MultiLineString' | 'Polygon' | 'MultiPolygon' | 'GeometryCollection')[];
+    geomTypes?: (
+      | 'Point'
+      | 'MultiPoint'
+      | 'LineString'
+      | 'MultiLineString'
+      | 'Polygon'
+      | 'MultiPolygon'
+      | 'GeometryCollection'
+    )[];
   };
   nilValues?: NilValuesText[];
   value?: GeoJSONGeometry;
@@ -873,7 +902,7 @@ interface GeometryComponent extends AbstractSimpleComponent {
 
 ```typescript
 // Simple components (no aggregation)
-type SimpleComponent = 
+type SimpleComponent =
   | BooleanComponent
   | CountComponent
   | QuantityComponent
@@ -886,7 +915,7 @@ type SimpleComponent =
   | CategoryRangeComponent;
 
 // Any data component
-type DataComponent = 
+type DataComponent =
   | SimpleComponent
   | DataRecordComponent
   | VectorComponent
@@ -952,7 +981,11 @@ interface NilValuesText {
   value: string;
 }
 
-type NilValue = NilValuesInteger | NilValuesNumber | NilValuesTime | NilValuesText;
+type NilValue =
+  | NilValuesInteger
+  | NilValuesNumber
+  | NilValuesTime
+  | NilValuesText;
 ```
 
 ### 4.8 Unit of Measure
@@ -970,11 +1003,7 @@ interface UnitReference {
 ### 4.9 Encodings
 
 ```typescript
-type Encoding = 
-  | BinaryEncoding
-  | TextEncoding
-  | XMLEncoding
-  | JSONEncoding;
+type Encoding = BinaryEncoding | TextEncoding | XMLEncoding | JSONEncoding;
 
 interface BinaryEncoding {
   type: 'BinaryEncoding';
@@ -1068,7 +1097,7 @@ interface PolygonGeoJSON {
 
 interface MultiPolygonGeoJSON {
   type: 'MultiPolygon';
-  coordinates: (([number, number][] | [number, number, number][])[] )[];
+  coordinates: ([number, number][] | [number, number, number][])[][];
 }
 
 interface GeometryCollectionGeoJSON {
@@ -1077,7 +1106,7 @@ interface GeometryCollectionGeoJSON {
 }
 
 // Union type for any geometry
-type Geometry = 
+type Geometry =
   | PointGeoJSON
   | MultiPointGeoJSON
   | LineStringGeoJSON
@@ -1112,13 +1141,13 @@ interface GeoJSONFeatureCollection {
 
 ```typescript
 // Position representations
-type Position = 
+type Position =
   | PositionText
   | PositionPoint
   | PositionPose
   | PositionProcess
   | PositionDataStream
-  | PositionVector     // Deprecated
+  | PositionVector // Deprecated
   | PositionDataRecord // Deprecated
   | PositionTrajectory; // Deprecated
 
@@ -1145,7 +1174,11 @@ interface PositionDataStream {
 }
 
 // GeoPose representations
-type Pose = GeoPoseYPR | GeoPoseQuaternion | RelativePoseYPR | RelativePoseQuaternion;
+type Pose =
+  | GeoPoseYPR
+  | GeoPoseQuaternion
+  | RelativePoseYPR
+  | RelativePoseQuaternion;
 
 interface GeoPoseYPR {
   type: 'GeoPose';
@@ -1178,7 +1211,7 @@ interface RelativePoseQuaternion {
 interface PositionGeo {
   lat: number; // WGS84 latitude (degrees)
   lon: number; // WGS84 longitude (degrees)
-  h: number;   // Height above WGS84 ellipsoid (meters)
+  h: number; // Height above WGS84 ellipsoid (meters)
 }
 
 interface PositionXYZ {
@@ -1188,9 +1221,9 @@ interface PositionXYZ {
 }
 
 interface AnglesYPR {
-  yaw: number;   // degrees
+  yaw: number; // degrees
   pitch: number; // degrees
-  roll: number;  // degrees
+  roll: number; // degrees
 }
 
 interface Quaternion {
@@ -1409,7 +1442,13 @@ interface TemporalFrame {
 }
 
 // List types
-type ComponentList = (SimpleProcess | AggregateProcess | PhysicalComponent | PhysicalSystem | Link)[];
+type ComponentList = (
+  | SimpleProcess
+  | AggregateProcess
+  | PhysicalComponent
+  | PhysicalSystem
+  | Link
+)[];
 type FeatureList = Link[];
 type InputList = (Field | Link)[];
 type OutputList = (Field | Link)[];
@@ -1436,7 +1475,7 @@ interface Collection {
   // Required
   id: string;
   links: Link[]; // Min: 1
-  
+
   // Optional metadata
   title?: string;
   description?: string;
@@ -1453,15 +1492,19 @@ interface Extent {
 
 interface SpatialExtent {
   bbox: BBox[]; // Min: 1
-  crs?: 'http://www.opengis.net/def/crs/OGC/1.3/CRS84' | 'http://www.opengis.net/def/crs/OGC/0/CRS84h';
+  crs?:
+    | 'http://www.opengis.net/def/crs/OGC/1.3/CRS84'
+    | 'http://www.opengis.net/def/crs/OGC/0/CRS84h';
 }
 
 interface TemporalExtent {
-  interval: (TimeInterval)[]; // Min: 1
+  interval: TimeInterval[]; // Min: 1
   trs?: 'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian';
 }
 
-type BBox = [number, number, number, number] | [number, number, number, number, number, number];
+type BBox =
+  | [number, number, number, number]
+  | [number, number, number, number, number, number];
 // [minLon, minLat, maxLon, maxLat] or [minLon, minLat, minElevation, maxLon, maxLat, maxElevation]
 
 type TimeInterval = [string | null, string | null]; // [start, end] - nullable for open intervals
@@ -1542,14 +1585,14 @@ interface CommonQueryParams {
   // Pagination
   limit?: number; // 1-10000
   offset?: number; // 0+
-  
+
   // Temporal filters
   datetime?: string | [string, string]; // ISO 8601 instant or interval
-  
+
   // Spatial filters
   bbox?: BBox;
   geom?: Geometry; // Intersects filter
-  
+
   // Text search
   keyword?: string | string[];
   q?: string; // Full-text search
@@ -1563,14 +1606,14 @@ interface SystemQueryParams extends CommonQueryParams {
   // ID filters
   id?: string | string[]; // Local IDs or UIDs
   uid?: string | string[]; // Unique identifiers
-  
+
   // Relationship filters
   parent?: string; // Parent system ID
   procedure?: string | string[]; // Implementing procedures
   foi?: string | string[]; // Features of interest (transitive)
   observedProperty?: string | string[]; // Via datastreams
   controlledProperty?: string | string[]; // Via controlstreams
-  
+
   // Recursive queries
   recursive?: boolean; // Include nested subsystems
 }
@@ -1579,13 +1622,13 @@ interface DeploymentQueryParams extends CommonQueryParams {
   // ID filters
   id?: string | string[];
   uid?: string | string[];
-  
+
   // Relationship filters
   system?: string | string[]; // Deployed systems
   foi?: string | string[]; // Features of interest
   observedProperty?: string | string[];
   controlledProperty?: string | string[];
-  
+
   // Recursive queries
   recursive?: boolean; // Include subdeployments
 }
@@ -1600,7 +1643,7 @@ interface SamplingFeatureQueryParams extends CommonQueryParams {
   // ID filters
   id?: string | string[];
   uid?: string | string[];
-  
+
   // Relationship filters
   parent?: string; // Parent system
   procedure?: string | string[];
@@ -1613,7 +1656,7 @@ interface PropertyQueryParams extends CommonQueryParams {
   // ID filters
   id?: string | string[];
   uid?: string | string[];
-  
+
   // Property-specific filters
   baseProperty?: string | string[]; // Base property URIs
   objectType?: string | string[]; // Object type URIs
@@ -1626,14 +1669,14 @@ interface PropertyQueryParams extends CommonQueryParams {
 interface DataStreamQueryParams extends CommonQueryParams {
   // ID filters
   id?: string | string[];
-  
+
   // Relationship filters
   system?: string | string[]; // Producer system
   procedure?: string | string[];
   deployment?: string | string[];
   foi?: string | string[]; // Feature of interest
   observedProperty?: string | string[]; // Observed properties
-  
+
   // Temporal filters for observations
   phenomenonTime?: string | [string, string]; // Phenomenon time extent
   resultTime?: string | [string, string]; // Result time extent
@@ -1642,15 +1685,15 @@ interface DataStreamQueryParams extends CommonQueryParams {
 interface ObservationQueryParams extends CommonQueryParams {
   // ID filters
   id?: string | string[];
-  
+
   // Relationship filters
   datastream?: string; // Parent datastream ID
   foi?: string | string[];
-  
+
   // Temporal filters
   phenomenonTime?: string | [string, string];
   resultTime?: string | [string, string];
-  
+
   // Result filters (if Advanced Filtering conformance)
   resultValue?: number | [number, number]; // Value or range
 }
@@ -1658,14 +1701,14 @@ interface ObservationQueryParams extends CommonQueryParams {
 interface ControlStreamQueryParams extends CommonQueryParams {
   // ID filters
   id?: string | string[];
-  
+
   // Relationship filters
   system?: string | string[]; // Target system
   procedure?: string | string[];
   deployment?: string | string[];
   foi?: string | string[];
   controlledProperty?: string | string[];
-  
+
   // Temporal filters for commands
   issueTime?: string | [string, string];
   executionTime?: string | [string, string];
@@ -1674,14 +1717,14 @@ interface ControlStreamQueryParams extends CommonQueryParams {
 interface CommandQueryParams extends CommonQueryParams {
   // ID filters
   id?: string | string[];
-  
+
   // Relationship filters
   controlstream?: string; // Parent control stream ID
-  
+
   // Temporal filters
   issueTime?: string | [string, string];
   executionTime?: string | [string, string];
-  
+
   // Status filter
   status?: CommandStatusCode | CommandStatusCode[];
 }
@@ -1689,14 +1732,14 @@ interface CommandQueryParams extends CommonQueryParams {
 interface SystemEventQueryParams extends CommonQueryParams {
   // ID filters
   id?: string | string[];
-  
+
   // Relationship filters
   system?: string | string[]; // Related systems
-  
+
   // Temporal filter
   time?: string | [string, string]; // Event occurrence time
   reportTime?: string | [string, string]; // Report time
-  
+
   // Classification filters
   type?: string | string[]; // Event type URIs
 }
@@ -1732,7 +1775,11 @@ interface CreateDataStreamRequest {
 interface CreateObservationRequest {
   body: Observation | Observation[];
   headers?: {
-    'Content-Type': 'application/json' | 'application/swe+json' | 'application/swe+text' | 'application/swe+binary';
+    'Content-Type':
+      | 'application/json'
+      | 'application/swe+json'
+      | 'application/swe+text'
+      | 'application/swe+binary';
     Accept?: string;
   };
 }
@@ -1740,7 +1787,11 @@ interface CreateObservationRequest {
 interface CreateCommandRequest {
   body: Command | Command[];
   headers?: {
-    'Content-Type': 'application/json' | 'application/swe+json' | 'application/swe+text' | 'application/swe+binary';
+    'Content-Type':
+      | 'application/json'
+      | 'application/swe+json'
+      | 'application/swe+text'
+      | 'application/swe+binary';
     Accept?: string;
   };
 }
@@ -1846,7 +1897,7 @@ interface Link {
 }
 
 // Link relation types
-type LinkRelation = 
+type LinkRelation =
   | 'self'
   | 'canonical'
   | 'alternate'
@@ -1875,13 +1926,13 @@ type TimeInstantOrNow = TimeInstant | 'now';
 type TimePeriod = [TimeInstantOrNow, TimeInstantOrNow];
 
 // Query parameter time type
-type DateTimeQuery = 
-  | TimeInstant          // Single instant
-  | TimePeriod           // Time range
-  | 'now'                // Current time
-  | 'latest'             // Latest available
-  | '../now'             // Open start to now
-  | 'now/..'             // Now to open end
+type DateTimeQuery =
+  | TimeInstant // Single instant
+  | TimePeriod // Time range
+  | 'now' // Current time
+  | 'latest' // Latest available
+  | '../now' // Open start to now
+  | 'now/..' // Now to open end
   | `${string}/${string}`; // ISO 8601 interval
 ```
 
@@ -1896,7 +1947,8 @@ interface Resource<TProperties = any> {
 }
 
 // Generic feature with geometry
-interface Feature<TProperties = any, TGeometry = Geometry> extends Resource<TProperties> {
+interface Feature<TProperties = any, TGeometry = Geometry>
+  extends Resource<TProperties> {
   type: 'Feature';
   geometry: TGeometry | null;
 }
@@ -1938,20 +1990,26 @@ type ReplaceProps<T> = Omit<T, 'id'>;
 ```typescript
 // Resource type guards
 function isSystem(resource: any): resource is System {
-  return resource?.type === 'Feature' && 
-         resource?.properties?.featureType?.includes('System');
+  return (
+    resource?.type === 'Feature' &&
+    resource?.properties?.featureType?.includes('System')
+  );
 }
 
 function isDataStream(resource: any): resource is DataStream {
-  return typeof resource?.id === 'string' && 
-         Array.isArray(resource?.formats) &&
-         'system@link' in resource;
+  return (
+    typeof resource?.id === 'string' &&
+    Array.isArray(resource?.formats) &&
+    'system@link' in resource
+  );
 }
 
 function isObservation(resource: any): resource is Observation {
-  return typeof resource?.phenomenonTime === 'string' && 
-         typeof resource?.resultTime === 'string' &&
-         'result' in resource;
+  return (
+    typeof resource?.phenomenonTime === 'string' &&
+    typeof resource?.resultTime === 'string' &&
+    'result' in resource
+  );
 }
 
 // Component type guards
@@ -1959,7 +2017,9 @@ function isQuantity(component: DataComponent): component is QuantityComponent {
   return component.type === 'Quantity';
 }
 
-function isDataRecord(component: DataComponent): component is DataRecordComponent {
+function isDataRecord(
+  component: DataComponent
+): component is DataRecordComponent {
   return component.type === 'DataRecord';
 }
 
@@ -1980,30 +2040,32 @@ function isPolygon(geometry: Geometry): geometry is PolygonGeoJSON {
 const MediaTypes = {
   // GeoJSON
   GEOJSON: 'application/geo+json',
-  
+
   // SensorML
   SENSORML_JSON: 'application/sml+json',
-  
+
   // SWE Common
   SWE_JSON: 'application/swe+json',
   SWE_TEXT: 'application/swe+text',
   SWE_BINARY: 'application/swe+binary',
-  
+
   // Standard JSON
   JSON: 'application/json',
-  
+
   // Other
   PROTOBUF: 'application/protobuf',
 } as const;
 
-type MediaType = typeof MediaTypes[keyof typeof MediaTypes];
+type MediaType = (typeof MediaTypes)[keyof typeof MediaTypes];
 
 // Format-specific return types
-type FormatResponse<T, F extends MediaType> = 
-  F extends 'application/geo+json' ? GeoJSONFeature :
-  F extends 'application/sml+json' ? SystemSensorML :
-  F extends 'application/json' ? T :
-  T;
+type FormatResponse<T, F extends MediaType> = F extends 'application/geo+json'
+  ? GeoJSONFeature
+  : F extends 'application/sml+json'
+  ? SystemSensorML
+  : F extends 'application/json'
+  ? T
+  : T;
 ```
 
 ---
@@ -2013,9 +2075,11 @@ type FormatResponse<T, F extends MediaType> =
 ### 11.1 Type Safety vs Flexibility Trade-offs
 
 **Strict Types (Internal Library Use):**
+
 ```typescript
 // Strict - enforces all requirements
-interface StrictSystem extends Required<Pick<System, 'type' | 'geometry' | 'properties'>> {
+interface StrictSystem
+  extends Required<Pick<System, 'type' | 'geometry' | 'properties'>> {
   properties: Required<Pick<SystemProperties, 'featureType' | 'uid' | 'name'>>;
 }
 
@@ -2027,6 +2091,7 @@ function processValidatedSystem(system: StrictSystem): void {
 ```
 
 **Flexible Types (User-Facing API):**
+
 ```typescript
 // Flexible - accepts broader input
 type SystemInput = Partial<System> & Pick<System, 'properties'>;
@@ -2041,6 +2106,7 @@ function createSystem(input: SystemInput): Promise<System> {
 ### 11.2 Minimal vs Comprehensive Type Exports
 
 **Minimal Export Strategy (Recommended for v1):**
+
 - Core resource types only (10 types)
 - Basic query parameter types (5 types)
 - Response wrappers (3 types)
@@ -2048,6 +2114,7 @@ function createSystem(input: SystemInput): Promise<System> {
 - **Total: ~25 exported types**
 
 **Comprehensive Export Strategy (For Advanced Users):**
+
 - All 100+ types exported
 - Full SWE Common component hierarchy
 - All SensorML process types
@@ -2056,22 +2123,42 @@ function createSystem(input: SystemInput): Promise<System> {
 - **Total: 100+ exported types**
 
 **Recommended Approach:**
+
 ```typescript
 // src/types/index.ts - Public API
 export {
   // Core Resources (10)
-  System, Deployment, Procedure, SamplingFeature, PropertyResource,
-  DataStream, Observation, ControlStream, Command, SystemEvent,
-  
+  System,
+  Deployment,
+  Procedure,
+  SamplingFeature,
+  PropertyResource,
+  DataStream,
+  Observation,
+  ControlStream,
+  Command,
+  SystemEvent,
+
   // Collections (3)
-  SystemCollection, DataStreamCollection, ObservationCollection,
-  
+  SystemCollection,
+  DataStreamCollection,
+  ObservationCollection,
+
   // Query Parameters (5)
-  SystemQueryParams, DataStreamQueryParams, ObservationQueryParams,
-  ControlStreamQueryParams, CommonQueryParams,
-  
+  SystemQueryParams,
+  DataStreamQueryParams,
+  ObservationQueryParams,
+  ControlStreamQueryParams,
+  CommonQueryParams,
+
   // Utilities (7)
-  Link, TimePeriod, TimeInstant, Geometry, Point, Collection, PaginatedResponse,
+  Link,
+  TimePeriod,
+  TimeInstant,
+  Geometry,
+  Point,
+  Collection,
+  PaginatedResponse,
 };
 
 // src/types/advanced.ts - Advanced API (opt-in)
@@ -2084,6 +2171,7 @@ export * from './constraints';
 ### 11.3 Type Depth Control
 
 **Shallow Types (Default):**
+
 ```typescript
 // Links not expanded - just references
 interface System {
@@ -2094,6 +2182,7 @@ interface System {
 ```
 
 **Deep Types (Opt-in via Generic Parameter):**
+
 ```typescript
 // Links expanded to full resources
 interface SystemDeep {
@@ -2103,16 +2192,17 @@ interface SystemDeep {
 }
 
 // Generic type with depth control
-type Expand<T, D extends number = 0> = D extends 3 
-  ? T 
-  : T extends Link 
-    ? Resource 
-    : T;
+type Expand<T, D extends number = 0> = D extends 3
+  ? T
+  : T extends Link
+  ? Resource
+  : T;
 ```
 
 ### 11.4 Runtime Validation Integration
 
 **Zod Schema Generation (Optional):**
+
 ```typescript
 import { z } from 'zod';
 
@@ -2141,6 +2231,7 @@ function validateSystem(data: unknown): System {
 ```
 
 **Validation Strategy:**
+
 - TypeScript types for compile-time safety
 - Optional Zod schemas for runtime validation
 - Users can choose validation library (Zod, Yup, io-ts, etc.)
@@ -2153,6 +2244,7 @@ function validateSystem(data: unknown): System {
 ### 12.1 Type Generation Approach
 
 **Option 1: Manual Type Definitions**
+
 - Pro: Full control, optimized for TypeScript
 - Pro: Can add documentation comments
 - Pro: Can simplify/improve OpenAPI schemas
@@ -2160,6 +2252,7 @@ function validateSystem(data: unknown): System {
 - Con: Risk of drift from OpenAPI spec
 
 **Option 2: Automated Generation from OpenAPI**
+
 - Pro: Always in sync with spec
 - Pro: Less maintenance
 - Con: Generated types may be verbose
@@ -2167,6 +2260,7 @@ function validateSystem(data: unknown): System {
 - Tools: openapi-typescript, swagger-typescript-api
 
 **Recommended: Hybrid Approach**
+
 1. Generate initial types from OpenAPI YAML
 2. Review and refine generated types
 3. Add JSDoc comments and examples
@@ -2244,12 +2338,13 @@ src/types/
 ### 12.3 Documentation Strategy
 
 **JSDoc Comments:**
-```typescript
+
+````typescript
 /**
  * System resource representing sensors, actuators, platforms, and systems.
- * 
+ *
  * @see {@link https://docs.ogc.org/is/23-001/23-001.html#system-resource OGC API - Connected Systems Part 1 § 7.2}
- * 
+ *
  * @example
  * ```typescript
  * const sensor: System = {
@@ -2268,9 +2363,10 @@ src/types/
 export interface System extends GeoJSONFeature {
   // ...
 }
-```
+````
 
 **README with Type Usage Examples:**
+
 - Common type patterns
 - Type narrowing with type guards
 - Format negotiation examples
@@ -2279,11 +2375,13 @@ export interface System extends GeoJSONFeature {
 ### 12.4 Versioning Strategy
 
 **Semantic Versioning for Types:**
+
 - **Major version change:** Breaking changes to public types
 - **Minor version change:** New types added (non-breaking)
 - **Patch version change:** Documentation or internal type fixes
 
 **Compatibility Guarantees:**
+
 - Public API types (index.ts) follow strict semver
 - Advanced types (advanced.ts) can have breaking changes in minor versions
 - Internal types can change freely
@@ -2291,6 +2389,7 @@ export interface System extends GeoJSONFeature {
 ### 12.5 Testing Strategy
 
 **Type Tests:**
+
 ```typescript
 // tests/types/system.test-d.ts (using tsd or vitest)
 import { expectType, expectError } from 'tsd';
@@ -2318,6 +2417,7 @@ if (isSystem(resource)) {
 ```
 
 **Integration with Runtime Tests:**
+
 ```typescript
 // tests/integration/types.test.ts
 import { describe, it, expect } from 'vitest';
@@ -2334,10 +2434,10 @@ describe('System type validation', () => {
         name: 'Test Sensor',
       },
     };
-    
+
     expect(() => SystemSchema.parse(system)).not.toThrow();
   });
-  
+
   it('rejects invalid system', () => {
     const invalid = { type: 'Feature' };
     expect(() => SystemSchema.parse(invalid)).toThrow();

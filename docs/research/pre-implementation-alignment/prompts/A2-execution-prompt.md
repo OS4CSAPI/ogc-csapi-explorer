@@ -36,7 +36,7 @@ The Implementation Guide and Test Research are the **stronger sources of truth**
 
 3. **Check 3 (Method Count Accuracy):** Sum the method counts listed in ROADMAP Phase 2 tasks (Systems: 12, Deployments: 8, Procedures: 8, Sampling Features: 8, Properties: 6, DataStreams: 11, Observations: 9, Control Streams: 8, Commands: 10 = 80 total). Verify each count against Implementation Guide §6 resource type sections (lines 1193-1715). Check method names match.
 
-4. **Check 4 (File/Directory Structure):** Extract every file path implied by ROADMAP tasks (model.ts, helpers.ts, url_builder.ts, endpoint.ts, info.ts, index.ts, formats/sensorml/*.ts, formats/swecommon/*.ts, formats/constants.ts, formats/index.ts). Compare against Implementation Guide §14 file inventory. Check fixture directory path is `fixtures/csapi/` not `fixtures/ogc-api/csapi/`.
+4. **Check 4 (File/Directory Structure):** Extract every file path implied by ROADMAP tasks (model.ts, helpers.ts, url*builder.ts, endpoint.ts, info.ts, index.ts, formats/sensorml/*.ts, formats/swecommon/\_.ts, formats/constants.ts, formats/index.ts). Compare against Implementation Guide §14 file inventory. Check fixture directory path is `fixtures/csapi/` not `fixtures/ogc-api/csapi/`.
 
 5. **Check 5 (Phase Dependencies):** Verify stated dependencies (Phase 1→2→3→4). Check intra-phase dependencies (Phase 3: SWE Common types before SensorML types). Check whether any A1 updates changed component relationships.
 

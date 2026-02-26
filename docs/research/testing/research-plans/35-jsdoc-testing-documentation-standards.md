@@ -66,6 +66,7 @@ Define JSDoc documentation standards for test files to ensure tests are self-doc
 **Objective:** Analyze test documentation in upstream implementations
 
 **Tasks:**
+
 1. ✅ Review test documentation in upstream codebase (grep searches, file reads)
 2. ✅ Identify JSDoc patterns in test files (found NEAR-ZERO formal documentation)
 3. ✅ Extract file-level documentation patterns (none found)
@@ -81,6 +82,7 @@ Define JSDoc documentation standards for test files to ensure tests are self-doc
 **Objective:** Identify useful JSDoc tags for test documentation
 
 **Tasks:**
+
 1. ✅ Review standard JSDoc tags (@param, @returns, @example, @deprecated)
 2. ✅ Identify test-specific tags (@specification, @fixture, @coverage, @scenario)
 3. ✅ Evaluate custom tag needs (CSAPI-specific tags for spec traceability)
@@ -94,6 +96,7 @@ Define JSDoc documentation standards for test files to ensure tests are self-doc
 **Objective:** Define what should be documented at each level
 
 **Tasks:**
+
 1. ✅ Define file-level documentation requirements (optional, recommended for complex files)
 2. ✅ Define describe block documentation requirements (rarely needed, only for complex setup)
 3. ✅ Define test case documentation requirements (optional for spec-driven tests)
@@ -108,6 +111,7 @@ Define JSDoc documentation standards for test files to ensure tests are self-doc
 **Objective:** Design JSDoc templates for different test patterns
 
 **Tasks:**
+
 1. ✅ Design file-level JSDoc template (3 templates for different file types)
 2. ✅ Design test suite JSDoc template (minimal, rarely used)
 3. ✅ Design test case JSDoc template (3 templates: standard, spec-driven, scenario)
@@ -122,6 +126,7 @@ Define JSDoc documentation standards for test files to ensure tests are self-doc
 **Objective:** Define documentation standards and guidelines
 
 **Tasks:**
+
 1. ✅ Define when JSDoc is required vs optional (utilities REQUIRED, tests OPTIONAL)
 2. ✅ Define documentation style guidelines (5 rules: human-focused, intent not implementation, concise, active voice, present tense)
 3. ✅ Define linking and reference standards (@specification format, spec abbreviations)
@@ -136,6 +141,7 @@ Define JSDoc documentation standards for test files to ensure tests are self-doc
 **Objective:** Create comprehensive test documentation standards guide
 
 **Tasks:**
+
 1. ✅ Consolidate documentation requirements (4 levels, required vs optional)
 2. ✅ Create JSDoc template library (12 templates for different patterns)
 3. ✅ Document standards and guidelines (5 style rules, review process)
@@ -167,6 +173,7 @@ This research is complete when:
 **Test documentation standards guide with JSDoc templates**
 
 Content includes:
+
 - JSDoc tag reference for test documentation
 - Standard JSDoc tags (@description, @example, @param, @returns)
 - Custom tags for testing (@fixture, @specification, @scenario, @coverage)
@@ -188,14 +195,15 @@ Content includes:
 **Example JSDoc Templates:**
 
 **File-Level Documentation:**
+
 ```typescript
 /**
  * @fileoverview Tests for QueryBuilder collection methods
  * @module tests/QueryBuilder/collections
- * 
+ *
  * Tests validate collection listing, filtering, and pagination
  * according to CSAPI Part 1 specification.
- * 
+ *
  * @specification https://docs.ogc.org/is/23-001/23-001.html#collections
  * @coverage Core collection operations (Section 7.2)
  * @fixtures Uses fixtures/ogc-api/sample-data/collections.json
@@ -203,15 +211,16 @@ Content includes:
 ```
 
 **Test Case Documentation:**
+
 ```typescript
 /**
  * Tests that getCollections() returns valid collection array
- * 
+ *
  * Validates collection structure matches CSAPI spec:
  * - Each collection has required id, title fields
  * - Links array includes self and items relations
  * - Extent is properly structured (spatial, temporal)
- * 
+ *
  * @fixture sample-data/collections.json (contains 3 collections)
  * @specification CSAPI Part 1, Section 7.2.2
  */
@@ -225,11 +234,13 @@ it('should return valid collection array', async () => {
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 19: Test Organization and File Structure (test file patterns)
 - Section 1-2: Upstream Analysis (documentation patterns)
 - Section 34: Test Utility Design (utility documentation)
 
 **Blocks:**
+
 - Test implementation (documentation standards guide developers)
 - Test maintenance (documentation aids understanding)
 - Code review (documentation standards for reviews)
@@ -257,18 +268,21 @@ it('should return valid collection array', async () => {
 <!-- Add notes and unresolved questions here as research progresses -->
 
 **Initial Observations:**
+
 - JSDoc makes tests self-documenting and easier to maintain
 - Documentation should explain WHY (intent) not just WHAT (already in code)
 - Linking to specifications helps trace requirements to tests
 - Documenting fixtures helps understand test data
 
 **Documentation Principles:**
+
 1. **Intent over Implementation**: Document why test exists, not what code does
 2. **Specification Traceability**: Link tests to spec sections
 3. **Fixture Provenance**: Document where test data came from
 4. **Coverage Transparency**: Document what is and isn't tested
 
 **JSDoc Tags for Tests:**
+
 - **@fileoverview**: File-level description
 - **@module**: Test module identifier
 - **@specification**: Link to spec section
@@ -278,12 +292,14 @@ it('should return valid collection array', async () => {
 - **@example**: Example usage or expected output
 
 **Documentation Levels:**
+
 1. **File**: Overall purpose, what component is tested
 2. **Suite (describe)**: What aspect of component is tested
 3. **Test (it)**: Specific behavior being validated
 4. **Helper**: What utility does, parameters, returns
 
 **When to Document:**
+
 - **Always**: File-level, complex test logic, non-obvious assertions
 - **Often**: Test intent for important scenarios, fixture references
 - **Sometimes**: Simple, self-explanatory tests may skip JSDoc
@@ -293,12 +309,14 @@ it('should return valid collection array', async () => {
 ### Research Findings
 
 **Key Discovery: Upstream Has Near-Zero Test Documentation**
+
 - Only 1 JSDoc block in 8,200+ lines of test code (0.3% density)
 - Tests are self-documenting through clear naming and structure
 - Minimal inline comments focus on "why" not "what"
 - **Implication:** CSAPI needs MORE documentation than upstream due to spec complexity
 
 **Documentation Standards Established:**
+
 - **4 documentation levels** (file, suite, test, helper) with required vs optional guidance
 - **11 JSDoc tags** (7 standard + 4 custom: @specification, @fixture, @coverage, @scenario)
 - **12 JSDoc templates** for different test patterns
@@ -306,25 +324,30 @@ it('should return valid collection array', async () => {
 - **Documentation overhead:** ~15% (30 hours for 80 test files, ~22 min/file average)
 
 **Required Documentation:**
+
 - ✅ Test utility functions (ALWAYS - @param, @returns, @example)
 - ✅ Complex test setup (ALWAYS - explain non-obvious logic)
 - ✅ Deprecated code (ALWAYS - @deprecated with migration path)
 
 **Optional Documentation:**
+
 - 🟡 File-level (RECOMMENDED for complex components)
 - 🟡 Specification links (RECOMMENDED for spec-driven tests)
 - 🟡 Fixture references (RECOMMENDED for complex fixtures)
 - 🟡 Test cases (OPTIONAL - only for non-obvious intent)
 
 **Documentation Principle:**
+
 > "Document WHY (intent, rationale, context), not WHAT (visible from code)"
 
 **ROI Analysis:**
+
 - **Value:** HIGH (spec traceability, maintainability, coverage visibility)
 - **Cost:** MEDIUM (initial 30 hours), LOW (5% maintenance overhead)
 - **Recommendation:** PROCEED - Benefits outweigh costs
 
 **What This Unblocks:**
+
 - Test implementation with documentation standards
 - Code reviews with documentation checklist
 - Specification traceability (tests linked to requirements)

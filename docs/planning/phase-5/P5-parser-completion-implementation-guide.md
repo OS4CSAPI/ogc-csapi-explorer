@@ -106,14 +106,14 @@ API Response (JSON)
 
 All 6 resource type interfaces already exist in `src/ogc-api/csapi/model.ts`. No new resource interfaces are needed — only 2 new schema response interfaces.
 
-| Interface | Location | Fields |
-|-----------|----------|--------|
-| `Property` | model.ts L401–417 | `id`, `label`, `description`, `uniqueId`, `baseProperty`, `objectType`, `statistic`, `links` |
-| `Datastream` | model.ts L433–462 | `id`, `name`, `description`, `validTime`, `formats`, `outputName`, `observedProperties`, `phenomenonTime`, `resultTime`, `resultType`, `live`, `type`, `links` |
-| `Observation` | model.ts L475–494 | `id`, `phenomenonTime`, `resultTime`, `parameters`, `result`, `links` |
-| `ControlStream` | model.ts L506–523 | `id`, `name`, `description`, `validTime`, `formats`, `inputName`, `controlledProperties`, `issueTime`, `executionTime`, `live`, `async`, `links` |
-| `Command` | model.ts L535–548 | `id`, `issueTime`, `executionTime`, `sender`, `currentStatus`, `parameters`, `links` |
-| `CommandStatus` | model.ts L560–575 | `id`, `reportTime`, `statusCode`, `percentCompletion`, `executionTime`, `message`, `links` |
+| Interface       | Location          | Fields                                                                                                                                                         |
+| --------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Property`      | model.ts L401–417 | `id`, `label`, `description`, `uniqueId`, `baseProperty`, `objectType`, `statistic`, `links`                                                                   |
+| `Datastream`    | model.ts L433–462 | `id`, `name`, `description`, `validTime`, `formats`, `outputName`, `observedProperties`, `phenomenonTime`, `resultTime`, `resultType`, `live`, `type`, `links` |
+| `Observation`   | model.ts L475–494 | `id`, `phenomenonTime`, `resultTime`, `parameters`, `result`, `links`                                                                                          |
+| `ControlStream` | model.ts L506–523 | `id`, `name`, `description`, `validTime`, `formats`, `inputName`, `controlledProperties`, `issueTime`, `executionTime`, `live`, `async`, `links`               |
+| `Command`       | model.ts L535–548 | `id`, `issueTime`, `executionTime`, `sender`, `currentStatus`, `parameters`, `links`                                                                           |
+| `CommandStatus` | model.ts L560–575 | `id`, `reportTime`, `statusCode`, `percentCompletion`, `executionTime`, `message`, `links`                                                                     |
 
 ---
 
@@ -123,7 +123,7 @@ All new parsers must follow these principles, established by prior phases and do
 
 ### 3.1 Tolerant Extraction (Postel's Law)
 
-> *"Be liberal in what you accept."*
+> _"Be liberal in what you accept."_
 
 Parsers extract what they can from the input without gating on validation. If a field is missing, use the interface default (undefined, null, empty array). If a field has an unexpected shape, fall back gracefully. Never throw on malformed data — only throw on structurally unusable input (e.g., input is not an object).
 
@@ -143,6 +143,7 @@ No validation gate between recognition and extraction.
 ### 3.3 Consistent Patterns
 
 New parsers must be consistent with existing parsers in:
+
 - **Error handling** — Same throw conditions as `extractCSAPIFeature()` and `parseSensorML30()`
 - **Field transformation** — Same `parseValidTime()` for all time intervals
 - **JSDoc** — Same documentation density as SensorML sub-parsers (Phase 3.5 pattern)
@@ -177,7 +178,11 @@ Property is the **only Part 1 resource that is NOT a GeoJSON Feature**. It arriv
   "objectType": "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement",
   "statistic": "http://www.opengis.net/def/property/OGC/0/Mean",
   "links": [
-    { "rel": "self", "href": "/properties/air-temp", "type": "application/json" }
+    {
+      "rel": "self",
+      "href": "/properties/air-temp",
+      "type": "application/json"
+    }
   ]
 }
 ```
@@ -186,16 +191,16 @@ Property is the **only Part 1 resource that is NOT a GeoJSON Feature**. It arriv
 
 #### Field Transformations
 
-| Field | Source Type | Target Type | Transformation |
-|-------|------------|-------------|----------------|
-| `id` | `string \| undefined` | `string \| undefined` | Direct pass-through (server-assigned, may be absent) |
-| `label` | `string` | `string` | Direct extraction; fall back to empty string |
-| `description` | `string \| undefined` | `string \| undefined` | Conditional extraction |
-| `uniqueId` | `string` | `string` | Direct extraction; fall back to empty string |
-| `baseProperty` | `string` | `string` | Direct extraction; fall back to empty string |
-| `objectType` | `string \| undefined` | `string \| undefined` | Conditional extraction |
-| `statistic` | `string \| undefined` | `string \| undefined` | Conditional extraction |
-| `links` | `array \| undefined` | `ResourceLink[] \| undefined` | Extract if array; omit if absent |
+| Field          | Source Type           | Target Type                   | Transformation                                       |
+| -------------- | --------------------- | ----------------------------- | ---------------------------------------------------- |
+| `id`           | `string \| undefined` | `string \| undefined`         | Direct pass-through (server-assigned, may be absent) |
+| `label`        | `string`              | `string`                      | Direct extraction; fall back to empty string         |
+| `description`  | `string \| undefined` | `string \| undefined`         | Conditional extraction                               |
+| `uniqueId`     | `string`              | `string`                      | Direct extraction; fall back to empty string         |
+| `baseProperty` | `string`              | `string`                      | Direct extraction; fall back to empty string         |
+| `objectType`   | `string \| undefined` | `string \| undefined`         | Conditional extraction                               |
+| `statistic`    | `string \| undefined` | `string \| undefined`         | Conditional extraction                               |
+| `links`        | `array \| undefined`  | `ResourceLink[] \| undefined` | Extract if array; omit if absent                     |
 
 **No `validTime`.** Property has no `validTime` per OGC 23-001 (`DerivedProperty` → `AbstractSweIdentifiable` → `AbstractSWE`). See [validTime coverage analysis](../../research/phase-5/validtime-coverage-analysis.md).
 
@@ -212,10 +217,14 @@ export function parseProperty(json: unknown): Property {
   return {
     ...(typeof obj.id === 'string' ? { id: obj.id } : {}),
     label: typeof obj.label === 'string' ? obj.label : '',
-    ...(typeof obj.description === 'string' ? { description: obj.description } : {}),
+    ...(typeof obj.description === 'string'
+      ? { description: obj.description }
+      : {}),
     uniqueId: typeof obj.uniqueId === 'string' ? obj.uniqueId : '',
     baseProperty: typeof obj.baseProperty === 'string' ? obj.baseProperty : '',
-    ...(typeof obj.objectType === 'string' ? { objectType: obj.objectType } : {}),
+    ...(typeof obj.objectType === 'string'
+      ? { objectType: obj.objectType }
+      : {}),
     ...(typeof obj.statistic === 'string' ? { statistic: obj.statistic } : {}),
     ...(Array.isArray(obj.links) ? { links: obj.links as ResourceLink[] } : {}),
   } satisfies Property;
@@ -224,14 +233,14 @@ export function parseProperty(json: unknown): Property {
 
 #### Test Cases
 
-| # | Test | Input | Expected |
-|---|------|-------|----------|
-| 1 | Full Property | All fields present | All fields extracted |
-| 2 | Minimal Property | Only required fields (`uniqueId`, `label`, `baseProperty`) | Optional fields omitted |
-| 3 | Missing label | `label` absent | Falls back to empty string |
-| 4 | Non-object input | `null`, `42`, `"string"` | Throws Error |
-| 5 | Empty object | `{}` | Returns defaults (empty strings for required fields) |
-| 6 | Extra fields ignored | Fields not in interface | Extra fields not in output |
+| #   | Test                 | Input                                                      | Expected                                             |
+| --- | -------------------- | ---------------------------------------------------------- | ---------------------------------------------------- |
+| 1   | Full Property        | All fields present                                         | All fields extracted                                 |
+| 2   | Minimal Property     | Only required fields (`uniqueId`, `label`, `baseProperty`) | Optional fields omitted                              |
+| 3   | Missing label        | `label` absent                                             | Falls back to empty string                           |
+| 4   | Non-object input     | `null`, `42`, `"string"`                                   | Throws Error                                         |
+| 5   | Empty object         | `{}`                                                       | Returns defaults (empty strings for required fields) |
+| 6   | Extra fields ignored | Fields not in interface                                    | Extra fields not in output                           |
 
 ---
 
@@ -257,7 +266,10 @@ export function parseProperty(json: unknown): Property {
   "outputName": "weather",
   "validTime": ["2026-01-26T18:32:01.56Z", "now"],
   "observedProperties": [
-    { "definition": "http://mmisw.org/ont/cf/parameter/air_temperature", "label": "Air Temperature" }
+    {
+      "definition": "http://mmisw.org/ont/cf/parameter/air_temperature",
+      "label": "Air Temperature"
+    }
   ],
   "formats": [
     "application/om+json",
@@ -278,23 +290,24 @@ export function parseProperty(json: unknown): Property {
 
 #### Field Transformations
 
-| Field | Source Type | Target Type | Transformation |
-|-------|------------|-------------|----------------|
-| `id` | `string` | `string` | Direct extraction |
-| `name` | `string` | `string` | Direct extraction; fall back to empty string |
-| `description` | `string \| undefined` | `string \| undefined` | Conditional extraction |
-| `validTime` | `[string, string] \| null` | `TimeInterval \| undefined` | `parseValidTime()` — handles `"now"` sentinel, null, array, object formats |
-| `formats` | `string[]` | `string[]` | Extract if array; fall back to empty array |
-| `outputName` | `string \| undefined` | `string \| undefined` | Conditional extraction |
-| `observedProperties` | `array \| null` | `string[]` | Extract `definition` URIs from objects; fall back to empty array |
-| `phenomenonTime` | `[string, string] \| null` | `TimeInterval \| null` | `parseValidTime()` or null |
-| `resultTime` | `[string, string] \| null` | `TimeInterval \| null` | `parseValidTime()` or null |
-| `resultType` | `string \| null` | `enum \| null` | Validate against known values; null if unknown |
-| `live` | `boolean \| null` | `boolean \| null` | Direct extraction |
-| `type` | `string \| undefined` | `'status' \| 'observation' \| undefined` | Conditional extraction |
-| `links` | `array` | `ResourceLink[]` | Extract if array; fall back to empty array |
+| Field                | Source Type                | Target Type                              | Transformation                                                             |
+| -------------------- | -------------------------- | ---------------------------------------- | -------------------------------------------------------------------------- |
+| `id`                 | `string`                   | `string`                                 | Direct extraction                                                          |
+| `name`               | `string`                   | `string`                                 | Direct extraction; fall back to empty string                               |
+| `description`        | `string \| undefined`      | `string \| undefined`                    | Conditional extraction                                                     |
+| `validTime`          | `[string, string] \| null` | `TimeInterval \| undefined`              | `parseValidTime()` — handles `"now"` sentinel, null, array, object formats |
+| `formats`            | `string[]`                 | `string[]`                               | Extract if array; fall back to empty array                                 |
+| `outputName`         | `string \| undefined`      | `string \| undefined`                    | Conditional extraction                                                     |
+| `observedProperties` | `array \| null`            | `string[]`                               | Extract `definition` URIs from objects; fall back to empty array           |
+| `phenomenonTime`     | `[string, string] \| null` | `TimeInterval \| null`                   | `parseValidTime()` or null                                                 |
+| `resultTime`         | `[string, string] \| null` | `TimeInterval \| null`                   | `parseValidTime()` or null                                                 |
+| `resultType`         | `string \| null`           | `enum \| null`                           | Validate against known values; null if unknown                             |
+| `live`               | `boolean \| null`          | `boolean \| null`                        | Direct extraction                                                          |
+| `type`               | `string \| undefined`      | `'status' \| 'observation' \| undefined` | Conditional extraction                                                     |
+| `links`              | `array`                    | `ResourceLink[]`                         | Extract if array; fall back to empty array                                 |
 
 **Cross-references (NOT extracted into interface):**
+
 - `system@id` — present in raw JSON but not in `Datastream` interface; ignored by parser
 - `system@link` — link object; same — not in interface
 
@@ -304,26 +317,26 @@ export function parseProperty(json: unknown): Property {
 
 Datastream has **three** time-interval fields. All use the same `[start, end]` array format ("timePeriod" in the OpenAPI spec). All are parsed with the same `parseValidTime()` function:
 
-| Field | Nullable? | Semantics |
-|-------|-----------|-----------|
-| `validTime` | Optional (may be absent) | When the datastream is/was valid |
-| `phenomenonTime` | `null` allowed (readOnly) | Time range of all observations |
-| `resultTime` | `null` allowed (readOnly) | Time range of all result timestamps |
+| Field            | Nullable?                 | Semantics                           |
+| ---------------- | ------------------------- | ----------------------------------- |
+| `validTime`      | Optional (may be absent)  | When the datastream is/was valid    |
+| `phenomenonTime` | `null` allowed (readOnly) | Time range of all observations      |
+| `resultTime`     | `null` allowed (readOnly) | Time range of all result timestamps |
 
 See [validTime coverage analysis](../../research/phase-5/validtime-coverage-analysis.md) for the full `validTime` landscape.
 
 #### Test Cases
 
-| # | Test | Focus |
-|---|------|-------|
-| 1 | Full Datastream | All fields present, verify each transformation |
-| 2 | Minimal Datastream | Required fields only (`id`, `name`, `formats`) |
-| 3 | `validTime` with `"now"` | `["2026-01-26T18:32:01.56Z", "now"]` → `{ start: Date, end: undefined }` |
-| 4 | `observedProperties` as objects | Array of `{ definition, label }` → array of definition strings |
-| 5 | `observedProperties` as strings | Direct pass-through |
-| 6 | `phenomenonTime` null | Returns null, not undefined |
-| 7 | Non-object input | Throws Error |
-| 8 | Cross-reference fields ignored | `system@id` not in output |
+| #   | Test                            | Focus                                                                    |
+| --- | ------------------------------- | ------------------------------------------------------------------------ |
+| 1   | Full Datastream                 | All fields present, verify each transformation                           |
+| 2   | Minimal Datastream              | Required fields only (`id`, `name`, `formats`)                           |
+| 3   | `validTime` with `"now"`        | `["2026-01-26T18:32:01.56Z", "now"]` → `{ start: Date, end: undefined }` |
+| 4   | `observedProperties` as objects | Array of `{ definition, label }` → array of definition strings           |
+| 5   | `observedProperties` as strings | Direct pass-through                                                      |
+| 6   | `phenomenonTime` null           | Returns null, not undefined                                              |
+| 7   | Non-object input                | Throws Error                                                             |
+| 8   | Cross-reference fields ignored  | `system@id` not in output                                                |
 
 ---
 
@@ -353,18 +366,19 @@ See [validTime coverage analysis](../../research/phase-5/validtime-coverage-anal
 
 #### Field Transformations
 
-| Field | Source Type | Target Type | Transformation |
-|-------|------------|-------------|----------------|
-| `id` | `string` | `string` | Direct extraction |
-| `phenomenonTime` | `string \| undefined` | `string \| undefined` | Direct pass-through (ISO 8601 instant, NOT a time interval) |
-| `resultTime` | `string` | `string` | Direct extraction |
-| `parameters` | `object \| undefined` | `Record<string, unknown> \| undefined` | Conditional extraction |
-| `result` | `unknown \| undefined` | `unknown \| undefined` | Pass-through (schema-dependent shape) |
-| `links` | `array \| undefined` | `ResourceLink[] \| undefined` | Conditional extraction |
+| Field            | Source Type            | Target Type                            | Transformation                                              |
+| ---------------- | ---------------------- | -------------------------------------- | ----------------------------------------------------------- |
+| `id`             | `string`               | `string`                               | Direct extraction                                           |
+| `phenomenonTime` | `string \| undefined`  | `string \| undefined`                  | Direct pass-through (ISO 8601 instant, NOT a time interval) |
+| `resultTime`     | `string`               | `string`                               | Direct extraction                                           |
+| `parameters`     | `object \| undefined`  | `Record<string, unknown> \| undefined` | Conditional extraction                                      |
+| `result`         | `unknown \| undefined` | `unknown \| undefined`                 | Pass-through (schema-dependent shape)                       |
+| `links`          | `array \| undefined`   | `ResourceLink[] \| undefined`          | Conditional extraction                                      |
 
 **Important distinction:** Observation time fields are **instants** (single ISO 8601 strings), NOT time intervals (arrays). This is different from Datastream/ControlStream time fields. The `Observation` interface stores them as strings, not `TimeInterval`.
 
 **Cross-references (NOT extracted into interface):**
+
 - `datastream@id` — present in raw JSON, not in current `Observation` interface; ignored by parser
 - `samplingFeature@id` — may be present; not in interface; ignored
 
@@ -372,14 +386,14 @@ See [validTime coverage analysis](../../research/phase-5/validtime-coverage-anal
 
 #### Test Cases
 
-| # | Test | Focus |
-|---|------|-------|
-| 1 | Full Observation | All fields present |
-| 2 | Minimal Observation | Only `id`, `resultTime` (required per spec) |
-| 3 | Complex result | Nested record as `result` — pass-through verified |
-| 4 | Missing phenomenonTime | Optional field absent |
-| 5 | Non-object input | Throws Error |
-| 6 | Cross-reference fields ignored | `datastream@id` not in output |
+| #   | Test                           | Focus                                             |
+| --- | ------------------------------ | ------------------------------------------------- |
+| 1   | Full Observation               | All fields present                                |
+| 2   | Minimal Observation            | Only `id`, `resultTime` (required per spec)       |
+| 3   | Complex result                 | Nested record as `result` — pass-through verified |
+| 4   | Missing phenomenonTime         | Optional field absent                             |
+| 5   | Non-object input               | Throws Error                                      |
+| 6   | Cross-reference fields ignored | `datastream@id` not in output                     |
 
 ---
 
@@ -407,7 +421,10 @@ Real server example (OSH, ST#9 F30):
   "inputName": "mavControl",
   "validTime": ["2026-01-14T04:49:19.134Z", "now"],
   "issueTime": ["2026-01-14T12:42:21.910351Z", "2026-01-14T13:11:31.196096Z"],
-  "executionTime": ["2026-01-14T12:42:21.928726Z", "2026-01-14T13:11:31.196096Z"],
+  "executionTime": [
+    "2026-01-14T12:42:21.928726Z",
+    "2026-01-14T13:11:31.196096Z"
+  ],
   "controlledProperties": [],
   "formats": [
     "application/json",
@@ -423,20 +440,20 @@ Real server example (OSH, ST#9 F30):
 
 #### Field Transformations
 
-| Field | Source Type | Target Type | Transformation |
-|-------|------------|-------------|----------------|
-| `id` | `string` | `string` | Direct extraction |
-| `name` | `string` | `string` | Direct extraction; fall back to empty string |
-| `description` | `string \| undefined` | `string \| undefined` | Conditional extraction |
-| `validTime` | `[string, string] \| null` | `TimeInterval \| undefined` | `parseValidTime()` |
-| `formats` | `string[]` | `string[]` | Extract if array; fall back to empty array |
-| `inputName` | `string \| undefined` | `string \| undefined` | Conditional extraction |
-| `controlledProperties` | `array \| null` | `string[]` | Extract `definition` URIs from objects or pass strings; fall back to empty array |
-| `issueTime` | `[string, string] \| null` | `TimeInterval \| null` | `parseValidTime()` or null |
-| `executionTime` | `[string, string] \| null` | `TimeInterval \| null` | `parseValidTime()` or null |
-| `live` | `boolean \| null` | `boolean \| null` | Direct extraction |
-| `async` | `boolean` | `boolean` | Direct extraction; fall back to false |
-| `links` | `array` | `ResourceLink[]` | Extract if array; fall back to empty array |
+| Field                  | Source Type                | Target Type                 | Transformation                                                                   |
+| ---------------------- | -------------------------- | --------------------------- | -------------------------------------------------------------------------------- |
+| `id`                   | `string`                   | `string`                    | Direct extraction                                                                |
+| `name`                 | `string`                   | `string`                    | Direct extraction; fall back to empty string                                     |
+| `description`          | `string \| undefined`      | `string \| undefined`       | Conditional extraction                                                           |
+| `validTime`            | `[string, string] \| null` | `TimeInterval \| undefined` | `parseValidTime()`                                                               |
+| `formats`              | `string[]`                 | `string[]`                  | Extract if array; fall back to empty array                                       |
+| `inputName`            | `string \| undefined`      | `string \| undefined`       | Conditional extraction                                                           |
+| `controlledProperties` | `array \| null`            | `string[]`                  | Extract `definition` URIs from objects or pass strings; fall back to empty array |
+| `issueTime`            | `[string, string] \| null` | `TimeInterval \| null`      | `parseValidTime()` or null                                                       |
+| `executionTime`        | `[string, string] \| null` | `TimeInterval \| null`      | `parseValidTime()` or null                                                       |
+| `live`                 | `boolean \| null`          | `boolean \| null`           | Direct extraction                                                                |
+| `async`                | `boolean`                  | `boolean`                   | Direct extraction; fall back to false                                            |
+| `links`                | `array`                    | `ResourceLink[]`            | Extract if array; fall back to empty array                                       |
 
 **Cross-references (NOT extracted):** `system@id`, `system@link` — not in `ControlStream` interface.
 
@@ -444,26 +461,26 @@ Real server example (OSH, ST#9 F30):
 
 ControlStream mirrors Datastream's shape closely. Both share the `baseStream` schema in the OpenAPI spec. The key differences:
 
-| Datastream | ControlStream |
-|-----------|---------------|
-| `outputName` | `inputName` |
-| `observedProperties` | `controlledProperties` |
+| Datastream                      | ControlStream                 |
+| ------------------------------- | ----------------------------- |
+| `outputName`                    | `inputName`                   |
+| `observedProperties`            | `controlledProperties`        |
 | `phenomenonTime` / `resultTime` | `issueTime` / `executionTime` |
-| `resultType` | — (absent) |
-| — | `async` |
+| `resultType`                    | — (absent)                    |
+| —                               | `async`                       |
 
 This structural parallel suggests extracting shared parsing logic (see [§7 Shared Utilities](#7-shared-utilities)).
 
 #### Test Cases
 
-| # | Test | Focus |
-|---|------|-------|
-| 1 | Full ControlStream | All fields from real OSH response (F30) |
-| 2 | Minimal ControlStream | Only `id`, `name`, `formats`, `async` |
-| 3 | Empty `controlledProperties` | Returns empty array |
-| 4 | `validTime` with `"now"` | Parses correctly |
-| 5 | `executionTime` null | Returns null |
-| 6 | Non-object input | Throws Error |
+| #   | Test                         | Focus                                   |
+| --- | ---------------------------- | --------------------------------------- |
+| 1   | Full ControlStream           | All fields from real OSH response (F30) |
+| 2   | Minimal ControlStream        | Only `id`, `name`, `formats`, `async`   |
+| 3   | Empty `controlledProperties` | Returns empty array                     |
+| 4   | `validTime` with `"now"`     | Parses correctly                        |
+| 5   | `executionTime` null         | Returns null                            |
+| 6   | Non-object input             | Throws Error                            |
 
 ---
 
@@ -499,15 +516,15 @@ Real server example (OSH, ST#10 F31):
 
 #### Field Transformations
 
-| Field | Source Type | Target Type | Transformation |
-|-------|------------|-------------|----------------|
-| `id` | `string` | `string` | Direct extraction |
-| `issueTime` | `string` | `string` | Direct pass-through (ISO 8601 instant) |
-| `executionTime` | `[string, string] \| undefined` | `TimeInterval \| undefined` | `parseValidTime()` — only present when command has been executed |
-| `sender` | `string \| undefined` | `string \| undefined` | Conditional extraction |
-| `currentStatus` | `string \| undefined` | `CommandStatusCode \| undefined` | Validate against `CommandStatusCodes` enum; fall back to undefined if invalid |
-| `parameters` | `object` | `Record<string, unknown>` | Direct extraction; fall back to empty object |
-| `links` | `array \| undefined` | `ResourceLink[] \| undefined` | Conditional extraction |
+| Field           | Source Type                     | Target Type                      | Transformation                                                                |
+| --------------- | ------------------------------- | -------------------------------- | ----------------------------------------------------------------------------- |
+| `id`            | `string`                        | `string`                         | Direct extraction                                                             |
+| `issueTime`     | `string`                        | `string`                         | Direct pass-through (ISO 8601 instant)                                        |
+| `executionTime` | `[string, string] \| undefined` | `TimeInterval \| undefined`      | `parseValidTime()` — only present when command has been executed              |
+| `sender`        | `string \| undefined`           | `string \| undefined`            | Conditional extraction                                                        |
+| `currentStatus` | `string \| undefined`           | `CommandStatusCode \| undefined` | Validate against `CommandStatusCodes` enum; fall back to undefined if invalid |
+| `parameters`    | `object`                        | `Record<string, unknown>`        | Direct extraction; fall back to empty object                                  |
+| `links`         | `array \| undefined`            | `ResourceLink[] \| undefined`    | Conditional extraction                                                        |
 
 **Cross-references (NOT extracted):** `controlstream@id` — present in raw JSON, not in `Command` interface.
 
@@ -517,16 +534,16 @@ Real server example (OSH, ST#10 F31):
 
 #### Test Cases
 
-| # | Test | Focus |
-|---|------|-------|
-| 1 | Full Command | All fields from real OSH response (F31) |
-| 2 | Minimal Command | Only `id`, `issueTime`, `parameters` (required per spec) |
-| 3 | `currentStatus` valid | `"COMPLETED"` → `'COMPLETED'` |
-| 4 | `currentStatus` invalid | Unknown string → `undefined` |
-| 5 | `executionTime` present | Parsed to `TimeInterval` |
-| 6 | `executionTime` absent | Not in output |
-| 7 | Complex parameters | Nested object pass-through |
-| 8 | Non-object input | Throws Error |
+| #   | Test                    | Focus                                                    |
+| --- | ----------------------- | -------------------------------------------------------- |
+| 1   | Full Command            | All fields from real OSH response (F31)                  |
+| 2   | Minimal Command         | Only `id`, `issueTime`, `parameters` (required per spec) |
+| 3   | `currentStatus` valid   | `"COMPLETED"` → `'COMPLETED'`                            |
+| 4   | `currentStatus` invalid | Unknown string → `undefined`                             |
+| 5   | `executionTime` present | Parsed to `TimeInterval`                                 |
+| 6   | `executionTime` absent  | Not in output                                            |
+| 7   | Complex parameters      | Nested object pass-through                               |
+| 8   | Non-object input        | Throws Error                                             |
 
 ---
 
@@ -547,27 +564,31 @@ Real server example (OSH, ST#10 F38):
   "command@id": "0o1qr7kupc33cgmqj0",
   "reportTime": "2026-01-14T12:42:21.928728Z",
   "statusCode": "COMPLETED",
-  "executionTime": ["2026-01-14T12:42:21.928726Z", "2026-01-14T12:42:21.928726Z"]
+  "executionTime": [
+    "2026-01-14T12:42:21.928726Z",
+    "2026-01-14T12:42:21.928726Z"
+  ]
 }
 ```
 
 #### Field Transformations
 
-| Field | Source Type | Target Type | Transformation |
-|-------|------------|-------------|----------------|
-| `id` | `string` | `string` | Direct extraction |
-| `reportTime` | `string` | `string` | Direct pass-through (ISO 8601 instant) |
-| `statusCode` | `string` | `CommandStatusCode` | Validate against `CommandStatusCodes` enum; fall back to `'PENDING'` if invalid (must always be present) |
-| `percentCompletion` | `number \| undefined` | `number \| undefined` | Conditional extraction; range 0–100 |
-| `executionTime` | `[string, string] \| undefined` | `TimeInterval \| undefined` | `parseValidTime()` |
-| `message` | `string \| undefined` | `string \| undefined` | Conditional extraction |
-| `links` | `array \| undefined` | `ResourceLink[] \| undefined` | Conditional extraction |
+| Field               | Source Type                     | Target Type                   | Transformation                                                                                           |
+| ------------------- | ------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `id`                | `string`                        | `string`                      | Direct extraction                                                                                        |
+| `reportTime`        | `string`                        | `string`                      | Direct pass-through (ISO 8601 instant)                                                                   |
+| `statusCode`        | `string`                        | `CommandStatusCode`           | Validate against `CommandStatusCodes` enum; fall back to `'PENDING'` if invalid (must always be present) |
+| `percentCompletion` | `number \| undefined`           | `number \| undefined`         | Conditional extraction; range 0–100                                                                      |
+| `executionTime`     | `[string, string] \| undefined` | `TimeInterval \| undefined`   | `parseValidTime()`                                                                                       |
+| `message`           | `string \| undefined`           | `string \| undefined`         | Conditional extraction                                                                                   |
+| `links`             | `array \| undefined`            | `ResourceLink[] \| undefined` | Conditional extraction                                                                                   |
 
 **Cross-references (NOT extracted):** `command@id` — present in raw JSON, not in `CommandStatus` interface.
 
 **`statusCode` normalization:** Unlike `currentStatus` on Command (optional), `statusCode` on CommandStatus is **required** per the spec. If the value is missing or unrecognized, fall back to `'PENDING'` (the initial state) rather than undefined, because the interface type is non-optional `CommandStatusCode`.
 
 **`executionTime` semantics vary by `statusCode`:**
+
 - `SCHEDULED` → planned execution time
 - `EXECUTING` → start time of execution
 - `COMPLETED` / `FAILED` → actual execution time range
@@ -576,15 +597,15 @@ The parser does not interpret these semantics — it just parses the time interv
 
 #### Test Cases
 
-| # | Test | Focus |
-|---|------|-------|
-| 1 | Full CommandStatus | All fields from real OSH response (F38) |
-| 2 | Minimal CommandStatus | Only `id`, `reportTime`, `statusCode` (required) |
-| 3 | `statusCode` valid | `"COMPLETED"` → `'COMPLETED'` |
-| 4 | `statusCode` invalid | Unknown string → `'PENDING'` fallback |
-| 5 | `percentCompletion` present | Extracted as number |
-| 6 | `executionTime` present | Parsed to `TimeInterval` |
-| 7 | Non-object input | Throws Error |
+| #   | Test                        | Focus                                            |
+| --- | --------------------------- | ------------------------------------------------ |
+| 1   | Full CommandStatus          | All fields from real OSH response (F38)          |
+| 2   | Minimal CommandStatus       | Only `id`, `reportTime`, `statusCode` (required) |
+| 3   | `statusCode` valid          | `"COMPLETED"` → `'COMPLETED'`                    |
+| 4   | `statusCode` invalid        | Unknown string → `'PENDING'` fallback            |
+| 5   | `percentCompletion` present | Extracted as number                              |
+| 6   | `executionTime` present     | Parsed to `TimeInterval`                         |
+| 7   | Non-object input            | Throws Error                                     |
 
 ---
 
@@ -651,24 +672,24 @@ export interface DatastreamSchemaResponse {
 
 #### Field Transformations
 
-| Field | Source Type | Target Type | Transformation |
-|-------|------------|-------------|----------------|
-| `obsFormat` | `string` | `string` | Direct extraction; fall back to empty string |
+| Field          | Source Type           | Target Type                 | Transformation                               |
+| -------------- | --------------------- | --------------------------- | -------------------------------------------- |
+| `obsFormat`    | `string`              | `string`                    | Direct extraction; fall back to empty string |
 | `resultSchema` | `object \| undefined` | `SWEComponent \| undefined` | Delegate to `parseSWEComponent()` if present |
 | `recordSchema` | `object \| undefined` | `SWEComponent \| undefined` | Delegate to `parseSWEComponent()` if present |
-| `encoding` | `object \| undefined` | `DataEncoding \| undefined` | Delegate to `parseEncoding()` if present |
+| `encoding`     | `object \| undefined` | `DataEncoding \| undefined` | Delegate to `parseEncoding()` if present     |
 
 **Schema delegation:** The `resultSchema` or `recordSchema` field contains a SWE Common component (typically `DataRecord`). The parser delegates to the existing `parseSWEComponent()` for full recursive parsing of the schema tree. This is the key value — it connects the schema response to the already-complete SWE Common parser layer.
 
 #### Test Cases
 
-| # | Test | Focus |
-|---|------|-------|
-| 1 | JSON format response | `obsFormat` + `resultSchema` with DataRecord |
-| 2 | SWE Common format response | `obsFormat` + `recordSchema` + `encoding` |
-| 3 | Missing schema fields | Only `obsFormat` present |
-| 4 | Nested DataRecord | Schema with multiple fields → full SWE parse tree |
-| 5 | Non-object input | Throws Error |
+| #   | Test                       | Focus                                             |
+| --- | -------------------------- | ------------------------------------------------- |
+| 1   | JSON format response       | `obsFormat` + `resultSchema` with DataRecord      |
+| 2   | SWE Common format response | `obsFormat` + `recordSchema` + `encoding`         |
+| 3   | Missing schema fields      | Only `obsFormat` present                          |
+| 4   | Nested DataRecord          | Schema with multiple fields → full SWE parse tree |
+| 5   | Non-object input           | Throws Error                                      |
 
 ---
 
@@ -711,20 +732,20 @@ export interface ControlStreamSchemaResponse {
 
 #### Field Transformations
 
-| Field | Source Type | Target Type | Transformation |
-|-------|------------|-------------|----------------|
-| `commandFormat` | `string` | `string` | Direct extraction; fall back to empty string |
+| Field              | Source Type           | Target Type                 | Transformation                               |
+| ------------------ | --------------------- | --------------------------- | -------------------------------------------- |
+| `commandFormat`    | `string`              | `string`                    | Direct extraction; fall back to empty string |
 | `parametersSchema` | `object \| undefined` | `SWEComponent \| undefined` | Delegate to `parseSWEComponent()` if present |
-| `encoding` | `object \| undefined` | `DataEncoding \| undefined` | Delegate to `parseEncoding()` if present |
+| `encoding`         | `object \| undefined` | `DataEncoding \| undefined` | Delegate to `parseEncoding()` if present     |
 
 #### Test Cases
 
-| # | Test | Focus |
-|---|------|-------|
-| 1 | JSON format response | `commandFormat` + `parametersSchema` with DataRecord |
-| 2 | Missing parametersSchema | Only `commandFormat` present |
-| 3 | Nested DataRecord | Full SWE parse tree verified |
-| 4 | Non-object input | Throws Error |
+| #   | Test                     | Focus                                                |
+| --- | ------------------------ | ---------------------------------------------------- |
+| 1   | JSON format response     | `commandFormat` + `parametersSchema` with DataRecord |
+| 2   | Missing parametersSchema | Only `commandFormat` present                         |
+| 3   | Nested DataRecord        | Full SWE parse tree verified                         |
+| 4   | Non-object input         | Throws Error                                         |
 
 ---
 
@@ -745,6 +766,7 @@ All other inline component types (`SimpleProcess`, `PhysicalComponent`, and the 
 ### Why This Matters
 
 Real-world SensorML systems contain mixed process types. A PhysicalSystem weather station may contain:
+
 - `SimpleProcess` temperature sensors
 - `PhysicalComponent` wind vanes
 - Nested `PhysicalSystem` sub-platforms
@@ -772,7 +794,12 @@ return value as unknown as ComponentEntry;
 
 ```typescript
 // Delegate all inline process types to the main SensorML dispatcher
-const knownTypes = ['PhysicalSystem', 'PhysicalComponent', 'SimpleProcess', 'AggregateProcess'];
+const knownTypes = [
+  'PhysicalSystem',
+  'PhysicalComponent',
+  'SimpleProcess',
+  'AggregateProcess',
+];
 if (typeof value.type === 'string' && knownTypes.includes(value.type)) {
   const parsed = parseSensorML30(value);
   return { ...parsed, name: value.name as string } as ComponentEntry;
@@ -800,18 +827,18 @@ Adding the reverse import (`import { parseSensorML30 } from './parser'` in both 
 
 #### Test Cases
 
-| # | Test | Focus |
-|---|------|-------|
-| 1 | PhysicalSystem with SimpleProcess child | Child is parsed, not raw JSON |
-| 2 | PhysicalSystem with PhysicalComponent child | Child is parsed |
-| 3 | PhysicalSystem with AggregateProcess child | Child is parsed |
-| 4 | PhysicalSystem with PhysicalSystem child | Still works (regression) |
-| 5 | AggregateProcess with SimpleProcess child | Child is parsed |
-| 6 | AggregateProcess with PhysicalSystem child | Child is parsed |
-| 7 | AggregateProcess with PhysicalComponent child | Child is parsed |
-| 8 | AggregateProcess with AggregateProcess child | Still works (regression) |
-| 9 | External link component | Still passed through (not a process type) |
-| 10 | Unknown type string | Passed through (tolerant extraction) |
+| #   | Test                                          | Focus                                     |
+| --- | --------------------------------------------- | ----------------------------------------- |
+| 1   | PhysicalSystem with SimpleProcess child       | Child is parsed, not raw JSON             |
+| 2   | PhysicalSystem with PhysicalComponent child   | Child is parsed                           |
+| 3   | PhysicalSystem with AggregateProcess child    | Child is parsed                           |
+| 4   | PhysicalSystem with PhysicalSystem child      | Still works (regression)                  |
+| 5   | AggregateProcess with SimpleProcess child     | Child is parsed                           |
+| 6   | AggregateProcess with PhysicalSystem child    | Child is parsed                           |
+| 7   | AggregateProcess with PhysicalComponent child | Child is parsed                           |
+| 8   | AggregateProcess with AggregateProcess child  | Still works (regression)                  |
+| 9   | External link component                       | Still passed through (not a process type) |
+| 10  | Unknown type string                           | Passed through (tolerant extraction)      |
 
 ---
 
@@ -838,7 +865,10 @@ Both `parseCommand()` and `parseCommandStatus()` need to validate status code st
 
 ```typescript
 function normalizeStatusCode(value: unknown): CommandStatusCode | undefined {
-  if (typeof value === 'string' && CommandStatusCodes.includes(value as CommandStatusCode)) {
+  if (
+    typeof value === 'string' &&
+    CommandStatusCodes.includes(value as CommandStatusCode)
+  ) {
     return value as CommandStatusCode;
   }
   return undefined;
@@ -889,17 +919,17 @@ The fix in `parseComponentEntry()` integrates via the existing SensorML parser p
 
 Following the pattern established by existing parser tests:
 
-| Parser | Test File |
-|--------|-----------|
-| `parseProperty()` | `src/ogc-api/csapi/formats/property.spec.ts` |
-| `parseDatastream()` | `src/ogc-api/csapi/formats/part2.spec.ts` |
-| `parseObservation()` | `src/ogc-api/csapi/formats/part2.spec.ts` |
-| `parseControlStream()` | `src/ogc-api/csapi/formats/part2.spec.ts` |
-| `parseCommand()` | `src/ogc-api/csapi/formats/part2.spec.ts` |
-| `parseCommandStatus()` | `src/ogc-api/csapi/formats/part2.spec.ts` |
-| `parseDatastreamSchemaResponse()` | `src/ogc-api/csapi/formats/schema-response.spec.ts` |
-| `parseControlStreamSchemaResponse()` | `src/ogc-api/csapi/formats/schema-response.spec.ts` |
-| Recursive delegation fix | Tests in existing `physical-system.spec.ts` and `aggregate-process.spec.ts` |
+| Parser                               | Test File                                                                   |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| `parseProperty()`                    | `src/ogc-api/csapi/formats/property.spec.ts`                                |
+| `parseDatastream()`                  | `src/ogc-api/csapi/formats/part2.spec.ts`                                   |
+| `parseObservation()`                 | `src/ogc-api/csapi/formats/part2.spec.ts`                                   |
+| `parseControlStream()`               | `src/ogc-api/csapi/formats/part2.spec.ts`                                   |
+| `parseCommand()`                     | `src/ogc-api/csapi/formats/part2.spec.ts`                                   |
+| `parseCommandStatus()`               | `src/ogc-api/csapi/formats/part2.spec.ts`                                   |
+| `parseDatastreamSchemaResponse()`    | `src/ogc-api/csapi/formats/schema-response.spec.ts`                         |
+| `parseControlStreamSchemaResponse()` | `src/ogc-api/csapi/formats/schema-response.spec.ts`                         |
+| Recursive delegation fix             | Tests in existing `physical-system.spec.ts` and `aggregate-process.spec.ts` |
 
 ### 9.2 Test Patterns
 
@@ -912,15 +942,15 @@ Following [Parser Testing vs Spec Validation](../../research/testing/review/note
 
 ### 9.3 Fixture Sources
 
-| Resource | Real Server Data? | Fixture Source |
-|----------|-------------------|----------------|
-| Property | **No** — 0 items from both servers | Constructed from OGC 23-001 `DerivedProperty` schema |
-| Datastream | Yes — OSH returns full datastreams | ST#7 response examples |
-| Observation | Yes — OSH returns observations | ST#8 response examples |
-| ControlStream | Yes — OSH returns control streams | ST#9 F30 response example |
-| Command | Yes — OSH returns commands | ST#10 F31 response example |
-| CommandStatus | Yes — OSH returns command statuses | ST#10 F38 response example |
-| Schema Response | Yes — OSH returns schema wrappers | ST#7 schema observations |
+| Resource        | Real Server Data?                  | Fixture Source                                       |
+| --------------- | ---------------------------------- | ---------------------------------------------------- |
+| Property        | **No** — 0 items from both servers | Constructed from OGC 23-001 `DerivedProperty` schema |
+| Datastream      | Yes — OSH returns full datastreams | ST#7 response examples                               |
+| Observation     | Yes — OSH returns observations     | ST#8 response examples                               |
+| ControlStream   | Yes — OSH returns control streams  | ST#9 F30 response example                            |
+| Command         | Yes — OSH returns commands         | ST#10 F31 response example                           |
+| CommandStatus   | Yes — OSH returns command statuses | ST#10 F38 response example                           |
+| Schema Response | Yes — OSH returns schema wrappers  | ST#7 schema observations                             |
 
 ### 9.4 Coverage Target
 
@@ -934,28 +964,28 @@ Given that parser functions are pure transformations with well-defined inputs, a
 
 Parser-relevant findings from the [Server Quirks Reference](../../implementation/server-quirks-reference.md):
 
-| Finding | Summary | Parser Impact |
-|---------|---------|---------------|
-| F34 | OSH has no top-level `/commands` endpoint — only nested under `/controlstreams/{id}/commands` | No parser impact (URL-level concern), but means Command fixtures come from nested endpoints only |
-| F38 | CommandStatus data shape: `command@id`, `reportTime`, `statusCode`, `executionTime` array | Directly informs `parseCommandStatus()` field list |
-| F39 | Commands use `items` envelope with link-based pagination | Confirms `parseCollectionResponse()` handles the envelope; parsers only need item-level logic |
-| F45 | Response envelope varies by server AND format — OSH uses `items` for default JSON, `features` for `?f=geojson` | Envelope handled by `parseCollectionResponse()`; Part 2 resources always use `items` |
-| F49 | OSH SamplingFeatures lack `sampledFeature@link` | Validates tolerant extraction philosophy — never gate on missing fields |
-| F85 | Deployment `validTime` absent from OSH, null from 52North | Validates `parseValidTime()` tolerant design; same function reused by new parsers |
+| Finding | Summary                                                                                                        | Parser Impact                                                                                    |
+| ------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| F34     | OSH has no top-level `/commands` endpoint — only nested under `/controlstreams/{id}/commands`                  | No parser impact (URL-level concern), but means Command fixtures come from nested endpoints only |
+| F38     | CommandStatus data shape: `command@id`, `reportTime`, `statusCode`, `executionTime` array                      | Directly informs `parseCommandStatus()` field list                                               |
+| F39     | Commands use `items` envelope with link-based pagination                                                       | Confirms `parseCollectionResponse()` handles the envelope; parsers only need item-level logic    |
+| F45     | Response envelope varies by server AND format — OSH uses `items` for default JSON, `features` for `?f=geojson` | Envelope handled by `parseCollectionResponse()`; Part 2 resources always use `items`             |
+| F49     | OSH SamplingFeatures lack `sampledFeature@link`                                                                | Validates tolerant extraction philosophy — never gate on missing fields                          |
+| F85     | Deployment `validTime` absent from OSH, null from 52North                                                      | Validates `parseValidTime()` tolerant design; same function reused by new parsers                |
 
 ---
 
 ## 11. Risk Register
 
-| # | Risk | Likelihood | Impact | Mitigation |
-|---|------|-----------|--------|------------|
-| 1 | **No Property test data** — both servers return 0 items | Certain | Medium | Build fixtures from OGC spec. Document as known limitation. Do an integration test once a server provides Property data. |
-| 2 | **Circular import** from Gap #9 fix | Low | High | TypeScript ESM handles circular imports via live bindings. Verify with test suite. Fallback: pass dispatcher as callback. |
-| 3 | **`observedProperties` shape variance** — objects vs strings | Medium | Low | Handle both shapes in `parseDatastream()`. Test both. |
-| 4 | **Cross-reference fields evolve** — `@id` / `@link` fields may be added to interfaces later | Low | Low | Parsers currently ignore `@id` / `@link` fields. Adding them later is additive, not breaking. |
-| 5 | **52North Part 2 differences** — 52North may serialize differently | Medium | Medium | Use OSH fixtures as primary, add 52North fixtures when available. Tolerant extraction handles most variance. |
-| 6 | **Schema response format variance** — JSON vs SWE Common have different wrapper fields | Medium | Low | Handle both `resultSchema` and `recordSchema` in `parseDatastreamSchemaResponse()`. Test both formats. |
-| 7 | **`CommandStatusCodes` enum drift** — spec may add new status codes | Low | Low | `normalizeStatusCode()` returns undefined for unrecognized values; interface accepts the union type. |
+| #   | Risk                                                                                        | Likelihood | Impact | Mitigation                                                                                                                |
+| --- | ------------------------------------------------------------------------------------------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **No Property test data** — both servers return 0 items                                     | Certain    | Medium | Build fixtures from OGC spec. Document as known limitation. Do an integration test once a server provides Property data.  |
+| 2   | **Circular import** from Gap #9 fix                                                         | Low        | High   | TypeScript ESM handles circular imports via live bindings. Verify with test suite. Fallback: pass dispatcher as callback. |
+| 3   | **`observedProperties` shape variance** — objects vs strings                                | Medium     | Low    | Handle both shapes in `parseDatastream()`. Test both.                                                                     |
+| 4   | **Cross-reference fields evolve** — `@id` / `@link` fields may be added to interfaces later | Low        | Low    | Parsers currently ignore `@id` / `@link` fields. Adding them later is additive, not breaking.                             |
+| 5   | **52North Part 2 differences** — 52North may serialize differently                          | Medium     | Medium | Use OSH fixtures as primary, add 52North fixtures when available. Tolerant extraction handles most variance.              |
+| 6   | **Schema response format variance** — JSON vs SWE Common have different wrapper fields      | Medium     | Low    | Handle both `resultSchema` and `recordSchema` in `parseDatastreamSchemaResponse()`. Test both formats.                    |
+| 7   | **`CommandStatusCodes` enum drift** — spec may add new status codes                         | Low        | Low    | `normalizeStatusCode()` returns undefined for unrecognized values; interface accepts the union type.                      |
 
 ---
 
@@ -963,15 +993,15 @@ Parser-relevant findings from the [Server Quirks Reference](../../implementation
 
 All `@id` and `@link` fields observed in Part 2 responses, compiled from smoke tests:
 
-| Field | Found On | Example Value |
-|-------|----------|---------------|
-| `system@id` | Datastream, ControlStream | `"0o0o"` |
-| `system@link` | Datastream, ControlStream | `{ href, uid, type }` |
-| `datastream@id` | Observation | `"0ocb"` |
-| `foi@id` | Observation | Feature of Interest reference |
-| `samplingFeature@id` | Observation | Alternative to `foi@id` |
-| `controlstream@id` | Command | `"0o10"` |
-| `command@id` | CommandStatus | `"0o1qr7kupc33cgmqj0"` |
+| Field                | Found On                  | Example Value                 |
+| -------------------- | ------------------------- | ----------------------------- |
+| `system@id`          | Datastream, ControlStream | `"0o0o"`                      |
+| `system@link`        | Datastream, ControlStream | `{ href, uid, type }`         |
+| `datastream@id`      | Observation               | `"0ocb"`                      |
+| `foi@id`             | Observation               | Feature of Interest reference |
+| `samplingFeature@id` | Observation               | Alternative to `foi@id`       |
+| `controlstream@id`   | Command                   | `"0o10"`                      |
+| `command@id`         | CommandStatus             | `"0o1qr7kupc33cgmqj0"`        |
 
 **Current status:** None of these fields are in the TypeScript interfaces. The parsers ignore them during extraction. If interface expansion is desired in the future, it will be additive — no parser changes required, only additional field extraction.
 
@@ -990,19 +1020,19 @@ This chain represents the full resource navigation hierarchy. Each `@id` field l
 
 ## Appendix C: Time Field Type Summary
 
-| Resource | Field | Spec Type | Interface Type | Parser Action |
-|----------|-------|-----------|---------------|---------------|
-| Datastream | `validTime` | `timePeriod` (array[2]) | `TimeInterval?` | `parseValidTime()` |
-| Datastream | `phenomenonTime` | `timePeriod \| null` | `TimeInterval \| null` | `parseValidTime()` or null |
-| Datastream | `resultTime` | `timePeriod \| null` | `TimeInterval \| null` | `parseValidTime()` or null |
-| ControlStream | `validTime` | `timePeriod` (array[2]) | `TimeInterval?` | `parseValidTime()` |
-| ControlStream | `issueTime` | `timePeriod \| null` | `TimeInterval \| null` | `parseValidTime()` or null |
-| ControlStream | `executionTime` | `timePeriod \| null` | `TimeInterval \| null` | `parseValidTime()` or null |
-| Command | `issueTime` | `date-time` (instant) | `string` | Pass-through |
-| Command | `executionTime` | `timePeriod` (array[2]) | `TimeInterval?` | `parseValidTime()` |
-| CommandStatus | `reportTime` | `date-time` (instant) | `string` | Pass-through |
-| CommandStatus | `executionTime` | `timePeriod` (array[2]) | `TimeInterval?` | `parseValidTime()` |
-| Observation | `phenomenonTime` | `date-time` (instant) | `string?` | Pass-through |
-| Observation | `resultTime` | `date-time` (instant) | `string` | Pass-through |
+| Resource      | Field            | Spec Type               | Interface Type         | Parser Action              |
+| ------------- | ---------------- | ----------------------- | ---------------------- | -------------------------- |
+| Datastream    | `validTime`      | `timePeriod` (array[2]) | `TimeInterval?`        | `parseValidTime()`         |
+| Datastream    | `phenomenonTime` | `timePeriod \| null`    | `TimeInterval \| null` | `parseValidTime()` or null |
+| Datastream    | `resultTime`     | `timePeriod \| null`    | `TimeInterval \| null` | `parseValidTime()` or null |
+| ControlStream | `validTime`      | `timePeriod` (array[2]) | `TimeInterval?`        | `parseValidTime()`         |
+| ControlStream | `issueTime`      | `timePeriod \| null`    | `TimeInterval \| null` | `parseValidTime()` or null |
+| ControlStream | `executionTime`  | `timePeriod \| null`    | `TimeInterval \| null` | `parseValidTime()` or null |
+| Command       | `issueTime`      | `date-time` (instant)   | `string`               | Pass-through               |
+| Command       | `executionTime`  | `timePeriod` (array[2]) | `TimeInterval?`        | `parseValidTime()`         |
+| CommandStatus | `reportTime`     | `date-time` (instant)   | `string`               | Pass-through               |
+| CommandStatus | `executionTime`  | `timePeriod` (array[2]) | `TimeInterval?`        | `parseValidTime()`         |
+| Observation   | `phenomenonTime` | `date-time` (instant)   | `string?`              | Pass-through               |
+| Observation   | `resultTime`     | `date-time` (instant)   | `string`               | Pass-through               |
 
 Key distinction: **Instants** (`date-time`) stay as strings per the interface. **Periods** (`timePeriod` / array[2]) are parsed to `TimeInterval` via `parseValidTime()`. See [validTime coverage analysis](../../research/phase-5/validtime-coverage-analysis.md) for full rationale.

@@ -44,15 +44,15 @@ This report does not propose behavioral modifications to the library without app
 
 The core problem: When no `Accept` header is sent (or when `application/json` is used — the library's current default for JSON requests), 52North's CSA server returns empty FeatureCollections for Part 1 resource requests. Only `Accept: application/geo+json` returns populated data from both tested servers (52North and OSH SensorHub).
 
-| Aspect | Assessment |
-|--------|------------|
-| **Change type** | Behavioral — modifies HTTP request headers for Part 1 resource GET requests |
-| **Production behavior modified** | Yes — changes what servers receive in the Accept header |
-| **Existing tests affected** | Potentially — any test mocking `sharedFetch` with Accept header assertions |
-| **Risk to library integrity** | **Moderate** — behavioral HTTP changes affect all consumers |
-| **Estimated scope** | Small code change, large behavioral impact surface |
-| **Dependencies** | Related to Issue #6 (CSAPI_CONTENT_TYPES); consumes same Part 1/Part 2 media type mapping |
-| **GET-only constraint** | **Critical** — S-8 from CRUD smoke testing confirms OSH SensorHub rejects `Accept: application/geo+json` on POST requests; this default must apply to GET requests only |
+| Aspect                           | Assessment                                                                                                                                                              |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Change type**                  | Behavioral — modifies HTTP request headers for Part 1 resource GET requests                                                                                             |
+| **Production behavior modified** | Yes — changes what servers receive in the Accept header                                                                                                                 |
+| **Existing tests affected**      | Potentially — any test mocking `sharedFetch` with Accept header assertions                                                                                              |
+| **Risk to library integrity**    | **Moderate** — behavioral HTTP changes affect all consumers                                                                                                             |
+| **Estimated scope**              | Small code change, large behavioral impact surface                                                                                                                      |
+| **Dependencies**                 | Related to Issue #6 (CSAPI_CONTENT_TYPES); consumes same Part 1/Part 2 media type mapping                                                                               |
+| **GET-only constraint**          | **Critical** — S-8 from CRUD smoke testing confirms OSH SensorHub rejects `Accept: application/geo+json` on POST requests; this default must apply to GET requests only |
 
 **Key findings from this review:**
 
@@ -78,12 +78,12 @@ Issue #9 corresponds to **Finding F-4** from the [upstream findings document](ht
 
 The issue documents the following cross-server Accept header behavior:
 
-| Accept Header Value | OSH SensorHub | 52North STA |
-|---------------------|---------------|-------------|
-| `application/json` | 5 items (works) | **0 items** (empty FeatureCollection) |
-| `application/sml+json` | 5 items (works) | 3 items (SensorML format) |
-| `application/geo+json` | 5 items (works) | **3 items** (GeoJSON format) |
-| None (browser default) | 5 items | 3 items (server default, typically SML) |
+| Accept Header Value    | OSH SensorHub   | 52North STA                             |
+| ---------------------- | --------------- | --------------------------------------- |
+| `application/json`     | 5 items (works) | **0 items** (empty FeatureCollection)   |
+| `application/sml+json` | 5 items (works) | 3 items (SensorML format)               |
+| `application/geo+json` | 5 items (works) | **3 items** (GeoJSON format)            |
+| None (browser default) | 5 items         | 3 items (server default, typically SML) |
 
 **Key observation:** `application/geo+json` is the **only** Accept value that returns populated data from both servers. This is consistent with Part 1 of the CSA specification (OGC 23-001r1), which defines Part 1 resources as GeoJSON Features.
 
@@ -141,17 +141,29 @@ export class CSAPIQueryBuilder {
   constructor(
     collection_: OgcApiCollectionInfo,
     resourceUrls?: Map<string, string>
-  ) { /* URL extraction only */ }
+  ) {
+    /* URL extraction only */
+  }
 
-  private extractBaseUrl(): string { /* ... */ }
-  private extractAvailableResources(): Set<string> { /* ... */ }
-  private buildResourceUrl(resourceType: string, ...segments: string[]): string { /* ... */ }
+  private extractBaseUrl(): string {
+    /* ... */
+  }
+  private extractAvailableResources(): Set<string> {
+    /* ... */
+  }
+  private buildResourceUrl(
+    resourceType: string,
+    ...segments: string[]
+  ): string {
+    /* ... */
+  }
 }
 ```
 
 **Assessment:** The builder has **zero HTTP logic** — no `fetch` calls, no header manipulation, no request construction. It takes collection metadata and produces URL strings. Every public method returns `string` (a URL).
 
 Adding `getAcceptHeader(resourceType)` to this class would:
+
 - Expand the class's single responsibility from "URL builder" to "request builder"
 - Introduce HTTP concerns into a module that currently has none
 - Violate the AI Operational Constraints: "Do not introduce new abstractions, layers, or dependencies without approval"
@@ -161,16 +173,20 @@ Adding `getAcceptHeader(resourceType)` to this class would:
 The media type constants already exist:
 
 ```typescript
-export const MEDIA_TYPE_GEOJSON = 'application/geo+json';     // L27
-export const MEDIA_TYPE_JSON = 'application/json';             // L33
+export const MEDIA_TYPE_GEOJSON = 'application/geo+json'; // L27
+export const MEDIA_TYPE_JSON = 'application/json'; // L33
 export const MEDIA_TYPE_SENSORML_JSON = 'application/sml+json'; // L39
-export const MEDIA_TYPE_SWE_JSON = 'application/swe+json';     // L45
+export const MEDIA_TYPE_SWE_JSON = 'application/swe+json'; // L45
 // ... (plus SWE_TEXT, SWE_CSV, SWE_BINARY)
 
 export const CSAPI_MEDIA_TYPES = [
-  MEDIA_TYPE_GEOJSON, MEDIA_TYPE_JSON,
-  MEDIA_TYPE_SENSORML_JSON, MEDIA_TYPE_SWE_JSON,
-  MEDIA_TYPE_SWE_TEXT, MEDIA_TYPE_SWE_CSV, MEDIA_TYPE_SWE_BINARY,
+  MEDIA_TYPE_GEOJSON,
+  MEDIA_TYPE_JSON,
+  MEDIA_TYPE_SENSORML_JSON,
+  MEDIA_TYPE_SWE_JSON,
+  MEDIA_TYPE_SWE_TEXT,
+  MEDIA_TYPE_SWE_CSV,
+  MEDIA_TYPE_SWE_BINARY,
 ] as const;
 ```
 
@@ -183,8 +199,16 @@ The demo app's bridge module (`csapi-bridge.ts`) **already implements** the Part
 ```typescript
 // From demo bridge module (not library code)
 function getContentType(resourceType: string): string {
-  const part1 = ['systems', 'deployments', 'procedures', 'samplingFeatures', 'properties'];
-  return part1.includes(resourceType) ? 'application/geo+json' : 'application/json';
+  const part1 = [
+    'systems',
+    'deployments',
+    'procedures',
+    'samplingFeatures',
+    'properties',
+  ];
+  return part1.includes(resourceType)
+    ? 'application/geo+json'
+    : 'application/json';
 }
 ```
 
@@ -278,14 +302,14 @@ All 12 linked reference documents from the ogc-csapi-explorer repository were re
 
 ### 6.1 What could go wrong?
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Accept header change breaks existing working requests | **Low** | **High** | Only apply to Part 1 GET requests; Part 2 and other protocol requests unaffected |
-| OSH SensorHub rejects `Accept: application/geo+json` on POST | **Confirmed (S-8)** | **High** | Limit the default to GET requests only — do NOT apply to POST/PUT/DELETE |
-| Modifying `sharedFetch()` defaults affects all library protocols | **High if done** | **Critical** | Do NOT modify `sharedFetch()` defaults — use `customAcceptHeader` parameter or provide guidance constants |
-| Adding `getAcceptHeader()` to `CSAPIQueryBuilder` expands its scope | **Certain if done** | **Medium** | Provide the mapping as a standalone constant/helper in `formats/constants.ts`, not as a builder method |
-| Tests that mock Accept header behavior break | **Medium** | **Low** | Review test mocks before implementation |
-| Server behavior changes over time (Accept header handling evolves) | **Low** | **Low** | Document the rationale and test against both servers |
+| Risk                                                                | Likelihood          | Impact       | Mitigation                                                                                                |
+| ------------------------------------------------------------------- | ------------------- | ------------ | --------------------------------------------------------------------------------------------------------- |
+| Accept header change breaks existing working requests               | **Low**             | **High**     | Only apply to Part 1 GET requests; Part 2 and other protocol requests unaffected                          |
+| OSH SensorHub rejects `Accept: application/geo+json` on POST        | **Confirmed (S-8)** | **High**     | Limit the default to GET requests only — do NOT apply to POST/PUT/DELETE                                  |
+| Modifying `sharedFetch()` defaults affects all library protocols    | **High if done**    | **Critical** | Do NOT modify `sharedFetch()` defaults — use `customAcceptHeader` parameter or provide guidance constants |
+| Adding `getAcceptHeader()` to `CSAPIQueryBuilder` expands its scope | **Certain if done** | **Medium**   | Provide the mapping as a standalone constant/helper in `formats/constants.ts`, not as a builder method    |
+| Tests that mock Accept header behavior break                        | **Medium**          | **Low**      | Review test mocks before implementation                                                                   |
+| Server behavior changes over time (Accept header handling evolves)  | **Low**             | **Low**      | Document the rationale and test against both servers                                                      |
 
 ### 6.2 Risk classification
 
@@ -299,6 +323,7 @@ Unlike Issues #5–#8 (which proposed additive changes: new methods, constants, 
 - It **does** have a confirmed failure mode (S-8: POST with geo+json Accept fails on OSH)
 
 However, the risk is **mitigated** by:
+
 - The `customAcceptHeader` infrastructure already existing in `sharedFetch()`
 - The exact media type constant (`MEDIA_TYPE_GEOJSON`) already existing
 - The Part 1/Part 2 mapping being well-documented and spec-aligned
@@ -307,6 +332,7 @@ However, the risk is **mitigated** by:
 ### 6.3 Integrity assessment
 
 The library's integrity requires **careful implementation** if this change proceeds. The safest approach is:
+
 1. Add a guidance constant (like `CSAPI_ACCEPT_HEADERS`) — zero behavioral impact until a consumer uses it
 2. Do NOT modify `sharedFetch()` defaults — use the existing `customAcceptHeader` parameter
 3. Do NOT add HTTP logic to `CSAPIQueryBuilder` — preserve the URL builder pattern
@@ -320,12 +346,12 @@ The library's integrity requires **careful implementation** if this change proce
 
 Issue #9 proposes adding `getAcceptHeader(resourceType)` "alongside URL generation." The question is: where does Accept header guidance belong architecturally?
 
-| Option | What It Means | Pros | Cons |
-|--------|--------------|------|------|
-| **A. Add method to `CSAPIQueryBuilder`** | `builder.getAcceptHeader('systems')` returns `'application/geo+json'` | Co-located with URL generation | Expands builder scope from URL → request; violates single responsibility |
-| **B. Add standalone constant map in `formats/constants.ts`** | `CSAPI_ACCEPT_HEADERS['systems']` returns `'application/geo+json'` | Minimal, additive, consistent with Issue #6 pattern | Not co-located with builder |
-| **C. Add helper function in a new or existing module** | `getAcceptHeaderForResource('systems')` returns `'application/geo+json'` | Clean API, can enforce GET-only constraint in JSDoc | New function export, mild scope expansion |
-| **D. Modify `sharedFetch()` defaults** | Change the default `asJson` Accept to `application/geo+json` for CSAPI | Automatic for all consumers | Affects all library protocols; unacceptable risk |
+| Option                                                       | What It Means                                                            | Pros                                                | Cons                                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------ |
+| **A. Add method to `CSAPIQueryBuilder`**                     | `builder.getAcceptHeader('systems')` returns `'application/geo+json'`    | Co-located with URL generation                      | Expands builder scope from URL → request; violates single responsibility |
+| **B. Add standalone constant map in `formats/constants.ts`** | `CSAPI_ACCEPT_HEADERS['systems']` returns `'application/geo+json'`       | Minimal, additive, consistent with Issue #6 pattern | Not co-located with builder                                              |
+| **C. Add helper function in a new or existing module**       | `getAcceptHeaderForResource('systems')` returns `'application/geo+json'` | Clean API, can enforce GET-only constraint in JSDoc | New function export, mild scope expansion                                |
+| **D. Modify `sharedFetch()` defaults**                       | Change the default `asJson` Accept to `application/geo+json` for CSAPI   | Automatic for all consumers                         | Affects all library protocols; unacceptable risk                         |
 
 ### 7.2 Assessment
 
@@ -371,10 +397,10 @@ export const CSAPI_ACCEPT_HEADERS = {
 
 Issue #6 ([OS4CSAPI/ogc-csapi-explorer#6](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/6)) proposes `CSAPI_CONTENT_TYPES` for POST/PUT Content-Type headers. Issue #9 proposes Accept header defaults for GET requests. Both use the same Part 1/Part 2 → media type mapping:
 
-| Resource Category | Part 1 (Systems, Deployments, Procedures, SamplingFeatures, Properties) | Part 2 (DataStreams, Observations, ControlStreams, Commands) |
-|-------------------|----------------------------------------------------------------------|-------------------------------------------------------------|
-| **Content-Type (Issue #6, for POST/PUT)** | `application/geo+json` | `application/json` |
-| **Accept (Issue #9, for GET)** | `application/geo+json` | `application/json` |
+| Resource Category                         | Part 1 (Systems, Deployments, Procedures, SamplingFeatures, Properties) | Part 2 (DataStreams, Observations, ControlStreams, Commands) |
+| ----------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **Content-Type (Issue #6, for POST/PUT)** | `application/geo+json`                                                  | `application/json`                                           |
+| **Accept (Issue #9, for GET)**            | `application/geo+json`                                                  | `application/json`                                           |
 
 **Inference:** These two issues should be implemented together or with awareness of each other. A unified constant map with clear JSDoc documenting both purposes would be the most maintainable solution.
 
@@ -393,17 +419,20 @@ The CRUD smoke test findings document ([crud-smoke-test-findings.md](https://git
 ### 8.2 Why POST/PUT/DELETE don't need Accept headers
 
 For write operations:
+
 - **POST (201 Created):** Servers typically return an empty body with a `Location` header. The Accept header is irrelevant when there's no response body to negotiate.
 - **PUT (204 No Content):** No response body at all.
 - **DELETE (204 No Content):** No response body at all.
 
 Setting `Accept: application/geo+json` on these requests is:
+
 1. **Semantically meaningless** — there's no response body to negotiate
 2. **Actively harmful** — S-8 confirms it causes failures on OSH SensorHub
 
 ### 8.3 Implication for implementation
 
 Any implementation of Issue #9 must clearly scope the Accept header default to **GET requests only**. This must be documented in:
+
 - The constant/helper JSDoc
 - Any implementation that automatically sets the header
 - The upstream PR description
@@ -466,11 +495,12 @@ import { CSAPI_ACCEPT_HEADERS } from 'ogc-client/ogc-api/csapi/formats/constants
 // When making a GET request for systems:
 const url = builder.getSystems({ limit: 10 });
 const response = await fetch(url, {
-  headers: { 'Accept': CSAPI_ACCEPT_HEADERS['systems'] }
+  headers: { Accept: CSAPI_ACCEPT_HEADERS['systems'] },
 });
 ```
 
 The library's own `sharedFetch()` could also be called with:
+
 ```typescript
 sharedFetch(url, 'GET', true, CSAPI_ACCEPT_HEADERS['systems']);
 ```
@@ -507,34 +537,34 @@ export const CSAPI_RESOURCE_MEDIA_TYPES = { ... } as const;
 
 ## Appendix A: Authority Precedence Analysis
 
-| Authority Level | Source | Says About Accept Headers | Weight |
-|----------------|--------|--------------------------|--------|
-| 1 (Highest) | OGC 23-001r1 Part 1 | Defines Part 1 resources as GeoJSON Features; `application/geo+json` is the canonical media type | Definitive |
-| 2 | OGC 23-002r1 Part 2 | Defines Part 2 resources as JSON; `application/json` is the canonical media type | Definitive |
-| 3 | AI Collaboration Agreement | Changes should strengthen contribution quality without expanding scope | Supportive |
-| 4 | AI Operational Constraints | "Do not introduce new abstractions without approval"; "Prefer minimal diffs"; "Do not expand scope beyond issue description" | Constraining |
-| 5 | Issue #9 description | Proposes Accept header defaults with specific mapping; suggests builder method addition | Scoping |
-| 6 | Existing source code | `sharedFetch()` already has `customAcceptHeader`; `MEDIA_TYPE_GEOJSON` exists; builder is URL-only | Precedent |
-| 7 | 12 reference documents | F-4 ranked #1 priority; S-8 confirms GET-only constraint; demo bridge already implements the mapping | Evidence |
+| Authority Level | Source                     | Says About Accept Headers                                                                                                    | Weight       |
+| --------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| 1 (Highest)     | OGC 23-001r1 Part 1        | Defines Part 1 resources as GeoJSON Features; `application/geo+json` is the canonical media type                             | Definitive   |
+| 2               | OGC 23-002r1 Part 2        | Defines Part 2 resources as JSON; `application/json` is the canonical media type                                             | Definitive   |
+| 3               | AI Collaboration Agreement | Changes should strengthen contribution quality without expanding scope                                                       | Supportive   |
+| 4               | AI Operational Constraints | "Do not introduce new abstractions without approval"; "Prefer minimal diffs"; "Do not expand scope beyond issue description" | Constraining |
+| 5               | Issue #9 description       | Proposes Accept header defaults with specific mapping; suggests builder method addition                                      | Scoping      |
+| 6               | Existing source code       | `sharedFetch()` already has `customAcceptHeader`; `MEDIA_TYPE_GEOJSON` exists; builder is URL-only                           | Precedent    |
+| 7               | 12 reference documents     | F-4 ranked #1 priority; S-8 confirms GET-only constraint; demo bridge already implements the mapping                         | Evidence     |
 
 ---
 
 ## Appendix B: Cross-Reference Matrix
 
-| Document | Location | Relevance to Issue #9 |
-|----------|----------|-----------------------|
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | ogc-csapi-explorer | F-4 — the finding Issue #9 addresses; #1 priority ranking; content negotiation appendix with full test matrix |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | ogc-csapi-explorer | Maps F-4 → Issue #9; Severity High, Risk Medium; notes dual concern with Issue #6 |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | ogc-csapi-explorer | Finding #2: library is URL builder, not HTTP client; Finding #14: no Content-Type guidance from builder |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | ogc-csapi-explorer | Finding #3: content negotiation behavior; full test matrix confirming geo+json is most interoperable |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | ogc-csapi-explorer | Finding #6: Content-Type mapping needs library guidance; Priority 2 recommendation: CSAPI_CONTENT_TYPES constant |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | "negotiation overstates what a URL builder does"; validates builder scope is URL-only |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Demo bypasses OgcApiEndpoint; bridge handles HTTP transport separately from builder |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | ogc-csapi-explorer | **S-8: Critical** — OSH rejects Accept: geo+json on POST; Accept default must be GET-only |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | ogc-csapi-explorer | Confirms http-utils.ts has shared dependencies; modifying it affects all protocols |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | ogc-csapi-explorer | Only 1 commit touched library source; Issue #9 would be second behavioral change |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | ogc-csapi-explorer | F-13: `f` parameter vs. header-based negotiation are separate mechanisms; context for content negotiation |
-| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | ogc-client-CSAPI_2 | Authority precedence; no scope expansion; no new abstractions without approval; minimal diffs |
+| Document                                                                                                                                                       | Location           | Relevance to Issue #9                                                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | ogc-csapi-explorer | F-4 — the finding Issue #9 addresses; #1 priority ranking; content negotiation appendix with full test matrix    |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | ogc-csapi-explorer | Maps F-4 → Issue #9; Severity High, Risk Medium; notes dual concern with Issue #6                                |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                       | ogc-csapi-explorer | Finding #2: library is URL builder, not HTTP client; Finding #14: no Content-Type guidance from builder          |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | ogc-csapi-explorer | Finding #3: content negotiation behavior; full test matrix confirming geo+json is most interoperable             |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | ogc-csapi-explorer | Finding #6: Content-Type mapping needs library guidance; Priority 2 recommendation: CSAPI_CONTENT_TYPES constant |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | ogc-csapi-explorer | "negotiation overstates what a URL builder does"; validates builder scope is URL-only                            |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | ogc-csapi-explorer | Demo bypasses OgcApiEndpoint; bridge handles HTTP transport separately from builder                              |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | ogc-csapi-explorer | **S-8: Critical** — OSH rejects Accept: geo+json on POST; Accept default must be GET-only                        |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | ogc-csapi-explorer | Confirms http-utils.ts has shared dependencies; modifying it affects all protocols                               |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | ogc-csapi-explorer | Only 1 commit touched library source; Issue #9 would be second behavioral change                                 |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | ogc-csapi-explorer | F-13: `f` parameter vs. header-based negotiation are separate mechanisms; context for content negotiation        |
+| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)                        | ogc-client-CSAPI_2 | Authority precedence; no scope expansion; no new abstractions without approval; minimal diffs                    |
 
 ---
 

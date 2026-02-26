@@ -1,8 +1,7 @@
 # Findings Report: Issue #20 — Fix `buildResourceUrl()` Fallback to Use Correct Lowercase URL Path for controlStreams (F-17)
 
 > **Date**: 2026-02-18
-> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#20](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/20)
-> **Finding ID**: F-17 (from [crud-smoke-test-phase-2-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-phase-2-findings.md))
+> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#20](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/20) > **Finding ID**: F-17 (from [crud-smoke-test-phase-2-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-phase-2-findings.md))
 > **Labels on source issue**: `bug`
 
 ---
@@ -52,13 +51,13 @@ The OGC Connected Systems API Part 2 spec uses `/controlstreams` (all lowercase)
 
 ### Affected methods
 
-| Method | Line | Produces | Should Produce |
-|---|---|---|---|
-| `getControlStreams()` | 1642 | `/controlStreams?...` | `/controlstreams?...` |
-| `getControlStream(id)` | 1664 | `/controlStreams/{id}` | `/controlstreams/{id}` |
-| `createControlStream()` | 1685 | `/controlStreams` | `/controlstreams` |
-| `updateControlStream(id)` | 1707 | `/controlStreams/{id}` | `/controlstreams/{id}` |
-| `deleteControlStream(id)` | 1727 | `/controlStreams/{id}` | `/controlstreams/{id}` |
+| Method                       | Line | Produces                      | Should Produce                |
+| ---------------------------- | ---- | ----------------------------- | ----------------------------- |
+| `getControlStreams()`        | 1642 | `/controlStreams?...`         | `/controlstreams?...`         |
+| `getControlStream(id)`       | 1664 | `/controlStreams/{id}`        | `/controlstreams/{id}`        |
+| `createControlStream()`      | 1685 | `/controlStreams`             | `/controlstreams`             |
+| `updateControlStream(id)`    | 1707 | `/controlStreams/{id}`        | `/controlstreams/{id}`        |
+| `deleteControlStream(id)`    | 1727 | `/controlStreams/{id}`        | `/controlstreams/{id}`        |
 | `getControlStreamSchema(id)` | 1753 | `/controlStreams/{id}/schema` | `/controlstreams/{id}/schema` |
 
 **Not affected**: `getSystemControlStreams()` (line 465) and `getPropertyControlStreams()` (line 1164) — these already hardcode the correct lowercase `'controlstreams'` as a sub-path parameter.
@@ -137,8 +136,18 @@ function makeCsBuilder() {
   return new CSAPIQueryBuilder(
     makeCollection({
       links: [
-        { rel: 'self', type: '', title: '', href: 'https://example.com/collections/iot' },
-        { rel: 'ogc-cs:controlStreams', type: '', title: '', href: '/controlstreams' },
+        {
+          rel: 'self',
+          type: '',
+          title: '',
+          href: 'https://example.com/collections/iot',
+        },
+        {
+          rel: 'ogc-cs:controlStreams',
+          type: '',
+          title: '',
+          href: '/controlstreams',
+        },
       ],
     })
   );
@@ -172,26 +181,26 @@ The fix would make the code's output match its own documentation.
 
 ### Risk of fixing (LOW)
 
-| Risk Factor | Assessment |
-|---|---|
-| **Scope of change** | 1 line changed + ~6 lines added (override map + helper function) |
-| **Method signatures** | No changes — all public API signatures remain identical |
-| **`CSAPIResourceTypes` / `assertResourceAvailable()`** | No changes — internal type keys preserved |
-| **8 other resource types** | Unaffected — their keys already match their URL paths |
-| **`resourceUrls_` map path** | Unaffected — the fix only changes the fallback path |
-| **Nested sub-path methods** | Unaffected — they already use correct lowercase strings |
-| **Test updates required** | Yes — ~10 test expectations change from camelCase to lowercase |
-| **Breaking change?** | No — the fix corrects output to match the spec |
+| Risk Factor                                            | Assessment                                                       |
+| ------------------------------------------------------ | ---------------------------------------------------------------- |
+| **Scope of change**                                    | 1 line changed + ~6 lines added (override map + helper function) |
+| **Method signatures**                                  | No changes — all public API signatures remain identical          |
+| **`CSAPIResourceTypes` / `assertResourceAvailable()`** | No changes — internal type keys preserved                        |
+| **8 other resource types**                             | Unaffected — their keys already match their URL paths            |
+| **`resourceUrls_` map path**                           | Unaffected — the fix only changes the fallback path              |
+| **Nested sub-path methods**                            | Unaffected — they already use correct lowercase strings          |
+| **Test updates required**                              | Yes — ~10 test expectations change from camelCase to lowercase   |
+| **Breaking change?**                                   | No — the fix corrects output to match the spec                   |
 
 ### Risk of NOT fixing (MEDIUM-HIGH)
 
-| Risk Factor | Assessment |
-|---|---|
-| **Every consumer without `resourceUrls_` map** | Gets broken controlStream URLs |
-| **Strict servers (OSH)** | Reject all 6 controlStream operations with 400 |
-| **Internal inconsistency persists** | Sub-path methods produce correct lowercase; top-level methods produce incorrect camelCase |
-| **Documentation mismatch persists** | JSDoc examples show lowercase; code produces camelCase |
-| **Consumers must workaround** | Every consumer must independently discover and work around the casing bug |
+| Risk Factor                                    | Assessment                                                                                |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Every consumer without `resourceUrls_` map** | Gets broken controlStream URLs                                                            |
+| **Strict servers (OSH)**                       | Reject all 6 controlStream operations with 400                                            |
+| **Internal inconsistency persists**            | Sub-path methods produce correct lowercase; top-level methods produce incorrect camelCase |
+| **Documentation mismatch persists**            | JSDoc examples show lowercase; code produces camelCase                                    |
+| **Consumers must workaround**                  | Every consumer must independently discover and work around the casing bug                 |
 
 ---
 
@@ -220,6 +229,7 @@ Applied in `buildResourceUrl()`:
 ```
 
 **Advantages:**
+
 - Single-point change — corrects all 6 affected methods at once
 - No changes to `CSAPIResourceTypes`, `assertResourceAvailable()`, or any method signatures
 - Extensible — if future resource types have similar mismatches, one map entry suffices
@@ -263,24 +273,24 @@ Would require updating 6 methods to pass a lowercase literal string. Introduces 
 
 ## Cross-References
 
-| Document | Relevance |
-|---|---|
-| [AI Operational Constraints §2.2](../../governance/AI_OPERATIONAL_CONSTRAINTS.md) | Minimal diffs preferred; no new abstractions without approval — Option A is compliant |
-| [CSAPI Implementation Guide](../../planning/csapi-implementation-guide.md) | Responsibility #2 (Construct URLs) — the affected core responsibility |
-| [Issue #5 report (F-1/F-2)](issue-5-nested-create-methods.md) | Same class of bug (URL generation); recommended to fix |
-| [crud-smoke-test-phase-2-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-phase-2-findings.md) | F-17 original finding: severity High, demo workaround at commit `6f2d854` |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | Confirms F-17 workaround is in demo layer; library source NOT modified |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Confirms `CSAPIResourceTypes` includes `controlStreams`; F-1 reference (same class) |
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | V-7 shows camelCase builder output; F-2 shows expected lowercase paths |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | F-2 shows lowercase `/controlstreams` as expected server path |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | Finding #13: builder outputs camelCase `/controlStreams/` in URLs |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | Explains discovery fallback — why consumers hit `buildResourceUrl()` directly |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | §7 shows lowercase `/controlstreams` as correct URL path |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | Phase 1 findings context (F-15, F-16) |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | Cross-server testing context |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | EndpointError refactor context |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | F-13: related `getControlStreamSchema()` parameter name issue |
-| [OGC 23-002 Connected Systems API Part 2](https://docs.ogc.org/is/23-002/23-002.html#_controlstream_resources) | Spec uses `/controlstreams` (lowercase) |
-| [url_builder.ts](../../src/ogc-api/csapi/url_builder.ts) | `buildResourceUrl()` fallback at L210; affected methods at L1642–1755 |
-| [model.ts](../../src/ogc-api/csapi/model.ts) | `CSAPIResourceTypes` with `'controlStreams'` key at L38 |
-| [helpers.ts](../../src/ogc-api/csapi/helpers.ts) | `scanCsapiLinks()` at L123 — returns hrefs but they're discarded by `extractAvailableResources()` |
+| Document                                                                                                                                                       | Relevance                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [AI Operational Constraints §2.2](../../governance/AI_OPERATIONAL_CONSTRAINTS.md)                                                                              | Minimal diffs preferred; no new abstractions without approval — Option A is compliant             |
+| [CSAPI Implementation Guide](../../planning/csapi-implementation-guide.md)                                                                                     | Responsibility #2 (Construct URLs) — the affected core responsibility                             |
+| [Issue #5 report (F-1/F-2)](issue-5-nested-create-methods.md)                                                                                                  | Same class of bug (URL generation); recommended to fix                                            |
+| [crud-smoke-test-phase-2-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-phase-2-findings.md)           | F-17 original finding: severity High, demo workaround at commit `6f2d854`                         |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | Confirms F-17 workaround is in demo layer; library source NOT modified                            |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Confirms `CSAPIResourceTypes` includes `controlStreams`; F-1 reference (same class)               |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | V-7 shows camelCase builder output; F-2 shows expected lowercase paths                            |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | F-2 shows lowercase `/controlstreams` as expected server path                                     |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                       | Finding #13: builder outputs camelCase `/controlStreams/` in URLs                                 |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | Explains discovery fallback — why consumers hit `buildResourceUrl()` directly                     |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | §7 shows lowercase `/controlstreams` as correct URL path                                          |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | Phase 1 findings context (F-15, F-16)                                                             |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | Cross-server testing context                                                                      |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | EndpointError refactor context                                                                    |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | F-13: related `getControlStreamSchema()` parameter name issue                                     |
+| [OGC 23-002 Connected Systems API Part 2](https://docs.ogc.org/is/23-002/23-002.html#_controlstream_resources)                                                 | Spec uses `/controlstreams` (lowercase)                                                           |
+| [url_builder.ts](../../src/ogc-api/csapi/url_builder.ts)                                                                                                       | `buildResourceUrl()` fallback at L210; affected methods at L1642–1755                             |
+| [model.ts](../../src/ogc-api/csapi/model.ts)                                                                                                                   | `CSAPIResourceTypes` with `'controlStreams'` key at L38                                           |
+| [helpers.ts](../../src/ogc-api/csapi/helpers.ts)                                                                                                               | `scanCsapiLinks()` at L123 — returns hrefs but they're discarded by `extractAvailableResources()` |

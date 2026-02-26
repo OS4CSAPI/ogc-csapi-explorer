@@ -3,6 +3,7 @@
 **Purpose:** Define what constitutes meaningful, production-quality testing for the CSAPI client implementation.
 
 **Context:** Previous test suite was criticized as "trivial" and lacking depth. Need to understand:
+
 - What upstream maintainers expect
 - What "end-to-end" means for a URL-building client library
 - How to test CSAPI/SensorML/SWE/GeoJSON properly
@@ -17,6 +18,7 @@
 **Primary Reference: [PR #114 - EDR Implementation](https://github.com/camptocamp/ogc-client/pull/114)**
 
 **Questions to answer:**
+
 - [ ] How many test files did EDR add?
 - [ ] What types of tests? (unit, integration, e2e?)
 - [ ] What's the test coverage %?
@@ -34,12 +36,14 @@
 ### 2. Existing ogc-client Test Patterns
 
 **Sources to study:**
+
 - WFS implementation tests
 - STAC implementation tests
 - OgcApiEndpoint tests
 - Shared utility tests
 
 **Questions to answer:**
+
 - [ ] What's the consistent test structure across implementations?
 - [ ] How do they test conformance detection?
 - [ ] How do they test collection handling?
@@ -55,6 +59,7 @@
 ### 3. TypeScript Client Library Testing Best Practices
 
 **Questions to answer:**
+
 - [ ] What does "meaningful" testing look like for a client library?
 - [ ] What's considered good coverage %? (line, branch, function)
 - [ ] How to test without actual HTTP calls?
@@ -64,6 +69,7 @@
 - [ ] How to test error conditions?
 
 **Resources to investigate:**
+
 - TypeScript testing guides
 - Client library testing patterns (axios, fetch-wrappers, etc.)
 - OGC/geospatial client library examples
@@ -73,6 +79,7 @@
 ### 4. CSAPI-Specific Testing Requirements
 
 **Questions to answer:**
+
 - [ ] Does CSAPI spec define test requirements or conformance tests?
 - [ ] Are there CSAPI test suites we should reference?
 - [ ] What are the critical paths that MUST be tested?
@@ -81,6 +88,7 @@
 - [ ] What query parameter combinations are most critical?
 
 **Sources:**
+
 - [CSAPI Part 1 Spec](../research/ogcapi-connectedsystems-1.bundled.oas31.yaml)
 - [CSAPI Part 2 Spec](../research/ogcapi-connectedsystems-2.bundled.oas31.yaml)
 - OGC conformance test suites (if they exist)
@@ -90,6 +98,7 @@
 ### 5. Format Validation Testing (SensorML/SWE/GeoJSON)
 
 **Questions to answer:**
+
 - [ ] What constitutes "real" test data vs trivial mocks?
 - [ ] Where to get valid SensorML 3.0 examples?
 - [ ] Where to get valid SWE Common 3.0 examples?
@@ -99,6 +108,7 @@
 - [ ] How to test invalid/malformed data?
 
 **Sources:**
+
 - SensorML 3.0 spec examples
 - SWE Common 3.0 spec examples
 - CSAPI spec example responses
@@ -110,6 +120,7 @@
 ### 6. URL Builder Testing Patterns
 
 **Specific challenges:**
+
 - [ ] How to validate complete URL structure (protocol, host, path, query)?
 - [ ] How to test URL encoding (spaces, special chars, arrays)?
 - [ ] How to test query parameter combinations (10+ params × multiple values)?
@@ -125,6 +136,7 @@
 ### 7. Coverage Targets and Metrics
 
 **Questions to answer:**
+
 - [ ] What coverage % should we target overall?
 - [ ] Which modules need 95%+ coverage?
 - [ ] Which modules can be lower priority?
@@ -142,6 +154,7 @@
 ### 8. Integration Test Strategy
 
 **Questions to answer:**
+
 - [ ] What counts as "integration" vs "unit" for this project?
 - [ ] Should we test against mock CSAPI endpoints?
 - [ ] Should we test against real CSAPI servers? (Answer: No - that's what CSAPI-Live-Testing was for)
@@ -154,6 +167,7 @@
 ### 9. Test Organization and Structure
 
 **Questions to answer:**
+
 - [ ] How to organize test files? (per resource? per functionality?)
 - [ ] How to organize fixtures?
 - [ ] How to share test utilities?
@@ -166,6 +180,7 @@
 ### 10. Previous Work - Lessons Learned
 
 **From [ogc-client-CSAPI](https://github.com/OS4CSAPI/ogc-client-CSAPI):**
+
 - [ ] What tests existed? (196 initial, 499 final)
 - [ ] What feedback did we get?
 - [ ] What was "trivial"?
@@ -180,16 +195,19 @@
 ## Research Deliverables
 
 ### Phase 1: Investigation (Complete these first)
+
 1. **PR #114 Test Analysis Document** - Line-by-line breakdown of EDR test strategy
 2. **Upstream Test Pattern Summary** - Common patterns across WFS/STAC/EDR
 3. **Test Data Inventory** - Where to get real SensorML/SWE/GeoJSON examples
 
 ### Phase 2: Strategy Definition
+
 4. **Test Specification Template** - Standardized structure for each resource type
 5. **Coverage Requirements by Module** - Specific targets for each code area
 6. **Test Fixture Plan** - What fixtures to create and where to source them
 
 ### Phase 3: Implementation Guide
+
 7. **Testing Playbook** - Step-by-step guide for writing tests
 8. **Test Examples** - Concrete "good" vs "trivial" examples
 9. **Quality Checklist** - How to validate tests are meaningful
@@ -199,6 +217,7 @@
 ## Success Criteria
 
 Research is complete when we can answer:
+
 1. ✅ "What would a maintainer expect to see in our test suite?"
 2. ✅ "How do we know if our tests are meaningful vs trivial?"
 3. ✅ "What specific fixtures and data should we use?"
@@ -220,4 +239,3 @@ Research is complete when we can answer:
 ## Notes & Findings
 
 _(Add research findings here as we investigate)_
-

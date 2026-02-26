@@ -19,6 +19,7 @@ The Camptocamp OGC Client Library uses the `OgcApiEndpoint` class as the main co
 The conformance reader is existing code in `OgcApiEndpoint` that checks which OGC API standards a server implements by reading its conformance document. For CSAPI support, we will extend this reader by adding new conformance class checks that detect CSAPI Part 1 (Systems, Deployments, Procedures, Sampling Features, Properties) and Part 2 (DataStreams, Observations, Control Streams, Commands) capabilities. This follows the exact pattern already used for EDR detection - adding a `hasConnectedSystems` method similar to the existing `hasEnvironmentalDataRetrieval` method. The extension integrates seamlessly into the upstream repository's architecture without breaking existing functionality for Features, Tiles, Records, or EDR. This approach aligns with the project goal of making CSAPI support feel like a natural part of the existing library rather than a bolt-on addition.
 
 **CSAPI Conformance Classes to Detect:**
+
 - Part 1 Core: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/core`
 - Part 1 Systems: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/system`
 - Part 1 Deployments: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/deployment`
@@ -31,6 +32,7 @@ The conformance reader is existing code in `OgcApiEndpoint` that checks which OG
 - Part 2 Commands: `http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/command`
 
 **Recommended Development Workflow:**
+
 1. Write method signature for new conformance detection methods
 2. Add JSDoc comments with description, return types, examples
 3. Implement the detection logic
@@ -46,6 +48,7 @@ The conformance reader is existing code in `OgcApiEndpoint` that checks which OG
 The collections reader is existing code that fetches and parses the `/collections` endpoint to discover what data is available on a server. For CSAPI, we will extend this parser to recognize and extract CSAPI-specific metadata that indicates whether a collection contains Systems, DataStreams, Observations, or other CSAPI resources. This is primarily an extension of existing parsing logic rather than building something entirely new - we're adding new properties to the collection info objects and new filter methods like `csapiSystemCollections`, `csapiDataStreamCollections`, and `csapiObservationCollections` alongside the existing `featureCollections` and `edrCollections` getters. The extension reuses the upstream repository's established patterns for handling different resource types within the unified collections framework. This approach supports the project goal of providing developers a consistent experience across all OGC API standards through one endpoint class.
 
 **CSAPI Collection Properties to Parse:**
+
 - `featureType` property indicating resource type (e.g., `sosa:System`, `sosa:Deployment`, `sosa:ObservationCollection`)
 - Links to CSAPI-specific operations (create, update, delete, schema endpoints for Part 2 resources)
 - Temporal extent for observation collections
@@ -56,6 +59,7 @@ The collections reader is existing code that fetches and parses the `/collection
 - Schema information (DataStream/ControlStream schema availability)
 
 **Recommended Development Workflow:**
+
 1. Write method signature for new collection filter methods
 2. Add JSDoc comments documenting parameters, return types, filter behavior
 3. Implement the parsing and filtering logic
@@ -73,16 +77,19 @@ The OgcApiEndpoint integration adds the CSAPI factory method to the main `OgcApi
 **Integration Points in OgcApiEndpoint:**
 
 **1. Import Statement (1 line):**
+
 ```typescript
 import CSAPIQueryBuilder from './csapi/url_builder.js';
 ```
 
 **2. Cache Field (2 lines):**
+
 ```typescript
 private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Map();
 ```
 
 **3. Collections Getter (~6 lines):**
+
 ```typescript
 get csapiCollections(): Promise<string[]> {
   return Promise.all([this.data, this.hasConnectedSystems])
@@ -93,6 +100,7 @@ get csapiCollections(): Promise<string[]> {
 ```
 
 **4. Conformance Getter (~6 lines):**
+
 ```typescript
 get hasConnectedSystems(): Promise<boolean> {
   return Promise.all([this.conformanceClasses]).then(checkHasConnectedSystems);
@@ -100,6 +108,7 @@ get hasConnectedSystems(): Promise<boolean> {
 ```
 
 **5. Factory Method (~17 lines):**
+
 ```typescript
 public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
   if (!this.hasConnectedSystems) {
@@ -117,6 +126,7 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
 ```
 
 **Developer Usage Pattern:**
+
 ```typescript
 import { OgcApiEndpoint } from '@camptocamp/ogc-client';
 
@@ -127,7 +137,7 @@ await endpoint.isReady();
 if (await endpoint.hasConnectedSystems) {
   // Get CSAPI query builder for a collection
   const csapi = await endpoint.csapi('sensors-collection');
-  
+
   // Use builder methods to construct URLs for all 9 resource types
   const systemsUrl = csapi.getSystems({ bbox: [...], recursive: true });
   const observationsUrl = csapi.getObservations(datastreamId, { phenomenonTime: '2024-01-01/..' });
@@ -135,6 +145,7 @@ if (await endpoint.hasConnectedSystems) {
 ```
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for factory method and getters
 2. Add comprehensive JSDoc documenting conformance checking, caching, and usage pattern
 3. Implement integration following EDR pattern exactly
@@ -150,6 +161,7 @@ if (await endpoint.hasConnectedSystems) {
 The CSAPIQueryBuilder is new code we need to build as a single comprehensive class containing URL-building methods for all 9 CSAPI resource types, following the pattern established by the existing `EDRQueryBuilder` class. This QueryBuilder class is instantiated by the `OgcApiEndpoint.csapi()` factory method and provides developers with all the methods needed to construct URLs for CSAPI operations: querying Systems with spatial/temporal filters, creating Observations in DataStreams, retrieving historical observations with temporal ranges, sending Commands to Control Streams, and accessing all other CSAPI resources. The class consolidates URL construction for approximately 60-70 unique URL patterns across Part 1 resources (Systems, Deployments, Procedures, Sampling Features, Properties) and Part 2 resources (DataStreams, Observations, Control Streams, Commands), including canonical endpoints, nested resource endpoints, schema endpoints, and special-purpose endpoints like command status/result tracking. This single-class design follows the upstream repository's architecture pattern where one QueryBuilder per API family handles all URL construction for that API, keeping the implementation focused and maintainable rather than splitting across multiple handler classes. The following sections detail the URL construction requirements for each of the 9 resource types as methods within this one CSAPIQueryBuilder class.
 
 **URL Construction Requirements:**
+
 - Canonical resource endpoints: `/systems`, `/deployments`, `/procedures`, `/samplingFeatures`, `/properties`, `/datastreams`, `/observations`, `/controlstreams`, `/commands`
 - Nested resource endpoints: `/systems/{id}/subsystems`, `/systems/{id}/datastreams`, `/datastreams/{id}/observations`, `/controlstreams/{id}/commands`
 - Schema endpoints: `/datastreams/{id}/schema`, `/controlstreams/{id}/schema`
@@ -161,6 +173,7 @@ The CSAPIQueryBuilder is new code we need to build as a single comprehensive cla
 This URL builder implements FULL query parameter support for CSAPI Parts 1 and 2, including all standard OGC API parameters and all CSAPI-specific extensions. This is NOT an MVP - we support the complete filtering and pagination capabilities defined in the CSAPI specifications.
 
 **Standard OGC API Parameters:**
+
 - `bbox`: Spatial bounding box filter (2D and 3D) for Systems, Deployments, Sampling Features
 - `datetime`: Temporal filter using ISO 8601 intervals for validTime filtering
 - `limit`: Maximum results per page (1 to 10,000 for Part 2)
@@ -168,17 +181,20 @@ This URL builder implements FULL query parameter support for CSAPI Parts 1 and 2
 - `f`: Format negotiation (json, geojson, sml+json, swe+json, swe+text)
 
 **CSAPI Common Parameters (Part 1):**
+
 - `id`: Filter by resource ID (multiple IDs supported as comma-separated list)
 - `uid`: Filter by unique identifier (URN-based filtering)
 - `q`: Full-text search across resource properties
 - `{propertyName}`: Filter by any resource property (e.g., `name=Weather%20Station`, `systemType=sosa:Sensor`)
 
 **CSAPI Hierarchical Parameters:**
+
 - `recursive`: Boolean flag for hierarchical queries (subsystems, subdeployments)
   - `recursive=false`: Direct children only (default)
   - `recursive=true`: All descendants at all nesting levels
 
 **CSAPI Relationship Parameters (Part 1):**
+
 - `parent`: Filter by parent system/deployment ID
 - `procedure`: Filter resources by associated procedure
 - `foi`: Filter by feature of interest
@@ -189,28 +205,33 @@ This URL builder implements FULL query parameter support for CSAPI Parts 1 and 2
 - `objectType`: Filter by resource type
 
 **CSAPI Temporal Parameters (Part 2):**
+
 - `phenomenonTime`: When observation was made (ISO 8601 interval, primary temporal filter for observations)
 - `resultTime`: When observation result became available
 - `executionTime`: When command should be/was executed
 - `issueTime`: When command was issued
 
 **Pagination Modes:**
+
 - **Offset-based** (Part 1): `limit` + `offset` for predictable page navigation
 - **Cursor-based** (Part 2): `limit` + `cursor` for efficient large dataset streaming
 - **Temporal windowing** (Part 2): `phenomenonTime` intervals for time-series data
 
 **Advanced Filtering Capabilities:**
+
 - **Multiple ID filtering**: `id=sys1,sys2,sys3` (OR logic)
 - **Property-based filtering**: Any resource property can be used as query parameter
 - **Combined filters**: All parameters can be combined (AND logic between different parameter types)
 - **Nested endpoint filtering**: All query parameters work on nested endpoints (e.g., `/systems/{id}/subsystems?bbox=...&recursive=true`)
 
 **Format Negotiation:**
+
 - Query parameter: `f=json|geojson|sml+json|swe+json|swe+text|html`
 - HTTP Accept header: `application/json`, `application/geo+json`, `application/sml+json`, `application/swe+json`, `application/swe+text`
 - Format-specific parameters for Part 2: `obsFormat` (observation encoding), `cmdFormat` (command encoding)
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for each URL construction method (buildSystemsURL, etc.)
 2. Add comprehensive JSDoc with all parameters, examples of constructed URLs
 3. Implement URL construction and parameter encoding
@@ -228,6 +249,7 @@ The CSAPIQueryBuilder includes Systems resource methods to manage CSAPI System r
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all systems: `GET /systems`
 - Get single system: `GET /systems/{id}`
 - Query systems: `GET /systems?bbox=...&parent=...&recursive=true`
@@ -238,19 +260,23 @@ The CSAPIQueryBuilder includes Systems resource methods to manage CSAPI System r
 - Systems in collection: `GET /collections/{collectionId}/items?featureType=sosa:System`
 
 **Create Operations:**
+
 - Create system: `POST /systems` with GeoJSON or SensorML body
 - Create subsystem: `POST /systems/{parentId}/subsystems` with body
 - Add to collection: `POST /collections/{collectionId}/items` with system feature
 
 **Update Operations:**
+
 - Replace system: `PUT /systems/{id}` with full document
 - Partial update: `PATCH /systems/{id}` with partial document (JSON Patch or Merge Patch)
 
 **Delete Operations:**
+
 - Delete system: `DELETE /systems/{id}`
 - Cascade delete: `DELETE /systems/{id}?cascade=true` (deletes subsystems, datastreams, etc.)
 
 **System Relationship Management:**
+
 - Parse and expose subsystem hierarchy
 - Navigate system-deployment associations (bidirectional)
 - Navigate system-procedure associations
@@ -275,6 +301,7 @@ These methods implement FULL query parameter support - NOT MVP scope. All filter
 - **Combined filtering**: All query parameters work together with AND logic
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for all CRUD and query methods
 2. Add comprehensive JSDoc with parameter descriptions, return types, examples
 3. Implement each method with inline documentation for complex logic
@@ -291,6 +318,7 @@ The CSAPIQueryBuilder includes Deployments resource methods to manage CSAPI Depl
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all deployments: `GET /deployments`
 - Get single deployment: `GET /deployments/{id}`
 - Query deployments: `GET /deployments?bbox=...&system=...&datetime=...`
@@ -300,19 +328,23 @@ The CSAPIQueryBuilder includes Deployments resource methods to manage CSAPI Depl
 - Deployments in collection: `GET /collections/{collectionId}/items?featureType=sosa:Deployment`
 
 **Create Operations:**
+
 - Create deployment: `POST /deployments` with GeoJSON body
 - Create subdeployment: `POST /deployments/{parentId}/subdeployments`
 - Add to collection: `POST /collections/{collectionId}/items`
 
 **Update Operations:**
+
 - Replace deployment: `PUT /deployments/{id}`
 - Partial update: `PATCH /deployments/{id}`
 
 **Delete Operations:**
+
 - Delete deployment: `DELETE /deployments/{id}`
 - Cascade delete: `DELETE /deployments/{id}?cascade=true`
 
 **Deployment Relationship Management:**
+
 - Parse and expose subdeployment hierarchy
 - Navigate deployment-system associations (many-to-many)
 - Extract spatial extent (deployment footprint)
@@ -336,6 +368,7 @@ These methods implement FULL query parameter support - NOT MVP scope.
 - **Combined filtering**: All parameters work together
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for CRUD and spatial/temporal query methods
 2. Add JSDoc with parameter descriptions, spatial/temporal filter examples
 3. Implement each operation with documentation for extent handling
@@ -352,6 +385,7 @@ The CSAPIQueryBuilder includes Procedures resource methods to manage CSAPI Proce
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all procedures: `GET /procedures`
 - Get single procedure: `GET /procedures/{id}`
 - Query procedures: `GET /procedures?system=...&q=...`
@@ -359,17 +393,21 @@ The CSAPIQueryBuilder includes Procedures resource methods to manage CSAPI Proce
 - Procedures in collection: `GET /collections/{collectionId}/items?featureType=sosa:Procedure`
 
 **Create Operations:**
+
 - Create procedure: `POST /procedures` with GeoJSON or SensorML body
 - Add to collection: `POST /collections/{collectionId}/items`
 
 **Update Operations:**
+
 - Replace procedure: `PUT /procedures/{id}`
 - Partial update: `PATCH /procedures/{id}`
 
 **Delete Operations:**
+
 - Delete procedure: `DELETE /procedures/{id}`
 
 **Procedure Properties to Parse:**
+
 - `procedureType`: URI indicating type (sensor, algorithm, protocol)
 - `methodKind`: URI from controlled vocabulary
 - `attachedTo`: Link to system that uses this procedure
@@ -379,6 +417,7 @@ The CSAPIQueryBuilder includes Procedures resource methods to manage CSAPI Proce
 - `documentation`: Links to manuals, specifications
 
 **Procedure Relationship Management:**
+
 - Systems using this procedure (reverse lookup)
 - DataStreams using this procedure (Part 2 cross-reference)
 - Parse SensorML method descriptions
@@ -398,6 +437,7 @@ These methods implement FULL query parameter support - NOT MVP scope.
 - **Combined filtering**: All parameters work together
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for read operations and query methods
 2. Add JSDoc documenting SensorML integration, system associations
 3. Implement read and query logic with format negotiation
@@ -414,6 +454,7 @@ The CSAPIQueryBuilder includes Sampling Features resource methods to manage CSAP
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all sampling features: `GET /samplingFeatures`
 - Get single sampling feature: `GET /samplingFeatures/{id}`
 - Query sampling features: `GET /samplingFeatures?bbox=...&foi=...&system=...`
@@ -422,18 +463,22 @@ The CSAPIQueryBuilder includes Sampling Features resource methods to manage CSAP
 - Sampling features in collection: `GET /collections/{collectionId}/items?featureType=sosa:SamplingFeature`
 
 **Create Operations:**
+
 - Create sampling feature: `POST /samplingFeatures` with GeoJSON body
 - Create under system: `POST /systems/{systemId}/samplingFeatures`
 - Add to collection: `POST /collections/{collectionId}/items`
 
 **Update Operations:**
+
 - Replace sampling feature: `PUT /samplingFeatures/{id}`
 - Partial update: `PATCH /samplingFeatures/{id}`
 
 **Delete Operations:**
+
 - Delete sampling feature: `DELETE /samplingFeatures/{id}`
 
 **Sampling Feature Properties to Parse:**
+
 - `samplingFeatureType`: URI indicating type (point, specimen, transect)
 - `sampledFeature`: Link to ultimate feature of interest
 - `relatedSamplingFeature`: Links to related sampling features
@@ -442,6 +487,7 @@ The CSAPIQueryBuilder includes Sampling Features resource methods to manage CSAP
 - `samplingMethod`: How sample was collected
 
 **Sampling Feature Relationship Management:**
+
 - Systems using this sampling feature
 - Ultimate feature of interest (sampled feature)
 - Related sampling features (hierarchical relationships)
@@ -462,6 +508,7 @@ These methods implement FULL query parameter support - NOT MVP scope.
 - **Combined filtering**: All parameters work together
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for CRUD and spatial query methods
 2. Add JSDoc with geometry types, relationship parameters, examples
 3. Implement operations with spatial filter handling
@@ -478,6 +525,7 @@ The CSAPIQueryBuilder includes Properties resource methods to manage CSAPI Prope
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all properties: `GET /properties`
 - Get single property: `GET /properties/{id}`
 - Query properties: `GET /properties?q=temperature&system=...`
@@ -485,6 +533,7 @@ The CSAPIQueryBuilder includes Properties resource methods to manage CSAPI Prope
 - Properties in collection: `GET /collections/{collectionId}/items?featureType=sosa:ObservableProperty`
 
 **Property Metadata to Parse:**
+
 - `definition`: URI from controlled vocabulary (QUDT, CF, etc.)
 - `label`: Human-readable name
 - `description`: Detailed explanation
@@ -493,6 +542,7 @@ The CSAPIQueryBuilder includes Properties resource methods to manage CSAPI Prope
 - `units`: Standard units of measure
 
 **Property Relationship Management:**
+
 - Systems capable of observing this property
 - DataStreams observing this property (Part 2)
 - ControlStreams controlling this property (Part 2)
@@ -512,6 +562,7 @@ These methods implement FULL query parameter support - NOT MVP scope.
 - **Combined filtering**: All parameters work together
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for read and vocabulary navigation methods
 2. Add JSDoc documenting vocabulary integration, hierarchy navigation
 3. Implement read operations with baseProperty relationship handling
@@ -528,6 +579,7 @@ The CSAPIQueryBuilder includes DataStreams resource methods to manage CSAPI Data
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all datastreams: `GET /datastreams`
 - Get single datastream: `GET /datastreams/{id}`
 - Query datastreams: `GET /datastreams?system=...&observedProperty=...&foi=...`
@@ -536,18 +588,22 @@ The CSAPIQueryBuilder includes DataStreams resource methods to manage CSAPI Data
 - DataStreams in collection: `GET /collections/{collectionId}/items`
 
 **Create Operations:**
+
 - Create datastream: `POST /datastreams` with JSON body including result schema
 - Create under system: `POST /systems/{systemId}/datastreams`
 
 **Update Operations:**
+
 - Replace datastream: `PUT /datastreams/{id}` (caution: schema changes affect existing observations)
 - Partial update: `PATCH /datastreams/{id}` (limited schema updates allowed)
 
 **Delete Operations:**
+
 - Delete datastream: `DELETE /datastreams/{id}`
 - Cascade delete: `DELETE /datastreams/{id}?cascade=true` (deletes all observations)
 
 **DataStream Properties to Parse:**
+
 - `name`: Human-readable name
 - `description`: Detailed description
 - `system`: Link to producing system (required)
@@ -562,6 +618,7 @@ The CSAPIQueryBuilder includes DataStreams resource methods to manage CSAPI Data
 - `archiveDuration`: How long observations are retained
 
 **DataStream Relationship Management:**
+
 - System producing this datastream (required association)
 - Properties being observed (required association)
 - Observations in this datastream (Part 2, see Observations methods)
@@ -570,6 +627,7 @@ The CSAPIQueryBuilder includes DataStreams resource methods to manage CSAPI Data
 - Features of interest (optional association)
 
 **Schema Operations:**
+
 - Parse SWE Common result schema
 - Validate observation results against schema
 - Provide schema introspection for clients
@@ -590,6 +648,7 @@ These methods implement FULL query parameter support - NOT MVP scope.
 - **Combined filtering**: All parameters work together to narrow discovery
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for CRUD, schema operations, observation navigation
 2. Add comprehensive JSDoc with schema handling examples, validation rules
 3. Implement each operation with schema integration documentation
@@ -606,6 +665,7 @@ The CSAPIQueryBuilder includes Observations resource methods to manage CSAPI Obs
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all observations: `GET /observations?phenomenonTime=...&limit=...`
 - Get single observation: `GET /observations/{id}`
 - Stream-specific observations: `GET /datastreams/{id}/observations?phenomenonTime=2024-01-01/2024-01-31`
@@ -614,18 +674,22 @@ The CSAPIQueryBuilder includes Observations resource methods to manage CSAPI Obs
 - Pagination: `GET /observations?cursor={nextCursor}&limit=1000`
 
 **Create Operations:**
+
 - Create single observation: `POST /datastreams/{id}/observations` with observation body
 - Bulk create: `POST /datastreams/{id}/observations` with array of observations
 - Stream ingestion: POST to `/datastreams/{id}/observations` with streaming payload
 
 **Update Operations:**
+
 - Replace observation: `PUT /observations/{id}` (rare, usually observations are immutable)
 - Partial update: `PATCH /observations/{id}` (for quality flags, validation status)
 
 **Delete Operations:**
+
 - Delete observation: `DELETE /observations/{id}` (rare, usually retained)
 
 **Observation Properties to Parse:**
+
 - `phenomenonTime`: When the observation was made (required, ISO 8601)
 - `resultTime`: When the result became available (optional, defaults to phenomenonTime)
 - `result`: Observation result structured per DataStream schema (required)
@@ -634,6 +698,7 @@ The CSAPIQueryBuilder includes Observations resource methods to manage CSAPI Obs
 - `featureOfInterest`: Link to observed feature (optional if provided by DataStream)
 
 **Observation Result Parsing:**
+
 - Parse SWE Common JSON encoding: structured JSON with units
 - Parse SWE Common Text encoding: CSV-style compact format
 - Parse SWE Common Binary encoding: efficient binary format
@@ -670,6 +735,7 @@ Both offset-based and cursor-based pagination fully implemented - NOT MVP scope.
 - **Stable sorting**: By phenomenonTime ascending, then by ID for deterministic ordering
 
 **Performance Considerations:**
+
 - Efficient parsing of large observation arrays
 - Streaming support for bulk ingestion
 - Incremental parsing of CSV/Text format
@@ -677,6 +743,7 @@ Both offset-based and cursor-based pagination fully implemented - NOT MVP scope.
 - Caching of DataStream schemas
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for CRUD, query, bulk operations, pagination
 2. Add detailed JSDoc with temporal filter examples, pagination modes, encoding formats
 3. Implement operations with inline documentation for complex temporal queries
@@ -693,6 +760,7 @@ The CSAPIQueryBuilder includes Control Streams resource methods to manage CSAPI 
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all control streams: `GET /controlstreams`
 - Get single control stream: `GET /controlstreams/{id}`
 - Query control streams: `GET /controlstreams?system=...&controlledProperty=...`
@@ -701,18 +769,22 @@ The CSAPIQueryBuilder includes Control Streams resource methods to manage CSAPI 
 - Control streams in collection: `GET /collections/{collectionId}/items`
 
 **Create Operations:**
+
 - Create control stream: `POST /controlstreams` with JSON body including parameter schema
 - Create under system: `POST /systems/{systemId}/controlstreams`
 
 **Update Operations:**
+
 - Replace control stream: `PUT /controlstreams/{id}`
 - Partial update: `PATCH /controlstreams/{id}`
 
 **Delete Operations:**
+
 - Delete control stream: `DELETE /controlstreams/{id}`
 - Cascade delete: `DELETE /controlstreams/{id}?cascade=true` (deletes all commands)
 
 **Control Stream Properties to Parse:**
+
 - `name`: Human-readable name
 - `description`: Detailed description
 - `system`: Link to controlled system (required)
@@ -724,12 +796,14 @@ The CSAPIQueryBuilder includes Control Streams resource methods to manage CSAPI 
 - `supportsFeasibility`: Can check feasibility before execution
 
 **Control Stream Relationship Management:**
+
 - System being controlled (required association)
 - Properties being controlled (required association)
 - Commands sent through this stream (see Commands methods)
 - Valid parameter ranges and constraints
 
 **Schema Operations:**
+
 - Parse SWE Common parameter schema
 - Validate command parameters against schema
 - Provide schema introspection for clients
@@ -749,6 +823,7 @@ These methods implement FULL query parameter support - NOT MVP scope.
 - **Combined filtering**: All parameters work together
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for CRUD, schema operations, command navigation
 2. Add JSDoc with parameter schema examples, validation rules
 3. Implement operations with schema integration documentation
@@ -765,6 +840,7 @@ The CSAPIQueryBuilder includes Commands resource methods to manage CSAPI Command
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all commands: `GET /commands?issueTime=...&limit=...`
 - Get single command: `GET /commands/{id}`
 - Stream-specific commands: `GET /controlstreams/{id}/commands?issueTime=2024-01-01/..`
@@ -774,19 +850,23 @@ The CSAPIQueryBuilder includes Commands resource methods to manage CSAPI Command
 - Get command result: `GET /commands/{id}/result`
 
 **Create Operations:**
+
 - Create single command: `POST /controlstreams/{id}/commands` with command body
 - Bulk create: `POST /controlstreams/{id}/commands` with array of commands
 - Check feasibility: `POST /controlstreams/{id}/feasibility` with parameters
 
 **Update Operations:**
+
 - Update command status: `PATCH /commands/{id}/status` (for system-generated status updates)
 - Update command result: `PUT /commands/{id}/result` (when execution completes)
 - Cancel command: `POST /commands/{id}/cancel`
 
 **Delete Operations:**
+
 - Delete command: `DELETE /commands/{id}` (if not yet executed)
 
 **Command Properties to Parse:**
+
 - `issueTime`: When command was issued (ISO 8601)
 - `executionTime`: When to execute (optional, immediate if omitted)
 - `parameters`: Command parameters per ControlStream schema
@@ -795,12 +875,14 @@ The CSAPIQueryBuilder includes Commands resource methods to manage CSAPI Command
 - `receiver`: Target system/component
 
 **Command Status Properties:**
+
 - `status`: Current state (pending, accepted, executing, completed, failed, cancelled)
 - `percentCompletion`: Progress indicator (0-100)
 - `statusMessage`: Human-readable status
 - `updateTime`: Last status update timestamp
 
 **Command Result Properties:**
+
 - `result`: Execution result per ControlStream schema
 - `completionTime`: When execution finished
 - `resultQuality`: Quality indicators for result
@@ -829,6 +911,7 @@ Both offset-based and cursor-based pagination fully implemented - NOT MVP scope.
 - **Stable sorting**: By issueTime ascending, then by ID
 
 **Command Lifecycle Management:**
+
 - Submit command (validate parameters)
 - Track status (poll for updates)
 - Retrieve result (when completed)
@@ -836,10 +919,12 @@ Both offset-based and cursor-based pagination fully implemented - NOT MVP scope.
 - Check feasibility (before submission)
 
 **Synchronous vs Asynchronous Execution:**
+
 - Synchronous: POST returns 200 with immediate result
 - Asynchronous: POST returns 201 with status URL, client polls for completion
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for CRUD, execution, status tracking, result retrieval
 2. Add comprehensive JSDoc with status state machine, async patterns, examples
 3. Implement operations with detailed status tracking documentation
@@ -856,6 +941,7 @@ Both offset-based and cursor-based pagination fully implemented - NOT MVP scope.
 The GeoJSON handler is existing code in the library that parses GeoJSON Feature and FeatureCollection documents, supporting all seven geometry types (Point, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, GeometryCollection). For CSAPI, we will extend this handler with COMPLETE recognition and extraction of ALL CSAPI-specific properties - NOT MVP Scope. The extension will recognize CSAPI-specific feature types through the `featureType` property and extract all CSAPI resource properties from the feature `properties` object. CSAPI Part 1 resources (Systems, Deployments, Procedures, Sampling Features) are encoded as GeoJSON features with additional semantic properties like `systemType`, `assetType`, `uniqueIdentifier`, `validTime`, and association links to related resources. The extension will add comprehensive type checking for all these CSAPI properties and complete validation rules specific to each CSAPI feature type, while maintaining compatibility with generic GeoJSON handling for other OGC API standards. This approach leverages the existing GeoJSON infrastructure while adding CSAPI-aware semantics on top.
 
 **COMPLETE CSAPI-Specific GeoJSON Properties - NOT MVP Scope:**
+
 - Systems: `systemType` (URI), `assetType` (enum), `uniqueIdentifier` (URI), `validTime` (period), association arrays (`subsystems`, `deployments`, `procedures`, `samplingFeatures`, `datastreams`, `controlstreams`)
 - Deployments: `deployedSystems` (array), `validTime` (period), spatial/temporal extent
 - Procedures: `procedureType` (URI), `methodKind` (URI), `attachedTo` (link to system)
@@ -863,6 +949,7 @@ The GeoJSON handler is existing code in the library that parses GeoJSON Feature 
 - All resources: `id`, `name`, `description`, `links` (HATEOAS navigation)
 
 **COMPLETE Validation Requirements - NOT MVP Scope:**
+
 - `uniqueIdentifier` must be valid URI (preferably URN format following RFC 8141)
 - `systemType` must be from SOSA/SSN vocabulary (`sosa:Sensor`, `sosa:Platform`, `sosa:Actuator`, `sosa:Sampler`, etc.) with URI validation
 - `validTime` must be ISO 8601 temporal period or instant with full interval support (start/end, start/duration, open-ended)
@@ -877,6 +964,7 @@ The GeoJSON handler is existing code in the library that parses GeoJSON Feature 
 - Property data type validation (strings, numbers, booleans, arrays, objects match schema)
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for CSAPI property extraction methods
 2. Add JSDoc documenting which CSAPI properties are handled, validation rules
 3. Implement parsing logic for each resource type
@@ -892,12 +980,14 @@ The GeoJSON handler is existing code in the library that parses GeoJSON Feature 
 The SensorML handler is new code we need to build to parse [OGC SensorML 3.0](https://docs.ogc.org/is/23-000r1/23-000r1.html) format documents that describe sensor systems, components, and processes in detail with COMPLETE support for ALL SensorML 3.0 elements - NOT MVP Scope. SensorML 3.0 is the latest version of the JSON-native format from the Sensor Web Enablement (SWE) standards family, published in 2024, that provides rich metadata about sensors, actuators, and processing chains with significant improvements over the previous XML-based 2.x versions. CSAPI servers return SensorML 3.0 documents when describing Systems or Procedures, providing detailed technical specifications beyond what GeoJSON can express. We will build a comprehensive parser that handles all SensorML 3.0 system models (System, PhysicalComponent, PhysicalSystem, SystemConfiguration), all component descriptions, all feature of interest definitions, all capability/characteristic/constraint specifications, all input/output specifications, all configuration parameters, all operational modes, all component connections, and temporal validity periods. The parser must convert SensorML 3.0 JSON documents into TypeScript objects that the library can work with, following the same architecture patterns as the existing GeoJSON and other format handlers. This new component represents one of the most complex format handling tasks in the project due to SensorML's hierarchical structure, extensive vocabulary, and deep integration with [SWE Common 3.0](https://docs.ogc.org/is/23-011r1/23-011r1.html) data components.
 
 **SensorML 3.0 Document Types to Parse:**
+
 - **System**: Abstract system description with common properties (identification, classification, characteristics, capabilities, contacts)
 - **PhysicalComponent**: Single physical sensor or actuator with detailed specifications, position, and operating characteristics
 - **PhysicalSystem**: Composite system made of multiple components with spatial/functional connections and aggregation properties
 - **SystemConfiguration**: Reusable configuration profiles with parameter settings and mode definitions
 
 **SensorML 3.0 Elements to Extract:**
+
 - **Identification**: `uid` (unique identifier), `label`, `description`, `identifiers` (array of alternate identifiers)
 - **Classification**: `classifiers` array with type definitions, intended applications, sensor taxonomies
 - **ValidTime**: Temporal period when description is valid (ISO 8601 period)
@@ -917,6 +1007,7 @@ The SensorML handler is new code we need to build to parse [OGC SensorML 3.0](ht
 - **Position**: Location and orientation using GeoJSON Point or more complex positioning models
 
 **COMPLETE Parsing Capabilities - NOT MVP Scope:**
+
 - **Recursive component parsing**: Unlimited depth traversal for nested PhysicalSystems with full component hierarchy preservation
 - **SWE Common 3.0 DataComponent integration**: Complete parsing of all DataComponent types used in characteristics, capabilities, parameters, inputs, outputs (DataRecord, DataArray, Quantity, Count, Boolean, Text, Time, Category, Vector, Matrix, all range types, DataChoice, GeometryData)
 - **Unit of measure parsing**: Full UCUM code support ([UCUM codes](http://unitsofmeasure.org/)) with unit validation, scale factors, offsets
@@ -932,11 +1023,13 @@ The SensorML handler is new code we need to build to parse [OGC SensorML 3.0](ht
 - **Documentation links**: Media type detection, thumbnail generation, content previewing
 
 **References:**
+
 - [OGC SensorML 3.0 Standard](https://docs.ogc.org/is/23-000r1/23-000r1.html) (OGC 23-000r1)
 - [SensorML 3.0 JSON Schema](https://schemas.opengis.net/sensorml/3.0/)
 - [OGC Connected Systems API Part 1 - SensorML Encoding](https://docs.ogc.org/is/23-001/23-001.html#sensorml-encoding)
 
 **Recommended Development Workflow:**
+
 1. Write TypeScript interfaces for SensorML types (PhysicalSystem, PhysicalComponent, etc.)
 2. Add comprehensive JSDoc to each interface documenting all properties and relationships
 3. Implement parser methods with JSDoc showing examples of input/output
@@ -955,6 +1048,7 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 **SWE Common 3.0 Data Components to Parse:**
 
 **Simple Components:**
+
 - **Quantity**: Numeric measurement with unit of measure and optional constraints (temperature, pressure, voltage)
 - **Count**: Integer count value with optional constraints (particle count, event count)
 - **Boolean**: True/false indicator (on/off status, alarm state)
@@ -963,11 +1057,13 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 - **Category**: Categorical value from controlled vocabulary with code space (weather condition, quality flag)
 
 **Range Components (new in 3.0):**
+
 - **QuantityRange**: Range of numeric values with units (temperature range, acceptable operating range)
 - **CategoryRange**: Range of categorical values (quality range indicators)
 - **TimeRange**: Temporal interval (observation period, validity period)
 
 **Complex Components:**
+
 - **DataRecord**: Structured record containing multiple named fields (multi-property observation)
 - **DataArray**: Array of measurements with variable or fixed element count (time series, profile, trajectory)
 - **Vector**: Positional vector with coordinate reference system (3D location, velocity, acceleration)
@@ -978,20 +1074,23 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 **SWE Common 3.0 Encodings to Support:**
 
 **JSON Encoding** (human-readable):
+
 ```json
 {
-  "temperature": {"uom": {"code": "Cel"}, "value": 23.5},
-  "humidity": {"uom": {"code": "%"}, "value": 65.2}
+  "temperature": { "uom": { "code": "Cel" }, "value": 23.5 },
+  "humidity": { "uom": { "code": "%" }, "value": 65.2 }
 }
 ```
 
 **Text Encoding** (CSV-style compact):
+
 ```
 23.5,65.2
 24.1,63.8
 ```
 
 **Binary Encoding** (efficient streaming):
+
 - IEEE 754 floating point (32-bit, 64-bit)
 - Integer encodings (signed/unsigned, 8/16/32/64-bit)
 - Base64 encoded blocks
@@ -999,6 +1098,7 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 - Little-endian and big-endian byte order support
 
 **COMPLETE Schema Validation Requirements - NOT MVP Scope:**
+
 - **Result structure validation**: Complete matching of result structure against DataStream schema (all DataComponent definitions, nested structures, choice discriminators)
 - **Range validation**: All values within allowed ranges (AllowedValues enumeration lists, AllowedIntervals numeric/temporal ranges, AllowedTimes temporal constraints, AllowedTokens text patterns with regex)
 - **Unit validation**: Complete UCUM code validation ([UCUM codes](http://unitsofmeasure.org/)) with unit conversion support, scale factors, offsets
@@ -1013,6 +1113,7 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 - **Choice validation**: DataChoice discriminator present, selected option matches discriminator, option structure validation
 
 **COMPLETE Advanced 3.0 Features Support - NOT MVP Scope:**
+
 - **NilValues**: Complete representation of missing/invalid data with all reason codes (inapplicable, missing, template, unknown, withheld, BelowDetectionRange, AboveDetectionRange), reason text, custom codes
 - **Quality**: All associated quality indicators (accuracy measures, precision values, confidence intervals, data quality flags, quality DataRecord with multiple quality dimensions)
 - **Constraints**: Complete support for AllowedValues (enumeration lists, code lists), AllowedIntervals (numeric ranges, temporal ranges, open/closed bounds), AllowedTimes (temporal constraints, ISO 8601 intervals), AllowedTokens (text patterns, regex validation, character sets)
@@ -1024,11 +1125,13 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 - **Type coercion**: Automatic type conversion with precision preservation (integer to float, timestamp to ISO string, etc.)
 
 **References:**
+
 - [OGC SWE Common 3.0 Standard](https://docs.ogc.org/is/23-011r1/23-011r1.html) (OGC 23-011r1)
 - [SWE Common 3.0 JSON Schema](https://schemas.opengis.net/sweCommon/3.0/)
 - [OGC Connected Systems API Part 2 - SWE Common Encoding](https://docs.ogc.org/is/23-002/23-002.html#swe-common-encoding)
 
 **Recommended Development Workflow:**
+
 1. Write TypeScript interfaces for each DataComponent type (Quantity, DataRecord, etc.)
 2. Add detailed JSDoc with encoding examples (JSON/Text/Binary)
 3. Implement parser for each encoding format with comprehensive documentation
@@ -1046,6 +1149,7 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 The format detector is existing code that examines HTTP response headers (Content-Type) and document structure to determine what format a server returned. For CSAPI, we will extend this detector with COMPLETE recognition of ALL CSAPI media types with comprehensive fallback detection - NOT MVP Scope. The extension will recognize all new media types used by CSAPI servers: `application/sml+json` (SensorML-JSON encoding), `application/swe+json` (SWE Common JSON encoding), `application/swe+text` (SWE Common Text/CSV encoding), and `application/swe+binary` (SWE Common Binary encoding). The extension will add these media types to the library's format registry and route them to the appropriate new format handlers (SensorML handler, SWE Common handler) with complete parameter parsing (charset, boundary, encoding parameters). This follows the existing pattern where the detector checks Content-Type headers first, then falls back to comprehensive document structure analysis if headers are missing or ambiguous. The extension maintains the library's existing format abstraction architecture where developers work with parsed TypeScript objects regardless of the wire format.
 
 **COMPLETE Media Type Recognition - NOT MVP Scope:**
+
 - `application/sml+json` → Route to SensorML Handler (with charset detection)
 - `application/swe+json` → Route to SWE Common Handler (JSON encoding, charset detection)
 - `application/swe+text` → Route to SWE Common Handler (Text encoding, delimiter detection, charset handling)
@@ -1054,6 +1158,7 @@ The format detector is existing code that examines HTTP response headers (Conten
 - All media type parameters: charset (UTF-8, UTF-16, ISO-8859-1, etc.), version, encoding, boundary for multipart
 
 **COMPLETE Detection Strategy - NOT MVP Scope:**
+
 1. **Content-Type header parsing** (primary method): Full media type parsing with parameter extraction, quality factor handling (q values), wildcard matching, charset detection
 2. **Accept header negotiation**: Server-driven content negotiation with quality factors, format preference ordering, fallback format selection
 3. **Document structure analysis** (fallback for missing headers): Root JSON property examination (SensorML: `type: PhysicalSystem`, SWE Common: `type: DataRecord`, CSAPI GeoJSON: `featureType` property), schema pattern matching, namespace detection
@@ -1065,6 +1170,7 @@ The format detector is existing code that examines HTTP response headers (Conten
 9. **Error handling**: Graceful degradation for unknown formats, detailed error messages for malformed content, format suggestion for common mistakes
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for CSAPI media type detection
 2. Add JSDoc documenting each media type, detection strategy, fallback behavior
 3. Implement detection logic with inline comments for complex heuristics
@@ -1082,6 +1188,7 @@ The validator is existing code that checks whether parsed documents conform to f
 **COMPLETE CSAPI Validation Rules - NOT MVP Scope:**
 
 **Part 1 Resource Validation:**
+
 - Systems: `uniqueIdentifier` (required URI), `systemType` (required, from SOSA vocabulary), `name` (required string), `location` (required for mobile systems)
 - Deployments: `validTime` (required temporal period), spatial extent (required)
 - Procedures: `procedureType` (required URI), attached system reference validation
@@ -1089,12 +1196,14 @@ The validator is existing code that checks whether parsed documents conform to f
 - Properties: `definition` (required URI from vocabulary), `label` (required string)
 
 **Part 2 Resource Validation:**
+
 - DataStreams: schema validation (result schema must be valid SWE Common DataComponent), observed properties must reference existing Property resources, system association (required)
 - Observations: result validation (must conform to DataStream schema), temporal validation (phenomenonTime required), result time validation
 - Control Streams: schema validation (parameter schema must be valid SWE Common), system association (required)
 - Commands: parameter validation (must conform to ControlStream schema), execution time validation
 
 **COMPLETE Cross-Reference Validation - NOT MVP Scope:**
+
 - **Association links**: All links must have valid href (absolute or relative URI), valid rel (IANA or CSAPI relation type), optional type (media type), optional title
 - **Resource references**: Referenced resources must exist in collection or be valid external URIs with optional dereferencing and existence checking
 - **Hierarchical integrity**: Parent-child relationships are consistent (system subsystems, deployment subdeployments), no circular references, depth limits respected
@@ -1107,6 +1216,7 @@ The validator is existing code that checks whether parsed documents conform to f
 - **External references**: HTTP/HTTPS links reachable (optional validation), media types match content, documentation links valid
 
 **Validation Error Reporting:**
+
 - **Error severity**: Error (invalid/unusable), Warning (questionable/suboptimal), Info (recommendations)
 - **Error context**: JSON path to error location, line/column numbers, surrounding context
 - **Error messages**: Clear description of problem, expected vs actual values, suggested fixes
@@ -1119,6 +1229,7 @@ The validator is existing code that checks whether parsed documents conform to f
 - Observation-DataStream associations must be valid
 
 **Recommended Development Workflow:**
+
 1. Write method signatures for each validation rule category
 2. Add JSDoc documenting what is validated, error codes returned, examples
 3. Implement validation logic with clear error messages
@@ -1141,6 +1252,7 @@ The background processing component extends the existing Web Worker infrastructu
 This worker extension implements FULL offloading of computationally expensive CSAPI operations to maintain UI responsiveness.
 
 **Format Parsing (Heavy Operations):**
+
 - **SensorML 3.0 parsing**: Complex hierarchical JSON document parsing with recursive PhysicalSystem component trees, deep nesting, SWE Common DataComponent integration
 - **SWE Common 3.0 parsing**: Binary encoding decoding (IEEE 754 float, multi-byte integers, byte order handling), Text/CSV parsing, JSON encoding with schema-driven validation
 - **Large observation arrays**: Parsing thousands of observations with result validation against DataStream schemas (range checks, unit validation, quality indicators)
@@ -1148,17 +1260,20 @@ This worker extension implements FULL offloading of computationally expensive CS
 - **GeoJSON feature collections**: Large spatial datasets with CSAPI-specific property extraction (Systems, Deployments, Procedures, Sampling Features)
 
 **Validation Operations (CPU-Intensive):**
+
 - **Schema validation**: Complex SWE Common DataComponent schema validation with constraint checking
 - **Observation result validation**: Validate observation results against DataStream result schemas (range checks, unit validation, quality indicators)
 - **Command parameter validation**: Validate command parameters against ControlStream parameter schemas
 - **Cross-reference validation**: Check resource association integrity across hierarchies
 
 **Query Operations (Memory/CPU Intensive):**
+
 - **Recursive hierarchy traversal**: Deep system/deployment trees with all descendants (potentially hundreds/thousands of nodes)
 - **Spatial filtering**: bbox intersection calculations across large feature collections
 - **Temporal filtering**: phenomenonTime/resultTime interval matching across large observation sets
 
 **Worker Message Types to Add:**
+
 - `PARSE_SENSORML_3`: Input SensorML 3.0 JSON, output parsed System/PhysicalComponent/PhysicalSystem object
 - `PARSE_SWE_RESULT`: Input SWE Common encoded result (JSON/Text/Binary) + schema, output validated parsed values
 - `PARSE_SWE_BINARY`: Input Base64 binary block + schema, output decoded observation array
@@ -1170,17 +1285,20 @@ This worker extension implements FULL offloading of computationally expensive CS
 - `FILTER_TEMPORAL`: Input observation array + temporal interval, output filtered observations
 
 **Performance Benefits:**
+
 - Prevent main thread blocking during large data operations
 - Enable responsive UIs during heavy parsing
 - Parallel processing of multiple requests
 - Better utilization of multi-core CPUs
 
 **Fallback for Non-Worker Environments:**
+
 - Provide synchronous fallback implementation
 - Maintain same API surface
 - Graceful degradation in environments without Web Worker support
 
 **Recommended Development Workflow:**
+
 1. Write message handler signatures for each CSAPI worker operation
 2. Add JSDoc documenting message format, performance benefits, error handling
 3. Implement worker handlers with fallback logic
@@ -1203,6 +1321,7 @@ The test coverage component extends the existing Jest test suite to cover all CS
 This testing extension implements COMPREHENSIVE test coverage for all CSAPI functionality to match the existing library standard (>80% code coverage).
 
 **Format Parser Tests (Complete Coverage):**
+
 - **GeoJSON CSAPI extensions**: All Part 1 resource types (Systems, Deployments, Procedures, Sampling Features), all CSAPI-specific properties, all geometry types, validation rules
 - **SensorML 3.0 parser**: All system models (System, PhysicalComponent, PhysicalSystem, SystemConfiguration), all elements (identification, classification, characteristics, capabilities, constraints, contacts, FeaturesOfInterest, modes, components, connections), recursive component parsing, SWE Common integration
 - **SWE Common 3.0 parser**: All data components (Quantity, Count, Boolean, Text, Time, Category, QuantityRange, CategoryRange, TimeRange, DataRecord, DataArray, Vector, Matrix, DataChoice, GeometryData), all encodings (JSON, Text, Binary with endianness), constraint validation, quality indicators, nil values
@@ -1210,6 +1329,7 @@ This testing extension implements COMPREHENSIVE test coverage for all CSAPI func
 - **Validator**: All Part 1 validation rules (required properties, enumeration values, URI formats, temporal constraints, spatial constraints, association integrity), all Part 2 validation rules (schema conformance, result validation, parameter validation), cross-reference validation
 
 **Resource Handler Tests (All CRUD Operations + All Query Parameters):**
+
 - **Systems**: Create/read/update/delete, subsystem hierarchy (recursive queries), all query parameters (bbox, datetime, parent, deployment, procedure, foi, id, uid, q, property filters, recursive), pagination (limit, offset), format negotiation (GeoJSON vs SensorML), error cases
 - **Deployments**: CRUD, subdeployment hierarchy, all query parameters (bbox, datetime, system, parent, id, uid, q, property filters, recursive), pagination, format (GeoJSON only), error cases
 - **Procedures**: CRUD, all query parameters (system, id, uid, q, property filters), pagination, format negotiation (GeoJSON vs SensorML), error cases
@@ -1221,6 +1341,7 @@ This testing extension implements COMPREHENSIVE test coverage for all CSAPI func
 - **Commands**: CRUD, status tracking, result retrieval, all temporal queries (issueTime, executionTime with all interval types), status filtering, both pagination modes, bulk operations, synchronous vs asynchronous execution, error cases
 
 **Query Builder Tests (All Query Parameters + All Combinations):**
+
 - **Canonical endpoints**: URL construction for all 9 resource types
 - **Nested endpoints**: All nesting patterns (systems/subsystems, systems/datastreams, datastreams/observations, controlstreams/commands)
 - **Query parameter encoding**: All spatial parameters (bbox 2D/3D, coordinate validation), all temporal parameters (datetime, phenomenonTime, resultTime, executionTime, issueTime with all interval formats), all relationship parameters (parent, system, deployment, procedure, foi, observedProperty, controlledProperty, baseProperty), all common parameters (id with multiple values, uid, q, property filters), hierarchical parameters (recursive), pagination (limit, offset, cursor), format negotiation (f parameter, Accept headers)
@@ -1230,6 +1351,7 @@ This testing extension implements COMPREHENSIVE test coverage for all CSAPI func
 - **Error cases**: Invalid parameter values, malformed URLs, unsupported combinations
 
 **Integration Tests (End-to-End Workflows):**
+
 - **Discovery workflows**: Connect to server → check conformance → list collections → filter by resource type → retrieve resources
 - **Observation workflows**: Discover systems → find datastreams → query observations with temporal filters → paginate results → parse SWE Common results
 - **Command workflows**: Discover systems → find control streams → check feasibility → submit commands → track status → retrieve results
@@ -1239,6 +1361,7 @@ This testing extension implements COMPREHENSIVE test coverage for all CSAPI func
 - **Error handling**: Server errors (4xx, 5xx), validation errors (schema mismatches, invalid data), network errors (timeouts, connection failures), malformed responses
 
 **Test Fixtures to Create (Complete Coverage):**
+
 - **Specification examples**: All example responses from CSAPI Parts 1 & 2 specification documents
 - **Edge cases**: Empty collections, minimal resources, malformed data (for error handling tests), boundary conditions (max limits, extreme coordinates, edge temporal values)
 - **Large datasets**: Paginated collections (100s of items), large observation sets (1000s-10000s of results for pagination testing), complex hierarchies (deep system/deployment nesting)
@@ -1247,6 +1370,7 @@ This testing extension implements COMPREHENSIVE test coverage for all CSAPI func
 - **Schema fixtures**: All DataStream schema examples (various observable types, all SWE Common component types), all ControlStream parameter schemas (all controllable property types)
 
 **Test Coverage Targets:**
+
 - **Code coverage**: >80% statement coverage for all new code, >80% branch coverage for all new code, 100% coverage for all public API methods
 - **Resource coverage**: 100% of all CSAPI resource types, 100% of all query parameters, 100% of all format types (GeoJSON, SensorML 3.0, SWE Common 3.0 all encodings)
 - **Error coverage**: All error conditions documented in CSAPI specification
@@ -1268,6 +1392,7 @@ The API documentation component extends the existing TypeDoc documentation to co
 ## Summary: Build vs Extend Breakdown
 
 ### Components Extending Existing Code (9 components):
+
 1. **Conformance Reader** - Add CSAPI conformance class checks (`hasConnectedSystems` getter, ~7 lines in info.ts)
 2. **Collections Reader** - Parse CSAPI collection metadata with FULL query/filter/pagination support (`csapiCollections` getter, ~6 lines in endpoint.ts)
 3. **OgcApiEndpoint Integration** - Add `csapi(collectionId)` factory method to main endpoint class (~35 lines in endpoint.ts following EDR pattern)
@@ -1279,6 +1404,7 @@ The API documentation component extends the existing TypeDoc documentation to co
 9. **API Documentation** - Add CSAPI docs to TypeDoc (JSDoc comments written as code is developed, extend existing documentation)
 
 ### Components Building New Code (3 components):
+
 1. **CSAPIQueryBuilder** - New query builder class with URL-building methods for all 9 CSAPI resource types (following EDRQueryBuilder pattern from PR #114)
    - Systems methods (getSystems, createSystem, updateSystem, deleteSystem, getSubsystems, getSystemHistory, etc.)
    - Deployments methods (getDeployments, createDeployment, updateDeployment, deleteDeployment, getSubdeployments, etc.)
@@ -1304,6 +1430,7 @@ The API documentation component extends the existing TypeDoc documentation to co
 **Scope Understanding:** While the summary lists "3 components building new code" (architecturally accurate), the CSAPIQueryBuilder component represents ~70% of the new code volume (~10,000-14,000 lines of code) because it implements URL construction for 9 distinct CSAPI resource types with approximately 60-70 unique URL patterns covering full CRUD operations, nested resource access, schema endpoints, and comprehensive query parameter support. The detailed sections above document the functional methods within this single CSAPIQueryBuilder class. This consolidated single-class architecture follows the upstream EDR pattern (one QueryBuilder per API family) but delivers functionally extensive capabilities across all CSAPI resources. Clients evaluating scope should understand that while architecturally elegant (3 new classes vs 12), the functional scope is substantial - implementing complete CSAPI Part 1 and Part 2 specifications with full query, filter, and pagination support across all resource types.
 
 ### Estimated Scope:
+
 - **Extending existing code:** ~20% of effort (9 small extensions following established patterns, ~50 total lines modified)
 - **Building new code:** ~80% of effort (CSAPIQueryBuilder with ~60-70 URL patterns, 2 complex format parsers)
 - **Total estimated lines of code:** ~15,000-20,000 lines (reduced from initial estimate due to single QueryBuilder class vs 9 separate handlers)

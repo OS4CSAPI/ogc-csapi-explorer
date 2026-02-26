@@ -14,6 +14,7 @@ This analysis defines how CSAPI functionality integrates into the `OgcApiEndpoin
 **Key Finding:** The integration is minimal, non-breaking, and directly replicates the EDR architecture. Developers access all CSAPI functionality through one method that returns a `CSAPIQueryBuilder` instance with methods for all 9 resource types.
 
 **Integration Footprint:**
+
 - **endpoint.ts:** ~43 lines (import, cache field, collections getter, factory method)
 - **info.ts:** ~16 lines (conformance getter + helper function)
 - **index.ts:** ~6 lines (exports)
@@ -29,16 +30,16 @@ This analysis defines how CSAPI functionality integrates into the `OgcApiEndpoin
 
 **File:** `endpoint.ts` (line ~283 in current codebase, after `hasEnvironmentalDataRetrieval` getter)
 
-```typescript
+````typescript
 /**
  * Returns a CSAPI query builder for constructing URLs to Connected Systems API resources.
  * The query builder provides methods for accessing Systems, Deployments, Procedures,
  * Sampling Features, Properties, DataStreams, Observations, Control Streams, and Commands.
- * 
+ *
  * @param collection_id The collection identifier that contains CSAPI resources
  * @returns Promise resolving to a CSAPIQueryBuilder instance
  * @throws {EndpointError} If the endpoint does not support Connected Systems API
- * 
+ *
  * @example
  * ```typescript
  * const endpoint = new OgcApiEndpoint('https://server.com/api');
@@ -59,27 +60,31 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
   cache.set(collection_id, result);
   return result;
 }
-```
+````
 
 ### Method Characteristics
 
 **Parameter Requirements:**
+
 - **collection_id:** String - REQUIRED
   - Must be a valid collection ID returned by `endpoint.csapiCollections` or `endpoint.allCollections`
   - Collection must support CSAPI resources (indicated by conformance classes and collection metadata)
   - Invalid collection IDs should throw descriptive errors
 
 **Return Type:**
+
 - `Promise<CSAPIQueryBuilder>` - Async operation that fetches collection metadata before instantiation
 - Resolves to a fully-initialized QueryBuilder with all methods available immediately
 - No need for additional `.isReady()` calls - QueryBuilder is ready upon return
 
 **Error Conditions:**
+
 1. **No CSAPI Support:** Throws `EndpointError` if `hasConnectedSystems` is false
 2. **Invalid Collection:** Throws error from `getCollectionInfo()` if collection doesn't exist
 3. **Missing Metadata:** CSAPIQueryBuilder constructor should validate collection has required CSAPI metadata
 
 **Caching Behavior:**
+
 - Uses `Map<string, CSAPIQueryBuilder>` as cache storage
 - Cache key is the `collection_id` string
 - Same builder instance returned for repeated calls with same collection_id
@@ -89,6 +94,7 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
 ### EDR Pattern Comparison
 
 **EDR Factory Method (Reference):**
+
 ```typescript
 public async edr(collection_id: string): Promise<EDRQueryBuilder> {
   if (!this.hasEnvironmentalDataRetrieval) {
@@ -106,6 +112,7 @@ public async edr(collection_id: string): Promise<EDRQueryBuilder> {
 ```
 
 **CSAPI Adaptation Strategy:**
+
 1. Replace `EDRQueryBuilder` → `CSAPIQueryBuilder`
 2. Replace `hasEnvironmentalDataRetrieval` → `hasConnectedSystems`
 3. Replace cache field name `collection_id_to_edr_builder_` → `collection_id_to_csapi_builder_`
@@ -127,62 +134,67 @@ export default class CSAPIQueryBuilder {
   private baseUrl: string;
   private supported_resource_types: Set<CSAPIResourceType>;
   private supported_schemas: Record<string, SchemaInfo>;
-  
+
   /**
    * Creates a new CSAPI query builder for the specified collection.
    * Validates that the collection has CSAPI metadata and extracts resource type support.
-   * 
+   *
    * @param collection Collection metadata from OgcApiEndpoint.getCollectionInfo()
    * @throws {Error} If collection is missing required CSAPI metadata
    */
   constructor(collection: OgcApiCollectionInfo) {
     this.collection = collection;
     this.baseUrl = collection.id; // or extract from links
-    
+
     // Validate collection has CSAPI metadata
     if (!collection.csapi_resources) {
       throw new Error(
         `Collection '${collection.id}' does not contain CSAPI resource metadata`
       );
     }
-    
+
     // Extract supported resource types from collection metadata
     this.supported_resource_types = new Set();
     const resources = collection.csapi_resources;
-    
+
     if (resources.systems) this.supported_resource_types.add('systems');
     if (resources.deployments) this.supported_resource_types.add('deployments');
     if (resources.procedures) this.supported_resource_types.add('procedures');
-    if (resources.samplingFeatures) this.supported_resource_types.add('samplingFeatures');
+    if (resources.samplingFeatures)
+      this.supported_resource_types.add('samplingFeatures');
     if (resources.properties) this.supported_resource_types.add('properties');
     if (resources.datastreams) this.supported_resource_types.add('datastreams');
-    if (resources.observations) this.supported_resource_types.add('observations');
-    if (resources.controlstreams) this.supported_resource_types.add('controlstreams');
+    if (resources.observations)
+      this.supported_resource_types.add('observations');
+    if (resources.controlstreams)
+      this.supported_resource_types.add('controlstreams');
     if (resources.commands) this.supported_resource_types.add('commands');
-    
+
     // Extract schema information for Part 2 resources
     this.supported_schemas = this.extractSchemaInfo(resources);
   }
-  
+
   /**
    * Helper to extract schema metadata for DataStreams and ControlStreams
    */
-  private extractSchemaInfo(resources: CSAPIResourcesMetadata): Record<string, SchemaInfo> {
+  private extractSchemaInfo(
+    resources: CSAPIResourcesMetadata
+  ): Record<string, SchemaInfo> {
     const schemas: Record<string, SchemaInfo> = {};
-    
+
     // DataStream schemas
     if (resources.datastreams?.schemas) {
       schemas['datastreams'] = resources.datastreams.schemas;
     }
-    
+
     // ControlStream schemas
     if (resources.controlstreams?.schemas) {
       schemas['controlstreams'] = resources.controlstreams.schemas;
     }
-    
+
     return schemas;
   }
-  
+
   // ... URL building methods follow ...
 }
 ```
@@ -190,59 +202,61 @@ export default class CSAPIQueryBuilder {
 ### Constructor Parameters
 
 **Required Input:**
+
 - `collection: OgcApiCollectionInfo` - Collection metadata object from `endpoint.getCollectionInfo()`
 
 **What Collection Info Must Contain:**
+
 ```typescript
 interface OgcApiCollectionInfo {
-  id: string;                    // Collection identifier
-  title?: string;                // Human-readable title
-  description?: string;          // Collection description
-  
+  id: string; // Collection identifier
+  title?: string; // Human-readable title
+  description?: string; // Collection description
+
   // CSAPI-specific additions (extend existing type)
   csapi_resources?: {
     systems?: {
-      link: { href: string; rel: string; };
-      operations?: string[];     // ['GET', 'POST']
+      link: { href: string; rel: string };
+      operations?: string[]; // ['GET', 'POST']
     };
     deployments?: {
-      link: { href: string; rel: string; };
+      link: { href: string; rel: string };
       operations?: string[];
     };
     procedures?: {
-      link: { href: string; rel: string; };
+      link: { href: string; rel: string };
       operations?: string[];
     };
     samplingFeatures?: {
-      link: { href: string; rel: string; };
+      link: { href: string; rel: string };
       operations?: string[];
     };
     properties?: {
-      link: { href: string; rel: string; };
+      link: { href: string; rel: string };
       operations?: string[];
     };
     datastreams?: {
-      link: { href: string; rel: string; };
+      link: { href: string; rel: string };
       operations?: string[];
-      schemas?: SchemaInfo;      // SWE Common schema metadata
+      schemas?: SchemaInfo; // SWE Common schema metadata
     };
     observations?: {
-      link: { href: string; rel: string; };
+      link: { href: string; rel: string };
       operations?: string[];
     };
     controlstreams?: {
-      link: { href: string; rel: string; };
+      link: { href: string; rel: string };
       operations?: string[];
-      schemas?: SchemaInfo;      // SWE Common schema metadata
+      schemas?: SchemaInfo; // SWE Common schema metadata
     };
     commands?: {
-      link: { href: string; rel: string; };
+      link: { href: string; rel: string };
       operations?: string[];
     };
   };
-  
+
   // Existing properties
-  itemFormats?: string[];        // Supported formats
+  itemFormats?: string[]; // Supported formats
   extent?: {
     spatial?: BoundingBox;
     temporal?: TemporalExtent;
@@ -259,51 +273,61 @@ interface OgcApiCollectionInfo {
 ### Constructor Validation
 
 **Validation Checks:**
+
 1. **CSAPI Metadata Presence:** Verify `collection.csapi_resources` exists
 2. **At Least One Resource Type:** Verify at least one resource type is supported
 3. **Valid Link Metadata:** Verify each resource has valid `link.href` and `link.rel`
 
 **Error Messages:**
+
 ```typescript
 // Missing metadata
-throw new Error(`Collection '${collection.id}' does not contain CSAPI resource metadata`);
+throw new Error(
+  `Collection '${collection.id}' does not contain CSAPI resource metadata`
+);
 
 // No supported resources
-throw new Error(`Collection '${collection.id}' does not support any CSAPI resource types`);
+throw new Error(
+  `Collection '${collection.id}' does not support any CSAPI resource types`
+);
 
 // Invalid link metadata
-throw new Error(`Resource type 'systems' in collection '${collection.id}' has invalid link metadata`);
+throw new Error(
+  `Resource type 'systems' in collection '${collection.id}' has invalid link metadata`
+);
 ```
 
 ### EDR Pattern Comparison
 
 **EDR Constructor (Reference):**
+
 ```typescript
 constructor(collection: OgcApiCollectionInfo) {
   this.collection = collection;
-  
+
   // Validate collection has EDR metadata
   if (!collection.data_queries) {
     throw new Error(
       `Collection '${collection.id}' does not support data queries`
     );
   }
-  
+
   // Extract supported query types
   this.supported_query_types = {};
   const queries = collection.data_queries;
-  
+
   if (queries.position) this.supported_query_types.position = true;
   if (queries.area) this.supported_query_types.area = true;
   if (queries.cube) this.supported_query_types.cube = true;
   // ... etc for all EDR query types
-  
+
   // Extract parameter metadata
   this.supported_parameters = collection.parameter_names || {};
 }
 ```
 
 **CSAPI Differences:**
+
 - EDR uses `data_queries` → CSAPI uses `csapi_resources`
 - EDR has 9 query types → CSAPI has 9 resource types
 - EDR extracts parameters → CSAPI extracts schemas (Part 2 only)
@@ -316,12 +340,14 @@ constructor(collection: OgcApiCollectionInfo) {
 ### Cache Implementation
 
 **Cache Storage:**
+
 ```typescript
 // In OgcApiEndpoint class
 private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Map();
 ```
 
 **Cache Operations:**
+
 1. **Initialization:** Cache starts empty when `OgcApiEndpoint` is instantiated
 2. **Lookup:** Before creating QueryBuilder, check `cache.has(collection_id)`
 3. **Store:** After creating QueryBuilder, store with `cache.set(collection_id, builder)`
@@ -330,16 +356,19 @@ private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Ma
 ### Cache Lifecycle
 
 **When Cache is Populated:**
+
 - First call to `endpoint.csapi('collection-A')` → fetches metadata, creates builder, caches
 - Second call to `endpoint.csapi('collection-A')` → returns cached builder (no HTTP request)
 - Call to `endpoint.csapi('collection-B')` → fetches metadata for B, creates new builder, caches
 
 **Cache Scope:**
+
 - Cache lives for lifetime of `OgcApiEndpoint` instance
 - Each endpoint instance has its own cache (not shared across instances)
 - Cache is NOT persisted (lost when endpoint instance is garbage collected)
 
 **Cache Benefits:**
+
 1. **Performance:** Eliminates redundant HTTP requests for collection metadata
 2. **Consistency:** Same builder instance ensures consistent behavior
 3. **Memory:** Minimal memory footprint (one QueryBuilder per collection)
@@ -347,10 +376,12 @@ private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Ma
 ### Cache Key Strategy
 
 **Key Format:**
+
 - Simple string: `collection_id` parameter passed to `csapi()` method
 - Example keys: `'sensors-collection'`, `'weather-stations'`, `'observation-data'`
 
 **Key Uniqueness:**
+
 - Collection IDs are globally unique within an endpoint
 - No risk of collisions (endpoint provides the collection IDs)
 - Case-sensitive matching (keys must match exactly)
@@ -358,11 +389,13 @@ private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Ma
 ### Cache Invalidation
 
 **When Cache Should Be Cleared:**
+
 - **Never automatically:** Cache is valid for endpoint lifetime
 - **Manual clearing:** User can create new endpoint instance if metadata changes
 - **Future enhancement:** Could add `clearCache()` method if needed
 
 **Why No Auto-Invalidation:**
+
 - Collection metadata is static for most use cases
 - Server-side changes to collections are rare during client session
 - Re-creating endpoint instance is simple if invalidation needed
@@ -370,6 +403,7 @@ private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Ma
 ### EDR Pattern Comparison
 
 **EDR Cache Implementation:**
+
 ```typescript
 // Same pattern as CSAPI
 private collection_id_to_edr_builder_: Map<string, EDRQueryBuilder> = new Map();
@@ -382,6 +416,7 @@ if (cache.has(collection_id)) {
 ```
 
 **CSAPI Adaptation:**
+
 - Identical pattern, just different type names
 - No architectural changes needed
 - Proven to work in production for ~2 years
@@ -397,16 +432,18 @@ if (cache.has(collection_id)) {
 ```typescript
 /**
  * Checks if the endpoint supports OGC API - Connected Systems API.
- * 
+ *
  * @param conformanceClasses Array of conformance class URIs from /conformance endpoint
  * @returns True if endpoint supports CSAPI (either Part 1 or Part 2), false otherwise
  */
 export function checkHasConnectedSystems(
   conformanceClasses: ConformanceClass[]
 ): boolean {
-  const csapiPart1Core = 'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/core';
-  const csapiPart2Core = 'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/core';
-  
+  const csapiPart1Core =
+    'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/core';
+  const csapiPart2Core =
+    'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/core';
+
   // Check if endpoint advertises CSAPI Part 1 OR Part 2 support
   return conformanceClasses.some(
     (conformanceClass) =>
@@ -435,43 +472,48 @@ get hasConnectedSystems(): Promise<boolean> {
 ### Conformance Classes to Detect
 
 **Part 1 Conformance Classes:**
+
 ```typescript
 // Core (required for Part 1 support)
-'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/core'
+'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/core';
 
 // Resource Types (optional but common)
-'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/system'
-'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/deployment'
-'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/procedure'
-'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/samplingFeature'
-'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/property'
+'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/system';
+'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/deployment';
+'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/procedure';
+'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/samplingFeature';
+'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/property';
 ```
 
 **Part 2 Conformance Classes:**
+
 ```typescript
 // Core (required for Part 2 support)
-'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/core'
+'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/core';
 
 // Resource Types (optional but common)
-'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/datastream'
-'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/observation'
-'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/controlstream'
-'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/command'
+'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/datastream';
+'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/observation';
+'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/controlstream';
+'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/command';
 ```
 
 ### Detection Logic
 
 **Basic Detection (Recommended):**
+
 - Check for Part 1 Core **OR** Part 2 Core conformance class
 - If either is present, endpoint supports CSAPI
 - Specific resource type support determined from collection metadata, not conformance
 
 **Rationale:**
+
 - Core conformance indicates endpoint implements CSAPI standard
 - Resource-specific conformance classes are optional in spec
 - Collection metadata is authoritative source for resource type support
 
 **Alternative Detection (More Strict):**
+
 ```typescript
 export function checkHasConnectedSystems(
   conformanceClasses: ConformanceClass[]
@@ -490,7 +532,7 @@ export function checkHasConnectedSystems(
     'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/controlstream',
     'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/command',
   ];
-  
+
   return conformanceClasses.some((cc) =>
     csapiClasses.some((csapiClass) => cc.includes(csapiClass))
   );
@@ -500,6 +542,7 @@ export function checkHasConnectedSystems(
 ### EDR Pattern Comparison
 
 **EDR Conformance Check (Reference):**
+
 ```typescript
 export function checkHasEnvironmentalDataRetrieval(
   conformanceClasses: ConformanceClass[]
@@ -523,6 +566,7 @@ get hasEnvironmentalDataRetrieval(): Promise<boolean> {
 ```
 
 **CSAPI Adaptation:**
+
 - Same structure (function + getter)
 - Check for Part 1 OR Part 2 core classes (EDR checks multiple versions)
 - Return boolean Promise
@@ -545,7 +589,7 @@ get csapiCollections(): Promise<string[]> {
   return Promise.all([this.data, this.hasConnectedSystems])
     .then(([data, hasCSAPI]) => (hasCSAPI ? data : { collections: [] }))
     .then(parseCollections)
-    .then((collections) => 
+    .then((collections) =>
       collections.filter((c) => c.csapi_resources !== undefined)
     )
     .then((collections) => collections.map((c) => c.name));
@@ -555,12 +599,14 @@ get csapiCollections(): Promise<string[]> {
 ### Filtering Logic
 
 **Step-by-Step Process:**
+
 1. **Check CSAPI Support:** If `hasConnectedSystems` is false, return empty array
 2. **Parse Collections:** Extract collection metadata from `/collections` response
 3. **Filter CSAPI Collections:** Keep only collections with `csapi_resources` metadata
 4. **Extract Names:** Map filtered collections to their identifier strings
 
 **Collection Detection Criteria:**
+
 ```typescript
 // Collection must have csapi_resources metadata
 interface ParsedCollection {
@@ -574,12 +620,13 @@ interface ParsedCollection {
 }
 
 // Filter function
-collections.filter((c) => c.csapi_resources !== undefined)
+collections.filter((c) => c.csapi_resources !== undefined);
 ```
 
 ### Resource Type Filtering (Optional Enhancement)
 
 **If needed, add specific resource type getters:**
+
 ```typescript
 /**
  * Collections that support CSAPI Systems resource
@@ -613,6 +660,7 @@ get csapiDataStreamCollections(): Promise<string[]> {
 ### EDR Pattern Comparison
 
 **EDR Collections Getter (Reference):**
+
 ```typescript
 get edrCollections(): Promise<string[]> {
   return Promise.all([this.data, this.hasEnvironmentalDataRetrieval])
@@ -624,6 +672,7 @@ get edrCollections(): Promise<string[]> {
 ```
 
 **CSAPI Adaptation:**
+
 - Replace `hasEnvironmentalDataRetrieval` → `hasConnectedSystems`
 - Replace filter `c.hasDataQueries` → `c.csapi_resources !== undefined`
 - Keep all other logic identical
@@ -660,13 +709,13 @@ export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
  */
 export interface CSAPIResourceMetadata {
   link: {
-    href: string;          // URL to the resource endpoint
-    rel: string;           // Relation type
-    type?: string;         // Media type
-    title?: string;        // Human-readable title
+    href: string; // URL to the resource endpoint
+    rel: string; // Relation type
+    type?: string; // Media type
+    title?: string; // Human-readable title
   };
-  operations?: string[];   // Supported HTTP methods ['GET', 'POST', 'PUT', 'DELETE']
-  schemas?: SchemaInfo;    // For DataStreams/ControlStreams only
+  operations?: string[]; // Supported HTTP methods ['GET', 'POST', 'PUT', 'DELETE']
+  schemas?: SchemaInfo; // For DataStreams/ControlStreams only
 }
 
 /**
@@ -675,8 +724,8 @@ export interface CSAPIResourceMetadata {
 export interface SchemaInfo {
   encoding: 'json' | 'text' | 'binary';
   definition: {
-    href: string;          // URL to schema definition
-    type: string;          // Media type (application/swe+json, etc.)
+    href: string; // URL to schema definition
+    type: string; // Media type (application/swe+json, etc.)
   };
 }
 
@@ -703,7 +752,7 @@ export interface CSAPIResourcesMetadata {
 ```typescript
 export interface OgcApiCollectionInfo {
   // ... existing properties ...
-  
+
   /**
    * CSAPI resource metadata (added for CSAPI support)
    */
@@ -721,35 +770,35 @@ export interface OgcApiCollectionInfo {
  */
 export interface CSAPICommonParams {
   // Standard OGC API params
-  bbox?: number[];                    // [minX, minY, maxX, maxY] or [minX, minY, minZ, maxX, maxY, maxZ]
-  datetime?: DateTimeParameter;       // ISO 8601 interval or instant
-  limit?: number;                     // Max results per page (1-10000)
-  offset?: number;                    // Skip N results
-  f?: string;                         // Format (json, geojson, sml+json, swe+json, swe+text)
-  
+  bbox?: number[]; // [minX, minY, maxX, maxY] or [minX, minY, minZ, maxX, maxY, maxZ]
+  datetime?: DateTimeParameter; // ISO 8601 interval or instant
+  limit?: number; // Max results per page (1-10000)
+  offset?: number; // Skip N results
+  f?: string; // Format (json, geojson, sml+json, swe+json, swe+text)
+
   // CSAPI common params
-  id?: string | string[];             // Filter by resource ID(s)
-  uid?: string | string[];            // Filter by UID(s)
-  q?: string;                         // Full-text search
-  
+  id?: string | string[]; // Filter by resource ID(s)
+  uid?: string | string[]; // Filter by UID(s)
+  q?: string; // Full-text search
+
   // Hierarchical params
-  parent?: string;                    // Filter by parent resource
-  recursive?: boolean;                // Include children recursively
-  
+  parent?: string; // Filter by parent resource
+  recursive?: boolean; // Include children recursively
+
   // Property filters (dynamic)
-  [propertyName: string]: any;        // Filter by any resource property
+  [propertyName: string]: any; // Filter by any resource property
 }
 
 /**
  * Systems-specific query parameters
  */
 export interface SystemsParams extends CSAPICommonParams {
-  procedure?: string;                 // Filter by associated procedure
-  foi?: string;                       // Filter by feature of interest
-  observedProperty?: string[];        // Filter by observed properties
-  controlledProperty?: string[];      // Filter by controlled properties
-  validTime?: DateTimeParameter;      // Filter by temporal validity
-  geom?: string;                      // Filter by geometry (WKT)
+  procedure?: string; // Filter by associated procedure
+  foi?: string; // Filter by feature of interest
+  observedProperty?: string[]; // Filter by observed properties
+  controlledProperty?: string[]; // Filter by controlled properties
+  validTime?: DateTimeParameter; // Filter by temporal validity
+  geom?: string; // Filter by geometry (WKT)
 }
 
 /**
@@ -757,8 +806,8 @@ export interface SystemsParams extends CSAPICommonParams {
  */
 export interface ObservationsParams extends CSAPICommonParams {
   phenomenonTime?: DateTimeParameter; // Filter by observation time
-  resultTime?: DateTimeParameter;     // Filter by result reception time
-  select?: string[];                  // Select specific properties
+  resultTime?: DateTimeParameter; // Filter by result reception time
+  select?: string[]; // Select specific properties
 }
 
 // ... similar interfaces for other resource types ...
@@ -767,6 +816,7 @@ export interface ObservationsParams extends CSAPICommonParams {
 ### EDR Pattern Comparison
 
 **EDR Type Definitions (Reference):**
+
 ```typescript
 export const DataQueryTypes = [
   'items',
@@ -784,7 +834,7 @@ export type DataQueryType = (typeof DataQueryTypes)[number];
 
 export interface OgcApiCollectionInfo {
   // ... existing props
-  
+
   data_queries?: {
     [K in DataQueryType]?: {
       link: {
@@ -798,6 +848,7 @@ export interface OgcApiCollectionInfo {
 ```
 
 **CSAPI Adaptation:**
+
 - Replace `DataQueryTypes` → `CSAPIResourceTypes`
 - Replace `data_queries` → `csapi_resources`
 - Add `operations` array for HTTP methods (EDR doesn't need this)
@@ -811,17 +862,21 @@ export interface OgcApiCollectionInfo {
 ### File Modifications Required
 
 **1. src/ogc-api/endpoint.ts**
+
 - **Line ~50:** Add import statement
+
   ```typescript
   import CSAPIQueryBuilder from './csapi/url_builder.js';
   ```
 
 - **Line ~60:** Add cache field
+
   ```typescript
   private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Map();
   ```
 
 - **Line ~200:** Add collections getter (after `edrCollections`)
+
   ```typescript
   get csapiCollections(): Promise<string[]> { ... }
   ```
@@ -836,7 +891,9 @@ export interface OgcApiCollectionInfo {
 ---
 
 **2. src/ogc-api/info.ts**
+
 - **Line ~250:** Add conformance check function (after `checkHasEnvironmentalDataRetrieval`)
+
   ```typescript
   export function checkHasConnectedSystems(
     conformanceClasses: ConformanceClass[]
@@ -854,6 +911,7 @@ export interface OgcApiCollectionInfo {
 ---
 
 **3. src/index.ts**
+
 - **Line ~40:** Add exports (after EDR exports)
   ```typescript
   export { default as CSAPIQueryBuilder } from './ogc-api/csapi/url_builder.js';
@@ -873,13 +931,15 @@ export interface OgcApiCollectionInfo {
 ---
 
 **4. src/ogc-api/model.ts**
+
 - **Line ~80:** Extend `OgcApiCollectionInfo` interface
+
   ```typescript
   import type { CSAPIResourcesMetadata } from './csapi/types.js';
-  
+
   export interface OgcApiCollectionInfo {
     // ... existing properties ...
-    
+
     /**
      * CSAPI resource metadata (added for CSAPI support)
      */
@@ -894,12 +954,14 @@ export interface OgcApiCollectionInfo {
 ### New Files Required
 
 **1. src/ogc-api/csapi/types.ts** (~150-200 lines)
+
 - CSAPI type definitions
 - Resource types enum
 - Metadata interfaces
 - Query parameter types
 
 **2. src/ogc-api/csapi/url_builder.ts** (~10,000-14,000 lines)
+
 - CSAPIQueryBuilder class
 - Constructor
 - 9 resource type method groups
@@ -907,11 +969,13 @@ export interface OgcApiCollectionInfo {
 - Parameter validation
 
 **3. src/ogc-api/csapi/helpers.ts** (~50-100 lines)
+
 - Date formatting functions
 - Parameter serialization
 - Validation helpers
 
 **4. src/ogc-api/csapi/index.ts** (~5 lines)
+
 - Exports for CSAPI module
 - Re-export types and classes
 
@@ -920,6 +984,7 @@ export interface OgcApiCollectionInfo {
 ### Integration Testing Files
 
 **1. fixtures/ogc-api/csapi/** (~500-800 lines JSON)
+
 - Sample CSAPI root document
 - Sample conformance document
 - Sample collections document
@@ -927,6 +992,7 @@ export interface OgcApiCollectionInfo {
 - Sample resource responses
 
 **2. src/ogc-api/endpoint.spec.ts** (~400 lines added)
+
 - CSAPI conformance detection tests
 - Collections filtering tests
 - Factory method tests
@@ -934,6 +1000,7 @@ export interface OgcApiCollectionInfo {
 - Error handling tests
 
 **3. src/ogc-api/csapi/url_builder.spec.ts** (~2000-2500 lines)
+
 - Constructor validation tests
 - URL building tests for all 9 resource types
 - Parameter validation tests
@@ -946,6 +1013,7 @@ export interface OgcApiCollectionInfo {
 ### How CSAPIQueryBuilder Interacts with Collection Metadata
 
 **Metadata Flow:**
+
 ```
 OgcApiEndpoint
   ↓ fetches /collections
@@ -959,6 +1027,7 @@ Resource URLs
 ```
 
 **Collection Metadata Example:**
+
 ```json
 {
   "id": "sensors-collection",
@@ -1002,6 +1071,7 @@ Resource URLs
 ```
 
 **CSAPIQueryBuilder Usage:**
+
 ```typescript
 const builder = await endpoint.csapi('sensors-collection');
 
@@ -1017,11 +1087,14 @@ const datastreamsUrl = builder.getDataStreams({ limit: 50 });
 ### Relationship to Conformance Classes
 
 **Detection Hierarchy:**
+
 1. **Endpoint Level:** `hasConnectedSystems` checks conformance classes
+
    - If true, endpoint offers CSAPI support globally
    - If false, no CSAPI collections available
 
 2. **Collection Level:** `csapi_resources` indicates collection capabilities
+
    - Even if endpoint supports CSAPI, not all collections may have CSAPI resources
    - Collection metadata is authoritative for resource type support
 
@@ -1030,28 +1103,30 @@ const datastreamsUrl = builder.getDataStreams({ limit: 50 });
    - Collection may support Observations but not Commands
 
 **Example Scenarios:**
+
 ```typescript
 // Scenario 1: Full CSAPI support
-await endpoint.hasConnectedSystems // true
-await endpoint.csapiCollections    // ['collection-A', 'collection-B']
+await endpoint.hasConnectedSystems; // true
+await endpoint.csapiCollections; // ['collection-A', 'collection-B']
 const builder = await endpoint.csapi('collection-A');
-builder.supported_resource_types   // Set(['systems', 'datastreams', 'observations'])
+builder.supported_resource_types; // Set(['systems', 'datastreams', 'observations'])
 
 // Scenario 2: Partial CSAPI support
-await endpoint.hasConnectedSystems // true
-await endpoint.csapiCollections    // ['collection-C']
+await endpoint.hasConnectedSystems; // true
+await endpoint.csapiCollections; // ['collection-C']
 const builder = await endpoint.csapi('collection-C');
-builder.supported_resource_types   // Set(['systems']) - only systems supported
+builder.supported_resource_types; // Set(['systems']) - only systems supported
 
 // Scenario 3: No CSAPI support
-await endpoint.hasConnectedSystems // false
-await endpoint.csapiCollections    // []
-await endpoint.csapi('collection-X') // throws EndpointError
+await endpoint.hasConnectedSystems; // false
+await endpoint.csapiCollections; // []
+await endpoint.csapi('collection-X'); // throws EndpointError
 ```
 
 ### Error Handling at Integration Points
 
 **Conformance Check Failure:**
+
 ```typescript
 public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
   if (!this.hasConnectedSystems) {
@@ -1062,6 +1137,7 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
 ```
 
 **Collection Not Found:**
+
 ```typescript
 // getCollectionInfo() throws if collection doesn't exist
 const collection = await this.getCollectionInfo(collection_id);
@@ -1069,6 +1145,7 @@ const collection = await this.getCollectionInfo(collection_id);
 ```
 
 **Missing CSAPI Metadata:**
+
 ```typescript
 // CSAPIQueryBuilder constructor validates metadata
 constructor(collection: OgcApiCollectionInfo) {
@@ -1082,6 +1159,7 @@ constructor(collection: OgcApiCollectionInfo) {
 ```
 
 **Unsupported Resource Type:**
+
 ```typescript
 // Each URL building method checks support
 getSystems(params?: SystemsParams): string {
@@ -1103,12 +1181,12 @@ getSystems(params?: SystemsParams): string {
 ```typescript
 describe('OgcApiEndpoint with CSAPI', () => {
   let endpoint: OgcApiEndpoint;
-  
+
   describe('nominal case', () => {
     beforeEach(() => {
       endpoint = new OgcApiEndpoint('http://local/csapi/test-endpoint');
     });
-    
+
     describe('#info', () => {
       it('returns endpoint info', async () => {
         await expect(endpoint.info).resolves.toEqual({
@@ -1116,11 +1194,11 @@ describe('OgcApiEndpoint with CSAPI', () => {
           description: 'Test endpoint for CSAPI integration',
         });
       });
-      
+
       it('supports CSAPI', async () => {
         await expect(endpoint.hasConnectedSystems).resolves.toBe(true);
       });
-      
+
       it('can list all CSAPI collections', async () => {
         await expect(endpoint.csapiCollections).resolves.toEqual([
           'sensors-collection',
@@ -1128,7 +1206,7 @@ describe('OgcApiEndpoint with CSAPI', () => {
         ]);
       });
     });
-    
+
     describe('#csapi', () => {
       it('can produce a CSAPI query builder', async () => {
         const builder = await endpoint.csapi('sensors-collection');
@@ -1136,7 +1214,7 @@ describe('OgcApiEndpoint with CSAPI', () => {
         expect(builder.supported_resource_types).toContain('systems');
         expect(builder.supported_resource_types).toContain('datastreams');
       });
-      
+
       it('caches properly', async () => {
         const spy = jest.spyOn(endpoint, 'getCollectionInfo');
         const builder1 = await endpoint.csapi('sensors-collection');
@@ -1144,16 +1222,18 @@ describe('OgcApiEndpoint with CSAPI', () => {
         expect(builder1).toBe(builder2); // same object is returned
         expect(spy).toHaveBeenCalledTimes(1); // only called once
       });
-      
+
       it('throws error if endpoint does not support CSAPI', async () => {
         const noCSAPIEndpoint = new OgcApiEndpoint('http://local/no-csapi');
         await expect(noCSAPIEndpoint.csapi('any-collection')).rejects.toThrow(
           'Endpoint does not support Connected Systems API'
         );
       });
-      
+
       it('throws error if collection does not exist', async () => {
-        await expect(endpoint.csapi('nonexistent-collection')).rejects.toThrow();
+        await expect(
+          endpoint.csapi('nonexistent-collection')
+        ).rejects.toThrow();
       });
     });
   });
@@ -1168,7 +1248,7 @@ describe('OgcApiEndpoint with CSAPI', () => {
 describe('CSAPIQueryBuilder', () => {
   let builder: CSAPIQueryBuilder;
   let mockCollection: OgcApiCollectionInfo;
-  
+
   beforeEach(() => {
     mockCollection = {
       id: 'sensors-collection',
@@ -1192,7 +1272,7 @@ describe('CSAPIQueryBuilder', () => {
     };
     builder = new CSAPIQueryBuilder(mockCollection);
   });
-  
+
   describe('constructor', () => {
     it('validates collection has CSAPI metadata', () => {
       const invalidCollection = { id: 'test', title: 'Test' };
@@ -1200,14 +1280,14 @@ describe('CSAPIQueryBuilder', () => {
         'does not contain CSAPI resource metadata'
       );
     });
-    
+
     it('extracts supported resource types', () => {
       expect(builder.supported_resource_types).toContain('systems');
       expect(builder.supported_resource_types).toContain('datastreams');
       expect(builder.supported_resource_types).not.toContain('observations');
     });
   });
-  
+
   describe('#getSystems', () => {
     it('builds URL without parameters', () => {
       const url = builder.getSystems();
@@ -1215,12 +1295,12 @@ describe('CSAPIQueryBuilder', () => {
         'https://server.com/api/collections/sensors-collection/systems'
       );
     });
-    
+
     it('builds URL with bbox parameter', () => {
       const url = builder.getSystems({ bbox: [0, 0, 10, 10] });
       expect(url).toContain('bbox=0,0,10,10');
     });
-    
+
     it('throws error if systems not supported', () => {
       const noSystemsCollection = {
         id: 'test',
@@ -1228,13 +1308,15 @@ describe('CSAPIQueryBuilder', () => {
           datastreams: mockCollection.csapi_resources.datastreams,
         },
       };
-      const noSystemsBuilder = new CSAPIQueryBuilder(noSystemsCollection as any);
+      const noSystemsBuilder = new CSAPIQueryBuilder(
+        noSystemsCollection as any
+      );
       expect(() => noSystemsBuilder.getSystems()).toThrow(
         'Collection does not support systems resource'
       );
     });
   });
-  
+
   // ... similar tests for other resource types ...
 });
 ```
@@ -1242,6 +1324,7 @@ describe('CSAPIQueryBuilder', () => {
 ### Fixture Requirements
 
 **Files Needed in fixtures/ogc-api/csapi/:**
+
 1. `root.json` - Landing page with CSAPI conformance
 2. `conformance.json` - Conformance classes including CSAPI
 3. `collections.json` - Collections list with CSAPI metadata
@@ -1250,6 +1333,7 @@ describe('CSAPIQueryBuilder', () => {
 6. `datastreams-response.json` - Sample datastreams resource response
 
 **Fixture Example (collections.json):**
+
 ```json
 {
   "collections": [
@@ -1388,42 +1472,49 @@ describe('CSAPIQueryBuilder', () => {
 All CSAPI implementation code must follow these Development Standards to ensure consistency with the upstream library and maintainability:
 
 ### Code Quality Standards
+
 - **Type Safety:** All functions, parameters, and return values must have explicit TypeScript types. No `any` types except where absolutely necessary with clear justification.
 - **Documentation:** All public methods and interfaces must have JSDoc comments explaining purpose, parameters, return values, and examples.
 - **Testing:** Minimum 80% test coverage. All public methods must have unit tests. All integration points must have integration tests.
 - **Error Handling:** All error conditions must throw descriptive errors with actionable messages. Use `EndpointError` for endpoint-level errors.
 
 ### Architecture Standards
+
 - **Factory Pattern:** Follow EDR pattern exactly - factory method in OgcApiEndpoint, QueryBuilder class in dedicated subfolder.
 - **Composition Over Inheritance:** No subclassing of OgcApiEndpoint. Use composition and delegation.
 - **Progressive Enhancement:** New code must not break existing functionality for Features, Tiles, Records, or EDR.
 - **Minimal Core Changes:** Keep modifications to core files (endpoint.ts, info.ts, model.ts) under 50 lines total.
 
 ### File Organization Standards
+
 - **CSAPI Module:** All CSAPI code in `src/ogc-api/csapi/` subfolder
 - **File Structure:** url_builder.ts, types.ts, helpers.ts, index.ts
 - **Fixtures:** All test fixtures in `fixtures/ogc-api/csapi/` subfolder
 - **Tests:** Integration tests in endpoint.spec.ts, unit tests in csapi/url_builder.spec.ts
 
 ### Naming Conventions
+
 - **Class Names:** PascalCase (CSAPIQueryBuilder, EndpointError)
 - **Method Names:** camelCase (getSystems, getObservations)
 - **Type Names:** PascalCase (CSAPIResourceType, SystemsParams)
 - **Constants:** UPPER_SNAKE_CASE or const arrays (CSAPIResourceTypes)
 
 ### Testing Standards
+
 - **Fixture-Driven:** Use realistic JSON fixtures from live CSAPI endpoints
 - **Test Organization:** describe blocks for classes, nested describes for methods
 - **Coverage:** Test nominal cases, error cases, edge cases, parameter combinations
 - **Assertions:** Use Jest matchers (toEqual, toThrow, toContain, etc.)
 
 ### Documentation Standards
+
 - **JSDoc Format:** Use `@param`, `@returns`, `@throws`, `@example` tags
 - **Examples:** Include runnable code examples in JSDoc
 - **References:** Link to CSAPI specifications for complex behavior
 - **Changelog:** Document all changes in CHANGELOG.md
 
 **Reference Documents:**
+
 - [Development Standards - CSAPI Implementation Guide](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/csapi-implementation-guide.md#development-standards) - Complete standards section
 - [Upstream Library Expectations](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/requirements/upstream-expectations.md) - What camptocamp/ogc-client expects
 
@@ -1432,11 +1523,13 @@ All CSAPI implementation code must follow these Development Standards to ensure 
 ## References
 
 ### Primary References
+
 - [PR #114 (EDR Implementation) Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/pr114-analysis.md) - **PRIMARY BLUEPRINT** - Complete EDR pattern documentation
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - Systems, Deployments, Procedures, Sampling Features, Properties
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html) - DataStreams, Observations, Control Streams, Commands
 
 ### Supporting References
+
 - [CSAPI Implementation Guide](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/csapi-implementation-guide.md) - Complete component inventory
 - [Integration with Existing Code](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/integration-analysis.md) - Line-by-line integration requirements
 - [QueryBuilder Pattern Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/querybuilder-pattern-analysis.md) - Factory method lifecycle, caching strategy
@@ -1451,47 +1544,48 @@ All CSAPI implementation code must follow these Development Standards to ensure 
 ### A. Complete Code Example
 
 **Developer Usage (Full Workflow):**
+
 ```typescript
 import { OgcApiEndpoint } from '@camptocamp/ogc-client';
 
 async function exploreCSAPIEndpoint() {
   // 1. Create endpoint
   const endpoint = new OgcApiEndpoint('https://server.com/api');
-  
+
   // 2. Check CSAPI support
   if (await endpoint.hasConnectedSystems) {
     console.log('Endpoint supports CSAPI!');
-    
+
     // 3. List CSAPI collections
     const collections = await endpoint.csapiCollections;
     console.log('CSAPI Collections:', collections);
-    
+
     // 4. Get query builder for a collection
     const csapi = await endpoint.csapi('sensors-collection');
-    
+
     // 5. Build URLs for CSAPI resources
-    
+
     // Systems with spatial filter
     const systemsUrl = csapi.getSystems({
       bbox: [-180, -90, 180, 90],
       recursive: true,
     });
     console.log('Systems URL:', systemsUrl);
-    
+
     // DataStreams for a specific system
     const datastreamsUrl = csapi.getSystemDataStreams('system-123', {
       observedProperty: ['temperature', 'humidity'],
       limit: 50,
     });
     console.log('DataStreams URL:', datastreamsUrl);
-    
+
     // Observations with temporal filter
     const observationsUrl = csapi.getObservations('datastream-456', {
       phenomenonTime: '2024-01-01/2024-01-31',
       limit: 1000,
     });
     console.log('Observations URL:', observationsUrl);
-    
+
     // Commands for a control stream
     const commandsUrl = csapi.getCommands('controlstream-789', {
       resultTime: '2024-01-01/..',
@@ -1508,6 +1602,7 @@ exploreCSAPIEndpoint();
 ### B. Conformance Class URIs Reference
 
 **Part 1 - Feature Resources:**
+
 ```
 Core:              http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/core
 System:            http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/system
@@ -1518,6 +1613,7 @@ Property:          http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req
 ```
 
 **Part 2 - Dynamic Data:**
+
 ```
 Core:              http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/core
 DataStream:        http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req/datastream
@@ -1529,6 +1625,7 @@ Command:           http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/req
 ### C. Collection Metadata Example
 
 **Complete Example:**
+
 ```json
 {
   "id": "sensors-collection",

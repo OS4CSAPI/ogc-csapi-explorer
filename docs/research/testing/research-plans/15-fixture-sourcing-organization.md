@@ -42,7 +42,7 @@ Create comprehensive plan for sourcing, organizing, and maintaining test fixture
 ## 3. Primary Resources ✅
 
 - ✅ **CSAPI Part 1 Specification**: Extracted 11 Part 1 examples
-- ✅ **CSAPI Part 2 Specification**: Extracted 14+ Part 2 examples  
+- ✅ **CSAPI Part 2 Specification**: Extracted 14+ Part 2 examples
 - ✅ **SensorML 3.0 Specification**: https://docs.ogc.org/is/23-000/23-000.html (Accessible, examples extracted)
   - JSON Schema Repository: https://schemas.opengis.net/sensorML/3.0/json/
   - JSON Example Repository: https://schemas.opengis.net/sensorML/3.0/json/examples/
@@ -72,6 +72,7 @@ Create comprehensive plan for sourcing, organizing, and maintaining test fixture
 **Objective:** Catalog all fixtures needed across all test types
 
 **Tasks:**
+
 1. ✅ Extract fixture requirements from Section 8-14 deliverables
 2. ✅ Categorize fixtures by resource type and format
 3. ✅ Identify fixture variants needed (valid, invalid, edge cases)
@@ -79,6 +80,7 @@ Create comprehensive plan for sourcing, organizing, and maintaining test fixture
 5. ✅ Create fixture requirements matrix
 
 **Deliverables:**
+
 - ✅ Complete fixture inventory: ~280 fixtures
 - ✅ Fixture matrix (Section 2.1 of deliverable)
 - ✅ Complexity analysis (Section 2.2)
@@ -89,6 +91,7 @@ Create comprehensive plan for sourcing, organizing, and maintaining test fixture
 **Objective:** Identify optimal sources for each fixture type
 
 **Tasks:**
+
 1. ✅ Identified CSAPI specification examples (25+)
 2. ✅ Accessed SensorML 3.0 specification (SUCCESS - full spec retrieved)
 3. ✅ Accessed SWE Common 3.0 specification (SUCCESS - full spec retrieved)
@@ -98,6 +101,7 @@ Create comprehensive plan for sourcing, organizing, and maintaining test fixture
 7. ✅ Documented fixture sourcing plan (Section 4)
 
 **Deliverables:**
+
 - ✅ Sourcing strategy by category (Section 4.1-4.8)
 - ✅ Specification access confirmed
 - ✅ OpenSensorHub unavailability documented
@@ -108,6 +112,7 @@ Create comprehensive plan for sourcing, organizing, and maintaining test fixture
 **Objective:** Design fixture directory structure and naming conventions
 
 **Tasks:**
+
 1. ✅ Analyzed upstream fixture patterns (hierarchical by test type)
 2. ✅ Designed directory structure: test-type primary, resource/workflow secondary
 3. ✅ Defined naming conventions: kebab-case with variant indicators
@@ -115,6 +120,7 @@ Create comprehensive plan for sourcing, organizing, and maintaining test fixture
 5. ✅ Created organization specification (Section 5-7 of deliverable)
 
 **Deliverables:**
+
 - ✅ Directory structure design (30 directories) - Section 5
 - ✅ File naming conventions with variant indicators - Section 6
 - ✅ Metadata schema and provenance system - Section 7
@@ -124,6 +130,7 @@ Create comprehensive plan for sourcing, organizing, and maintaining test fixture
 **Objective:** Define how fixtures will be shared and maintained
 
 **Tasks:**
+
 1. ✅ Identified fixture reuse opportunities across tests (universal fixtures)
 2. ✅ Designed fixture loading utilities (composition patterns)
 3. ✅ Defined fixture validation process (schema, semantic, integration)
@@ -131,6 +138,7 @@ Create comprehensive plan for sourcing, organizing, and maintaining test fixture
 5. ✅ Documented fixture maintenance guidelines (Section 9)
 
 **Deliverables:**
+
 - ✅ Reusability patterns documentation - Section 8
 - ✅ Maintenance procedures - Section 9
 - ✅ Validation requirements - Section 10
@@ -140,6 +148,7 @@ Create comprehensive plan for sourcing, organizing, and maintaining test fixture
 **Objective:** Create comprehensive fixture sourcing and organization plan
 
 **Tasks:**
+
 1. ✅ Consolidated fixture inventory (~280 fixtures cataloged)
 2. ✅ Created complete sourcing plan with URLs/sources (Section 4)
 3. ✅ Finalized directory structure specification (Section 5)
@@ -147,6 +156,7 @@ Create comprehensive plan for sourcing, organizing, and maintaining test fixture
 5. ✅ Created deliverable document (15 sections, ~25,000 words)
 
 **Deliverables:**
+
 - ✅ 3-phase execution plan with day-by-day tasks - Section 11
 - ✅ Implementation priorities (~290 hours estimated) - Section 12
 - ✅ Risk assessment (9 risks with mitigations) - Section 13
@@ -174,6 +184,7 @@ This research is complete when:
 **Complete fixture inventory with sourcing plan and directory structure**
 
 Content includes:
+
 - ✅ Fixture requirements matrix (by resource type, format, variant) - Section 2
 - ✅ Fixture sourcing plan with specific sources/URLs - Section 4
 - ✅ Directory structure specification - Section 5
@@ -197,6 +208,7 @@ Content includes:
 ## 8. Dependencies ✅
 
 **Must Complete Before Starting:**
+
 - ✅ Section 8: CSAPI Specification Test Requirements
 - ✅ Section 9: SensorML 3.0 Format Testing Requirements
 - ✅ Section 10: SWE Common 3.0 Format Testing Requirements
@@ -206,6 +218,7 @@ Content includes:
 - ✅ Section 14: Integration Test Workflow Design
 
 **Blocks (Now Unblocked):**
+
 - Section 16: Test Coverage Requirements (can use fixture count)
 - Section 17: Mocking and Stubbing Strategy (can use fixture organization)
 - Section 18: Test Data Generation Strategies (can use sourcing plan)
@@ -233,6 +246,7 @@ Content includes:
 ## 10. Key Findings
 
 **Fixture Sources:**
+
 - ✅ CSAPI Specs: 25+ examples from Parts 1 & 2
 - ✅ SensorML 3.0: https://docs.ogc.org/is/23-000/23-000.html + examples repo
 - ✅ SWE Common 3.0: https://docs.ogc.org/is/24-014/24-014.html (Annex B.1/B.2: 15 examples)
@@ -240,14 +254,17 @@ Content includes:
 - ⏳ 52°North: Not accessed (deferred)
 
 **Fixture Breakdown:**
+
 - From Specs: ~170 fixtures
-- Hand-Crafted: ~110 fixtures  
+- Hand-Crafted: ~110 fixtures
 - Total: ~280 fixtures minimum
 
 **Critical Priorities (MVP):**
+
 - 46 fixtures for critical path: QueryBuilder (5), CSAPI Part 1 (11), GeoJSON valid (10), Integration discovery (8), Resource universal (5), SensorML basic (7)
 
 **Execution Plan:**
+
 - Phase 1 (Weeks 1-2): Spec extraction (~170 fixtures)
 - Phase 2 (Weeks 3-4): Hand-crafting (~80 fixtures)
 - Phase 3 (Week 5): Validation and integration

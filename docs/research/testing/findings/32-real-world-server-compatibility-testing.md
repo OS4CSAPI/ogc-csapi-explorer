@@ -19,12 +19,14 @@
 **Research Time:** 75 minutes – February 6, 2026
 
 **Primary Source(s):**
+
 - [OpenSensorHub Analysis](../../requirements/csapi-opensensorhub-analysis.md)
 - [52°North Analysis](../../requirements/csapi-52north-analysis.md)
 - [Conformance Capabilities](../../requirements/csapi-conformance-capabilities.md)
 - [Implementation Guide](../../../planning/csapi-implementation-guide.md)
 
 **Supporting Resources:**
+
 - Section 22: [Conformance and Capability Testing](22-conformance-capability-testing.md) (conformance detection)
 - Section 8: [CSAPI Specification Review](08-csapi-specification-review.md) (conformance classes)
 
@@ -37,12 +39,14 @@
 This document defines strategies for validating the TypeScript CSAPI client library against multiple real-world CSAPI servers with different conformance profiles. Two production-ready servers are available for testing:
 
 **OpenSensorHub (Full Conformance):**
+
 - URL: http://45.55.99.236:8080/sensorhub/api
 - Conformance: 33/33 classes (100%) - Parts 1, 2, 3
 - Live data: 6 systems, 28 datastreams, thousands of observations
 - Authentication: HTTP Basic Auth
 
 **52°North (Partial Conformance):**
+
 - URL: https://csa.demo.52north.org/
 - Conformance: ~15-18 classes (Part 1 full, Part 2 partial)
 - Live data: 3 systems, 1 deployment, limited Part 2
@@ -52,20 +56,24 @@ This document defines strategies for validating the TypeScript CSAPI client libr
 ### Key Findings
 
 **Server Capability Profiles:**
+
 - **Full Conformance (OSH)**: All resources, full CRUD, all encodings, streaming
 - **Partial Conformance (52N)**: Part 1 complete, Part 2 DataStreams only (no ControlStreams)
 - **Minimal Conformance**: Read-only systems or deployments (hypothetical)
 
 **Testing Strategies:**
+
 - **Live Testing**: Validate against real servers, catch interoperability issues
 - **Offline Mocking**: Recorded responses, reliable CI/CD execution
 - **Hybrid Approach**: Live tests nightly/manual, offline tests in CI
 
 **Server-Specific Quirks:**
+
 - **OSH**: Base32-encoded IDs, async servlet patterns, WebSocket/MQTT streaming
 - **52N**: UUID IDs, incomplete conformance declaration, Part 2 500 errors, SSL issues
 
 **Test Scope:**
+
 - **Conformance detection**: ~6 tests (100 lines)
 - **Full conformance (OSH)**: ~20 tests (400-500 lines)
 - **Partial conformance (52N)**: ~15 tests (300-400 lines)
@@ -74,11 +82,13 @@ This document defines strategies for validating the TypeScript CSAPI client libr
 - **Total**: ~56 tests, 1100-1400 lines
 
 **Implementation Priority:**
+
 1. **CRITICAL**: Conformance detection, server availability checks
 2. **HIGH**: Full conformance tests (OSH), partial conformance tests (52N)
 3. **MEDIUM**: Graceful degradation, server quirk handling
 
 **Key Testing Challenges:**
+
 1. **Live server dependencies**: Network reliability, server uptime
 2. **Data variability**: Live data changes over time
 3. **Authentication**: Credential management for OSH
@@ -86,6 +96,7 @@ This document defines strategies for validating the TypeScript CSAPI client libr
 5. **Rate limiting**: Unknown limits on live servers
 
 **Mitigation Strategies:**
+
 - Record live server responses as fixtures for offline testing
 - Implement server availability checks before tests
 - Make live tests optional (skip if server unavailable)
@@ -101,6 +112,7 @@ This document defines strategies for validating the TypeScript CSAPI client libr
 ### 1.1 OpenSensorHub (Full Conformance)
 
 **Server Details:**
+
 - **Implementation**: Java/Spring Boot, production-ready
 - **Repository**: https://github.com/opensensorhub/osh-core
 - **Live Server**: http://45.55.99.236:8080/sensorhub/api
@@ -111,6 +123,7 @@ This document defines strategies for validating the TypeScript CSAPI client libr
 **Conformance Classes (33 total):**
 
 **Part 1 (13 classes):**
+
 - ✅ A.1: Common
 - ✅ A.2: System Features
 - ✅ A.3: Subsystems
@@ -126,6 +139,7 @@ This document defines strategies for validating the TypeScript CSAPI client libr
 - ✅ A.13: SensorML Format
 
 **Part 2 (12 classes):**
+
 - ✅ A.1: Common
 - ✅ A.2: DataStreams & Observations
 - ✅ A.3: Control Streams & Commands
@@ -140,12 +154,14 @@ This document defines strategies for validating the TypeScript CSAPI client libr
 - ✅ A.12: SWE Binary Encoding
 
 **Part 3 (8+ classes):**
+
 - ✅ System Events
 - ✅ WebSocket Streaming
 - ✅ MQTT Streaming
 - (Additional Part 3 classes beyond CSAPI 1.0 scope)
 
 **Live Data Inventory:**
+
 - **Systems**: 6 (3 LIVE replay drones, 3 archived Android devices)
 - **Deployments**: 3 (drone missions)
 - **Procedures**: 6 (sensor type definitions)
@@ -156,6 +172,7 @@ This document defines strategies for validating the TypeScript CSAPI client libr
 - **Commands**: Historical command records
 
 **Data Characteristics:**
+
 - **ID Format**: Base32-encoded strings (e.g., `03tbj7mvqg50`, `0406fcgwtjk5`)
 - **Live Streaming**: `validTime: [..., "now"]` for active systems
 - **Time Range**: Historical data from 2023-2024, live data current
@@ -163,6 +180,7 @@ This document defines strategies for validating the TypeScript CSAPI client libr
 - **Formats Supported**: JSON, GeoJSON, SensorML JSON, O&M JSON, SWE JSON/Text/Binary/CSV/XML, HTML
 
 **Authentication Details:**
+
 ```http
 GET /systems HTTP/1.1
 Host: 45.55.99.236:8080
@@ -172,6 +190,7 @@ Authorization: Basic <base64-encoded-credentials>
 **Rate Limiting**: Unknown (assumed generous for public demo server)
 
 **Server Behaviors:**
+
 - Default pagination limit: 100 items
 - Maximum limit: 10,000 items
 - Async servlet architecture (non-blocking)
@@ -181,6 +200,7 @@ Authorization: Basic <base64-encoded-credentials>
 - Complex CQL2 filtering support (30+ query parameters)
 
 **Test Value:**
+
 - ✅ **Full conformance baseline** - All features should work
 - ✅ **Production behavior** - Real-world performance characteristics
 - ✅ **Live data** - Test temporal queries with current time
@@ -194,6 +214,7 @@ Authorization: Basic <base64-encoded-credentials>
 ### 1.2 52°North (Partial Conformance)
 
 **Server Details:**
+
 - **Implementation**: Python/Quart/pygeoapi
 - **Repository**: https://github.com/52North/connected-systems-pygeoapi
 - **Live Server**: https://csa.demo.52north.org/
@@ -204,6 +225,7 @@ Authorization: Basic <base64-encoded-credentials>
 **Conformance Classes (~15-18 total):**
 
 **Part 1 (13 classes - Full):**
+
 - ✅ A.1: Common
 - ✅ A.2: System Features
 - ✅ A.3: Subsystems
@@ -219,6 +241,7 @@ Authorization: Basic <base64-encoded-credentials>
 - ✅ A.13: SensorML Format
 
 **Part 2 (Partial - 2-5 classes):**
+
 - ⚠️ A.1: Common (expected but not declared)
 - 🚧 A.2: DataStreams & Observations (in development)
 - ❌ A.3: Control Streams & Commands (not implemented)
@@ -227,6 +250,7 @@ Authorization: Basic <base64-encoded-credentials>
 - ⚠️ A.9: O&M JSON Encoding (expected if A.2 complete)
 
 **Live Data Inventory:**
+
 - **Systems**: 3 (YSI sensor, Valeport CTD, RBR platform)
 - **Deployments**: 1 (Baltic Sea buoy testing)
 - **Procedures**: 1 (Aanderaa sensor type definition)
@@ -236,6 +260,7 @@ Authorization: Basic <base64-encoded-credentials>
 - **Observations**: Not accessible (500 errors)
 
 **Data Characteristics:**
+
 - **ID Format**: Mixed (UUIDs, URNs, strings)
   - UUID: `4e09de42-674d-4e03-a620-2d219b030a50`
   - URN: `urn:sensor:5400-526`, `urn:platform:5300-909`
@@ -244,6 +269,7 @@ Authorization: Basic <base64-encoded-credentials>
 - **Formats Supported**: GeoJSON, SensorML JSON
 
 **Server Issues:**
+
 - ⚠️ **Expired SSL Certificate**: Requires certificate validation bypass
 - ⚠️ **Incomplete Conformance Declaration**: Only 1 class declared (should be 13+)
 - ❌ **Part 2 Non-Functional**: DataStreams/Observations return 500 Internal Server Error
@@ -252,15 +278,15 @@ Authorization: Basic <base64-encoded-credentials>
 **Conformance Declaration Issue:**
 
 **Actual Response** (GET /conformance):
+
 ```json
 {
-  "conformsTo": [
-    "http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core"
-  ]
+  "conformsTo": ["http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core"]
 }
 ```
 
 **Expected Response** (based on functional endpoints):
+
 ```json
 {
   "conformsTo": [
@@ -279,6 +305,7 @@ Authorization: Basic <base64-encoded-credentials>
 ```
 
 **Test Value:**
+
 - ✅ **Incomplete conformance testing** - Test client fallback logic
 - ✅ **Partial conformance scenario** - Part 1 only
 - ✅ **Error handling** - Part 2 500 errors
@@ -291,37 +318,37 @@ Authorization: Basic <base64-encoded-credentials>
 
 ### 1.3 Server Capability Matrix
 
-| Capability | OpenSensorHub | 52°North | Notes |
-|-----------|---------------|----------|-------|
-| **Conformance Classes** | 33 (100%) | ~15-18 (Part 1 only) | OSH full, 52N partial |
-| **Part 1: Systems** | ✅ Full CRUD | ✅ Full CRUD | Both complete |
-| **Part 1: Deployments** | ✅ Full CRUD | ✅ Full CRUD | Both complete |
-| **Part 1: Procedures** | ✅ Full CRUD | ✅ Full CRUD | Both complete |
-| **Part 1: Sampling Features** | ✅ Full CRUD | ✅ Full CRUD | Both complete |
-| **Part 1: Properties** | ✅ Full CRUD | ✅ Full CRUD | Both complete |
-| **Part 1: Subsystems** | ✅ Hierarchical | ✅ Hierarchical | Both complete |
-| **Part 1: Subdeployments** | ✅ Hierarchical | ✅ Hierarchical | Both complete |
-| **Part 2: DataStreams** | ✅ Full CRUD | ❌ 500 errors | OSH only |
-| **Part 2: Observations** | ✅ Full CRUD | ❌ 500 errors | OSH only |
-| **Part 2: ControlStreams** | ✅ Full CRUD | ❌ Not implemented | OSH only |
-| **Part 2: Commands** | ✅ Full CRUD | ❌ Not implemented | OSH only |
-| **Advanced Filtering** | ✅ CQL2 (30+ params) | ✅ CQL2 | Both complete |
-| **GeoJSON Format** | ✅ Supported | ✅ Supported | Both complete |
-| **SensorML Format** | ✅ Supported | ✅ Supported | Both complete |
-| **SWE Common Formats** | ✅ JSON/Text/Binary/CSV/XML | ❌ Not available | OSH only |
-| **WebSocket Streaming** | ✅ Available | ❌ Not available | OSH only (Part 3) |
-| **MQTT Streaming** | ✅ Available | ❌ Not available | OSH only (Part 3) |
-| **Authentication** | ✅ HTTP Basic Auth | ❌ None (public) | OSH requires auth |
-| **SSL Certificate** | ✅ Valid | ⚠️ Expired | 52N requires bypass |
-| **Conformance Declaration** | ✅ Complete (33 classes) | ⚠️ Incomplete (1 class) | 52N misleading |
-| **Live Systems** | 6 | 3 | OSH more data |
-| **Live Deployments** | 3 | 1 | OSH more data |
-| **Live DataStreams** | 28 | 0 (inaccessible) | OSH only |
-| **Live Observations** | Thousands | 0 (inaccessible) | OSH only |
-| **ID Format** | Base32 strings | UUIDs/URNs/strings | Different formats |
-| **Pagination Limit (Default)** | 100 | Unknown (~20-50 typical pygeoapi) | OSH documented |
-| **Pagination Limit (Max)** | 10,000 | Unknown (~1000 typical pygeoapi) | OSH documented |
-| **Use Case** | Drones, mobile sensors | Oceanographic buoys | Different domains |
+| Capability                     | OpenSensorHub               | 52°North                          | Notes                 |
+| ------------------------------ | --------------------------- | --------------------------------- | --------------------- |
+| **Conformance Classes**        | 33 (100%)                   | ~15-18 (Part 1 only)              | OSH full, 52N partial |
+| **Part 1: Systems**            | ✅ Full CRUD                | ✅ Full CRUD                      | Both complete         |
+| **Part 1: Deployments**        | ✅ Full CRUD                | ✅ Full CRUD                      | Both complete         |
+| **Part 1: Procedures**         | ✅ Full CRUD                | ✅ Full CRUD                      | Both complete         |
+| **Part 1: Sampling Features**  | ✅ Full CRUD                | ✅ Full CRUD                      | Both complete         |
+| **Part 1: Properties**         | ✅ Full CRUD                | ✅ Full CRUD                      | Both complete         |
+| **Part 1: Subsystems**         | ✅ Hierarchical             | ✅ Hierarchical                   | Both complete         |
+| **Part 1: Subdeployments**     | ✅ Hierarchical             | ✅ Hierarchical                   | Both complete         |
+| **Part 2: DataStreams**        | ✅ Full CRUD                | ❌ 500 errors                     | OSH only              |
+| **Part 2: Observations**       | ✅ Full CRUD                | ❌ 500 errors                     | OSH only              |
+| **Part 2: ControlStreams**     | ✅ Full CRUD                | ❌ Not implemented                | OSH only              |
+| **Part 2: Commands**           | ✅ Full CRUD                | ❌ Not implemented                | OSH only              |
+| **Advanced Filtering**         | ✅ CQL2 (30+ params)        | ✅ CQL2                           | Both complete         |
+| **GeoJSON Format**             | ✅ Supported                | ✅ Supported                      | Both complete         |
+| **SensorML Format**            | ✅ Supported                | ✅ Supported                      | Both complete         |
+| **SWE Common Formats**         | ✅ JSON/Text/Binary/CSV/XML | ❌ Not available                  | OSH only              |
+| **WebSocket Streaming**        | ✅ Available                | ❌ Not available                  | OSH only (Part 3)     |
+| **MQTT Streaming**             | ✅ Available                | ❌ Not available                  | OSH only (Part 3)     |
+| **Authentication**             | ✅ HTTP Basic Auth          | ❌ None (public)                  | OSH requires auth     |
+| **SSL Certificate**            | ✅ Valid                    | ⚠️ Expired                        | 52N requires bypass   |
+| **Conformance Declaration**    | ✅ Complete (33 classes)    | ⚠️ Incomplete (1 class)           | 52N misleading        |
+| **Live Systems**               | 6                           | 3                                 | OSH more data         |
+| **Live Deployments**           | 3                           | 1                                 | OSH more data         |
+| **Live DataStreams**           | 28                          | 0 (inaccessible)                  | OSH only              |
+| **Live Observations**          | Thousands                   | 0 (inaccessible)                  | OSH only              |
+| **ID Format**                  | Base32 strings              | UUIDs/URNs/strings                | Different formats     |
+| **Pagination Limit (Default)** | 100                         | Unknown (~20-50 typical pygeoapi) | OSH documented        |
+| **Pagination Limit (Max)**     | 10,000                      | Unknown (~1000 typical pygeoapi)  | OSH documented        |
+| **Use Case**                   | Drones, mobile sensors      | Oceanographic buoys               | Different domains     |
 
 ---
 
@@ -332,6 +359,7 @@ Authorization: Basic <base64-encoded-credentials>
 **Definition**: Server implements all CSAPI Part 1 and Part 2 conformance classes with complete CRUD operations and multiple encoding formats.
 
 **Characteristics:**
+
 - ✅ All 11 CSAPI resources available
 - ✅ Full CRUD (GET, POST, PUT, PATCH, DELETE) on all resources
 - ✅ All encoding formats (GeoJSON, SensorML, SWE Common JSON/Text/Binary)
@@ -341,10 +369,11 @@ Authorization: Basic <base64-encoded-credentials>
 - ✅ Pagination (configurable, up to 10,000 items)
 
 **Expected Client Behavior:**
+
 ```typescript
 // All resource classes should be available
 const client = new CSAPIClient('http://45.55.99.236:8080/sensorhub/api', {
-  auth: { type: 'basic', username: 'ogc', password: 'ogc' }
+  auth: { type: 'basic', username: 'ogc', password: 'ogc' },
 });
 
 await client.initialize();
@@ -377,6 +406,7 @@ stream.on('data', (obs) => console.log(obs));
 ```
 
 **Test Scenarios:**
+
 1. **Full CRUD operations** on all resources
 2. **Hierarchical navigation** (subsystems, subdeployments)
 3. **Cross-resource queries** (system → datastreams → observations)
@@ -393,6 +423,7 @@ stream.on('data', (obs) => console.log(obs));
 **Definition**: Server implements CSAPI Part 1 fully but Part 2 only partially or not at all. Client must gracefully degrade to Part 1-only mode.
 
 **Characteristics:**
+
 - ✅ Part 1 resources fully available (Systems, Deployments, Procedures, Sampling Features, Properties)
 - ✅ Full CRUD on Part 1 resources
 - ✅ Part 1 encodings (GeoJSON, SensorML)
@@ -402,10 +433,11 @@ stream.on('data', (obs) => console.log(obs));
 - ⚠️ Incomplete conformance declaration
 
 **Expected Client Behavior:**
+
 ```typescript
 // Client detects partial conformance
 const client = new CSAPIClient('https://csa.demo.52north.org/', {
-  ssl: { rejectUnauthorized: false }  // Skip cert validation
+  ssl: { rejectUnauthorized: false }, // Skip cert validation
 });
 
 await client.initialize();
@@ -416,7 +448,7 @@ expect(client.deployments).toBeDefined();
 expect(client.procedures).toBeDefined();
 
 // Part 2 resources unavailable or return null
-expect(client.datastreams).toBeNull();  // or throws ConformanceError
+expect(client.datastreams).toBeNull(); // or throws ConformanceError
 expect(client.observations).toBeNull();
 expect(client.controlstreams).toBeNull();
 expect(client.commands).toBeNull();
@@ -435,6 +467,7 @@ try {
 ```
 
 **Test Scenarios:**
+
 1. **Conformance detection** with incomplete declaration
 2. **Endpoint probing** when conformance insufficient
 3. **Part 1 full CRUD** operations
@@ -449,6 +482,7 @@ try {
 **Definition**: Server implements only one CSAPI resource type (e.g., Systems only) with read-only operations. Represents minimum viable CSAPI server.
 
 **Characteristics:**
+
 - ✅ One Part 1 resource type (Systems OR Deployments OR Procedures OR Properties)
 - ✅ Read operations only (GET list, GET item)
 - ✅ At least one encoding (GeoJSON OR SensorML)
@@ -458,6 +492,7 @@ try {
 - ❌ No advanced filtering
 
 **Expected Client Behavior:**
+
 ```typescript
 const client = new CSAPIClient('https://minimal.csapi.org/');
 await client.initialize();
@@ -481,6 +516,7 @@ try {
 ```
 
 **Test Scenarios:**
+
 1. **Single resource type** detection
 2. **Read-only operations** validation
 3. **CRUD method unavailability** error handling
@@ -499,6 +535,7 @@ try {
 **Impact:** Client must accept non-UUID string IDs, not validate ID format.
 
 **Workaround:**
+
 ```typescript
 // Don't assume UUID format
 function isValidCSAPIId(id: string): boolean {
@@ -514,10 +551,11 @@ function isValidCSAPIId(id: string): boolean {
 **Impact:** Client must handle async responses with polling.
 
 **Workaround:**
+
 ```typescript
 async function createResource(data: any): Promise<Resource> {
   const response = await post('/systems', data);
-  
+
   if (response.status === 202) {
     // Async creation - poll for completion
     const location = response.headers.get('Location');
@@ -536,6 +574,7 @@ async function createResource(data: any): Promise<Resource> {
 **Impact:** Client must support streaming protocols for Part 3 features.
 
 **Workaround:**
+
 ```typescript
 // Detect streaming capabilities
 if (client.capabilities.hasWebSocketStreaming) {
@@ -554,13 +593,14 @@ if (client.capabilities.hasWebSocketStreaming) {
 **Impact:** Client must provide credentials.
 
 **Workaround:**
+
 ```typescript
 const client = new CSAPIClient('http://45.55.99.236:8080/sensorhub/api', {
   auth: {
     type: 'basic',
     username: process.env.OSH_USERNAME || 'ogc',
-    password: process.env.OSH_PASSWORD || 'ogc'
-  }
+    password: process.env.OSH_PASSWORD || 'ogc',
+  },
 });
 ```
 
@@ -571,6 +611,7 @@ const client = new CSAPIClient('http://45.55.99.236:8080/sensorhub/api', {
 **Impact:** Client can request large batches, but may timeout.
 
 **Workaround:**
+
 ```typescript
 // Use reasonable default, allow override
 const defaultLimit = 100;
@@ -593,11 +634,12 @@ async function list(limit: number = defaultLimit): Promise<ResourceCollection> {
 **Impact:** Client requests fail with SSL errors.
 
 **Workaround:**
+
 ```typescript
 const client = new CSAPIClient('https://csa.demo.52north.org/', {
   ssl: {
-    rejectUnauthorized: false  // Only for testing!
-  }
+    rejectUnauthorized: false, // Only for testing!
+  },
 });
 ```
 
@@ -610,31 +652,34 @@ const client = new CSAPIClient('https://csa.demo.52north.org/', {
 **Impact:** Client cannot rely solely on conformance endpoint.
 
 **Workaround:**
+
 ```typescript
-async function detectCapabilities(client: CSAPIClient): Promise<ServerCapabilities> {
+async function detectCapabilities(
+  client: CSAPIClient
+): Promise<ServerCapabilities> {
   const conformance = await client.getConformance();
-  
+
   if (conformance.conformsTo.length < 5) {
     console.warn('Incomplete conformance declaration - probing endpoints');
-    
+
     // Probe for Part 1 resources
     const probeResults = await Promise.allSettled([
       client.http.get('/systems?limit=1'),
       client.http.get('/deployments?limit=1'),
       client.http.get('/procedures?limit=1'),
       client.http.get('/samplingFeatures?limit=1'),
-      client.http.get('/properties?limit=1')
+      client.http.get('/properties?limit=1'),
     ]);
-    
+
     return {
       hasSystems: probeResults[0].status === 'fulfilled',
       hasDeployments: probeResults[1].status === 'fulfilled',
       hasProcedures: probeResults[2].status === 'fulfilled',
       hasSamplingFeatures: probeResults[3].status === 'fulfilled',
-      hasProperties: probeResults[4].status === 'fulfilled'
+      hasProperties: probeResults[4].status === 'fulfilled',
     };
   }
-  
+
   // Normal conformance-based detection
   return parseConformance(conformance);
 }
@@ -647,6 +692,7 @@ async function detectCapabilities(client: CSAPIClient): Promise<ServerCapabiliti
 **Impact:** Client must handle Part 2 unavailability gracefully.
 
 **Workaround:**
+
 ```typescript
 async function initializePart2(client: CSAPIClient): Promise<void> {
   try {
@@ -654,10 +700,12 @@ async function initializePart2(client: CSAPIClient): Promise<void> {
     client.capabilities.hasDataStreams = true;
   } catch (error) {
     if (error.status === 500) {
-      console.warn('Part 2 not available (500 error) - continuing with Part 1 only');
+      console.warn(
+        'Part 2 not available (500 error) - continuing with Part 1 only'
+      );
       client.capabilities.hasDataStreams = false;
     } else {
-      throw error;  // Other errors are unexpected
+      throw error; // Other errors are unexpected
     }
   }
 }
@@ -670,11 +718,13 @@ async function initializePart2(client: CSAPIClient): Promise<void> {
 **Impact:** Client must accept all ID formats.
 
 **Examples:**
+
 - UUID: `4e09de42-674d-4e03-a620-2d219b030a50`
 - URN: `urn:sensor:5400-526`
 - String: `YSI599503-00-1`
 
 **Workaround:**
+
 ```typescript
 // Accept any ID format
 function isValidCSAPIId(id: string): boolean {
@@ -689,6 +739,7 @@ function isValidCSAPIId(id: string): boolean {
 **Impact:** Limited test coverage, cannot test large-scale scenarios.
 
 **Workaround:**
+
 - Use 52N for basic connectivity and error handling tests
 - Use OSH for comprehensive feature validation
 - Use mock fixtures for large-scale scenarios
@@ -702,12 +753,14 @@ function isValidCSAPIId(id: string): boolean {
 ### 4.1 Live Testing (Nightly/Manual)
 
 **When to Use:**
+
 - Real-world interoperability validation
 - Catch server behavior changes
 - Test with live data patterns
 - Manual exploratory testing
 
 **Characteristics:**
+
 - ✅ Real server behavior
 - ✅ Real network conditions
 - ✅ Catch API changes early
@@ -717,24 +770,27 @@ function isValidCSAPIId(id: string): boolean {
 - ⚠️ Data variability
 
 **Implementation:**
+
 ```typescript
 describe('Live Server Integration Tests', () => {
   // Skip if server unavailable
   beforeAll(async () => {
-    const available = await checkServerAvailability('http://45.55.99.236:8080/sensorhub/api');
+    const available = await checkServerAvailability(
+      'http://45.55.99.236:8080/sensorhub/api'
+    );
     if (!available) {
       console.warn('OSH server unavailable - skipping live tests');
       return;
     }
   });
-  
+
   it('should list live systems', async () => {
     const client = new CSAPIClient('http://45.55.99.236:8080/sensorhub/api', {
-      auth: { type: 'basic', username: 'ogc', password: 'ogc' }
+      auth: { type: 'basic', username: 'ogc', password: 'ogc' },
     });
-    
+
     const systems = await client.systems.list({ limit: 10 });
-    
+
     expect(systems.items.length).toBeGreaterThan(0);
     expect(systems.items[0]).toHaveProperty('id');
     expect(systems.items[0]).toHaveProperty('name');
@@ -743,6 +799,7 @@ describe('Live Server Integration Tests', () => {
 ```
 
 **Execution:**
+
 ```bash
 # Run live tests manually
 npm run test:live
@@ -764,12 +821,14 @@ jobs:
 ### 4.2 Offline Testing (CI/CD)
 
 **When to Use:**
+
 - Continuous integration (every commit)
 - Fast, reliable test execution
 - No network dependencies
 - Deterministic results
 
 **Characteristics:**
+
 - ✅ Fast execution
 - ✅ No network dependency
 - ✅ No server uptime dependency
@@ -778,6 +837,7 @@ jobs:
 - ⚠️ Fixtures may become stale
 
 **Implementation:**
+
 ```typescript
 describe('Offline Server Compatibility Tests', () => {
   beforeAll(() => {
@@ -786,22 +846,22 @@ describe('Offline Server Compatibility Tests', () => {
       if (url.includes('/conformance')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(oshConformanceFixture)
+          json: () => Promise.resolve(oshConformanceFixture),
         });
       } else if (url.includes('/systems')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(oshSystemsFixture)
+          json: () => Promise.resolve(oshSystemsFixture),
         });
       }
       // ... more fixtures
     });
   });
-  
+
   it('should handle OpenSensorHub conformance', async () => {
     const client = new CSAPIClient('http://mock-osh-server');
     await client.initialize();
-    
+
     expect(client.capabilities.hasSystems).toBe(true);
     expect(client.capabilities.hasDataStreams).toBe(true);
     expect(client.capabilities.hasControlStreams).toBe(true);
@@ -810,19 +870,20 @@ describe('Offline Server Compatibility Tests', () => {
 ```
 
 **Fixture Recording:**
+
 ```typescript
 // Record live server responses as fixtures
 async function recordFixtures() {
   const servers = [
     { name: 'osh', url: 'http://45.55.99.236:8080/sensorhub/api' },
-    { name: '52n', url: 'https://csa.demo.52north.org/' }
+    { name: '52n', url: 'https://csa.demo.52north.org/' },
   ];
-  
+
   for (const server of servers) {
     const conformance = await fetch(`${server.url}/conformance`);
     const systems = await fetch(`${server.url}/systems?limit=10`);
     const deployments = await fetch(`${server.url}/deployments?limit=10`);
-    
+
     // Save fixtures
     await fs.writeFile(
       `fixtures/servers/${server.name}/conformance.json`,
@@ -845,17 +906,20 @@ async function recordFixtures() {
 ### 4.3 Hybrid Approach (Recommended)
 
 **Strategy:**
+
 - **CI/CD (every commit)**: Offline tests with fixtures
 - **Nightly (scheduled)**: Live tests against real servers
 - **Manual (as needed)**: Exploratory testing, fixture updates
 
 **Benefits:**
+
 - ✅ Fast CI/CD feedback (offline)
 - ✅ Real-world validation (nightly live)
 - ✅ Fixture staleness detection (nightly)
 - ✅ Best of both worlds
 
 **Implementation:**
+
 ```bash
 # CI/CD (fast)
 npm run test:offline
@@ -878,14 +942,14 @@ npm run test:exploratory
 
 **Priority:** **CRITICAL**
 
-| Test ID | Scenario | Expected Behavior | Lines |
-|---------|----------|-------------------|-------|
-| COMPAT-CONF-001 | Detect full conformance (OSH) | All 33 classes detected, all resources available | 20 |
-| COMPAT-CONF-002 | Detect partial conformance (52N) | Part 1 detected, Part 2 unavailable | 20 |
-| COMPAT-CONF-003 | Handle incomplete conformance declaration | Probe endpoints, detect actual capabilities | 25 |
-| COMPAT-CONF-004 | Handle conformance endpoint failure | Throw error or probe endpoints | 15 |
-| COMPAT-CONF-005 | Validate conformance class URIs | Parse conformance URIs correctly | 10 |
-| COMPAT-CONF-006 | Cache conformance results | Don't re-query conformance on every request | 10 |
+| Test ID         | Scenario                                  | Expected Behavior                                | Lines |
+| --------------- | ----------------------------------------- | ------------------------------------------------ | ----- |
+| COMPAT-CONF-001 | Detect full conformance (OSH)             | All 33 classes detected, all resources available | 20    |
+| COMPAT-CONF-002 | Detect partial conformance (52N)          | Part 1 detected, Part 2 unavailable              | 20    |
+| COMPAT-CONF-003 | Handle incomplete conformance declaration | Probe endpoints, detect actual capabilities      | 25    |
+| COMPAT-CONF-004 | Handle conformance endpoint failure       | Throw error or probe endpoints                   | 15    |
+| COMPAT-CONF-005 | Validate conformance class URIs           | Parse conformance URIs correctly                 | 10    |
+| COMPAT-CONF-006 | Cache conformance results                 | Don't re-query conformance on every request      | 10    |
 
 **Test Implementation:**
 
@@ -894,51 +958,51 @@ describe('Conformance Detection', () => {
   describe('Full Conformance (OpenSensorHub)', () => {
     it('detects all 33 conformance classes', async () => {
       const client = new CSAPIClient('http://45.55.99.236:8080/sensorhub/api', {
-        auth: { type: 'basic', username: 'ogc', password: 'ogc' }
+        auth: { type: 'basic', username: 'ogc', password: 'ogc' },
       });
-      
+
       await client.initialize();
-      
+
       // Part 1 resources
       expect(client.capabilities.hasSystems).toBe(true);
       expect(client.capabilities.hasDeployments).toBe(true);
       expect(client.capabilities.hasProcedures).toBe(true);
       expect(client.capabilities.hasSamplingFeatures).toBe(true);
       expect(client.capabilities.hasProperties).toBe(true);
-      
+
       // Part 2 resources
       expect(client.capabilities.hasDataStreams).toBe(true);
       expect(client.capabilities.hasObservations).toBe(true);
       expect(client.capabilities.hasControlStreams).toBe(true);
       expect(client.capabilities.hasCommands).toBe(true);
-      
+
       // Features
       expect(client.capabilities.hasSubsystems).toBe(true);
       expect(client.capabilities.hasSubdeployments).toBe(true);
       expect(client.capabilities.hasCRUD).toBe(true);
       expect(client.capabilities.hasUpdate).toBe(true);
       expect(client.capabilities.hasAdvancedFiltering).toBe(true);
-      
+
       // Formats
       expect(client.capabilities.hasGeoJSON).toBe(true);
       expect(client.capabilities.hasSensorML).toBe(true);
       expect(client.capabilities.hasSWEJSON).toBe(true);
     });
   });
-  
+
   describe('Partial Conformance (52North)', () => {
     it('detects Part 1 only', async () => {
       const client = new CSAPIClient('https://csa.demo.52north.org/', {
-        ssl: { rejectUnauthorized: false }
+        ssl: { rejectUnauthorized: false },
       });
-      
+
       await client.initialize();
-      
+
       // Part 1 resources available
       expect(client.capabilities.hasSystems).toBe(true);
       expect(client.capabilities.hasDeployments).toBe(true);
       expect(client.capabilities.hasProcedures).toBe(true);
-      
+
       // Part 2 resources unavailable
       expect(client.capabilities.hasDataStreams).toBe(false);
       expect(client.capabilities.hasObservations).toBe(false);
@@ -946,7 +1010,7 @@ describe('Conformance Detection', () => {
       expect(client.capabilities.hasCommands).toBe(false);
     });
   });
-  
+
   describe('Incomplete Conformance Declaration', () => {
     it('probes endpoints when conformance < 5 classes', async () => {
       // Mock 52N incomplete conformance
@@ -954,55 +1018,58 @@ describe('Conformance Detection', () => {
         if (url.includes('/conformance')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
-              conformsTo: ['http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core']
-            })
+            json: () =>
+              Promise.resolve({
+                conformsTo: [
+                  'http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core',
+                ],
+              }),
           });
         } else if (url.includes('/systems')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ items: [], links: [] })
+            json: () => Promise.resolve({ items: [], links: [] }),
           });
         } else if (url.includes('/deployments')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ items: [], links: [] })
+            json: () => Promise.resolve({ items: [], links: [] }),
           });
         } else {
           return Promise.resolve({ ok: false, status: 404 });
         }
       });
-      
+
       const client = new CSAPIClient('https://test.csapi.org/');
       await client.initialize();
-      
+
       // Should probe and detect actual capabilities
       expect(client.capabilities.hasSystems).toBe(true);
       expect(client.capabilities.hasDeployments).toBe(true);
-      expect(client.capabilities.hasProcedures).toBe(false);  // 404
+      expect(client.capabilities.hasProcedures).toBe(false); // 404
     });
   });
-  
+
   describe('Conformance Caching', () => {
     it('caches conformance results', async () => {
       let conformanceRequests = 0;
-      
+
       globalThis.fetch = jest.fn().mockImplementation((url: string) => {
         if (url.includes('/conformance')) {
           conformanceRequests++;
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve(oshConformanceFixture)
+            json: () => Promise.resolve(oshConformanceFixture),
           });
         }
         return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
       });
-      
+
       const client = new CSAPIClient('http://test.csapi.org/');
       await client.initialize();
       await client.systems.list();
       await client.deployments.list();
-      
+
       // Should only query conformance once
       expect(conformanceRequests).toBe(1);
     });
@@ -1018,90 +1085,92 @@ describe('Conformance Detection', () => {
 
 **Priority:** **HIGH**
 
-| Test ID | Scenario | Expected Behavior | Lines |
-|---------|----------|-------------------|-------|
-| COMPAT-OSH-001 | List systems with pagination | Returns paginated systems | 20 |
-| COMPAT-OSH-002 | Get single system by ID | Returns system with metadata | 20 |
-| COMPAT-OSH-003 | Query systems with filters | Returns filtered systems | 25 |
-| COMPAT-OSH-004 | List deployments | Returns deployments | 20 |
-| COMPAT-OSH-005 | List procedures | Returns procedures | 20 |
-| COMPAT-OSH-006 | List sampling features | Returns sampling features | 20 |
-| COMPAT-OSH-007 | List properties | Returns properties | 20 |
-| COMPAT-OSH-008 | Navigate subsystems hierarchy | Returns subsystems | 25 |
-| COMPAT-OSH-009 | Navigate subdeployments hierarchy | Returns subdeployments | 25 |
-| COMPAT-OSH-010 | List datastreams | Returns datastreams | 20 |
-| COMPAT-OSH-011 | Query observations | Returns observations | 25 |
-| COMPAT-OSH-012 | Query observations with temporal filter | Returns filtered observations | 30 |
-| COMPAT-OSH-013 | Test HTTP Basic Auth | Authentication successful | 20 |
-| COMPAT-OSH-014 | Test multiple formats | GeoJSON, SensorML, SWE formats work | 30 |
-| COMPAT-OSH-015 | Test advanced filtering | CQL2 queries work | 25 |
-| COMPAT-OSH-016 | Test large pagination | Pagination up to 10,000 items | 20 |
-| COMPAT-OSH-017 | Cross-resource navigation | System → DataStreams → Observations | 30 |
-| COMPAT-OSH-018 | Live streaming check | WebSocket endpoint available | 20 |
-| COMPAT-OSH-019 | Test control streams | ControlStreams available | 20 |
-| COMPAT-OSH-020 | Test commands | Commands available | 20 |
+| Test ID        | Scenario                                | Expected Behavior                   | Lines |
+| -------------- | --------------------------------------- | ----------------------------------- | ----- |
+| COMPAT-OSH-001 | List systems with pagination            | Returns paginated systems           | 20    |
+| COMPAT-OSH-002 | Get single system by ID                 | Returns system with metadata        | 20    |
+| COMPAT-OSH-003 | Query systems with filters              | Returns filtered systems            | 25    |
+| COMPAT-OSH-004 | List deployments                        | Returns deployments                 | 20    |
+| COMPAT-OSH-005 | List procedures                         | Returns procedures                  | 20    |
+| COMPAT-OSH-006 | List sampling features                  | Returns sampling features           | 20    |
+| COMPAT-OSH-007 | List properties                         | Returns properties                  | 20    |
+| COMPAT-OSH-008 | Navigate subsystems hierarchy           | Returns subsystems                  | 25    |
+| COMPAT-OSH-009 | Navigate subdeployments hierarchy       | Returns subdeployments              | 25    |
+| COMPAT-OSH-010 | List datastreams                        | Returns datastreams                 | 20    |
+| COMPAT-OSH-011 | Query observations                      | Returns observations                | 25    |
+| COMPAT-OSH-012 | Query observations with temporal filter | Returns filtered observations       | 30    |
+| COMPAT-OSH-013 | Test HTTP Basic Auth                    | Authentication successful           | 20    |
+| COMPAT-OSH-014 | Test multiple formats                   | GeoJSON, SensorML, SWE formats work | 30    |
+| COMPAT-OSH-015 | Test advanced filtering                 | CQL2 queries work                   | 25    |
+| COMPAT-OSH-016 | Test large pagination                   | Pagination up to 10,000 items       | 20    |
+| COMPAT-OSH-017 | Cross-resource navigation               | System → DataStreams → Observations | 30    |
+| COMPAT-OSH-018 | Live streaming check                    | WebSocket endpoint available        | 20    |
+| COMPAT-OSH-019 | Test control streams                    | ControlStreams available            | 20    |
+| COMPAT-OSH-020 | Test commands                           | Commands available                  | 20    |
 
 **Sample Test Implementation:**
 
 ```typescript
 describe('OpenSensorHub Full Conformance', () => {
   let client: CSAPIClient;
-  
+
   beforeAll(async () => {
-    const available = await checkServerAvailability('http://45.55.99.236:8080/sensorhub/api');
+    const available = await checkServerAvailability(
+      'http://45.55.99.236:8080/sensorhub/api'
+    );
     if (!available) {
       console.warn('OSH unavailable - skipping tests');
       return;
     }
-    
+
     client = new CSAPIClient('http://45.55.99.236:8080/sensorhub/api', {
-      auth: { type: 'basic', username: 'ogc', password: 'ogc' }
+      auth: { type: 'basic', username: 'ogc', password: 'ogc' },
     });
     await client.initialize();
   });
-  
+
   describe('Part 1 Resources', () => {
     it('lists systems with pagination', async () => {
       const systems = await client.systems.list({ limit: 5 });
-      
+
       expect(systems.items).toBeDefined();
       expect(systems.items.length).toBeGreaterThan(0);
       expect(systems.items.length).toBeLessThanOrEqual(5);
       expect(systems.links).toBeDefined();
-      
+
       // Validate system structure
       const system = systems.items[0];
-      expect(system.id).toMatch(/^[a-z0-9]+$/);  // Base32 format
+      expect(system.id).toMatch(/^[a-z0-9]+$/); // Base32 format
       expect(system.name).toBeDefined();
       expect(system.description).toBeDefined();
     });
-    
+
     it('gets single system by ID', async () => {
       const systems = await client.systems.list({ limit: 1 });
       const systemId = systems.items[0].id;
-      
+
       const system = await client.systems.get(systemId);
-      
+
       expect(system.id).toBe(systemId);
       expect(system.name).toBeDefined();
       expect(system).toHaveProperty('properties');
     });
-    
+
     it('queries systems with keyword filter', async () => {
       const systems = await client.systems.list({ q: 'drone' });
-      
+
       expect(systems.items).toBeDefined();
-      systems.items.forEach(sys => {
+      systems.items.forEach((sys) => {
         expect(
           sys.name.toLowerCase().includes('drone') ||
-          sys.description?.toLowerCase().includes('drone')
+            sys.description?.toLowerCase().includes('drone')
         ).toBe(true);
       });
     });
-    
+
     it('navigates subsystems hierarchy', async () => {
       const systems = await client.systems.list({ limit: 10 });
-      
+
       // Find system with subsystems
       let parentSystem;
       for (const sys of systems.items) {
@@ -1111,97 +1180,105 @@ describe('OpenSensorHub Full Conformance', () => {
           break;
         }
       }
-      
+
       if (parentSystem) {
-        const subsystems = await client.systems.subsystems(parentSystem.id).list();
+        const subsystems = await client.systems
+          .subsystems(parentSystem.id)
+          .list();
         expect(subsystems.items.length).toBeGreaterThan(0);
         expect(subsystems.items[0]).toHaveProperty('id');
       }
     });
   });
-  
+
   describe('Part 2 Resources', () => {
     it('lists datastreams', async () => {
       const datastreams = await client.datastreams.list({ limit: 5 });
-      
+
       expect(datastreams.items).toBeDefined();
       expect(datastreams.items.length).toBeGreaterThan(0);
-      
+
       const ds = datastreams.items[0];
       expect(ds.id).toBeDefined();
       expect(ds.name).toBeDefined();
       expect(ds).toHaveProperty('observedProperty');
     });
-    
+
     it('queries observations with temporal filter', async () => {
       // Get a datastream
       const datastreams = await client.datastreams.list({ limit: 1 });
       const datastreamId = datastreams.items[0].id;
-      
+
       // Query observations from last 24 hours
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const oneDayAgo = new Date(
+        Date.now() - 24 * 60 * 60 * 1000
+      ).toISOString();
       const now = new Date().toISOString();
-      
-      const observations = await client.datastreams.observations(datastreamId).list({
-        phenomenonTime: `${oneDayAgo}/${now}`,
-        limit: 10
-      });
-      
+
+      const observations = await client.datastreams
+        .observations(datastreamId)
+        .list({
+          phenomenonTime: `${oneDayAgo}/${now}`,
+          limit: 10,
+        });
+
       expect(observations.items).toBeDefined();
-      observations.items.forEach(obs => {
+      observations.items.forEach((obs) => {
         expect(obs).toHaveProperty('phenomenonTime');
         expect(obs).toHaveProperty('result');
       });
     });
-    
+
     it('tests control streams availability', async () => {
       const controlstreams = await client.controlstreams.list({ limit: 1 });
-      
+
       expect(controlstreams).toBeDefined();
       // May be empty if no control streams defined
     });
   });
-  
+
   describe('Advanced Features', () => {
     it('tests HTTP Basic Auth', async () => {
       // Should have authenticated successfully in beforeAll
       const systems = await client.systems.list({ limit: 1 });
       expect(systems.items.length).toBeGreaterThan(0);
     });
-    
+
     it('tests multiple format support', async () => {
-      const systemsGeoJSON = await client.systems.list({ 
+      const systemsGeoJSON = await client.systems.list({
         f: 'geojson',
-        limit: 1
+        limit: 1,
       });
       expect(systemsGeoJSON.type).toBe('FeatureCollection');
-      
+
       const systemsSensorML = await client.systems.list({
         f: 'sml+json',
-        limit: 1
+        limit: 1,
       });
       expect(systemsSensorML).toHaveProperty('items');
     });
-    
+
     it('cross-navigates System → DataStreams → Observations', async () => {
       // Get a system
       const systems = await client.systems.list({ limit: 1 });
       const systemId = systems.items[0].id;
-      
+
       // Get its datastreams
       const datastreams = await client.systems.datastreams(systemId).list();
       if (datastreams.items.length === 0) {
         console.warn('No datastreams for system - skipping');
         return;
       }
-      
+
       const datastreamId = datastreams.items[0].id;
-      
+
       // Get observations from that datastream
-      const observations = await client.datastreams.observations(datastreamId).list({
-        limit: 5
-      });
-      
+      const observations = await client.datastreams
+        .observations(datastreamId)
+        .list({
+          limit: 5,
+        });
+
       expect(observations.items).toBeDefined();
     });
   });
@@ -1212,106 +1289,115 @@ describe('OpenSensorHub Full Conformance', () => {
 
 ### 5.3 Partial Conformance Tests (52°North) (~15 tests, 300-400 lines)
 
-> **⚠️ REVIEW NOTICE (Phase 2E — C1, AP1/AP4):** Same issues as Section 5.2. These tests connect to a live 52°North server, assert server response content (`expect(deployment.geometry.coordinates).toHaveLength(2)`, `expect(lon).toBeCloseTo(14.03, 0)` — specific Baltic Sea coordinates), and validate server data shapes (`expect(sys.id)` UUID/URN format checks). The partial conformance *scenarios* are valuable — they describe how the client should handle missing ControlStreams and incomplete Part 2 — but must be rewritten as fixture-based client behavior tests. See Section 5.5 for the correct approach.
+> **⚠️ REVIEW NOTICE (Phase 2E — C1, AP1/AP4):** Same issues as Section 5.2. These tests connect to a live 52°North server, assert server response content (`expect(deployment.geometry.coordinates).toHaveLength(2)`, `expect(lon).toBeCloseTo(14.03, 0)` — specific Baltic Sea coordinates), and validate server data shapes (`expect(sys.id)` UUID/URN format checks). The partial conformance _scenarios_ are valuable — they describe how the client should handle missing ControlStreams and incomplete Part 2 — but must be rewritten as fixture-based client behavior tests. See Section 5.5 for the correct approach.
 
 **Priority:** **HIGH**
 
-| Test ID | Scenario | Expected Behavior | Lines |
-|---------|----------|-------------------|-------|
-| COMPAT-52N-001 | Detect incomplete conformance | Probe endpoints successfully | 25 |
-| COMPAT-52N-002 | List systems | Returns 3 systems | 20 |
-| COMPAT-52N-003 | Get single system | Returns system metadata | 20 |
-| COMPAT-52N-004 | List deployments | Returns 1 deployment | 20 |
-| COMPAT-52N-005 | Get single deployment | Returns deployment with location | 25 |
-| COMPAT-52N-006 | List procedures | Returns 1 procedure | 20 |
-| COMPAT-52N-007 | Handle SSL certificate issues | Bypass certificate validation | 15 |
-| COMPAT-52N-008 | Test Part 2 unavailability | DataStreams return 500 or unavailable | 25 |
-| COMPAT-52N-009 | Graceful Part 2 degradation | Client continues with Part 1 only | 25 |
-| COMPAT-52N-010 | Handle mixed ID formats | Accept UUIDs, URNs, strings | 20 |
-| COMPAT-52N-011 | Test oceanographic metadata | Validate real-world deployment data | 30 |
-| COMPAT-52N-012 | Navigate deployment systems | Query deployed systems | 25 |
-| COMPAT-52N-013 | Test external documentation links | Validate PDF links | 20 |
-| COMPAT-52N-014 | Handle small dataset | Test with limited data (3 systems) | 20 |
-| COMPAT-52N-015 | Validate GeoJSON coordinates | WGS84 format correct | 20 |
+| Test ID        | Scenario                          | Expected Behavior                     | Lines |
+| -------------- | --------------------------------- | ------------------------------------- | ----- |
+| COMPAT-52N-001 | Detect incomplete conformance     | Probe endpoints successfully          | 25    |
+| COMPAT-52N-002 | List systems                      | Returns 3 systems                     | 20    |
+| COMPAT-52N-003 | Get single system                 | Returns system metadata               | 20    |
+| COMPAT-52N-004 | List deployments                  | Returns 1 deployment                  | 20    |
+| COMPAT-52N-005 | Get single deployment             | Returns deployment with location      | 25    |
+| COMPAT-52N-006 | List procedures                   | Returns 1 procedure                   | 20    |
+| COMPAT-52N-007 | Handle SSL certificate issues     | Bypass certificate validation         | 15    |
+| COMPAT-52N-008 | Test Part 2 unavailability        | DataStreams return 500 or unavailable | 25    |
+| COMPAT-52N-009 | Graceful Part 2 degradation       | Client continues with Part 1 only     | 25    |
+| COMPAT-52N-010 | Handle mixed ID formats           | Accept UUIDs, URNs, strings           | 20    |
+| COMPAT-52N-011 | Test oceanographic metadata       | Validate real-world deployment data   | 30    |
+| COMPAT-52N-012 | Navigate deployment systems       | Query deployed systems                | 25    |
+| COMPAT-52N-013 | Test external documentation links | Validate PDF links                    | 20    |
+| COMPAT-52N-014 | Handle small dataset              | Test with limited data (3 systems)    | 20    |
+| COMPAT-52N-015 | Validate GeoJSON coordinates      | WGS84 format correct                  | 20    |
 
 **Sample Test Implementation:**
 
 ```typescript
 describe('52North Partial Conformance', () => {
   let client: CSAPIClient;
-  
+
   beforeAll(async () => {
-    const available = await checkServerAvailability('https://csa.demo.52north.org/');
+    const available = await checkServerAvailability(
+      'https://csa.demo.52north.org/'
+    );
     if (!available) {
       console.warn('52N unavailable - skipping tests');
       return;
     }
-    
+
     client = new CSAPIClient('https://csa.demo.52north.org/', {
-      ssl: { rejectUnauthorized: false }  // Skip cert validation
+      ssl: { rejectUnauthorized: false }, // Skip cert validation
     });
     await client.initialize();
   });
-  
+
   describe('Conformance Detection', () => {
     it('detects incomplete conformance and probes endpoints', async () => {
       const conformance = await client.getConformance();
-      
+
       // 52N declares only 1 class
       expect(conformance.conformsTo.length).toBeLessThan(5);
-      
+
       // But resources are available (detected via probing)
       expect(client.capabilities.hasSystems).toBe(true);
       expect(client.capabilities.hasDeployments).toBe(true);
       expect(client.capabilities.hasProcedures).toBe(true);
     });
   });
-  
+
   describe('Part 1 Resources', () => {
     it('lists systems', async () => {
       const systems = await client.systems.list();
-      
+
       expect(systems.items).toBeDefined();
-      expect(systems.items.length).toBe(3);  // Known dataset size
-      
+      expect(systems.items.length).toBe(3); // Known dataset size
+
       // Validate oceanographic sensors
-      const systemNames = systems.items.map(s => s.name);
-      expect(systemNames.some(name => name.includes('YSI') || name.includes('Valeport') || name.includes('RBR'))).toBe(true);
+      const systemNames = systems.items.map((s) => s.name);
+      expect(
+        systemNames.some(
+          (name) =>
+            name.includes('YSI') ||
+            name.includes('Valeport') ||
+            name.includes('RBR')
+        )
+      ).toBe(true);
     });
-    
+
     it('gets deployment with location', async () => {
       const deployments = await client.deployments.list();
       expect(deployments.items.length).toBeGreaterThan(0);
-      
+
       const deployment = deployments.items[0];
       expect(deployment).toHaveProperty('geometry');
       expect(deployment.geometry.type).toBe('Point');
-      expect(deployment.geometry.coordinates).toHaveLength(2);  // [lon, lat]
-      
+      expect(deployment.geometry.coordinates).toHaveLength(2); // [lon, lat]
+
       // Baltic Sea coordinates
       const [lon, lat] = deployment.geometry.coordinates;
-      expect(lon).toBeCloseTo(14.03, 0);  // ~14° E
-      expect(lat).toBeCloseTo(54.33, 0);  // ~54° N
+      expect(lon).toBeCloseTo(14.03, 0); // ~14° E
+      expect(lat).toBeCloseTo(54.33, 0); // ~54° N
     });
-    
+
     it('handles mixed ID formats', async () => {
       const systems = await client.systems.list();
-      
-      systems.items.forEach(sys => {
+
+      systems.items.forEach((sys) => {
         // Accept any ID format
         expect(typeof sys.id).toBe('string');
         expect(sys.id.length).toBeGreaterThan(0);
-        
+
         // May be UUID, URN, or plain string
         const isUUID = /^[0-9a-f-]{36}$/i.test(sys.id);
         const isURN = sys.id.startsWith('urn:');
         const isString = !isUUID && !isURN;
-        
+
         expect(isUUID || isURN || isString).toBe(true);
       });
     });
   });
-  
+
   describe('Part 2 Unavailability', () => {
     it('handles DataStreams 500 error gracefully', async () => {
       // Attempt to list datastreams
@@ -1328,52 +1414,52 @@ describe('52North Partial Conformance', () => {
           console.warn('Part 2 not declared in conformance - expected');
           expect(error.capability).toMatch(/datastream/i);
         } else {
-          throw error;  // Unexpected error
+          throw error; // Unexpected error
         }
       }
     });
-    
+
     it('continues with Part 1 after Part 2 failure', async () => {
       // Even if Part 2 fails, Part 1 should still work
       const systems = await client.systems.list();
       expect(systems.items.length).toBeGreaterThan(0);
-      
+
       const deployments = await client.deployments.list();
       expect(deployments.items.length).toBeGreaterThan(0);
     });
   });
-  
+
   describe('Real-World Data Validation', () => {
     it('validates oceanographic deployment metadata', async () => {
       const deployments = await client.deployments.list();
       const deployment = deployments.items[0];
-      
+
       // Validate deployment metadata
       expect(deployment.name).toBeDefined();
       expect(deployment).toHaveProperty('deployedSystems');
       expect(Array.isArray(deployment.deployedSystems)).toBe(true);
-      
+
       // Validate location (Baltic Sea)
       expect(deployment.geometry).toBeDefined();
       expect(deployment.geometry.type).toBe('Point');
     });
-    
+
     it('validates external documentation links', async () => {
       const procedures = await client.procedures.list();
       if (procedures.items.length > 0) {
         const procedure = procedures.items[0];
-        
+
         // May have external documentation links
         if (procedure.documentation) {
-          procedure.documentation.forEach(doc => {
+          procedure.documentation.forEach((doc) => {
             expect(doc).toHaveProperty('href');
-            expect(doc.href).toMatch(/^https?:\/\//);  // Valid URL
+            expect(doc.href).toMatch(/^https?:\/\//); // Valid URL
           });
         }
       }
     });
   });
-  
+
   describe('SSL Certificate Handling', () => {
     it('bypasses invalid certificate', async () => {
       // Should have succeeded in beforeAll with rejectUnauthorized: false
@@ -1392,79 +1478,91 @@ describe('52North Partial Conformance', () => {
 
 **Priority:** **CRITICAL**
 
-| Test ID | Scenario | Expected Behavior | Lines |
-|---------|----------|-------------------|-------|
-| COMPAT-AVAIL-001 | Check server reachability | HTTP request succeeds | 20 |
-| COMPAT-AVAIL-002 | Check conformance endpoint | /conformance returns 200 | 20 |
-| COMPAT-AVAIL-003 | Handle server timeout | Throw timeout error | 20 |
-| COMPAT-AVAIL-004 | Handle server 500 error | Throw server error | 20 |
-| COMPAT-AVAIL-005 | Skip tests if server unavailable | Tests skipped gracefully | 20 |
+| Test ID          | Scenario                         | Expected Behavior        | Lines |
+| ---------------- | -------------------------------- | ------------------------ | ----- |
+| COMPAT-AVAIL-001 | Check server reachability        | HTTP request succeeds    | 20    |
+| COMPAT-AVAIL-002 | Check conformance endpoint       | /conformance returns 200 | 20    |
+| COMPAT-AVAIL-003 | Handle server timeout            | Throw timeout error      | 20    |
+| COMPAT-AVAIL-004 | Handle server 500 error          | Throw server error       | 20    |
+| COMPAT-AVAIL-005 | Skip tests if server unavailable | Tests skipped gracefully | 20    |
 
 **Test Implementation:**
 
 ```typescript
 describe('Server Availability', () => {
-  async function checkServerAvailability(url: string, timeout: number = 5000): Promise<boolean> {
+  async function checkServerAvailability(
+    url: string,
+    timeout: number = 5000
+  ): Promise<boolean> {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
-      
+
       const response = await fetch(`${url}/conformance`, {
-        signal: controller.signal
+        signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
       return false;
     }
   }
-  
+
   it('checks OpenSensorHub availability', async () => {
-    const available = await checkServerAvailability('http://45.55.99.236:8080/sensorhub/api');
-    
+    const available = await checkServerAvailability(
+      'http://45.55.99.236:8080/sensorhub/api'
+    );
+
     if (!available) {
       console.warn('OSH server unavailable - tests will be skipped');
     }
-    
+
     // Don't fail test if server unavailable
     expect(typeof available).toBe('boolean');
   });
-  
+
   it('checks 52North availability', async () => {
-    const available = await checkServerAvailability('https://csa.demo.52north.org/');
-    
+    const available = await checkServerAvailability(
+      'https://csa.demo.52north.org/'
+    );
+
     if (!available) {
       console.warn('52N server unavailable - tests will be skipped');
     }
-    
+
     expect(typeof available).toBe('boolean');
   });
-  
+
   it('handles server timeout', async () => {
-    const available = await checkServerAvailability('http://slow.example.com', 1000);
+    const available = await checkServerAvailability(
+      'http://slow.example.com',
+      1000
+    );
     expect(available).toBe(false);
   });
-  
+
   it('handles server 500 error', async () => {
     globalThis.fetch = jest.fn().mockResolvedValueOnce({
       ok: false,
-      status: 500
+      status: 500,
     });
-    
+
     const available = await checkServerAvailability('http://error.example.com');
     expect(available).toBe(false);
   });
-  
+
   describe('Test Skipping', () => {
     it('skips tests when server unavailable', async () => {
-      const available = await checkServerAvailability('http://unavailable.example.com');
-      
+      const available = await checkServerAvailability(
+        'http://unavailable.example.com'
+      );
+
       if (!available) {
         console.warn('Server unavailable - skipping test suite');
-        return;  // Skip remaining tests
+        return; // Skip remaining tests
       }
-      
+
       // Run tests only if available
       const client = new CSAPIClient('http://unavailable.example.com');
       await client.initialize();
@@ -1481,18 +1579,18 @@ describe('Server Availability', () => {
 
 **Priority:** **MEDIUM**
 
-| Test ID | Scenario | Expected Behavior | Lines |
-|---------|----------|-------------------|-------|
-| COMPAT-DEGRADE-001 | Part 2 unavailable | Client works in Part 1-only mode | 25 |
-| COMPAT-DEGRADE-002 | No CRUD conformance | Create/update/delete throw errors | 25 |
-| COMPAT-DEGRADE-003 | No subsystems conformance | Subsystems method unavailable | 20 |
-| COMPAT-DEGRADE-004 | No advanced filtering | Complex queries throw errors | 25 |
-| COMPAT-DEGRADE-005 | No SensorML format | SensorML requests throw errors | 20 |
-| COMPAT-DEGRADE-006 | Single resource type | Only systems available | 25 |
-| COMPAT-DEGRADE-007 | Read-only server | All writes throw errors | 25 |
-| COMPAT-DEGRADE-008 | Missing nested resources | Nested methods return null | 20 |
-| COMPAT-DEGRADE-009 | Partial format support | Fallback to JSON | 20 |
-| COMPAT-DEGRADE-010 | Feature detection caching | Don't re-probe on every request | 15 |
+| Test ID            | Scenario                  | Expected Behavior                 | Lines |
+| ------------------ | ------------------------- | --------------------------------- | ----- |
+| COMPAT-DEGRADE-001 | Part 2 unavailable        | Client works in Part 1-only mode  | 25    |
+| COMPAT-DEGRADE-002 | No CRUD conformance       | Create/update/delete throw errors | 25    |
+| COMPAT-DEGRADE-003 | No subsystems conformance | Subsystems method unavailable     | 20    |
+| COMPAT-DEGRADE-004 | No advanced filtering     | Complex queries throw errors      | 25    |
+| COMPAT-DEGRADE-005 | No SensorML format        | SensorML requests throw errors    | 20    |
+| COMPAT-DEGRADE-006 | Single resource type      | Only systems available            | 25    |
+| COMPAT-DEGRADE-007 | Read-only server          | All writes throw errors           | 25    |
+| COMPAT-DEGRADE-008 | Missing nested resources  | Nested methods return null        | 20    |
+| COMPAT-DEGRADE-009 | Partial format support    | Fallback to JSON                  | 20    |
+| COMPAT-DEGRADE-010 | Feature detection caching | Don't re-probe on every request   | 15    |
 
 **Sample Test Implementation:**
 
@@ -1505,34 +1603,35 @@ describe('Graceful Degradation', () => {
         if (url.includes('/conformance')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
-              conformsTo: [
-                'http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core',
-                'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/api-common',
-                'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/system'
-              ]
-            })
+            json: () =>
+              Promise.resolve({
+                conformsTo: [
+                  'http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core',
+                  'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/api-common',
+                  'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/system',
+                ],
+              }),
           });
         } else if (url.includes('/systems')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ items: [], links: [] })
+            json: () => Promise.resolve({ items: [], links: [] }),
           });
         } else if (url.includes('/datastreams')) {
           return Promise.resolve({ ok: false, status: 404 });
         }
       });
-      
+
       const client = new CSAPIClient('http://test.csapi.org/');
       await client.initialize();
-      
+
       // Part 1 available
       expect(client.systems).toBeDefined();
       await client.systems.list();
-      
+
       // Part 2 unavailable
       expect(client.datastreams).toBeNull();
-      
+
       try {
         await client.datastreams.list();
       } catch (error) {
@@ -1540,64 +1639,65 @@ describe('Graceful Degradation', () => {
       }
     });
   });
-  
+
   describe('No CRUD Conformance', () => {
     it('throws errors on create/update/delete', async () => {
       globalThis.fetch = jest.fn().mockImplementation((url: string) => {
         if (url.includes('/conformance')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
-              conformsTo: [
-                'http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core',
-                'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/api-common',
-                'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/system'
-                // No create-replace-delete conformance
-              ]
-            })
+            json: () =>
+              Promise.resolve({
+                conformsTo: [
+                  'http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core',
+                  'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/api-common',
+                  'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/system',
+                  // No create-replace-delete conformance
+                ],
+              }),
           });
         } else if (url.includes('/systems')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ items: [], links: [] })
+            json: () => Promise.resolve({ items: [], links: [] }),
           });
         }
       });
-      
+
       const client = new CSAPIClient('http://test.csapi.org/');
       await client.initialize();
-      
+
       expect(client.capabilities.hasCRUD).toBe(false);
-      
+
       // GET works
       await client.systems.list();
-      
+
       // POST throws error
-      await expect(
-        client.systems.create({ name: 'Test' })
-      ).rejects.toThrow(ConformanceError);
-      
+      await expect(client.systems.create({ name: 'Test' })).rejects.toThrow(
+        ConformanceError
+      );
+
       // PUT throws error
       await expect(
         client.systems.replace('sys-123', { name: 'Test' })
       ).rejects.toThrow(ConformanceError);
-      
+
       // DELETE throws error
-      await expect(
-        client.systems.delete('sys-123')
-      ).rejects.toThrow(ConformanceError);
+      await expect(client.systems.delete('sys-123')).rejects.toThrow(
+        ConformanceError
+      );
     });
   });
-  
+
   describe('Format Fallback', () => {
     it('falls back to JSON when SensorML unavailable', async () => {
       const client = new CSAPIClient('http://test.csapi.org/');
       client.capabilities.hasSensorML = false;
       client.capabilities.hasGeoJSON = true;
-      
+
       // Request SensorML but get GeoJSON
       const systems = await client.systems.list({ f: 'sml+json' });
-      
+
       // Should fallback to GeoJSON
       expect(systems.type).toBe('FeatureCollection');
     });
@@ -1640,19 +1740,24 @@ export const TEST_SERVERS: ServerConfig[] = [
     auth: {
       type: 'basic',
       username: process.env.OSH_USERNAME || 'ogc',
-      password: process.env.OSH_PASSWORD || 'ogc'
+      password: process.env.OSH_PASSWORD || 'ogc',
     },
-    quirks: ['base32-ids', 'async-servlet', 'websocket-streaming']
+    quirks: ['base32-ids', 'async-servlet', 'websocket-streaming'],
   },
   {
     name: '52North',
     url: 'https://csa.demo.52north.org/',
     profile: 'partial',
     ssl: {
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
     },
-    quirks: ['expired-ssl', 'incomplete-conformance', 'part2-500-errors', 'mixed-id-formats']
-  }
+    quirks: [
+      'expired-ssl',
+      'incomplete-conformance',
+      'part2-500-errors',
+      'mixed-id-formats',
+    ],
+  },
 ];
 ```
 
@@ -1668,11 +1773,11 @@ export async function checkServerAvailability(
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
+
     const response = await fetch(`${url}/conformance`, {
-      signal: controller.signal
+      signal: controller.signal,
     });
-    
+
     clearTimeout(timeoutId);
     return response.ok;
   } catch (error) {
@@ -1680,18 +1785,20 @@ export async function checkServerAvailability(
   }
 }
 
-export async function checkAllServersAvailability(): Promise<Map<string, boolean>> {
+export async function checkAllServersAvailability(): Promise<
+  Map<string, boolean>
+> {
   const availability = new Map<string, boolean>();
-  
+
   for (const server of TEST_SERVERS) {
     const available = await checkServerAvailability(server.url);
     availability.set(server.name, available);
-    
+
     if (!available) {
       console.warn(`Server ${server.name} unavailable - tests will be skipped`);
     }
   }
-  
+
   return availability;
 }
 ```
@@ -1701,28 +1808,31 @@ export async function checkAllServersAvailability(): Promise<Map<string, boolean
 ```typescript
 // test/utils/fixture-recorder.ts
 
-export async function recordServerFixtures(server: ServerConfig, outputDir: string): Promise<void> {
+export async function recordServerFixtures(
+  server: ServerConfig,
+  outputDir: string
+): Promise<void> {
   const client = new CSAPIClient(server.url, {
     auth: server.auth,
-    ssl: server.ssl
+    ssl: server.ssl,
   });
-  
+
   await client.initialize();
-  
+
   // Record conformance
   const conformance = await client.getConformance();
   await fs.writeFile(
     path.join(outputDir, server.name, 'conformance.json'),
     JSON.stringify(conformance, null, 2)
   );
-  
+
   // Record systems (first page)
   const systems = await client.systems.list({ limit: 10 });
   await fs.writeFile(
     path.join(outputDir, server.name, 'systems.json'),
     JSON.stringify(systems, null, 2)
   );
-  
+
   // Record deployments
   if (client.capabilities.hasDeployments) {
     const deployments = await client.deployments.list({ limit: 10 });
@@ -1731,7 +1841,7 @@ export async function recordServerFixtures(server: ServerConfig, outputDir: stri
       JSON.stringify(deployments, null, 2)
     );
   }
-  
+
   // Record datastreams
   if (client.capabilities.hasDataStreams) {
     try {
@@ -1741,10 +1851,12 @@ export async function recordServerFixtures(server: ServerConfig, outputDir: stri
         JSON.stringify(datastreams, null, 2)
       );
     } catch (error) {
-      console.warn(`DataStreams unavailable for ${server.name}: ${error.message}`);
+      console.warn(
+        `DataStreams unavailable for ${server.name}: ${error.message}`
+      );
     }
   }
-  
+
   console.log(`Fixtures recorded for ${server.name}`);
 }
 ```
@@ -1759,15 +1871,15 @@ module.exports = {
     {
       displayName: 'offline',
       testMatch: ['**/*.offline.spec.ts'],
-      testEnvironment: 'node'
+      testEnvironment: 'node',
     },
     {
       displayName: 'live',
       testMatch: ['**/*.live.spec.ts'],
       testEnvironment: 'node',
-      testTimeout: 30000  // Longer timeout for live tests
-    }
-  ]
+      testTimeout: 30000, // Longer timeout for live tests
+    },
+  ],
 };
 ```
 
@@ -1792,15 +1904,18 @@ module.exports = {
 ### 7.1 Rate Limiting Considerations
 
 **OpenSensorHub:**
+
 - Unknown rate limits (assumed generous for public demo)
 - Shared server - be considerate
 - Avoid excessive write operations
 
 **52°North:**
+
 - Unknown rate limits
 - Development server - may be more restrictive
 
 **Best Practices:**
+
 - Limit concurrent requests (max 5-10)
 - Add delays between requests (100-200ms)
 - Use pagination to reduce request count
@@ -1816,19 +1931,19 @@ export class RequestThrottler {
   private activeRequests = 0;
   private maxConcurrent: number;
   private minDelay: number;
-  
+
   constructor(maxConcurrent: number = 5, minDelayMs: number = 100) {
     this.maxConcurrent = maxConcurrent;
     this.minDelay = minDelayMs;
   }
-  
+
   async execute<T>(fn: () => Promise<T>): Promise<T> {
     while (this.activeRequests >= this.maxConcurrent) {
       await this.waitForSlot();
     }
-    
+
     this.activeRequests++;
-    
+
     try {
       const result = await fn();
       await this.delay();
@@ -1837,13 +1952,13 @@ export class RequestThrottler {
       this.activeRequests--;
     }
   }
-  
+
   private async waitForSlot(): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, 50));
+    return new Promise((resolve) => setTimeout(resolve, 50));
   }
-  
+
   private async delay(): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, this.minDelay));
+    return new Promise((resolve) => setTimeout(resolve, this.minDelay));
   }
 }
 
@@ -1860,50 +1975,50 @@ const deployments = await throttler.execute(() => client.deployments.list());
 
 ### 8.1 Test Implementation Summary
 
-| Test Category | Test Count | Lines per Test | Total Lines | Priority |
-|---------------|-----------|----------------|-------------|----------|
-| Conformance Detection | 6 | 15-20 | 100 | **CRITICAL** |
-| Full Conformance (OSH) | 20 | 20-25 | 400-500 | **HIGH** |
-| Partial Conformance (52N) | 15 | 20-27 | 300-400 | **HIGH** |
-| Server Availability | 5 | 20 | 100 | **CRITICAL** |
-| Graceful Degradation | 10 | 15-25 | 200-250 | **MEDIUM** |
-| **TOTAL** | **56** | **~22 avg** | **1100-1400** | |
+| Test Category             | Test Count | Lines per Test | Total Lines   | Priority     |
+| ------------------------- | ---------- | -------------- | ------------- | ------------ |
+| Conformance Detection     | 6          | 15-20          | 100           | **CRITICAL** |
+| Full Conformance (OSH)    | 20         | 20-25          | 400-500       | **HIGH**     |
+| Partial Conformance (52N) | 15         | 20-27          | 300-400       | **HIGH**     |
+| Server Availability       | 5          | 20             | 100           | **CRITICAL** |
+| Graceful Degradation      | 10         | 15-25          | 200-250       | **MEDIUM**   |
+| **TOTAL**                 | **56**     | **~22 avg**    | **1100-1400** |              |
 
 ### 8.2 Infrastructure Implementation
 
-| Component | Lines | Priority |
-|-----------|-------|----------|
-| Server Configuration | 50-75 | **CRITICAL** |
-| Availability Checker | 50-75 | **CRITICAL** |
-| Fixture Recorder | 100-150 | **HIGH** |
-| Request Throttler | 50-75 | **MEDIUM** |
-| Test Utilities | 100-150 | **MEDIUM** |
-| **TOTAL** | **350-525** | |
+| Component            | Lines       | Priority     |
+| -------------------- | ----------- | ------------ |
+| Server Configuration | 50-75       | **CRITICAL** |
+| Availability Checker | 50-75       | **CRITICAL** |
+| Fixture Recorder     | 100-150     | **HIGH**     |
+| Request Throttler    | 50-75       | **MEDIUM**   |
+| Test Utilities       | 100-150     | **MEDIUM**   |
+| **TOTAL**            | **350-525** |              |
 
 ### 8.3 Fixture Requirements
 
-| Fixture Category | Count | Priority |
-|------------------|-------|----------|
-| OSH Conformance | 1 | **CRITICAL** |
-| OSH Systems | 1 | **HIGH** |
-| OSH Deployments | 1 | **HIGH** |
-| OSH DataStreams | 1 | **HIGH** |
-| OSH Observations | 1 | **HIGH** |
-| 52N Conformance | 1 | **CRITICAL** |
-| 52N Systems | 1 | **HIGH** |
-| 52N Deployments | 1 | **HIGH** |
-| Error Responses | 5-10 | **MEDIUM** |
-| **TOTAL** | **13-18** | |
+| Fixture Category | Count     | Priority     |
+| ---------------- | --------- | ------------ |
+| OSH Conformance  | 1         | **CRITICAL** |
+| OSH Systems      | 1         | **HIGH**     |
+| OSH Deployments  | 1         | **HIGH**     |
+| OSH DataStreams  | 1         | **HIGH**     |
+| OSH Observations | 1         | **HIGH**     |
+| 52N Conformance  | 1         | **CRITICAL** |
+| 52N Systems      | 1         | **HIGH**     |
+| 52N Deployments  | 1         | **HIGH**     |
+| Error Responses  | 5-10      | **MEDIUM**   |
+| **TOTAL**        | **13-18** |              |
 
 ### 8.4 Total Implementation Effort
 
-| Component | Lines | Priority | Estimated Time |
-|-----------|-------|----------|----------------|
-| Test Implementation | 1100-1400 | **CRITICAL/HIGH** | 20-28 hours |
-| Infrastructure | 350-525 | **CRITICAL/HIGH** | 6-10 hours |
-| Fixtures | 13-18 files | **CRITICAL/HIGH** | 3-5 hours |
-| Documentation | 100-150 | **MEDIUM** | 2-3 hours |
-| **TOTAL** | **1550-2075 lines** | | **31-46 hours** |
+| Component           | Lines               | Priority          | Estimated Time  |
+| ------------------- | ------------------- | ----------------- | --------------- |
+| Test Implementation | 1100-1400           | **CRITICAL/HIGH** | 20-28 hours     |
+| Infrastructure      | 350-525             | **CRITICAL/HIGH** | 6-10 hours      |
+| Fixtures            | 13-18 files         | **CRITICAL/HIGH** | 3-5 hours       |
+| Documentation       | 100-150             | **MEDIUM**        | 2-3 hours       |
+| **TOTAL**           | **1550-2075 lines** |                   | **31-46 hours** |
 
 ---
 
@@ -1918,6 +2033,7 @@ const deployments = await throttler.execute(() => client.deployments.list());
 **Tests:** 11 tests, ~200 lines
 
 **Deliverables:**
+
 - Server availability checker
 - Conformance detection tests
 - Server configuration infrastructure
@@ -1931,6 +2047,7 @@ const deployments = await throttler.execute(() => client.deployments.list());
 **Tests:** 35 tests, ~700-900 lines
 
 **Deliverables:**
+
 - OpenSensorHub full conformance tests
 - 52°North partial conformance tests
 - Fixture recording utilities
@@ -1944,6 +2061,7 @@ const deployments = await throttler.execute(() => client.deployments.list());
 **Tests:** 10 tests, ~200-250 lines
 
 **Deliverables:**
+
 - Graceful degradation tests
 - Request throttling
 - Advanced test utilities
@@ -1957,6 +2075,7 @@ const deployments = await throttler.execute(() => client.deployments.list());
 **Problem:** Tests depend on external servers that may be unavailable or slow.
 
 **Mitigation:**
+
 - Implement server availability checks before tests
 - Skip tests gracefully if server unavailable
 - Run live tests nightly or manually, not in CI
@@ -1967,6 +2086,7 @@ const deployments = await throttler.execute(() => client.deployments.list());
 **Problem:** Live data changes over time, tests may become inconsistent.
 
 **Mitigation:**
+
 - Don't assert exact values (counts, IDs)
 - Assert patterns and structures instead
 - Use relative time queries (last 24 hours, not absolute dates)
@@ -1977,6 +2097,7 @@ const deployments = await throttler.execute(() => client.deployments.list());
 **Problem:** OSH requires credentials, must not commit to repo.
 
 **Mitigation:**
+
 - Use environment variables for credentials
 - Provide default test credentials (public demo server)
 - Document credential setup in README
@@ -1987,6 +2108,7 @@ const deployments = await throttler.execute(() => client.deployments.list());
 **Problem:** 52N has expired certificate, requires bypass.
 
 **Mitigation:**
+
 - Allow SSL validation bypass for specific test servers only
 - Document security implications
 - Never disable SSL in production code
@@ -1997,6 +2119,7 @@ const deployments = await throttler.execute(() => client.deployments.list());
 **Problem:** Unknown rate limits, may hit limits during tests.
 
 **Mitigation:**
+
 - Implement request throttling (max 5-10 concurrent)
 - Add delays between requests (100-200ms)
 - Use pagination to reduce request count
@@ -2009,12 +2132,14 @@ const deployments = await throttler.execute(() => client.deployments.list());
 ### 11.1 Server Documentation
 
 **OpenSensorHub:**
+
 - Repository: https://github.com/opensensorhub/osh-core
 - Documentation: https://github.com/opensensorhub/osh-core/wiki
 - Live Server: http://45.55.99.236:8080/sensorhub/api
 - Authentication: HTTP Basic Auth (username: ogc, password: ogc)
 
 **52°North:**
+
 - Repository: https://github.com/52North/connected-systems-pygeoapi
 - Documentation: https://52north.github.io/connected-systems-pygeoapi/
 - Live Server: https://csa.demo.52north.org/
@@ -2034,28 +2159,29 @@ const deployments = await throttler.execute(() => client.deployments.list());
 
 ### Appendix A: Server Comparison Matrix
 
-| Feature | OpenSensorHub | 52°North | Difference |
-|---------|---------------|----------|------------|
-| **Language** | Java | Python | Implementation approach |
-| **Framework** | Spring Boot | Quart/pygeoapi | Web framework |
-| **Conformance** | 33 classes (100%) | ~15-18 classes (Part 1 only) | **Major difference** |
-| **Part 1** | Full | Full | Same |
-| **Part 2** | Full | Partial (DataStreams only) | **Major difference** |
-| **Part 3** | Full | None | **Major difference** |
-| **Systems** | 6 live | 3 static | OSH more data |
-| **Deployments** | 3 | 1 | OSH more data |
-| **DataStreams** | 28 live | 0 (500 errors) | **Major difference** |
-| **Observations** | Thousands | 0 (500 errors) | **Major difference** |
-| **ID Format** | Base32 strings | UUIDs/URNs/strings | Different formats |
-| **Authentication** | HTTP Basic Auth | None | OSH secured |
-| **SSL Certificate** | Valid | Expired | 52N requires bypass |
-| **Streaming** | WebSocket/MQTT | None | **Major difference** |
-| **Use Case** | Drones, mobile | Oceanographic buoys | Different domains |
-| **Maturity** | Production | Development | **Major difference** |
+| Feature             | OpenSensorHub     | 52°North                     | Difference              |
+| ------------------- | ----------------- | ---------------------------- | ----------------------- |
+| **Language**        | Java              | Python                       | Implementation approach |
+| **Framework**       | Spring Boot       | Quart/pygeoapi               | Web framework           |
+| **Conformance**     | 33 classes (100%) | ~15-18 classes (Part 1 only) | **Major difference**    |
+| **Part 1**          | Full              | Full                         | Same                    |
+| **Part 2**          | Full              | Partial (DataStreams only)   | **Major difference**    |
+| **Part 3**          | Full              | None                         | **Major difference**    |
+| **Systems**         | 6 live            | 3 static                     | OSH more data           |
+| **Deployments**     | 3                 | 1                            | OSH more data           |
+| **DataStreams**     | 28 live           | 0 (500 errors)               | **Major difference**    |
+| **Observations**    | Thousands         | 0 (500 errors)               | **Major difference**    |
+| **ID Format**       | Base32 strings    | UUIDs/URNs/strings           | Different formats       |
+| **Authentication**  | HTTP Basic Auth   | None                         | OSH secured             |
+| **SSL Certificate** | Valid             | Expired                      | 52N requires bypass     |
+| **Streaming**       | WebSocket/MQTT    | None                         | **Major difference**    |
+| **Use Case**        | Drones, mobile    | Oceanographic buoys          | Different domains       |
+| **Maturity**        | Production        | Development                  | **Major difference**    |
 
 ### Appendix B: Quirk Catalog
 
 **OpenSensorHub Quirks:**
+
 1. Base32-encoded IDs (not UUIDs)
 2. Async servlet architecture (may return 202 Accepted)
 3. WebSocket/MQTT streaming (non-REST)
@@ -2063,6 +2189,7 @@ const deployments = await throttler.execute(() => client.deployments.list());
 5. Large pagination limits (max 10,000)
 
 **52°North Quirks:**
+
 1. Expired SSL certificate (requires bypass)
 2. Incomplete conformance declaration (only 1 class declared)
 3. Part 2 500 errors (DataStreams/Observations unavailable)
@@ -2072,12 +2199,14 @@ const deployments = await throttler.execute(() => client.deployments.list());
 ### Appendix C: Expected Live Data
 
 **OpenSensorHub (as of Feb 2026):**
+
 - **Systems**: 6 (DJI Matrice drones, Android phones)
 - **Deployments**: 3 (drone missions)
 - **DataStreams**: 28 (location, velocity, acceleration, attitude, IMU, GPS, health)
 - **Observations**: Thousands (historical from 2023-2024, live streaming)
 
 **52°North (as of Feb 2026):**
+
 - **Systems**: 3 (YSI 5400-526 sensor, Valeport 5300-909 CTD, RBR platform)
 - **Deployments**: 1 (Baltic Sea buoy testing, coordinates ~14.03°E, 54.33°N)
 - **Procedures**: 1 (Aanderaa DCPS TD304 sensor type)

@@ -5,6 +5,7 @@
 **Version:** 1.2  
 **Date:** February 14, 2026  
 **Source documents:**
+
 - `docs/implementation/phase-1-code-review.md` (Findings F1–F9)
 - `docs/implementation/phase-1-fix-report.md` (Fixes for F1, F5)
 - `docs/implementation/phase-2.2-code-review.md` (Findings F1–F15, Root Cause Analysis)
@@ -69,32 +70,32 @@ For each resource type being implemented, the test suite must include:
 
 **What happened:** Query options were over-copied from Systems when implementing Deployments, and some resource-specific fields were not tested because they looked "similar enough."
 
-**Why it matters:** Each resource type has a distinct set of applicable query parameters. Copying tests from a previous resource type and changing the method name is not sufficient — you must verify the correct fields for *this* resource type.
+**Why it matters:** Each resource type has a distinct set of applicable query parameters. Copying tests from a previous resource type and changing the method name is not sufficient — you must verify the correct fields for _this_ resource type.
 
 **Query parameter applicability (from the Implementation Guide §6):**
 
-| Parameter | Systems | Deployments | Procedures | SamplingFeatures | Properties | DataStreams | Observations | ControlStreams | Commands |
-|-----------|---------|-------------|------------|-----------------|------------|-------------|-------------|----------------|----------|
-| `id` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `uid` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | — |
-| `q` (keyword) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | ✅ | — |
-| `bbox` | ✅ | ✅ | — | ✅ | — | — | — | — | — |
-| `datetime` | ✅ | ✅ | — | ✅ | — | ✅ | ✅ | ✅ | ✅ |
-| `limit` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `offset` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — | — | — |
-| `cursor` | — | — | — | — | — | — | ✅ | ✅ | ✅ |
-| `f` (format) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `parent` | ✅ | ✅ | — | — | — | — | — | — | — |
-| `recursive` | ✅ | ✅ | — | — | — | — | — | — | — |
-| `system` | — | — | — | — | — | ✅ | — | ✅ | — |
-| `procedure` | ✅ | — | — | — | — | ✅ | — | ✅ | — |
-| `foi` | — | — | — | — | — | ✅ | ✅ | — | — |
-| `observedProperty` | — | — | — | — | — | ✅ | — | — | — |
-| `controlledProperty` | — | — | — | — | — | — | — | ✅ | — |
-| `phenomenonTime` | — | — | — | — | — | — | ✅ | — | — |
-| `resultTime` | — | — | — | — | — | — | ✅ | — | — |
-| `issueTime` | — | — | — | — | — | — | — | — | ✅ |
-| `executionTime` | — | — | — | — | — | — | — | — | ✅ |
+| Parameter            | Systems | Deployments | Procedures | SamplingFeatures | Properties | DataStreams | Observations | ControlStreams | Commands |
+| -------------------- | ------- | ----------- | ---------- | ---------------- | ---------- | ----------- | ------------ | -------------- | -------- |
+| `id`                 | ✅      | ✅          | ✅         | ✅               | ✅         | ✅          | ✅           | ✅             | ✅       |
+| `uid`                | ✅      | ✅          | ✅         | ✅               | ✅         | ✅          | —            | ✅             | —        |
+| `q` (keyword)        | ✅      | ✅          | ✅         | ✅               | ✅         | ✅          | —            | ✅             | —        |
+| `bbox`               | ✅      | ✅          | —          | ✅               | —          | —           | —            | —              | —        |
+| `datetime`           | ✅      | ✅          | —          | ✅               | —          | ✅          | ✅           | ✅             | ✅       |
+| `limit`              | ✅      | ✅          | ✅         | ✅               | ✅         | ✅          | ✅           | ✅             | ✅       |
+| `offset`             | ✅      | ✅          | ✅         | ✅               | ✅         | ✅          | —            | —              | —        |
+| `cursor`             | —       | —           | —          | —                | —          | —           | ✅           | ✅             | ✅       |
+| `f` (format)         | ✅      | ✅          | ✅         | ✅               | ✅         | ✅          | ✅           | ✅             | ✅       |
+| `parent`             | ✅      | ✅          | —          | —                | —          | —           | —            | —              | —        |
+| `recursive`          | ✅      | ✅          | —          | —                | —          | —           | —            | —              | —        |
+| `system`             | —       | —           | —          | —                | —          | ✅          | —            | ✅             | —        |
+| `procedure`          | ✅      | —           | —          | —                | —          | ✅          | —            | ✅             | —        |
+| `foi`                | —       | —           | —          | —                | —          | ✅          | ✅           | —              | —        |
+| `observedProperty`   | —       | —           | —          | —                | —          | ✅          | —            | —              | —        |
+| `controlledProperty` | —       | —           | —          | —                | —          | —           | —            | ✅             | —        |
+| `phenomenonTime`     | —       | —           | —          | —                | —          | —           | ✅           | —              | —        |
+| `resultTime`         | —       | —           | —          | —                | —          | —           | ✅           | —              | —        |
+| `issueTime`          | —       | —           | —          | —                | —          | —           | —            | —              | ✅       |
+| `executionTime`      | —       | —           | —          | —                | —          | —           | —            | —              | ✅       |
 
 **Action:** Before writing tests, consult this table. Write one test for each ✅ in your resource type's column.
 
@@ -113,6 +114,7 @@ if (key === 'datetime' || key === 'phenomenonTime' || key === 'resultTime' || ke
 **Current temporal keys in the condition:** `datetime`, `phenomenonTime`, `resultTime`, `issueTime`, `executionTime`.
 
 **Action:**
+
 - Issues #7–#9 (Procedures, SamplingFeatures, Properties): These resource types do NOT add new temporal keys. No changes needed to `buildQueryString`.
 - Issues #10–#13 (DataStreams, Observations, ControlStreams, Commands): These introduce `phenomenonTime`, `resultTime`, `issueTime`, `executionTime`. **Verify** that each temporal key used in your `QueryOptions` interface is already present in the `buildQueryString` condition. If it's not, flag it — do not add it yourself (that's infrastructure, owned by Issue #3's scope).
 
@@ -131,6 +133,7 @@ When copying Systems methods to create Deployments methods, it's easy to change 
 **Why it matters:** If `getProcedures()` calls `this.assertResourceAvailable('systems')` instead of `this.assertResourceAvailable('procedures')`, it will silently check access for the wrong resource — the method appears to work but validates against the wrong capability.
 
 **Action:** After implementing all methods for a resource type, grep for the resource type string to verify every method uses the correct one:
+
 - `procedures` for Issue #7
 - `samplingFeatures` for Issue #8
 - `properties` for Issue #9
@@ -148,6 +151,7 @@ When copying Systems methods to create Deployments methods, it's easy to change 
 **Why it matters:** Creating new files increases merge complexity, splits related logic, and crosses issue scope boundaries.
 
 **Action for every Phase 2 issue:**
+
 - Methods go into `src/ogc-api/csapi/url_builder.ts` (modify only)
 - Tests go into `src/ogc-api/csapi/url_builder.spec.ts` (modify only)
 - Do NOT create new `.ts` files
@@ -173,6 +177,7 @@ When copying Systems methods to create Deployments methods, it's easy to change 
 **Why it matters:** Each issue is naturally treated as an isolated unit of work. When the same logic appears in the issue you just closed, the reflex is "that's done, don't touch it" instead of "that's shared infrastructure, extract it."
 
 **Action:** If your implementation requires logic that already exists in a method from a previous issue, do NOT duplicate it. Instead:
+
 1. If the existing logic can be called directly, call it
 2. If it needs to be extracted into a shared helper, flag it as a comment on the issue — do not make the extraction yourself (that crosses issue scope)
 3. Do not copy-paste method bodies and change names/strings — this is the #1 source of DRY violations in our history
@@ -186,6 +191,7 @@ When copying Systems methods to create Deployments methods, it's easy to change 
 **Why it matters:** A single server exercises one implementation's conventions. Real interoperability bugs hide in the gaps between implementations. Three smoke tests against the same server gave us false confidence that discovery was solid.
 
 **Action:** Every phase-end smoke test should hit both live servers:
+
 - **OpenSensorHub** (`http://45.55.99.236:8080/sensorhub/api`) — requires Basic auth. Credentials are NOT stored in the repository. If you have forgotten them, ask the human collaborator.
 - **52North** (`https://csa.demo.52north.org/`) — no auth, but requires `-SkipCertificateCheck` (expired SSL cert).
 
@@ -193,11 +199,11 @@ When copying Systems methods to create Deployments methods, it's easy to change 
 
 ## Lesson 9: "Works By Luck" Is a Bug
 
-**What happened:** Convention 3 parsing works on 52North *only* because HTML links (no query params) happen to appear before JSON links (with query params) in the server's response. If link ordering changed, discovery would silently break. The code produced correct output for the wrong reason.
+**What happened:** Convention 3 parsing works on 52North _only_ because HTML links (no query params) happen to appear before JSON links (with query params) in the server's response. If link ordering changed, discovery would silently break. The code produced correct output for the wrong reason.
 
 **Why it matters:** Code that succeeds due to incidental conditions (response ordering, favorable data shapes, specific server behavior) is fragile. It passes tests and smoke tests but breaks when assumptions shift.
 
-**Action:** When testing against live servers, look for cases where our code succeeds — then ask *why* it succeeds. If the answer depends on response ordering or other incidental server behavior, that's a latent bug to track.
+**Action:** When testing against live servers, look for cases where our code succeeds — then ask _why_ it succeeds. If the answer depends on response ordering or other incidental server behavior, that's a latent bug to track.
 
 ---
 

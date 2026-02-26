@@ -9,13 +9,13 @@
 
 ## Verification Status
 
-| Check | Result |
-|-------|--------|
-| `tsc --noEmit` | ✅ Clean |
-| CSAPI unit tests (url_builder, model, helpers) | ✅ All passing |
-| Endpoint integration tests | ✅ 82/83 passing (1 pre-existing non-CSAPI failure) |
-| `assertResourceAvailable('procedures')` in all 8 methods | ✅ Verified via grep |
-| Lessons Learned L1–L7 compliance | ✅ All applied |
+| Check                                                    | Result                                              |
+| -------------------------------------------------------- | --------------------------------------------------- |
+| `tsc --noEmit`                                           | ✅ Clean                                            |
+| CSAPI unit tests (url_builder, model, helpers)           | ✅ All passing                                      |
+| Endpoint integration tests                               | ✅ 82/83 passing (1 pre-existing non-CSAPI failure) |
+| `assertResourceAvailable('procedures')` in all 8 methods | ✅ Verified via grep                                |
+| Lessons Learned L1–L7 compliance                         | ✅ All applied                                      |
 
 ---
 
@@ -23,10 +23,10 @@
 
 ### Issue #7: Procedures Methods
 
-| File | Lines Changed | Phase 2.3 Lines |
-|------|--------------|-----------------|
-| `src/ogc-api/csapi/url_builder.ts` | +168 (624 → 793) | Lines 2, 626–793 |
-| `src/ogc-api/csapi/url_builder.spec.ts` | +186 (893 → 1079) | Lines 893–1079 |
+| File                                    | Lines Changed     | Phase 2.3 Lines  |
+| --------------------------------------- | ----------------- | ---------------- |
+| `src/ogc-api/csapi/url_builder.ts`      | +168 (624 → 793)  | Lines 2, 626–793 |
+| `src/ogc-api/csapi/url_builder.spec.ts` | +186 (893 → 1079) | Lines 893–1079   |
 
 Total production code: 168 new lines (8 methods + JSDoc)  
 Total test code: 186 new lines (20 tests in 7 describe blocks)
@@ -116,12 +116,12 @@ This is strict-mode safe — truthiness check on the captured value narrows corr
 
 The 20 Procedures tests demonstrate a measurable improvement in test discipline over the 16 Deployments tests added in Phase 2.2:
 
-| Quality metric | Deployments (Phase 2.2) | Procedures (Phase 2.3) |
-|---------------|-------------------------|------------------------|
-| Assertion style | Mixed (`toBe` + `toContain`) | All exact `toBe()` |
-| `offset` test with actual value | ❌ | ✅ (line 920) |
-| `f` (format) parameter test | ❌ | ✅ (line 940) |
-| Resource validation coverage | 1 of 8 methods checked | 8 of 8 methods checked |
+| Quality metric                  | Deployments (Phase 2.2)      | Procedures (Phase 2.3) |
+| ------------------------------- | ---------------------------- | ---------------------- |
+| Assertion style                 | Mixed (`toBe` + `toContain`) | All exact `toBe()`     |
+| `offset` test with actual value | ❌                           | ✅ (line 920)          |
+| `f` (format) parameter test     | ❌                           | ✅ (line 940)          |
+| Resource validation coverage    | 1 of 8 methods checked       | 8 of 8 methods checked |
 
 This is a direct result of applying Lesson L1 (test checklist) from the lessons-learned governance doc. The test quality improvement between Phase 2.2 and Phase 2.3 is evidence that the lessons-learned process works.
 
@@ -184,16 +184,16 @@ This is the same pattern used for `DeploymentQueryOptions` (which extends with `
 
 All Procedure methods correctly point to Part 1 spec sections:
 
-| Method | `@see` target |
-|--------|--------------|
-| `getProcedures` | `23-001/23-001.html#_procedure_resources` |
-| `getProcedure` | `23-001/23-001.html#_procedure_resources` |
-| `createProcedure` | `23-001/23-001.html#_procedure_resources` |
-| `updateProcedure` | `23-001/23-001.html#_procedure_resources` |
-| `deleteProcedure` | `23-001/23-001.html#_procedure_resources` |
-| `getProcedureSystems` | `23-001/23-001.html#_procedure_resources` |
+| Method                    | `@see` target                              |
+| ------------------------- | ------------------------------------------ |
+| `getProcedures`           | `23-001/23-001.html#_procedure_resources`  |
+| `getProcedure`            | `23-001/23-001.html#_procedure_resources`  |
+| `createProcedure`         | `23-001/23-001.html#_procedure_resources`  |
+| `updateProcedure`         | `23-001/23-001.html#_procedure_resources`  |
+| `deleteProcedure`         | `23-001/23-001.html#_procedure_resources`  |
+| `getProcedureSystems`     | `23-001/23-001.html#_procedure_resources`  |
 | `getProcedureDataStreams` | `23-002/23-002.html#_datastream_resources` |
-| `getProcedureHistory` | `23-001/23-001.html#_procedure_history` |
+| `getProcedureHistory`     | `23-001/23-001.html#_procedure_history`    |
 
 `getProcedureDataStreams` correctly references Part 2 spec (`23-002`) since datastreams are a Part 2 resource. `getProcedureHistory` correctly uses the `_procedure_history` anchor (not `_procedure_resources`). Both follow the patterns established by `getSystemDataStreams` (Part 2 link) and `getSystemHistory` (`_system_history` anchor).
 
@@ -204,6 +204,7 @@ All Procedure methods correctly point to Part 1 spec sections:
 Systems have `getSystemSubsystems`, Deployments have `getDeploymentSubdeployments`. Procedures have neither — there is no `getProcedureSubprocedures` method. This is correct: the OGC Connected Systems spec does not define hierarchical nesting for procedures. They are leaf resources.
 
 The method set is exactly right:
+
 - **CRUD:** get list, get single, create, update, delete (5 methods)
 - **Associations:** systems implementing the procedure, datastreams using the procedure (2 methods)
 - **History:** version history (1 method)
@@ -220,8 +221,13 @@ Both `getProcedureSystems` and `getProcedureDataStreams` have tests with and wit
 
 ```typescript
 it('getProcedureSystems returns correct URL with pagination', () => {
-  const url = makeProcBuilder().getProcedureSystems('proc-001', { limit: 5, offset: 10 });
-  expect(url).toBe('https://example.com/.../procedures/proc-001/systems?limit=5&offset=10');
+  const url = makeProcBuilder().getProcedureSystems('proc-001', {
+    limit: 5,
+    offset: 10,
+  });
+  expect(url).toBe(
+    'https://example.com/.../procedures/proc-001/systems?limit=5&offset=10'
+  );
 });
 ```
 
@@ -243,16 +249,16 @@ This is the same pattern used for `makeDepBuilder()` (repeated in 6 Deployment d
 
 ## Summary
 
-| Category | Count | Items |
-|----------|-------|-------|
-| Phase 2.2 findings resolved | **3** | P2-F1 (dead code), P2-F2 (DRY), P2-F3 (strict-mode) |
-| Phase 2.2 findings partially resolved | **1** | P2-F8 (offset test — fixed for Procedures, still open for Systems/Deployments) |
-| Phase 2.2 findings still open | **4** | P2-F4 (weak datetime), P2-F5 (parent/recursive), P2-F6 (pagination), P2-F7 (cursor) |
-| Phase 1 findings still open | **2** | P1-F4 (exports), P1-F6 (temporal keys) |
-| New — positive findings | **6** | F1 (test quality improvement), F2 (validation coverage), F3 (JSDoc quality), F5 (spec links), F6 (correct method set), F7 (association pagination) |
-| New — informational | **1** | F4 (type alias allows unsupported params) |
-| New — consistency note | **1** | F8 (repeated factory function — by design) |
-| **New bugs or design issues** | **0** | — |
+| Category                              | Count | Items                                                                                                                                              |
+| ------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 2.2 findings resolved           | **3** | P2-F1 (dead code), P2-F2 (DRY), P2-F3 (strict-mode)                                                                                                |
+| Phase 2.2 findings partially resolved | **1** | P2-F8 (offset test — fixed for Procedures, still open for Systems/Deployments)                                                                     |
+| Phase 2.2 findings still open         | **4** | P2-F4 (weak datetime), P2-F5 (parent/recursive), P2-F6 (pagination), P2-F7 (cursor)                                                                |
+| Phase 1 findings still open           | **2** | P1-F4 (exports), P1-F6 (temporal keys)                                                                                                             |
+| New — positive findings               | **6** | F1 (test quality improvement), F2 (validation coverage), F3 (JSDoc quality), F5 (spec links), F6 (correct method set), F7 (association pagination) |
+| New — informational                   | **1** | F4 (type alias allows unsupported params)                                                                                                          |
+| New — consistency note                | **1** | F8 (repeated factory function — by design)                                                                                                         |
+| **New bugs or design issues**         | **0** | —                                                                                                                                                  |
 
 ---
 
@@ -282,6 +288,7 @@ Phase 2.3 had zero new defects or design issues. This is a meaningful data point
 ### The simplicity factor
 
 Procedures are the simplest of the three Part 1 resource types implemented so far:
+
 - `ProcedureQueryOptions = QueryOptions` — no extensions, no special fields
 - No sub-resource nesting (no `getSubprocedures`)
 - No spatial support (`bbox` documented as unsupported)
@@ -291,7 +298,7 @@ This meant less surface area for bugs than Systems (6 extra query fields) or Dep
 
 ### The lessons-learned factor
 
-The more significant factor is that the lessons-learned governance doc (`phase-2-lessons-learned.md`) was created *before* Issue #7 was started, not after. Every lesson was applied proactively:
+The more significant factor is that the lessons-learned governance doc (`phase-2-lessons-learned.md`) was created _before_ Issue #7 was started, not after. Every lesson was applied proactively:
 
 - **L1 (test checklist):** All tests use exact `toBe()` assertions. No `toContain` shortcuts.
 - **L2 (query param table):** The JSDoc explicitly lists supported and unsupported parameters.
@@ -303,7 +310,7 @@ The more significant factor is that the lessons-learned governance doc (`phase-2
 
 The test quality improvement between Deployments (Phase 2.2) and Procedures (Phase 2.3) — exact assertions, offset coverage, format parameter coverage, full validation test — directly resulted from creating the lessons-learned doc between the two phases. The process worked exactly as intended: document what went wrong, apply the lessons to the next unit of work, verify the improvement.
 
-The remaining open findings (P2-F4–F7) are all from Deployments code that was written *before* the lessons were documented. They serve as the control group. The Procedures code serves as the experimental group. The difference is measurable.
+The remaining open findings (P2-F4–F7) are all from Deployments code that was written _before_ the lessons were documented. They serve as the control group. The Procedures code serves as the experimental group. The difference is measurable.
 
 ---
 

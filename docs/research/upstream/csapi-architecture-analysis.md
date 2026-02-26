@@ -31,35 +31,35 @@
 **CSAPI has 9 resource types** (vs 1-2 for other OGC APIs in ogc-client):
 
 **Part 1: Feature Resources (5 types)**
+
 1. Systems - Sensor devices and platforms
 2. Deployments - System installations over time
 3. Procedures - Observation/processing methods
 4. Sampling Features - Locations where observations occur
 5. Properties - Measurable properties
 
-**Part 2: Dynamic Data (4 types)**
-6. Datastreams - Time series data channels
-7. Observations - Individual measurements
-8. Control Streams - Command channels
-9. Commands - Control instructions
+**Part 2: Dynamic Data (4 types)** 6. Datastreams - Time series data channels 7. Observations - Individual measurements 8. Control Streams - Command channels 9. Commands - Control instructions
 
 **Question:** How to implement 9 resources cleanly without creating 9x the code volume?
 
 ### Key Constraints
 
 **From upstream patterns:**
+
 - Single QueryBuilder class per API
 - URL building only (no data fetching)
 - Methods return strings, not objects
 - Minimal validation (trust TypeScript + server)
 
 **From governance:**
+
 - Minimal impact on existing code
 - Follow EDR pattern (PR #114)
 - No over-engineering
 - Justify any code volume
 
 **FIRM DESIGN DECISION (2026-02-04):**
+
 - ✅ **Full format handling required**
 - ✅ GeoJSON parsing (all resources)
 - ✅ SensorML 3.0 parsing (systems, deployments, procedures)
@@ -74,26 +74,27 @@
 
 **Part 1 Resources (Feature-based):**
 
-| Resource | Endpoints | Sub-resources | History | Formats Supported |
-|----------|-----------|---------------|---------|-------------------|
-| Systems | 5 | subsystems, deployments, samplingFeatures, datastreams | Yes | GeoJSON, SensorML 3.0 |
-| Deployments | 4 | subdeployments, systems | Yes | GeoJSON, SensorML 3.0 |
-| Procedures | 3 | None | Yes | GeoJSON, SensorML 3.0 |
-| Sampling Features | 3 | None | Yes | GeoJSON |
-| Properties | 3 | None | No | GeoJSON |
+| Resource          | Endpoints | Sub-resources                                          | History | Formats Supported     |
+| ----------------- | --------- | ------------------------------------------------------ | ------- | --------------------- |
+| Systems           | 5         | subsystems, deployments, samplingFeatures, datastreams | Yes     | GeoJSON, SensorML 3.0 |
+| Deployments       | 4         | subdeployments, systems                                | Yes     | GeoJSON, SensorML 3.0 |
+| Procedures        | 3         | None                                                   | Yes     | GeoJSON, SensorML 3.0 |
+| Sampling Features | 3         | None                                                   | Yes     | GeoJSON               |
+| Properties        | 3         | None                                                   | No      | GeoJSON               |
 
 **Part 2 Resources (Dynamic Data):**
 
-| Resource | Endpoints | Sub-resources | Timing | Formats Supported |
-|----------|-----------|---------------|---------|-------------------|
-| Datastreams | 4 | observations, schema | No | GeoJSON, SWE Common 3.0 |
-| Observations | 3 | None | Time filtering | GeoJSON, custom |
-| Control Streams | 4 | commands, schema | No | GeoJSON, SWE Common 3.0 |
-| Commands | 5 | status, result | Status tracking | GeoJSON, custom |
+| Resource        | Endpoints | Sub-resources        | Timing          | Formats Supported       |
+| --------------- | --------- | -------------------- | --------------- | ----------------------- |
+| Datastreams     | 4         | observations, schema | No              | GeoJSON, SWE Common 3.0 |
+| Observations    | 3         | None                 | Time filtering  | GeoJSON, custom         |
+| Control Streams | 4         | commands, schema     | No              | GeoJSON, SWE Common 3.0 |
+| Commands        | 5         | status, result       | Status tracking | GeoJSON, custom         |
 
 ### URL Pattern Analysis
 
 **Top-level endpoints (9):**
+
 ```
 /systems
 /deployments
@@ -107,6 +108,7 @@
 ```
 
 **Sub-resource endpoints (10):**
+
 ```
 /systems/{id}/subsystems
 /systems/{id}/deployments
@@ -125,6 +127,7 @@
 ```
 
 **Special endpoints (5):**
+
 ```
 /commands/{id}/status
 /commands/{id}/status/{statusId}
@@ -145,6 +148,7 @@
 **All 9 resources share similar CRUD operations:**
 
 **Pattern:**
+
 ```
 GET    /{resources}           - List
 GET    /{resources}/{id}      - Read single
@@ -158,6 +162,7 @@ DELETE /{resources}/{id}      - Delete
 ### History Pattern
 
 **5 resources support history:**
+
 - Systems
 - Deployments
 - Procedures
@@ -165,6 +170,7 @@ DELETE /{resources}/{id}      - Delete
 - Properties
 
 **Pattern:**
+
 ```
 GET /{resource}/{id}/history[?validTime=...]
 ```
@@ -174,10 +180,12 @@ GET /{resource}/{id}/history[?validTime=...]
 ### Schema Pattern
 
 **2 resources have schemas:**
+
 - Datastreams (observations schema)
 - Control Streams (commands schema)
 
 **Pattern:**
+
 ```
 GET /{resource}/{id}/schema[?f=swe|proto]
 ```
@@ -189,6 +197,7 @@ GET /{resource}/{id}/schema[?f=swe|proto]
 **Only Commands** have status tracking:
 
 **Pattern:**
+
 ```
 GET    /commands/{id}/status
 GET    /commands/{id}/status/{statusId}
@@ -208,6 +217,7 @@ GET    /commands/{id}/result/{resultId}
 ### Conceptual Differences
 
 **Part 1: Feature Resources**
+
 - Static or slowly-changing metadata
 - Describe systems and their context
 - Spatial (GeoJSON) or descriptive (SensorML)
@@ -215,6 +225,7 @@ GET    /commands/{id}/result/{resultId}
 - Have validity time periods (history)
 
 **Part 2: Dynamic Data**
+
 - Rapidly-changing time series data
 - Observations and commands stream continuously
 - Tied to specific systems/datastreams
@@ -228,32 +239,34 @@ GET    /commands/{id}/result/{resultId}
 ```typescript
 export default class CSAPIQueryBuilder {
   // Part 1 resources
-  async getSystems(options?: QueryOptions): Promise<string>
-  async getSystem(id: string): Promise<string>
-  
-  async getDeployments(options?: QueryOptions): Promise<string>
-  async getDeployment(id: string): Promise<string>
-  
+  async getSystems(options?: QueryOptions): Promise<string>;
+  async getSystem(id: string): Promise<string>;
+
+  async getDeployments(options?: QueryOptions): Promise<string>;
+  async getDeployment(id: string): Promise<string>;
+
   // ... (all 5 Part 1 resources)
-  
+
   // Part 2 resources
-  async getDatastreams(options?: QueryOptions): Promise<string>
-  async getDatastream(id: string): Promise<string>
-  
-  async getObservations(options?: QueryOptions): Promise<string>
-  async getObservation(id: string): Promise<string>
-  
+  async getDatastreams(options?: QueryOptions): Promise<string>;
+  async getDatastream(id: string): Promise<string>;
+
+  async getObservations(options?: QueryOptions): Promise<string>;
+  async getObservation(id: string): Promise<string>;
+
   // ... (all 4 Part 2 resources)
 }
 ```
 
 **Pros:**
+
 - Matches upstream pattern (1 builder per API)
 - Single entry point for users
 - Shared cache and base URL
 - Simpler endpoint integration
 
 **Cons:**
+
 - Large class (~70-80 methods)
 - Mixes conceptually different concerns
 - May be harder to navigate
@@ -282,11 +295,13 @@ endpoint.csapiDynamicData(collectionId)
 ```
 
 **Pros:**
+
 - Cleaner separation of concerns
 - Smaller classes
 - Users can import only what they need
 
 **Cons:**
+
 - **Breaks upstream pattern** (all other APIs have single builder)
 - More complex endpoint integration
 - Duplicate cache/base URL handling
@@ -295,6 +310,7 @@ endpoint.csapiDynamicData(collectionId)
 ### Recommendation: Single Builder
 
 **Rationale:**
+
 - Matches EDR pattern (single builder)
 - CSAPI is logically one API (just has 2 parts)
 - Class size manageable (~70-80 methods)
@@ -302,35 +318,48 @@ endpoint.csapiDynamicData(collectionId)
 - Users work with one object
 
 **Implementation:**
+
 ```typescript
 export default class CSAPIQueryBuilder {
   // ========================================
   // PART 1: FEATURE RESOURCES
   // ========================================
-  
+
   // Systems (12 methods)
-  async getSystems(options?: QueryOptions): Promise<string>
-  async getSystem(systemId: string): Promise<string>
-  async getSystemHistory(systemId: string, options?: HistoryOptions): Promise<string>
-  async getSubsystems(systemId: string, options?: QueryOptions): Promise<string>
-  async getSystemDeployments(systemId: string, options?: QueryOptions): Promise<string>
-  async getSystemSamplingFeatures(systemId: string, options?: QueryOptions): Promise<string>
+  async getSystems(options?: QueryOptions): Promise<string>;
+  async getSystem(systemId: string): Promise<string>;
+  async getSystemHistory(
+    systemId: string,
+    options?: HistoryOptions
+  ): Promise<string>;
+  async getSubsystems(
+    systemId: string,
+    options?: QueryOptions
+  ): Promise<string>;
+  async getSystemDeployments(
+    systemId: string,
+    options?: QueryOptions
+  ): Promise<string>;
+  async getSystemSamplingFeatures(
+    systemId: string,
+    options?: QueryOptions
+  ): Promise<string>;
   // ... more system methods
-  
+
   // Deployments (8 methods)
-  async getDeployments(options?: QueryOptions): Promise<string>
+  async getDeployments(options?: QueryOptions): Promise<string>;
   // ...
-  
+
   // Procedures, Sampling Features, Properties...
-  
+
   // ========================================
   // PART 2: DYNAMIC DATA
   // ========================================
-  
+
   // Datastreams (11 methods)
-  async getDatastreams(options?: QueryOptions): Promise<string>
+  async getDatastreams(options?: QueryOptions): Promise<string>;
   // ...
-  
+
   // Observations, Control Streams, Commands...
 }
 ```
@@ -344,15 +373,18 @@ export default class CSAPIQueryBuilder {
 ### Sub-Resource Patterns
 
 **Type 1: Parent owns children**
+
 - `/systems/{id}/subsystems` - System contains subsystems
 - `/deployments/{id}/subdeployments` - Deployment contains subdeployments
 
 **Type 2: Relationships**
+
 - `/systems/{id}/deployments` - Deployments of a system
 - `/deployments/{id}/systems` - Systems in a deployment
 - `/systems/{id}/samplingFeatures` - Sampling features for a system
 
 **Type 3: Data channels**
+
 - `/systems/{id}/datastreams` - Datastreams from a system
 - `/systems/{id}/controlstreams` - Control streams for a system
 - `/datastreams/{id}/observations` - Observations in a datastream
@@ -392,6 +424,7 @@ async getSystemDatastreams(
 ```
 
 **Characteristics:**
+
 - Parent ID required
 - Append sub-resource path
 - Same query options support
@@ -441,13 +474,14 @@ async getSystemDatastreams(
 ): Promise<string> {
   // Build parent URL
   const systemUrl = await this.getSystem(systemId);
-  
+
   // Append sub-resource path
   return `${systemUrl}/datastreams${this.buildQueryString(options)}`;
 }
 ```
 
 **Rationale:**
+
 - No fetch required
 - Follows REST URL patterns
 - Simple and predictable
@@ -464,12 +498,14 @@ async getSystemDatastreams(
 **Shared patterns across resources:**
 
 1. **List + Get pattern (9 resources):**
+
    ```typescript
    async get{Resources}(options?: QueryOptions): Promise<string>
    async get{Resource}(id: string): Promise<string>
    ```
 
 2. **History pattern (5 resources):**
+
    ```typescript
    async get{Resource}History(
      id: string,
@@ -490,16 +526,16 @@ async getSystemDatastreams(
 abstract class ResourceNavigator {
   abstract resourcePath: string;
   abstract hasHistory: boolean;
-  
+
   async list(options?: QueryOptions): Promise<string> {
     const url = `${this.baseUrl}/${this.resourcePath}`;
     return `${url}${this.buildQueryString(options)}`;
   }
-  
+
   async get(id: string): Promise<string> {
     return `${this.baseUrl}/${this.resourcePath}/${id}`;
   }
-  
+
   async history(id: string, options?: HistoryOptions): Promise<string> {
     if (!this.hasHistory) throw new Error('Resource does not support history');
     return `${this.get(id)}/history${this.buildQueryString(options)}`;
@@ -509,7 +545,7 @@ abstract class ResourceNavigator {
 class SystemsNavigator extends ResourceNavigator {
   resourcePath = 'systems';
   hasHistory = true;
-  
+
   // System-specific methods
   async getSubsystems(id: string, options?: QueryOptions): Promise<string> {
     return `${this.get(id)}/subsystems${this.buildQueryString(options)}`;
@@ -518,11 +554,13 @@ class SystemsNavigator extends ResourceNavigator {
 ```
 
 **Pros:**
+
 - Reduces code duplication
 - Clear inheritance hierarchy
 - Easy to add new resources
 
 **Cons:**
+
 - **Breaks upstream pattern** (no other API uses inheritance)
 - More complex to understand
 - Harder to navigate (methods split across classes)
@@ -544,38 +582,40 @@ export default class CSAPIQueryBuilder {
     if (subPath) url += `/${subPath}`;
     return url + this.buildQueryString(options);
   }
-  
+
   // Explicit method implementations
   async getSystems(options?: QueryOptions): Promise<string> {
     return this.buildResourceUrl('systems', undefined, undefined, options);
   }
-  
+
   async getSystem(systemId: string): Promise<string> {
     return this.buildResourceUrl('systems', systemId);
   }
-  
+
   async getSystemHistory(
     systemId: string,
     options?: HistoryOptions
   ): Promise<string> {
     return this.buildResourceUrl('systems', systemId, 'history', options);
   }
-  
+
   async getDeployments(options?: QueryOptions): Promise<string> {
     return this.buildResourceUrl('deployments', undefined, undefined, options);
   }
-  
+
   // ... explicit methods for all resources
 }
 ```
 
 **Pros:**
+
 - Matches upstream pattern (EDR does similar)
 - All methods visible in one class
 - Helper reduces duplication
 - Easy to understand and navigate
 
 **Cons:**
+
 - Some repetition in method signatures
 - More lines of code
 
@@ -588,7 +628,7 @@ export default class CSAPIQueryBuilder {
   // ========================================
   // PRIVATE HELPERS
   // ========================================
-  
+
   private buildResourceUrl(
     resourceType: string,
     id?: string,
@@ -600,59 +640,60 @@ export default class CSAPIQueryBuilder {
     if (subPath) url += `/${subPath}`;
     return url + this.buildQueryString(options);
   }
-  
+
   private buildQueryString(options?: QueryOptions): string {
     if (!options) return '';
     const params = new URLSearchParams();
     if (options.limit) params.set('limit', options.limit.toString());
     if (options.offset) params.set('offset', options.offset.toString());
     if (options.bbox) params.set('bbox', options.bbox.join(','));
-    if (options.datetime) params.set('datetime', formatDateTime(options.datetime));
+    if (options.datetime)
+      params.set('datetime', formatDateTime(options.datetime));
     if (options.f) params.set('f', options.f);
     const query = params.toString();
     return query ? `?${query}` : '';
   }
-  
+
   // ========================================
   // PUBLIC METHODS (9 RESOURCES)
   // ========================================
-  
+
   // Systems (12 methods)
   async getSystems(options?: QueryOptions): Promise<string> {
     return this.buildResourceUrl('systems', undefined, undefined, options);
   }
-  
+
   async getSystem(systemId: string): Promise<string> {
     return this.buildResourceUrl('systems', systemId);
   }
-  
+
   async getSystemHistory(
     systemId: string,
     options?: HistoryOptions
   ): Promise<string> {
     return this.buildResourceUrl('systems', systemId, 'history', options);
   }
-  
+
   async getSubsystems(
     systemId: string,
     options?: QueryOptions
   ): Promise<string> {
     return this.buildResourceUrl('systems', systemId, 'subsystems', options);
   }
-  
+
   // ... 8 more system methods
-  
+
   // Deployments (8 methods)
   async getDeployments(options?: QueryOptions): Promise<string> {
     return this.buildResourceUrl('deployments', undefined, undefined, options);
   }
-  
+
   async getDeployment(deploymentId: string): Promise<string> {
     return this.buildResourceUrl('deployments', deploymentId);
   }
-  
+
   // ... 6 more deployment methods
-  
+
   // ... 7 more resources (Procedures, Sampling Features, Properties,
   //     Datastreams, Observations, Control Streams, Commands)
 }
@@ -669,6 +710,7 @@ export default class CSAPIQueryBuilder {
 **Problem:** Not all CSAPI endpoints support all 9 resources.
 
 **Example:**
+
 - Endpoint A: Only systems, deployments, datastreams
 - Endpoint B: All 9 resources
 - Endpoint C: Only observations (data access only)
@@ -705,20 +747,20 @@ export function checkHasConnectedSystemsDynamicData([conformance]: [
 private extractAvailableResources(): Set<string> {
   const resources = new Set<string>();
   const linkRels = this.collection_.links.map(l => l.rel);
-  
+
   // Part 1 resources
   if (linkRels.includes('systems')) resources.add('systems');
   if (linkRels.includes('deployments')) resources.add('deployments');
   if (linkRels.includes('procedures')) resources.add('procedures');
   if (linkRels.includes('samplingFeatures')) resources.add('samplingFeatures');
   if (linkRels.includes('properties')) resources.add('properties');
-  
+
   // Part 2 resources
   if (linkRels.includes('datastreams')) resources.add('datastreams');
   if (linkRels.includes('observations')) resources.add('observations');
   if (linkRels.includes('controlstreams')) resources.add('controlstreams');
   if (linkRels.includes('commands')) resources.add('commands');
-  
+
   return resources;
 }
 
@@ -742,10 +784,12 @@ async getSystems(options?: QueryOptions): Promise<string> {
 ```
 
 **Pros:**
+
 - Fail fast with clear message
 - Prevents invalid URLs
 
 **Cons:**
+
 - Adds ~1 line per method (~70-80 lines total)
 - Server will 404 anyway
 - Breaks "minimal validation" pattern
@@ -766,11 +810,13 @@ if (builder.availableResources.has('systems')) {
 ```
 
 **Pros:**
+
 - Minimal validation (matches error handling strategy)
 - Trusts server to 404
 - Less code
 
 **Cons:**
+
 - User must check manually
 - May generate invalid URLs
 
@@ -782,16 +828,16 @@ if (builder.availableResources.has('systems')) {
 export default class CSAPIQueryBuilder {
   // Public property for users to check
   public readonly availableResources: Set<string>;
-  
+
   constructor(private collection_: OgcApiCollectionInfo) {
     this.availableResources = this.extractAvailableResources();
   }
-  
+
   // No validation in methods
   async getSystems(options?: QueryOptions): Promise<string> {
     return this.buildResourceUrl('systems', undefined, undefined, options);
   }
-  
+
   // ... other methods
 }
 
@@ -809,6 +855,7 @@ if (builder.availableResources.has('systems')) {
 ```
 
 **Rationale:**
+
 - Follows "minimal validation" principle (Section 9)
 - User has visibility into capabilities
 - Server validates via HTTP 404
@@ -825,6 +872,7 @@ if (builder.availableResources.has('systems')) {
 **Formats to Support:**
 
 **1. GeoJSON (RFC 7946) - ALL Resources**
+
 - Standard GeoJSON features
 - Geometry + properties
 - Built-in TypeScript support
@@ -832,6 +880,7 @@ if (builder.availableResources.has('systems')) {
 - **Status: ✅ SUPPORTED** - No additional parsing needed
 
 **2. SensorML 3.0 - Systems, Deployments, Procedures**
+
 - XML-based system descriptions
 - SimpleProcess, AggregateProcess, PhysicalSystem
 - Complex nested structures
@@ -839,6 +888,7 @@ if (builder.availableResources.has('systems')) {
 - **Version: 3.0 ONLY** (not 2.0/2.1)
 
 **3. SWE Common 3.0 - Datastreams, Control Streams**
+
 - Data component definitions
 - DataArray, DataRecord, Quantity, Time, etc.
 - JSON and XML encodings
@@ -960,11 +1010,16 @@ export type SWECommonDataComponent =
   | TimeRange
   | QuantityRange;
 
-export function parseSWECommon30(input: string | object): SWECommonDataComponent {
+export function parseSWECommon30(
+  input: string | object
+): SWECommonDataComponent {
   // JSON or XML parsing implementation
 }
 
-export function serializeSWECommon30(component: SWECommonDataComponent, format: 'json' | 'xml'): string {
+export function serializeSWECommon30(
+  component: SWECommonDataComponent,
+  format: 'json' | 'xml'
+): string {
   // Serialization implementation
 }
 ```
@@ -981,7 +1036,7 @@ export const CSAPI_FORMATS = {
   SWE_COMMON_30_XML: 'application/swe+xml; version=3.0',
 } as const;
 
-export type CSAPIFormat = typeof CSAPI_FORMATS[keyof typeof CSAPI_FORMATS];
+export type CSAPIFormat = (typeof CSAPI_FORMATS)[keyof typeof CSAPI_FORMATS];
 
 export const FORMAT_SHORTCUTS = {
   json: CSAPI_FORMATS.GEOJSON,
@@ -995,41 +1050,41 @@ export const FORMAT_SHORTCUTS = {
 
 **Format parsing implementation:**
 
-| Component | Lines | Description |
-|-----------|-------|-------------|
-| **SensorML 3.0 Parser** | | |
-| types.ts | 400-600 | TypeScript interfaces for all SensorML types |
-| parser.ts | 600-800 | XML parsing logic (DOM traversal, validation) |
-| simple-process.ts | 150-200 | SimpleProcess-specific handling |
-| aggregate-process.ts | 200-250 | AggregateProcess-specific handling |
-| physical-system.ts | 200-250 | PhysicalSystem-specific handling |
-| index.ts | 50-100 | Exports and convenience functions |
-| **SensorML Subtotal** | **1,600-2,200** | **Complete SensorML 3.0 support** |
-| | | |
-| **SWE Common 3.0 Parser** | | |
-| types.ts | 400-600 | TypeScript interfaces for all SWE types |
-| parser.ts | 500-700 | JSON/XML parsing logic |
-| data-record.ts | 150-200 | DataRecord handling |
-| data-array.ts | 200-250 | DataArray handling |
-| components.ts | 300-400 | All component types (Quantity, Time, etc.) |
-| index.ts | 50-100 | Exports and convenience functions |
-| **SWE Common Subtotal** | **1,600-2,250** | **Complete SWE Common 3.0 support** |
-| | | |
-| **Supporting Code** | | |
-| geojson.ts | 50-100 | GeoJSON type re-exports |
-| constants.ts | 50-100 | Format constants and MIME types |
-| **Supporting Subtotal** | **100-200** | **Format infrastructure** |
-| | | |
-| **TOTAL FORMAT CODE** | **3,300-4,650** | **Full format handling** |
+| Component                 | Lines           | Description                                   |
+| ------------------------- | --------------- | --------------------------------------------- |
+| **SensorML 3.0 Parser**   |                 |                                               |
+| types.ts                  | 400-600         | TypeScript interfaces for all SensorML types  |
+| parser.ts                 | 600-800         | XML parsing logic (DOM traversal, validation) |
+| simple-process.ts         | 150-200         | SimpleProcess-specific handling               |
+| aggregate-process.ts      | 200-250         | AggregateProcess-specific handling            |
+| physical-system.ts        | 200-250         | PhysicalSystem-specific handling              |
+| index.ts                  | 50-100          | Exports and convenience functions             |
+| **SensorML Subtotal**     | **1,600-2,200** | **Complete SensorML 3.0 support**             |
+|                           |                 |                                               |
+| **SWE Common 3.0 Parser** |                 |                                               |
+| types.ts                  | 400-600         | TypeScript interfaces for all SWE types       |
+| parser.ts                 | 500-700         | JSON/XML parsing logic                        |
+| data-record.ts            | 150-200         | DataRecord handling                           |
+| data-array.ts             | 200-250         | DataArray handling                            |
+| components.ts             | 300-400         | All component types (Quantity, Time, etc.)    |
+| index.ts                  | 50-100          | Exports and convenience functions             |
+| **SWE Common Subtotal**   | **1,600-2,250** | **Complete SWE Common 3.0 support**           |
+|                           |                 |                                               |
+| **Supporting Code**       |                 |                                               |
+| geojson.ts                | 50-100          | GeoJSON type re-exports                       |
+| constants.ts              | 50-100          | Format constants and MIME types               |
+| **Supporting Subtotal**   | **100-200**     | **Format infrastructure**                     |
+|                           |                 |                                               |
+| **TOTAL FORMAT CODE**     | **3,300-4,650** | **Full format handling**                      |
 
 **Tests for format parsing:**
 
-| Component | Lines | Description |
-|-----------|-------|-------------|
-| SensorML 3.0 tests | 1,500-2,000 | Parser tests, type validation, examples |
-| SWE Common 3.0 tests | 1,500-2,000 | Parser tests, type validation, examples |
-| Integration tests | 500-700 | Format integration with QueryBuilder |
-| **TOTAL FORMAT TESTS** | **3,500-4,700** | **Comprehensive test coverage** |
+| Component              | Lines           | Description                             |
+| ---------------------- | --------------- | --------------------------------------- |
+| SensorML 3.0 tests     | 1,500-2,000     | Parser tests, type validation, examples |
+| SWE Common 3.0 tests   | 1,500-2,000     | Parser tests, type validation, examples |
+| Integration tests      | 500-700         | Format integration with QueryBuilder    |
+| **TOTAL FORMAT TESTS** | **3,500-4,700** | **Comprehensive test coverage**         |
 
 **Total format handling code volume: ~6,800-9,350 lines (implementation + tests)**
 
@@ -1068,13 +1123,16 @@ const smlXml = await response.text();
 const system = parseSensorML30(smlXml);
 
 // Get datastream schema as SWE Common
-const schemaUrl = await builder.getDatastreamSchema('ds-456', { f: 'swe-json' });
+const schemaUrl = await builder.getDatastreamSchema('ds-456', {
+  f: 'swe-json',
+});
 const schemaResponse = await fetch(schemaUrl);
 const schemaJson = await schemaResponse.json();
 const schema = parseSWECommon30(schemaJson);
 ```
 
 **Separation of concerns:**
+
 - ✅ CSAPIQueryBuilder = URL building
 - ✅ Format parsers = Data parsing
 - ✅ Users choose when to parse
@@ -1083,6 +1141,7 @@ const schema = parseSWECommon30(schemaJson);
 ### Updated Implementation Checklist
 
 ✅ **Architecture:**
+
 - [x] Single CSAPIQueryBuilder class (~500-700 lines)
 - [x] 2-3 private helper methods
 - [x] 70-80 public URL-building methods
@@ -1090,12 +1149,14 @@ const schema = parseSWECommon30(schemaJson);
 - [x] No validation in methods
 
 ✅ **Integration:**
+
 - [x] endpoint.hasConnectedSystems getter
 - [x] endpoint.csapi(collectionId) factory
 - [x] Collection caching
 - [x] Conformance checking in info.ts
 
 ✅ **Formats (NEW REQUIREMENTS):**
+
 - [x] **GeoJSON support** (standard JSON parsing)
 - [x] **SensorML 3.0 parser** (~1,600-2,200 lines)
 - [x] **SWE Common 3.0 parser** (~1,600-2,250 lines)
@@ -1104,6 +1165,7 @@ const schema = parseSWECommon30(schemaJson);
 - [x] NO support for SensorML 2.0/2.1 or SWE Common 2.0
 
 ✅ **Code volume:**
+
 - [x] QueryBuilder: ~560-760 lines
 - [x] **Format parsing: ~3,300-4,650 lines (NEW)**
 - [x] **Format tests: ~3,500-4,700 lines (NEW)**
@@ -1122,12 +1184,12 @@ const schema = parseSWECommon30(schemaJson);
 
 **Trade-offs accepted:**
 
-| Trade-off | Impact | Mitigation |
-|-----------|--------|------------|
-| Code volume increase | +6,800-9,350 lines | Organized in separate formats/ subfolder |
-| Maintenance burden | Format spec changes | Version-specific (3.0 only), clear separation |
-| Bundle size | +~100-150 KB | Tree-shakeable, can import parsers separately |
-| Testing complexity | +3,500-4,700 test lines | Comprehensive examples from specs |
+| Trade-off            | Impact                  | Mitigation                                    |
+| -------------------- | ----------------------- | --------------------------------------------- |
+| Code volume increase | +6,800-9,350 lines      | Organized in separate formats/ subfolder      |
+| Maintenance burden   | Format spec changes     | Version-specific (3.0 only), clear separation |
+| Bundle size          | +~100-150 KB            | Tree-shakeable, can import parsers separately |
+| Testing complexity   | +3,500-4,700 test lines | Comprehensive examples from specs             |
 
 **Decision confidence: HIGH**
 
@@ -1173,21 +1235,22 @@ src/ogc-api/csapi/
 
 **Detailed count by resource:**
 
-| Resource | Methods | Notes |
-|----------|---------|-------|
-| Systems | 12 | List, Get, History, Subsystems, Deployments, SamplingFeatures, Datastreams, ControlStreams, + CRUD |
-| Deployments | 8 | List, Get, History, Subdeployments, Systems, + CRUD |
-| Procedures | 8 | List, Get, History, + CRUD |
-| Sampling Features | 8 | List, Get, History, + CRUD |
-| Properties | 6 | List, Get, + CRUD (no history) |
-| Datastreams | 11 | List, Get, Observations, Schema, + CRUD, + system-scoped |
-| Observations | 9 | List, Get, + Create, + datastream-scoped, time filtering |
-| Control Streams | 8 | List, Get, Commands, Schema, + CRUD, + system-scoped |
-| Commands | 10 | List, Get, Status, Result, + CRUD, + control-stream-scoped |
+| Resource          | Methods | Notes                                                                                              |
+| ----------------- | ------- | -------------------------------------------------------------------------------------------------- |
+| Systems           | 12      | List, Get, History, Subsystems, Deployments, SamplingFeatures, Datastreams, ControlStreams, + CRUD |
+| Deployments       | 8       | List, Get, History, Subdeployments, Systems, + CRUD                                                |
+| Procedures        | 8       | List, Get, History, + CRUD                                                                         |
+| Sampling Features | 8       | List, Get, History, + CRUD                                                                         |
+| Properties        | 6       | List, Get, + CRUD (no history)                                                                     |
+| Datastreams       | 11      | List, Get, Observations, Schema, + CRUD, + system-scoped                                           |
+| Observations      | 9       | List, Get, + Create, + datastream-scoped, time filtering                                           |
+| Control Streams   | 8       | List, Get, Commands, Schema, + CRUD, + system-scoped                                               |
+| Commands          | 10      | List, Get, Status, Result, + CRUD, + control-stream-scoped                                         |
 
 **Total:** ~70-80 public methods in QueryBuilder.
 
 **Plus:**
+
 - 2-3 private helpers (buildResourceUrl, buildQueryString)
 - 1 constructor
 - 1 resource discovery method
@@ -1200,6 +1263,7 @@ src/ogc-api/csapi/
 ### Code Volume Comparison
 
 **EDR (PR #114) QueryBuilder:**
+
 - ~400 lines
 - 1 resource type (coverage data)
 - 6 query types (position, radius, area, cube, trajectory, corridor)
@@ -1207,6 +1271,7 @@ src/ogc-api/csapi/
 - **No format parsing**
 
 **CSAPI QueryBuilder (projected):**
+
 - ~500-700 lines
 - 9 resource types
 - ~70-80 public methods
@@ -1281,15 +1346,20 @@ src/ogc-api/csapi/
 import CSAPIQueryBuilder from './csapi/url_builder.js';
 
 export default class OgcApiEndpoint {
-  private collection_id_to_csapi_builder_ = new Map<string, CSAPIQueryBuilder>();
-  
+  private collection_id_to_csapi_builder_ = new Map<
+    string,
+    CSAPIQueryBuilder
+  >();
+
   get hasConnectedSystems(): Promise<boolean> {
     return this.featureCheckFactory_(checkHasConnectedSystems);
   }
-  
+
   async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
-    if (!await this.hasConnectedSystems) {
-      throw new EndpointError('Endpoint does not support Connected Systems API');
+    if (!(await this.hasConnectedSystems)) {
+      throw new EndpointError(
+        'Endpoint does not support Connected Systems API'
+      );
     }
     const cache = this.collection_id_to_csapi_builder_;
     if (cache.has(collection_id)) {
@@ -1310,13 +1380,13 @@ export default class CSAPIQueryBuilder {
   private collection_: OgcApiCollectionInfo;
   private baseUrl: string;
   public readonly availableResources: Set<string>;
-  
+
   constructor(collection: OgcApiCollectionInfo) {
     this.collection_ = collection;
-    this.baseUrl = getLinkUrl(collection, 'self', /* ... */);
+    this.baseUrl = getLinkUrl(collection, 'self' /* ... */);
     this.availableResources = this.extractAvailableResources();
   }
-  
+
   // ... (same as Section 10 in original document)
 }
 ```
@@ -1326,7 +1396,11 @@ export default class CSAPIQueryBuilder {
 ```typescript
 // User code with format parsing
 import { CSAPIQueryBuilder } from 'ogc-client';
-import { parseSensorML30, parseSWECommon30, CSAPI_FORMATS } from 'ogc-client/csapi/formats';
+import {
+  parseSensorML30,
+  parseSWECommon30,
+  CSAPI_FORMATS,
+} from 'ogc-client/csapi/formats';
 
 const endpoint = await OgcApiEndpoint.fromUrl('https://api.example.com');
 const builder = await endpoint.csapi('sensors');
@@ -1342,7 +1416,9 @@ console.log(system.name); // 'Temperature Sensor 01'
 console.log(system.capabilities); // Array of capabilities
 
 // Get datastream schema as SWE Common 3.0
-const schemaUrl = await builder.getDatastreamSchema('temp-stream', { f: 'swe-json' });
+const schemaUrl = await builder.getDatastreamSchema('temp-stream', {
+  f: 'swe-json',
+});
 const schemaResponse = await fetch(schemaUrl);
 const schemaJson = await schemaResponse.json();
 const schema = parseSWECommon30(schemaJson);
@@ -1355,42 +1431,45 @@ console.log(schema.fields); // Array of field definitions
 
 **CSAPI implementation:**
 
-| Component | Lines | Description |
-|-----------|-------|-------------|
-| **Core QueryBuilder** | | |
-| url_builder.ts | 500-700 | QueryBuilder class with 70-80 methods |
-| model.ts | 200-300 | CSAPI-specific types |
-| helpers.ts | 50-100 | URL/param helpers |
-| index.ts | 10-20 | Exports |
-| **Core Subtotal** | **760-1,120** | **URL building functionality** |
-| | | |
-| **Format Parsing** | | |
-| formats/geojson.ts | 50-100 | GeoJSON type re-exports |
-| formats/constants.ts | 50-100 | Format constants |
-| formats/sensorml/ | 1,600-2,200 | Complete SensorML 3.0 support |
-| formats/swecommon/ | 1,600-2,250 | Complete SWE Common 3.0 support |
-| **Format Subtotal** | **3,300-4,650** | **Full format parsing** |
-| | | |
-| **Integration** | | |
-| endpoint.ts additions | 30 | hasConnectedSystems + csapi() method |
-| info.ts additions | 15 | Conformance checking |
-| **Integration Subtotal** | **45** | **Core integration** |
-| | | |
-| **TOTAL IMPLEMENTATION** | **4,105-5,815** | **Complete CSAPI support** |
+| Component                | Lines           | Description                           |
+| ------------------------ | --------------- | ------------------------------------- |
+| **Core QueryBuilder**    |                 |                                       |
+| url_builder.ts           | 500-700         | QueryBuilder class with 70-80 methods |
+| model.ts                 | 200-300         | CSAPI-specific types                  |
+| helpers.ts               | 50-100          | URL/param helpers                     |
+| index.ts                 | 10-20           | Exports                               |
+| **Core Subtotal**        | **760-1,120**   | **URL building functionality**        |
+|                          |                 |                                       |
+| **Format Parsing**       |                 |                                       |
+| formats/geojson.ts       | 50-100          | GeoJSON type re-exports               |
+| formats/constants.ts     | 50-100          | Format constants                      |
+| formats/sensorml/        | 1,600-2,200     | Complete SensorML 3.0 support         |
+| formats/swecommon/       | 1,600-2,250     | Complete SWE Common 3.0 support       |
+| **Format Subtotal**      | **3,300-4,650** | **Full format parsing**               |
+|                          |                 |                                       |
+| **Integration**          |                 |                                       |
+| endpoint.ts additions    | 30              | hasConnectedSystems + csapi() method  |
+| info.ts additions        | 15              | Conformance checking                  |
+| **Integration Subtotal** | **45**          | **Core integration**                  |
+|                          |                 |                                       |
+| **TOTAL IMPLEMENTATION** | **4,105-5,815** | **Complete CSAPI support**            |
 
 **Per-resource efficiency (QueryBuilder only):**
+
 - 9 resources = 760-1,120 lines total
 - Average: ~84-124 lines per resource type
 - EDR: ~400 lines for 1 resource type
 - **QueryBuilder is 3-5x more efficient per resource**
 
 **Format parsing (separate concern):**
+
 - SensorML 3.0: ~1,600-2,200 lines
 - SWE Common 3.0: ~1,600-2,250 lines
 - Supporting code: ~100-200 lines
 - **Format parsing is optional for users** (can import separately)
 
 **Comparison to upstream:**
+
 - ogc-client core (excluding tests): ~3000-4000 lines
 - CSAPI addition: ~4,105-5,815 lines (~100-145% increase)
 - **Significant but justified** for complete CSAPI support with formats
@@ -1413,6 +1492,7 @@ console.log(schema.fields); // Array of field definitions
 ### Implementation Checklist
 
 ✅ **Architecture:**
+
 - [x] Single CSAPIQueryBuilder class (~500-700 lines)
 - [x] 2-3 private helper methods
 - [x] 70-80 public URL-building methods
@@ -1420,12 +1500,14 @@ console.log(schema.fields); // Array of field definitions
 - [x] No validation in methods
 
 ✅ **Integration:**
+
 - [x] endpoint.hasConnectedSystems getter
 - [x] endpoint.csapi(collectionId) factory
 - [x] Collection caching
 - [x] Conformance checking in info.ts
 
 ✅ **Formats (REQUIRED):**
+
 - [x] **GeoJSON support** (standard JSON parsing)
 - [x] **SensorML 3.0 parser** (~1,600-2,200 lines)
 - [x] **SWE Common 3.0 parser** (~1,600-2,250 lines)
@@ -1434,6 +1516,7 @@ console.log(schema.fields); // Array of field definitions
 - [x] **Version-specific: 3.0 ONLY**
 
 ✅ **Code volume:**
+
 - [x] QueryBuilder: ~760-1,120 lines
 - [x] Format parsing: ~3,300-4,650 lines
 - [x] Integration: ~45 lines
@@ -1446,6 +1529,7 @@ console.log(schema.fields); // Array of field definitions
 **Complete CSAPI client library** following upstream patterns where applicable, with strategic decision to include full format handling. 9 resources handled with **same approach** as EDR's 1 resource (QueryBuilder), PLUS comprehensive format parsing for SensorML 3.0 and SWE Common 3.0. Clean separation of concerns: URL building in QueryBuilder, format parsing in separate modules.
 
 **This represents a COMPLETE implementation** that provides:
+
 - ✅ URL building for all 9 CSAPI resources
 - ✅ Full GeoJSON, SensorML 3.0, and SWE Common 3.0 support
 - ✅ Strong TypeScript typing throughout

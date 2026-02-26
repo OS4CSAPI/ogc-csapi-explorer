@@ -105,7 +105,7 @@ Real examples from actual servers to test against.
 
 - 1 main thing to use
 - 3 discovery helpers
-- 5 format handlers  
+- 5 format handlers
 - 9 resource managers
 - 2 worker pieces
 - Full test coverage
@@ -118,6 +118,6 @@ This gives developers a complete, production-ready CSAPI client that works with 
 
 ## Document Change Log
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2026-02-01 | Initial component list |
+| Version | Date       | Changes                |
+| ------- | ---------- | ---------------------- |
+| 1.0     | 2026-02-01 | Initial component list |

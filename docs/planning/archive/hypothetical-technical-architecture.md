@@ -3,6 +3,7 @@
 Based on all the research, this lists every feature, enhancement, and capability we could build for the CSAPI client library.
 
 **Research Sources:**
+
 - Section 16: CSAPI Part 1 specification (Systems, Deployments, Procedures, Sampling Features, Properties)
 - Section 17: CSAPI Part 2 specification (DataStreams, Observations, Control Streams, Commands)
 - Section 18: SensorML 2.0/2.1 format specification
@@ -12,13 +13,15 @@ Based on all the research, this lists every feature, enhancement, and capability
 ---
 
 ## Core Foundation (Must Have)
-*Sources: Sections 16, 17*
+
+_Sources: Sections 16, 17_
 
 **Main Entry Point**
 The thing developers use to connect to servers and access everything else.
 
 **Service Discovery**
-*Source: Section 16 (CSAPI conformance, collections endpoints)*
+_Source: Section 16 (CSAPI conformance, collections endpoints)_
+
 - Read what the server supports
 - Get list of available collections
 - Parse server metadata
@@ -26,7 +29,8 @@ The thing developers use to connect to servers and access everything else.
 - Build proper URLs for all operations
 
 **Format Handlers**
-*Sources: Sections 18, 19*
+_Sources: Sections 18, 19_
+
 - GeoJSON for geographic data
 - SensorML for sensor descriptions (Section 18)
 - SWE Common for observation schemas and data (Section 19)
@@ -34,7 +38,8 @@ The thing developers use to connect to servers and access everything else.
 - Validation for all formats
 
 **Part 1 Resources**
-*Source: Section 16*
+_Source: Section 16_
+
 - Systems (sensors and platforms)
 - Deployments (where/when sensors are placed)
 - Procedures (how measurements are taken)
@@ -42,14 +47,15 @@ The thing developers use to connect to servers and access everything else.
 - Properties (what can be measured)
 
 **Part 2 Resources**
-*Source: Section 17*
+_Source: Section 17_
+
 - DataStreams (ongoing observation series)
 - Observations (actual measurements)
 - Control Streams (command interfaces)
 - Commands (instructions to systems)
 
 **Background Processing**
-*Source: Existing ogc-client patterns*
+_Source: Existing ogc-client patterns_
 Move heavy work off main thread so UIs stay responsive.
 
 **Test Coverage**
@@ -60,7 +66,8 @@ Tests for everything, real server data, performance checks.
 ## Advanced Format Support
 
 **GeoJSON Extensions**
-*Source: GeoJSON RFC 7946*
+_Source: GeoJSON RFC 7946_
+
 - 3D coordinates (elevation)
 - Custom coordinate reference systems
 - Time-varying geometries
@@ -68,7 +75,8 @@ Tests for everything, real server data, performance checks.
 - Bounding box optimization
 
 **SensorML Advanced Features**
-*Source: Section 18 (SensorML 2.0/2.1 specification)*
+_Source: Section 18 (SensorML 2.0/2.1 specification)_
+
 - Process chains (linked operations)
 - Aggregate systems (systems of systems)
 - Component connections and data flows
@@ -83,7 +91,8 @@ Tests for everything, real server data, performance checks.
 - Event history
 
 **SWE Common Advanced Types**
-*Source: Section 19 (SWE Common 2.0 specification)*
+_Source: Section 19 (SWE Common 2.0 specification)_
+
 - Quality annotations on observations
 - Nil values (missing data handling)
 - Choice types (one-of-many)
@@ -95,7 +104,8 @@ Tests for everything, real server data, performance checks.
 - Recursive array handling
 
 **SWE Encoding Support**
-*Source: Section 19 (SWE Common encodings)*
+_Source: Section 19 (SWE Common encodings)_
+
 - JSON encoding (native)
 - Text encoding with custom separators
 - Binary encoding for compact storage
@@ -109,21 +119,24 @@ Tests for everything, real server data, performance checks.
 ## Query and Filter Enhancements
 
 **Spatial Queries**
-*Source: OGC API Features filtering patterns*
+_Source: OGC API Features filtering patterns_
+
 - Bounding box filtering
 - Within/intersects/contains operations
 - Distance-based queries
 - Custom CRS support
 
 **Temporal Queries**
-*Source: Section 16, 17 (datetime parameter)*
+_Source: Section 16, 17 (datetime parameter)_
+
 - Time instant filtering
 - Time range filtering
 - Before/after operations
 - Temporal relationships
 
 **Property Filtering**
-*Source: OGC API Features, CQL specification*
+_Source: OGC API Features, CQL specification_
+
 - CQL filter support
 - Property value matching
 - Comparison operators
@@ -131,7 +144,8 @@ Tests for everything, real server data, performance checks.
 - Pattern matching
 
 **Sorting and Pagination**
-*Source: Sections 16, 17 (limit, offset parameters)*
+_Source: Sections 16, 17 (limit, offset parameters)_
+
 - Sort by any property
 - Ascending/descending order
 - Offset-based pagination
@@ -139,7 +153,8 @@ Tests for everything, real server data, performance checks.
 - Configurable page sizes
 
 **Field Selection**
-*Source: Section 16, 17 (properties parameter)*
+_Source: Section 16, 17 (properties parameter)_
+
 - Request only needed properties
 - Reduce response size
 - Nested property selection
@@ -149,21 +164,24 @@ Tests for everything, real server data, performance checks.
 ## Data Access Patterns
 
 **Bulk Operations**
-*Source: Section 17 (batch observation creation)*
+_Source: Section 17 (batch observation creation)_
+
 - Batch create multiple records at once
 - Bulk update operations
 - Transaction support
 - Partial success handling
 
 **Streaming Support**
-*Source: Section 17 (large observation datasets)*
+_Source: Section 17 (large observation datasets)_
+
 - Stream large observation datasets
 - Real-time data feeds
 - WebSocket connections
 - Server-sent events
 
 **Caching Strategies**
-*Source: Existing ogc-client patterns*
+_Source: Existing ogc-client patterns_
+
 - Cache service metadata
 - Cache collection info
 - Cache query results
@@ -172,7 +190,8 @@ Tests for everything, real server data, performance checks.
 - In-memory vs persistent cache
 
 **Offline Support**
-*Source: Progressive web app patterns*
+_Source: Progressive web app patterns_
+
 - Queue operations when offline
 - Sync when connection restored
 - Conflict resolution
@@ -183,28 +202,32 @@ Tests for everything, real server data, performance checks.
 ## System Capabilities
 
 **Hierarchical Systems**
-*Source: Section 18 (SensorML components/subsystems)*
+_Source: Section 18 (SensorML components/subsystems)_
+
 - Parent-child relationships
 - Component navigation
 - Recursive system queries
 - System aggregation
 
 **System Search**
-*Source: Section 16 (Systems collection queries)*
+_Source: Section 16 (Systems collection queries)_
+
 - Search by type
 - Search by capability
 - Search by location
 - Search by time validity
 
 **System Configuration**
-*Source: Section 18 (SensorML configuration/parameters)*
+_Source: Section 18 (SensorML configuration/parameters)_
+
 - Read configuration parameters
 - Update configuration
 - Configuration history
 - Configuration validation
 
 **System Status**
-*Source: General IoT patterns*
+_Source: General IoT patterns_
+
 - Current operational status
 - Health monitoring
 - Availability tracking
@@ -215,28 +238,32 @@ Tests for everything, real server data, performance checks.
 ## Observation Features
 
 **Result Parsing**
-*Source: Section 19 (SWE Common result schemas)*
+_Source: Section 19 (SWE Common result schemas)_
+
 - Schema-based parsing
 - Type validation
 - Unit conversion
 - Quality checking
 
 **Time Series Operations**
-*Source: Section 17 (temporal queries on observations)*
+_Source: Section 17 (temporal queries on observations)_
+
 - Aggregate by time period
 - Interpolation
 - Gap detection
 - Statistical summaries
 
 **Data Transformation**
-*Source: Section 19 (SWE Common units, constraints)*
+_Source: Section 19 (SWE Common units, constraints)_
+
 - Unit conversion
 - Coordinate transformation
 - Value normalization
 - Derived values
 
 **Quality Control**
-*Source: Section 19 (SWE Common quality properties)*
+_Source: Section 19 (SWE Common quality properties)_
+
 - Quality flags
 - Validation rules
 - Outlier detection
@@ -247,14 +274,16 @@ Tests for everything, real server data, performance checks.
 ## Command and Control
 
 **Command Templates**
-*Source: Section 17 (Control Streams, Commands)*
+_Source: Section 17 (Control Streams, Commands)_
+
 - Predefined commands
 - Parameter validation
 - Command scheduling
 - Recurring commands
 
 **Command Execution**
-*Source: Section 17 (Command resource)*
+_Source: Section 17 (Command resource)_
+
 - Synchronous commands
 - Asynchronous commands
 - Status tracking
@@ -262,7 +291,8 @@ Tests for everything, real server data, performance checks.
 - Error handling
 
 **Access Control**
-*Source: OGC API security considerations*
+_Source: OGC API security considerations_
+
 - Authentication integration
 - Authorization checking
 - Command permissions
@@ -273,14 +303,16 @@ Tests for everything, real server data, performance checks.
 ## Developer Experience
 
 **Type Safety**
-*Source: TypeScript best practices*
+_Source: TypeScript best practices_
+
 - Full TypeScript definitions
 - Generic types for resources
 - Type guards
 - Compile-time validation
 
 **Error Handling**
-*Source: OGC exception reports, HTTP standards*
+_Source: OGC exception reports, HTTP standards_
+
 - Specific error types
 - Error codes
 - Detailed error messages
@@ -288,14 +320,16 @@ Tests for everything, real server data, performance checks.
 - Network error retry
 
 **Logging and Debugging**
-*Source: Standard development practices*
+_Source: Standard development practices_
+
 - Debug mode
 - Request/response logging
 - Performance metrics
 - Tracing support
 
 **Documentation**
-*Source: Documentation best practices*
+_Source: Documentation best practices_
+
 - Inline documentation
 - Code examples
 - Tutorial guides
@@ -307,28 +341,32 @@ Tests for everything, real server data, performance checks.
 ## Performance Optimizations
 
 **Request Optimization**
-*Source: HTTP/REST best practices*
+_Source: HTTP/REST best practices_
+
 - Request batching
 - Parallel requests
 - Request deduplication
 - Connection pooling
 
 **Response Optimization**
-*Source: HTTP compression, OGC APIs*
+_Source: HTTP compression, OGC APIs_
+
 - Compression support
 - Partial responses
 - Response streaming
 - Lazy loading
 
 **Memory Management**
-*Source: JavaScript optimization patterns*
+_Source: JavaScript optimization patterns_
+
 - Efficient data structures
 - Memory pooling
 - Garbage collection hints
 - Large dataset handling
 
 **Bundle Optimization**
-*Source: Modern bundler capabilities*
+_Source: Modern bundler capabilities_
+
 - Tree shaking support
 - Code splitting
 - Lazy module loading
@@ -339,28 +377,32 @@ Tests for everything, real server data, performance checks.
 ## Integration Features
 
 **Framework Support**
-*Source: Modern framework patterns*
+_Source: Modern framework patterns_
+
 - React hooks
 - Vue composables
 - Angular services
 - Svelte stores
 
 **Library Integration**
-*Source: Web mapping library APIs*
+_Source: Web mapping library APIs_
+
 - OpenLayers integration
 - Leaflet integration
 - Cesium integration
 - D3.js integration
 
 **Standards Support**
-*Source: OGC standards family*
+_Source: OGC standards family_
+
 - OGC API Features compatibility
 - SensorThings API similarities
 - SOS compatibility layer
 - O&M compliance
 
 **Export Capabilities**
-*Source: Common data formats*
+_Source: Common data formats_
+
 - Export to CSV
 - Export to GeoJSON
 - Export to KML
@@ -371,7 +413,8 @@ Tests for everything, real server data, performance checks.
 ## Advanced Networking
 
 **HTTP Features**
-*Source: HTTP/2 specification, REST patterns*
+_Source: HTTP/2 specification, REST patterns_
+
 - HTTP/2 support
 - Custom headers
 - Authentication schemes (Basic, Bearer, OAuth)
@@ -379,14 +422,16 @@ Tests for everything, real server data, performance checks.
 - Certificate handling
 
 **Retry Logic**
-*Source: Resilience patterns*
+_Source: Resilience patterns_
+
 - Exponential backoff
 - Configurable retry attempts
 - Retry on specific errors
 - Circuit breaker pattern
 
 **Rate Limiting**
-*Source: API rate limiting patterns*
+_Source: API rate limiting patterns_
+
 - Automatic throttling
 - Configurable limits
 - Queue management
@@ -397,21 +442,24 @@ Tests for everything, real server data, performance checks.
 ## Monitoring and Analytics
 
 **Usage Metrics**
-*Source: Observability patterns*
+_Source: Observability patterns_
+
 - Request counting
 - Response times
 - Error rates
 - Cache hit rates
 
 **Performance Monitoring**
-*Source: Performance best practices*
+_Source: Performance best practices_
+
 - Parsing time
 - Network time
 - Total request time
 - Memory usage
 
 **Health Checks**
-*Source: Service health patterns*
+_Source: Service health patterns_
+
 - Server availability
 - Endpoint health
 - Feature support detection
@@ -422,28 +470,32 @@ Tests for everything, real server data, performance checks.
 ## Extension Points
 
 **Plugin System**
-*Source: Extensibility patterns*
+_Source: Extensibility patterns_
+
 - Custom format parsers
 - Custom validators
 - Custom transformers
 - Custom cache providers
 
 **Middleware Support**
-*Source: Middleware architecture patterns*
+_Source: Middleware architecture patterns_
+
 - Request interceptors
 - Response interceptors
 - Error interceptors
 - Transform middleware
 
 **Custom Resources**
-*Source: CSAPI extension points*
+_Source: CSAPI extension points_
+
 - Register custom resource types
 - Custom handlers
 - Custom schemas
 - Extension namespaces
 
 **Event System**
-*Source: Event-driven architecture*
+_Source: Event-driven architecture_
+
 - Lifecycle events
 - Data change events
 - Error events
@@ -454,21 +506,24 @@ Tests for everything, real server data, performance checks.
 ## Security Features
 
 **Input Validation**
-*Source: OWASP security practices*
+_Source: OWASP security practices_
+
 - Schema validation
 - Sanitization
 - Injection prevention
 - Size limits
 
 **Secure Communication**
-*Source: Web security standards*
+_Source: Web security standards_
+
 - HTTPS enforcement
 - Certificate pinning
 - Security headers
 - CORS handling
 
 **Data Protection**
-*Source: Data protection best practices*
+_Source: Data protection best practices_
+
 - Sensitive data masking
 - Encryption at rest
 - Secure storage
@@ -479,21 +534,24 @@ Tests for everything, real server data, performance checks.
 ## Testing Utilities
 
 **Mock Server**
-*Source: Testing best practices*
+_Source: Testing best practices_
+
 - Local test server
 - Configurable responses
 - Scenario testing
 - Error simulation
 
 **Test Helpers**
-*Source: Test-driven development*
+_Source: Test-driven development_
+
 - Fixture generation
 - Data builders
 - Assertion helpers
 - Coverage tools
 
 **Performance Testing**
-*Source: Performance testing frameworks*
+_Source: Performance testing frameworks_
+
 - Load testing utilities
 - Stress testing
 - Benchmark suite
@@ -504,7 +562,8 @@ Tests for everything, real server data, performance checks.
 ## Deployment Features
 
 **Environment Support**
-*Source: JavaScript runtime capabilities*
+_Source: JavaScript runtime capabilities_
+
 - Browser (all modern)
 - Node.js
 - Deno
@@ -512,7 +571,8 @@ Tests for everything, real server data, performance checks.
 - Service Workers
 
 **Build Outputs**
-*Source: Module format standards*
+_Source: Module format standards_
+
 - ESM modules
 - CommonJS modules
 - UMD bundles
@@ -520,7 +580,8 @@ Tests for everything, real server data, performance checks.
 - Source maps
 
 **Versioning**
-*Source: Semantic versioning, NPM standards*
+_Source: Semantic versioning, NPM standards_
+
 - Semantic versioning
 - Changelog generation
 - Migration guides
@@ -531,21 +592,24 @@ Tests for everything, real server data, performance checks.
 ## Community Features
 
 **Examples and Demos**
-*Source: Open source best practices*
+_Source: Open source best practices_
+
 - Basic examples
 - Advanced examples
 - Live demos
 - Code sandboxes
 
 **Development Tools**
-*Source: Developer tooling patterns*
+_Source: Developer tooling patterns_
+
 - CLI tool for testing
 - Debug console
 - Inspector tool
 - Schema validator
 
 **Contribution Support**
-*Source: Open source governance*
+_Source: Open source governance_
+
 - Development setup guide
 - Contributing guidelines
 - Issue templates

@@ -26,6 +26,7 @@
 ### Part 1 Decisions (THIS DOCUMENT - COMPLETE)
 
 **Questions Answered:**
+
 - ✅ Should we have one builder or split Part 1/Part 2?
 - ✅ Should we use inheritance or helper methods?
 - ✅ Should we parse formats or URL-only?
@@ -34,6 +35,7 @@
 - ✅ How to discover available resources?
 
 **Research Basis:**
+
 - Plan 01: PR#114 EDR Pattern (template)
 - Plan 02: QueryBuilder Pattern (upstream consistency)
 - Plan 03: CSAPI Architecture Decisions (9 resources, format handling)
@@ -43,6 +45,7 @@
 ### Part 2 Decisions (PENDING - Plans 11-16)
 
 **Questions Remaining:**
+
 - 📋 How to integrate with endpoint.ts? (Plan 11)
 - 📋 Exact file structure for 10,000+ lines? (Plan 12)
 - 📋 How to define SensorML/SWE types? (Plan 13)
@@ -64,6 +67,7 @@ Should CSAPI have one builder or split Part 1 (feature resources) and Part 2 (dy
 ### Research Evidence
 
 **From Plan 04 (Architecture Patterns):**
+
 - 100% of ogc-client APIs use single builder class
 - EDR: 1 builder for 1 resource type
 - WFS: 1 builder for 1 resource type
@@ -71,11 +75,13 @@ Should CSAPI have one builder or split Part 1 (feature resources) and Part 2 (dy
 - **Pattern: Always single builder, regardless of complexity**
 
 **From Plan 02 (QueryBuilder Pattern):**
+
 - Upstream convention: One entry point per API
 - Users expect `endpoint.csapi()` to return single object
 - Cache management simpler with single class
 
 **From Plan 03 (CSAPI Architecture):**
+
 - 9 resources share common patterns (CRUD, history, schema)
 - Part 1 and Part 2 are logically one API (just different purposes)
 - Class size manageable with clear organization
@@ -89,22 +95,25 @@ export default class CSAPIQueryBuilder {
   // ========================================
   // PART 1: FEATURE RESOURCES
   // ========================================
-  
+
   // Systems (12 methods)
-  async getSystems(options?: QueryOptions): Promise<string>
-  async getSystem(systemId: string): Promise<string>
-  async getSystemHistory(systemId: string, options?: HistoryOptions): Promise<string>
+  async getSystems(options?: QueryOptions): Promise<string>;
+  async getSystem(systemId: string): Promise<string>;
+  async getSystemHistory(
+    systemId: string,
+    options?: HistoryOptions
+  ): Promise<string>;
   // ... 9 more system methods
-  
+
   // Deployments (8 methods)
   // Procedures (8 methods)
   // Sampling Features (8 methods)
   // Properties (6 methods)
-  
+
   // ========================================
   // PART 2: DYNAMIC DATA
   // ========================================
-  
+
   // Datastreams (11 methods)
   // Observations (9 methods)
   // Control Streams (8 methods)
@@ -117,6 +126,7 @@ export default class CSAPIQueryBuilder {
 ### Rationale
 
 **Pros:**
+
 - ✅ Matches EDR pattern (single builder)
 - ✅ Follows upstream convention (100% consistency)
 - ✅ Single entry point for users
@@ -124,6 +134,7 @@ export default class CSAPIQueryBuilder {
 - ✅ Clear organization via comment sections
 
 **Cons Considered:**
+
 - Large class (~500-700 lines) - **Mitigated:** Similar to EDR, organized by sections
 - Mixed concerns (metadata + data) - **Mitigated:** CSAPI is logically one API
 
@@ -140,12 +151,14 @@ Should we use abstract base classes for code reuse or helper methods?
 ### Research Evidence
 
 **From Plan 04 (Architecture Patterns):**
+
 - **0 occurrences** of inheritance in ogc-client
 - **0 abstract base classes** for resource navigation
 - **100%** use private helper methods for code reuse
 - EDR uses helper functions for link extraction, URL building
 
 **From Plan 02 (QueryBuilder Pattern):**
+
 - Explicit method implementations preferred
 - All methods visible in single class
 - Helper methods reduce duplication without inheritance
@@ -159,7 +172,7 @@ export default class CSAPIQueryBuilder {
   // ========================================
   // PRIVATE HELPERS
   // ========================================
-  
+
   private buildResourceUrl(
     resourceType: string,
     id?: string,
@@ -171,27 +184,27 @@ export default class CSAPIQueryBuilder {
     if (subPath) url += `/${subPath}`;
     return url + this.buildQueryString(options);
   }
-  
+
   private buildQueryString(options?: QueryOptions): string {
     // Implementation
   }
-  
+
   private extractAvailableResources(): Set<string> {
     // Implementation
   }
-  
+
   // ========================================
   // PUBLIC METHODS (70-80 methods)
   // ========================================
-  
+
   async getSystems(options?: QueryOptions): Promise<string> {
     return this.buildResourceUrl('systems', undefined, undefined, options);
   }
-  
+
   async getSystem(systemId: string): Promise<string> {
     return this.buildResourceUrl('systems', systemId);
   }
-  
+
   // ... explicit methods for all resources
 }
 ```
@@ -201,6 +214,7 @@ export default class CSAPIQueryBuilder {
 ### Rationale
 
 **Pros:**
+
 - ✅ Matches EDR pattern (no inheritance)
 - ✅ Follows upstream convention (100% consistency)
 - ✅ All methods visible in one place
@@ -208,6 +222,7 @@ export default class CSAPIQueryBuilder {
 - ✅ Reduces duplication (~60% reuse via helpers)
 
 **Cons Considered:**
+
 - Some method signature repetition - **Acceptable:** Clarity over cleverness
 
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Zero inheritance precedent in codebase
@@ -223,11 +238,13 @@ Should the library parse GeoJSON, SensorML, and SWE Common formats?
 ### Research Evolution
 
 **Original Research (Plan 03, 2026-01-30):**
+
 - Found: All upstream implementations (WFS, EDR, STAC) skip format parsing
 - Recommendation: No format parsing, URL building only
 - Code volume savings: ~2,000-4,000 lines
 
 **User Mandate (2026-02-04):**
+
 - ✅ **FULL format handling REQUIRED**
 - ✅ GeoJSON, SensorML 3.0, SWE Common 3.0
 - ✅ Version-specific: 3.0 ONLY (not older versions)
@@ -259,11 +276,13 @@ src/ogc-api/csapi/
 ```
 
 **Separation of Concerns:**
+
 - CSAPIQueryBuilder = URL building ONLY
 - Format parsers = Separate imports
 - Users choose when to parse
 
 **Usage Pattern:**
+
 ```typescript
 import { CSAPIQueryBuilder } from 'ogc-client';
 import { parseSensorML30 } from 'ogc-client/csapi/formats';
@@ -277,6 +296,7 @@ const system = parseSensorML30(await response.text());
 ### Rationale
 
 **Why Full Format Handling:**
+
 1. **CSAPI-Specific Complexity:** SensorML/SWE are core to CSAPI (unlike optional formats)
 2. **User Experience:** Manual parsing creates significant friction
 3. **Type Safety:** TypeScript interfaces provide strong typing
@@ -284,6 +304,7 @@ const system = parseSensorML30(await response.text());
 5. **Differentiation:** Complete CSAPI client library vs simple URL builder
 
 **Why Separate Subfolder:**
+
 1. **Clean Separation:** URL building vs parsing are distinct concerns
 2. **Tree-Shaking:** Users can exclude parsers if not needed
 3. **Maintainability:** Format changes isolated from QueryBuilder
@@ -302,11 +323,13 @@ Should methods validate that a resource is available before building URLs?
 ### Research Evidence
 
 **From Plan 10 (Upstream Expectations):**
+
 - Principle: "Minimal validation" - trust TypeScript + server
 - Server validates via HTTP 404 if resource unavailable
 - No validation in EDR methods
 
 **From Plan 03 (CSAPI Architecture):**
+
 - Collection links indicate available resources
 - Not all endpoints support all 9 resources
 
@@ -322,32 +345,36 @@ Should methods validate that a resource is available before building URLs?
 export default class CSAPIQueryBuilder {
   // Public property for users to check
   public readonly availableResources: Set<string>;
-  
+
   constructor(private collection_: OgcApiCollectionInfo) {
     this.availableResources = this.extractAvailableResources();
   }
-  
+
   // VALIDATE in all methods
   async getSystems(options?: QueryOptions): Promise<string> {
     if (!this.availableResources.has('systems')) {
       throw new EndpointError(
         `Collection '${this.collection_.id}' does not support 'systems' resource. ` +
-        `Available resources: ${Array.from(this.availableResources).join(', ')}`
+          `Available resources: ${Array.from(this.availableResources).join(
+            ', '
+          )}`
       );
     }
     return this.buildResourceUrl('systems', undefined, undefined, options);
   }
-  
+
   async getDeployments(options?: QueryOptions): Promise<string> {
     if (!this.availableResources.has('deployments')) {
       throw new EndpointError(
         `Collection '${this.collection_.id}' does not support 'deployments' resource. ` +
-        `Available resources: ${Array.from(this.availableResources).join(', ')}`
+          `Available resources: ${Array.from(this.availableResources).join(
+            ', '
+          )}`
       );
     }
     return this.buildResourceUrl('deployments', undefined, undefined, options);
   }
-  
+
   // ... validation in all 70-80 methods
 }
 
@@ -368,6 +395,7 @@ try {
 ### Rationale
 
 **Why Validate (User Mandate):**
+
 1. **Better Developer Experience:** Fail-fast with clear, actionable error messages
 2. **Debugging Efficiency:** Users know immediately if resource is unavailable (not a network/server issue)
 3. **Standard Practice:** Most client libraries validate before operations
@@ -375,6 +403,7 @@ try {
 5. **Type Safety Extension:** TypeScript types + runtime validation = complete safety
 
 **Trade-offs Accepted:**
+
 - Deviates from EDR pattern - **Acceptable:** CSAPI has 9 resources (more complexity than EDR's 1)
 - Additional code - **Acceptable:** ~140-160 lines is <2% of total implementation
 - Validation overhead - **Negligible:** Set lookup is O(1), happens once per method call
@@ -395,6 +424,7 @@ How does CSAPIQueryBuilder integrate with OgcApiEndpoint?
 ### Research Evidence
 
 **From Plan 01 (EDR Pattern):**
+
 ```typescript
 // In endpoint.ts
 private collection_id_to_edr_builder_ = new Map<string, EDRQueryBuilder>();
@@ -408,6 +438,7 @@ async edr(collection_id: string): Promise<EDRQueryBuilder> {
 ```
 
 **From Plan 02 (QueryBuilder Pattern):**
+
 - Factory method per API type
 - Collection-based builders
 - Map-based caching
@@ -421,15 +452,20 @@ async edr(collection_id: string): Promise<EDRQueryBuilder> {
 import CSAPIQueryBuilder from './csapi/url_builder.js';
 
 export default class OgcApiEndpoint {
-  private collection_id_to_csapi_builder_ = new Map<string, CSAPIQueryBuilder>();
-  
+  private collection_id_to_csapi_builder_ = new Map<
+    string,
+    CSAPIQueryBuilder
+  >();
+
   get hasConnectedSystems(): Promise<boolean> {
     return this.featureCheckFactory_(checkHasConnectedSystems);
   }
-  
+
   async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
-    if (!await this.hasConnectedSystems) {
-      throw new EndpointError('Endpoint does not support Connected Systems API');
+    if (!(await this.hasConnectedSystems)) {
+      throw new EndpointError(
+        'Endpoint does not support Connected Systems API'
+      );
     }
     const cache = this.collection_id_to_csapi_builder_;
     if (cache.has(collection_id)) {
@@ -444,6 +480,7 @@ export default class OgcApiEndpoint {
 ```
 
 **Conformance checking:**
+
 ```typescript
 // In src/ogc-api/shared/info.ts (~15 lines added)
 export function checkHasConnectedSystems([conformance]: [
@@ -458,6 +495,7 @@ export function checkHasConnectedSystems([conformance]: [
 ### Rationale
 
 **Pros:**
+
 - ✅ Identical to EDR pattern
 - ✅ Minimal code addition (~45 lines total)
 - ✅ Collection-based caching
@@ -471,41 +509,41 @@ export function checkHasConnectedSystems([conformance]: [
 
 ### QueryBuilder Implementation
 
-| Component | Lines | Status |
-|-----------|-------|--------|
-| url_builder.ts | 640-860 | Structure decided, details pending |
-| - Methods (base) | 500-700 | URL building logic |
-| - Validation | 140-160 | Resource validation (~2 lines/method) |
-| model.ts | 200-300 | Structure decided, types pending |
-| helpers.ts | 50-100 | Structure decided, details pending |
-| **Core Subtotal** | **890-1,260** | **Structure complete** |
+| Component         | Lines         | Status                                |
+| ----------------- | ------------- | ------------------------------------- |
+| url_builder.ts    | 640-860       | Structure decided, details pending    |
+| - Methods (base)  | 500-700       | URL building logic                    |
+| - Validation      | 140-160       | Resource validation (~2 lines/method) |
+| model.ts          | 200-300       | Structure decided, types pending      |
+| helpers.ts        | 50-100        | Structure decided, details pending    |
+| **Core Subtotal** | **890-1,260** | **Structure complete**                |
 
 ### Format Parsing Implementation
 
-| Component | Lines | Status |
-|-----------|-------|--------|
-| formats/sensorml/ | 1,600-2,200 | Structure decided, types pending |
-| formats/swecommon/ | 1,600-2,250 | Structure decided, types pending |
-| formats/geojson.ts | 50-100 | Structure decided |
-| formats/constants.ts | 50-100 | Structure decided |
-| **Format Subtotal** | **3,300-4,650** | **Structure complete** |
+| Component            | Lines           | Status                           |
+| -------------------- | --------------- | -------------------------------- |
+| formats/sensorml/    | 1,600-2,200     | Structure decided, types pending |
+| formats/swecommon/   | 1,600-2,250     | Structure decided, types pending |
+| formats/geojson.ts   | 50-100          | Structure decided                |
+| formats/constants.ts | 50-100          | Structure decided                |
+| **Format Subtotal**  | **3,300-4,650** | **Structure complete**           |
 
 ### Integration
 
-| Component | Lines | Status |
-|-----------|-------|--------|
-| endpoint.ts additions | 30 | Pattern decided |
-| info.ts additions | 15 | Pattern decided |
-| **Integration Subtotal** | **45** | **Complete** |
+| Component                | Lines  | Status          |
+| ------------------------ | ------ | --------------- |
+| endpoint.ts additions    | 30     | Pattern decided |
+| info.ts additions        | 15     | Pattern decided |
+| **Integration Subtotal** | **45** | **Complete**    |
 
 ### Tests
 
-| Component | Lines | Status |
-|-----------|-------|--------|
-| QueryBuilder tests | 2,000-2,500 | Patterns pending (Plan 06?) |
-| Format parser tests | 3,500-4,700 | Patterns pending |
-| Integration tests | 500-700 | Patterns pending |
-| **Test Subtotal** | **6,000-7,900** | **Patterns pending** |
+| Component           | Lines           | Status                      |
+| ------------------- | --------------- | --------------------------- |
+| QueryBuilder tests  | 2,000-2,500     | Patterns pending (Plan 06?) |
+| Format parser tests | 3,500-4,700     | Patterns pending            |
+| Integration tests   | 500-700         | Patterns pending            |
+| **Test Subtotal**   | **6,000-7,900** | **Patterns pending**        |
 
 ### Grand Total
 
@@ -547,31 +585,37 @@ export function checkHasConnectedSystems([conformance]: [
 **From Remaining Research Plans:**
 
 **Plan 11: Integration Requirements**
+
 - How does CSAPIQueryBuilder use OgcApiCollectionInfo?
 - What properties are accessed?
 - What links are expected?
 
 **Plan 12: File Organization**
+
 - Exact file structure for 10,000+ lines?
 - How to organize format parsers?
 - Where do tests go?
 
 **Plan 13: TypeScript Types**
+
 - How to structure SensorML 3.0 types (~400-600 lines)?
 - How to structure SWE Common 3.0 types (~400-600 lines)?
 - Type export strategy?
 
 **Plan 14: Usage Scenarios**
+
 - What are the common usage patterns?
 - How do users typically combine methods?
 - What convenience methods are needed?
 
 **Plan 15: Query Parameters**
+
 - What parameters are common across resources?
 - What parameters are resource-specific?
 - How to handle format selection (f=json|sml)?
 
 **Plan 16: Subresource Navigation**
+
 - Exact pattern for `/systems/{id}/datastreams`?
 - How to handle nested resources?
 - Cache parent URLs?
@@ -582,6 +626,7 @@ export function checkHasConnectedSystems([conformance]: [
 **Part 2** gives us the **floorplan** (exact dimensions, door placement).
 
 Without Plans 11-16, we'd be guessing at:
+
 - Type definitions (~800-1,200 lines of guessing)
 - Query parameter handling (inconsistent across methods)
 - File organization (messy 10,000+ line structure)
@@ -598,7 +643,7 @@ Without Plans 11-16, we'd be guessing at:
 **Research:** Plans 01-04, 10 (5 plans)  
 **Time:** ~8-10 hours  
 **Output:** This decision document  
-**Confidence:** 100%  
+**Confidence:** 100%
 
 ### Phase 2: Implementation Design 📋 PENDING
 
@@ -608,6 +653,7 @@ Without Plans 11-16, we'd be guessing at:
 **Expected Confidence:** 95%+
 
 **Plans to Complete:**
+
 - ✅ Plan 11: Integration Requirements (CRITICAL)
 - ✅ Plan 12: File Organization (CRITICAL)
 - ✅ Plan 13: TypeScript Types (CRITICAL)
@@ -618,6 +664,7 @@ Without Plans 11-16, we'd be guessing at:
 ### Phase 3: Implementation 🚀 READY AFTER PART 2
 
 **What we'll implement:**
+
 - CSAPIQueryBuilder class (~640-860 lines with validation)
 - Format parsers (~3,300-4,650 lines)
 - Integration (~45 lines)
@@ -631,6 +678,7 @@ Without Plans 11-16, we'd be guessing at:
 ## Decision Authority
 
 **Research Foundation:**
+
 - Plan 01: PR#114 EDR Pattern ✅
 - Plan 02: QueryBuilder Pattern ✅
 - Plan 03: CSAPI Architecture Decisions ✅
@@ -638,10 +686,12 @@ Without Plans 11-16, we'd be guessing at:
 - Plan 10: Upstream Expectations ✅
 
 **User Decisions:**
+
 - Format handling mandate (2026-02-04)
 - Resource validation mandate (2026-02-04)
 
 **Governance:**
+
 - Follows upstream conventions (100% alignment)
 - Minimal impact on existing code
 - EDR pattern as template
@@ -655,24 +705,24 @@ Without Plans 11-16, we'd be guessing at:
 
 ### Completed (5 of 22)
 
-| Plan | Title | Status | Output |
-|------|-------|--------|--------|
-| 01 | PR#114 EDR Pattern | ✅ Complete | findings/01-pr114-edr-pattern-findings.md |
-| 02 | QueryBuilder Pattern | ✅ Complete | findings/02-querybuilder-pattern-findings.md |
-| 03 | CSAPI Architecture Decisions | ✅ Complete | findings/03-csapi-architecture-decisions-findings.md |
-| 04 | Architecture Patterns | ✅ Complete | findings/04-architecture-patterns-findings.md |
-| 10 | Upstream Expectations | ✅ Complete | findings/10-upstream-expectations-findings.md |
+| Plan | Title                        | Status      | Output                                               |
+| ---- | ---------------------------- | ----------- | ---------------------------------------------------- |
+| 01   | PR#114 EDR Pattern           | ✅ Complete | findings/01-pr114-edr-pattern-findings.md            |
+| 02   | QueryBuilder Pattern         | ✅ Complete | findings/02-querybuilder-pattern-findings.md         |
+| 03   | CSAPI Architecture Decisions | ✅ Complete | findings/03-csapi-architecture-decisions-findings.md |
+| 04   | Architecture Patterns        | ✅ Complete | findings/04-architecture-patterns-findings.md        |
+| 10   | Upstream Expectations        | ✅ Complete | findings/10-upstream-expectations-findings.md        |
 
 ### Pending for Part 2 (6 of 22)
 
-| Plan | Title | Priority | Why Needed |
-|------|-------|----------|------------|
-| 11 | Integration Requirements | CRITICAL | How to use OgcApiCollectionInfo |
-| 12 | File Organization | CRITICAL | Exact file structure |
-| 13 | TypeScript Types | CRITICAL | Type definitions for formats |
-| 14 | Usage Scenarios | HIGH | Common patterns |
-| 15 | Query Parameters | HIGH | Parameter handling |
-| 16 | Subresource Navigation | HIGH | Nested resource patterns |
+| Plan | Title                    | Priority | Why Needed                      |
+| ---- | ------------------------ | -------- | ------------------------------- |
+| 11   | Integration Requirements | CRITICAL | How to use OgcApiCollectionInfo |
+| 12   | File Organization        | CRITICAL | Exact file structure            |
+| 13   | TypeScript Types         | CRITICAL | Type definitions for formats    |
+| 14   | Usage Scenarios          | HIGH     | Common patterns                 |
+| 15   | Query Parameters         | HIGH     | Parameter handling              |
+| 16   | Subresource Navigation   | HIGH     | Nested resource patterns        |
 
 ### Optional (11 of 22)
 

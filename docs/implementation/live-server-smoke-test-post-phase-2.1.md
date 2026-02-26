@@ -20,11 +20,11 @@ No code changes were made. All tests were run from the terminal using raw `fetch
 
 The server advertises **full CSAPI support** across all three specification parts:
 
-| Part | Conformance Classes |
-|------|-------------------|
-| Part 1 (Resources) | core, system, subsystem, deployment, subdeployment, procedure, sf (sampling features), property, create-replace-delete, geojson, sensorml |
-| Part 2 (Dynamic Data) | datastream, controlstream, system-history, system-event, create-replace-delete, json, swecommon-json, swecommon-text, swecommon-binary |
-| Part 3 (Pub/Sub) | websocket, mqtt |
+| Part                  | Conformance Classes                                                                                                                       |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Part 1 (Resources)    | core, system, subsystem, deployment, subdeployment, procedure, sf (sampling features), property, create-replace-delete, geojson, sensorml |
+| Part 2 (Dynamic Data) | datastream, controlstream, system-history, system-event, create-replace-delete, json, swecommon-json, swecommon-text, swecommon-binary    |
+| Part 3 (Pub/Sub)      | websocket, mqtt                                                                                                                           |
 
 The server exposes 4 collections: `all_systems`, `all_datastreams`, `all_fois`, `all_procedures`.
 
@@ -36,13 +36,13 @@ Resources are available at top-level URLs: `/systems`, `/deployments`, `/procedu
 
 ### What WORKS
 
-| Check | Detail |
-|-------|--------|
-| **Conformance detection** | `checkHasConnectedSystems` correctly identifies CSAPI support. The server advertises `ogcapi-connectedsystems-1/1.0/conf/core`, which our function matches. |
-| **System resource shape** | Individual system objects have `type: "Feature"`, `id`, `geometry`, and `properties` with `uid`, `featureType`, `name` — matching our `System` interface structure. |
-| **featureType URIs** | The server uses `http://www.w3.org/ns/sosa/Sensor`, which is one of the 5 values in our `SystemTypeUris` constant. |
-| **Nested endpoints** | `/systems/{id}/subsystems` and `/systems/{id}/datastreams` both resolve and return data, confirming the URL patterns our builder generates are structurally correct. |
-| **Query parameters** | `?limit=N` is accepted and respected by the server. |
+| Check                     | Detail                                                                                                                                                               |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Conformance detection** | `checkHasConnectedSystems` correctly identifies CSAPI support. The server advertises `ogcapi-connectedsystems-1/1.0/conf/core`, which our function matches.          |
+| **System resource shape** | Individual system objects have `type: "Feature"`, `id`, `geometry`, and `properties` with `uid`, `featureType`, `name` — matching our `System` interface structure.  |
+| **featureType URIs**      | The server uses `http://www.w3.org/ns/sosa/Sensor`, which is one of the 5 values in our `SystemTypeUris` constant.                                                   |
+| **Nested endpoints**      | `/systems/{id}/subsystems` and `/systems/{id}/datastreams` both resolve and return data, confirming the URL patterns our builder generates are structurally correct. |
+| **Query parameters**      | `?limit=N` is accepted and respected by the server.                                                                                                                  |
 
 ### What BREAKS — 5 Findings
 
@@ -54,17 +54,22 @@ Resources are available at top-level URLs: `/systems`, `/deployments`, `/procedu
 **Impact:** Our `extractAvailableResources()` scans for the `ogc-cs:` prefix and finds nothing. `availableResources` is an empty Set. Every public method (`getSystems`, `getSystem`, `createSystem`, etc.) calls `assertResourceAvailable('systems')` and immediately throws `EndpointError`.
 
 **Server's actual collection links:**
+
 ```json
 {
   "id": "all_systems",
   "links": [
-    { "rel": "self", "href": "http://45.55.99.236:8080/sensorhub/api/collections" },
+    {
+      "rel": "self",
+      "href": "http://45.55.99.236:8080/sensorhub/api/collections"
+    },
     { "rel": "items", "href": "systems" }
   ]
 }
 ```
 
 **Root document links:**
+
 ```json
 { "rel": "systems", "href": "http://45.55.99.236:8080/sensorhub/api/systems" }
 { "rel": "deployments", "href": "http://45.55.99.236:8080/sensorhub/api/deployments" }
@@ -81,14 +86,14 @@ Resources are available at top-level URLs: `/systems`, `/deployments`, `/procedu
 **What we expect:** Resources scoped under a collection: `/collections/{id}/systems`
 **What the server returns:** Resources at the API root: `/sensorhub/api/systems`
 
-**Impact:** Even if F1 were fixed, our `buildResourceUrl` constructs paths relative to a collection's self link. The collection's self link points to `/sensorhub/api/collections` (the collection *list*), not to itself. So our builder would produce:
+**Impact:** Even if F1 were fixed, our `buildResourceUrl` constructs paths relative to a collection's self link. The collection's self link points to `/sensorhub/api/collections` (the collection _list_), not to itself. So our builder would produce:
 
 ```
 Expected:  http://45.55.99.236:8080/sensorhub/api/collections/all_systems/systems
 Actual:    http://45.55.99.236:8080/sensorhub/api/systems
 ```
 
-The server's architecture treats collections as a *grouping catalog* while resources live at the API root level. Our code assumes the OGC API Common pattern where resources are nested under their collection.
+The server's architecture treats collections as a _grouping catalog_ while resources live at the API root level. Our code assumes the OGC API Common pattern where resources are nested under their collection.
 
 **Severity:** Critical — URLs would be wrong even after fixing F1.
 
@@ -100,6 +105,7 @@ The server's architecture treats collections as a *grouping catalog* while resou
 **What the server returns:** `{ items: [...], links: [...] }`
 
 The systems list endpoint returns:
+
 ```json
 {
   "items": [
@@ -123,6 +129,7 @@ No `type: "FeatureCollection"` wrapper, no `features` key, no `numberMatched` or
 **What the server returns:** `validTime: ["2026-01-26T18:32:01.56Z", "now"]`
 
 The server encodes time intervals as a two-element string array, where:
+
 - Element 0 is the start time as an ISO 8601 string
 - Element 1 is the end time, or the literal string `"now"` for open-ended intervals
 
@@ -149,7 +156,7 @@ It's important to understand what these findings are and what they aren't.
 
 **Nothing is broken.** All 100 CSAPI unit tests pass. ESLint is clean. TypeScript is clean. Every piece of code does exactly what it was designed to do. Phase 1 and Phase 2.1 are complete by their own acceptance criteria.
 
-What the smoke test revealed is that our code was designed against our *reading of the spec*. The reference implementation (OpenSensorHub) interprets some parts of the spec differently than we did:
+What the smoke test revealed is that our code was designed against our _reading of the spec_. The reference implementation (OpenSensorHub) interprets some parts of the spec differently than we did:
 
 - We assumed collections would advertise resources with `ogc-cs:systems` link relations — a reasonable reading of the spec. The real server uses plain `rel: "items"` and `rel: "systems"` instead.
 - We assumed resources would be scoped under collections (`/collections/iot/systems`). The real server puts them at the API root (`/api/systems`).
@@ -158,7 +165,7 @@ These are **design assumptions**, not bugs. Our fixture data (which we wrote our
 
 The analogy: imagine building a perfectly working USB-A plug, tested thoroughly against a USB-A port you built yourself. Then you try plugging it into someone else's device and discover they built a USB-C port. Your plug isn't broken — it just handles one connector shape when the real world has two.
 
-**What actually needs to happen:** We need to support *both* patterns — our existing collection-scoped pattern (which other servers may use) AND the top-level pattern (which the reference implementation uses). It's additive, not corrective. None of the existing code or tests need to change — we'd be adding a second resource discovery path.
+**What actually needs to happen:** We need to support _both_ patterns — our existing collection-scoped pattern (which other servers may use) AND the top-level pattern (which the reference implementation uses). It's additive, not corrective. None of the existing code or tests need to change — we'd be adding a second resource discovery path.
 
 This is exactly why we did the smoke test. Without it, we'd have kept building more methods on a single pattern and discovered the gap much later, when it would have been more painful to fix.
 
@@ -166,13 +173,13 @@ This is exactly why we did the smoke test. Without it, we'd have kept building m
 
 ## Summary
 
-| Finding | Severity | Affects | Fix Phase |
-|---------|----------|---------|-----------|
-| F1: Link relation prefix mismatch | Critical | URL Builder | Phase 2 (before more methods are added) |
-| F2: Top-level vs. collection-scoped URLs | Critical | URL Builder + Endpoint integration | Phase 2 (architectural) |
-| F3: Response envelope format | Moderate | Response parser | Phase 3 |
-| F4: validTime array format | Moderate | Model / parser | Phase 3 |
-| F5: Missing pagination metadata | Low | Collection types | Phase 3 (optional fields already handle this) |
+| Finding                                  | Severity | Affects                            | Fix Phase                                     |
+| ---------------------------------------- | -------- | ---------------------------------- | --------------------------------------------- |
+| F1: Link relation prefix mismatch        | Critical | URL Builder                        | Phase 2 (before more methods are added)       |
+| F2: Top-level vs. collection-scoped URLs | Critical | URL Builder + Endpoint integration | Phase 2 (architectural)                       |
+| F3: Response envelope format             | Moderate | Response parser                    | Phase 3                                       |
+| F4: validTime array format               | Moderate | Model / parser                     | Phase 3                                       |
+| F5: Missing pagination metadata          | Low      | Collection types                   | Phase 3 (optional fields already handle this) |
 
 ### Verdict
 

@@ -34,6 +34,7 @@
 3. **Link rel/type** - Follow link with specific MIME type
 
 **Priority order:**
+
 1. Explicit `f` parameter (highest priority)
 2. Link type-based selection
 3. Accept header (fallback)
@@ -42,13 +43,13 @@
 
 **Not centralized in utility module** - spread across endpoint classes:
 
-| Location | Format Logic |
-|----------|--------------|
-| `src/shared/mime-type.ts` | MIME type detection utilities |
-| `src/shared/http-utils.ts` | Accept header handling |
-| `src/ogc-api/endpoint.ts` | Link-based format selection |
-| `src/stac/endpoint.ts` | Accept header from links |
-| `src/ogc-api/edr/url_builder.ts` | `f` parameter handling |
+| Location                         | Format Logic                  |
+| -------------------------------- | ----------------------------- |
+| `src/shared/mime-type.ts`        | MIME type detection utilities |
+| `src/shared/http-utils.ts`       | Accept header handling        |
+| `src/ogc-api/endpoint.ts`        | Link-based format selection   |
+| `src/stac/endpoint.ts`           | Accept header from links      |
+| `src/ogc-api/edr/url_builder.ts` | `f` parameter handling        |
 
 **No dedicated format negotiation module** - each API handles it inline.
 
@@ -67,7 +68,7 @@
 export type optionalPositionParams = {
   parameter_name?: string[];
   datetime?: DateTimeParameter;
-  f?: string;  // Format parameter
+  f?: string; // Format parameter
 };
 
 // In URL builder
@@ -79,14 +80,14 @@ if (optional_params.f !== undefined) {
 **Usage:**
 
 ```typescript
-const url = builder.buildPositionDownloadUrl(
-  'POINT(0 51)',
-  { f: 'application/json' }
-);
+const url = builder.buildPositionDownloadUrl('POINT(0 51)', {
+  f: 'application/json',
+});
 // Results in: .../position?coords=POINT(0%2051)&f=application%2Fjson
 ```
 
 **Characteristics:**
+
 - Simple string parameter
 - No validation (trusts user input)
 - No format enum
@@ -121,11 +122,12 @@ const url = new URL(linkWithFormat.href);
 
 ```typescript
 const url = await endpoint.getCollectionItemsUrl('myCollection', {
-  outputFormat: 'application/geo+json'
+  outputFormat: 'application/geo+json',
 });
 ```
 
 **Characteristics:**
+
 - Link-based discovery
 - Type matching from collection metadata
 - Fallback chain for JSON formats
@@ -140,12 +142,12 @@ const url = await endpoint.getCollectionItemsUrl('myCollection', {
 ```typescript
 // Get link with type
 const itemsLink = getLinks(collectionDoc, 'items')[0];
-const acceptType = itemsLink?.type;  // e.g., 'application/geo+json'
+const acceptType = itemsLink?.type; // e.g., 'application/geo+json'
 
 // Use as Accept header
 const doc = await fetchStacDocument(
   url.toString(),
-  acceptType  // Passed as custom Accept header
+  acceptType // Passed as custom Accept header
 );
 ```
 
@@ -169,6 +171,7 @@ export function sharedFetch(
 ```
 
 **Characteristics:**
+
 - Automatic from link metadata
 - HTTP content negotiation
 - Server chooses based on Accept header
@@ -211,23 +214,27 @@ export function sharedFetch(
 ### Accept Header Patterns
 
 **Default (no format specified):**
+
 - No Accept header set
 - Server returns default format
 
 **JSON requested (`asJson: true`):**
+
 ```
 Accept: application/json,application/schema+json
 ```
 
 **Custom format:**
+
 ```typescript
-sharedFetch(url, 'GET', false, 'application/geo+json')
+sharedFetch(url, 'GET', false, 'application/geo+json');
 // Results in: Accept: application/geo+json
 ```
 
 **Multiple formats (quality values not supported):**
 
 ❌ **Not implemented:**
+
 ```
 Accept: application/geo+json;q=0.9,application/json;q=0.8
 ```
@@ -239,7 +246,7 @@ Accept: application/geo+json;q=0.9,application/json;q=0.8
 ```typescript
 const itemsDoc = await fetchStacDocument(
   url.toString(),
-  acceptType  // From link.type
+  acceptType // From link.type
 );
 ```
 
@@ -262,12 +269,14 @@ url.searchParams.set('f', optional_params.f);
 ### Why Different Approaches?
 
 **Query parameter (`f`) advantages:**
+
 - URL is self-documenting
 - Easy to cache by URL
 - Simple implementation
 - Works with proxy caching
 
 **Accept header advantages:**
+
 - Standard HTTP content negotiation
 - Cleaner URLs
 - Multiple format preferences
@@ -288,7 +297,7 @@ export type optionalPositionParams = {
   datetime?: DateTimeParameter;
   z?: ZParameter;
   crs?: string;
-  f?: string;  // Format parameter
+  f?: string; // Format parameter
 };
 ```
 
@@ -300,11 +309,11 @@ buildPositionDownloadUrl(
   optional_params: optionalPositionParams = {}
 ): string {
   // ... build base URL
-  
+
   if (optional_params.f !== undefined) {
     url.searchParams.set('f', optional_params.f);
   }
-  
+
   return url.toString();
 }
 ```
@@ -313,18 +322,19 @@ buildPositionDownloadUrl(
 
 ```typescript
 // User provides format string directly
-const url = builder.buildPositionDownloadUrl(
-  'POINT(0 51)',
-  { f: 'CoverageJSON' }
-);
+const url = builder.buildPositionDownloadUrl('POINT(0 51)', {
+  f: 'CoverageJSON',
+});
 ```
 
 **Benefits:**
+
 - Simple implementation
 - Flexible (any format string)
 - No maintenance (no format enum to update)
 
 **Drawbacks:**
+
 - No type safety
 - No autocomplete
 - User must know valid formats
@@ -346,17 +356,18 @@ getCollectionItemsUrl(
   let linkWithFormat = itemLinks.find(
     (link) => link.type === options?.outputFormat
   );
-  
+
   // If not found in links, add as 'f' parameter
   if (options?.outputFormat && !linkWithFormat) {
     url.searchParams.set('f', options.outputFormat);
   }
-  
+
   return url.toString();
 }
 ```
 
 **Pattern:**
+
 1. Try to find link with matching type
 2. If not found, add `f` query parameter
 3. Warn if format not in collection metadata
@@ -502,12 +513,14 @@ export const CSAPIFormats = {
 ### When Constants Make Sense
 
 **Pros of constants:**
+
 - Type safety
 - Autocomplete
 - Avoid typos
 - Documentation
 
 **Cons of constants:**
+
 - Maintenance burden
 - Less flexible
 - May not cover all formats
@@ -526,11 +539,11 @@ export type MimeType = string;
 
 ```typescript
 // ❌ Not done:
-export type MimeType = 
+export type MimeType =
   | 'application/geo+json'
   | 'application/json'
-  | 'text/html'
-  // ... exhaustive list
+  | 'text/html';
+// ... exhaustive list
 ```
 
 **Reason:** Too restrictive, standards evolve.
@@ -543,13 +556,13 @@ export type MimeType =
 
 **From OGC API - Connected Systems spec:**
 
-| Format | MIME Type | Usage |
-|--------|-----------|-------|
-| GeoJSON | `application/geo+json` | Default JSON format |
-| JSON-FG | `application/vnd.ogc.fg+json` | Features with geometry |
-| SensorML JSON | `application/sensorml+json` | System descriptions |
-| SensorML XML | `application/sensorml+xml` | Legacy format |
-| HTML | `text/html` | Human-readable |
+| Format        | MIME Type                     | Usage                  |
+| ------------- | ----------------------------- | ---------------------- |
+| GeoJSON       | `application/geo+json`        | Default JSON format    |
+| JSON-FG       | `application/vnd.ogc.fg+json` | Features with geometry |
+| SensorML JSON | `application/sensorml+json`   | System descriptions    |
+| SensorML XML  | `application/sensorml+xml`    | Legacy format          |
+| HTML          | `text/html`                   | Human-readable         |
 
 ### Recommended Format Handling
 
@@ -563,7 +576,7 @@ export interface QueryOptions {
   offset?: number;
   bbox?: BoundingBox;
   datetime?: DateTimeParameter;
-  f?: string;  // Format parameter (MIME type)
+  f?: string; // Format parameter (MIME type)
 }
 ```
 
@@ -578,15 +591,15 @@ async getSystems(options?: QueryOptions): Promise<string> {
     undefined,
     true
   );
-  
+
   const url = new URL(baseUrl);
-  
+
   if (options?.f) {
     url.searchParams.set('f', options.f);
   }
-  
+
   // ... other parameters
-  
+
   return url.toString();
 }
 ```
@@ -598,13 +611,13 @@ async getSystems(options?: QueryOptions): Promise<string> {
 const url1 = await builder.getSystems();
 
 // Request GeoJSON explicitly
-const url2 = await builder.getSystems({ 
-  f: 'application/geo+json' 
+const url2 = await builder.getSystems({
+  f: 'application/geo+json',
 });
 
 // Request SensorML
-const url3 = await builder.getSystem('sys-123', { 
-  f: 'application/sensorml+json' 
+const url3 = await builder.getSystem('sys-123', {
+  f: 'application/sensorml+json',
 });
 ```
 
@@ -623,8 +636,8 @@ export const CSAPIFormats = {
 } as const;
 
 // Usage (optional, for convenience)
-const url = await builder.getSystem('sys-123', { 
-  f: CSAPIFormats.SensorML_JSON 
+const url = await builder.getSystem('sys-123', {
+  f: CSAPIFormats.SensorML_JSON,
 });
 ```
 
@@ -704,7 +717,7 @@ async getSystems(options?: { f?: string }): Promise<string> {
 
 ```typescript
 const response = await fetch(url);
-const data = await response.json();  // Built-in JSON parsing
+const data = await response.json(); // Built-in JSON parsing
 return data;
 ```
 
@@ -741,11 +754,13 @@ function validateGeoJSON(data: any): System {
 **Keep it simple:**
 
 1. **JSON formats (GeoJSON, JSON-FG):**
+
    - Use native `response.json()`
    - Return as typed objects
    - No validation
 
 2. **XML formats (SensorML XML):**
+
    - Return raw string or parse to DOM
    - Don't type XML responses (too complex)
 
@@ -773,13 +788,13 @@ const systems: SystemCollection = await response.json();
 ```typescript
 async getSystems(options?: QueryOptions): Promise<SystemCollection | string> {
   const url = this.buildSystemsUrl(options);
-  
+
   // If XML format requested, return raw
   if (options?.f?.includes('xml')) {
     const response = await fetch(url);
     return await response.text();
   }
-  
+
   // Otherwise return parsed JSON
   const response = await fetch(url);
   return await response.json();
@@ -820,11 +835,12 @@ export interface QueryOptions {
   offset?: number;
   bbox?: BoundingBox;
   datetime?: DateTimeParameter;
-  f?: string;  // Format (MIME type) - using string for flexibility
+  f?: string; // Format (MIME type) - using string for flexibility
 }
 ```
 
 **Pattern:**
+
 - Constants optional (exported for convenience)
 - Type uses `string` for flexibility
 - No validation (trusts server)
@@ -856,7 +872,7 @@ export default class CSAPIQueryBuilder {
       undefined,
       true
     );
-    
+
     return this.buildUrl(baseUrl, options);
   }
 
@@ -869,7 +885,7 @@ export default class CSAPIQueryBuilder {
   async getSystem(systemId: string, options?: QueryOptions): Promise<string> {
     const collectionUrl = await this.getSystems();
     const baseUrl = getChildPath(collectionUrl, systemId);
-    
+
     return this.buildUrl(baseUrl, options);
   }
 
@@ -879,33 +895,34 @@ export default class CSAPIQueryBuilder {
    */
   private buildUrl(base: string, options?: QueryOptions): string {
     const url = new URL(base);
-    
+
     if (options?.limit !== undefined) {
       url.searchParams.set('limit', options.limit.toString());
     }
-    
+
     if (options?.offset !== undefined) {
       url.searchParams.set('offset', options.offset.toString());
     }
-    
+
     if (options?.bbox !== undefined) {
       url.searchParams.set('bbox', options.bbox.join(','));
     }
-    
+
     if (options?.datetime !== undefined) {
       url.searchParams.set('datetime', formatDateTime(options.datetime));
     }
-    
+
     if (options?.f !== undefined) {
       url.searchParams.set('f', options.f);
     }
-    
+
     return url.toString();
   }
 }
 ```
 
 **Pattern:**
+
 - Format parameter treated like any other query param
 - No validation
 - No format-specific URLs
@@ -927,9 +944,9 @@ const url = await builder.getSystems();
 **Example 2: Explicit GeoJSON**
 
 ```typescript
-const url = await builder.getSystems({ 
+const url = await builder.getSystems({
   f: 'application/geo+json',
-  limit: 10
+  limit: 10,
 });
 // https://api.example.com/collections/sensors-collection/systems?f=application%2Fgeo%2Bjson&limit=10
 ```
@@ -939,8 +956,8 @@ const url = await builder.getSystems({
 ```typescript
 import { CSAPIFormats } from 'ogc-client';
 
-const url = await builder.getSystem('sensor-123', { 
-  f: CSAPIFormats.SensorML_JSON 
+const url = await builder.getSystem('sensor-123', {
+  f: CSAPIFormats.SensorML_JSON,
 });
 // https://api.example.com/collections/sensors-collection/systems/sensor-123?f=application%2Fsensorml%2Bjson
 ```
@@ -956,18 +973,19 @@ const url = await builder.getSystems({ f: 'text/html' });
 
 **CSAPI format handling:**
 
-| Aspect | Implementation |
-|--------|----------------|
-| Format selection | Query parameter `f` |
-| Format constants | Optional export for convenience |
-| Format validation | None (trust server) |
-| Accept headers | Not used |
-| Link-based discovery | Not used |
-| Parser/validators | None (return URLs only) |
+| Aspect               | Implementation                   |
+| -------------------- | -------------------------------- |
+| Format selection     | Query parameter `f`              |
+| Format constants     | Optional export for convenience  |
+| Format validation    | None (trust server)              |
+| Accept headers       | Not used                         |
+| Link-based discovery | Not used                         |
+| Parser/validators    | None (return URLs only)          |
 | Format-specific URLs | Single URL, format via `f` param |
-| Default behavior | Server chooses format |
+| Default behavior     | Server chooses format            |
 
 **Design principles:**
+
 1. ✅ Simple query parameter approach
 2. ✅ No validation (trust server)
 3. ✅ Optional constants for user convenience
@@ -995,6 +1013,7 @@ const url = await builder.getSystems({ f: 'text/html' });
 ### CSAPI Format Strategy Checklist
 
 ✅ **Implementation:**
+
 - [x] Add `f?: string` to QueryOptions
 - [x] Set `f` query parameter in buildUrl helper
 - [x] Optional: Export format constants for user convenience
@@ -1004,6 +1023,7 @@ const url = await builder.getSystems({ f: 'text/html' });
 - [x] Return URLs only
 
 ✅ **Estimated code:**
+
 - Format constants: ~10 lines (optional)
 - Query parameter handling: ~3 lines
 - Total: ~13 lines
@@ -1017,6 +1037,7 @@ const url = await builder.getSystems({ f: 'text/html' });
 CSAPI should use **query parameter (`f`) format selection** following EDR pattern exactly.
 
 No need for:
+
 - Custom Accept headers
 - Link-based format discovery
 - Format validators
@@ -1024,6 +1045,7 @@ No need for:
 - Complex format negotiation
 
 Simple implementation:
+
 1. Add `f?: string` to QueryOptions
 2. Set as query parameter if provided
 3. Optionally export format constants

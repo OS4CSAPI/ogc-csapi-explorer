@@ -11,6 +11,7 @@
 ## Research Objectives
 
 1. **Key Patterns Identification:**
+
    - Extract main architectural patterns
    - Identify resource organization strategy
    - Note any single vs multiple class indicators

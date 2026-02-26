@@ -59,6 +59,7 @@ Validate estimated test-to-code ratio (~0.9:1) is reasonable compared to upstrea
 **Objective:** Calculate actual test-to-code ratios in upstream implementations
 
 **Tasks:**
+
 1. Count implementation lines in EDR (PR #114)
 2. Count test lines in EDR (PR #114)
 3. Calculate EDR test-to-code ratio
@@ -71,6 +72,7 @@ Validate estimated test-to-code ratio (~0.9:1) is reasonable compared to upstrea
 **Objective:** Understand typical ratios in TypeScript client libraries
 
 **Tasks:**
+
 1. Research recommended test-to-code ratios
 2. Analyze ratios in comparable client libraries
 3. Understand factors affecting ratio (complexity, error handling)
@@ -82,6 +84,7 @@ Validate estimated test-to-code ratio (~0.9:1) is reasonable compared to upstrea
 **Objective:** Validate Implementation Guide line estimates
 
 **Tasks:**
+
 1. Review implementation line estimate methodology
 2. Review test line estimate methodology
 3. Compare estimates to upstream actual ratios
@@ -94,6 +97,7 @@ Validate estimated test-to-code ratio (~0.9:1) is reasonable compared to upstrea
 **Objective:** Understand ratio variation by component type
 
 **Tasks:**
+
 1. Analyze QueryBuilder expected ratio
 2. Analyze parser (SensorML, SWE Common, GeoJSON) expected ratios
 3. Analyze resource method expected ratios
@@ -106,6 +110,7 @@ Validate estimated test-to-code ratio (~0.9:1) is reasonable compared to upstrea
 **Objective:** Define how to track ratio during incremental development
 
 **Tasks:**
+
 1. Extract phase-by-phase estimates from ROADMAP
 2. Calculate expected ratio per phase
 3. Design ratio tracking mechanism
@@ -117,6 +122,7 @@ Validate estimated test-to-code ratio (~0.9:1) is reasonable compared to upstrea
 **Objective:** Create ratio validation report and adjust estimates
 
 **Tasks:**
+
 1. Consolidate ratio measurements and benchmarks
 2. Validate or adjust Implementation Guide estimates
 3. Document ratio expectations by component
@@ -155,6 +161,7 @@ This research is complete when:
 **Test-to-code ratio validation report with adjustments if needed**
 
 Content includes:
+
 - Upstream test-to-code ratio measurements (EDR, WFS, WMS, WMTS, STAC)
 - Industry benchmark analysis
 - Implementation Guide estimate validation
@@ -170,12 +177,14 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis (EDR line counts)
 - Section 2: Existing Upstream Test Pattern Survey (ratio patterns)
 - Section 3: TypeScript Client Library Testing Best Practices (industry standards)
 - All component testing sections (8-18) to validate completeness of estimates
 
 **Blocks:**
+
 - Implementation Guide (estimates may need adjustment)
 - ROADMAP (phase estimates may need adjustment)
 - Resource allocation (line estimates affect effort estimates)
@@ -209,6 +218,7 @@ Content includes:
 **Validation Result:** ✅ **CSAPI test-to-code ratio is VALIDATED and appropriate**
 
 **Key Findings:**
+
 1. ✅ CSAPI ratio (0.86-0.90:1) is within industry range (1.0-2.0:1) and acceptable
 2. ✅ Conservative compared to upstream average (1.44:1) but realistic for TypeScript
 3. ✅ Component-specific ratios all validated (0.57-2.24:1 depending on component)
@@ -216,12 +226,14 @@ Content includes:
 5. ✅ Ratio tracking procedures defined and ready to implement
 
 **Adjusted Estimates:**
+
 - **Implementation:** 4,850-6,500 lines (no change)
 - **Tests:** 4,150-5,850 lines (adjusted from 4,400-6,300)
 - **Total:** 9,000-12,350 lines (adjusted from 9,250-12,800)
 - **Ratio:** **0.86-0.90:1** (adjusted from 0.91-0.97:1)
 
 **Recommendations:**
+
 1. ✅ **PROCEED** with adjusted estimates (minor 5-10% reduction in test estimates)
 2. ⏳ Update Implementation Guide with adjusted test line estimates
 3. ⏳ Update ROADMAP if needed (phase estimates still valid)
@@ -229,6 +241,7 @@ Content includes:
 5. ✅ Set up CI/CD coverage monitoring (GitHub Actions workflow provided)
 
 **Rationale for Conservative Ratio:**
+
 - Modern testing practices (focused, efficient tests)
 - TypeScript compiler provides type checking (reduces need for defensive tests)
 - Reusable test utilities (parseAndValidateUrl, test helpers)
@@ -243,6 +256,7 @@ Content includes:
 | **CSAPI Target** | 4,850-6,500 | 4,150-5,850 | **0.86-0.90:1** | ✅ **Conservative, appropriate** |
 
 **Dependencies Unblocked:**
+
 - ✅ Implementation Guide (estimates validated with minor adjustment)
 - ✅ ROADMAP (phase estimates validated)
 - ✅ Resource allocation (effort estimates realistic)

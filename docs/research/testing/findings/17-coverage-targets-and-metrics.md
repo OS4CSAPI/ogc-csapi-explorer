@@ -9,10 +9,12 @@
 **Research Time:** ~90 minutes (January 8, 2025)
 
 **Primary Source(s):**
+
 - [CSAPI Implementation Guide](../../../planning/csapi-implementation-guide.md) (Coverage targets: >80%)
 - [Jest Coverage Documentation](https://jestjs.io/docs/configuration#coveragethreshold)
 
 **Supporting Resources:**
+
 - Section 1: [EDR Test Blueprint](01-edr-test-blueprint.md) (upstream coverage analysis)
 - Section 2: [Upstream Test Consistency](02-upstream-test-consistency.md) (upstream coverage patterns)
 - Section 3: [TypeScript Testing Standards](03-typescript-testing-standards.md) (industry standards)
@@ -55,6 +57,7 @@ From [`csapi-implementation-guide.md`](../../../planning/csapi-implementation-gu
 > **Code coverage**: >80% statement coverage, >80% branch coverage, 100% public API coverage
 
 **Key Requirements:**
+
 - **Statement Coverage:** >80% minimum
 - **Branch Coverage:** >80% minimum
 - **Public API Coverage:** 100% (all exported functions, classes, types)
@@ -67,17 +70,20 @@ From [`csapi-implementation-guide.md`](../../../planning/csapi-implementation-gu
 From [Section 3: TypeScript Testing Standards](./03-typescript-testing-standards.md):
 
 **Industry Targets:**
+
 - **Statement Coverage:** 85-95% target, 80% minimum
 - **Branch Coverage:** 80-90% target, 75% minimum
 - **Function Coverage:** 90-100% target, 85% minimum
 
 **Mature Library Priorities:**
+
 1. **Branch coverage** (80%+) prioritized over statement coverage
 2. **Error path coverage** explicitly tested
 3. **Edge case coverage** documented and measured
 4. **Assertion quality** more important than test quantity
 
 **Examples from Major Libraries:**
+
 - **@octokit/rest.js:** Aims for 100% coverage in critical areas
 - **axios:** 95%+ coverage with extensive edge case testing
 - **TypeORM:** 80-90% coverage with focus on integration tests
@@ -85,6 +91,7 @@ From [Section 3: TypeScript Testing Standards](./03-typescript-testing-standards
 ### 1.3 Upstream Coverage State
 
 **Current Configuration (`jest.config.cjs`):**
+
 ```javascript
 module.exports = {
   testEnvironment: 'jsdom',
@@ -96,6 +103,7 @@ module.exports = {
 ```
 
 **Findings:**
+
 - ❌ No `coverageThreshold` property configured
 - ❌ No coverage scripts in `package.json`
 - ✅ `coveragePathIgnorePatterns` excludes only XML files
@@ -108,12 +116,13 @@ module.exports = {
 From [Section 1: EDR Test Blueprint](./01-edr-test-blueprint.md):
 
 **EDR Coverage Characteristics:**
+
 - **Test-to-Code Ratio:** ~1:4.8 (298 test lines / 2,858 implementation lines)
 - **Coverage:** Not explicitly measured, but comprehensive based on evidence:
   - All 8 EDR query methods tested
   - Error paths systematically tested
   - Edge cases (empty params, datetime variations, Z parameter) covered
-- **Coverage Gaps:** 
+- **Coverage Gaps:**
   - `url_builder.ts` has no direct unit tests (only integration tests)
   - Corridor/trajectory queries only have error tests (not happy path)
 
@@ -127,42 +136,46 @@ From [Section 1: EDR Test Blueprint](./01-edr-test-blueprint.md):
 
 Based on component complexity, criticality, and testing effort from Sections 8-16:
 
-| Component Type | Statement | Branch | Function | Rationale | Test Lines (Est.) |
-|----------------|-----------|--------|----------|-----------|-------------------|
-| **QueryBuilders (URL Builders)** | 90-95% | 85-90% | 95-100% | Core functionality, many parameter combinations, high cyclomatic complexity | ~1,880-2,256 lines |
-| **Parsers (SensorML, SWE)** | 90-95% | 85-95% | 100% | Complex nested structures, many formats (JSON/Text/Binary), critical data integrity | ~2,200-3,300 lines |
-| **Endpoint (OgcApiEndpoint)** | 90-95% | 85-90% | 100% | Central orchestration logic, many resource types, complex workflows | ~4,800 lines |
-| **Utilities (Validators, Type Guards)** | 85-95% | 80-90% | 90-100% | Reusable across components, tested in isolation + integration, simpler logic | ~500-800 lines |
-| **Worker Extensions** | 85-90% | 80-85% | 95-100% | Async complexity, background processing, message passing, critical for performance | ~2,310-2,860 lines |
-| **Error Classes** | 90-100% | 80-90% | 100% | Critical for debugging, error messages, stack traces; simple but important | ~200-300 lines |
-| **Type Definitions** | N/A | N/A | N/A | No runtime code; validated at compile time only | 0 lines (compilation) |
-| **Integration Tests** | N/A | N/A | N/A | Measure workflow coverage, not line coverage | ~1,200-1,500 lines |
+| Component Type                          | Statement | Branch | Function | Rationale                                                                           | Test Lines (Est.)     |
+| --------------------------------------- | --------- | ------ | -------- | ----------------------------------------------------------------------------------- | --------------------- |
+| **QueryBuilders (URL Builders)**        | 90-95%    | 85-90% | 95-100%  | Core functionality, many parameter combinations, high cyclomatic complexity         | ~1,880-2,256 lines    |
+| **Parsers (SensorML, SWE)**             | 90-95%    | 85-95% | 100%     | Complex nested structures, many formats (JSON/Text/Binary), critical data integrity | ~2,200-3,300 lines    |
+| **Endpoint (OgcApiEndpoint)**           | 90-95%    | 85-90% | 100%     | Central orchestration logic, many resource types, complex workflows                 | ~4,800 lines          |
+| **Utilities (Validators, Type Guards)** | 85-95%    | 80-90% | 90-100%  | Reusable across components, tested in isolation + integration, simpler logic        | ~500-800 lines        |
+| **Worker Extensions**                   | 85-90%    | 80-85% | 95-100%  | Async complexity, background processing, message passing, critical for performance  | ~2,310-2,860 lines    |
+| **Error Classes**                       | 90-100%   | 80-90% | 100%     | Critical for debugging, error messages, stack traces; simple but important          | ~200-300 lines        |
+| **Type Definitions**                    | N/A       | N/A    | N/A      | No runtime code; validated at compile time only                                     | 0 lines (compilation) |
+| **Integration Tests**                   | N/A       | N/A    | N/A      | Measure workflow coverage, not line coverage                                        | ~1,200-1,500 lines    |
 
 **Total Estimated Test Lines:** ~13,090-17,016 lines
 
 > **⚠️ Estimate Discrepancy (H1 review fix):** This component-level total of ~13,090–17,016 lines is **~3× higher** than all other estimates in the research series and the Implementation Guide:
+>
 > - **Implementation Guide** (§1.1 above): ~4,500–6,000 lines
 > - **Doc 19** (authoritative file inventory, 22 files): ~4,040–5,340 lines
 > - **Doc 20** (module-level estimates): ~4,150–5,850 lines
 >
-> The inflation appears to result from component estimates being developed independently (Sections 8–16) without reconciliation against the file-level inventory. For example, Endpoint alone is estimated at ~4,800 lines — nearly the entire budget from Doc 19. **The authoritative estimate is Doc 19's 4,040–5,340 lines across 22 files.** The coverage *percentage targets* in this matrix remain valid; only the line count estimates are inflated. When planning test implementation, use Doc 19's file inventory as the sizing reference.
+> The inflation appears to result from component estimates being developed independently (Sections 8–16) without reconciliation against the file-level inventory. For example, Endpoint alone is estimated at ~4,800 lines — nearly the entire budget from Doc 19. **The authoritative estimate is Doc 19's 4,040–5,340 lines across 22 files.** The coverage _percentage targets_ in this matrix remain valid; only the line count estimates are inflated. When planning test implementation, use Doc 19's file inventory as the sizing reference.
 
 ### 2.2 Detailed Component Targets
 
 #### QueryBuilders (URL Builders)
 
 **Coverage Targets:**
+
 - **Statement:** 90-95%
 - **Branch:** 85-90%
 - **Function:** 95-100%
 
 **Justification:**
+
 - 9 resource types (Systems, Deployments, Procedures, SamplingFeatures, Properties, DataStreams, Observations, ControlStreams, Commands)
 - Each resource has 5-10 query parameters (temporal, spatial, entity filtering)
 - Parameter combination logic creates high cyclomatic complexity
 - Pagination, sorting, filtering all need branch testing
 
 **Test Scenarios (153 tests, 1,880-2,256 lines):**
+
 - Systems: 18 tests (~150-200 lines)
 - Deployments: 16 tests (~120-180 lines)
 - Procedures: 16 tests (~120-180 lines)
@@ -174,6 +187,7 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
 - Commands: 20 tests (~150-220 lines)
 
 **Coverage Quality Indicators:**
+
 - ✅ All parameter combinations tested (valid + invalid)
 - ✅ All temporal filter formats tested (ISO 8601 intervals)
 - ✅ All spatial filter formats tested (bbox, point, polygon)
@@ -183,11 +197,13 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
 #### Parsers (SensorML + SWE Common)
 
 **Coverage Targets:**
+
 - **Statement:** 90-95%
 - **Branch:** 85-95%
 - **Function:** 100%
 
 **Justification:**
+
 - **SensorML:** 4 structure types (PhysicalSystem, PhysicalComponent, SimpleProcess, AggregateProcess)
 - **SWE Common:** 3 encodings (JSON, Text, Binary) × many data types
 - Complex nested structures (recursive parsing, 4-5 levels deep)
@@ -195,7 +211,9 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
 - High error handling complexity (malformed XML/JSON, missing fields)
 
 **Test Scenarios:**
+
 - **SensorML:** 46-57 tests, 500-800 lines
+
   - PhysicalSystem: 12-15 tests (~150-225 lines)
   - PhysicalComponent: 8-10 tests (~80-120 lines)
   - SimpleProcess: 5-6 tests (~50-72 lines)
@@ -210,6 +228,7 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
   - Schema validation: 8 tests (~96-120 lines)
 
 **Coverage Quality Indicators:**
+
 - ✅ All nesting levels tested (1-5 levels deep)
 - ✅ All data types tested (integers, floats, booleans, text, time, category, choice)
 - ✅ All encoding formats tested (JSON, Text, Binary with endianness variants)
@@ -219,11 +238,13 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
 #### Endpoint (OgcApiEndpoint + CSAPI Resources)
 
 **Coverage Targets:**
+
 - **Statement:** 90-95%
 - **Branch:** 85-90%
 - **Function:** 100%
 
 **Justification:**
+
 - Central orchestration for all CSAPI operations
 - 9 resource types with CRUD operations
 - Complex filtering logic (temporal, spatial, entity)
@@ -231,11 +252,13 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
 - High cyclomatic complexity (many code paths)
 
 **Test Scenarios (250+ tests, ~4,800 lines):**
+
 - **CRITICAL Priority:** Systems, DataStreams, Observations (~2,500 lines)
 - **HIGH Priority:** Deployments, SamplingFeatures, ControlStreams, Commands (~1,500 lines)
 - **MEDIUM Priority:** Procedures, Properties, Subdeployments (~800 lines)
 
 **Coverage Quality Indicators:**
+
 - ✅ All resource types tested (9 resources)
 - ✅ All CRUD operations tested (list, get, create, update, delete, patch)
 - ✅ All query parameters tested per resource
@@ -245,22 +268,26 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
 #### Utilities (Validators, Type Guards, Helpers)
 
 **Coverage Targets:**
+
 - **Statement:** 85-95%
 - **Branch:** 80-90%
 - **Function:** 90-100%
 
 **Justification:**
+
 - Reusable across all components
 - Simpler logic than parsers/builders
 - High function coverage due to small, focused functions
 - Tested in both isolation (unit) and integration
 
 **Test Scenarios:**
+
 - Validators: ~200-300 lines (ISO 8601, bbox, GeoJSON, SWE)
 - Type guards: ~100-150 lines (isSystem, isDataStream, etc.)
 - Helpers: ~200-350 lines (URL encoding, pagination, sorting)
 
 **Coverage Quality Indicators:**
+
 - ✅ All validation rules tested (valid + invalid inputs)
 - ✅ All type guards tested (positive + negative cases)
 - ✅ All helper functions tested (edge cases + typical use)
@@ -269,18 +296,22 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
 #### Worker Extensions
 
 **Coverage Targets:**
+
 - **Statement:** 85-90%
 - **Branch:** 80-85%
 - **Function:** 95-100%
 
 **Justification:**
+
 - Async complexity (promises, callbacks, message passing)
 - Background processing (parsing, validation)
 - Critical for performance (large datasets)
 - Moderate cyclomatic complexity (less than parsers)
 
 **Test Scenarios (201 tests, 2,310-2,860 lines):**
+
 - **Unit Tests:** 139 tests (~1,650-1,980 lines)
+
   - Message handling: 12 tests (~180-240 lines)
   - Worker lifecycle: 12 tests (~180-240 lines)
   - Error propagation: 18 tests (~270-360 lines)
@@ -295,6 +326,7 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
   - Error scenarios: 18 tests (~156-208 lines)
 
 **Coverage Quality Indicators:**
+
 - ✅ All message types tested (parse, validate, transform)
 - ✅ All lifecycle events tested (start, stop, error, complete)
 - ✅ All error propagation paths tested (worker → main thread)
@@ -304,23 +336,27 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
 #### Error Classes
 
 **Coverage Targets:**
+
 - **Statement:** 90-100%
 - **Branch:** 80-90%
 - **Function:** 100%
 
 **Justification:**
+
 - Simple logic but critical for debugging
 - Error messages must be clear and actionable
 - Stack traces must be preserved
 - Few branches (mostly straightforward constructors)
 
 **Test Scenarios (~200-300 lines):**
+
 - All custom error classes instantiated
 - All error messages validated
 - All stack traces preserved
 - All error codes/types validated
 
 **Coverage Quality Indicators:**
+
 - ✅ All error classes instantiated
 - ✅ All error messages validated (clear, actionable)
 - ✅ All stack traces preserved (`Error.captureStackTrace`)
@@ -329,11 +365,13 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
 ### 2.3 Overall Project Target
 
 **Recommended Overall Targets:**
+
 - **Statement Coverage:** 88-92% (weighted average)
 - **Branch Coverage:** 83-88% (weighted average)
 - **Function Coverage:** 95-98% (weighted average)
 
 **Rationale:**
+
 - Exceeds official >80% requirement
 - Aligns with industry standards (85-95% statement, 80-90% branch)
 - Component-specific targets reflect complexity and criticality
@@ -348,6 +386,7 @@ Based on component complexity, criticality, and testing effort from Sections 8-1
 **Problem:** 100% code coverage ≠ Quality tests
 
 **Example of "Trivial Coverage":**
+
 ```typescript
 // BAD: 100% coverage, 0% meaningful testing
 function add(a: number, b: number): number {
@@ -361,6 +400,7 @@ test('add function exists', () => {
 ```
 
 **Example of "Meaningful Coverage":**
+
 ```typescript
 // GOOD: Tests behavior, edge cases, and error conditions
 test('add calculates sum correctly', () => {
@@ -380,6 +420,7 @@ test('add calculates sum correctly', () => {
 **Required Edge Cases per Component:**
 
 **QueryBuilders:**
+
 - ✅ Empty parameters (`{}`)
 - ✅ Single parameter (`{limit: 10}`)
 - ✅ All parameters combined
@@ -390,6 +431,7 @@ test('add calculates sum correctly', () => {
 - ✅ Temporal edge cases (open intervals: `../2024-01-31`, `2024-01-01/..`)
 
 **Parsers:**
+
 - ✅ Empty documents (`{}`, `""`)
 - ✅ Minimal valid documents (only required fields)
 - ✅ Maximal documents (all optional fields)
@@ -400,6 +442,7 @@ test('add calculates sum correctly', () => {
 - ✅ Namespace variations (`gml:id` vs `id`, `sml:PhysicalSystem` vs `PhysicalSystem`)
 
 **Endpoint:**
+
 - ✅ Empty collections (`[]`)
 - ✅ Single item collections (`[item]`)
 - ✅ Large collections (1000+ items)
@@ -408,6 +451,7 @@ test('add calculates sum correctly', () => {
 - ✅ Sorting edge cases (single field, multiple fields, invalid field)
 
 **Workers:**
+
 - ✅ Empty messages (`{type: "parse", data: {}}`)
 - ✅ Large messages (10K+ observations)
 - ✅ Invalid messages (missing type, missing data)
@@ -422,11 +466,13 @@ test('add calculates sum correctly', () => {
 **Required Error Paths per Component:**
 
 **QueryBuilders:**
+
 - ✅ Invalid parameter types (TypeError)
 - ✅ Invalid parameter values (RangeError)
 - ✅ Invalid parameter combinations (ValidationError)
 
 **Parsers:**
+
 - ✅ Malformed JSON/XML (SyntaxError)
 - ✅ Missing required fields (ValidationError)
 - ✅ Invalid field types (TypeError)
@@ -435,6 +481,7 @@ test('add calculates sum correctly', () => {
 - ✅ Namespace resolution failures (NamespaceError)
 
 **Endpoint:**
+
 - ✅ HTTP 404 Not Found (missing resource)
 - ✅ HTTP 400 Bad Request (invalid parameters)
 - ✅ HTTP 500 Internal Server Error (parsing failure)
@@ -442,6 +489,7 @@ test('add calculates sum correctly', () => {
 - ✅ Validation errors (invalid GeoJSON, invalid SWE)
 
 **Workers:**
+
 - ✅ Message handling errors (unknown message type)
 - ✅ Parsing errors (malformed data)
 - ✅ Validation errors (invalid schema)
@@ -450,6 +498,7 @@ test('add calculates sum correctly', () => {
 - ✅ Memory errors (large datasets)
 
 **Error Path Coverage Metric:**
+
 ```
 Error Path Coverage = (Error Paths Tested / Total Error Paths) × 100%
 ```
@@ -463,19 +512,21 @@ Error Path Coverage = (Error Paths Tested / Total Error Paths) × 100%
 **Quality Criteria:**
 
 1. **Specific Assertions:** Use `.toBe()`, `.toEqual()`, `.toStrictEqual()` over `.toBeDefined()`
+
    ```typescript
    // BAD
    expect(result).toBeDefined();
-   
+
    // GOOD
    expect(result).toEqual({ id: 'sys1', name: 'System 1' });
    ```
 
 2. **Multiple Assertions:** Verify all aspects of result
+
    ```typescript
    // BAD
    expect(result).toBeDefined();
-   
+
    // GOOD
    expect(result.id).toBe('sys1');
    expect(result.name).toBe('System 1');
@@ -484,20 +535,22 @@ Error Path Coverage = (Error Paths Tested / Total Error Paths) × 100%
    ```
 
 3. **Error Assertions:** Verify error type, message, and context
+
    ```typescript
    // BAD
    expect(() => parse(invalid)).toThrow();
-   
+
    // GOOD
    expect(() => parse(invalid)).toThrow(ValidationError);
    expect(() => parse(invalid)).toThrow('Missing required field: id');
    ```
 
 4. **State Verification:** Verify side effects, not just return values
+
    ```typescript
    // BAD
    client.createSystem(system);
-   
+
    // GOOD
    await client.createSystem(system);
    expect(client.cache.has('sys1')).toBe(true);
@@ -505,6 +558,7 @@ Error Path Coverage = (Error Paths Tested / Total Error Paths) × 100%
    ```
 
 **Assertion Quality Metric:**
+
 ```
 Assertion Quality = (Specific Assertions / Total Assertions) × 100%
 ```
@@ -520,21 +574,25 @@ Assertion Quality = (Specific Assertions / Total Assertions) × 100%
 **Coverage by client code area:**
 
 **QueryBuilder methods:**
+
 - ✅ All resource type methods covered (getSystems, getDeployments, etc.)
 - ✅ Parameter encoding paths (pagination, bbox, datetime, filtering)
 - ✅ Edge cases per method (empty params, boundary values, special characters)
 
 **Parser functions:**
+
 - ✅ Each parser's happy path (valid input → correct output)
 - ✅ Each parser's error path (malformed input → appropriate error)
 - ✅ Optional field handling (present vs absent)
 
 **Endpoint methods:**
+
 - ✅ Each public method exercised
 - ✅ Error handling paths (network errors, 404, malformed responses)
 - ✅ Conformance-dependent behavior (feature available vs not)
 
 **Practical coverage metric:**
+
 ```
 Client Code Coverage = (Tested functions & branches / Total functions & branches) × 100%
 ```
@@ -546,6 +604,7 @@ Client Code Coverage = (Tested functions & branches / Total functions & branches
 Use this checklist to evaluate test quality beyond raw percentages:
 
 **Per Test Suite:**
+
 - [ ] All edge cases documented and tested
 - [ ] All error paths documented and tested
 - [ ] All assertions are specific (not just `.toBeDefined()`)
@@ -556,6 +615,7 @@ Use this checklist to evaluate test quality beyond raw percentages:
 - [ ] All tests run quickly (<100ms per test)
 
 **Per Component:**
+
 - [ ] Coverage targets met (statement, branch, function)
 - [ ] Edge case coverage ≥90%
 - [ ] Error path coverage ≥90%
@@ -563,6 +623,7 @@ Use this checklist to evaluate test quality beyond raw percentages:
 - [ ] All public methods have tests
 
 **Overall Project:**
+
 - [ ] Overall coverage targets met (88-92% statement, 83-88% branch)
 - [ ] No coverage regressions (coverage doesn't decrease)
 - [ ] Coverage reports generated automatically (CI/CD)
@@ -582,83 +643,88 @@ Add the following to `jest.config.cjs` (adapt paths as implementation progresses
 module.exports = {
   testEnvironment: 'jsdom',
   transform: {
-    '^.+\\.(ts|xml)$': ['<rootDir>/jest.ts-transformer.cjs', { /* ... */ }]
+    '^.+\\.(ts|xml)$': [
+      '<rootDir>/jest.ts-transformer.cjs',
+      {
+        /* ... */
+      },
+    ],
   },
   setupFilesAfterEnv: ['./test-setup.ts'],
   coveragePathIgnorePatterns: [
-    '.(xml)$',           // XML fixtures
-    '.d.ts$',            // Type definitions
-    '/fixtures/',        // Test fixtures
-    '/examples/',        // Example code
-    'test-setup.ts',     // Test setup
-    'test-setup.node.ts' // Node test setup
+    '.(xml)$', // XML fixtures
+    '.d.ts$', // Type definitions
+    '/fixtures/', // Test fixtures
+    '/examples/', // Example code
+    'test-setup.ts', // Test setup
+    'test-setup.node.ts', // Node test setup
   ],
   moduleNameMapper: {
-    '^(..?/.+)\\.c?jsx?$': '$1'
+    '^(..?/.+)\\.c?jsx?$': '$1',
   },
 
   // ===== NEW: Coverage Configuration =====
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
-    '!src/index.ts'  // Re-exports only
+    '!src/index.ts', // Re-exports only
   ],
   coverageReporters: [
-    'text',           // Console output
-    'text-summary',   // Summary for CI
-    'html',           // HTML report for local dev
-    'json',           // JSON for tooling
-    'lcov'            // LCOV for CI integration
+    'text', // Console output
+    'text-summary', // Summary for CI
+    'html', // HTML report for local dev
+    'json', // JSON for tooling
+    'lcov', // LCOV for CI integration
   ],
   coverageDirectory: 'coverage',
-  
+
   // Overall thresholds (enforced across all files)
   coverageThreshold: {
     global: {
-      statements: 80,  // Official minimum
-      branches: 80,    // Official minimum
-      functions: 85,   // Higher for small, focused functions
-      lines: 80        // Matches statements
+      statements: 80, // Official minimum
+      branches: 80, // Official minimum
+      functions: 85, // Higher for small, focused functions
+      lines: 80, // Matches statements
     },
-    
+
     // Component-specific thresholds
     './src/ogc-api/csapi/url_builder.ts': {
       statements: 90,
       branches: 85,
       functions: 95,
-      lines: 90
+      lines: 90,
     },
     './src/ogc-api/csapi/endpoint.ts': {
       statements: 90,
       branches: 85,
       functions: 100,
-      lines: 90
+      lines: 90,
     },
     './src/ogc-api/csapi/parsers/*.ts': {
       statements: 90,
       branches: 85,
       functions: 100,
-      lines: 90
+      lines: 90,
     },
     './src/ogc-api/csapi/validators/*.ts': {
       statements: 85,
       branches: 80,
       functions: 90,
-      lines: 85
+      lines: 85,
     },
     './src/worker/*.ts': {
       statements: 85,
       branches: 80,
       functions: 95,
-      lines: 85
+      lines: 85,
     },
     './src/shared/errors/*.ts': {
       statements: 90,
       branches: 80,
       functions: 100,
-      lines: 90
-    }
-  }
+      lines: 90,
+    },
+  },
 };
 ```
 
@@ -672,13 +738,13 @@ Add to `package.json`:
     "test": "jest",
     "test:browser": "jest --config jest.config.cjs",
     "test:node": "jest --config jest.node.config.cjs",
-    
+
     // NEW: Coverage scripts
     "test:coverage": "jest --coverage",
     "test:coverage:browser": "jest --config jest.config.cjs --coverage",
     "test:coverage:node": "jest --config jest.node.config.cjs --coverage",
-    "coverage:report": "open coverage/lcov-report/index.html",  // macOS
-    "coverage:report:win": "start coverage/lcov-report/index.html"  // Windows
+    "coverage:report": "open coverage/lcov-report/index.html", // macOS
+    "coverage:report:win": "start coverage/lcov-report/index.html" // Windows
   }
 }
 ```
@@ -686,6 +752,7 @@ Add to `package.json`:
 ### 4.3 Coverage Enforcement
 
 **Local Development:**
+
 ```bash
 # Run tests with coverage (no threshold enforcement by default)
 npm run test:coverage
@@ -696,6 +763,7 @@ npm run coverage:report:win  # Windows
 ```
 
 **CI/CD (Enforce Thresholds):**
+
 ```bash
 # Run tests with coverage and enforce thresholds (fails if below targets)
 npm run test:coverage -- --coverageThreshold
@@ -711,21 +779,25 @@ CI=true npm run test:coverage
 **Solution:** Phase-based coverage ratcheting
 
 **Phase 4 (Current - Testing Infrastructure):**
+
 - Global: 50% statement, 50% branch (baseline)
 - Critical components: 70% statement, 65% branch
 - Goal: Establish coverage infrastructure and baseline
 
 **Phase 5 (CSAPI Implementation):**
+
 - Global: 70% statement, 70% branch
 - Critical components (Systems, DataStreams, Observations): 85% statement, 80% branch
 - Goal: High coverage for core resources
 
 **Phase 6 (Advanced Features):**
+
 - Global: 80% statement, 80% branch (meets official requirement)
 - All components: 85%+ statement, 80%+ branch
 - Goal: Meet official coverage targets
 
 **Phase 7 (Optional Features):**
+
 - Global: 88% statement, 83% branch
 - All components: 90%+ statement, 85%+ branch
 - Goal: Exceed official targets, approach industry best practices
@@ -739,6 +811,7 @@ CI=true npm run test:coverage
 ### 5.1 Coverage Tracking Workflow
 
 **Step 1: Establish Baseline (Phase 4)**
+
 ```bash
 # Run initial coverage
 npm run test:coverage
@@ -749,6 +822,7 @@ cp coverage/coverage-summary.json docs/research/testing/coverage-reports/baselin
 ```
 
 **Step 2: Track Progress (Each PR)**
+
 ```bash
 # Run coverage before changes
 npm run test:coverage
@@ -766,6 +840,7 @@ diff coverage-before.json coverage-after.json
 ```
 
 **Step 3: Prevent Regressions (CI/CD)**
+
 ```yaml
 # .github/workflows/test.yml (example)
 - name: Run tests with coverage
@@ -785,6 +860,7 @@ diff coverage-before.json coverage-after.json
 **Goal:** Coverage should never decrease (ratcheting effect)
 
 **Strategy 1: Git Hook (Pre-Commit)**
+
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
@@ -808,6 +884,7 @@ echo "✅ Coverage maintained: $CURRENT% >= $BASELINE%"
 ```
 
 **Strategy 2: CI/CD Check**
+
 ```yaml
 # .github/workflows/test.yml
 - name: Run coverage
@@ -824,8 +901,10 @@ echo "✅ Coverage maintained: $CURRENT% >= $BASELINE%"
 ```
 
 **Strategy 3: Coverage Badge (README.md)**
+
 ```markdown
 <!-- README.md -->
+
 ![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
 ```
 
@@ -834,12 +913,14 @@ echo "✅ Coverage maintained: $CURRENT% >= $BASELINE%"
 **Recommended Tools:**
 
 1. **Codecov** (Free for open source)
+
    - Automatic coverage reports on PRs
    - Coverage trends over time
    - Coverage diffs (before/after)
    - GitHub integration
 
 2. **Coveralls** (Free for open source)
+
    - Similar to Codecov
    - Slightly different UI
 
@@ -849,6 +930,7 @@ echo "✅ Coverage maintained: $CURRENT% >= $BASELINE%"
    - Technical debt tracking
 
 **Setup Example (Codecov):**
+
 ```yaml
 # .github/workflows/test.yml
 - name: Upload coverage to Codecov
@@ -866,24 +948,28 @@ echo "✅ Coverage maintained: $CURRENT% >= $BASELINE%"
 ### 6.1 Phase 4 (Current Phase)
 
 **Coverage Infrastructure:**
+
 - [x] Jest coverage configuration added to `jest.config.cjs`
 - [x] Coverage scripts added to `package.json`
 - [ ] Baseline coverage report generated and saved
 - [ ] Coverage regression prevention implemented (git hook or CI)
 
 **Baseline Targets (Phase 4):**
+
 - [ ] Global: 50% statement, 50% branch
 - [ ] Critical components: 70% statement, 65% branch
 
 ### 6.2 Phase 5 (CSAPI Implementation)
 
 **Coverage Targets:**
+
 - [ ] Global: 70% statement, 70% branch
 - [ ] Systems: 85% statement, 80% branch
 - [ ] DataStreams: 85% statement, 80% branch
 - [ ] Observations: 85% statement, 80% branch
 
 **Quality Metrics:**
+
 - [ ] Edge case coverage ≥85%
 - [ ] Error path coverage ≥85%
 - [ ] Assertion quality ≥75%
@@ -891,10 +977,12 @@ echo "✅ Coverage maintained: $CURRENT% >= $BASELINE%"
 ### 6.3 Phase 6 (Advanced Features)
 
 **Coverage Targets:**
+
 - [ ] Global: 80% statement, 80% branch (official requirement met)
 - [ ] All components: 85%+ statement, 80%+ branch
 
 **Quality Metrics:**
+
 - [ ] Edge case coverage ≥90%
 - [ ] Error path coverage ≥90%
 - [ ] Assertion quality ≥80%
@@ -903,10 +991,12 @@ echo "✅ Coverage maintained: $CURRENT% >= $BASELINE%"
 ### 6.4 Phase 7 (Optional Features)
 
 **Coverage Targets:**
+
 - [ ] Global: 88% statement, 83% branch
 - [ ] All components: 90%+ statement, 85%+ branch
 
 **Quality Metrics:**
+
 - [ ] All quality metrics ≥90%
 - [ ] Zero coverage regressions
 - [ ] Coverage trends tracked (Codecov/Coveralls)
@@ -927,11 +1017,13 @@ echo "✅ Coverage maintained: $CURRENT% >= $BASELINE%"
 ### 7.2 Per Test Implementation
 
 **Before Writing Tests:**
+
 - [ ] Review component-specific coverage targets (Section 2.2)
 - [ ] Review coverage quality indicators (Section 3.2)
 - [ ] Review coverage quality checklist (Section 3.3)
 
 **During Test Implementation:**
+
 - [ ] Write tests for each public method and code path
 - [ ] Add edge case tests (boundary conditions)
 - [ ] Add error path tests (all error types)
@@ -939,6 +1031,7 @@ echo "✅ Coverage maintained: $CURRENT% >= $BASELINE%"
 - [ ] Verify test isolation (no shared state)
 
 **After Test Implementation:**
+
 - [ ] Run `npm run test:coverage` to verify coverage
 - [ ] Review coverage report (HTML or console)
 - [ ] Verify coverage targets met for component
@@ -948,6 +1041,7 @@ echo "✅ Coverage maintained: $CURRENT% >= $BASELINE%"
 ### 7.3 Per ROADMAP Phase
 
 **Phase End Checklist:**
+
 - [ ] Run full coverage report (`npm run test:coverage`)
 - [ ] Verify phase coverage targets met (Section 5.1)
 - [ ] Update `coverageThreshold` in `jest.config.cjs` for next phase
@@ -962,6 +1056,7 @@ echo "✅ Coverage maintained: $CURRENT% >= $BASELINE%"
 ### 8.1 Statement Coverage
 
 **Code:**
+
 ```typescript
 function divide(a: number, b: number): number {
   if (b === 0) {
@@ -972,6 +1067,7 @@ function divide(a: number, b: number): number {
 ```
 
 **Test (50% statement coverage):**
+
 ```typescript
 test('divide calculates quotient', () => {
   expect(divide(10, 2)).toBe(5);
@@ -982,6 +1078,7 @@ test('divide calculates quotient', () => {
 ```
 
 **Test (100% statement coverage):**
+
 ```typescript
 test('divide calculates quotient', () => {
   expect(divide(10, 2)).toBe(5);
@@ -997,6 +1094,7 @@ test('divide throws on division by zero', () => {
 ### 8.2 Branch Coverage
 
 **Code:**
+
 ```typescript
 function getStatus(value: number): string {
   if (value > 0) {
@@ -1010,6 +1108,7 @@ function getStatus(value: number): string {
 ```
 
 **Test (33% branch coverage):**
+
 ```typescript
 test('getStatus returns positive', () => {
   expect(getStatus(5)).toBe('positive');
@@ -1020,6 +1119,7 @@ test('getStatus returns positive', () => {
 ```
 
 **Test (100% branch coverage):**
+
 ```typescript
 test('getStatus returns positive', () => {
   expect(getStatus(5)).toBe('positive');
@@ -1039,6 +1139,7 @@ test('getStatus returns zero', () => {
 ### 8.3 Function Coverage
 
 **Code:**
+
 ```typescript
 function add(a: number, b: number): number {
   return a + b;
@@ -1054,6 +1155,7 @@ function multiply(a: number, b: number): number {
 ```
 
 **Test (33% function coverage):**
+
 ```typescript
 test('add calculates sum', () => {
   expect(add(1, 2)).toBe(3);
@@ -1064,6 +1166,7 @@ test('add calculates sum', () => {
 ```
 
 **Test (100% function coverage):**
+
 ```typescript
 test('add calculates sum', () => {
   expect(add(1, 2)).toBe(3);
@@ -1098,6 +1201,7 @@ test('multiply calculates product', () => {
 
 **Document Status:** ✅ COMPLETE  
 **Next Steps:**
+
 1. Implement Jest coverage configuration (Section 4)
 2. Establish baseline coverage (Section 5)
 3. Begin Phase 4 test implementation with coverage tracking

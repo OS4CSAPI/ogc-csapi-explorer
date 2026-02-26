@@ -11,11 +11,13 @@
 ## Research Objectives
 
 1. **Pattern Survey:**
+
    - EDR file structure (single QueryBuilder)
    - WFS/WMS file structures
    - Common organization patterns
 
 2. **Multi-Class Implications:**
+
    - How would separate resource clients be organized?
    - Additional file count
    - Export/import complexity
@@ -54,6 +56,7 @@
 7. **Conventions:** Flat structure (<10 files), relative imports with .js, default export for classes
 
 **Convention Compliance:**
+
 - Single-class: ✅ 100% (9/9 rules)
 - Multi-class: ❌ 50-60% (4-5/9 rules, breaks flat structure)
 
@@ -68,11 +71,13 @@
 ## Expected Findings
 
 **If single-class has simpler organization:**
+
 - Fewer files to manage
 - Clearer structure
 - Favors consolidation
 
 **If multi-class is acceptable:**
+
 - More files but clear separation
 - May improve navigability
 - Both patterns viable

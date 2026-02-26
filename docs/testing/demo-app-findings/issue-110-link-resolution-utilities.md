@@ -3,8 +3,7 @@
 > **Date:** 2026-02-21
 > **Issue:** [OS4CSAPI/ogc-client-CSAPI_2#110](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/110) — "No `@link` / `@id` resolution utilities for cross-resource reference following"
 > **Repository under review:** `OS4CSAPI/ogc-client-CSAPI_2` (`src/ogc-api/csapi/`)
-> **Discovered by:** [ogc-csapi-explorer `tryLinkFallback()` workaround](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/ad06b52), [Gap Analysis Report](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/csapi-link-property-gap-analysis.md)
-> **Labels:** enhancement
+> **Discovered by:** [ogc-csapi-explorer `tryLinkFallback()` workaround](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/ad06b52), [Gap Analysis Report](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/csapi-link-property-gap-analysis.md) > **Labels:** enhancement
 
 ---
 
@@ -48,17 +47,17 @@ This report applies the following constraints with particular care:
 
 **Recommendation: DO NOT IMPLEMENT at this time.** The issue should remain open as a documented enhancement for future consideration, but no code changes should be made to the CSAPI client library contribution.
 
-| Finding | Description | Severity | Recommendation |
-|---------|-------------|----------|----------------|
-| **F-110.1** | No `@link` resolution utilities exist in the library | **CONFIRMED GAP** | Acknowledged — but not in contribution scope |
-| **F-110.2** | The gap is a **consumer convenience concern**, not a spec-conformance gap | **LOW** | Library correctly parses and exposes `@link` data; resolution is consumer responsibility |
-| **F-110.3** | ROADMAP defines no task for `@link` resolution utilities | **SCOPE BOUNDARY** | Adding unplanned functionality violates §2.1 |
-| **F-110.4** | Implementation Guide mentions "reference resolution" only for SensorML parser internals | **NOT APPLICABLE** | Not a standalone utility; different concern entirely |
+| Finding     | Description                                                                                  | Severity               | Recommendation                                                                             |
+| ----------- | -------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| **F-110.1** | No `@link` resolution utilities exist in the library                                         | **CONFIRMED GAP**      | Acknowledged — but not in contribution scope                                               |
+| **F-110.2** | The gap is a **consumer convenience concern**, not a spec-conformance gap                    | **LOW**                | Library correctly parses and exposes `@link` data; resolution is consumer responsibility   |
+| **F-110.3** | ROADMAP defines no task for `@link` resolution utilities                                     | **SCOPE BOUNDARY**     | Adding unplanned functionality violates §2.1                                               |
+| **F-110.4** | Implementation Guide mentions "reference resolution" only for SensorML parser internals      | **NOT APPLICABLE**     | Not a standalone utility; different concern entirely                                       |
 | **F-110.5** | The upstream library has no precedent for resolving inline `@link`-style property references | **ARCHITECTURAL RISK** | Existing `fetchLink()` operates on HATEOAS `links[]` arrays, not inline `@link` properties |
-| **F-110.6** | Proposed `resolveResourceRef()` introduces `fetch()` calls into the CSAPI module | **ARCHITECTURAL RISK** | CSAPI module currently has zero direct fetch calls; this would break the layering |
-| **F-110.7** | `resolveWithLinkFallback()` requires knowledge of both navigation URLs and `@link` refs | **COMPLEXITY RISK** | Couples URL builder concerns with parser output; increases surface area significantly |
-| **F-110.8** | `CSAPIResourceRef` type is already exported; consumers have everything needed | **SUFFICIENT** | Typed `@link` fields + exported type = consumers can build their own resolution |
-| **F-110.9** | The ogc-csapi-explorer workaround (`tryLinkFallback()`) is application-specific | **CONTEXT** | Different apps need different error handling, auth, caching — library shouldn't prescribe |
+| **F-110.6** | Proposed `resolveResourceRef()` introduces `fetch()` calls into the CSAPI module             | **ARCHITECTURAL RISK** | CSAPI module currently has zero direct fetch calls; this would break the layering          |
+| **F-110.7** | `resolveWithLinkFallback()` requires knowledge of both navigation URLs and `@link` refs      | **COMPLEXITY RISK**    | Couples URL builder concerns with parser output; increases surface area significantly      |
+| **F-110.8** | `CSAPIResourceRef` type is already exported; consumers have everything needed                | **SUFFICIENT**         | Typed `@link` fields + exported type = consumers can build their own resolution            |
+| **F-110.9** | The ogc-csapi-explorer workaround (`tryLinkFallback()`) is application-specific              | **CONTEXT**            | Different apps need different error handling, auth, caching — library shouldn't prescribe  |
 
 **Bottom line:** Issues #108 and #109 delivered the foundational capability — `@link` data is parsed, typed, and accessible. The library's job is to **parse and expose** the data faithfully, which it now does. Resolution (fetching resources from `@link` hrefs) is inherently application-specific and belongs in consuming applications, not in a parsing/URL-building library.
 
@@ -68,12 +67,12 @@ This report applies the following constraints with particular care:
 
 Issue #110 requests four new utility functions for `@link` / `@id` cross-reference resolution:
 
-| Proposed Utility | Purpose | Category |
-|-----------------|---------|----------|
-| `resolveResourceRef()` | Fetch a resource from a `CSAPIResourceRef.href` | **HTTP fetch** |
-| `parseResourceRefHref()` | Extract resource type and ID from an href string | **URL parsing** |
-| `extractCrossReferences()` | Collect all `@link`/`@id` fields from raw JSON | **Data extraction** |
-| `resolveWithLinkFallback()` | Try navigation endpoint, fall back to `@link` | **Orchestration** |
+| Proposed Utility            | Purpose                                          | Category            |
+| --------------------------- | ------------------------------------------------ | ------------------- |
+| `resolveResourceRef()`      | Fetch a resource from a `CSAPIResourceRef.href`  | **HTTP fetch**      |
+| `parseResourceRefHref()`    | Extract resource type and ID from an href string | **URL parsing**     |
+| `extractCrossReferences()`  | Collect all `@link`/`@id` fields from raw JSON   | **Data extraction** |
+| `resolveWithLinkFallback()` | Try navigation endpoint, fall back to `@link`    | **Orchestration**   |
 
 The issue was discovered by the [ogc-csapi-explorer](https://github.com/OS4CSAPI/ogc-csapi-explorer) project, which had to implement a `tryLinkFallback()` function (~105 lines) because the library didn't expose `@link` data at all. That root cause has now been resolved by #108 (interfaces) and #109 (parser extraction).
 
@@ -83,23 +82,23 @@ The issue was discovered by the [ogc-csapi-explorer](https://github.com/OS4CSAPI
 
 ### 4.1 What the Library Provides Today (Post #108/#109)
 
-| Layer | Component | Status | What It Does |
-|-------|-----------|--------|-------------|
-| **Types** | `CSAPIResourceRef` in `model.ts` L117–127 | Exported | Typed interface for `@link` objects: `{ href, uid?, title?, rt? }` |
-| **Part 1 interfaces** | `systemKindLink`, `platformLink`, `deployedSystemsLink`, `sampledFeatureLink` | Complete | Optional `CSAPIResourceRef` fields on System, Deployment, SamplingFeature |
-| **Part 1 parser** | `extractCSAPIFeature()` in `geojson.ts` | Complete | Extracts all 4 `@link` fields into typed interface fields |
-| **Part 2 parsers** | `parseDatastream()`, `parseControlStream()`, etc. in `part2.ts` | Complete (`@id` only) | Extracts all `@id` scalar cross-references (e.g., `system@id` → `systemId`) |
-| **URL builder** | `CSAPIQueryBuilder` in `url_builder.ts` | Complete (68 methods) | Builds URLs for all server-side navigation endpoints |
-| **HATEOAS scanner** | `scanCsapiLinks()` in `helpers.ts` | Complete | Scans document-level HATEOAS `links[]` for resource type navigation |
+| Layer                 | Component                                                                     | Status                | What It Does                                                                |
+| --------------------- | ----------------------------------------------------------------------------- | --------------------- | --------------------------------------------------------------------------- |
+| **Types**             | `CSAPIResourceRef` in `model.ts` L117–127                                     | Exported              | Typed interface for `@link` objects: `{ href, uid?, title?, rt? }`          |
+| **Part 1 interfaces** | `systemKindLink`, `platformLink`, `deployedSystemsLink`, `sampledFeatureLink` | Complete              | Optional `CSAPIResourceRef` fields on System, Deployment, SamplingFeature   |
+| **Part 1 parser**     | `extractCSAPIFeature()` in `geojson.ts`                                       | Complete              | Extracts all 4 `@link` fields into typed interface fields                   |
+| **Part 2 parsers**    | `parseDatastream()`, `parseControlStream()`, etc. in `part2.ts`               | Complete (`@id` only) | Extracts all `@id` scalar cross-references (e.g., `system@id` → `systemId`) |
+| **URL builder**       | `CSAPIQueryBuilder` in `url_builder.ts`                                       | Complete (68 methods) | Builds URLs for all server-side navigation endpoints                        |
+| **HATEOAS scanner**   | `scanCsapiLinks()` in `helpers.ts`                                            | Complete              | Scans document-level HATEOAS `links[]` for resource type navigation         |
 
 ### 4.2 What the Library Does NOT Provide
 
-| Missing Capability | Issue #110 Proposal | Currently a Gap? |
-|-------------------|---------------------|------------------|
-| Fetch a resource from `@link.href` | `resolveResourceRef()` | Consumer responsibility — data is exposed |
-| Parse resource type/ID from href | `parseResourceRefHref()` | Consumer responsibility — href is a plain string |
-| Collect all `@link`/`@id` from raw JSON | `extractCrossReferences()` | Partially redundant — typed parsers already do this |
-| Navigation-then-fallback orchestration | `resolveWithLinkFallback()` | Consumer responsibility — application-specific |
+| Missing Capability                      | Issue #110 Proposal         | Currently a Gap?                                    |
+| --------------------------------------- | --------------------------- | --------------------------------------------------- |
+| Fetch a resource from `@link.href`      | `resolveResourceRef()`      | Consumer responsibility — data is exposed           |
+| Parse resource type/ID from href        | `parseResourceRefHref()`    | Consumer responsibility — href is a plain string    |
+| Collect all `@link`/`@id` from raw JSON | `extractCrossReferences()`  | Partially redundant — typed parsers already do this |
+| Navigation-then-fallback orchestration  | `resolveWithLinkFallback()` | Consumer responsibility — application-specific      |
 
 ### 4.3 Private Helpers — Already Present But Not Exported
 
@@ -144,13 +143,13 @@ This appears in the SensorML Handler section under "Parsing Capabilities" — it
 
 ### 5.4 AI Operational Constraints Assessment
 
-| Constraint | Applies? | Analysis |
-|-----------|----------|----------|
-| §2.1 — Do not infer unstated requirements | **YES** | No ROADMAP task, no Guide section, no contribution goal statement defines `@link` resolution utilities as a deliverable |
-| §2.1 — Do not expand scope beyond issue | **YES** | Even if Issue #110 is accepted, the utilities themselves have never been part of the contribution scope |
-| §2.2 — Do not introduce new abstractions or layers | **YES** | The proposed utilities create a new "resolution layer" between parsing and consumption |
-| §2.2 — Do not introduce new dependencies | **YES** | `resolveResourceRef()` and `resolveWithLinkFallback()` introduce fetch calls into the CSAPI module |
-| §2.2 — Preserve upstream patterns | **YES** | The upstream library's CSAPI module contains zero fetch calls; adding them changes the module's character |
+| Constraint                                         | Applies? | Analysis                                                                                                                |
+| -------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------- |
+| §2.1 — Do not infer unstated requirements          | **YES**  | No ROADMAP task, no Guide section, no contribution goal statement defines `@link` resolution utilities as a deliverable |
+| §2.1 — Do not expand scope beyond issue            | **YES**  | Even if Issue #110 is accepted, the utilities themselves have never been part of the contribution scope                 |
+| §2.2 — Do not introduce new abstractions or layers | **YES**  | The proposed utilities create a new "resolution layer" between parsing and consumption                                  |
+| §2.2 — Do not introduce new dependencies           | **YES**  | `resolveResourceRef()` and `resolveWithLinkFallback()` introduce fetch calls into the CSAPI module                      |
+| §2.2 — Preserve upstream patterns                  | **YES**  | The upstream library's CSAPI module contains zero fetch calls; adding them changes the module's character               |
 
 ---
 
@@ -160,12 +159,12 @@ This appears in the SensorML Handler section under "Parsing Capabilities" — it
 
 The upstream ogc-client library has a clear architectural pattern for link resolution:
 
-| Module | Link Resolution Approach | Fetch Calls? |
-|--------|------------------------|-------------|
+| Module                          | Link Resolution Approach                                                                | Fetch Calls?               |
+| ------------------------------- | --------------------------------------------------------------------------------------- | -------------------------- |
 | **`src/ogc-api/link-utils.ts`** | `fetchLink()`, `fetchDocument()`, `getLinkUrl()` — operates on HATEOAS `links[]` arrays | Yes — uses `sharedFetch()` |
-| **`src/stac/link-utils.ts`** | `fetchLink()` — same pattern adapted for STAC | Yes — uses `sharedFetch()` |
-| **`src/ogc-api/endpoint.ts`** | Orchestrates `fetchLink()` calls for document navigation | Yes — through link-utils |
-| **`src/ogc-api/csapi/`** | `CSAPIQueryBuilder` builds URLs; parsers parse JSON; helpers scan links | **No fetch calls** |
+| **`src/stac/link-utils.ts`**    | `fetchLink()` — same pattern adapted for STAC                                           | Yes — uses `sharedFetch()` |
+| **`src/ogc-api/endpoint.ts`**   | Orchestrates `fetchLink()` calls for document navigation                                | Yes — through link-utils   |
+| **`src/ogc-api/csapi/`**        | `CSAPIQueryBuilder` builds URLs; parsers parse JSON; helpers scan links                 | **No fetch calls**         |
 
 **Critical observation:** The CSAPI module (`src/ogc-api/csapi/`) is a **parse-and-build** module. It parses incoming JSON into typed objects and builds outgoing URL strings. It never fetches. The fetch calls happen at the `endpoint.ts` level (one tier up).
 
@@ -173,13 +172,13 @@ Adding `resolveResourceRef()` or `resolveWithLinkFallback()` to the CSAPI module
 
 ### 6.2 What `fetchLink()` Actually Does vs What #110 Proposes
 
-| Aspect | Upstream `fetchLink()` | Proposed `resolveResourceRef()` |
-|--------|----------------------|-------------------------------|
-| Input | OGC API document containing `links[]` array | `CSAPIResourceRef` object with `href` string |
-| Link type | HATEOAS rel-typed links (`{ rel, href, type }`) | Inline `@link` property references (`{ href, uid?, title?, rt? }`) |
-| Purpose | Navigate between OGC API documents (conformance, collections, tilesets) | Resolve inline cross-references to fetch associated resources |
-| Location | `src/ogc-api/link-utils.ts` (shared utility) | Proposed: `src/ogc-api/csapi/link-resolution.ts` (CSAPI-specific) |
-| Precedent | Used ~10 times in `endpoint.ts` | No existing usage anywhere |
+| Aspect    | Upstream `fetchLink()`                                                  | Proposed `resolveResourceRef()`                                    |
+| --------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Input     | OGC API document containing `links[]` array                             | `CSAPIResourceRef` object with `href` string                       |
+| Link type | HATEOAS rel-typed links (`{ rel, href, type }`)                         | Inline `@link` property references (`{ href, uid?, title?, rt? }`) |
+| Purpose   | Navigate between OGC API documents (conformance, collections, tilesets) | Resolve inline cross-references to fetch associated resources      |
+| Location  | `src/ogc-api/link-utils.ts` (shared utility)                            | Proposed: `src/ogc-api/csapi/link-resolution.ts` (CSAPI-specific)  |
+| Precedent | Used ~10 times in `endpoint.ts`                                         | No existing usage anywhere                                         |
 
 The upstream `fetchLink()` operates on document-level HATEOAS navigation — a fundamentally different concern from resolving inline `@link` properties within parsed CSAPI resources.
 
@@ -189,23 +188,23 @@ The upstream `fetchLink()` operates on document-level HATEOAS navigation — a f
 
 ### 7.1 Risks of Implementing
 
-| Risk | Severity | Description |
-|------|----------|-------------|
-| **Scope expansion** | **HIGH** | Adds unplanned functionality not in ROADMAP, Guide, or contribution goal |
-| **Architectural layer violation** | **HIGH** | Introduces fetch calls into the CSAPI parse-and-build module |
-| **Test surface explosion** | **MEDIUM** | Each fetch-based utility needs network mocking, error handling, timeout testing |
-| **API surface growth** | **MEDIUM** | 4 new exported functions + new file = significant new public API to maintain |
-| **Application-specific concerns** | **MEDIUM** | Error handling, auth headers, retry logic, caching — apps differ; library can't prescribe |
-| **Premature abstraction** | **MEDIUM** | Only one consumer (ogc-csapi-explorer) has encountered this; pattern isn't validated across multiple apps |
-| **Contribution integrity** | **HIGH** | Adding unscoped work risks introducing defects into a well-tested, stable codebase |
+| Risk                              | Severity   | Description                                                                                               |
+| --------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------- |
+| **Scope expansion**               | **HIGH**   | Adds unplanned functionality not in ROADMAP, Guide, or contribution goal                                  |
+| **Architectural layer violation** | **HIGH**   | Introduces fetch calls into the CSAPI parse-and-build module                                              |
+| **Test surface explosion**        | **MEDIUM** | Each fetch-based utility needs network mocking, error handling, timeout testing                           |
+| **API surface growth**            | **MEDIUM** | 4 new exported functions + new file = significant new public API to maintain                              |
+| **Application-specific concerns** | **MEDIUM** | Error handling, auth headers, retry logic, caching — apps differ; library can't prescribe                 |
+| **Premature abstraction**         | **MEDIUM** | Only one consumer (ogc-csapi-explorer) has encountered this; pattern isn't validated across multiple apps |
+| **Contribution integrity**        | **HIGH**   | Adding unscoped work risks introducing defects into a well-tested, stable codebase                        |
 
 ### 7.2 Risks of NOT Implementing
 
-| Risk | Severity | Description |
-|------|----------|-------------|
-| **Consumer boilerplate** | **LOW** | Consumers write ~10–20 lines to fetch from a `CSAPIResourceRef.href` — trivial with typed data available |
-| **Discovery gap** | **LOW** | Without a library function, consumers must know to read `@link` fields — but `CSAPIResourceRef` type is exported and fields are documented with JSDoc |
-| **No fallback orchestration** | **LOW** | Consumers implement their own try-navigation-then-fallback — but this is application-specific by nature |
+| Risk                          | Severity | Description                                                                                                                                           |
+| ----------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Consumer boilerplate**      | **LOW**  | Consumers write ~10–20 lines to fetch from a `CSAPIResourceRef.href` — trivial with typed data available                                              |
+| **Discovery gap**             | **LOW**  | Without a library function, consumers must know to read `@link` fields — but `CSAPIResourceRef` type is exported and fields are documented with JSDoc |
+| **No fallback orchestration** | **LOW**  | Consumers implement their own try-navigation-then-fallback — but this is application-specific by nature                                               |
 
 ### 7.3 What #108/#109 Already Solved
 
@@ -243,13 +242,13 @@ Issue #110 identifies a real consumer convenience gap, but the proposed fix:
 
 ### What the Library Should Provide (and Already Does)
 
-| Responsibility | Status | How |
-|---------------|--------|-----|
-| Parse `@link` from JSON | **Done** (#109) | `extractCSAPIFeature()` extracts all `@link` fields |
-| Type `@link` data | **Done** (#108) | `CSAPIResourceRef` interface, fields on System/Deployment/SamplingFeature |
-| Export types for consumers | **Done** (#108) | `CSAPIResourceRef` exported from `src/index.ts` |
-| Build navigation URLs | **Done** (original) | `CSAPIQueryBuilder` with 68 methods |
-| Resolve `@link` by fetching | **Consumer responsibility** | Consumers fetch `ref.href` using their own HTTP infrastructure |
+| Responsibility              | Status                      | How                                                                       |
+| --------------------------- | --------------------------- | ------------------------------------------------------------------------- |
+| Parse `@link` from JSON     | **Done** (#109)             | `extractCSAPIFeature()` extracts all `@link` fields                       |
+| Type `@link` data           | **Done** (#108)             | `CSAPIResourceRef` interface, fields on System/Deployment/SamplingFeature |
+| Export types for consumers  | **Done** (#108)             | `CSAPIResourceRef` exported from `src/index.ts`                           |
+| Build navigation URLs       | **Done** (original)         | `CSAPIQueryBuilder` with 68 methods                                       |
+| Resolve `@link` by fetching | **Consumer responsibility** | Consumers fetch `ref.href` using their own HTTP infrastructure            |
 
 ### Recommended Actions
 
@@ -257,7 +256,7 @@ Issue #110 identifies a real consumer convenience gap, but the proposed fix:
 2. **Do not add fetch calls** to any CSAPI source file.
 3. **Do not export** the private helpers `isCSAPIResourceRef()` / `parseResourceRef()` from `geojson.ts` — they are internal parser implementation details.
 4. **Keep Issue #110 open** as a documented enhancement request for future consideration (post-contribution).
-5. **Consider adding a JSDoc usage example** to `CSAPIResourceRef` showing how consumers can resolve references — this is informational, zero-risk, and helps consumers without expanding the API surface. *(Optional, low priority.)*
+5. **Consider adding a JSDoc usage example** to `CSAPIResourceRef` showing how consumers can resolve references — this is informational, zero-risk, and helps consumers without expanding the API surface. _(Optional, low priority.)_
 
 ### If the Scope Were Expanded in the Future
 
@@ -272,17 +271,17 @@ If the project maintainer later decides to add `@link` resolution utilities, the
 
 ## Appendix A: Authority Precedence Analysis
 
-| Level | Source | What It Says About `@link` Resolution Utilities | Supports Implementation? |
-|-------|--------|-----------------------------------------------|-------------------------|
-| 1 (highest) | OGC 23-001/23-002 | Defines `@link` data format and semantics — says nothing about how clients should resolve references | **NEUTRAL** — spec defines data, not client behavior |
-| 2 | AI Collaboration Agreement | §3: Human maintainer has final authority over scope. §5: Controlled evolution; no opportunistic improvement | **NO** — no approval for scope expansion |
-| 3 | AI Operational Constraints | §2.1: Do not infer unstated requirements. §2.2: Do not introduce new abstractions without approval | **NO** — utilities are unstated requirements |
-| 4 | ROADMAP | No task for `@link` resolution utilities. `@link` mentioned only for parsing (Phase 3 Task 1) | **NO** — not in any phase |
-| 4 | Implementation Guide | "Reference resolution" mentioned once — for SensorML `xlink:href` internal parsing | **NO** — different concern |
-| 4 | Contribution Goal | "GeoJSON extensions recognizing all CSAPI-specific resource types and properties" | **NO** — "recognizing" ≠ "resolving"; parsing is complete |
-| 4 | Existing code (`CSAPIQueryBuilder`) | Builds navigation URLs; does not fetch | **NO** — establishes parse-and-build pattern |
-| 4 | Existing code (`link-utils.ts`) | `fetchLink()` exists for HATEOAS document links | **PARTIAL** — pattern exists in upstream, but for a different link type |
-| 5 | Explorer workaround | `tryLinkFallback()` needed 105 lines pre-#108/#109 | **MITIGATED** — root cause resolved; consumer code now trivial |
+| Level       | Source                              | What It Says About `@link` Resolution Utilities                                                             | Supports Implementation?                                                |
+| ----------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 1 (highest) | OGC 23-001/23-002                   | Defines `@link` data format and semantics — says nothing about how clients should resolve references        | **NEUTRAL** — spec defines data, not client behavior                    |
+| 2           | AI Collaboration Agreement          | §3: Human maintainer has final authority over scope. §5: Controlled evolution; no opportunistic improvement | **NO** — no approval for scope expansion                                |
+| 3           | AI Operational Constraints          | §2.1: Do not infer unstated requirements. §2.2: Do not introduce new abstractions without approval          | **NO** — utilities are unstated requirements                            |
+| 4           | ROADMAP                             | No task for `@link` resolution utilities. `@link` mentioned only for parsing (Phase 3 Task 1)               | **NO** — not in any phase                                               |
+| 4           | Implementation Guide                | "Reference resolution" mentioned once — for SensorML `xlink:href` internal parsing                          | **NO** — different concern                                              |
+| 4           | Contribution Goal                   | "GeoJSON extensions recognizing all CSAPI-specific resource types and properties"                           | **NO** — "recognizing" ≠ "resolving"; parsing is complete               |
+| 4           | Existing code (`CSAPIQueryBuilder`) | Builds navigation URLs; does not fetch                                                                      | **NO** — establishes parse-and-build pattern                            |
+| 4           | Existing code (`link-utils.ts`)     | `fetchLink()` exists for HATEOAS document links                                                             | **PARTIAL** — pattern exists in upstream, but for a different link type |
+| 5           | Explorer workaround                 | `tryLinkFallback()` needed 105 lines pre-#108/#109                                                          | **MITIGATED** — root cause resolved; consumer code now trivial          |
 
 **No authority level supports adding `@link` resolution utilities to the contribution scope.**
 

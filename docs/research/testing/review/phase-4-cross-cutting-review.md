@@ -15,64 +15,64 @@ Phase 4 is the final meta-review across all 38 findings documents and 12 review 
 
 ### Findings Documents (38 + 1 supplemental)
 
-| # | Document | Topic |
-|---|----------|-------|
-| 01 | `01-edr-test-blueprint.md` | EDR Test Blueprint |
-| 02 | `02-upstream-test-consistency.md` | Upstream Test Consistency |
-| 03 | `03-typescript-testing-standards.md` | TypeScript Testing Standards |
-| 04 | `04-implementation-guide-testing-requirements.md` | Implementation Guide Testing Requirements |
-| 05 | `05-roadmap-testing-integration.md` | ROADMAP Testing Integration |
-| 06 | `06-meaningful-vs-trivial-definition.md` | Meaningful vs Trivial Definition |
-| 07 | `07-end-to-end-testing-scope.md` | End-to-End Testing Scope |
-| 08 | `08-csapi-specification-test-requirements.md` | CSAPI Specification Test Requirements |
-| 09 | `09-sensorml-testing-requirements.md` | SensorML Testing Requirements |
-| 10 | `10-swe-common-testing-requirements.md` | SWE Common Testing Requirements |
-| 11 | `11-geojson-csapi-testing-requirements.md` | GeoJSON CSAPI Testing Requirements |
-| 12 | `12-querybuilder-testing-strategy.md` | QueryBuilder Testing Strategy |
-| 13 | `13-resource-method-testing-patterns.md` | Resource Method Testing Patterns |
-| 14 | `14-integration-test-workflow-design.md` | Integration Test Workflow Design |
-| 15 | `15-fixture-sourcing-organization.md` | Fixture Sourcing & Organization |
-| 15P2 | `15-part-2-fixture-documentation-best-practices.md` | Fixture Documentation Best Practices |
-| 16 | `16-worker-extensions-testing.md` | Worker Extensions Testing |
-| 17 | `17-coverage-targets-and-metrics.md` | Coverage Targets & Metrics |
-| 18 | `18-error-condition-testing-strategy.md` | Error Condition Testing Strategy |
-| 19 | `19-test-organization-file-structure.md` | Test Organization & File Structure |
-| 20 | `20-test-to-code-ratio-validation.md` | Test-to-Code Ratio Validation |
-| 21 | `21-typescript-type-testing-strategy.md` | TypeScript Type Testing Strategy |
-| 22 | `22-conformance-capability-testing.md` | Conformance & Capability Testing |
-| 23 | `23-pagination-testing.md` | Pagination Testing |
-| 24 | `24-query-parameter-combination-testing.md` | Query Parameter Combination Testing |
-| 25 | `25-format-negotiation-testing.md` | Format Negotiation Testing |
-| 26 | `26-subresource-navigation-testing.md` | Subresource Navigation Testing |
-| 27 | `27-schema-driven-validation-testing.md` | Schema-Driven Validation Testing |
-| 28 | `28-temporal-query-testing.md` | Temporal Query Testing |
-| 29 | `29-spatial-query-testing.md` | Spatial Query Testing |
-| 30 | `30-bulk-operations-testing.md` | Bulk Operations Testing |
-| 31 | `31-command-lifecycle-testing.md` | Command Lifecycle Testing |
-| 32 | `32-real-world-server-compatibility-testing.md` | Real-World Server Compatibility Testing |
-| 33 | `33-performance-efficiency-testing.md` | Performance & Efficiency Testing |
-| 34 | `34-test-utility-helper-design.md` | Test Utility & Helper Design |
-| 35 | `35-jsdoc-testing-documentation-standards.md` | JSDoc Testing Documentation Standards |
-| 36 | `36-test-quality-checklist-review-process.md` | Test Quality Checklist & Review Process |
-| 37 | `37-test-maintenance-evolution-strategy.md` | Test Maintenance & Evolution Strategy |
-| 38 | `38-testing-playbook-synthesis.md` | Testing Playbook Synthesis |
+| #    | Document                                            | Topic                                     |
+| ---- | --------------------------------------------------- | ----------------------------------------- |
+| 01   | `01-edr-test-blueprint.md`                          | EDR Test Blueprint                        |
+| 02   | `02-upstream-test-consistency.md`                   | Upstream Test Consistency                 |
+| 03   | `03-typescript-testing-standards.md`                | TypeScript Testing Standards              |
+| 04   | `04-implementation-guide-testing-requirements.md`   | Implementation Guide Testing Requirements |
+| 05   | `05-roadmap-testing-integration.md`                 | ROADMAP Testing Integration               |
+| 06   | `06-meaningful-vs-trivial-definition.md`            | Meaningful vs Trivial Definition          |
+| 07   | `07-end-to-end-testing-scope.md`                    | End-to-End Testing Scope                  |
+| 08   | `08-csapi-specification-test-requirements.md`       | CSAPI Specification Test Requirements     |
+| 09   | `09-sensorml-testing-requirements.md`               | SensorML Testing Requirements             |
+| 10   | `10-swe-common-testing-requirements.md`             | SWE Common Testing Requirements           |
+| 11   | `11-geojson-csapi-testing-requirements.md`          | GeoJSON CSAPI Testing Requirements        |
+| 12   | `12-querybuilder-testing-strategy.md`               | QueryBuilder Testing Strategy             |
+| 13   | `13-resource-method-testing-patterns.md`            | Resource Method Testing Patterns          |
+| 14   | `14-integration-test-workflow-design.md`            | Integration Test Workflow Design          |
+| 15   | `15-fixture-sourcing-organization.md`               | Fixture Sourcing & Organization           |
+| 15P2 | `15-part-2-fixture-documentation-best-practices.md` | Fixture Documentation Best Practices      |
+| 16   | `16-worker-extensions-testing.md`                   | Worker Extensions Testing                 |
+| 17   | `17-coverage-targets-and-metrics.md`                | Coverage Targets & Metrics                |
+| 18   | `18-error-condition-testing-strategy.md`            | Error Condition Testing Strategy          |
+| 19   | `19-test-organization-file-structure.md`            | Test Organization & File Structure        |
+| 20   | `20-test-to-code-ratio-validation.md`               | Test-to-Code Ratio Validation             |
+| 21   | `21-typescript-type-testing-strategy.md`            | TypeScript Type Testing Strategy          |
+| 22   | `22-conformance-capability-testing.md`              | Conformance & Capability Testing          |
+| 23   | `23-pagination-testing.md`                          | Pagination Testing                        |
+| 24   | `24-query-parameter-combination-testing.md`         | Query Parameter Combination Testing       |
+| 25   | `25-format-negotiation-testing.md`                  | Format Negotiation Testing                |
+| 26   | `26-subresource-navigation-testing.md`              | Subresource Navigation Testing            |
+| 27   | `27-schema-driven-validation-testing.md`            | Schema-Driven Validation Testing          |
+| 28   | `28-temporal-query-testing.md`                      | Temporal Query Testing                    |
+| 29   | `29-spatial-query-testing.md`                       | Spatial Query Testing                     |
+| 30   | `30-bulk-operations-testing.md`                     | Bulk Operations Testing                   |
+| 31   | `31-command-lifecycle-testing.md`                   | Command Lifecycle Testing                 |
+| 32   | `32-real-world-server-compatibility-testing.md`     | Real-World Server Compatibility Testing   |
+| 33   | `33-performance-efficiency-testing.md`              | Performance & Efficiency Testing          |
+| 34   | `34-test-utility-helper-design.md`                  | Test Utility & Helper Design              |
+| 35   | `35-jsdoc-testing-documentation-standards.md`       | JSDoc Testing Documentation Standards     |
+| 36   | `36-test-quality-checklist-review-process.md`       | Test Quality Checklist & Review Process   |
+| 37   | `37-test-maintenance-evolution-strategy.md`         | Test Maintenance & Evolution Strategy     |
+| 38   | `38-testing-playbook-synthesis.md`                  | Testing Playbook Synthesis                |
 
 ### Review Reports (9 + 3 notes)
 
-| File | Phase |
-|------|-------|
-| `phase-0-lessons-from-failed-attempt.md` | Phase 0 — Anti-pattern catalog (AP1–AP5) |
-| `phase-1-foundation-validation.md` | Phase 1 — Foundation validation |
-| `phase-2a-fixtures-category.md` | Phase 2A — Fixtures |
-| `phase-2b-testing-patterns-category.md` | Phase 2B — Testing patterns |
-| `phase-2c-standards-quality-category.md` | Phase 2C — Standards & quality |
-| `phase-2d-csapi-specific-testing-category.md` | Phase 2D — CSAPI-specific testing |
-| `phase-2e-advanced-scenarios-category.md` | Phase 2E — Advanced scenarios |
-| `phase-2f-integration-workflow-category.md` | Phase 2F — Integration & workflow |
-| `phase-3-synthesis-validation.md` | Phase 3 — Synthesis validation |
-| `notes-parser-testing-vs-spec-validation.md` | Notes |
-| `notes-why-models-default-to-server-validation.md` | Notes |
-| `verified-conformance-uris.md` | Notes |
+| File                                               | Phase                                    |
+| -------------------------------------------------- | ---------------------------------------- |
+| `phase-0-lessons-from-failed-attempt.md`           | Phase 0 — Anti-pattern catalog (AP1–AP5) |
+| `phase-1-foundation-validation.md`                 | Phase 1 — Foundation validation          |
+| `phase-2a-fixtures-category.md`                    | Phase 2A — Fixtures                      |
+| `phase-2b-testing-patterns-category.md`            | Phase 2B — Testing patterns              |
+| `phase-2c-standards-quality-category.md`           | Phase 2C — Standards & quality           |
+| `phase-2d-csapi-specific-testing-category.md`      | Phase 2D — CSAPI-specific testing        |
+| `phase-2e-advanced-scenarios-category.md`          | Phase 2E — Advanced scenarios            |
+| `phase-2f-integration-workflow-category.md`        | Phase 2F — Integration & workflow        |
+| `phase-3-synthesis-validation.md`                  | Phase 3 — Synthesis validation           |
+| `notes-parser-testing-vs-spec-validation.md`       | Notes                                    |
+| `notes-why-models-default-to-server-validation.md` | Notes                                    |
+| `verified-conformance-uris.md`                     | Notes                                    |
 
 ## Review Methodology
 
@@ -127,13 +127,13 @@ Doc 31 (Command Lifecycle Testing) was the **only document with significant unre
 **Severity**: HIGH  
 **Status**: ✅ RESOLVED
 
-| # | Document | Line | Broken Link | Correct Target |
-|---|----------|------|-------------|----------------|
-| 1 | Doc 17 | 1091 | `./16-worker-extensions-testing-strategy.md` | `./16-worker-extensions-testing.md` |
-| 2 | Doc 16 | 1794 | `../../planning/csapi-implementation-guide.md` | `../../../planning/csapi-implementation-guide.md` |
-| 3 | Doc 16 | 1795 | `../../planning/ROADMAP.md` | `../../../planning/ROADMAP.md` |
-| 4 | Doc 17 | 51 | `../../../csapi-implementation-guide.md` | `../../../planning/csapi-implementation-guide.md` |
-| 5 | Doc 17 | 1092 | `../../../csapi-implementation-guide.md` | `../../../planning/csapi-implementation-guide.md` |
+| #   | Document | Line | Broken Link                                    | Correct Target                                    |
+| --- | -------- | ---- | ---------------------------------------------- | ------------------------------------------------- |
+| 1   | Doc 17   | 1091 | `./16-worker-extensions-testing-strategy.md`   | `./16-worker-extensions-testing.md`               |
+| 2   | Doc 16   | 1794 | `../../planning/csapi-implementation-guide.md` | `../../../planning/csapi-implementation-guide.md` |
+| 3   | Doc 16   | 1795 | `../../planning/ROADMAP.md`                    | `../../../planning/ROADMAP.md`                    |
+| 4   | Doc 17   | 51   | `../../../csapi-implementation-guide.md`       | `../../../planning/csapi-implementation-guide.md` |
+| 5   | Doc 17   | 1092 | `../../../csapi-implementation-guide.md`       | `../../../planning/csapi-implementation-guide.md` |
 
 **Resolution applied**: All 5 paths corrected in place.
 
@@ -306,24 +306,31 @@ The project has both `test-setup.ts` and `test-setup.node.ts` with separate conf
 ## Positive Findings
 
 ### P1: Review Report Cross-References — 100% Accurate
+
 All 42 cross-references from review reports (Phases 2A–3) to findings documents are valid. Every document number, filename, and relative path is correct.
 
 ### P2: Anti-Pattern Banners — 16/16 At-Risk Documents Properly Bannered
+
 All at-risk documents from Phases 2D, 2E, and Phase 4 now have adequate review notices. Doc 31 received its banner in Phase 4. Doc 32 is particularly well-bannered with 9 separate notices across sections. Doc 33 OUT OF SCOPE banner is prominent and clear.
 
 ### P3: Key Terms Consistent — 7/10 Fully Aligned
+
 "Meaningful test," "fixture," "unit test," "client-oriented vs server-oriented," "trivial test," "edge case," and "deep testing" are all used consistently across their primary documents with no contradictions.
 
 ### P4: Doc 36 Enterprise Review Simplification — Fully Reconciled
+
 The 3-stage enterprise review process was correctly simplified to single-stage self-review, and this change is consistently reflected in both Doc 36 and Doc 38.
 
 ### P5: Doc 32 AP2 Rejection — Cleanly Contained
+
 Doc 32's hybrid fixture/live execution model is heavily bannered, and no other documents reference or endorse its approach. Doc 38 correctly avoids any reference to Doc 32.
 
 ### P6: Evolution Points Mostly Tracked
+
 3 of 5 evolution points are fully reconciled (Doc 33 scope, Doc 32 AP2, Doc 36 enterprise review). The remaining 2 partial reconciliations (Doc 15 Part 2 and coverage targets) are identified as M1 and M5 above.
 
 ### P7: Completeness — Core Concerns Covered
+
 Mock/stub strategy (Docs 01, 02, 03, 34), async testing patterns (Docs 01, 02, 03, 31), import mocking (Docs 03, 16), and test lifecycle management (Docs 02, 34) are all adequately covered across the corpus.
 
 ---
@@ -356,51 +363,51 @@ All 16 actionable issues have been resolved. The remaining no-action items (L1, 
 
 ## Quantitative Summary
 
-| Metric | Count |
-|--------|-------|
-| Documents reviewed | 38 findings + 12 review files |
-| Terms audited | 10 |
-| Cross-references validated | 85 |
-| Evolution points traced | 5 |
-| Completeness concerns checked | 8 |
-| Redundancy areas examined | 10 |
-| Anti-pattern documents scanned | 16 |
-| | |
-| **Issues found** | |
-| Critical | 0 |
-| High | 6 |
-| Medium | 6 |
-| Low | 6 |
-| | |
-| **Cross-reference accuracy** | |
-| Valid links | 85 / 85 (100%) |
-| Broken links | 0 / 85 (0%) — 5 fixed |
-| Imprecise (but not wrong) | 3 / 85 (3.5%) |
-| | |
-| **Terminology consistency** | |
-| Consistent terms | 7 / 10 |
-| Inconsistent terms | 2 / 10 |
-| Minor inconsistency | 1 / 10 |
-| | |
-| **Anti-pattern compliance** | |
-| Properly bannered | 16 / 16 |
-| Missing banners | 0 / 16 |
-| Minor phrasing only | 0 / 16 |
+| Metric                         | Count                         |
+| ------------------------------ | ----------------------------- |
+| Documents reviewed             | 38 findings + 12 review files |
+| Terms audited                  | 10                            |
+| Cross-references validated     | 85                            |
+| Evolution points traced        | 5                             |
+| Completeness concerns checked  | 8                             |
+| Redundancy areas examined      | 10                            |
+| Anti-pattern documents scanned | 16                            |
+|                                |                               |
+| **Issues found**               |                               |
+| Critical                       | 0                             |
+| High                           | 6                             |
+| Medium                         | 6                             |
+| Low                            | 6                             |
+|                                |                               |
+| **Cross-reference accuracy**   |                               |
+| Valid links                    | 85 / 85 (100%)                |
+| Broken links                   | 0 / 85 (0%) — 5 fixed         |
+| Imprecise (but not wrong)      | 3 / 85 (3.5%)                 |
+|                                |                               |
+| **Terminology consistency**    |                               |
+| Consistent terms               | 7 / 10                        |
+| Inconsistent terms             | 2 / 10                        |
+| Minor inconsistency            | 1 / 10                        |
+|                                |                               |
+| **Anti-pattern compliance**    |                               |
+| Properly bannered              | 16 / 16                       |
+| Missing banners                | 0 / 16                        |
+| Minor phrasing only            | 0 / 16                        |
 
 ---
 
 ## Phase History
 
-| Phase | Scope | Issues Found | Issues Resolved |
-|-------|-------|:---:|:---:|
-| Phase 0 | Anti-pattern catalog (AP1–AP5) | 5 anti-patterns | Cataloged |
-| Phase 1 | Foundation (Docs 01, 02, 12, 38) | 8 | 8 |
-| Phase 2A | Fixtures (Doc 15) | 4 | 4 |
-| Phase 2B | Testing patterns (Docs 06, 13, 14, 19, 34) | 8 | 8 |
-| Phase 2C | Standards/quality (Docs 03, 17, 20, 35, 36, 37) | 10 | 10 |
-| Phase 2D | CSAPI-specific (Docs 08, 09, 10, 11, 21, 22) | 14 | 14 |
-| Phase 2E | Advanced scenarios (Docs 18, 23–33) | 27 | 27 |
-| Phase 2F | Integration/workflow (Docs 04, 05, 07, 16) | 11 | 11 |
-| Phase 3 | Synthesis (Doc 38) | 10 | 10 |
-| **Phase 4** | **Cross-cutting (all 38 docs)** | **18** | **16 resolved + 2 no-action** |
-| **Total** | | **115** | **110 resolved** |
+| Phase       | Scope                                           |  Issues Found   |        Issues Resolved        |
+| ----------- | ----------------------------------------------- | :-------------: | :---------------------------: |
+| Phase 0     | Anti-pattern catalog (AP1–AP5)                  | 5 anti-patterns |           Cataloged           |
+| Phase 1     | Foundation (Docs 01, 02, 12, 38)                |        8        |               8               |
+| Phase 2A    | Fixtures (Doc 15)                               |        4        |               4               |
+| Phase 2B    | Testing patterns (Docs 06, 13, 14, 19, 34)      |        8        |               8               |
+| Phase 2C    | Standards/quality (Docs 03, 17, 20, 35, 36, 37) |       10        |              10               |
+| Phase 2D    | CSAPI-specific (Docs 08, 09, 10, 11, 21, 22)    |       14        |              14               |
+| Phase 2E    | Advanced scenarios (Docs 18, 23–33)             |       27        |              27               |
+| Phase 2F    | Integration/workflow (Docs 04, 05, 07, 16)      |       11        |              11               |
+| Phase 3     | Synthesis (Doc 38)                              |       10        |              10               |
+| **Phase 4** | **Cross-cutting (all 38 docs)**                 |     **18**      | **16 resolved + 2 no-action** |
+| **Total**   |                                                 |     **115**     |       **110 resolved**        |

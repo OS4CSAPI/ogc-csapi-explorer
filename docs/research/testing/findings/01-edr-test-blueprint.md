@@ -3,17 +3,19 @@
 **Research Plan:** [docs/research/testing/research-plans/01-pr114-blueprint-analysis.md](../research-plans/01-pr114-blueprint-analysis.md)  
 **Research Questions:** 71 detailed questions about test patterns, coverage, assertions, fixtures, and quality indicators  
 **Methodology:** 4-phase analysis (PR overview → test file analysis → pattern extraction → synthesis)  
-**Research Time:** 3.5 hours (February 5, 2026, 10:30 AM - 2:00 PM)  
+**Research Time:** 3.5 hours (February 5, 2026, 10:30 AM - 2:00 PM)
 
 **Primary Source:** camptocamp/ogc-client PR #114 - OGC EDR URL Builder Support  
 **PR Details:**
+
 - Merged: August 29, 2025 by jahow
 - Author: C-Loftus (cgs-earth)
 - URL: https://github.com/camptocamp/ogc-client/pull/114
 
 **Supporting Resources:**
+
 - Local clone: camptocamp/ogc-client repository
-- EDR test files: src/ogc-api/edr/*.spec.ts, src/ogc-api/endpoint.spec.ts (EDR sections)
+- EDR test files: src/ogc-api/edr/\*.spec.ts, src/ogc-api/endpoint.spec.ts (EDR sections)
 - EDR fixtures: fixtures/ogc-api/edr/
 - OGC API - Environmental Data Retrieval specification
 - PR review comments and feedback
@@ -51,39 +53,39 @@ PR #114 added OGC Environmental Data Retrieval (EDR) API support to ogc-client t
 
 ### Unit Test Files (New)
 
-| File | Location | Lines | Tests | Purpose |
-|------|----------|-------|-------|---------|
-| `helpers.spec.ts` | `src/ogc-api/edr/` | 39 | 5 | DateTime parameter serialization |
-| `model.spec.ts` | `src/ogc-api/edr/` | 38 | 6 | Z-parameter (vertical level) serialization |
-| (url_builder implicit) | `src/ogc-api/edr/` | 0 | 0 | No direct unit tests - tested via integration |
+| File                   | Location           | Lines | Tests | Purpose                                       |
+| ---------------------- | ------------------ | ----- | ----- | --------------------------------------------- |
+| `helpers.spec.ts`      | `src/ogc-api/edr/` | 39    | 5     | DateTime parameter serialization              |
+| `model.spec.ts`        | `src/ogc-api/edr/` | 38    | 6     | Z-parameter (vertical level) serialization    |
+| (url_builder implicit) | `src/ogc-api/edr/` | 0     | 0     | No direct unit tests - tested via integration |
 
 ### Integration Test Files (Modified)
 
-| File | Location | Lines Added | Tests Added | Purpose |
-|------|----------|-------------|-------------|---------|
-| `endpoint.spec.ts` | `src/ogc-api/` | 298 | 13 scenarios | EDR endpoint detection, collection listing, query building, error handling |
+| File               | Location       | Lines Added | Tests Added  | Purpose                                                                    |
+| ------------------ | -------------- | ----------- | ------------ | -------------------------------------------------------------------------- |
+| `endpoint.spec.ts` | `src/ogc-api/` | 298         | 13 scenarios | EDR endpoint detection, collection listing, query building, error handling |
 
 ### Implementation Files
 
-| File | Location | Lines | Purpose |
-|------|----------|-------|---------|
-| `url_builder.ts` | `src/ogc-api/edr/` | 561 | Main QueryBuilder class with 8 EDR query methods |
-| `model.ts` | `src/ogc-api/edr/` | 125 | Type definitions for EDR-specific parameters |
-| `helpers.ts` | `src/ogc-api/edr/` | 23 | DateTime serialization utility |
-| `endpoint.ts` | `src/ogc-api/` | +41 -2 | Integration of EDR into OgcApiEndpoint |
-| `info.ts` | `src/ogc-api/` | +61 -45 | EDR conformance checking, collection parsing |
-| `model.ts` (ogc-api) | `src/ogc-api/` | +46 -1 | EDR type definitions in OgcApiCollectionInfo |
-| `link-utils.ts` | `src/ogc-api/` | +9 -5 | Link resolution support for EDR collections |
+| File                 | Location           | Lines   | Purpose                                          |
+| -------------------- | ------------------ | ------- | ------------------------------------------------ |
+| `url_builder.ts`     | `src/ogc-api/edr/` | 561     | Main QueryBuilder class with 8 EDR query methods |
+| `model.ts`           | `src/ogc-api/edr/` | 125     | Type definitions for EDR-specific parameters     |
+| `helpers.ts`         | `src/ogc-api/edr/` | 23      | DateTime serialization utility                   |
+| `endpoint.ts`        | `src/ogc-api/`     | +41 -2  | Integration of EDR into OgcApiEndpoint           |
+| `info.ts`            | `src/ogc-api/`     | +61 -45 | EDR conformance checking, collection parsing     |
+| `model.ts` (ogc-api) | `src/ogc-api/`     | +46 -1  | EDR type definitions in OgcApiCollectionInfo     |
+| `link-utils.ts`      | `src/ogc-api/`     | +9 -5   | Link resolution support for EDR collections      |
 
 ### Fixture Files
 
-| File | Location | Size | Purpose |
-|------|----------|------|---------|
-| `sample-data-hub.json` | `fixtures/ogc-api/edr/` | 80 lines | EDR root document |
-| `conformance.json` | `fixtures/ogc-api/edr/sample-data-hub/` | 22 lines | Conformance classes including EDR core |
-| `collections.json` | `fixtures/ogc-api/edr/sample-data-hub/` | 715 lines | 2 collections (ADWR sites + reservoir-api) |
-| `reservoir-api.json` (2 copies) | `fixtures/ogc-api/edr/sample-data-hub/` | 194 + 574 lines | Detailed EDR collection with data_queries |
-| `reservoir-api.json` | `fixtures/ogc-api/edr/sample-data-hub/collections/` | 574 lines | Full collection document |
+| File                            | Location                                            | Size            | Purpose                                    |
+| ------------------------------- | --------------------------------------------------- | --------------- | ------------------------------------------ |
+| `sample-data-hub.json`          | `fixtures/ogc-api/edr/`                             | 80 lines        | EDR root document                          |
+| `conformance.json`              | `fixtures/ogc-api/edr/sample-data-hub/`             | 22 lines        | Conformance classes including EDR core     |
+| `collections.json`              | `fixtures/ogc-api/edr/sample-data-hub/`             | 715 lines       | 2 collections (ADWR sites + reservoir-api) |
+| `reservoir-api.json` (2 copies) | `fixtures/ogc-api/edr/sample-data-hub/`             | 194 + 574 lines | Detailed EDR collection with data_queries  |
+| `reservoir-api.json`            | `fixtures/ogc-api/edr/sample-data-hub/collections/` | 574 lines       | Full collection document                   |
 
 ---
 
@@ -163,7 +165,7 @@ describe('zParameterToString', () => {
 ```typescript
 describe('OgcApiEndpoint with EDR', () => {
   let endpoint: OgcApiEndpoint;
-  
+
   beforeEach(() => {
     endpoint = new OgcApiEndpoint('http://local/edr/sample-data-hub');
   });
@@ -186,16 +188,18 @@ describe('OgcApiEndpoint with EDR', () => {
 
   it('can produce EDR area queries with/without optional parameters', async () => {
     const builder = await endpoint.edr('reservoir-api');
-    
+
     const url1 = builder.buildAreaDownloadUrl(
       'POLYGON((-1.0 50.0, -1.0 51.0, 0.0 51.0, 0.0 50.0, -1.0 50.0))'
     );
-    expect(url1).toEqual('https://dummy.edr.app/collections/reservoir-api/area?coords=...');
-    
-    const url2 = builder.buildAreaDownloadUrl(
-      'POLYGON(...)',
-      { parameter_name: ['Water Temperature'], z: { type: 'single', level: 1 } }
+    expect(url1).toEqual(
+      'https://dummy.edr.app/collections/reservoir-api/area?coords=...'
     );
+
+    const url2 = builder.buildAreaDownloadUrl('POLYGON(...)', {
+      parameter_name: ['Water Temperature'],
+      z: { type: 'single', level: 1 },
+    });
     expect(url2).toContain('parameter-name=Water+Temperature');
     expect(url2).toContain('z=1');
   });
@@ -261,7 +265,9 @@ expect(() =>
 
 // 5. Serialization validation
 expect(zParameterToString({ type: 'single', level: 850 })).toBe('850');
-expect(DateTimeParameterToEDRString(new Date('2025-01-01'))).toBe('2025-01-01T00:00:00.000Z');
+expect(DateTimeParameterToEDRString(new Date('2025-01-01'))).toBe(
+  '2025-01-01T00:00:00.000Z'
+);
 ```
 
 **Key Difference:** PR #114 tests validate **exact outputs**, **complete structures**, and **meaningful error messages** rather than just checking presence.
@@ -287,6 +293,7 @@ fixtures/ogc-api/
 ### Fixture Quality
 
 **Real Spec Examples:** ✅ Yes
+
 - Based on USACE (US Army Corps of Engineers) Access2Water API
 - Contains realistic parameter names: "Elevation", "Water Temperature", "Inflow", "Outflow"
 - Proper EDR data_queries structure with 4 query types (items, locations, cube, area)
@@ -294,12 +301,12 @@ fixtures/ogc-api/
 
 **Fixture Variations:**
 
-| Variation | File | Purpose |
-|-----------|------|---------|
-| Minimal EDR endpoint | sample-data-hub.json | Root with basic EDR conformance link |
-| Full EDR collection | reservoir-api.json (574 lines) | Complete `data_queries` and `parameter_names` |
-| Simplified collection | reservoir-api.json (194 lines) | Same structure, fewer parameters (3 vs 22) |
-| Non-EDR collection | ADWR_GWSI_Sites | Feature collection without EDR support |
+| Variation             | File                           | Purpose                                       |
+| --------------------- | ------------------------------ | --------------------------------------------- |
+| Minimal EDR endpoint  | sample-data-hub.json           | Root with basic EDR conformance link          |
+| Full EDR collection   | reservoir-api.json (574 lines) | Complete `data_queries` and `parameter_names` |
+| Simplified collection | reservoir-api.json (194 lines) | Same structure, fewer parameters (3 vs 22)    |
+| Non-EDR collection    | ADWR_GWSI_Sites                | Feature collection without EDR support        |
 
 ### Fixture Usage Pattern
 
@@ -334,8 +341,9 @@ endpoint = new OgcApiEndpoint('http://local/edr/sample-data-hub');
 **No explicit coverage reports in PR artifacts**, but evidence suggests comprehensive coverage:
 
 1. **All 8 EDR query methods have corresponding test scenarios:**
+
    - ✅ area
-   - ✅ cube  
+   - ✅ cube
    - ✅ locations
    - ✅ position (via error tests)
    - ✅ radius (via error tests)
@@ -344,6 +352,7 @@ endpoint = new OgcApiEndpoint('http://local/edr/sample-data-hub');
    - ✅ instances (via `buildInstancesDownloadUrl()` - returns link)
 
 2. **Error paths systematically tested:**
+
    - Invalid parameter names (7 methods tested)
    - Invalid CRS (7 methods tested)
    - Invalid bbox (cube query)
@@ -373,11 +382,12 @@ endpoint = new OgcApiEndpoint('http://local/edr/sample-data-hub');
 ```typescript
 // OgcApiEndpoint uses composition to access EDR
 class OgcApiEndpoint {
-  private collection_id_to_edr_builder_: Map<string, EDRQueryBuilder> = new Map();
+  private collection_id_to_edr_builder_: Map<string, EDRQueryBuilder> =
+    new Map();
 
   public async edr(collection_id: string): Promise<EDRQueryBuilder> {
     if (cache.has(collection_id)) {
-      return cache.get(collection_id);  // Caching pattern
+      return cache.get(collection_id); // Caching pattern
     }
     const collection = await this.getCollectionInfo(collection_id);
     const result = new EDRQueryBuilder(collection);
@@ -428,6 +438,7 @@ buildAreaDownloadUrl(coords: string, params: optionalAreaParams = {}): string {
 ```
 
 **Testing Approach:**
+
 - Test with no optional params (minimal URL)
 - Test with each optional param individually
 - Test with multiple optional params
@@ -439,15 +450,15 @@ buildAreaDownloadUrl(coords: string, params: optionalAreaParams = {}): string {
 ```typescript
 it('can produce a EDR query builder', async () => {
   const builder = await endpoint.edr('reservoir-api');
-  
+
   // 1. Check builder was created
   expect(builder).toBeTruthy();
-  
+
   // 2. Validate builder exposes correct query types
   expect(builder.supported_queries).toEqual(
     new Set(['area', 'locations', 'cube'])
   );
-  
+
   // 3. Validate builder exposes correct parameters
   expect(Object.keys(builder.supported_parameters)).toEqual([
     'Elevation',
@@ -482,6 +493,7 @@ it('caches properly', async () => {
 Based on `endpoint.spec.ts` additions:
 
 1. **Endpoint Detection → Query Building Flow:**
+
    ```typescript
    // Not just unit testing EDRQueryBuilder, but the full flow:
    endpoint = new OgcApiEndpoint('http://local/edr/sample-data-hub');
@@ -492,6 +504,7 @@ Based on `endpoint.spec.ts` additions:
    ```
 
 2. **Multi-Component Interaction:**
+
    - OgcApiEndpoint (endpoint detection)
    - Info parsers (conformance, collections)
    - Link utilities (resolve data_queries links)
@@ -506,7 +519,7 @@ Based on `endpoint.spec.ts` additions:
 ```typescript
 describe('OgcApiEndpoint with EDR', () => {
   let endpoint: OgcApiEndpoint;
-  
+
   beforeEach(() => {
     endpoint = new OgcApiEndpoint('http://local/edr/sample-data-hub');
   });
@@ -525,7 +538,9 @@ describe('OgcApiEndpoint with EDR', () => {
     it('can produce a EDR query builder', async () => {
       // Integration: endpoint → collection info → builder creation
       const builder = await endpoint.edr('reservoir-api');
-      expect(builder.supported_queries).toEqual(new Set(['area', 'locations', 'cube']));
+      expect(builder.supported_queries).toEqual(
+        new Set(['area', 'locations', 'cube'])
+      );
     });
   });
 });
@@ -631,27 +646,32 @@ export function zParameterToString(z: ZParameter): string {
 Based on PR #114 acceptance:
 
 1. **✅ Type Safety:**
+
    - Strong TypeScript typing throughout
    - Type-safe optional parameter interfaces (`optionalAreaParams`, etc.)
    - Discriminated unions (`ZParameter` with `type` field)
    - No `any` types
 
 2. **✅ Comprehensive Error Handling:**
+
    - Tests for all validation paths
    - Meaningful error messages: `"The following parameter name does not exist..."`
    - Validation before URL construction
 
 3. **✅ Spec Compliance:**
+
    - Every method documented with `@see` links to OGC EDR spec
    - Parameter descriptions match spec terminology
    - Proper encoding of special characters (URL encoding tested)
 
 4. **✅ Real-World Fixtures:**
+
    - Based on actual USACE API
    - Realistic parameter names and units
    - Complete EDR data structures
 
 5. **✅ Integration Testing:**
+
    - End-to-end flows tested
    - No mocking of internal components
    - Caching behavior verified
@@ -664,6 +684,7 @@ Based on PR #114 acceptance:
 ### What Patterns Indicate "Trivial" Tests (Not Found in PR #114)
 
 ❌ **Not used:**
+
 - Simple `toContain()` checks without context
 - `toBeDefined()` / `toBeTruthy()` without follow-up
 - No validation of outputs
@@ -719,6 +740,7 @@ Based on PR #114 acceptance:
 ### Adaptations Needed for CSAPI
 
 1. **Multi-Builder Architecture:**
+
    ```typescript
    // Instead of one EDRQueryBuilder, CSAPI needs:
    const systemsBuilder = await endpoint.csapi('systems');
@@ -727,18 +749,20 @@ Based on PR #114 acceptance:
    ```
 
 2. **CRUD Method Pattern:**
+
    ```typescript
    // EDR only has buildXxxDownloadUrl()
    // CSAPI needs:
-   buildGetSystemsUrl(params)
-   buildGetSystemUrl(id, params)
-   buildPostSystemUrl(body)
-   buildPutSystemUrl(id, body)
-   buildPatchSystemUrl(id, body)
-   buildDeleteSystemUrl(id)
+   buildGetSystemsUrl(params);
+   buildGetSystemUrl(id, params);
+   buildPostSystemUrl(body);
+   buildPutSystemUrl(id, body);
+   buildPatchSystemUrl(id, body);
+   buildDeleteSystemUrl(id);
    ```
 
 3. **Resource Reference Validation:**
+
    ```typescript
    // CSAPI needs to validate related resources
    buildPostDeploymentUrl(systemId, deploymentBody) {
@@ -750,25 +774,27 @@ Based on PR #114 acceptance:
 4. **Nested Resource Queries:**
    ```typescript
    // CSAPI needs nested patterns
-   system.getDataStreams() // Get all DataStreams for a System
-   system.getDeployments() // Get all Deployments for a System
+   system.getDataStreams(); // Get all DataStreams for a System
+   system.getDeployments(); // Get all Deployments for a System
    ```
 
 ### Actionable Recommendations for CSAPI Testing
 
 1. **Test File Organization:**
+
    ```
    src/ogc-api/csapi/
      helpers.spec.ts          # Temporal filter serialization
      model.spec.ts            # Type definitions (like ZParameter)
      systems-builder.spec.ts  # SystemsQueryBuilder unit tests
      // ... one per resource type
-   
+
    src/ogc-api/
      endpoint.spec.ts         # Integration tests (modify existing)
    ```
 
 2. **Fixture Strategy:**
+
    ```
    fixtures/ogc-api/csapi/
      sample-csapi-endpoint.json       # Root
@@ -782,6 +808,7 @@ Based on PR #114 acceptance:
    ```
 
 3. **Test Prioritization:**
+
    - **HIGH:** Systems QueryBuilder (simplest, foundation)
    - **HIGH:** Integration tests (endpoint detection → builder creation)
    - **MEDIUM:** Deployments, DataStreams QueryBuilders (temporal complexity)
@@ -811,9 +838,9 @@ Based on PR #114 acceptance:
 class SystemsQueryBuilder extends CSAPIQueryBuilder {
   // Inherits base CRUD methods
   // Adds Systems-specific methods
-  buildGetSystemsUrl(params: GetSystemsParams): string { }
-  buildGetSystemUrl(id: string): string { }
-  buildPostSystemUrl(body: SystemBody): string { }
+  buildGetSystemsUrl(params: GetSystemsParams): string {}
+  buildGetSystemUrl(id: string): string {}
+  buildPostSystemUrl(body: SystemBody): string {}
   // ...
 }
 
@@ -824,6 +851,7 @@ class DeploymentsQueryBuilder extends CSAPIQueryBuilder {
 ```
 
 **Testing Pattern:**
+
 - Base class unit tests for common CRUD logic
 - Per-resource tests for resource-specific parameters
 - ~15-20 tests per resource type (12 base + resource-specific)
@@ -844,6 +872,7 @@ class CSAPIQueryBuilder {
 **From EDR to CSAPI:**
 
 1. **URL Construction Pattern:** ✅ Reusable
+
    ```typescript
    const url = new URL(baseUrl);
    url.searchParams.set(key, value);
@@ -851,6 +880,7 @@ class CSAPIQueryBuilder {
    ```
 
 2. **Parameter Validation Pattern:** ✅ Reusable
+
    ```typescript
    if (!this.supportedParameters[param]) {
      throw new Error(`Parameter ${param} not supported`);
@@ -858,6 +888,7 @@ class CSAPIQueryBuilder {
    ```
 
 3. **Optional Parameters Interface:** ✅ Reusable
+
    ```typescript
    type OptionalSystemsParams = {
      systemType?: string;
@@ -868,6 +899,7 @@ class CSAPIQueryBuilder {
    ```
 
 4. **Factory Method + Caching:** ✅ Reusable
+
    ```typescript
    async csapi(resourceType: string): Promise<CSAPIQueryBuilder> {
      if (cache.has(resourceType)) return cache.get(resourceType);
@@ -907,16 +939,16 @@ buildAreaDownloadUrl(
 ): string {
   const url = new URL(this.collection.data_queries?.area?.link.href);
   url.searchParams.set('coords', coords);
-  
+
   if (optional_params.z !== undefined)
     url.searchParams.set('z', zParameterToString(optional_params.z));
-  
+
   if (optional_params.datetime !== undefined)
     url.searchParams.set(
       'datetime',
       DateTimeParameterToEDRString(optional_params.datetime)
     );
-  
+
   return url.toString();
 }
 
@@ -931,16 +963,16 @@ export type GetSystemsParams = {
 
 buildGetSystemsUrl(params: GetSystemsParams = {}): string {
   const url = new URL(`${this.baseUrl}/collections/systems/items`);
-  
+
   if (params.systemType !== undefined)
     url.searchParams.set('systemType', params.systemType);
-  
+
   if (params.parent !== undefined)
     url.searchParams.set('parent', params.parent);
-  
+
   if (params.limit !== undefined)
     url.searchParams.set('limit', params.limit.toString());
-  
+
   return url.toString();
 }
 ```
@@ -957,10 +989,14 @@ export type ZParameter =
 
 export function zParameterToString(z: ZParameter): string {
   switch (z.type) {
-    case 'single': return `${z.level}`;
-    case 'interval': return `${z.minLevel}/${z.maxLevel}`;
-    case 'list': return z.levels.join(',');
-    case 'repeating': return `R${z.repeat}/${z.minLevel}/${z.step}`;
+    case 'single':
+      return `${z.level}`;
+    case 'interval':
+      return `${z.minLevel}/${z.maxLevel}`;
+    case 'list':
+      return z.levels.join(',');
+    case 'repeating':
+      return `R${z.repeat}/${z.minLevel}/${z.step}`;
   }
 }
 
@@ -974,10 +1010,14 @@ export type TemporalFilter =
 export function temporalFilterToString(filter: TemporalFilter): string {
   const format = (d: Date) => d.toISOString();
   switch (filter.type) {
-    case 'instant': return format(filter.time);
-    case 'interval': return `${format(filter.start)}/${format(filter.end)}`;
-    case 'open-start': return `../${format(filter.end)}`;
-    case 'open-end': return `${format(filter.start)}/..`;
+    case 'instant':
+      return format(filter.time);
+    case 'interval':
+      return `${format(filter.start)}/${format(filter.end)}`;
+    case 'open-start':
+      return `../${format(filter.end)}`;
+    case 'open-end':
+      return `${format(filter.start)}/..`;
   }
 }
 ```
@@ -1004,7 +1044,9 @@ if (optional_params.parameter_name) {
 if (params.systemType) {
   if (!this.supportedSystemTypes.includes(params.systemType)) {
     throw new Error(
-      `Invalid systemType: '${params.systemType}'. Supported: ${this.supportedSystemTypes.join(', ')}`
+      `Invalid systemType: '${
+        params.systemType
+      }'. Supported: ${this.supportedSystemTypes.join(', ')}`
     );
   }
   url.searchParams.set('systemType', params.systemType);
@@ -1017,7 +1059,7 @@ if (params.systemType) {
 // EDR Pattern
 describe('OgcApiEndpoint with EDR', () => {
   let endpoint: OgcApiEndpoint;
-  
+
   beforeEach(() => {
     endpoint = new OgcApiEndpoint('http://local/edr/sample-data-hub');
   });
@@ -1034,7 +1076,7 @@ describe('OgcApiEndpoint with EDR', () => {
 // CSAPI Application
 describe('OgcApiEndpoint with CSAPI', () => {
   let endpoint: OgcApiEndpoint;
-  
+
   beforeEach(() => {
     endpoint = new OgcApiEndpoint('http://local/csapi/sample-endpoint');
   });
@@ -1042,7 +1084,13 @@ describe('OgcApiEndpoint with CSAPI', () => {
   it('can produce a Systems query builder', async () => {
     const builder = await endpoint.csapi('systems');
     expect(builder).toBeTruthy();
-    expect(builder.supportedOperations).toEqual(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']);
+    expect(builder.supportedOperations).toEqual([
+      'GET',
+      'POST',
+      'PUT',
+      'PATCH',
+      'DELETE',
+    ]);
     expect(builder.resourceType).toBe('systems');
   });
 
@@ -1066,7 +1114,7 @@ it('throws an error with invalid bbox for cube query', async () => {
     builder.buildCubeDownloadUrl({
       minX: 0,
       minY: 10,
-      maxX: -10,  // Invalid: maxX < minX
+      maxX: -10, // Invalid: maxX < minX
       maxY: 12,
     })
   ).toThrow('minX must be less than or equal to maxX');
@@ -1082,9 +1130,9 @@ it('throws error with invalid systemType', async () => {
 
 it('throws error with invalid parent reference', async () => {
   const builder = await endpoint.csapi('systems');
-  expect(() =>
-    builder.buildGetSystemsUrl({ parent: 'not-a-uri' })
-  ).toThrow('parent must be a valid URI');
+  expect(() => builder.buildGetSystemsUrl({ parent: 'not-a-uri' })).toThrow(
+    'parent must be a valid URI'
+  );
 });
 ```
 

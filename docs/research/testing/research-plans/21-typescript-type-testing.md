@@ -62,6 +62,7 @@ Define strategy for testing TypeScript type definitions, interfaces, and type sa
 **Objective:** Analyze type testing patterns in upstream codebase
 
 **Tasks:**
+
 1. ✅ Identify type tests in upstream codebase - EDR model.spec.ts, helpers.spec.ts
 2. ✅ Analyze type testing libraries/tools used - Jest + ts-jest + TypeScript (no tsd/dtslint)
 3. ✅ Document type test patterns - Discriminated unions with explicit type annotations
@@ -69,6 +70,7 @@ Define strategy for testing TypeScript type definitions, interfaces, and type sa
 5. ✅ Identify runtime type validation patterns - Serialization helpers tested
 
 **Findings:**
+
 - Upstream uses Jest + ts-jest + TypeScript compiler only
 - No specialized type testing tools (tsd, dtslint)
 - Discriminated unions tested with explicit type annotations (ZParameter pattern)
@@ -79,6 +81,7 @@ Define strategy for testing TypeScript type definitions, interfaces, and type sa
 **Objective:** Evaluate type testing tools and approaches
 
 **Tasks:**
+
 1. ✅ Research tsd library capabilities - Explicit type assertions, inference testing
 2. ✅ Research dtslint capabilities - Microsoft tool for .d.ts files (deprecated)
 3. ✅ Evaluate TypeScript compiler for type testing - Industry standard, sufficient
@@ -92,6 +95,7 @@ Define strategy for testing TypeScript type definitions, interfaces, and type sa
 **Objective:** Catalog all TypeScript types requiring tests
 
 **Tasks:**
+
 1. ✅ Inventory all interfaces (resource types, schemas) - 9 resources + 6 helpers = 15
 2. ✅ Inventory all union types (discriminated unions) - 5 simple unions (no discriminated)
 3. ✅ Inventory all generic types - Collection<T> (simple generic)
@@ -99,6 +103,7 @@ Define strategy for testing TypeScript type definitions, interfaces, and type sa
 5. ✅ Create type testing requirements matrix - 31 types total, ~390 lines
 
 **Results:**
+
 - 9 resource interfaces (System, Deployment, etc.)
 - 6 helper interfaces (TimeInterval, Characteristic, etc.)
 - 3 query options (QueryOptions + 2 extended)
@@ -111,6 +116,7 @@ Define strategy for testing TypeScript type definitions, interfaces, and type sa
 **Objective:** Design test patterns for each type category
 
 **Tasks:**
+
 1. ✅ Design interface compilation test patterns - Required/optional/undefined tests
 2. ✅ Design union type discrimination test patterns - Variant tests per union
 3. ✅ Design generic constraint test patterns - Test with different type parameters
@@ -119,6 +125,7 @@ Define strategy for testing TypeScript type definitions, interfaces, and type sa
 6. ✅ Document type test structure templates - 6 patterns documented
 
 **Patterns created:**
+
 1. Interface compilation testing
 2. Union type variant testing
 3. Generic type testing
@@ -131,12 +138,14 @@ Define strategy for testing TypeScript type definitions, interfaces, and type sa
 **Objective:** Define when runtime validation is needed vs compile-time tests
 
 **Tasks:**
+
 1. ✅ Identify types requiring runtime validation - Minimal (no custom serialization)
 2. ✅ Define compile-time test approach - TypeScript compiler validates all structure
 3. ✅ Define runtime validation approach - Optional (only for type guards if needed)
 4. ✅ Document validation strategy per type category - Decision matrix created
 
 **Strategy:**
+
 - **Primary:** Compile-time (TypeScript compiler)
 - **Secondary:** Runtime (only for serialization helpers if needed)
 - **Type guards:** Optional (not needed for CSAPI initially)
@@ -146,6 +155,7 @@ Define strategy for testing TypeScript type definitions, interfaces, and type sa
 **Objective:** Create comprehensive TypeScript type testing strategy
 
 **Tasks:**
+
 1. ✅ Consolidate type test patterns - 6 patterns with examples
 2. ✅ Create type test templates - model.spec.ts template (400-500 lines)
 3. ✅ Document type testing tools and configuration - TypeScript + Jest only
@@ -172,7 +182,8 @@ This research is complete when:
 
 ## 7. Deliverable
 
-**Tx] Phase 1: Upstream Type Test Analysis - Complete (45 minutes)
+\*\*Tx] Phase 1: Upstream Type Test Analysis - Complete (45 minutes)
+
 - [x] Phase 2: Type Testing Tools Research - Complete (30 minutes)
 - [x] Phase 3: CSAPI Type Inventory - Complete (40 minutes)
 - [x] Phase 4: Type Test Pattern Design - Complete (50 minutes)
@@ -182,6 +193,7 @@ This research is complete when:
 - [x] Cross-references updated in related documents
 
 **Completion Date:** February 8, 2026
+
 - Type inference test patterns
 - Type guard test patterns
 - Runtime validation strategy
@@ -193,11 +205,13 @@ This research is complete when:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis (type test patterns)
 - Section 2: Existing Upstream Test Pattern Survey (type testing approaches)
 - Section 8: CSAPI Specification Test Requirements (type definitions)
 
 **Blocks:**
+
 - Section 19: Test Organization and File Structure (type test organization)
 - Type definition implementation (type tests guide type design)
 
@@ -217,6 +231,7 @@ This research is complete when:
 ---
 
 **Final Observations:**
+
 - ✅ Upstream uses Jest + ts-jest + TypeScript compiler only (no specialized tools)
 - ✅ EDR discriminated unions tested with explicit type annotations
 - ✅ CSAPI types are simpler than EDR (no complex discriminated unions)
@@ -229,7 +244,8 @@ This research is complete when:
 
 ---
 
-**Next Steps:** 
+**Next Steps:**
+
 1. Create `src/ogc-api/csapi/model.spec.ts` (~4 hours)
 2. Integrate type tests with QueryBuilder tests (~2 hours)
 3. Optional: Add type guards if mixed responses become common (~2.5 hours)

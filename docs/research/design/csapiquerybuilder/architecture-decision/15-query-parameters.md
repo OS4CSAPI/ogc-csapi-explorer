@@ -11,6 +11,7 @@
 ## Research Objectives
 
 1. **Parameter Scope:**
+
    - How many parameters are resource-specific vs shared?
    - Parameter combination complexity
    - Resource-specific validation needs
@@ -25,6 +26,7 @@
 ## Key Questions to Answer
 
 - [x] How many unique query parameters across all resources?
+
   - **30+ unique parameters total**
   - 5 Standard OGC API (bbox, datetime, limit, offset, f)
   - 4+ CSAPI Common (id, uid, q, {propertyName})
@@ -35,17 +37,20 @@
   - 1 Pagination (cursor)
 
 - [x] How many are shared vs resource-specific?
+
   - **47% shared** (14 parameters used by multiple resources)
   - **53% resource-specific** (16 parameters specific to 1-2 resources)
   - Parameters cluster by TYPE (spatial, temporal, relationship), NOT by resource
 
 - [x] Does parameter complexity favor class separation?
+
   - **NO - Strongly favors single-class**
   - Parameter validation is type-based, not resource-based
   - Parameter encoding is type-based, not resource-based
   - Zero resource-specific validation logic exists
 
 - [x] Can parameter handling be abstracted across resources?
+
   - **YES - Extremely effectively**
   - Single-class: 150-200 lines shared helpers, 85% reuse efficiency
   - Multi-class: 1,350-1,800 lines duplicated across 9 classes, 0% reuse
@@ -77,6 +82,7 @@ Likely shows parameter handling is manageable in either pattern with proper help
 Record key findings here for final synthesis document:
 
 ### Parameter Count Analysis
+
 - **Total: 30+ unique parameters** across all CSAPI resources
 - **Shared parameters: 14 (47%)** - Used by multiple resources
   - Universal (9 resources): limit, offset, f, id, uid, q (6 parameters)
@@ -85,6 +91,7 @@ Record key findings here for final synthesis document:
   - But parameters cluster by TYPE (temporal, relationship), not randomly distributed
 
 ### Complexity Assessment
+
 - **Parameter validation: Type-based, NOT resource-based**
   - bbox validation: Same for all 4 resources with geometry
   - datetime validation: Same for all 5+ resources with temporal properties
@@ -98,6 +105,7 @@ Record key findings here for final synthesis document:
   - Class separation provides NO additional safety
 
 ### Code Organization Implications
+
 - **STRONGLY favors single-class with shared helpers**
 - **Single-class metrics:**
   - Parameter handling: 150-200 lines (ONE implementation)
@@ -114,9 +122,11 @@ Record key findings here for final synthesis document:
   - Multi-class: 9 test suites (~1,800-2,700 lines) - 800-1200% overhead
 
 ### Architecture Impact
+
 - **Parameter complexity provides strong evidence AGAINST class separation**
 - **Confidence: ⭐⭐⭐⭐⭐ (5/5)**
 - **Recommendation: Single-class organization with type-based parameter helpers**
 
 ### Key Insight
+
 Parameters are naturally organized by TYPE (spatial, temporal, pagination, relationship, format), NOT by resource. This type-based organization maps perfectly to shared helper methods in a single class, but creates massive duplication if spread across multiple resource-specific classes.

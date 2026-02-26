@@ -1,8 +1,7 @@
 # Findings Report: Issue #22 — Add Relationship-Based Filter: systemId Dropdown on Datastreams List
 
 > **Date**: 2026-02-18
-> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#22](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/22)
-> **Labels on source issue**: `enhancement`
+> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#22](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/22) > **Labels on source issue**: `enhancement`
 
 ---
 
@@ -37,12 +36,12 @@ Every file the issue proposes modifying — `ResourceList.vue` and `csapi-bridge
 
 The demo app's `ResourceList.vue` component never passes relationship-based query filters when listing resources. From the issue:
 
-| Parameter | Status |
-|---|---|
-| `systemId` | Never passed as a list filter |
-| `procedureId` | Never passed as a list filter |
-| `foiId` | Never passed as a list filter |
-| `observedPropertyId` | Never passed as a list filter |
+| Parameter              | Status                        |
+| ---------------------- | ----------------------------- |
+| `systemId`             | Never passed as a list filter |
+| `procedureId`          | Never passed as a list filter |
+| `foiId`                | Never passed as a list filter |
+| `observedPropertyId`   | Never passed as a list filter |
 | `controlledPropertyId` | Never passed as a list filter |
 
 The issue is classified as **Priority 2** from the [Query Parameter Coverage Recommendations](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/query-parameter-coverage-recommendations.md).
@@ -50,6 +49,7 @@ The issue is classified as **Priority 2** from the [Query Parameter Coverage Rec
 ### What the issue proposes
 
 Add a PrimeVue `Select` dropdown to the datastreams list page that:
+
 1. Fetches available systems on mount using the existing `getSystems()` builder method
 2. Displays system name + ID as dropdown options
 3. Passes `systemId` into `DatastreamQueryOptions` on selection to re-fetch filtered datastreams
@@ -70,12 +70,12 @@ Add a PrimeVue `Select` dropdown to the datastreams list page that:
 
 All five relationship-based filter parameters are defined in our `model.ts` interfaces:
 
-| Parameter | Interface | Line |
-|---|---|---|
-| `systemId` | `DatastreamQueryOptions` | model.ts L203 |
-| `systemId` | `DeploymentQueryOptions` | model.ts L169 |
-| `systemId` | `ControlStreamQueryOptions` | model.ts L229 |
-| `observedPropertyId` | `DatastreamQueryOptions` | model.ts L205 |
+| Parameter              | Interface                   | Line          |
+| ---------------------- | --------------------------- | ------------- |
+| `systemId`             | `DatastreamQueryOptions`    | model.ts L203 |
+| `systemId`             | `DeploymentQueryOptions`    | model.ts L169 |
+| `systemId`             | `ControlStreamQueryOptions` | model.ts L229 |
+| `observedPropertyId`   | `DatastreamQueryOptions`    | model.ts L205 |
 | `controlledPropertyId` | `ControlStreamQueryOptions` | model.ts L231 |
 
 The `buildQueryString()` method at url_builder.ts line 234 handles all of these correctly — it iterates over option entries, skips `undefined`/`null` values, and serializes each parameter using `URLSearchParams.append()`.
@@ -99,12 +99,13 @@ The issue shows:
 
 ```typescript
 interface DataStreamQueryOptions {
-  systemId?: string[];   // Filter datastreams by parent system ID(s)
+  systemId?: string[]; // Filter datastreams by parent system ID(s)
 }
-builder.getDataStreams({ systemId: ['sys123'] }).buildUrl()
+builder.getDataStreams({ systemId: ['sys123'] }).buildUrl();
 ```
 
 Two inaccuracies relative to our actual API:
+
 1. **Type**: Our `systemId` is typed as `string`, not `string[]`. A single system ID string is the correct type per our implementation.
 2. **Return value**: `getDataStreams()` returns a `string` directly — there is no `.buildUrl()` chain.
 
@@ -118,6 +119,7 @@ const url = builder.getDataStreams({ systemId: 'sys-001' });
 ### This is a demo app demonstration coverage gap, not a library gap
 
 The distinction between "Not Demonstrated" and "Not Working" is critical:
+
 - **"Not Demonstrated"** means the demo app's UI does not exercise the capability — this is a demo app coverage gap
 - **"Not Working"** would mean the library fails to produce correct URLs — this is NOT the case
 
@@ -126,6 +128,7 @@ The [contribution-goal-accuracy-assessment](https://github.com/OS4CSAPI/ogc-csap
 ### No library changes are proposed or needed
 
 The issue does not propose any changes to:
+
 - `url_builder.ts` — `getDataStreams()` already accepts `systemId` via `DatastreamQueryOptions`
 - `model.ts` — `DatastreamQueryOptions.systemId` is already defined and typed
 - `url_builder.spec.ts` — `systemId` serialization is already tested
@@ -155,22 +158,22 @@ The issue does not propose any changes to:
 
 ## Cross-References
 
-| Document | Relevance |
-|---|---|
-| [AI Operational Constraints §2.1, §2.2](../../governance/AI_OPERATIONAL_CONSTRAINTS.md) | No scope expansion; minimal diffs; do not infer unstated requirements |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Explicitly verifies all 10 QueryOptions interfaces including `systemId` as correct |
-| [query-parameter-demonstration-coverage.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/query-parameter-demonstration-coverage.md) | Lists relationship-based filters as "Not Demonstrated" — confirms library support exists but demo doesn't exercise it |
-| [query-parameter-coverage-recommendations.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/query-parameter-coverage-recommendations.md) | Recommendation 2 (Priority 2) IS Issue #22 — proposes demo app changes only |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | Finding #7 confirms `buildQueryString()` serializes parameters correctly; demo passes limited options |
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | No finding addresses relationship-based filter serialization as broken |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | Exhaustive gap analysis found no issue with relationship-based filter support |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | Explains demo architecture; unrelated to query parameter filtering |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | F-15, F-16 findings about CRUD payloads; unrelated to query filters |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | Query parameter tests cover `limit`, `offset`, `q`; relationship filters not tested but not flagged as broken |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | Write operation findings; unrelated to query filter serialization |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | EndpointError refactor; unrelated to query parameters |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | Confirms no library source was changed for query filter reasons |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | Schema endpoint findings; unrelated to query filters |
-| [url_builder.ts](../../src/ogc-api/csapi/url_builder.ts) | `getDataStreams()` at L1212 accepts `DatastreamQueryOptions` including `systemId`; `buildQueryString()` at L234 serializes it correctly |
-| [model.ts](../../src/ogc-api/csapi/model.ts) | `DatastreamQueryOptions.systemId` at L203; `ControlStreamQueryOptions.systemId` at L229; `DeploymentQueryOptions.systemId` at L169 |
-| [url_builder.spec.ts](../../src/ogc-api/csapi/url_builder.spec.ts) | `systemId` serialization tests at L768–770, L1535–1537, L1563–1564, L2031–2033 |
+| Document                                                                                                                                                             | Relevance                                                                                                                               |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| [AI Operational Constraints §2.1, §2.2](../../governance/AI_OPERATIONAL_CONSTRAINTS.md)                                                                              | No scope expansion; minimal diffs; do not infer unstated requirements                                                                   |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md)       | Explicitly verifies all 10 QueryOptions interfaces including `systemId` as correct                                                      |
+| [query-parameter-demonstration-coverage.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/query-parameter-demonstration-coverage.md)     | Lists relationship-based filters as "Not Demonstrated" — confirms library support exists but demo doesn't exercise it                   |
+| [query-parameter-coverage-recommendations.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/query-parameter-coverage-recommendations.md) | Recommendation 2 (Priority 2) IS Issue #22 — proposes demo app changes only                                                             |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                             | Finding #7 confirms `buildQueryString()` serializes parameters correctly; demo passes limited options                                   |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                           | No finding addresses relationship-based filter serialization as broken                                                                  |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                       | Exhaustive gap analysis found no issue with relationship-based filter support                                                           |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md)       | Explains demo architecture; unrelated to query parameter filtering                                                                      |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                                 | F-15, F-16 findings about CRUD payloads; unrelated to query filters                                                                     |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                                   | Query parameter tests cover `limit`, `offset`, `q`; relationship filters not tested but not flagged as broken                           |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                           | Write operation findings; unrelated to query filter serialization                                                                       |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)                   | EndpointError refactor; unrelated to query parameters                                                                                   |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                         | Confirms no library source was changed for query filter reasons                                                                         |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                                   | Schema endpoint findings; unrelated to query filters                                                                                    |
+| [url_builder.ts](../../src/ogc-api/csapi/url_builder.ts)                                                                                                             | `getDataStreams()` at L1212 accepts `DatastreamQueryOptions` including `systemId`; `buildQueryString()` at L234 serializes it correctly |
+| [model.ts](../../src/ogc-api/csapi/model.ts)                                                                                                                         | `DatastreamQueryOptions.systemId` at L203; `ControlStreamQueryOptions.systemId` at L229; `DeploymentQueryOptions.systemId` at L169      |
+| [url_builder.spec.ts](../../src/ogc-api/csapi/url_builder.spec.ts)                                                                                                   | `systemId` serialization tests at L768–770, L1535–1537, L1563–1564, L2031–2033                                                          |

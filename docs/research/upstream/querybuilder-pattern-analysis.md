@@ -48,7 +48,8 @@ class EDRQueryBuilder { ... }
 endpoint.edr() // returns EDRQueryBuilder
 ```
 
-**Source:** 
+**Source:**
+
 - PR #114 implementation
 - Class name: `EDRQueryBuilder`
 - File: `src/ogc-api/edr/url_builder.ts`
@@ -81,6 +82,7 @@ const systems = await builder.getSystems();
 ### Definition
 
 A **QueryBuilder** is a standalone class that:
+
 1. Encapsulates collection-specific metadata
 2. Provides methods to build query URLs
 3. Optionally executes queries and returns typed results
@@ -116,15 +118,15 @@ User calls builder.buildPositionDownloadUrl(...)
 
 ### Responsibilities
 
-| Responsibility | QueryBuilder | Endpoint |
-|----------------|--------------|----------|
-| Fetch collection metadata | ❌ | ✅ |
-| Cache QueryBuilders | ❌ | ✅ |
-| Check endpoint conformance | ❌ | ✅ |
-| Build query URLs | ✅ | ❌ |
-| Validate query parameters | ✅ | ❌ |
-| Execute queries | ✅ | ❌ |
-| Store collection state | ✅ | ❌ |
+| Responsibility             | QueryBuilder | Endpoint |
+| -------------------------- | ------------ | -------- |
+| Fetch collection metadata  | ❌           | ✅       |
+| Cache QueryBuilders        | ❌           | ✅       |
+| Check endpoint conformance | ❌           | ✅       |
+| Build query URLs           | ✅           | ❌       |
+| Validate query parameters  | ✅           | ❌       |
+| Execute queries            | ✅           | ❌       |
+| Store collection state     | ✅           | ❌       |
 
 **Separation of concerns:** Endpoint = discovery, QueryBuilder = querying
 
@@ -143,28 +145,29 @@ public async edr(collection_id: string): Promise<EDRQueryBuilder> {
   if (!this.hasEnvironmentalDataRetrieval) {
     throw new EndpointError('Endpoint does not support EDR');
   }
-  
+
   // 2. Check cache
   const cache = this.collection_id_to_edr_builder_;
   if (cache.has(collection_id)) {
     return cache.get(collection_id);
   }
-  
+
   // 3. Fetch collection info
   const collection = await this.getCollectionInfo(collection_id);
-  
+
   // 4. Instantiate QueryBuilder
   const result = new EDRQueryBuilder(collection);
-  
+
   // 5. Cache for reuse
   cache.set(collection_id, result);
-  
+
   // 6. Return
   return result;
 }
 ```
 
 **Steps:**
+
 1. Conformance check (fail fast if not supported)
 2. Cache lookup (avoid re-fetching metadata)
 3. Metadata fetch (HTTP request for collection details)
@@ -198,14 +201,14 @@ class EDRQueryBuilder {
     if (!collection.data_queries) {
       throw new Error('No data queries found, so cannot issue EDR queries');
     }
-    
+
     // Extract capabilities
     this.supported_query_types = {
       area: collection.data_queries.area !== undefined,
       locations: collection.data_queries.locations !== undefined,
       // ... etc
     };
-    
+
     // Store metadata
     this.supported_parameters = collection.parameter_names;
     this.supported_crs = collection.crs;
@@ -215,6 +218,7 @@ class EDRQueryBuilder {
 ```
 
 **Actions:**
+
 - Validate collection has required data
 - Extract query type support flags
 - Store supported parameters
@@ -235,7 +239,7 @@ if (builder.supported_queries.has('position')) {
     { lon: -73.935242, lat: 40.730610 },
     { datetime: new Date('2024-01-01'), parameter_name: ['temperature'] }
   );
-  
+
   // Or execute query directly
   const data = await builder.getPosition(...);
 }
@@ -247,7 +251,7 @@ if (builder.supported_queries.has('position')) {
 
 ```typescript
 // First call: fetches metadata, creates builder, caches
-const builder1 = await endpoint.edr('temperature'); 
+const builder1 = await endpoint.edr('temperature');
 
 // Second call: returns cached builder (no HTTP request)
 const builder2 = await endpoint.edr('temperature');
@@ -270,18 +274,18 @@ export default class EDRQueryBuilder {
   // Private state
   private supported_query_types: {...};
   private collection: OgcApiCollectionInfo;
-  
+
   // Public metadata
   public supported_parameters: Record<string, EdrParameterInfo> = {};
   public supported_crs: CrsCode[] = [];
   public links: Array<{...}> = [];
-  
+
   // Constructor
   constructor(private collection: OgcApiCollectionInfo) { ... }
-  
+
   // Capability getter
   get supported_queries(): Set<DataQueryType> { ... }
-  
+
   // Query building methods
   buildPositionDownloadUrl(...): string { ... }
   buildAreaDownloadUrl(...): string { ... }
@@ -290,7 +294,7 @@ export default class EDRQueryBuilder {
   buildCorridorDownloadUrl(...): string { ... }
   buildRadiusDownloadUrl(...): string { ... }
   buildLocationsDownloadUrl(...): string { ... }
-  
+
   // Query execution methods
   async getPosition(...): Promise<EdrData> { ... }
   async getArea(...): Promise<EdrData> { ... }
@@ -306,19 +310,19 @@ export default class EDRQueryBuilder {
 const builder = await endpoint.edr('temperature');
 
 // What query types are supported?
-builder.supported_queries // Set<'position' | 'area' | 'cube' | ...>
+builder.supported_queries; // Set<'position' | 'area' | 'cube' | ...>
 
 // What parameters can I query?
-builder.supported_parameters // { temperature: {...}, humidity: {...}, ... }
+builder.supported_parameters; // { temperature: {...}, humidity: {...}, ... }
 
 // What CRS are supported?
-builder.supported_crs // ['EPSG:4326', 'EPSG:3857', ...]
+builder.supported_crs; // ['EPSG:4326', 'EPSG:3857', ...]
 
 // What links are available?
-builder.links // [{ rel: 'items', href: '...' }, ...]
+builder.links; // [{ rel: 'items', href: '...' }, ...]
 
 // Original collection metadata
-builder.collection // Full OgcApiCollectionInfo object
+builder.collection; // Full OgcApiCollectionInfo object
 ```
 
 ### Method Pattern: Build URL
@@ -366,6 +370,7 @@ buildPositionDownloadUrl(
 ```
 
 **Pattern steps:**
+
 1. Capability check
 2. Base URL from links
 3. Required params
@@ -383,10 +388,10 @@ async getPosition(
 ): Promise<EdrData> {
   // 1. Build URL
   const url = this.buildPositionDownloadUrl(coords, optional_params);
-  
+
   // 2. Fetch data
   const response = await fetch(url);
-  
+
   // 3. Parse and return
   const data = await response.json();
   return data as EdrData;
@@ -407,7 +412,7 @@ Each QueryBuilder instance stores:
 class EDRQueryBuilder {
   // Collection metadata (passed in constructor)
   private collection: OgcApiCollectionInfo;
-  
+
   // Derived state (computed from collection)
   private supported_query_types: {...};
   public supported_parameters: {...};
@@ -424,7 +429,7 @@ Each collection gets its own QueryBuilder instance:
 
 ```typescript
 const builder1 = await endpoint.edr('temperature'); // Instance for 'temperature'
-const builder2 = await endpoint.edr('humidity');    // Instance for 'humidity'
+const builder2 = await endpoint.edr('humidity'); // Instance for 'humidity'
 
 // builder1.supported_parameters !== builder2.supported_parameters
 // Each has different collection metadata
@@ -454,7 +459,8 @@ interface OgcApiCollectionInfo {
 }
 ```
 
-**Flow:** 
+**Flow:**
+
 1. Endpoint fetches collection document (HTTP)
 2. Parses into OgcApiCollectionInfo
 3. Passes to QueryBuilder constructor
@@ -472,23 +478,24 @@ interface OgcApiCollectionInfo {
 // OgcApiEndpoint class
 class OgcApiEndpoint {
   // Cache: Map<collection_id, QueryBuilder_instance>
-  private collection_id_to_edr_builder_: Map<string, EDRQueryBuilder> = new Map();
-  
+  private collection_id_to_edr_builder_: Map<string, EDRQueryBuilder> =
+    new Map();
+
   public async edr(collection_id: string): Promise<EDRQueryBuilder> {
     const cache = this.collection_id_to_edr_builder_;
-    
+
     // Check cache first
     if (cache.has(collection_id)) {
       return cache.get(collection_id); // Return cached instance
     }
-    
+
     // Create new instance
     const collection = await this.getCollectionInfo(collection_id);
     const result = new EDRQueryBuilder(collection);
-    
+
     // Cache for future calls
     cache.set(collection_id, result);
-    
+
     return result;
   }
 }
@@ -499,9 +506,9 @@ class OgcApiEndpoint {
 **Collection ID** is the cache key:
 
 ```typescript
-endpoint.edr('temperature') // Creates and caches builder for 'temperature'
-endpoint.edr('temperature') // Returns cached builder
-endpoint.edr('humidity')    // Creates and caches NEW builder for 'humidity'
+endpoint.edr('temperature'); // Creates and caches builder for 'temperature'
+endpoint.edr('temperature'); // Returns cached builder
+endpoint.edr('humidity'); // Creates and caches NEW builder for 'humidity'
 ```
 
 ### Cache Benefits
@@ -553,15 +560,15 @@ export default class EDRQueryBuilder {
   public supported_parameters: Record<string, EdrParameterInfo>;
   public supported_crs: CrsCode[];
   public links: Array<...>;
-  
+
   // Public getters
   get supported_queries(): Set<DataQueryType>;
-  
+
   // Public methods
   buildPositionDownloadUrl(...): string;
   buildAreaDownloadUrl(...): string;
   // ... etc
-  
+
   async getPosition(...): Promise<EdrData>;
   // ... etc
 }
@@ -576,7 +583,7 @@ class EDRQueryBuilder {
   // Private - users can't access
   private supported_query_types: {...};
   private collection: OgcApiCollectionInfo;
-  
+
   // Helper methods (could be private, currently aren't)
   // None in current implementation - validation inline
 }
@@ -597,7 +604,7 @@ class EDRQueryBuilder {
 export default class CSAPIQueryBuilder {
   public supported_resources: Set<string>;
   // ... public members
-  
+
   async getSystems(...): Promise<System[]>;
   async getDeployments(...): Promise<Deployment[]>;
   // ... etc
@@ -622,7 +629,7 @@ class EDRQueryBuilder {
     if (!collection.data_queries) {
       throw new Error('No data queries found, so cannot issue EDR queries');
     }
-    
+
     // Extract what's available
     this.supported_query_types = {
       area: collection.data_queries.area !== undefined,
@@ -645,7 +652,7 @@ buildAreaDownloadUrl(...): string {
   if (!this.supported_query_types.area) {
     throw new Error('Collection does not support area queries');
   }
-  
+
   // Proceed with URL building
   const url = new URL(this.collection.data_queries?.area?.link.href);
   // ...
@@ -662,7 +669,7 @@ buildAreaDownloadUrl(...): string {
 const builder = await endpoint.edr('temperature');
 
 // Check what query types are supported
-console.log(builder.supported_queries); 
+console.log(builder.supported_queries);
 // Set { 'position', 'cube', 'area' }
 
 // User can check before calling
@@ -682,7 +689,7 @@ if (builder.supported_queries.has('trajectory')) {
 ```typescript
 buildPositionDownloadUrl(coords, optional_params): string {
   // ...
-  
+
   if (optional_params.parameter_name) {
     for (const param of optional_params.parameter_name) {
       // Validate parameter exists
@@ -694,7 +701,7 @@ buildPositionDownloadUrl(coords, optional_params): string {
     }
     url.searchParams.set('parameter-name', optional_params.parameter_name.join(','));
   }
-  
+
   if (optional_params.crs) {
     // Validate CRS is supported
     if (!this.supported_crs.includes(optional_params.crs)) {
@@ -704,7 +711,7 @@ buildPositionDownloadUrl(coords, optional_params): string {
     }
     url.searchParams.set('crs', optional_params.crs);
   }
-  
+
   // ...
 }
 ```
@@ -745,7 +752,10 @@ if (optional_params.datetime) {
 }
 
 if (optional_params.parameter_name) {
-  url.searchParams.set('parameter-name', optional_params.parameter_name.join(','));
+  url.searchParams.set(
+    'parameter-name',
+    optional_params.parameter_name.join(',')
+  );
 }
 
 // Return URL string
@@ -753,6 +763,7 @@ return url.toString();
 ```
 
 **Pattern:**
+
 - Create URL object from base
 - Use `searchParams.set()` for each parameter
 - Arrays join with comma
@@ -767,7 +778,10 @@ return url.toString();
 optional_params.parameter_name = ['temperature', 'humidity', 'pressure'];
 
 // Join into comma-separated string
-url.searchParams.set('parameter-name', optional_params.parameter_name.join(','));
+url.searchParams.set(
+  'parameter-name',
+  optional_params.parameter_name.join(',')
+);
 
 // Result: ?parameter-name=temperature,humidity,pressure
 ```
@@ -799,16 +813,16 @@ buildPositionDownloadUrl(
   if (!this.supported_query_types.position) {
     throw new Error('Collection does not support position queries');
   }
-  
+
   // Build
   const url = new URL(this.collection.data_queries?.position?.link.href);
   url.searchParams.set('coords', `POINT(${coords.lon} ${coords.lat})`);
-  
+
   // Add optional params
   if (optional_params.datetime) {
     url.searchParams.set('datetime', formatDatetime(optional_params.datetime));
   }
-  
+
   // Return
   return url.toString();
 }
@@ -827,16 +841,16 @@ async getPosition(
 ): Promise<EdrData> {
   // Build URL using the build method
   const url = this.buildPositionDownloadUrl(coords, optional_params);
-  
+
   // Fetch
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
-  
+
   // Parse
   const data = await response.json();
-  
+
   // Return typed
   return data as EdrData;
 }
@@ -883,7 +897,10 @@ if (optional_params.parameter_name) {
     }
   }
   // Use
-  url.searchParams.set('parameter-name', optional_params.parameter_name.join(','));
+  url.searchParams.set(
+    'parameter-name',
+    optional_params.parameter_name.join(',')
+  );
 }
 ```
 
@@ -899,57 +916,57 @@ if (optional_params.parameter_name) {
 export default class CSAPIQueryBuilder {
   // Private collection metadata
   private collection: OgcApiCollectionInfo;
-  
+
   // Public capability info
   public supported_resources: Set<string>;
   public links: Array<{...}>;
-  
+
   constructor(private collection: OgcApiCollectionInfo) {
     // Validate collection supports CSAPI
     if (!collection.hasConnectedSystems) {
       throw new Error('Collection does not support Connected Systems API');
     }
-    
+
     // Extract available resources from links
     this.supported_resources = this.extractSupportedResources();
     this.links = collection.links;
   }
-  
+
   private extractSupportedResources(): Set<string> {
     const resources = new Set<string>();
     const linkRels = this.collection.links.map(l => l.rel);
-    
+
     // Check for CSAPI resource link relations
     if (linkRels.includes('systems')) resources.add('systems');
     if (linkRels.includes('deployments')) resources.add('deployments');
     if (linkRels.includes('samplingFeatures')) resources.add('samplingFeatures');
     // ... etc for all 9 resources
-    
+
     return resources;
   }
-  
+
   // Resource access methods
   async getSystems(options?: QueryOptions): Promise<System[]> { ... }
   async getSystem(systemId: string): Promise<System> { ... }
-  
+
   async getDeployments(options?: QueryOptions): Promise<Deployment[]> { ... }
   async getDeployment(deploymentId: string): Promise<Deployment> { ... }
-  
+
   async getSamplingFeatures(options?: QueryOptions): Promise<SamplingFeature[]> { ... }
   async getSamplingFeature(featureId: string): Promise<SamplingFeature> { ... }
-  
+
   async getProcedures(options?: QueryOptions): Promise<Procedure[]> { ... }
   async getProcedure(procedureId: string): Promise<Procedure> { ... }
-  
+
   async getDatastreams(systemId: string, options?: QueryOptions): Promise<Datastream[]> { ... }
   async getDatastream(systemId: string, datastreamId: string): Promise<Datastream> { ... }
-  
+
   async getObservations(datastreamId: string, options?: QueryOptions): Promise<Observation[]> { ... }
-  
+
   async getControls(systemId: string, options?: QueryOptions): Promise<Control[]> { ... }
-  
+
   async getControlStreams(systemId: string, options?: QueryOptions): Promise<ControlStream[]> { ... }
-  
+
   async getCommands(controlStreamId: string, options?: QueryOptions): Promise<Command[]> { ... }
 }
 ```
@@ -965,12 +982,12 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
   if (!this.hasConnectedSystems) {
     throw new EndpointError('Endpoint does not support Connected Systems API');
   }
-  
+
   const cache = this.collection_id_to_csapi_builder_;
   if (cache.has(collection_id)) {
     return cache.get(collection_id);
   }
-  
+
   const collection = await this.getCollectionInfo(collection_id);
   const result = new CSAPIQueryBuilder(collection);
   cache.set(collection_id, result);
@@ -994,7 +1011,7 @@ console.log(builder.supported_resources);
 const systems = await builder.getSystems({
   limit: 10,
   offset: 0,
-  bbox: [-180, -90, 180, 90]
+  bbox: [-180, -90, 180, 90],
 });
 
 // Get specific system
@@ -1002,52 +1019,53 @@ const system = await builder.getSystem('system-123');
 
 // Get datastreams for a system
 const datastreams = await builder.getDatastreams('system-123', {
-  limit: 5
+  limit: 5,
 });
 
 // Get observations for a datastream
 const observations = await builder.getObservations('datastream-456', {
   datetime: { start: new Date('2024-01-01'), end: new Date('2024-01-31') },
-  limit: 100
+  limit: 100,
 });
 ```
 
 ### Key Differences from EDR
 
-| Aspect | EDR | CSAPI |
-|--------|-----|-------|
-| Query types | 7 query geometries (position, area, cube, etc.) | 9 resource types (systems, deployments, etc.) |
-| Methods | Build URL + execute query | Fetch resources + fetch by ID |
-| Nesting | Flat queries | Nested resources (system → datastreams → observations) |
-| Parameters | Geospatial (coords, bbox, z) | Standard OGC API (limit, offset, bbox, datetime) |
-| Validation | Check query type + parameters | Check resource availability + parameters |
+| Aspect      | EDR                                             | CSAPI                                                  |
+| ----------- | ----------------------------------------------- | ------------------------------------------------------ |
+| Query types | 7 query geometries (position, area, cube, etc.) | 9 resource types (systems, deployments, etc.)          |
+| Methods     | Build URL + execute query                       | Fetch resources + fetch by ID                          |
+| Nesting     | Flat queries                                    | Nested resources (system → datastreams → observations) |
+| Parameters  | Geospatial (coords, bbox, z)                    | Standard OGC API (limit, offset, bbox, datetime)       |
+| Validation  | Check query type + parameters                   | Check resource availability + parameters               |
 
 ### Method Pattern for CSAPI
 
 **List resource:**
+
 ```typescript
 async getSystems(options: QueryOptions = {}): Promise<System[]> {
   // 1. Check resource is available
   if (!this.supported_resources.has('systems')) {
     throw new Error('Systems resource not available on this collection');
   }
-  
+
   // 2. Get base URL from links
   const baseUrl = getLinkUrl(this.collection, 'systems', '');
   if (!baseUrl) {
     throw new Error('Systems link not found in collection');
   }
-  
+
   // 3. Build URL with query params
   const url = new URL(baseUrl);
   if (options.limit) url.searchParams.set('limit', options.limit.toString());
   if (options.offset) url.searchParams.set('offset', options.offset.toString());
   if (options.bbox) url.searchParams.set('bbox', options.bbox.join(','));
-  
+
   // 4. Fetch
   const response = await fetch(url.toString());
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  
+
   // 5. Parse and return
   const data = await response.json();
   return data.items as System[];
@@ -1055,21 +1073,22 @@ async getSystems(options: QueryOptions = {}): Promise<System[]> {
 ```
 
 **Get by ID:**
+
 ```typescript
 async getSystem(systemId: string): Promise<System> {
   // 1. Check resource is available
   if (!this.supported_resources.has('systems')) {
     throw new Error('Systems resource not available on this collection');
   }
-  
+
   // 2. Build URL for specific system
   const baseUrl = getLinkUrl(this.collection, 'systems', '');
   const url = `${baseUrl}/${systemId}`;
-  
+
   // 3. Fetch
   const response = await fetch(url);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  
+
   // 4. Parse and return
   const data = await response.json();
   return data as System;
@@ -1077,6 +1096,7 @@ async getSystem(systemId: string): Promise<System> {
 ```
 
 **Nested resource:**
+
 ```typescript
 async getDatastreams(
   systemId: string,
@@ -1086,19 +1106,19 @@ async getDatastreams(
   if (!this.supported_resources.has('datastreams')) {
     throw new Error('Datastreams resource not available on this collection');
   }
-  
+
   // 2. Build nested URL: /systems/{id}/datastreams
   const baseUrl = getLinkUrl(this.collection, 'systems', '');
   const url = new URL(`${baseUrl}/${systemId}/datastreams`);
-  
+
   // 3. Add query params
   if (options.limit) url.searchParams.set('limit', options.limit.toString());
   if (options.offset) url.searchParams.set('offset', options.offset.toString());
-  
+
   // 4. Fetch
   const response = await fetch(url.toString());
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  
+
   // 5. Parse and return
   const data = await response.json();
   return data.items as Datastream[];
@@ -1123,6 +1143,7 @@ async getDatastreams(
 ### CSAPI Implementation
 
 **Follows same pattern:**
+
 - Class: `CSAPIQueryBuilder`
 - Factory: `endpoint.csapi(collectionId)`
 - Methods: One per resource type (`getSystems`, `getDeployments`, etc.)

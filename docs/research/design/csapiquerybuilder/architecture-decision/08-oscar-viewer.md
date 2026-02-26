@@ -11,11 +11,13 @@
 ## Research Objectives
 
 1. **Client Library Usage:**
+
    - What CSAPI client does oscar-viewer use?
    - How does it organize access to different resources?
    - Wrapper patterns or direct usage?
 
 2. **TypeScript Patterns:**
+
    - Object-oriented wrapper patterns
    - Type safety approaches
    - Code organization for multi-resource access
@@ -41,11 +43,13 @@
 ## Expected Findings
 
 **If uses separate wrappers:**
+
 - Real-world evidence for separate-class pattern
 - Shows benefits in production
 - Informs our decision
 
 **If uses single client:**
+
 - Shows single-class pattern works
 - May inform method organization
 - Different perspective

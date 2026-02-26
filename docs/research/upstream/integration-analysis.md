@@ -32,6 +32,7 @@
 **Principle:** Additive, not modifications
 
 **Pattern:**
+
 1. Add new subfolder (e.g., `src/ogc-api/csapi/`)
 2. Add import statement to parent
 3. Add cache field to class
@@ -45,15 +46,16 @@
 
 **3 files require modifications:**
 
-| File | Lines Added | Lines Modified | Purpose |
-|------|-------------|----------------|---------|
-| `src/ogc-api/endpoint.ts` | ~35 | 0 | Add CSAPI factory method |
-| `src/ogc-api/info.ts` | ~12 | 0 | Add conformance check |
-| `src/index.ts` | ~15 | 0 | Export CSAPI types |
+| File                      | Lines Added | Lines Modified | Purpose                  |
+| ------------------------- | ----------- | -------------- | ------------------------ |
+| `src/ogc-api/endpoint.ts` | ~35         | 0              | Add CSAPI factory method |
+| `src/ogc-api/info.ts`     | ~12         | 0              | Add conformance check    |
+| `src/index.ts`            | ~15         | 0              | Export CSAPI types       |
 
 **Total:** ~62 lines added, 0 modified
 
 **Files NOT Modified:**
+
 - `src/ogc-api/model.ts` - No changes needed
 - `src/ogc-api/link-utils.ts` - Reused as-is
 - `src/shared/*` - All utilities reused as-is
@@ -132,6 +134,7 @@ public async edr(collection_id: string): Promise<EDRQueryBuilder> {
 ```
 
 **Pattern:**
+
 1. Check conformance
 2. Check cache
 3. Get collection info
@@ -196,7 +199,7 @@ import CSAPIQueryBuilder from './csapi/url_builder.js';
 ```typescript
 import { getBaseUrl, getChildPath } from '../shared/url-utils.js';
 import EDRQueryBuilder from './edr/url_builder.js';
-import CSAPIQueryBuilder from './csapi/url_builder.js';  // NEW
+import CSAPIQueryBuilder from './csapi/url_builder.js'; // NEW
 
 /**
  * Represents an OGC API endpoint advertising various collections and services.
@@ -265,7 +268,7 @@ import CSAPIQueryBuilder from './csapi/url_builder.js';  // NEW
    */
 ```
 
-**Note:** `hasSystemFeatures` property may not exist yet on `OgcApiCollectionInfo`. 
+**Note:** `hasSystemFeatures` property may not exist yet on `OgcApiCollectionInfo`.
 
 **Alternative (simpler):** Don't filter by collection property:
 
@@ -396,6 +399,7 @@ import CSAPIQueryBuilder from './csapi/url_builder.js';  // NEW
 **Total lines added:** ~35 lines (excluding blank lines)
 
 **Breakdown:**
+
 - Import: 1 line
 - Cache field: 2 lines
 - Collections getter: 6 lines (or 5 if not filtering)
@@ -404,6 +408,7 @@ import CSAPIQueryBuilder from './csapi/url_builder.js';  // NEW
 - Comments: 3 lines
 
 **Changes are:**
+
 - ✅ Additive only
 - ✅ Located in clear sections
 - ✅ Follow existing patterns exactly
@@ -430,16 +435,13 @@ import CSAPIQueryBuilder from './csapi/url_builder.js';  // NEW
 **Insert:**
 
 ```typescript
-export function checkHasConnectedSystems([conformance]: [
-  ConformanceClass[]
-]) {
+export function checkHasConnectedSystems([conformance]: [ConformanceClass[]]) {
   return (
     conformance.indexOf(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
     ) > -1 ||
-    conformance.indexOf(
-      'http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core'
-    ) > -1
+    conformance.indexOf('http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core') >
+      -1
   );
 }
 ```
@@ -457,16 +459,16 @@ export function checkHasEnvironmentalDataRetrieval([conformance]: [
   );
 }
 
-export function checkHasConnectedSystems([conformance]: [    // NEW (12 lines)
+export function checkHasConnectedSystems([conformance]: [
+  // NEW (12 lines)
   ConformanceClass[]
 ]) {
   return (
     conformance.indexOf(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
     ) > -1 ||
-    conformance.indexOf(
-      'http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core'
-    ) > -1
+    conformance.indexOf('http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core') >
+      -1
   );
 }
 
@@ -507,7 +509,7 @@ import {
 
 ```typescript
 import {
-  checkHasConnectedSystems,                    // NEW
+  checkHasConnectedSystems, // NEW
   checkHasEnvironmentalDataRetrieval,
   checkHasFeatures,
   checkHasRecords,
@@ -531,9 +533,11 @@ import {
 **Total lines added:** ~12 lines
 
 **Breakdown:**
+
 - Conformance check function: 12 lines
 
 **Changes are:**
+
 - ✅ Additive only
 - ✅ Single function
 - ✅ Follows EDR pattern exactly
@@ -548,6 +552,7 @@ import {
 **CSAPI should export resource types but NOT QueryBuilder.**
 
 **Reasoning:**
+
 - QueryBuilder accessed via factory: `endpoint.csapi(id)`
 - Resource types needed for user type annotations
 - Query options needed for method signatures
@@ -587,7 +592,8 @@ export type {
 ```typescript
 export { default as OgcApiEndpoint } from './ogc-api/endpoint.js';
 export * from './ogc-api/model.js';
-export type {                                    // NEW (17 lines)
+export type {
+  // NEW (17 lines)
   System,
   Deployment,
   SamplingFeature,
@@ -623,9 +629,11 @@ export * from './ogc-api/csapi/model.js';
 **Total lines added:** ~17 lines
 
 **Breakdown:**
+
 - Type exports: 17 lines (9 resources + 3 options + 2 helpers + type keyword + braces)
 
 **Changes are:**
+
 - ✅ Additive only
 - ✅ Explicit exports
 - ✅ Follows pattern of other APIs
@@ -668,14 +676,14 @@ export type FetchOptions = RequestInit;
 
 **Directly reuse (no redefinition):**
 
-| CSAPI Need | Shared Type | Usage |
-|------------|-------------|-------|
-| Spatial extent | `BoundingBox` | Query parameter, resource property |
-| Temporal filter | `DateTimeParameter` | Query parameter |
-| CRS codes | `CrsCode` | Query parameter, metadata |
-| Contact info | `Contact` | System metadata |
-| Provider info | `Provider` | Endpoint metadata |
-| Format negotiation | `MimeType` | Query parameter, links |
+| CSAPI Need         | Shared Type         | Usage                              |
+| ------------------ | ------------------- | ---------------------------------- |
+| Spatial extent     | `BoundingBox`       | Query parameter, resource property |
+| Temporal filter    | `DateTimeParameter` | Query parameter                    |
+| CRS codes          | `CrsCode`           | Query parameter, metadata          |
+| Contact info       | `Contact`           | System metadata                    |
+| Provider info      | `Provider`          | Endpoint metadata                  |
+| Format negotiation | `MimeType`          | Query parameter, links             |
 
 **Import pattern:**
 
@@ -693,13 +701,13 @@ import {
 export interface QueryOptions {
   limit?: number;
   offset?: number;
-  bbox?: BoundingBox;           // Reuse
-  datetime?: DateTimeParameter;  // Reuse
+  bbox?: BoundingBox; // Reuse
+  datetime?: DateTimeParameter; // Reuse
 }
 
 export interface System {
   properties: {
-    contacts?: Contact[];        // Reuse
+    contacts?: Contact[]; // Reuse
     // ...
   };
 }
@@ -709,7 +717,7 @@ export interface System {
 
 ```typescript
 // ❌ Don't do this
-export type BoundingBox = [number, number, number, number];  // Already in shared!
+export type BoundingBox = [number, number, number, number]; // Already in shared!
 ```
 
 ### OGC API Common Types Reuse
@@ -735,7 +743,7 @@ export interface OgcApiDocumentLink {
 import { OgcApiDocumentLink } from '../model.js';
 
 export interface System {
-  links: OgcApiDocumentLink[];  // Reuse
+  links: OgcApiDocumentLink[]; // Reuse
 }
 ```
 
@@ -768,18 +776,18 @@ export function getLinkUrl(
   baseUrl: string,
   mimeType?: MimeType,
   required?: boolean
-): string | null
+): string | null;
 
 export function fetchLink(
   doc: OgcApiDocument,
   rel: string | string[],
   baseUrl: string
-): Promise<OgcApiDocument>
+): Promise<OgcApiDocument>;
 
 export function getLinks(
   doc: OgcApiDocument,
   rel: string | string[]
-): OgcApiDocumentLink[]
+): OgcApiDocumentLink[];
 ```
 
 **Usage in CSAPIQueryBuilder:**
@@ -796,7 +804,7 @@ async getSystems(options?: QueryOptions): Promise<string> {
     undefined,
     true  // required
   );
-  
+
   // Build URL with query params
   const url = new URL(baseUrl);
   // ... add params
@@ -811,8 +819,11 @@ async getSystems(options?: QueryOptions): Promise<string> {
 **HTTP utilities:**
 
 ```typescript
-export function sharedFetch(url: string, options?: FetchOptions): Promise<Response>
-export function setQueryParams(url: URL, params: Record<string, string>): void
+export function sharedFetch(
+  url: string,
+  options?: FetchOptions
+): Promise<Response>;
+export function setQueryParams(url: URL, params: Record<string, string>): void;
 ```
 
 **Usage:**
@@ -823,10 +834,10 @@ import { setQueryParams } from '../../shared/http-utils.js';
 private buildUrl(base: string, options?: QueryOptions): string {
   const url = new URL(base);
   const params: Record<string, string> = {};
-  
+
   if (options?.limit) params.limit = options.limit.toString();
   if (options?.offset) params.offset = options.offset.toString();
-  
+
   setQueryParams(url, params);
   return url.toString();
 }
@@ -837,8 +848,8 @@ private buildUrl(base: string, options?: QueryOptions): string {
 **URL utilities:**
 
 ```typescript
-export function getBaseUrl(url: string): string
-export function getChildPath(parentUrl: string, childPath: string): string
+export function getBaseUrl(url: string): string;
+export function getChildPath(parentUrl: string, childPath: string): string;
 ```
 
 **Usage:**
@@ -875,14 +886,14 @@ if (!this.collection_) {
 
 **CSAPI can reuse 15+ utility functions:**
 
-| Category | Functions | Purpose |
-|----------|-----------|---------|
-| Links | `getLinkUrl`, `getLinks`, `fetchLink` | Link traversal |
-| HTTP | `sharedFetch`, `setQueryParams` | Network requests |
-| URLs | `getBaseUrl`, `getChildPath` | URL construction |
-| Errors | `EndpointError`, `check` | Error handling |
-| CRS | `hasInvertedCoordinates`, `simplifyEpsgUrn` | CRS utilities |
-| Cache | `useCache`, `clearCache` | Caching |
+| Category | Functions                                   | Purpose          |
+| -------- | ------------------------------------------- | ---------------- |
+| Links    | `getLinkUrl`, `getLinks`, `fetchLink`       | Link traversal   |
+| HTTP     | `sharedFetch`, `setQueryParams`             | Network requests |
+| URLs     | `getBaseUrl`, `getChildPath`                | URL construction |
+| Errors   | `EndpointError`, `check`                    | Error handling   |
+| CRS      | `hasInvertedCoordinates`, `simplifyEpsgUrn` | CRS utilities    |
+| Cache    | `useCache`, `clearCache`                    | Caching          |
 
 **Result:** CSAPI url_builder.ts can focus on business logic, not infrastructure.
 
@@ -947,13 +958,13 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> { ... }
 
 **Follow established patterns:**
 
-| EDR Pattern | CSAPI Equivalent |
-|-------------|------------------|
-| `hasEnvironmentalDataRetrieval` | `hasConnectedSystems` |
-| `edrCollections` | `csapiCollections` |
+| EDR Pattern                     | CSAPI Equivalent                  |
+| ------------------------------- | --------------------------------- |
+| `hasEnvironmentalDataRetrieval` | `hasConnectedSystems`             |
+| `edrCollections`                | `csapiCollections`                |
 | `collection_id_to_edr_builder_` | `collection_id_to_csapi_builder_` |
-| `edr(collection_id)` | `csapi(collection_id)` |
-| `EDRQueryBuilder` | `CSAPIQueryBuilder` |
+| `edr(collection_id)`            | `csapi(collection_id)`            |
+| `EDRQueryBuilder`               | `CSAPIQueryBuilder`               |
 
 #### 5. Minimize Import Changes
 
@@ -962,7 +973,7 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> { ... }
 ```typescript
 // Instead of new import block, add to existing
 import {
-  checkHasConnectedSystems,           // Add here
+  checkHasConnectedSystems, // Add here
   checkHasEnvironmentalDataRetrieval,
   // ... rest of imports
 } from './info.js';
@@ -995,6 +1006,7 @@ import {
 **Goal:** 3 modified files, ~65 lines added, 1 line modified
 
 **Breakdown:**
+
 - `endpoint.ts`: ~35 lines added, 1 line modified (import)
 - `info.ts`: ~12 lines added
 - `index.ts`: ~17 lines added
@@ -1021,21 +1033,19 @@ import {
 describe('checkHasConnectedSystems', () => {
   it('returns true when CSAPI conformance is present (full URI)', () => {
     const conformance = [
-      'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
+      'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core',
     ];
     expect(checkHasConnectedSystems([conformance])).toBe(true);
   });
 
   it('returns true when CSAPI conformance is present (short URI)', () => {
-    const conformance = [
-      'http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core'
-    ];
+    const conformance = ['http://www.opengis.net/spec/ogcapi-cs/1.0/conf/core'];
     expect(checkHasConnectedSystems([conformance])).toBe(true);
   });
 
   it('returns false when CSAPI conformance is missing', () => {
     const conformance = [
-      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core'
+      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     ];
     expect(checkHasConnectedSystems([conformance])).toBe(false);
   });
@@ -1053,18 +1063,16 @@ describe('OgcApiEndpoint CSAPI integration', () => {
   it('detects CSAPI support via conformance', async () => {
     // Mock endpoint with CSAPI conformance
     const mockRoot = {
-      links: [
-        { rel: 'conformance', href: '/conformance' }
-      ]
+      links: [{ rel: 'conformance', href: '/conformance' }],
     };
     const mockConformance = {
       conformsTo: [
-        'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
-      ]
+        'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core',
+      ],
     };
-    
+
     // ... setup mocks
-    
+
     const endpoint = new OgcApiEndpoint('http://example.com');
     const hasCSAPI = await endpoint.hasConnectedSystems;
     expect(hasCSAPI).toBe(true);
@@ -1072,7 +1080,7 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 
   it('returns csapi builder for collection', async () => {
     // ... setup mocks
-    
+
     const endpoint = new OgcApiEndpoint('http://example.com');
     const builder = await endpoint.csapi('test-collection');
     expect(builder).toBeInstanceOf(CSAPIQueryBuilder);
@@ -1080,20 +1088,20 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 
   it('caches csapi builder per collection', async () => {
     // ... setup mocks
-    
+
     const endpoint = new OgcApiEndpoint('http://example.com');
     const builder1 = await endpoint.csapi('test-collection');
     const builder2 = await endpoint.csapi('test-collection');
-    expect(builder1).toBe(builder2);  // Same instance
+    expect(builder1).toBe(builder2); // Same instance
   });
 
   it('throws error when CSAPI not supported', async () => {
     const mockConformance = {
-      conformsTo: []  // No CSAPI conformance
+      conformsTo: [], // No CSAPI conformance
     };
-    
+
     // ... setup mocks
-    
+
     const endpoint = new OgcApiEndpoint('http://example.com');
     await expect(endpoint.csapi('test-collection')).rejects.toThrow(
       'Endpoint does not support Connected Systems API'
@@ -1105,6 +1113,7 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 ### Integration Test File Modifications
 
 **2 test files modified:**
+
 - `src/ogc-api/info.spec.ts`: Add ~30 lines
 - `src/ogc-api/endpoint.spec.ts`: Add ~60 lines
 
@@ -1150,6 +1159,7 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 ### File Modification Summary
 
 **New files created:**
+
 - `src/ogc-api/csapi/model.ts`
 - `src/ogc-api/csapi/url_builder.ts`
 - `src/ogc-api/csapi/helpers.ts`
@@ -1158,6 +1168,7 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 - `fixtures/ogc-api/csapi/*.json` (8-10 fixtures)
 
 **Existing files modified:**
+
 - `src/ogc-api/endpoint.ts` (~35 lines added)
 - `src/ogc-api/info.ts` (~12 lines added)
 - `src/index.ts` (~17 lines added)
@@ -1165,6 +1176,7 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 - `src/ogc-api/endpoint.spec.ts` (~60 lines added)
 
 **Total changes:**
+
 - 5-6 new implementation files (~2150-2600 lines)
 - 5 modified files (~154 lines added)
 - 8-10 new fixture files
@@ -1189,12 +1201,14 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 ### Integration Code Volume
 
 **Existing files modified:**
+
 - endpoint.ts: 35 lines
 - info.ts: 12 lines
 - index.ts: 17 lines
 - **Total:** 64 lines
 
 **Test additions:**
+
 - info.spec.ts: 30 lines
 - endpoint.spec.ts: 60 lines
 - **Total:** 90 lines
@@ -1210,6 +1224,7 @@ describe('OgcApiEndpoint CSAPI integration', () => {
 CSAPI integrates into ogc-client with **~65 lines of production code** and **~90 lines of test code** added to existing files.
 
 Integration follows EDR pattern exactly:
+
 1. Conformance check function
 2. Cache field in endpoint class
 3. Collections getter

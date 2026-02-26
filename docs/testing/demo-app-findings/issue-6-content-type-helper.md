@@ -43,16 +43,16 @@ This report does not expand scope beyond what Issue #6 describes. No refactoring
 
 The issue identifies a genuine gap: the library provides no guidance on which `Content-Type` header consumers must use for POST/PUT write operations against CSAPI resources. Consumers must independently know the OGC spec's Part 1 vs Part 2 content-type split, which was confirmed to cause real failures during live E2E testing.
 
-| Aspect | Assessment |
-|--------|------------|
-| **Finding** | F-10 — "No Content-Type Guidance from the Builder" |
-| **Severity** | Medium (per upstream-findings.md and gap analysis) |
-| **Implementation risk** | Very Low — purely additive |
-| **Test risk** | Zero — no existing tests affected |
-| **API surface risk** | Zero — no existing signatures change |
-| **Change type** | New constant + new function + new export |
-| **Files affected** | 1–2 new additions, 1 export update |
-| **Existing code modified** | None |
+| Aspect                     | Assessment                                         |
+| -------------------------- | -------------------------------------------------- |
+| **Finding**                | F-10 — "No Content-Type Guidance from the Builder" |
+| **Severity**               | Medium (per upstream-findings.md and gap analysis) |
+| **Implementation risk**    | Very Low — purely additive                         |
+| **Test risk**              | Zero — no existing tests affected                  |
+| **API surface risk**       | Zero — no existing signatures change               |
+| **Change type**            | New constant + new function + new export           |
+| **Files affected**         | 1–2 new additions, 1 export update                 |
+| **Existing code modified** | None                                               |
 
 **Key finding:** One discrepancy was identified between Issue #6 and the E2E test reports regarding the correct Content-Type for `properties` resources. Issue #6 specifies `application/json`, but the specification and E2E write operations report indicate `application/geo+json` is correct. See [Section 7](#7-discrepancy-properties-content-type) for analysis.
 
@@ -64,10 +64,10 @@ The issue identifies a genuine gap: the library provides no guidance on which `C
 
 The `CSAPIQueryBuilder` constructs URLs for all CRUD operations but provides no information about which `Content-Type` header is required for write requests (POST/PUT). The OGC Connected Systems API defines a clear split:
 
-| Resource Category | Resource Types | Required Content-Type |
-|-------------------|----------------|-----------------------|
+| Resource Category         | Resource Types                                                 | Required Content-Type  |
+| ------------------------- | -------------------------------------------------------------- | ---------------------- |
 | **Part 1** (OGC 23-001r1) | systems, deployments, procedures, samplingFeatures, properties | `application/geo+json` |
-| **Part 2** (OGC 23-002r1) | datastreams, observations, controlStreams, commands | `application/json` |
+| **Part 2** (OGC 23-002r1) | datastreams, observations, controlStreams, commands            | `application/json`     |
 
 ### What Issue #6 proposes
 
@@ -82,8 +82,16 @@ During E2E testing against OSH SensorHub, sending a Part 1 resource (system) wit
 ```typescript
 // Demo app workaround (csapi-bridge.ts)
 export function getContentType(resourceType: string): string {
-  const part1 = ['systems', 'deployments', 'procedures', 'samplingFeatures', 'properties'];
-  return part1.includes(resourceType) ? 'application/geo+json' : 'application/json';
+  const part1 = [
+    'systems',
+    'deployments',
+    'procedures',
+    'samplingFeatures',
+    'properties',
+  ];
+  return part1.includes(resourceType)
+    ? 'application/geo+json'
+    : 'application/json';
 }
 ```
 
@@ -146,29 +154,30 @@ All 12 reference documents provided were reviewed. The following contain evidenc
 
 ### 5.1 Core evidence documents
 
-| Document | Relevant Finding | Content-Type Relevance |
-|----------|------------------|------------------------|
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | F-10: Medium severity, Priority 6 ("Should Address"), type "Missing helper" | Proposes `CSAPI_CONTENT_TYPES: Record<CSAPIResourceType, string>` |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | F-10 mapped to Issue #6, severity Medium, implementation risk Low | Confirms actionability and low risk |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | Finding #14: "No Content-Type guidance from the builder" (🟡 Low priority) | Bridge module implemented `getContentType()` as workaround |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | Finding #6: "Content-Type Mapping Needs Library Guidance" (Medium); Priority 2 recommendation | Provides full content-type map with `properties: 'application/geo+json'` |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | Finding #3: Content negotiation is critical; `application/geo+json` returns data from both servers | Confirms Part 1 = `geo+json` is the most interoperable choice |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | S-8: OSH rejects `Accept: application/geo+json` on POST; F-16 recommendation notes Content-Type guidance pairs with Issue #6 | Distinguishes Content-Type (request body format) from Accept (response format) |
+| Document                                                                                                                                       | Relevant Finding                                                                                                             | Content-Type Relevance                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                     | F-10: Medium severity, Priority 6 ("Should Address"), type "Missing helper"                                                  | Proposes `CSAPI_CONTENT_TYPES: Record<CSAPIResourceType, string>`              |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | F-10 mapped to Issue #6, severity Medium, implementation risk Low                                                            | Confirms actionability and low risk                                            |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)       | Finding #14: "No Content-Type guidance from the builder" (🟡 Low priority)                                                   | Bridge module implemented `getContentType()` as workaround                     |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)     | Finding #6: "Content-Type Mapping Needs Library Guidance" (Medium); Priority 2 recommendation                                | Provides full content-type map with `properties: 'application/geo+json'`       |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)             | Finding #3: Content negotiation is critical; `application/geo+json` returns data from both servers                           | Confirms Part 1 = `geo+json` is the most interoperable choice                  |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)           | S-8: OSH rejects `Accept: application/geo+json` on POST; F-16 recommendation notes Content-Type guidance pairs with Issue #6 | Distinguishes Content-Type (request body format) from Accept (response format) |
 
 ### 5.2 Supporting context documents
 
-| Document | Relevance to Issue #6 |
-|----------|----------------------|
-| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | Authority precedence confirming specs take priority over issue text (relevant to `properties` discrepancy) |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/contribution-goal-accuracy-assessment.md) | Confirms library is "specification-scoped" with all 9 resource types; F-10 noted as known gap |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | Demo bypasses `OgcApiEndpoint` — CSAPI modules are self-contained utilities; content-type helper fits this model |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | Only one library source change (EndpointError isolation) was made during demo development; all other workarounds stayed in demo code — supports the case that content-type logic belongs in the library |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | Established the pattern for additive, zero-behavior-change library improvements; the proposed constant follows the same philosophy |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | F-14 notes similar gap (no schema response parser); confirms pattern where library provides URL construction but lacks complementary metadata |
+| Document                                                                                                                                                       | Relevance to Issue #6                                                                                                                                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)                        | Authority precedence confirming specs take priority over issue text (relevant to `properties` discrepancy)                                                                                              |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/contribution-goal-accuracy-assessment.md)             | Confirms library is "specification-scoped" with all 9 resource types; F-10 noted as known gap                                                                                                           |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | Demo bypasses `OgcApiEndpoint` — CSAPI modules are self-contained utilities; content-type helper fits this model                                                                                        |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | Only one library source change (EndpointError isolation) was made during demo development; all other workarounds stayed in demo code — supports the case that content-type logic belongs in the library |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | Established the pattern for additive, zero-behavior-change library improvements; the proposed constant follows the same philosophy                                                                      |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | F-14 notes similar gap (no schema response parser); confirms pattern where library provides URL construction but lacks complementary metadata                                                           |
 
 ### 5.3 Consensus across documents
 
 All reports independently agree that:
+
 - The gap is real (F-10 confirmed across 6 documents)
 - The fix is additive (no existing code modified)
 - The risk is Low
@@ -181,11 +190,11 @@ All reports independently agree that:
 
 ### 6.1 What changes
 
-| Component | Change | Risk |
-|-----------|--------|------|
-| New constant `CSAPI_CONTENT_TYPES` | ~15 lines in `formats/constants.ts` or `model.ts` | Zero — new code only |
-| New function `getContentTypeForResource()` | ~5 lines helper function | Zero — new code only |
-| `src/index.ts` | Add 2 exports | Zero — additive export |
+| Component                                  | Change                                            | Risk                   |
+| ------------------------------------------ | ------------------------------------------------- | ---------------------- |
+| New constant `CSAPI_CONTENT_TYPES`         | ~15 lines in `formats/constants.ts` or `model.ts` | Zero — new code only   |
+| New function `getContentTypeForResource()` | ~5 lines helper function                          | Zero — new code only   |
+| `src/index.ts`                             | Add 2 exports                                     | Zero — additive export |
 
 ### 6.2 What does NOT change
 
@@ -199,13 +208,13 @@ All reports independently agree that:
 
 ### 6.3 Risk comparison
 
-| Risk category | Issue #5 (nested create methods) | Issue #6 (content-type constant) |
-|---------------|----------------------------------|----------------------------------|
-| New methods/functions | 5 new methods in `url_builder.ts` | 1 constant + 1 function (not in builder) |
-| Modifies existing code | No | No |
-| Touches builder internals | No (uses existing `buildResourceUrl`) | No (standalone constant/function) |
-| Test impact | None (new tests only) | None (new tests only) |
-| **Overall risk** | **Low** | **Very Low** |
+| Risk category             | Issue #5 (nested create methods)      | Issue #6 (content-type constant)         |
+| ------------------------- | ------------------------------------- | ---------------------------------------- |
+| New methods/functions     | 5 new methods in `url_builder.ts`     | 1 constant + 1 function (not in builder) |
+| Modifies existing code    | No                                    | No                                       |
+| Touches builder internals | No (uses existing `buildResourceUrl`) | No (standalone constant/function)        |
+| Test impact               | None (new tests only)                 | None (new tests only)                    |
+| **Overall risk**          | **Low**                               | **Very Low**                             |
 
 Issue #6 is strictly lower-risk than Issue #5 because it doesn't even add methods to the `CSAPIQueryBuilder` class — it adds a standalone constant and helper function.
 
@@ -216,11 +225,13 @@ Issue #6 is strictly lower-risk than Issue #5 because it doesn't even add method
 ### The discrepancy
 
 Issue #6 specifies:
+
 ```typescript
 properties: 'application/json',  // Issue #6 text
 ```
 
 The E2E write operations report (Priority 2 recommendation) specifies:
+
 ```typescript
 properties: 'application/geo+json',  // E2E report
 ```
@@ -230,6 +241,7 @@ properties: 'application/geo+json',  // E2E report
 Per AI Operational Constraints, **OGC specifications take precedence over issue descriptions**.
 
 **Properties** are defined in **OGC 23-001r1 (Part 1)**, not Part 2:
+
 - Part 1 (§11) defines the `Property` resource type
 - Part 1 resources are encoded as GeoJSON Features
 - Part 1 resource creation requires `Content-Type: application/geo+json`
@@ -243,16 +255,16 @@ The corrected constant:
 ```typescript
 export const CSAPI_CONTENT_TYPES: Record<CSAPIResourceType, string> = {
   // Part 1 resources — GeoJSON Features (OGC 23-001r1)
-  systems: MEDIA_TYPE_GEOJSON,         // 'application/geo+json'
-  deployments: MEDIA_TYPE_GEOJSON,     // 'application/geo+json'
-  procedures: MEDIA_TYPE_GEOJSON,      // 'application/geo+json'
+  systems: MEDIA_TYPE_GEOJSON, // 'application/geo+json'
+  deployments: MEDIA_TYPE_GEOJSON, // 'application/geo+json'
+  procedures: MEDIA_TYPE_GEOJSON, // 'application/geo+json'
   samplingFeatures: MEDIA_TYPE_GEOJSON, // 'application/geo+json'
-  properties: MEDIA_TYPE_GEOJSON,      // 'application/geo+json' (Part 1, NOT Part 2)
+  properties: MEDIA_TYPE_GEOJSON, // 'application/geo+json' (Part 1, NOT Part 2)
   // Part 2 resources — plain JSON (OGC 23-002r1)
-  datastreams: MEDIA_TYPE_JSON,        // 'application/json'
-  observations: MEDIA_TYPE_JSON,       // 'application/json'
-  controlStreams: MEDIA_TYPE_JSON,     // 'application/json'
-  commands: MEDIA_TYPE_JSON,           // 'application/json'
+  datastreams: MEDIA_TYPE_JSON, // 'application/json'
+  observations: MEDIA_TYPE_JSON, // 'application/json'
+  controlStreams: MEDIA_TYPE_JSON, // 'application/json'
+  commands: MEDIA_TYPE_JSON, // 'application/json'
 } as const;
 ```
 
@@ -263,6 +275,7 @@ export const CSAPI_CONTENT_TYPES: Record<CSAPIResourceType, string> = {
 ### 8.1 Verdict: Proceed with implementation
 
 Issue #6 should be implemented. The change is:
+
 - **Spec-justified** — OGC 23-001r1 and 23-002r1 define clear Content-Type requirements
 - **Evidence-backed** — wrong Content-Type caused real server rejections during E2E testing
 - **Purely additive** — zero modifications to existing code
@@ -284,6 +297,7 @@ The implementation MUST use `properties: MEDIA_TYPE_GEOJSON` (not `MEDIA_TYPE_JS
 ### 8.4 What NOT to do
 
 Per AI Operational Constraints:
+
 - Do NOT add Content-Type logic inside any existing `CSAPIQueryBuilder` method
 - Do NOT change any method return type to include content-type metadata (e.g., returning `{ url, contentType }` objects)
 - Do NOT modify any existing test
@@ -295,14 +309,14 @@ The constant and helper function stand alone. Consumers who want content-type gu
 
 ## Appendix A: Authority Precedence Analysis
 
-| Level | Source | What it says about F-10 | Alignment |
-|-------|--------|-------------------------|-----------|
-| 1 | **OGC 23-001r1** | Part 1 resources are GeoJSON Features → `application/geo+json` | ✅ Supports Issue #6 |
-| 1 | **OGC 23-002r1** | Part 2 resources are JSON → `application/json` | ✅ Supports Issue #6 |
-| 2 | **AI Collaboration Agreement** | Spec takes precedence over issue text | ✅ Resolves `properties` discrepancy |
-| 3 | **Issue #6 description** | Proposes `CSAPI_CONTENT_TYPES` + `getContentTypeForResource()` | ✅ Correct approach (with `properties` correction) |
-| 4 | **Existing code** | `formats/constants.ts` has `MEDIA_TYPE_GEOJSON`, `MEDIA_TYPE_JSON`; `model.ts` has `CSAPIResourceType` | ✅ Full infrastructure exists |
-| 5 | **Demo app** | Bridge module implemented identical workaround (`getContentType()`) | ✅ Proves the gap is real |
+| Level | Source                         | What it says about F-10                                                                                | Alignment                                          |
+| ----- | ------------------------------ | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| 1     | **OGC 23-001r1**               | Part 1 resources are GeoJSON Features → `application/geo+json`                                         | ✅ Supports Issue #6                               |
+| 1     | **OGC 23-002r1**               | Part 2 resources are JSON → `application/json`                                                         | ✅ Supports Issue #6                               |
+| 2     | **AI Collaboration Agreement** | Spec takes precedence over issue text                                                                  | ✅ Resolves `properties` discrepancy               |
+| 3     | **Issue #6 description**       | Proposes `CSAPI_CONTENT_TYPES` + `getContentTypeForResource()`                                         | ✅ Correct approach (with `properties` correction) |
+| 4     | **Existing code**              | `formats/constants.ts` has `MEDIA_TYPE_GEOJSON`, `MEDIA_TYPE_JSON`; `model.ts` has `CSAPIResourceType` | ✅ Full infrastructure exists                      |
+| 5     | **Demo app**                   | Bridge module implemented identical workaround (`getContentType()`)                                    | ✅ Proves the gap is real                          |
 
 ---
 
@@ -310,26 +324,26 @@ The constant and helper function stand alone. Consumers who want content-type gu
 
 This matrix maps Issue #6 / F-10 across all 12 reference documents reviewed:
 
-| Document | Finding ID | Severity | Priority | Content-Type for `properties` | Notes |
-|----------|-----------|----------|----------|-------------------------------|-------|
-| upstream-findings.md | F-10 | Medium | 6 ("Should Address") | `application/geo+json` | Original finding |
-| library-findings-gap-analysis.md | F-10 → Issue #6 | Medium | 3 (Medium) | Not specified | Confirms actionability |
-| library-integration-report.md | Finding #14 | 🟡 Low | — | Not specified | Workaround in bridge module |
-| e2e-write-operations-report.md | Finding #6 | Medium | Priority 2 | `application/geo+json` ✅ | Full map provided |
-| e2e-cross-server-report.md | Finding #3 | HIGH | — | — | Confirms `geo+json` most interoperable |
-| crud-smoke-test-findings.md | S-8, F-16 ref | — | — | — | Distinguishes Accept vs Content-Type |
-| AI_OPERATIONAL_CONSTRAINTS.md | — | — | — | — | Authority precedence rules |
-| contribution-goal-accuracy-assessment.md | — | — | — | — | F-10 noted as known gap |
-| conformance-bypass-architecture-notes.md | — | — | — | — | CSAPI modules are self-contained |
-| library-source-changes-audit.md | — | — | — | — | Only 1 library change during demo |
-| endpoint-error-isolation-report.md | — | — | — | — | Pattern for additive improvements |
-| schema-display-findings.md | F-14 (related) | Medium | — | — | Similar "missing helper" pattern |
-| **Issue #6 text** | F-10 | — | — | `application/json` ❌ | **Incorrect for `properties`** |
+| Document                                 | Finding ID      | Severity | Priority             | Content-Type for `properties` | Notes                                  |
+| ---------------------------------------- | --------------- | -------- | -------------------- | ----------------------------- | -------------------------------------- |
+| upstream-findings.md                     | F-10            | Medium   | 6 ("Should Address") | `application/geo+json`        | Original finding                       |
+| library-findings-gap-analysis.md         | F-10 → Issue #6 | Medium   | 3 (Medium)           | Not specified                 | Confirms actionability                 |
+| library-integration-report.md            | Finding #14     | 🟡 Low   | —                    | Not specified                 | Workaround in bridge module            |
+| e2e-write-operations-report.md           | Finding #6      | Medium   | Priority 2           | `application/geo+json` ✅     | Full map provided                      |
+| e2e-cross-server-report.md               | Finding #3      | HIGH     | —                    | —                             | Confirms `geo+json` most interoperable |
+| crud-smoke-test-findings.md              | S-8, F-16 ref   | —        | —                    | —                             | Distinguishes Accept vs Content-Type   |
+| AI_OPERATIONAL_CONSTRAINTS.md            | —               | —        | —                    | —                             | Authority precedence rules             |
+| contribution-goal-accuracy-assessment.md | —               | —        | —                    | —                             | F-10 noted as known gap                |
+| conformance-bypass-architecture-notes.md | —               | —        | —                    | —                             | CSAPI modules are self-contained       |
+| library-source-changes-audit.md          | —               | —        | —                    | —                             | Only 1 library change during demo      |
+| endpoint-error-isolation-report.md       | —               | —        | —                    | —                             | Pattern for additive improvements      |
+| schema-display-findings.md               | F-14 (related)  | Medium   | —                    | —                             | Similar "missing helper" pattern       |
+| **Issue #6 text**                        | F-10            | —        | —                    | `application/json` ❌         | **Incorrect for `properties`**         |
 
 ---
 
 ## Change Log
 
-| Version | Date | Description |
-|---------|------|-------------|
-| 1.0 | 2026-02-17 | Initial report |
+| Version | Date       | Description    |
+| ------- | ---------- | -------------- |
+| 1.0     | 2026-02-17 | Initial report |

@@ -24,6 +24,7 @@ We then analyzed whether our code changes would correctly handle the data these 
 **What the server actually returns:**
 
 In the **root document**, resources are advertised with plain relation names:
+
 ```json
 { "rel": "systems", "href": "http://45.55.99.236:8080/sensorhub/api/systems" }
 { "rel": "deployments", "href": "http://45.55.99.236:8080/sensorhub/api/deployments" }
@@ -34,6 +35,7 @@ In the **root document**, resources are advertised with plain relation names:
 ```
 
 In **each collection document**, resources are advertised with the generic `items` relation and the resource type embedded in the href:
+
 ```json
 { "rel": "items", "href": "systems" }
 { "rel": "items", "href": "datastreams" }
@@ -42,6 +44,7 @@ In **each collection document**, resources are advertised with the generic `item
 ```
 
 **Our fix (Issue #34):** We expanded `extractAvailableResources()` to recognize three conventions:
+
 1. `ogc-cs:` prefix (original — still works for spec-strict servers)
 2. Plain resource name as `rel` value — **matches this server's root document**
 3. `rel: "items"` with resource type in the `href` — **matches this server's collection documents**
@@ -57,6 +60,7 @@ In **each collection document**, resources are advertised with the generic `item
 **What the server actually returns:**
 
 The root document provides **absolute URLs** for each resource:
+
 ```
 http://45.55.99.236:8080/sensorhub/api/systems
 http://45.55.99.236:8080/sensorhub/api/deployments
@@ -64,16 +68,19 @@ http://45.55.99.236:8080/sensorhub/api/deployments
 ```
 
 Meanwhile, every collection's `self` link points to the same place — the collections **list**, not an individual collection:
+
 ```json
 { "rel": "self", "href": "http://45.55.99.236:8080/sensorhub/api/collections" }
 ```
 
 Without our fix, the builder would compute URLs like:
+
 ```
 http://45.55.99.236:8080/sensorhub/api/collections/systems  ← WRONG
 ```
 
 **Our fix (Issue #35):** The `csapi()` factory in `endpoint.ts` now calls `extractRootResourceUrls()`, which scans the root document's links and builds a map like:
+
 ```
 systems     → http://45.55.99.236:8080/sensorhub/api/systems
 deployments → http://45.55.99.236:8080/sensorhub/api/deployments
@@ -83,11 +90,13 @@ deployments → http://45.55.99.236:8080/sensorhub/api/deployments
 This map is passed to the builder. When constructing a URL, the builder checks the map first. If an absolute URL exists for the resource type, it uses that directly. Otherwise, it falls back to the collection-scoped pattern (for servers that do use collection paths).
 
 So `getSystems()` would now return:
+
 ```
 http://45.55.99.236:8080/sensorhub/api/systems  ← CORRECT
 ```
 
 And `getSystem('abc-123')` would return:
+
 ```
 http://45.55.99.236:8080/sensorhub/api/systems/abc-123  ← CORRECT
 ```
@@ -98,11 +107,11 @@ http://45.55.99.236:8080/sensorhub/api/systems/abc-123  ← CORRECT
 
 ## Remaining Findings (Not Addressed — Phase 3)
 
-| Finding | Severity | Status | Why It's Not Yet Relevant |
-|---------|----------|--------|---------------------------|
-| F3: `items` envelope instead of `FeatureCollection` | Moderate | Issue #36 open | Affects response **parsing**, which we haven't built yet (Phase 3) |
-| F4: Array-format `validTime` | Moderate | Issue #37 open | Also response parsing — Phase 3 |
-| F5: Missing `numberMatched`/`numberReturned` | Low | No issue needed | Our types already use optional fields |
+| Finding                                             | Severity | Status          | Why It's Not Yet Relevant                                          |
+| --------------------------------------------------- | -------- | --------------- | ------------------------------------------------------------------ |
+| F3: `items` envelope instead of `FeatureCollection` | Moderate | Issue #36 open  | Affects response **parsing**, which we haven't built yet (Phase 3) |
+| F4: Array-format `validTime`                        | Moderate | Issue #37 open  | Also response parsing — Phase 3                                    |
+| F5: Missing `numberMatched`/`numberReturned`        | Low      | No issue needed | Our types already use optional fields                              |
 
 ---
 

@@ -15,6 +15,7 @@ Cross-reference the **Contribution Goal and Definition** (v1.0, 32 lines) agains
 **Directionality:** The Implementation Guide (post-A1) is the **definitive source of truth**. The Contribution Goal is a high-level summary that should faithfully reflect what the guide specifies. This plan is almost entirely one-directional: checking the summary against the spec. A small reverse check verifies whether the Contribution Goal's framing (ecosystem positioning, value proposition) contains context the Implementation Guide could benefit from acknowledging.
 
 **Core Questions:**
+
 - Does every claim in the Contribution Goal match what the Implementation Guide actually defines?
 - Are the numbers (methods, files, lines, resource types) accurate and current?
 - Does the Contribution Goal omit any significant scope areas the Implementation Guide covers?
@@ -41,13 +42,14 @@ After A1 resolution, this is the canonical specification. Any discrepancy betwee
 
 ## Part I: Forward Checks (Contribution Goal → Implementation Guide)
 
-*"Does every claim in the Contribution Goal match the Implementation Guide?"*
+_"Does every claim in the Contribution Goal match the Implementation Guide?"_
 
 ### Check 1: Goal Statement Accuracy
 
 **Question:** Does the Contribution Goal's high-level purpose statement accurately reflect what the Implementation Guide defines?
 
 **Procedure:**
+
 1. Read the Contribution Goal's opening paragraph:
    > "Enable developers to interact with sensor networks, observation data, and system control through the Camptocamp OGC Client Library using the same unified interface they already use for other OGC APIs."
 2. Verify against Implementation Guide §3 (Purpose and Scope) and §4 (Architecture Overview)
@@ -64,20 +66,25 @@ After A1 resolution, this is the canonical specification. Any discrepancy betwee
 **Question:** Do the five Core Integration bullet points match the Implementation Guide?
 
 **Procedure:**
+
 1. **"Single QueryBuilder class with 70-80 methods covering all 9 CSAPI resource types"**
+
    - Verify "single class" matches Implementation Guide §6 (is it one class or multiple?)
    - Verify method count: does the guide define 70-80 methods? (Check post-A1 count)
    - Verify all 9 resource types listed match the guide's resource types exactly: Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands
 
 2. **"Factory method integration pattern following established library architecture (EDR pattern)"**
+
    - Verify the guide specifies a factory method pattern (§5, OgcApiEndpoint integration)
    - Verify the EDR pattern is the correct upstream reference
 
 3. **"Resource validation in all methods with fail-fast error handling"**
+
    - Verify the guide specifies resource validation (~2 lines per method, §6)
    - Verify "fail-fast" matches the guide's error handling strategy (§11)
 
 4. **"Complete query parameter support (spatial, temporal, hierarchical, relationship-based, property-based filters)"**
+
    - Verify all 5 parameter categories exist in the guide
    - Check whether the guide lists any additional parameter categories not mentioned here
 
@@ -93,17 +100,21 @@ After A1 resolution, this is the canonical specification. Any discrepancy betwee
 **Question:** Do the four Format Support bullet points match the Implementation Guide §7?
 
 **Procedure:**
+
 1. **"SensorML 3.0 parser with complete type system for all system models and recursive component parsing"**
+
    - Verify the guide specifies SensorML 3.0 parsing (§7)
    - Verify "all system models" — does the guide list SimpleProcess, AggregateProcess, PhysicalSystem, PhysicalComponent? Does the Contribution Goal's claim match?
    - Verify "recursive component parsing" is in the guide
 
 2. **"SWE Common 3.0 parser supporting all three encodings (JSON, Text/CSV, Binary) with schema validation"**
+
    - Verify all three encodings are in the guide
-   - **Critical check:** The `PARSE_SWE_BINARY` worker message type (Doc 16) is deferred to Phase 4, but binary SWE *parsing* itself (Doc 10) is IN SCOPE per the implementation guide §7 and Phase 2D assessment (M2/P4: "sound and directly usable"). The Contribution Goal's "all three encodings" is correct for parsing.
+   - **Critical check:** The `PARSE_SWE_BINARY` worker message type (Doc 16) is deferred to Phase 4, but binary SWE _parsing_ itself (Doc 10) is IN SCOPE per the implementation guide §7 and Phase 2D assessment (M2/P4: "sound and directly usable"). The Contribution Goal's "all three encodings" is correct for parsing.
    - Verify "schema validation" matches the guide's validator component
 
 3. **"GeoJSON extensions recognizing all CSAPI-specific resource types and properties"**
+
    - Verify against guide §7 GeoJSON handler section
    - Verify "all CSAPI-specific resource types" is accurate (featureType recognition)
 
@@ -111,7 +122,7 @@ After A1 resolution, this is the canonical specification. Any discrepancy betwee
    - Verify format detector extensions in the guide (§7)
    - Check whether "content negotiation" is accurately described or overscoped
 
-**Deliverable:** Per-bullet accuracy assessment. Note: Binary SWE *parsing* is in scope (Doc 10); only `PARSE_SWE_BINARY` worker offloading (Doc 16) is deferred to Phase 4.
+**Deliverable:** Per-bullet accuracy assessment. Note: Binary SWE _parsing_ is in scope (Doc 10); only `PARSE_SWE_BINARY` worker offloading (Doc 16) is deferred to Phase 4.
 
 ---
 
@@ -120,6 +131,7 @@ After A1 resolution, this is the canonical specification. Any discrepancy betwee
 **Question:** Are all specific numbers in the Contribution Goal current and consistent with post-A1 Implementation Guide values?
 
 **Procedure:**
+
 1. **"70-80 methods"** — verify against Implementation Guide §6 actual count
 2. **"9 CSAPI resource types"** — verify count
 3. **"1,750-2,400 lines of interfaces"** — verify against Implementation Guide model.ts estimate
@@ -137,6 +149,7 @@ After A1 resolution, this is the canonical specification. Any discrepancy betwee
 **Question:** Do the Quality Standards claims match the Implementation Guide's actual requirements?
 
 **Procedure:**
+
 1. **"Full TypeScript type safety with three-tier type hierarchy"** — verify the guide specifies three-tier (shared → ogc-api → csapi)
 2. **">80% test coverage with comprehensive unit, integration, and end-to-end tests"**
    - Verify >80% target
@@ -154,6 +167,7 @@ After A1 resolution, this is the canonical specification. Any discrepancy betwee
 **Question:** Does the Contribution Goal omit any significant scope areas that the Implementation Guide covers?
 
 **Procedure:**
+
 1. Read the Implementation Guide table of contents / section headers
 2. Check whether the Contribution Goal mentions or implies each major area:
    - Service Discovery (Conformance Reader, Collections Reader extensions) — mentioned?
@@ -175,6 +189,7 @@ After A1 resolution, this is the canonical specification. Any discrepancy betwee
 **Question:** Does the Contribution Goal promise anything the Implementation Guide doesn't actually deliver?
 
 **Procedure:**
+
 1. Check "specification-complete" — does the guide implement every conformance class from OGC 23-001/23-002/23-003, or only selected ones?
 2. Check "comprehensive TypeScript support" — is there any CSAPI functionality not covered?
 3. Check "real-time observation queries" — does the guide implement real-time/streaming, or only request/response patterns?
@@ -188,13 +203,14 @@ After A1 resolution, this is the canonical specification. Any discrepancy betwee
 
 ## Part II: Reverse Check (Implementation Guide → Contribution Goal)
 
-*"Does the Implementation Guide contain framing the Contribution Goal should echo?"*
+_"Does the Implementation Guide contain framing the Contribution Goal should echo?"_
 
 ### Check 8: Value Proposition and Ecosystem Context
 
 **Question:** Does the Implementation Guide's purpose/scope section contain framing or context that the Contribution Goal should incorporate?
 
 **Procedure:**
+
 1. Read Implementation Guide §3 (Purpose and Scope) for any ecosystem positioning language
 2. Read Implementation Guide §4 (Architecture Overview) for integration framing
 3. Check whether the guide states the contribution's value differently than the Contribution Goal
@@ -223,6 +239,7 @@ After A1 resolution, this is the canonical specification. Any discrepancy betwee
 **Estimated effort:** 1-2 hours (the Contribution Goal is only 32 lines — this is primarily a verification pass against the guide, not a deep research effort)
 
 **Output:** Alignment report with severity-rated findings (Critical/High/Medium/Low):
+
 - **Part I findings:** Contribution Goal claims vs Implementation Guide reality
 - **Part II findings:** Reverse feedback (expected to be brief)
 
@@ -233,6 +250,7 @@ After A1 resolution, this is the canonical specification. Any discrepancy betwee
 The cross-reference is complete when:
 
 **Contribution Goal → Implementation Guide:**
+
 - [ ] Goal statement verified as accurate (Check 1)
 - [ ] All Core Integration claims verified (Check 2)
 - [ ] All Format Support claims verified, Binary SWE status resolved (Check 3)
@@ -242,9 +260,11 @@ The cross-reference is complete when:
 - [ ] No overclaims remain (Check 7)
 
 **Implementation Guide → Contribution Goal:**
+
 - [ ] Reverse feedback documented (Check 8)
 
 **Final:**
+
 - [ ] Report generated with severity-rated findings
 - [ ] All Critical and High findings resolved
 - [ ] Contribution Goal updated where warranted

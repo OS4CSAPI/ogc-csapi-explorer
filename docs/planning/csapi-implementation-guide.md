@@ -12,6 +12,7 @@ This implementation adds Connected Systems API (CSAPI) support to the Camptocamp
 > **📊 RESEARCH FOUNDATION**
 >
 > This implementation guide is built on **13 completed research plans** (Plans 01-04, 10-16) with **⭐⭐⭐⭐⭐ confidence ratings (98-100%)** for all architectural and implementation decisions. Every design choice documented here has been validated through systematic analysis of:
+>
 > - Upstream library patterns (100% consistency with existing code)
 > - CSAPI specification requirements (complete Parts 1 & 2 coverage)
 > - Real-world usage scenarios (validated workflows)
@@ -24,10 +25,12 @@ This implementation adds Connected Systems API (CSAPI) support to the Camptocamp
 > **See:** [Architecture Decision Documents](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/tree/main/docs/research/design/csapiquerybuilder/architecture-decision/results) for complete research foundation.
 
 **What We're Building:**
+
 - **9 components extending existing code** - Small, targeted enhancements to conformance checking, collection parsing, format detection, validation, and worker infrastructure (~50 lines of modifications total)
 - **3 components building new code** - CSAPIQueryBuilder class for URL construction, SensorML 3.0 parser, and SWE Common 3.0 parser
 
 **Key Architectural Facts:**
+
 - **Integration Footprint:** 64 lines across 3 files (`endpoint.ts`: 35 lines, `info.ts`: 12 lines, `index.ts`: 17 lines)
 - **QueryBuilder Pattern:** Single `CSAPIQueryBuilder` class accessed via `endpoint.csapi(collectionId)` (follows upstream EDR pattern from PR #114)
 - **9 Resource Types:** Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands - all as methods within one QueryBuilder class
@@ -112,6 +115,7 @@ This implementation adds Connected Systems API (CSAPI) support to the Camptocamp
 This document describes every component needed to implement CSAPI support in the Camptocamp OGC Client Library, explaining which components extend existing code versus which require building new code from scratch. **This is a complete implementation manual with actionable roadmap.**
 
 **What This Document Provides:**
+
 - Complete component inventory for CSAPI implementation
 - Clear identification of "extend" vs "build" work
 - Integration points with existing library code
@@ -123,6 +127,7 @@ This document describes every component needed to implement CSAPI support in the
 
 **Scope Statement:**
 This implementation provides **COMPLETE CSAPI Parts 1 & 2 support** including:
+
 - ✅ All query parameters (spatial, temporal, hierarchical, relationship-based, property-based)
 - ✅ Full filtering capabilities (bbox, datetime, recursive, parent, system, foi, observedProperty, etc.)
 - ✅ Both pagination modes (offset-based and cursor-based)
@@ -137,17 +142,18 @@ This implementation provides **COMPLETE CSAPI Parts 1 & 2 support** including:
 **Client Responsibility Model:**
 The CSAPI client implementation has exactly **5 responsibilities** — everything else is the server's job:
 
-| # | Responsibility | Description | Guide Section |
-|---|---------------|-------------|---------------|
-| 1 | **Parse** | Parse service documents (conformance, collections, capabilities) | §5 Service Discovery |
-| 2 | **Construct** | Build URLs with correct query parameters for all 9 resource types | §6 Query Builder |
-| 3 | **Transform** | Convert responses (GeoJSON, SensorML, SWE Common) to typed TypeScript objects | §7 Format Handlers |
-| 4 | **Handle** | Manage errors, edge cases, content negotiation, and pagination | §11 Error Handling |
-| 5 | **Validate** | Validate inputs before requests (fail-fast with clear error messages) | §6 Resource Validation |
+| #   | Responsibility | Description                                                                   | Guide Section          |
+| --- | -------------- | ----------------------------------------------------------------------------- | ---------------------- |
+| 1   | **Parse**      | Parse service documents (conformance, collections, capabilities)              | §5 Service Discovery   |
+| 2   | **Construct**  | Build URLs with correct query parameters for all 9 resource types             | §6 Query Builder       |
+| 3   | **Transform**  | Convert responses (GeoJSON, SensorML, SWE Common) to typed TypeScript objects | §7 Format Handlers     |
+| 4   | **Handle**     | Manage errors, edge cases, content negotiation, and pagination                | §11 Error Handling     |
+| 5   | **Validate**   | Validate inputs before requests (fail-fast with clear error messages)         | §6 Resource Validation |
 
 This model defines the boundary between client and server concerns. The client never tests server conformance (AP3), never asserts server data content (AP1), and never makes real HTTP calls in tests (AP2). All testing validates that the client correctly performs these 5 responsibilities using mocked HTTP responses.
 
 **References:**
+
 - [OGC API - Connected Systems Part 1: Feature Resources](https://docs.ogc.org/is/23-001/23-001.html) - Standard defining Systems, Deployments, Procedures, Sampling Features, Properties
 - [OGC API - Connected Systems Part 2: Dynamic Data](https://docs.ogc.org/is/23-002/23-002.html) - Standard defining DataStreams, Observations, Control Streams, Commands
 - [Full Implementation Scope Definition](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/requirements/contribution-definition.md) - Complete vs partial implementation rationale
@@ -271,19 +277,19 @@ This implementation is built on extensive research with 98-100% confidence level
 
 **Completed Research Plans (13 of 22):**
 
-| Plan | Title | Confidence | Key Finding |
-|------|-------|------------|-------------|
-| 01 | PR#114 EDR Pattern | ⭐⭐⭐⭐⭐ | Factory method template, caching pattern |
-| 02 | QueryBuilder Pattern | ⭐⭐⭐⭐⭐ | Single builder class per API |
-| 03 | CSAPI Architecture | ⭐⭐⭐⭐⭐ | 9 resources, format handling required |
-| 04 | Architecture Patterns | ⭐⭐⭐⭐⭐ | 100% use helper methods, 0% inheritance |
-| 10 | Upstream Expectations | ⭐⭐⭐⭐⭐ | Minimal validation, trust server |
-| 11 | Integration Requirements | ⭐⭐⭐⭐⭐ | EDR pattern exactly (64 lines) |
-| 12 | File Organization | ⭐⭐⭐⭐⭐ | Flat structure + formats/ subfolder |
-| 13 | TypeScript Types | ⭐⭐⭐⭐⭐ | Three-tier hierarchy, single model.ts |
-| 14 | Usage Scenarios | ⭐⭐⭐⭐⭐ | 100% multi-resource workflows |
-| 15 | Query Parameters | ⭐⭐⭐⭐⭐ | 47% shared, type-based clustering |
-| 16 | Subresource Navigation | ⭐⭐⭐⭐⭐ | 100% cross-boundary navigation |
+| Plan | Title                    | Confidence | Key Finding                              |
+| ---- | ------------------------ | ---------- | ---------------------------------------- |
+| 01   | PR#114 EDR Pattern       | ⭐⭐⭐⭐⭐ | Factory method template, caching pattern |
+| 02   | QueryBuilder Pattern     | ⭐⭐⭐⭐⭐ | Single builder class per API             |
+| 03   | CSAPI Architecture       | ⭐⭐⭐⭐⭐ | 9 resources, format handling required    |
+| 04   | Architecture Patterns    | ⭐⭐⭐⭐⭐ | 100% use helper methods, 0% inheritance  |
+| 10   | Upstream Expectations    | ⭐⭐⭐⭐⭐ | Minimal validation, trust server         |
+| 11   | Integration Requirements | ⭐⭐⭐⭐⭐ | EDR pattern exactly (64 lines)           |
+| 12   | File Organization        | ⭐⭐⭐⭐⭐ | Flat structure + formats/ subfolder      |
+| 13   | TypeScript Types         | ⭐⭐⭐⭐⭐ | Three-tier hierarchy, single model.ts    |
+| 14   | Usage Scenarios          | ⭐⭐⭐⭐⭐ | 100% multi-resource workflows            |
+| 15   | Query Parameters         | ⭐⭐⭐⭐⭐ | 47% shared, type-based clustering        |
+| 16   | Subresource Navigation   | ⭐⭐⭐⭐⭐ | 100% cross-boundary navigation           |
 
 **Key Decisions Validated:**
 
@@ -296,12 +302,14 @@ This implementation is built on extensive research with 98-100% confidence level
 - **Type System:** Three-tier hierarchy with 1,750-2,400 lines
 
 **References:**
+
 - [Architecture Decision - Part 1](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md) - Structural design with confidence ratings
 - [Architecture Decision - Part 2](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md) - Implementation details
 - [Architecture Decision - Part 3](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part3-validation.md) - Usage scenario validation
 - [Lessons Learned](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/LESSONS-LEARNED-multi-class-failure.md) - Why previous multi-class attempts failed
 
 **References (Architecture Patterns):**
+
 - [Architecture Patterns Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/architecture-patterns-analysis.md) - Consistent patterns used in ogc-client for adding new OGC API support
 - [PR #114 (EDR Implementation) Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/pr114-analysis.md) - Direct blueprint for CSAPI implementation, factory method pattern
 - [QueryBuilder Pattern Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/querybuilder-pattern-analysis.md) - Core pattern for CSAPIQueryBuilder implementation
@@ -318,6 +326,7 @@ This implementation is built on extensive research with 98-100% confidence level
 The conformance reader is existing code in `OgcApiEndpoint` that checks which OGC API standards a server implements by reading its conformance document. For CSAPI support, we will extend this reader by adding new conformance class checks that detect CSAPI Part 1 (Systems, Deployments, Procedures, Sampling Features, Properties) and Part 2 (DataStreams, Observations, Control Streams, Commands) capabilities. This follows the exact pattern already used for EDR detection - adding a `hasConnectedSystems` method similar to the existing `hasEnvironmentalDataRetrieval` method. The extension integrates seamlessly into the upstream repository's architecture without breaking existing functionality for Features, Tiles, Records, or EDR. This approach aligns with the project goal of making CSAPI support feel like a natural part of the existing library rather than a bolt-on addition.
 
 **CSAPI Conformance Classes to Detect:**
+
 - Part 1 Core: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/core`
 - Part 1 Systems: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/system`
 - Part 1 Deployments: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/deployment`
@@ -332,6 +341,7 @@ The conformance reader is existing code in `OgcApiEndpoint` that checks which OG
 **Implementation Type:** EXTENDING EXISTING CODE (~12 lines in `info.ts`)
 
 **References:**
+
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - Conformance classes for Part 1 resources
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) - Machine-readable API definition for Part 1
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html) - Conformance classes for Part 2 resources
@@ -346,6 +356,7 @@ The conformance reader is existing code in `OgcApiEndpoint` that checks which OG
 The collections reader is existing code that fetches and parses the `/collections` endpoint to discover what data is available on a server. For CSAPI, we will extend this parser to recognize and extract CSAPI-specific metadata that indicates whether a collection contains Systems, DataStreams, Observations, or other CSAPI resources. This is primarily an extension of existing parsing logic rather than building something entirely new - we're adding new properties to the collection info objects and new filter methods like `csapiSystemCollections`, `csapiDataStreamCollections`, and `csapiObservationCollections` alongside the existing `featureCollections` and `edrCollections` getters. The extension reuses the upstream repository's established patterns for handling different resource types within the unified collections framework. This approach supports the project goal of providing developers a consistent experience across all OGC API standards through one endpoint class.
 
 **CSAPI Collection Properties to Parse:**
+
 - `featureType` property indicating resource type (e.g., `sosa:System`, `sosa:Deployment`, `sosa:ObservationCollection`)
 - Links to CSAPI-specific operations (create, update, delete, schema endpoints for Part 2 resources)
 - Temporal extent for observation collections
@@ -357,6 +368,7 @@ The collections reader is existing code that fetches and parses the `/collection
 **Implementation Type:** EXTENDING EXISTING CODE (~6 lines in `endpoint.ts`)
 
 **References:**
+
 - [SOSA/SSN Ontology](https://www.w3.org/TR/vocab-ssn/) - Semantic foundation for featureType values (sosa:System, sosa:Deployment, etc.)
 - [OGC API - Features](https://docs.ogc.org/is/17-069r4/17-069r4.html) - Collections endpoint patterns CSAPI extends
 - [Architecture Patterns Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/architecture-patterns-analysis.md) - Collection capability determination patterns
@@ -367,12 +379,12 @@ The collections reader is existing code that fetches and parses the `/collection
 >
 > **Evidence from smoke tests (Finding F14, post Phase 2.5):**
 >
-> | Discovery Convention | OSH | 52North | Result |
-> |---------------------|-----|---------|--------|
-> | Convention 1: Conformance class declares `req/property` | ❌ Not present | ❌ Not present | Not discoverable |
-> | Convention 2: Root document `links[]` contains `rel` for properties | ❌ No `properties` rel | ❌ No `properties` rel | Not discoverable |
-> | Convention 3: `/collections` includes a properties collection | ❌ 4 collections, none for properties | ❌ 5 collections, none for properties | Not discoverable |
-> | Direct request: `GET /properties` returns 200 | ✅ `{ items: [] }` | ✅ `{ items: [], links: [] }` | Works, but no way to know it exists |
+> | Discovery Convention                                                | OSH                                   | 52North                               | Result                              |
+> | ------------------------------------------------------------------- | ------------------------------------- | ------------------------------------- | ----------------------------------- |
+> | Convention 1: Conformance class declares `req/property`             | ❌ Not present                        | ❌ Not present                        | Not discoverable                    |
+> | Convention 2: Root document `links[]` contains `rel` for properties | ❌ No `properties` rel                | ❌ No `properties` rel                | Not discoverable                    |
+> | Convention 3: `/collections` includes a properties collection       | ❌ 4 collections, none for properties | ❌ 5 collections, none for properties | Not discoverable                    |
+> | Direct request: `GET /properties` returns 200                       | ✅ `{ items: [] }`                    | ✅ `{ items: [], links: [] }`         | Works, but no way to know it exists |
 >
 > **Impact on Phase 3 implementation:**
 >
@@ -447,9 +459,7 @@ import {
 #### info.ts Changes (+12 lines)
 
 ```typescript
-export function checkHasConnectedSystems([conformance]: [
-  ConformanceClass[]
-]) {
+export function checkHasConnectedSystems([conformance]: [ConformanceClass[]]) {
   return (
     conformance.indexOf(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
@@ -488,6 +498,7 @@ export type {
 **Total Integration Code:** 64 lines (35 + 12 + 17)
 
 **Developer Usage Pattern:**
+
 ```typescript
 import { OgcApiEndpoint } from '@camptocamp/ogc-client';
 
@@ -498,7 +509,7 @@ await endpoint.isReady();
 if (await endpoint.hasConnectedSystems) {
   // Get CSAPI query builder for a collection
   const csapi = await endpoint.csapi('sensors-collection');
-  
+
   // Use builder methods to construct URLs for all 9 resource types
   const systemsUrl = csapi.getSystems({ bbox: [...], recursive: true });
   const observationsUrl = csapi.getObservations(datastreamId, { phenomenonTime: '2024-01-01/..' });
@@ -508,6 +519,7 @@ if (await endpoint.hasConnectedSystems) {
 **Implementation Type:** EXTENDING EXISTING CODE (64 lines total across 3 files)
 
 **References:**
+
 - [PR #114 (EDR Implementation) Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/pr114-analysis.md) - **PRIMARY REFERENCE** - Direct blueprint for factory method pattern
 - [Architecture Decision - Part 2: Integration](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-1-integration-pattern) - Complete integration code with line-by-line breakdown
 - [Integration with Existing Code](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/integration-analysis.md) - Line-by-line integration requirements for endpoint.ts, info.ts, index.ts
@@ -522,16 +534,17 @@ if (await endpoint.hasConnectedSystems) {
 ### CSAPIQueryBuilder: Building New Query Construction Class
 
 > **📋 STRUCTURE NOTE**
-> 
+>
 > The following sections (Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands) are **methods within this single CSAPIQueryBuilder class**, not separate components.
-> 
+>
 > This follows the upstream EDR pattern where `EDRQueryBuilder` contains methods like `getCubeUrl()`, `getCorridorUrl()`, etc. Similarly, `CSAPIQueryBuilder` contains methods like `getSystems()`, `getObservations()`, `getCommands()`, etc.
-> 
+>
 > Each subsection below describes a **method group** within the QueryBuilder class.
 
 The CSAPIQueryBuilder is new code we need to build as a single comprehensive class containing URL-building methods for all 9 CSAPI resource types, following the pattern established by the existing `EDRQueryBuilder` class. This QueryBuilder class is instantiated by the `OgcApiEndpoint.csapi()` factory method and provides developers with all the methods needed to construct URLs for CSAPI operations: querying Systems with spatial/temporal filters, creating Observations in DataStreams, retrieving historical observations with temporal ranges, sending Commands to Control Streams, and accessing all other CSAPI resources. The class consolidates URL construction for approximately 60-70 unique URL patterns across Part 1 resources (Systems, Deployments, Procedures, Sampling Features, Properties) and Part 2 resources (DataStreams, Observations, Control Streams, Commands), including canonical endpoints, nested resource endpoints, schema endpoints, and special-purpose endpoints like command status/result tracking. This single-class design follows the upstream repository's architecture pattern where one QueryBuilder per API family handles all URL construction for that API, keeping the implementation focused and maintainable rather than splitting across multiple handler classes. The following sections detail the URL construction requirements for each of the 9 resource types as methods within this one CSAPIQueryBuilder class.
 
 **URL Construction Requirements:**
+
 - Canonical resource endpoints: `/systems`, `/deployments`, `/procedures`, `/samplingFeatures`, `/properties`, `/datastreams`, `/observations`, `/controlstreams`, `/commands`
 - Nested resource endpoints: `/systems/{id}/subsystems`, `/systems/{id}/datastreams`, `/datastreams/{id}/observations`, `/controlstreams/{id}/commands`
 - Schema endpoints: `/datastreams/{id}/schema`, `/controlstreams/{id}/schema`
@@ -541,6 +554,7 @@ The CSAPIQueryBuilder is new code we need to build as a single comprehensive cla
 **Implementation Type:** BUILDING NEW CODE (following EDRQueryBuilder pattern)
 
 **Code Volume:**
+
 - url_builder.ts: ~700-800 lines
 - model.ts: ~350-400 lines (GeoJSON types)
 - helpers.ts: ~50-80 lines
@@ -548,6 +562,7 @@ The CSAPIQueryBuilder is new code we need to build as a single comprehensive cla
 - **Total: ~4,550-6,030 lines**
 
 **References:**
+
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) - Machine-readable API definition for Part 1 endpoints
 - [OGC API - Connected Systems Part 2: OpenAPI Specification](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml) - Machine-readable API definition for Part 2 endpoints
 - [QueryBuilder Pattern Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/querybuilder-pattern-analysis.md) - Core pattern for implementation
@@ -571,32 +586,36 @@ This decision differs from the upstream EDR pattern (which has no validation) bu
 export default class CSAPIQueryBuilder {
   // Public property for users to check available resources
   public readonly availableResources: Set<string>;
-  
+
   constructor(private collection_: OgcApiCollectionInfo) {
     this.availableResources = this.extractAvailableResources();
   }
-  
+
   // Validate in ALL 80 methods before building URLs
   async getSystems(options?: QueryOptions): Promise<string> {
     if (!this.availableResources.has('systems')) {
       throw new EndpointError(
         `Collection '${this.collection_.id}' does not support 'systems' resource. ` +
-        `Available resources: ${Array.from(this.availableResources).join(', ')}`
+          `Available resources: ${Array.from(this.availableResources).join(
+            ', '
+          )}`
       );
     }
     return this.buildResourceUrl('systems', undefined, undefined, options);
   }
-  
+
   async getDeployments(options?: QueryOptions): Promise<string> {
     if (!this.availableResources.has('deployments')) {
       throw new EndpointError(
         `Collection '${this.collection_.id}' does not support 'deployments' resource. ` +
-        `Available resources: ${Array.from(this.availableResources).join(', ')}`
+          `Available resources: ${Array.from(this.availableResources).join(
+            ', '
+          )}`
       );
     }
     return this.buildResourceUrl('deployments', undefined, undefined, options);
   }
-  
+
   // ... validation in all 80 methods (~2 lines per method = ~160 lines total)
 }
 ```
@@ -637,6 +656,7 @@ try {
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - User mandate, clear UX benefit
 
 **References:**
+
 - [Architecture Decision - Part 1: Resource Validation](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#decision-4-resource-validation-user-mandate) - Complete rationale and implementation pattern
 
 ---
@@ -656,7 +676,7 @@ export default class CSAPIQueryBuilder {
   // ========================================
   // PRIVATE HELPERS (2-3 methods)
   // ========================================
-  
+
   /**
    * Core URL construction helper
    * Handles canonical and nested resource endpoints
@@ -677,7 +697,7 @@ export default class CSAPIQueryBuilder {
     if (subPath) url += `/${subPath}`;
     return url + this.buildQueryString(options);
   }
-  
+
   /**
    * Query parameter serialization helper
    * Handles encoding, arrays, special characters
@@ -687,7 +707,7 @@ export default class CSAPIQueryBuilder {
   private buildQueryString(options?: QueryOptions): string {
     if (!options) return '';
     const params = new URLSearchParams();
-    
+
     for (const [key, value] of Object.entries(options)) {
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
@@ -698,11 +718,11 @@ export default class CSAPIQueryBuilder {
         }
       }
     }
-    
+
     const queryString = params.toString();
     return queryString ? `?${queryString}` : '';
   }
-  
+
   /**
    * Resource discovery helper
    * Extracts available resources from collection links
@@ -710,7 +730,7 @@ export default class CSAPIQueryBuilder {
    */
   private extractAvailableResources(): Set<string> {
     const resources = new Set<string>();
-    
+
     // Parse collection links to find CSAPI resources
     for (const link of this.collection_.links) {
       const match = link.rel?.match(/^ogc-cs:(.+)$/);
@@ -718,14 +738,14 @@ export default class CSAPIQueryBuilder {
         resources.add(match[1]); // e.g., 'systems', 'datastreams'
       }
     }
-    
+
     return resources;
   }
-  
+
   // ========================================
   // PUBLIC METHODS (80 methods)
   // ========================================
-  
+
   // All public methods use the helpers above for code reuse
 }
 ```
@@ -748,6 +768,7 @@ export default class CSAPIQueryBuilder {
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Zero inheritance precedent in codebase
 
 **References:**
+
 - [Architecture Decision - Part 1: Helper Methods](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#decision-2-helper-methods-not-inheritance) - Complete analysis of helper methods vs inheritance
 - [Architecture Patterns Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/architecture-patterns-analysis.md) - 0% inheritance usage in upstream
 
@@ -762,6 +783,7 @@ This section quantifies why helper methods in a single class provide massive cod
 #### Parameter Distribution Analysis
 
 **From Research Plan 15 (Query Parameters):**
+
 - **30+ total parameters** across all CSAPI resources
 - **47% shared parameters** (14 parameters used by multiple resources)
 - **53% resource-specific parameters** (16 parameters, but cluster by TYPE not by resource)
@@ -769,33 +791,34 @@ This section quantifies why helper methods in a single class provide massive cod
 
 **Parameter clusters:**
 
-| Cluster Type | Parameters | Used By | Validation Logic |
-|--------------|------------|---------|------------------|
-| **Universal** | limit, offset, f, id, uid, q | 9 resources | Same across all |
-| **Spatial** | bbox | Systems, Deployments, SamplingFeatures | Same across all 3 |
-| **Temporal** | datetime, phenomenonTime, resultTime, executionTime, issueTime | 5+ resources | Same logic, different applicability |
-| **Relationship** | parent, procedure, foi, observedProperty, system, etc. | Varies by resource | Same encoding, different applicability |
-| **Format** | obsFormat, cmdFormat | Schema endpoints | Same logic |
-| **Hierarchical** | recursive | Systems, Deployments | Same logic |
-| **Pagination** | cursor | Observations, Commands | Same logic |
+| Cluster Type     | Parameters                                                     | Used By                                | Validation Logic                       |
+| ---------------- | -------------------------------------------------------------- | -------------------------------------- | -------------------------------------- |
+| **Universal**    | limit, offset, f, id, uid, q                                   | 9 resources                            | Same across all                        |
+| **Spatial**      | bbox                                                           | Systems, Deployments, SamplingFeatures | Same across all 3                      |
+| **Temporal**     | datetime, phenomenonTime, resultTime, executionTime, issueTime | 5+ resources                           | Same logic, different applicability    |
+| **Relationship** | parent, procedure, foi, observedProperty, system, etc.         | Varies by resource                     | Same encoding, different applicability |
+| **Format**       | obsFormat, cmdFormat                                           | Schema endpoints                       | Same logic                             |
+| **Hierarchical** | recursive                                                      | Systems, Deployments                   | Same logic                             |
+| **Pagination**   | cursor                                                         | Observations, Commands                 | Same logic                             |
 
 #### Temporal Parameter Applicability Matrix
 
 Each temporal parameter uses the same ISO 8601 encoding logic but applies to different resource types. The `encodeDateTime()` helper is shared; the `buildQueryString()` method selects which parameters to include based on the resource type.
 
-| Resource Type | `datetime` | `phenomenonTime` | `resultTime` | `executionTime` | `issueTime` |
-|---------------|:----------:|:-----------------:|:------------:|:---------------:|:-----------:|
-| **Systems** | ✅ | — | — | — | — |
-| **Deployments** | ✅ | — | — | — | — |
-| **Procedures** | — | — | — | — | — |
-| **Sampling Features** | — | — | — | — | — |
-| **Properties** | — | — | — | — | — |
-| **DataStreams** | ✅ | ✅ | ✅ | — | — |
-| **Observations** | — | ✅ | ✅ | — | — |
-| **Control Streams** | ✅ | — | — | ✅ | ✅ |
-| **Commands** | — | — | — | ✅ | ✅ |
+| Resource Type         | `datetime` | `phenomenonTime` | `resultTime` | `executionTime` | `issueTime` |
+| --------------------- | :--------: | :--------------: | :----------: | :-------------: | :---------: |
+| **Systems**           |     ✅     |        —         |      —       |        —        |      —      |
+| **Deployments**       |     ✅     |        —         |      —       |        —        |      —      |
+| **Procedures**        |     —      |        —         |      —       |        —        |      —      |
+| **Sampling Features** |     —      |        —         |      —       |        —        |      —      |
+| **Properties**        |     —      |        —         |      —       |        —        |      —      |
+| **DataStreams**       |     ✅     |        ✅        |      ✅      |        —        |      —      |
+| **Observations**      |     —      |        ✅        |      ✅      |        —        |      —      |
+| **Control Streams**   |     ✅     |        —         |      —       |       ✅        |     ✅      |
+| **Commands**          |     —      |        —         |      —       |       ✅        |     ✅      |
 
 **Parameter semantics:**
+
 - **`datetime`** — Filters by `validTime` property (when resource description is valid). Origin: OGC API – Common.
 - **`phenomenonTime`** — When the observation phenomenon occurred (applies to the feature of interest). Origin: CSAPI Part 2.
 - **`resultTime`** — When the observation result was produced/recorded. Supports `latest` special value (see below). Origin: CSAPI Part 2.
@@ -815,11 +838,11 @@ The `resultTime` parameter supports a special value `latest` that returns observ
 
 The `encodeDateTime()` helper must accept these formats:
 
-| Category | Count | Examples |
-|----------|-------|----------|
-| **Instants** | 7 | `2024-01-15`, `2024-01-15T12:00:00Z`, `2024-01-15T12:00:00+05:00`, `2024-01-15T12:00:00.123Z` |
-| **Intervals** | 7 | `2024-01-01/2024-12-31`, `../2024-12-31` (open start), `2024-01-01/..` (open end), `../..` (fully open), `2024-01-01T00:00:00Z/P1M` (start+duration) |
-| **Durations** | 9 | `P1Y`, `P1M`, `P1D`, `PT1H`, `PT30M`, `PT45S`, `P1DT12H` (used in intervals only, not standalone) |
+| Category      | Count | Examples                                                                                                                                             |
+| ------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Instants**  | 7     | `2024-01-15`, `2024-01-15T12:00:00Z`, `2024-01-15T12:00:00+05:00`, `2024-01-15T12:00:00.123Z`                                                        |
+| **Intervals** | 7     | `2024-01-01/2024-12-31`, `../2024-12-31` (open start), `2024-01-01/..` (open end), `../..` (fully open), `2024-01-01T00:00:00Z/P1M` (start+duration) |
+| **Durations** | 9     | `P1Y`, `P1M`, `P1D`, `PT1H`, `PT30M`, `PT45S`, `P1DT12H` (used in intervals only, not standalone)                                                    |
 
 #### Code Reuse Metrics: Single-Class Architecture
 
@@ -828,30 +851,34 @@ export default class CSAPIQueryBuilder {
   // ========================================
   // SHARED PARAMETER HELPERS (150-200 lines)
   // ========================================
-  
+
   private buildQueryString(options?: QueryOptions): string {
     if (!options) return '';
-    
+
     const params = new URLSearchParams();
-    
+
     // Universal parameters (used by ALL 9 resources)
     if (options.bbox) params.set('bbox', this.encodeBBox(options.bbox));
-    if (options.datetime) params.set('datetime', this.encodeDateTime(options.datetime));
+    if (options.datetime)
+      params.set('datetime', this.encodeDateTime(options.datetime));
     if (options.limit) params.set('limit', String(options.limit));
     if (options.offset) params.set('offset', String(options.offset));
     if (options.f) params.set('f', encodeURIComponent(options.f));
-    
+
     // CSAPI common parameters
     if (options.id) params.set('id', this.encodeArray(options.id));
     if (options.uid) params.set('uid', this.encodeArray(options.uid));
     if (options.q) params.set('q', encodeURIComponent(options.q));
-    
+
     // Relationship parameters (resource-specific applicability, shared logic)
     if (options.observedProperty) {
-      params.set('observedProperty', this.encodeArray(options.observedProperty));
+      params.set(
+        'observedProperty',
+        this.encodeArray(options.observedProperty)
+      );
     }
     if (options.foi) params.set('foi', this.encodeArray(options.foi));
-    
+
     // Temporal parameters (resource-specific applicability, shared logic)
     if (options.phenomenonTime) {
       params.set('phenomenonTime', this.encodeDateTime(options.phenomenonTime));
@@ -859,59 +886,59 @@ export default class CSAPIQueryBuilder {
     if (options.resultTime) {
       params.set('resultTime', this.encodeResultTime(options.resultTime));
     }
-    
+
     return params.toString() ? `?${params.toString()}` : '';
   }
-  
+
   // Type-based encoding helpers (shared across resources)
   private encodeBBox(bbox: BBoxFilter): string {
-    this.validateBBox(bbox);  // ✅ Same validation for 4 resources
+    this.validateBBox(bbox); // ✅ Same validation for 4 resources
     return [bbox.minLon, bbox.minLat, bbox.maxLon, bbox.maxLat].join(',');
   }
-  
+
   private encodeDateTime(datetime: DateTimeFilter): string {
-    this.validateDateTime(datetime);  // ✅ Same validation for 5+ resources
+    this.validateDateTime(datetime); // ✅ Same validation for 5+ resources
     if (datetime.start && datetime.end) {
       return `${datetime.start.toISOString()}/${datetime.end.toISOString()}`;
     }
     return datetime.start.toISOString();
   }
-  
+
   private encodeArray(values: string | string[]): string {
     return Array.isArray(values) ? values.join(',') : values;
   }
-  
+
   private validateBBox(bbox: BBoxFilter): void {
     // Value count: must be 4 (2D) or 6 (3D)
     // 4-value: minLon, minLat, maxLon, maxLat
     // 6-value: minLon, minLat, minElev, maxLon, maxLat, maxElev
-    
+
     // Coordinate range validation (WGS 84 / CRS84)
     // Latitude:  -90 to +90 (inclusive)
     // Longitude: -180 to +180 (inclusive)
     // Elevation: any numeric value (meters above WGS 84 ellipsoid)
-    
+
     // Ordering: minLon < maxLon, minLat < maxLat, minElev < maxElev
     // NOTE: minLon > maxLon is INVALID (antimeridian crossing not supported)
     //   → server returns 400 Bad Request
     //   → client workaround: split into two queries and merge results
-    
+
     if (bbox.minLon >= bbox.maxLon || bbox.minLat >= bbox.maxLat) {
       throw new Error('Invalid bbox: min values must be less than max values');
     }
   }
-  
+
   private validateDateTime(datetime: DateTimeFilter): void {
     if (datetime.start && datetime.end && datetime.start >= datetime.end) {
       throw new Error('Invalid datetime: start must be before end');
     }
   }
-  
+
   // ========================================
   // PUBLIC METHODS (80 methods)
   // All methods use shared helpers above
   // ========================================
-  
+
   async getSystems(options?: SystemQueryOptions): Promise<string> {
     if (!this.availableResources.has('systems')) {
       throw new EndpointError(`Collection does not support 'systems' resource`);
@@ -919,28 +946,33 @@ export default class CSAPIQueryBuilder {
     return `${this.baseUrl}/systems` + this.buildQueryString(options);
     // ✅ Uses shared helpers (bbox, datetime, limit, offset, etc.)
   }
-  
+
   async getDataStreams(options?: DatastreamQueryOptions): Promise<string> {
     if (!this.availableResources.has('datastreams')) {
-      throw new EndpointError(`Collection does not support 'datastreams' resource`);
+      throw new EndpointError(
+        `Collection does not support 'datastreams' resource`
+      );
     }
     return `${this.baseUrl}/datastreams` + this.buildQueryString(options);
     // ✅ Uses same shared helpers
   }
-  
+
   async getObservations(options?: ObservationQueryOptions): Promise<string> {
     if (!this.availableResources.has('observations')) {
-      throw new EndpointError(`Collection does not support 'observations' resource`);
+      throw new EndpointError(
+        `Collection does not support 'observations' resource`
+      );
     }
     return `${this.baseUrl}/observations` + this.buildQueryString(options);
     // ✅ Uses same shared helpers
   }
-  
+
   // ... 67 more methods, all using same helpers
 }
 ```
 
 **Code Metrics - Single-Class:**
+
 - Parameter helpers: **150-200 lines** (ONE implementation)
 - Methods using helpers: **80 methods**
 - Reuse efficiency: **85%** (helpers used by 60+ methods)
@@ -951,21 +983,22 @@ export default class CSAPIQueryBuilder {
 
 The `validateBBox()` helper enforces these constraints per CSAPI Part 1 and OGC API – Common:
 
-| Rule | Constraint | Error on Violation |
-|------|------------|-------------------|
-| **Value count** | Exactly 4 (2D) or 6 (3D) | 400 Bad Request |
-| **Latitude range** | -90 ≤ lat ≤ +90 | 400 Bad Request |
-| **Longitude range** | -180 ≤ lon ≤ +180 | 400 Bad Request |
-| **Ordering (lat)** | minLat < maxLat | 400 Bad Request |
-| **Ordering (lon)** | minLon < maxLon | 400 Bad Request |
-| **Ordering (elev)** | minElev < maxElev (6-value only) | 400 Bad Request |
-| **CRS** | WGS 84 / CRS84 only (lon, lat order). No `bbox-crs` param. | N/A — not negotiable |
-| **Antimeridian** | NOT supported. minLon > maxLon → 400 | 400 Bad Request |
-| **Non-numeric values** | All values must be valid numbers | 400 Bad Request |
+| Rule                   | Constraint                                                 | Error on Violation   |
+| ---------------------- | ---------------------------------------------------------- | -------------------- |
+| **Value count**        | Exactly 4 (2D) or 6 (3D)                                   | 400 Bad Request      |
+| **Latitude range**     | -90 ≤ lat ≤ +90                                            | 400 Bad Request      |
+| **Longitude range**    | -180 ≤ lon ≤ +180                                          | 400 Bad Request      |
+| **Ordering (lat)**     | minLat < maxLat                                            | 400 Bad Request      |
+| **Ordering (lon)**     | minLon < maxLon                                            | 400 Bad Request      |
+| **Ordering (elev)**    | minElev < maxElev (6-value only)                           | 400 Bad Request      |
+| **CRS**                | WGS 84 / CRS84 only (lon, lat order). No `bbox-crs` param. | N/A — not negotiable |
+| **Antimeridian**       | NOT supported. minLon > maxLon → 400                       | 400 Bad Request      |
+| **Non-numeric values** | All values must be valid numbers                           | 400 Bad Request      |
 
 **Coordinate order:** CRS84 = **longitude, latitude** (NOT latitude, longitude as in EPSG:4326).
 
 **Spatial semantics:**
+
 - Bbox returns resources whose geometry **intersects** the bbox (not "contained within")
 - **Point bbox** (min = max) is VALID — queries resources at a single point
 - Resources with **null geometry** are **excluded** from spatial query results
@@ -973,6 +1006,7 @@ The `validateBBox()` helper enforces these constraints per CSAPI Part 1 and OGC 
 - Valid bbox with no intersecting resources returns **empty FeatureCollection** (not an error)
 
 **Antimeridian workaround:** Client must split into two queries and merge results:
+
 ```
 // Instead of: bbox=170,-10,-170,10  (INVALID — minLon > maxLon)
 // Use:
@@ -982,17 +1016,17 @@ bbox=-180,-10,-170,10  // Western hemisphere portion
 
 **Spatial parameter support by resource type:**
 
-| Resource | `bbox` Supported | Notes |
-|----------|:----------------:|-------|
-| Systems | ✅ | Geometry optional (may be null) |
-| Deployments | ✅ | Geometry optional |
-| Procedures | ✅ | Geometry optional |
-| Sampling Features | ✅ | Geometry optional |
-| DataStreams | ❌ | Inherits geometry from parent System |
-| Observations | ❌ | Inherits geometry from DataStream/System |
-| Control Streams | ❌ | Inherits geometry from parent System |
-| Commands | ❌ | Inherits geometry from ControlStream/System |
-| Properties | ❌ | Non-spatial resource |
+| Resource          | `bbox` Supported | Notes                                       |
+| ----------------- | :--------------: | ------------------------------------------- |
+| Systems           |        ✅        | Geometry optional (may be null)             |
+| Deployments       |        ✅        | Geometry optional                           |
+| Procedures        |        ✅        | Geometry optional                           |
+| Sampling Features |        ✅        | Geometry optional                           |
+| DataStreams       |        ❌        | Inherits geometry from parent System        |
+| Observations      |        ❌        | Inherits geometry from DataStream/System    |
+| Control Streams   |        ❌        | Inherits geometry from parent System        |
+| Commands          |        ❌        | Inherits geometry from ControlStream/System |
+| Properties        |        ❌        | Non-spatial resource                        |
 
 #### Alternative: Multi-Class Code Duplication
 
@@ -1004,9 +1038,15 @@ class SystemsBuilder {
   private buildQueryString(options?: SystemQueryOptions): string {
     // ... duplicate 150-200 lines of parameter handling
   }
-  private encodeBBox(bbox: BBoxFilter): string { /* duplicate 10-15 lines */ }
-  private encodeDateTime(datetime: DateTimeFilter): string { /* duplicate 10-15 lines */ }
-  private validateBBox(bbox: BBoxFilter): void { /* duplicate 5-10 lines */ }
+  private encodeBBox(bbox: BBoxFilter): string {
+    /* duplicate 10-15 lines */
+  }
+  private encodeDateTime(datetime: DateTimeFilter): string {
+    /* duplicate 10-15 lines */
+  }
+  private validateBBox(bbox: BBoxFilter): void {
+    /* duplicate 5-10 lines */
+  }
   // ... 8+ more duplicate helper methods
 }
 
@@ -1015,8 +1055,12 @@ class DatastreamsBuilder {
   private buildQueryString(options?: DatastreamQueryOptions): string {
     // ... duplicate same 150-200 lines again
   }
-  private encodeDateTime(datetime: DateTimeFilter): string { /* duplicate again */ }
-  private validateDateTime(datetime: DateTimeFilter): void { /* duplicate again */ }
+  private encodeDateTime(datetime: DateTimeFilter): string {
+    /* duplicate again */
+  }
+  private validateDateTime(datetime: DateTimeFilter): void {
+    /* duplicate again */
+  }
   // ... 6+ more duplicate helper methods
 }
 
@@ -1025,12 +1069,14 @@ class DatastreamsBuilder {
 ```
 
 **Code Metrics - Multi-Class:**
+
 - Parameter helpers: **150-200 lines × 9 classes = 1,350-1,800 lines** of duplication
 - Reuse efficiency: **0%** (each class implements own helpers)
 - Code duplication: **1,200-1,600 lines** (726% overhead)
 - Maintenance locations: **9 files** (bug fixes in up to 9 places)
 
 **Maintenance Penalty:**
+
 - Bug fix in `encodeBBox()` → Must fix in 4 classes (Systems, Deployments, Procedures, SamplingFeatures)
 - Bug fix in `encodeDateTime()` → Must fix in 5+ classes (all temporal resources)
 - Bug fix in `validatePagination()` → Must fix in 9 classes (all resources)
@@ -1065,6 +1111,7 @@ class DatastreamsBuilder {
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Parameter complexity provides quantitative proof AGAINST class separation
 
 **References:**
+
 - [Architecture Decision - Part 3: Query Parameter Validation](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part3-validation.md#decision-2-query-parameter-validation) - Complete parameter analysis with distribution tables
 - [Research Plan 15](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/research-plan-15-query-parameters.md) - Original query parameter research
 
@@ -1079,6 +1126,7 @@ This section demonstrates how the single-class architecture enables fluent metho
 #### Navigation Pattern Requirements
 
 **From Research Plan 16 (Subresource Navigation):**
+
 - **16 navigation patterns** identified across all resources
 - **100% cross resource boundaries** - Not a single pattern stays within one resource type
 - **Maximum depth: 6+ levels** - System → Subsystem → ... → DataStream → Observation
@@ -1088,41 +1136,42 @@ This section demonstrates how the single-class architecture enables fluent metho
 
 The 16 navigation patterns fall into three distinct relationship types, each with different traversal characteristics:
 
-| Type | Count | Definition | Recursive? | Bidirectional? |
-|------|-------|------------|:----------:|:--------------:|
-| **Hierarchical** | 2 | Parent-child with recursive nesting — child is same type as parent | Yes (`recursive=true`) | No |
-| **Compositional** | 12 | Parent owns child — child cannot exist independently of parent | No (depth = 1) | No |
-| **Associative** | 2 | Many-to-many — both resources exist independently | No | Yes |
+| Type              | Count | Definition                                                         |       Recursive?       | Bidirectional? |
+| ----------------- | ----- | ------------------------------------------------------------------ | :--------------------: | :------------: |
+| **Hierarchical**  | 2     | Parent-child with recursive nesting — child is same type as parent | Yes (`recursive=true`) |       No       |
+| **Compositional** | 12    | Parent owns child — child cannot exist independently of parent     |     No (depth = 1)     |       No       |
+| **Associative**   | 2     | Many-to-many — both resources exist independently                  |           No           |      Yes       |
 
 **All 16 relationships classified:**
 
 **Part 1 — Core Resource Relationships (9):**
 
-| # | Parent → Child | Endpoint | Type |
-|---|----------------|----------|------|
-| 1 | System → Subsystems | `/systems/{id}/subsystems` | **Hierarchical** |
-| 2 | System → SamplingFeatures | `/systems/{id}/samplingFeatures` | Compositional |
-| 3 | System → Deployments | `/systems/{id}/deployments` | **Associative** |
-| 4 | System → DataStreams | `/systems/{id}/datastreams` | Compositional (cross-part) |
-| 5 | System → ControlStreams | `/systems/{id}/controlstreams` | Compositional (cross-part) |
-| 6 | System → SystemEvents | `/systems/{id}/events` | Compositional (cross-part) |
-| 7 | Deployment → Subdeployments | `/deployments/{id}/subdeployments` | **Hierarchical** |
-| 8 | Deployment → Systems | Reverse via query (`GET /systems?deployment=...`) | **Associative** (reverse) |
-| 9 | Collection → Items | `/collections/{id}/items` | Compositional |
+| #   | Parent → Child              | Endpoint                                          | Type                       |
+| --- | --------------------------- | ------------------------------------------------- | -------------------------- |
+| 1   | System → Subsystems         | `/systems/{id}/subsystems`                        | **Hierarchical**           |
+| 2   | System → SamplingFeatures   | `/systems/{id}/samplingFeatures`                  | Compositional              |
+| 3   | System → Deployments        | `/systems/{id}/deployments`                       | **Associative**            |
+| 4   | System → DataStreams        | `/systems/{id}/datastreams`                       | Compositional (cross-part) |
+| 5   | System → ControlStreams     | `/systems/{id}/controlstreams`                    | Compositional (cross-part) |
+| 6   | System → SystemEvents       | `/systems/{id}/events`                            | Compositional (cross-part) |
+| 7   | Deployment → Subdeployments | `/deployments/{id}/subdeployments`                | **Hierarchical**           |
+| 8   | Deployment → Systems        | Reverse via query (`GET /systems?deployment=...`) | **Associative** (reverse)  |
+| 9   | Collection → Items          | `/collections/{id}/items`                         | Compositional              |
 
 **Part 2 — Dynamic Data Relationships (7):**
 
-| # | Parent → Child | Endpoint | Type |
-|---|----------------|----------|------|
-| 10 | DataStream → Observations | `/datastreams/{id}/observations` | Compositional |
-| 11 | ControlStream → Commands | `/controlstreams/{id}/commands` | Compositional |
-| 12 | ControlStream → Feasibility | `/controlstreams/{id}/feasibility` | Compositional |
-| 13 | Command → Status | `/commands/{id}/status` | Compositional |
-| 14 | Command → Result | `/commands/{id}/result` | Compositional |
-| 15 | Feasibility → Status | `/feasibility/{id}/status` | Compositional |
-| 16 | Feasibility → Result | `/feasibility/{id}/result` | Compositional |
+| #   | Parent → Child              | Endpoint                           | Type          |
+| --- | --------------------------- | ---------------------------------- | ------------- |
+| 10  | DataStream → Observations   | `/datastreams/{id}/observations`   | Compositional |
+| 11  | ControlStream → Commands    | `/controlstreams/{id}/commands`    | Compositional |
+| 12  | ControlStream → Feasibility | `/controlstreams/{id}/feasibility` | Compositional |
+| 13  | Command → Status            | `/commands/{id}/status`            | Compositional |
+| 14  | Command → Result            | `/commands/{id}/result`            | Compositional |
+| 15  | Feasibility → Status        | `/feasibility/{id}/status`         | Compositional |
+| 16  | Feasibility → Result        | `/feasibility/{id}/result`         | Compositional |
 
 **Type characteristics:**
+
 - **Hierarchical (2):** Subsystems and Subdeployments support unlimited recursive nesting via `recursive=true`. The child is the same resource type as the parent.
 - **Compositional (12):** The child is created via the parent endpoint (e.g., `POST /datastreams/{id}/observations`) but has a canonical URL at the top level (e.g., `/observations/{id}`). Nesting depth is exactly 1.
 - **Associative (2):** Only the Systems ↔ Deployments relationship. Navigable bidirectionally: forward via `/systems/{id}/deployments`, reverse via `GET /deployments?system={id}` or link following.
@@ -1167,19 +1216,19 @@ Deployment navigates to:
 export default class CSAPIQueryBuilder {
   private baseUrl: string;
   private parentContext: ParentContext | null = null;
-  
+
   // ========================================
   // FLUENT NAVIGATION API
   // All methods return same class type
   // ========================================
-  
+
   // System navigation
   system(systemId: string): CSAPIQueryBuilder {
     const builder = this.clone();
     builder.parentContext = { type: 'system', id: systemId };
-    return builder;  // ✅ Returns CSAPIQueryBuilder
+    return builder; // ✅ Returns CSAPIQueryBuilder
   }
-  
+
   // Hierarchical navigation (unlimited depth)
   subsystem(subsystemId: string): CSAPIQueryBuilder {
     if (this.parentContext?.type !== 'system') {
@@ -1187,9 +1236,9 @@ export default class CSAPIQueryBuilder {
     }
     const builder = this.clone();
     builder.parentContext = { type: 'system', id: subsystemId };
-    return builder;  // ✅ Returns CSAPIQueryBuilder (same type)
+    return builder; // ✅ Returns CSAPIQueryBuilder (same type)
   }
-  
+
   // Cross-boundary navigation (Part 1 → Part 2)
   datastream(datastreamId: string): CSAPIQueryBuilder {
     if (this.parentContext?.type !== 'system') {
@@ -1197,16 +1246,18 @@ export default class CSAPIQueryBuilder {
     }
     const builder = this.clone();
     builder.parentContext = { type: 'datastream', id: datastreamId };
-    return builder;  // ✅ Returns CSAPIQueryBuilder (same type)
+    return builder; // ✅ Returns CSAPIQueryBuilder (same type)
   }
-  
+
   // Terminal methods (return data)
   async getObservations(options?: ObservationQueryOptions): Promise<string> {
     if (this.parentContext?.type !== 'datastream') {
       throw new Error('getObservations() requires datastream context');
     }
-    return `${this.baseUrl}/datastreams/${this.parentContext.id}/observations` +
-      this.buildQueryString(options);
+    return (
+      `${this.baseUrl}/datastreams/${this.parentContext.id}/observations` +
+      this.buildQueryString(options)
+    );
   }
 }
 ```
@@ -1218,12 +1269,12 @@ export default class CSAPIQueryBuilder {
 const client = await endpoint.csapi('sensor-network');
 
 const observations = await client
-  .system('wx-station-001')              // ✅ Returns CSAPIQueryBuilder
-  .subsystem('temperature-module')       // ✅ Returns CSAPIQueryBuilder
-  .subsystem('sensor-array')             // ✅ Returns CSAPIQueryBuilder
-  .subsystem('sensor-001')               // ✅ Returns CSAPIQueryBuilder
-  .datastream('temp-ds-123')             // ✅ Returns CSAPIQueryBuilder
-  .getObservations({ limit: 100 });      // ✅ Returns Promise<string>
+  .system('wx-station-001') // ✅ Returns CSAPIQueryBuilder
+  .subsystem('temperature-module') // ✅ Returns CSAPIQueryBuilder
+  .subsystem('sensor-array') // ✅ Returns CSAPIQueryBuilder
+  .subsystem('sensor-001') // ✅ Returns CSAPIQueryBuilder
+  .datastream('temp-ds-123') // ✅ Returns CSAPIQueryBuilder
+  .getObservations({ limit: 100 }); // ✅ Returns Promise<string>
 
 // ✅ Type-safe throughout entire chain
 // ✅ No class switching or type changes
@@ -1232,6 +1283,7 @@ const observations = await client
 ```
 
 **Code Metrics - Single-Class:**
+
 - Navigation code: **500-600 lines** in 1 file
 - Circular dependencies: **0**
 - Method chain breaks: **0**
@@ -1248,18 +1300,18 @@ const client = await endpoint.csapi('weather-network');
 
 async function discoverTempSensors(systemId: string): Promise<Datastream[]> {
   const system = client.system(systemId);
-  
+
   // Get temperature datastreams for this system
   const datastreams = await system.getDatastreams({
-    observedProperty: 'temperature'
+    observedProperty: 'temperature',
   });
-  
+
   // Recursively check subsystems
   const subsystems = await system.getSubsystems();
   const nestedStreams = await Promise.all(
-    subsystems.map(sub => discoverTempSensors(sub.id))
+    subsystems.map((sub) => discoverTempSensors(sub.id))
   );
-  
+
   return [...datastreams, ...nestedStreams.flat()];
 }
 
@@ -1279,7 +1331,7 @@ const controlStream = uavSystem.controlstream('flight-control');
 
 // Issue command
 const commandUrl = await controlStream.createCommand({
-  parameters: { altitude: 500, speed: 15 }
+  parameters: { altitude: 500, speed: 15 },
 });
 const commandResponse = await fetch(commandUrl, { method: 'POST' });
 const command = await commandResponse.json();
@@ -1289,13 +1341,13 @@ const statusUrl = await client.command(command.id).getStatus();
 while (true) {
   const statusResponse = await fetch(statusUrl);
   const status = await statusResponse.json();
-  
+
   if (status.state === 'completed') {
     // Get result datastream
     const resultUrl = await client.command(command.id).getResult();
     break;
   }
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 }
 
 // ✅ Seamless navigation: System → ControlStream → Command → Status → Result
@@ -1319,15 +1371,13 @@ for (const system of systems) {
   const datastreams = await client
     .system(system.id)
     .getDatastreams({ observedProperty: 'salinity' });
-  
+
   for (const ds of datastreams) {
-    const observations = await client
-      .datastream(ds.id)
-      .getObservations({
-        phenomenonTime: '2024-01-01/2024-01-31',
-        limit: 1000
-      });
-    
+    const observations = await client.datastream(ds.id).getObservations({
+      phenomenonTime: '2024-01-01/2024-01-31',
+      limit: 1000,
+    });
+
     analyzeSalinity(system.name, observations);
   }
 }
@@ -1375,6 +1425,7 @@ class DatastreamsBuilder {
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Navigation patterns provide STRONGEST evidence for single-class
 
 **References:**
+
 - [Architecture Decision - Part 3: Navigation Pattern Validation](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part3-validation.md#decision-3-navigation-pattern-validation) - Complete navigation analysis with code examples
 - [Research Plan 16](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/research-plan-16-subresource-navigation.md) - Original navigation pattern research
 - [Industry Fluent API Patterns](https://aws.amazon.com/sdk-for-javascript/) - AWS SDK v3 fluent API design
@@ -1388,6 +1439,7 @@ The CSAPIQueryBuilder includes Systems resource methods to manage CSAPI System r
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all systems: `GET /systems`
 - Get single system: `GET /systems/{id}`
 - Query systems: `GET /systems?bbox=...&parent=...&recursive=true`
@@ -1398,19 +1450,23 @@ The CSAPIQueryBuilder includes Systems resource methods to manage CSAPI System r
 - Systems in collection: `GET /collections/{collectionId}/items?featureType=sosa:System`
 
 **Create Operations:**
+
 - Create system: `POST /systems` with GeoJSON or SensorML body
 - Create subsystem: `POST /systems/{parentId}/subsystems` with body
 - Add to collection: `POST /collections/{collectionId}/items` with system feature
 
 **Update Operations:**
+
 - Replace system: `PUT /systems/{id}` with full document
 - Partial update: `PATCH /systems/{id}` with partial document (JSON Patch or Merge Patch)
 
 **Delete Operations:**
+
 - Delete system: `DELETE /systems/{id}`
 - Cascade delete: `DELETE /systems/{id}?cascade=true` (deletes subsystems, datastreams, etc.)
 
 **System Relationship Management:**
+
 - Parse and expose subsystem hierarchy
 - Navigate system-deployment associations (bidirectional)
 - Navigate system-procedure associations
@@ -1421,6 +1477,7 @@ The CSAPIQueryBuilder includes Systems resource methods to manage CSAPI System r
 **Query Parameters:** See [Complete Query Parameter Support](#complete-query-parameter-support). Systems support: `bbox`, `datetime`, `recursive`, `parent`, `deployment`, `procedure`, `foi`, `id`, `uid`, `q`, property filters, `limit`, `offset`, `f`, `sortBy`, `sortOrder`.
 
 **References:**
+
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html): Normative specification for Systems resources and CRUD operations
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml): Systems endpoint definitions
 - [csapi-part1-requirements.md](../research/requirements/csapi-part1-requirements.md): Detailed client implementation requirements for Systems resource methods
@@ -1436,6 +1493,7 @@ The CSAPIQueryBuilder includes Deployments resource methods to manage CSAPI Depl
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all deployments: `GET /deployments`
 - Get single deployment: `GET /deployments/{id}`
 - Query deployments: `GET /deployments?bbox=...&system=...&datetime=...`
@@ -1445,19 +1503,23 @@ The CSAPIQueryBuilder includes Deployments resource methods to manage CSAPI Depl
 - Deployments in collection: `GET /collections/{collectionId}/items?featureType=sosa:Deployment`
 
 **Create Operations:**
+
 - Create deployment: `POST /deployments` with GeoJSON body
 - Create subdeployment: `POST /deployments/{parentId}/subdeployments`
 - Add to collection: `POST /collections/{collectionId}/items`
 
 **Update Operations:**
+
 - Replace deployment: `PUT /deployments/{id}`
 - Partial update: `PATCH /deployments/{id}`
 
 **Delete Operations:**
+
 - Delete deployment: `DELETE /deployments/{id}`
 - Cascade delete: `DELETE /deployments/{id}?cascade=true`
 
 **Deployment Relationship Management:**
+
 - Parse and expose subdeployment hierarchy
 - Navigate deployment-system associations (many-to-many)
 - Extract spatial extent (deployment footprint)
@@ -1467,6 +1529,7 @@ The CSAPIQueryBuilder includes Deployments resource methods to manage CSAPI Depl
 **Query Parameters:** See [Complete Query Parameter Support](#complete-query-parameter-support). Deployments support: `bbox`, `datetime`, `recursive`, `system`, `parent`, `id`, `uid`, `q`, property filters, `limit`, `offset`, `f`, `sortBy`, `sortOrder`.
 
 **References:**
+
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html): Normative specification for Deployments resources
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml): Deployments endpoint definitions
 - [csapi-part1-requirements.md](../research/requirements/csapi-part1-requirements.md): Client implementation requirements for Deployments including spatial/temporal queries
@@ -1481,6 +1544,7 @@ The CSAPIQueryBuilder includes Procedures resource methods to manage CSAPI Proce
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all procedures: `GET /procedures`
 - Get single procedure: `GET /procedures/{id}`
 - Query procedures: `GET /procedures?system=...&q=...`
@@ -1488,31 +1552,37 @@ The CSAPIQueryBuilder includes Procedures resource methods to manage CSAPI Proce
 - Procedures in collection: `GET /collections/{collectionId}/items?featureType=sosa:Procedure`
 
 **Create Operations:**
+
 - Create procedure: `POST /procedures` with GeoJSON or SensorML body
 - Add to collection: `POST /collections/{collectionId}/items`
 
 **Update Operations:**
+
 - Replace procedure: `PUT /procedures/{id}`
 - Partial update: `PATCH /procedures/{id}`
 
 **Delete Operations:**
+
 - Delete procedure: `DELETE /procedures/{id}`
 
 **Procedure Properties to Parse:**
 
-*GeoJSON encoding (`application/geo+json`):*
+_GeoJSON encoding (`application/geo+json`):_
+
 - `featureType`: Procedure type URI from `ProcedureTypeUris` (e.g., `sosa:Procedure`, `sosa:ObservingProcedure`, `sosa:SamplingProcedure`, `sosa:ActuatingProcedure`)
 - `uid`: Globally unique identifier URI
 - `name`, `description`: Human-readable metadata
 - `geometry`: Always `null` in GeoJSON encoding
 
-*SensorML encoding (`application/sml+json`) — additional properties:*
+_SensorML encoding (`application/sml+json`) — additional properties:_
+
 - `inputs`: Input parameters/requirements
 - `outputs`: Output specifications
 - `parameters`: Configuration parameters
 - `documentation`: Links to manuals, specifications
 
 **Procedure Relationship Management:**
+
 - Systems using this procedure (reverse lookup)
 - DataStreams using this procedure (Part 2 cross-reference)
 - Parse SensorML method descriptions
@@ -1521,6 +1591,7 @@ The CSAPIQueryBuilder includes Procedures resource methods to manage CSAPI Proce
 **Query Parameters:** See [Complete Query Parameter Support](#complete-query-parameter-support). Procedures support: `system`, `id`, `uid`, `q`, property filters, `limit`, `offset`, `f`, `sortBy`, `sortOrder`.
 
 **References:**
+
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html): Normative specification for Procedures resources and methodologies
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml): Procedures endpoint definitions
 - [csapi-part1-requirements.md](../research/requirements/csapi-part1-requirements.md): Client requirements for Procedures including SensorML format support
@@ -1535,6 +1606,7 @@ The CSAPIQueryBuilder includes Sampling Features resource methods to manage CSAP
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all sampling features: `GET /samplingFeatures`
 - Get single sampling feature: `GET /samplingFeatures/{id}`
 - Query sampling features: `GET /samplingFeatures?bbox=...&foi=...&system=...`
@@ -1543,20 +1615,24 @@ The CSAPIQueryBuilder includes Sampling Features resource methods to manage CSAP
 - Sampling features in collection: `GET /collections/{collectionId}/items?featureType=sosa:SamplingFeature`
 
 **Create Operations:**
+
 - Create sampling feature: `POST /samplingFeatures` with GeoJSON body
 - Create under system: `POST /systems/{systemId}/samplingFeatures`
 - Add to collection: `POST /collections/{collectionId}/items`
 
 **Update Operations:**
+
 - Replace sampling feature: `PUT /samplingFeatures/{id}`
 - Partial update: `PATCH /samplingFeatures/{id}`
 
 **Delete Operations:**
+
 - Delete sampling feature: `DELETE /samplingFeatures/{id}`
 
 **Sampling Feature Properties to Parse:**
 
-*GeoJSON encoding (`application/geo+json`):*
+_GeoJSON encoding (`application/geo+json`):_
+
 - `featureType`: Type URI for sampling feature
 - `uid`: Globally unique identifier URI
 - `name`, `description`: Human-readable metadata
@@ -1564,12 +1640,14 @@ The CSAPIQueryBuilder includes Sampling Features resource methods to manage CSAP
 - `sampledFeature@link`: Required link to ultimate feature of interest
 - `geometry`: Spatial geometry of sampling location (Point, Polygon, etc.)
 
-*Relationship management (via HATEOAS links):*
+_Relationship management (via HATEOAS links):_
+
 - Systems using this sampling feature
 - Related sampling features (hierarchical relationships)
 - Observations at this sampling feature (Part 2)
 
 **Sampling Feature Relationship Management:**
+
 - Systems using this sampling feature
 - Ultimate feature of interest (sampled feature)
 - Related sampling features (hierarchical relationships)
@@ -1578,6 +1656,7 @@ The CSAPIQueryBuilder includes Sampling Features resource methods to manage CSAP
 **Query Parameters:** See [Complete Query Parameter Support](#complete-query-parameter-support). Sampling Features support: `bbox`, `system`, `foi`, `relatedSamplingFeature`, `id`, `uid`, `q`, property filters, `limit`, `offset`, `f`, `sortBy`, `sortOrder`.
 
 **References:**
+
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html): Normative specification for Sampling Features resources
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml): Sampling Features endpoint definitions
 - [csapi-part1-requirements.md](../research/requirements/csapi-part1-requirements.md): Client requirements for Sampling Features navigation
@@ -1593,6 +1672,7 @@ The CSAPIQueryBuilder includes Properties resource methods to manage CSAPI Prope
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all properties: `GET /properties`
 - Get single property: `GET /properties/{id}`
 - Query properties: `GET /properties?q=temperature&system=...`
@@ -1602,6 +1682,7 @@ The CSAPIQueryBuilder includes Properties resource methods to manage CSAPI Prope
 > **⚠️ Non-Feature Resource:** Properties are the only Part 1 resource that is **not** a GeoJSON Feature. The CSAPI specification uses `resources`/`itemType` (not `features`/`featureType`) for Properties collections. The response is a plain JSON collection with `items` (not `features`), and collection metadata uses `itemType` (not `featureType`). This distinction must be handled in the response parser.
 
 **Property Metadata to Parse:**
+
 - `definition`: URI from controlled vocabulary (QUDT, CF, etc.)
 - `label`: Human-readable name
 - `description`: Detailed explanation
@@ -1610,12 +1691,14 @@ The CSAPIQueryBuilder includes Properties resource methods to manage CSAPI Prope
 - `units`: Standard units of measure
 
 **Association Navigation:**
+
 - Systems observing property: `GET /properties/{id}/systems`
 - DataStreams for property: `GET /properties/{id}/datastreams` (Part 2 cross-reference)
 - Control streams for property: `GET /properties/{id}/controlstreams` (Part 2 cross-reference)
 - Property history: `GET /properties/{id}/history`
 
 **Property Relationship Management:**
+
 - Systems capable of observing this property
 - DataStreams observing this property (Part 2)
 - ControlStreams controlling this property (Part 2)
@@ -1624,6 +1707,7 @@ The CSAPIQueryBuilder includes Properties resource methods to manage CSAPI Prope
 **Query Parameters:** See [Complete Query Parameter Support](#complete-query-parameter-support). Properties support: `system`, `baseProperty`, `id`, `uid`, `q`, property filters, `limit`, `offset`, `f`, `sortBy`, `sortOrder`.
 
 **References:**
+
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html): Normative specification for Properties resources
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml): Properties endpoint definitions
 - [csapi-part1-requirements.md](../research/requirements/csapi-part1-requirements.md): Client requirements for Properties navigation
@@ -1638,6 +1722,7 @@ The CSAPIQueryBuilder includes DataStreams resource methods to manage CSAPI Data
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all datastreams: `GET /datastreams`
 - Get single datastream: `GET /datastreams/{id}`
 - Query datastreams: `GET /datastreams?system=...&observedProperty=...&foi=...`
@@ -1646,18 +1731,22 @@ The CSAPIQueryBuilder includes DataStreams resource methods to manage CSAPI Data
 - DataStreams in collection: `GET /collections/{collectionId}/items`
 
 **Create Operations:**
+
 - Create datastream: `POST /datastreams` with JSON body including result schema
 - Create under system: `POST /systems/{systemId}/datastreams`
 
 **Update Operations:**
+
 - Replace datastream: `PUT /datastreams/{id}` (caution: schema changes affect existing observations)
 - Partial update: `PATCH /datastreams/{id}` (limited schema updates allowed)
 
 **Delete Operations:**
+
 - Delete datastream: `DELETE /datastreams/{id}`
 - Cascade delete: `DELETE /datastreams/{id}?cascade=true` (deletes all observations)
 
 **DataStream Properties to Parse:**
+
 - `name`: Human-readable name
 - `description`: Detailed description
 - `system`: Link to producing system (required)
@@ -1672,6 +1761,7 @@ The CSAPIQueryBuilder includes DataStreams resource methods to manage CSAPI Data
 - `archiveDuration`: How long observations are retained
 
 **DataStream Relationship Management:**
+
 - System producing this datastream (required association)
 - Properties being observed (required association)
 - Observations in this datastream (Part 2, see Observations methods)
@@ -1680,6 +1770,7 @@ The CSAPIQueryBuilder includes DataStreams resource methods to manage CSAPI Data
 - Features of interest (optional association)
 
 **Schema Operations:**
+
 - Get result schema: `GET /datastreams/{id}/schema?obsFormat={format}` — `obsFormat` is **required** (Part 2, Req 11)
 - Parse SWE Common result schema (DataComponent definition)
 - Validate observation results against schema
@@ -1688,18 +1779,19 @@ The CSAPIQueryBuilder includes DataStreams resource methods to manage CSAPI Data
 
 **`obsFormat` valid values for schema endpoint:**
 
-| Format | Media Type | Priority |
-|--------|-----------|----------|
-| SWE Common JSON | `application/swe+json` | **Critical** |
-| O&M JSON | `application/om+json` | High |
-| SWE Common Text (CSV) | `text/csv` | Medium |
-| SWE Common Binary | `application/octet-stream` | Low |
+| Format                | Media Type                 | Priority     |
+| --------------------- | -------------------------- | ------------ |
+| SWE Common JSON       | `application/swe+json`     | **Critical** |
+| O&M JSON              | `application/om+json`      | High         |
+| SWE Common Text (CSV) | `text/csv`                 | Medium       |
+| SWE Common Binary     | `application/octet-stream` | Low          |
 
 Omitting `obsFormat` on the schema endpoint returns **400 Bad Request** ("Missing required parameter").
 
 **Query Parameters:** See [Complete Query Parameter Support](#complete-query-parameter-support). DataStreams support: `system`, `observedProperty`, `foi`, `samplingFeature`, `procedure`, `datetime`, `id`, `uid`, `q`, property filters, `limit`, `offset`, `f`, `sortBy`, `sortOrder`.
 
 **References:**
+
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html): Normative specification for DataStreams resources and schema operations
 - [OGC API - Connected Systems Part 2: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml): DataStreams endpoint definitions
 - [csapi-part2-requirements.md](../research/requirements/csapi-part2-requirements.md): Client implementation requirements for DataStreams including schema handling
@@ -1715,6 +1807,7 @@ The CSAPIQueryBuilder includes Observations resource methods to manage CSAPI Obs
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all observations: `GET /observations?phenomenonTime=...&limit=...`
 - Get single observation: `GET /observations/{id}`
 - Stream-specific observations: `GET /datastreams/{id}/observations?phenomenonTime=2024-01-01/2024-01-31`
@@ -1723,18 +1816,22 @@ The CSAPIQueryBuilder includes Observations resource methods to manage CSAPI Obs
 - Pagination: `GET /observations?cursor={nextCursor}&limit=1000`
 
 **Create Operations:**
+
 - Create single observation: `POST /datastreams/{id}/observations` with observation body
 - Bulk create: `POST /datastreams/{id}/observations` with array of observations
 - Stream ingestion: POST to `/datastreams/{id}/observations` with streaming payload
 
 **Update Operations:**
+
 - Replace observation: `PUT /observations/{id}` (rare, usually observations are immutable)
 - Partial update: `PATCH /observations/{id}` (for quality flags, validation status)
 
 **Delete Operations:**
+
 - Delete observation: `DELETE /observations/{id}` (rare, usually retained)
 
 **Observation Properties to Parse:**
+
 - `phenomenonTime`: When the observation was made (required, ISO 8601)
 - `resultTime`: When the result became available (optional, defaults to phenomenonTime)
 - `result`: Observation result structured per DataStream schema (required)
@@ -1743,6 +1840,7 @@ The CSAPIQueryBuilder includes Observations resource methods to manage CSAPI Obs
 - `featureOfInterest`: Link to observed feature (optional if provided by DataStream)
 
 **Observation Result Parsing:**
+
 - Parse SWE Common JSON encoding: structured JSON with units
 - Parse SWE Common Text encoding: CSV-style compact format
 - Parse SWE Common Binary encoding: efficient binary format
@@ -1752,6 +1850,7 @@ The CSAPIQueryBuilder includes Observations resource methods to manage CSAPI Obs
 - Extract quality information
 
 **Temporal Query Features:**
+
 - **phenomenonTime filtering** (when observation was made - PRIMARY temporal filter):
   - Single instant: `phenomenonTime=2024-01-15T12:00:00Z`
   - Closed interval: `phenomenonTime=2024-01-01/2024-01-31`
@@ -1763,6 +1862,7 @@ The CSAPIQueryBuilder includes Observations resource methods to manage CSAPI Obs
 - **Temporal resolution**: Filter by minimum time spacing between observations
 
 **Pagination Support:**
+
 - **Offset-based pagination** (Part 1 style): `limit` + `offset` for predictable page numbers
 - **Cursor-based pagination** (Part 2 optimized): `limit` + `cursor` for efficient streaming of large time series
   - Cursor tokens encode position in result set
@@ -1773,6 +1873,7 @@ The CSAPIQueryBuilder includes Observations resource methods to manage CSAPI Obs
 - **Stable sorting**: By phenomenonTime ascending, then by ID for deterministic ordering
 
 **Performance Considerations:**
+
 - Efficient parsing of large observation arrays
 - Streaming support for bulk ingestion
 - Incremental parsing of CSV/Text format
@@ -1782,6 +1883,7 @@ The CSAPIQueryBuilder includes Observations resource methods to manage CSAPI Obs
 **Query Parameters:** See [Complete Query Parameter Support](#complete-query-parameter-support). Observations support: `phenomenonTime`, `resultTime`, `foi`, `id`, `limit`, `offset`, `cursor`, `f`, `obsFormat`, `sortBy`, `sortOrder`.
 
 **References:**
+
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html): Normative specification for Observations resources and temporal queries
 - [OGC API - Connected Systems Part 2: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml): Observations endpoint definitions
 - [csapi-part2-requirements.md](../research/requirements/csapi-part2-requirements.md): Client requirements for Observations including pagination and bulk operations
@@ -1797,6 +1899,7 @@ The CSAPIQueryBuilder includes Control Streams resource methods to manage CSAPI 
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all control streams: `GET /controlstreams`
 - Get single control stream: `GET /controlstreams/{id}`
 - Query control streams: `GET /controlstreams?system=...&controlledProperty=...`
@@ -1805,18 +1908,22 @@ The CSAPIQueryBuilder includes Control Streams resource methods to manage CSAPI 
 - Control streams in collection: `GET /collections/{collectionId}/items`
 
 **Create Operations:**
+
 - Create control stream: `POST /controlstreams` with JSON body including parameter schema
 - Create under system: `POST /systems/{systemId}/controlstreams`
 
 **Update Operations:**
+
 - Replace control stream: `PUT /controlstreams/{id}`
 - Partial update: `PATCH /controlstreams/{id}`
 
 **Delete Operations:**
+
 - Delete control stream: `DELETE /controlstreams/{id}`
 - Cascade delete: `DELETE /controlstreams/{id}?cascade=true` (deletes all commands)
 
 **Control Stream Properties to Parse:**
+
 - `name`: Human-readable name
 - `description`: Detailed description
 - `system`: Link to controlled system (required)
@@ -1828,12 +1935,14 @@ The CSAPIQueryBuilder includes Control Streams resource methods to manage CSAPI 
 - `supportsFeasibility`: Can check feasibility before execution
 
 **Control Stream Relationship Management:**
+
 - System being controlled (required association)
 - Properties being controlled (required association)
 - Commands sent through this stream (see Commands methods)
 - Valid parameter ranges and constraints
 
 **Schema Operations:**
+
 - Get parameter schema: `GET /controlstreams/{id}/schema?cmdFormat={format}` — `cmdFormat` is **required** (Part 2, Req 25)
 - Parse SWE Common parameter schema (DataComponent definition)
 - Validate command parameters against schema
@@ -1842,8 +1951,8 @@ The CSAPIQueryBuilder includes Control Streams resource methods to manage CSAPI 
 
 **`cmdFormat` valid values for schema endpoint:**
 
-| Format | Media Type | Priority |
-|--------|-----------|----------|
+| Format          | Media Type             | Priority     |
+| --------------- | ---------------------- | ------------ |
 | SWE Common JSON | `application/swe+json` | **Critical** |
 
 Omitting `cmdFormat` on the schema endpoint returns **400 Bad Request** ("Missing required parameter").
@@ -1851,6 +1960,7 @@ Omitting `cmdFormat` on the schema endpoint returns **400 Bad Request** ("Missin
 **Query Parameters:** See [Complete Query Parameter Support](#complete-query-parameter-support). Control Streams support: `system`, `controlledProperty`, `datetime`, `executionTime`, `issueTime`, `id`, `uid`, `q`, property filters, `limit`, `offset`, `f`, `sortBy`, `sortOrder`.
 
 **References:**
+
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html): Normative specification for ControlStreams resources
 - [OGC API - Connected Systems Part 2: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml): ControlStreams endpoint definitions
 - [csapi-part2-requirements.md](../research/requirements/csapi-part2-requirements.md): Client requirements for ControlStreams and actuation capabilities
@@ -1866,6 +1976,7 @@ The CSAPIQueryBuilder includes Commands resource methods to manage CSAPI Command
 **Operations to Implement:**
 
 **Read Operations:**
+
 - List all commands: `GET /commands?issueTime=...&limit=...`
 - Get single command: `GET /commands/{id}`
 - Stream-specific commands: `GET /controlstreams/{id}/commands?issueTime=2024-01-01/..`
@@ -1875,19 +1986,23 @@ The CSAPIQueryBuilder includes Commands resource methods to manage CSAPI Command
 - Get command result: `GET /commands/{id}/result`
 
 **Create Operations:**
+
 - Create single command: `POST /controlstreams/{id}/commands` with command body
 - Bulk create: `POST /controlstreams/{id}/commands` with array of commands
 - Check feasibility: `POST /controlstreams/{id}/feasibility` with parameters
 
 **Update Operations:**
+
 - Update command status: `PATCH /commands/{id}/status` (for system-generated status updates)
 - Update command result: `PUT /commands/{id}/result` (when execution completes)
 - Cancel command: `POST /commands/{id}/cancel`
 
 **Delete Operations:**
+
 - Delete command: `DELETE /commands/{id}` (if not yet executed)
 
 **Command Properties to Parse:**
+
 - `issueTime`: When command was issued (ISO 8601)
 - `executionTime`: When to execute (optional, immediate if omitted)
 - `parameters`: Command parameters per ControlStream schema
@@ -1896,17 +2011,20 @@ The CSAPIQueryBuilder includes Commands resource methods to manage CSAPI Command
 - `receiver`: Target system/component
 
 **Command Status Properties:**
+
 - `status`: Current state (`PENDING`, `ACCEPTED`, `EXECUTING`, `COMPLETED`, `FAILED`, `CANCELED` — see [Command Status Lifecycle](#command-status-lifecycle-state-machine) below)
 - `percentCompletion`: Progress indicator (0-100)
 - `statusMessage`: Human-readable status
 - `updateTime`: Last status update timestamp
 
 **Command Result Properties:**
+
 - `result`: Execution result per ControlStream schema
 - `completionTime`: When execution finished
 - `resultQuality`: Quality indicators for result
 
 **Temporal Query Features:**
+
 - **issueTime filtering** (when command was issued - PRIMARY temporal filter):
   - Single instant: `issueTime=2024-01-15T12:00:00Z`
   - Closed interval: `issueTime=2024-01-01/2024-01-31`
@@ -1917,6 +2035,7 @@ The CSAPIQueryBuilder includes Commands resource methods to manage CSAPI Command
 - **Relationship filtering**: `controlstream` parameter (commands for specific control stream)
 
 **Pagination Support:**
+
 - **Offset-based pagination**: `limit` + `offset` for predictable page numbers
 - **Cursor-based pagination**: `limit` + `cursor` for efficient streaming of command histories
 - **Limit parameter**: 1 to 10,000 (CSAPI Part 2 maximum)
@@ -1927,16 +2046,17 @@ The CSAPIQueryBuilder includes Commands resource methods to manage CSAPI Command
 
 Commands progress through a defined state machine with 6 states and strictly forward transitions:
 
-| State | Description | Terminal? | Cancellable? |
-|-------|-------------|-----------|-------------|
-| `PENDING` | Command accepted, waiting for processing | No | Yes |
-| `ACCEPTED` | Command validated and queued for execution | No | Yes |
-| `EXECUTING` | Command currently running | No | Yes |
-| `COMPLETED` | Command successfully finished | Yes | No |
-| `FAILED` | Command execution failed | Yes | No |
-| `CANCELED` | Command canceled before completion | Yes | No |
+| State       | Description                                | Terminal? | Cancellable? |
+| ----------- | ------------------------------------------ | --------- | ------------ |
+| `PENDING`   | Command accepted, waiting for processing   | No        | Yes          |
+| `ACCEPTED`  | Command validated and queued for execution | No        | Yes          |
+| `EXECUTING` | Command currently running                  | No        | Yes          |
+| `COMPLETED` | Command successfully finished              | Yes       | No           |
+| `FAILED`    | Command execution failed                   | Yes       | No           |
+| `CANCELED`  | Command canceled before completion         | Yes       | No           |
 
 **Valid State Transitions:**
+
 ```
 PENDING  → ACCEPTED     (validated and queued)
 PENDING  → CANCELED     (canceled before processing)
@@ -1950,18 +2070,21 @@ EXECUTING → CANCELED    (canceled during execution)
 **Invalid transitions:** Terminal states cannot transition. `PENDING` cannot skip to `EXECUTING` (must go through `ACCEPTED`). States cannot move backward.
 
 **Lifecycle Endpoints:**
+
 - Submit command: `POST /controlstreams/{id}/commands`
 - Get command with status: `GET /commands/{id}` (status field reflects current state)
 - Get command result: `GET /commands/{id}/result` (available when `COMPLETED`)
 - Cancel command: `POST /commands/{id}/cancel` (only non-terminal states)
 
 **Synchronous vs Asynchronous Execution:**
+
 - **Synchronous** (rare): POST returns `200 OK` with `COMPLETED` status and inline result
 - **Asynchronous** (typical): POST returns `201 Created` with `Location` header; status starts at `PENDING`; client polls `GET /commands/{id}` until terminal state
 
 **Query Parameters:** See [Complete Query Parameter Support](#complete-query-parameter-support). Commands support: `issueTime`, `executionTime`, `status`, `controlstream`, `id`, `limit`, `offset`, `cursor`, `f`, `cmdFormat`, `sortBy`, `sortOrder`.
 
 **References:**
+
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html): Normative specification for Commands resources and lifecycle management
 - [OGC API - Connected Systems Part 2: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml): Commands endpoint definitions
 - [csapi-part2-requirements.md](../research/requirements/csapi-part2-requirements.md): Client requirements for Commands including status tracking and feasibility
@@ -1979,6 +2102,7 @@ EXECUTING → CANCELED    (canceled during execution)
 This URL builder implements FULL query parameter support for CSAPI Parts 1 and 2, including all standard OGC API parameters and all CSAPI-specific extensions. This is NOT an MVP - we support the complete filtering and pagination capabilities defined in the CSAPI specifications.
 
 **Standard OGC API Parameters:**
+
 - `bbox`: Spatial bounding box filter (2D and 3D) for Systems, Deployments, Sampling Features
 - `datetime`: Temporal filter using ISO 8601 intervals for validTime filtering
 - `limit`: Maximum results per page (1 to 10,000 for Part 2)
@@ -1986,17 +2110,20 @@ This URL builder implements FULL query parameter support for CSAPI Parts 1 and 2
 - `f`: Format negotiation (json, geojson, sml+json, swe+json, swe+text)
 
 **CSAPI Common Parameters (Part 1):**
+
 - `id`: Filter by resource ID (multiple IDs supported as comma-separated list)
 - `uid`: Filter by unique identifier (URN-based filtering)
 - `q`: Full-text search across resource properties
 - `{propertyName}`: Filter by any resource property (e.g., `name=Weather%20Station`, `featureType=sosa:Sensor`)
 
 **CSAPI Hierarchical Parameters:**
+
 - `recursive`: Boolean flag for hierarchical queries (subsystems, subdeployments)
   - `recursive=false`: Direct children only (default)
   - `recursive=true`: All descendants at all nesting levels
 
 **CSAPI Relationship Parameters (Part 1):**
+
 - `parent`: Filter by parent system/deployment ID
 - `procedure`: Filter resources by associated procedure
 - `foi`: Filter by feature of interest
@@ -2007,33 +2134,39 @@ This URL builder implements FULL query parameter support for CSAPI Parts 1 and 2
 - `objectType`: Filter by resource type
 
 **CSAPI Temporal Parameters (Part 2):**
+
 - `phenomenonTime`: When observation was made (ISO 8601 interval, primary temporal filter for observations)
 - `resultTime`: When observation result became available
 - `executionTime`: When command should be/was executed
 - `issueTime`: When command was issued
 
 **Pagination Modes:**
+
 - **Offset-based** (Part 1): `limit` + `offset` for predictable page navigation
 - **Cursor-based** (Part 2): `limit` + `cursor` for efficient large dataset streaming
 - **Temporal windowing** (Part 2): `phenomenonTime` intervals for time-series data
 
 **Advanced Filtering Capabilities:**
+
 - **Multiple ID filtering**: `id=sys1,sys2,sys3` (OR logic)
 - **Property-based filtering**: Any resource property can be used as query parameter
 - **Combined filters**: All parameters can be combined (AND logic between different parameter types)
 - **Nested endpoint filtering**: All query parameters work on nested endpoints (e.g., `/systems/{id}/subsystems?bbox=...&recursive=true`)
 
 **Format Negotiation:**
+
 - Query parameter: `f=json|geojson|sml+json|swe+json|swe+text|html`
 - HTTP Accept header: `application/json`, `application/geo+json`, `application/sml+json`, `application/swe+json`, `application/swe+text`
 - Format-specific parameters for Part 2: `obsFormat` (observation encoding), `cmdFormat` (command encoding)
 
 **Sorting:**
+
 - `sortBy`: Field name to sort results by (e.g., `phenomenonTime`, `resultTime`, `id`). Valid sort fields are resource-dependent.
 - `sortOrder`: `asc` (ascending) or `desc` (descending). Defaults to `asc` if omitted.
 - Sorting is defined in OGC API – Common and supported by compliant CSAPI servers. Sorting is essential for deterministic pagination — paginating unsorted results produces unpredictable ordering across pages.
 
 **References:**
+
 - [Query Parameter Requirements](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/requirements/csapi-query-parameters.md) - Complete catalog of all CSAPI query parameters
 - [OGC API - Common](https://docs.ogc.org/is/19-072/19-072.html) - Standard OGC API parameters (bbox, datetime, limit, offset, f)
 - [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html) - Temporal parameter format specification
@@ -2160,11 +2293,13 @@ src/ogc-api/csapi/
 **File Purposes:**
 
 **Core files (3):**
+
 - `model.ts` - All TypeScript type definitions (GeoJSON-based resources)
 - `url_builder.ts` - CSAPIQueryBuilder class with all 80 methods
 - `helpers.ts` - Pure utility functions (URL encoding, temporal parsing, validation)
 
 **Format files (15):**
+
 - `formats/index.ts` - Barrel file for parser exports
 - `formats/geojson.ts` - GeoJSON parsing utilities (reuse geojson package)
 - `formats/constants.ts` - Media type constants, namespace URIs
@@ -2172,6 +2307,7 @@ src/ogc-api/csapi/
 - `formats/swecommon/` - SWE Common 3.0 parser (6 files)
 
 **Test files (2):**
+
 - `model.spec.ts` - Type validation tests
 - `url_builder.spec.ts` - QueryBuilder method tests
 
@@ -2186,6 +2322,7 @@ src/ogc-api/csapi/
 5. **Maintainable:** Format changes isolated from QueryBuilder
 
 **Why flat structure:**
+
 1. ✅ **100% convention compliance** - Matches all upstream APIs
 2. ✅ **Easy navigation** - No hunting through subdirectories
 3. ✅ **Clear organization** - Purpose obvious from filename
@@ -2193,6 +2330,7 @@ src/ogc-api/csapi/
 5. ✅ **No barrel files** - Direct imports (except formats/index.ts)
 
 **Why formats/ subfolder:**
+
 1. ✅ **Size justification** - 3,450+ lines needs organization
 2. ✅ **Separation of concerns** - URL building vs format parsing
 3. ✅ **Tree-shaking** - Users can exclude parsers
@@ -2201,19 +2339,20 @@ src/ogc-api/csapi/
 
 **Code Volume Breakdown:**
 
-| Component | Lines | Percentage |
-|-----------|-------|------------|
-| url_builder.ts | 700-800 | 13-15% |
-| model.ts | 350-400 | 6-8% |
-| helpers.ts | 50-80 | 1% |
-| formats/sensorml/ | 1,600-2,200 | 30-35% |
-| formats/swecommon/ | 1,600-2,250 | 30-36% |
-| formats/ (other) | 200-400 | 4-6% |
-| **TOTAL** | **4,500-5,130** | **100%** |
+| Component          | Lines           | Percentage |
+| ------------------ | --------------- | ---------- |
+| url_builder.ts     | 700-800         | 13-15%     |
+| model.ts           | 350-400         | 6-8%       |
+| helpers.ts         | 50-80           | 1%         |
+| formats/sensorml/  | 1,600-2,200     | 30-35%     |
+| formats/swecommon/ | 1,600-2,250     | 30-36%     |
+| formats/ (other)   | 200-400         | 4-6%       |
+| **TOTAL**          | **4,500-5,130** | **100%**   |
 
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Research Plan 12 validated structure
 
 **References:**
+
 - [Architecture Decision - Part 2: File Organization](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-2-file-organization) - Complete file structure analysis
 - [File Organization Strategy](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/file-organization-analysis.md) - Upstream file organization patterns
 
@@ -2235,21 +2374,21 @@ The type system is organized in three tiers for maximum reuse and clarity:
 // ========================================
 // TIER 1: SHARED PRIMITIVES (import from ../../shared/models.ts)
 // ========================================
-import { 
-  BoundingBox,           // Spatial primitive
-  DateTimeParameter,     // Temporal primitive
-  CrsCode,               // Coordinate reference system
-  MimeType,              // Format type
-  Contact                // Metadata primitive
+import {
+  BoundingBox, // Spatial primitive
+  DateTimeParameter, // Temporal primitive
+  CrsCode, // Coordinate reference system
+  MimeType, // Format type
+  Contact, // Metadata primitive
 } from '../../shared/models.js';
 
 // ========================================
 // TIER 2: OGC API COMMON (import from ../model.ts)
 // ========================================
 import {
-  OgcApiCollectionInfo,  // Collection metadata
-  OgcApiDocumentLink,    // HATEOAS links
-  ConformanceClass       // Conformance checking
+  OgcApiCollectionInfo, // Collection metadata
+  OgcApiDocumentLink, // HATEOAS links
+  ConformanceClass, // Conformance checking
 } from '../model.ts';
 
 // Import GeoJSON types from geojson package
@@ -2272,7 +2411,7 @@ export const CSAPIResourceTypes = [
   'commands',
 ] as const;
 
-export type CSAPIResourceType = typeof CSAPIResourceTypes[number];
+export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
 
 // 2. Query Options (~40 lines)
 export interface QueryOptions {
@@ -2325,11 +2464,11 @@ export interface System {
   id: string;
   type: 'System';
   properties: {
-    featureType: string;       // SystemTypeUris discriminator (sosa:Sensor, sosa:Platform, etc.)
-    uid: string;               // Globally unique identifier URI (required by spec)
+    featureType: string; // SystemTypeUris discriminator (sosa:Sensor, sosa:Platform, etc.)
+    uid: string; // Globally unique identifier URI (required by spec)
     name: string;
     description?: string;
-    assetType?: string;        // Equipment, Human, LivingThing, Simulation, Process, Group, Other
+    assetType?: string; // Equipment, Human, LivingThing, Simulation, Process, Group, Other
     validTime?: TimeInterval;
     // SensorML-only properties (populated when system fetched in application/sml+json):
     keywords?: string[];
@@ -2339,43 +2478,43 @@ export interface System {
     characteristics?: Characteristic[];
   };
   geometry?: Geometry;
-  links: ResourceLink[];       // Includes systemKind@link and association navigation
+  links: ResourceLink[]; // Includes systemKind@link and association navigation
 }
 
 export interface Deployment {
   id: string;
   type: 'Deployment';
   properties: {
-    featureType: string;       // DeploymentTypeUris discriminator (sosa:Deployment)
-    uid: string;               // Globally unique identifier URI (required by spec)
+    featureType: string; // DeploymentTypeUris discriminator (sosa:Deployment)
+    uid: string; // Globally unique identifier URI (required by spec)
     name: string;
     description?: string;
-    validTime: TimeInterval;   // Time period during which systems are deployed (required)
+    validTime: TimeInterval; // Time period during which systems are deployed (required)
   };
-  geometry?: Geometry;         // Deployment area (can be Polygon, not just Point)
-  links: ResourceLink[];       // Includes platform@link, deployedSystems@link navigation
+  geometry?: Geometry; // Deployment area (can be Polygon, not just Point)
+  links: ResourceLink[]; // Includes platform@link, deployedSystems@link navigation
 }
 
 export interface SamplingFeature {
   id: string;
   type: 'SamplingFeature';
   properties: {
-    featureType: string;       // Type URI for sampling feature
-    uid: string;               // Globally unique identifier URI (required by spec)
+    featureType: string; // Type URI for sampling feature
+    uid: string; // Globally unique identifier URI (required by spec)
     name: string;
     description?: string;
-    validTime?: TimeInterval;  // Optional validity period
+    validTime?: TimeInterval; // Optional validity period
   };
   geometry?: Geometry;
-  links: ResourceLink[];       // Includes sampledFeature@link navigation (required)
+  links: ResourceLink[]; // Includes sampledFeature@link navigation (required)
 }
 
 export interface Procedure {
   id: string;
   type: 'Procedure';
   properties: {
-    featureType: string;       // ProcedureTypeUris discriminator (sosa:Procedure, sosa:ObservingProcedure, etc.)
-    uid: string;               // Globally unique identifier URI (required by spec)
+    featureType: string; // ProcedureTypeUris discriminator (sosa:Procedure, sosa:ObservingProcedure, etc.)
+    uid: string; // Globally unique identifier URI (required by spec)
     name: string;
     description?: string;
     // Note: geometry is always null in GeoJSON encoding; detailed descriptions use SensorML
@@ -2422,7 +2561,7 @@ export interface Observation {
     phenomenonTime: Date;
     resultTime: Date;
     datastreamId: string;
-    result: any;  // Type depends on observed property
+    result: any; // Type depends on observed property
     resultQuality?: string[];
   };
   geometry?: Point;
@@ -2494,12 +2633,14 @@ export type CommandCollection = Collection<Command>;
 #### Why This Structure:
 
 **Three-Tier Benefits:**
+
 1. ✅ **Clear dependencies** - One-way imports (lower → higher)
 2. ✅ **Code reuse** - Shared types prevent duplication
 3. ✅ **Namespace clarity** - Types organized by scope
 4. ✅ **Maintainability** - Changes isolated to appropriate tier
 
 **Why single model.ts for GeoJSON:**
+
 1. ✅ **Convention compliance** - EDR uses single model.ts
 2. ✅ **Import simplicity** - One import for all resource types
 3. ✅ **IntelliSense efficiency** - Full autocomplete from one source
@@ -2509,6 +2650,7 @@ export type CommandCollection = Collection<Command>;
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Research Plan 13 validated structure
 
 **References:**
+
 - [Architecture Decision - Part 2: Type System](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-3-typescript-type-system) - Complete type system with all interfaces
 - [TypeScript Type System Design](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/typescript-types-analysis.md) - Three-tier hierarchy analysis
 
@@ -2525,20 +2667,20 @@ export type CommandCollection = Collection<Command>;
 import { OgcApiEndpoint, CSAPIQueryBuilder } from '@camptocamp/ogc-client';
 
 // GeoJSON types (CSAPI resources)
-import type { 
-  System, 
-  Deployment, 
+import type {
+  System,
+  Deployment,
   Datastream,
   Observation,
   SystemCollection,
-  ObservationCollection 
+  ObservationCollection,
 } from '@camptocamp/ogc-client';
 
 // Query options
-import type { 
-  QueryOptions, 
+import type {
+  QueryOptions,
   SystemQueryOptions,
-  ObservationQueryOptions 
+  ObservationQueryOptions,
 } from '@camptocamp/ogc-client';
 ```
 
@@ -2547,25 +2689,28 @@ import type {
 ```typescript
 // SensorML parsers and types
 import { parseSensorML30 } from '@camptocamp/ogc-client/csapi/formats/sensorml';
-import type { 
-  PhysicalSystem, 
+import type {
+  PhysicalSystem,
   PhysicalComponent,
-  Capability 
+  Capability,
 } from '@camptocamp/ogc-client/csapi/formats/sensorml';
 
 // SWE Common parsers and types
-import { parseSWEDataRecord, parseSWEDataArray } from '@camptocamp/ogc-client/csapi/formats/swecommon';
-import type { 
-  DataRecord, 
+import {
+  parseSWEDataRecord,
+  parseSWEDataArray,
+} from '@camptocamp/ogc-client/csapi/formats/swecommon';
+import type {
+  DataRecord,
   DataArray,
   Quantity,
-  DataEncoding 
+  DataEncoding,
 } from '@camptocamp/ogc-client/csapi/formats/swecommon';
 
 // Or barrel import (if using formats/index.ts)
-import { 
-  parseSensorML30, 
-  parseSWEDataRecord 
+import {
+  parseSensorML30,
+  parseSWEDataRecord,
 } from '@camptocamp/ogc-client/csapi/formats';
 ```
 
@@ -2573,7 +2718,11 @@ import {
 
 ```typescript
 // Three-tier hierarchy imports in model.ts
-import { BoundingBox, DateTimeParameter, Contact } from '../../shared/models.js';
+import {
+  BoundingBox,
+  DateTimeParameter,
+  Contact,
+} from '../../shared/models.js';
 import { OgcApiCollectionInfo, OgcApiDocumentLink } from '../model.js';
 import type { Geometry, Point } from 'geojson';
 
@@ -2603,11 +2752,12 @@ import { parseSensorML30 } from './csapi/formats/sensorml/parser.js';
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - 100% convention compliance
 
 **References:**
+
 - [Architecture Decision - Part 2: Import Patterns](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-5-user-experience-patterns) - Complete import pattern documentation
 
 ---
 
-*[Continue with existing resource methods sections from v2.0 - Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands, Query Parameters - these sections remain unchanged as they are already comprehensive]*
+_[Continue with existing resource methods sections from v2.0 - Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands, Query Parameters - these sections remain unchanged as they are already comprehensive]_
 
 ---
 
@@ -2625,22 +2775,26 @@ import { parseSensorML30 } from './csapi/formats/sensorml/parser.js';
 **Why CSAPI is Different:**
 
 1. **CSAPI-Specific Complexity:** SensorML 3.0 and SWE Common 3.0 are CORE to CSAPI functionality (not optional formats like WMS GetFeatureInfo XML or WFS DescribeFeatureType)
+
    - **Systems/Procedures:** Encoded in SensorML 3.0 (no simpler alternative)
    - **Observation Results:** Encoded in SWE Common 3.0 (binary/text/JSON - no alternatives)
    - **DataStream Schemas:** SWE Common DataComponents (complex type system)
 
 2. **User Experience:** Manual parsing creates significant friction
+
    - Developers would need to implement 1,600+ lines of SensorML parser themselves
    - Developers would need to implement 1,600+ lines of SWE Common parser themselves
    - No mature TypeScript libraries exist for SensorML 3.0 / SWE Common 3.0
    - CSAPI adoption severely limited without format support
 
 3. **Type Safety:** TypeScript interfaces provide strong typing
+
    - Parsed objects have full IntelliSense support
    - Compiler catches type errors
    - Better developer experience than raw JSON
 
 4. **Ecosystem Gap:** No mature TypeScript libraries for these formats
+
    - SensorML 3.0: Published 2024, no existing TypeScript parsers
    - SWE Common 3.0: Published 2024, no existing TypeScript parsers
    - Library fills critical ecosystem gap
@@ -2677,6 +2831,7 @@ const system = parseSensorML30(await response.text());
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - User mandate, clear ecosystem gap
 
 **References:**
+
 - [Architecture Decision - Part 1: Full Format Handling](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#decision-3-full-format-handling) - Complete rationale with research evolution
 
 ---
@@ -2704,13 +2859,16 @@ This section details the format-specific types that enable full IntelliSense and
 // Based on OGC SensorML 3.0 (23-000): https://docs.ogc.org/is/23-000/23-000.html
 // Schemas embedded in OGC API - Connected Systems Part 1 (23-001) OpenAPI spec
 
-import type { SWEDataComponent, AnySimpleComponent } from '../swecommon/types.js';
+import type {
+  SWEDataComponent,
+  AnySimpleComponent,
+} from '../swecommon/types.js';
 
 // Process discriminated union (matches procedure-2 and system-2 oneOf in Part 1 spec)
-export type SensorMLProcess = 
-  | SimpleProcess 
-  | AggregateProcess 
-  | PhysicalComponent 
+export type SensorMLProcess =
+  | SimpleProcess
+  | AggregateProcess
+  | PhysicalComponent
   | PhysicalSystem;
 
 // --- Concrete Process Types ---
@@ -2719,51 +2877,51 @@ export interface SimpleProcess {
   type: 'SimpleProcess';
   // ... DescribedObject properties (id, uniqueId, label, description, etc.)
   // ... AbstractProcess properties (definition, inputs, outputs, parameters, modes, etc.)
-  method?: ProcessMethod;  // Key distinguishing property
+  method?: ProcessMethod; // Key distinguishing property
 }
 
 // Inheritance: DescribedObject → AbstractProcess → AggregateProcess
 export interface AggregateProcess {
   type: 'AggregateProcess';
   // ... DescribedObject + AbstractProcess properties
-  components?: ComponentList;   // Sub-processes
-  connections?: ConnectionList;  // Data flow between components
+  components?: ComponentList; // Sub-processes
+  connections?: ConnectionList; // Data flow between components
 }
 
 // Inheritance: DescribedObject → AbstractProcess → AbstractPhysicalProcess → PhysicalComponent
 export interface PhysicalComponent {
   type: 'PhysicalComponent';
   // ... DescribedObject + AbstractProcess + AbstractPhysicalProcess properties
-  method?: ProcessMethod;  // Key distinguishing property (same as SimpleProcess)
-  position?: Position;     // Location/orientation
+  method?: ProcessMethod; // Key distinguishing property (same as SimpleProcess)
+  position?: Position; // Location/orientation
 }
 
 // Inheritance: DescribedObject → AbstractProcess → AbstractPhysicalProcess → PhysicalSystem
 export interface PhysicalSystem {
   type: 'PhysicalSystem';
   id: string;
-  uniqueId?: string;             // Globally unique identifier URI
-  label?: string;                // Human-readable label
+  uniqueId?: string; // Globally unique identifier URI
+  label?: string; // Human-readable label
   description?: string;
-  identifiers?: Term[];          // Alternate identifiers
-  classifiers?: Term[];          // Classifications
+  identifiers?: Term[]; // Alternate identifiers
+  classifiers?: Term[]; // Classifications
   validTime?: TimeInterval;
-  capabilities?: CapabilityList[];   // Operating capabilities
+  capabilities?: CapabilityList[]; // Operating capabilities
   characteristics?: CharacteristicList[]; // Physical characteristics
-  contacts?: ResponsibleParty[];     // Contacts (not "Contact")
-  documents?: Document[];            // Documentation (not "Documentation")
+  contacts?: ResponsibleParty[]; // Contacts (not "Contact")
+  documents?: Document[]; // Documentation (not "Documentation")
   history?: Event[];
   // AbstractProcess properties
-  definition?: string;           // URI defining the process type
-  inputs?: InputList;            // I/O specifications
+  definition?: string; // URI defining the process type
+  inputs?: InputList; // I/O specifications
   outputs?: OutputList;
   parameters?: ParameterList;
-  modes?: Mode[];                // Operating modes (not "ModeList")
+  modes?: Mode[]; // Operating modes (not "ModeList")
   // AbstractPhysicalProcess properties
-  position?: Position;           // Location/orientation
+  position?: Position; // Location/orientation
   // PhysicalSystem-specific properties
-  components?: ComponentList;    // Nested systems
-  connections?: ConnectionList;  // Component connections
+  components?: ComponentList; // Nested systems
+  connections?: ConnectionList; // Component connections
 }
 
 // --- Capability/Characteristic structures (per Part 1 spec) ---
@@ -2771,17 +2929,17 @@ export interface PhysicalSystem {
 export interface CapabilityList {
   label?: string;
   description?: string;
-  definition?: string;                  // URI: semantic link to capability group definition
-  conditions?: AnySimpleComponent[];    // Conditions under which capabilities apply
-  capabilities: AnyProperty[];          // SWE Common property values
+  definition?: string; // URI: semantic link to capability group definition
+  conditions?: AnySimpleComponent[]; // Conditions under which capabilities apply
+  capabilities: AnyProperty[]; // SWE Common property values
 }
 
 export interface CharacteristicList {
   label?: string;
   description?: string;
-  definition?: string;                  // URI: semantic link to characteristic group definition
-  conditions?: AnySimpleComponent[];    // Conditions under which characteristics apply
-  characteristics: AnyProperty[];       // SWE Common property values
+  definition?: string; // URI: semantic link to characteristic group definition
+  conditions?: AnySimpleComponent[]; // Conditions under which characteristics apply
+  characteristics: AnyProperty[]; // SWE Common property values
 }
 
 // AnyProperty: SWE Common types usable as capability/characteristic values
@@ -2792,23 +2950,23 @@ export type AnyProperty = AnySimpleComponent | Vector | DataArray | Matrix;
 export type ComponentList = ComponentEntry[];
 
 export interface ComponentEntry {
-  name: string;                         // From SoftNamedProperty wrapper
+  name: string; // From SoftNamedProperty wrapper
   label?: string;
   // oneOf: inline process definition OR external link
-  process?: SensorMLProcess;            // Inline component
-  href?: string;                        // External link reference
+  process?: SensorMLProcess; // Inline component
+  href?: string; // External link reference
 }
 
 // ConnectionList is a flat array of source→destination path pairs
 export type ConnectionList = Connection[];
 
 export interface Connection {
-  source: string;   // PathRef: e.g., "components/sensor1/outputs/temperature"
+  source: string; // PathRef: e.g., "components/sensor1/outputs/temperature"
   destination: string; // PathRef: e.g., "outputs/temperature"
 }
 
 export interface ProcessMethod {
-  algorithm?: unknown;  // Machine-readable algorithm (inline or by reference)
+  algorithm?: unknown; // Machine-readable algorithm (inline or by reference)
   description?: string; // Natural language description
 }
 
@@ -2864,8 +3022,8 @@ export interface DataRecord {
 }
 
 export interface DataField {
-  name: string;                 // Required, pattern: ^[A-Za-z][A-Za-z0-9_\-]*$
-  component: SWEDataComponent;  // Recursive structure (label lives on the component, not the field)
+  name: string; // Required, pattern: ^[A-Za-z][A-Za-z0-9_\-]*$
+  component: SWEDataComponent; // Recursive structure (label lives on the component, not the field)
 }
 
 export interface DataArray {
@@ -2874,7 +3032,7 @@ export interface DataArray {
   label?: string;
   description?: string;
   definition?: string;
-  elementType: DataField;       // Named wrapper (same SoftNamedProperty as DataRecord fields)
+  elementType: DataField; // Named wrapper (same SoftNamedProperty as DataRecord fields)
   elementCount?: ElementCount;
   values?: EncodedValues;
   encoding?: DataEncoding;
@@ -2886,29 +3044,26 @@ export interface Quantity {
   label?: string;
   description?: string;
   definition?: string;
-  uom: UnitOfMeasure;         // Unit of measure
+  uom: UnitOfMeasure; // Unit of measure
   constraint?: AllowedValues; // Value constraints
-  quality?: Quality[];        // Quality indicators
-  nilValues?: NilValues[];    // Missing data representation
+  quality?: Quality[]; // Quality indicators
+  nilValues?: NilValues[]; // Missing data representation
   value?: number;
 }
 
 // Unit of measure
 export interface UnitOfMeasure {
-  code?: string;  // UCUM code (e.g., "m/s", "degC")
-  href?: string;  // URI to unit definition
+  code?: string; // UCUM code (e.g., "m/s", "degC")
+  href?: string; // URI to unit definition
 }
 
 // Encoding types
-export type DataEncoding = 
-  | JSONEncoding 
-  | TextEncoding 
-  | BinaryEncoding;
+export type DataEncoding = JSONEncoding | TextEncoding | BinaryEncoding;
 
 export interface TextEncoding {
   type: 'TextEncoding';
-  tokenSeparator: string;   // e.g., ","
-  blockSeparator: string;   // e.g., "\n"
+  tokenSeparator: string; // e.g., ","
+  blockSeparator: string; // e.g., "\n"
   decimalSeparator?: string; // e.g., "."
   collapseWhiteSpaces?: boolean;
 }
@@ -2943,12 +3098,12 @@ export interface BinaryMember {
 
 #### Type Organization Summary
 
-| Location | Lines | Purpose |
-|----------|-------|---------|
-| `model.ts` | 350-400 | GeoJSON-based resource types |
-| `formats/sensorml/types.ts` | 800-1,200 | SensorML 3.0 interfaces |
-| `formats/swecommon/types.ts` | 600-800 | SWE Common 3.0 interfaces |
-| **TOTAL** | **1,750-2,400** | **Complete type system** |
+| Location                     | Lines           | Purpose                      |
+| ---------------------------- | --------------- | ---------------------------- |
+| `model.ts`                   | 350-400         | GeoJSON-based resource types |
+| `formats/sensorml/types.ts`  | 800-1,200       | SensorML 3.0 interfaces      |
+| `formats/swecommon/types.ts` | 600-800         | SWE Common 3.0 interfaces    |
+| **TOTAL**                    | **1,750-2,400** | **Complete type system**     |
 
 **Why Format-Specific Type Files:**
 
@@ -2965,7 +3120,7 @@ export interface BinaryMember {
 // SensorML Capability uses SWE Common DataComponent
 export interface Capability {
   name: string;
-  value: SWEDataComponent;  // Type from swecommon/types.ts
+  value: SWEDataComponent; // Type from swecommon/types.ts
 }
 
 // This integration provides seamless type flow from
@@ -2975,6 +3130,7 @@ export interface Capability {
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - User mandate + industry standard
 
 **References:**
+
 - [Architecture Decision - Part 2: Type System](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-3-typescript-type-system) - Complete type definitions with all interfaces
 - [OGC SensorML 3.0](https://docs.ogc.org/is/23-000/23-000.html) - Official SensorML specification
 - [OGC SWE Common 3.0](https://docs.ogc.org/is/24-014/24-014.html) - Official SWE Common specification
@@ -2993,9 +3149,11 @@ The GeoJSON handler is existing code in the library that parses GeoJSON Feature 
 **CSAPI GeoJSON Properties (per OGC Part 1 OpenAPI schema):**
 
 All GeoJSON resources inherit from the base `feature` schema with required properties:
+
 - All resources: `featureType` (type discriminator URI — required), `uid` (globally unique identifier URI — required), `name` (required string), `description` (optional string), `links` (HATEOAS navigation array)
 
 Resource-specific properties:
+
 - Systems: `featureType` (constrained to `SystemTypeUris`: `sosa:Sensor`, `sosa:Platform`, `sosa:Actuator`, `sosa:Sampler`, `sosa:System` or full URI equivalents), `assetType` (enum: `Equipment`, `Human`, `LivingThing`, `Simulation`, `Process`, `Group`, `Other`), `validTime` (timePeriod array of 2 ISO 8601 date-time strings), `systemKind@link` (link to procedure/datasheet)
 - Deployments: `featureType` (constrained to `DeploymentTypeUris`: `sosa:Deployment`), `validTime` (required timePeriod), `platform@link` (link to platform), `deployedSystems@link` (array of links to deployed systems)
 - Procedures: `featureType` (constrained to `ProcedureTypeUris`: `sosa:Procedure`, `sosa:ObservingProcedure`, `sosa:SamplingProcedure`, `sosa:ActuatingProcedure`, etc.), `geometry: null` (procedures have no geometry in GeoJSON encoding; detailed descriptions use SensorML encoding)
@@ -3004,6 +3162,7 @@ Resource-specific properties:
 > **Note on association navigation:** Associations (`subsystems`, `deployments`, `procedures`, `samplingFeatures`, `datastreams`, `controlstreams`) are accessed via HATEOAS `links` array entries with matching `rel` values, not as inline properties. The `@link` properties above are inline link objects within the `properties` object, distinct from the top-level `links` array.
 
 **Validation Requirements:**
+
 - `uid` must be valid URI (preferably URN format following RFC 8141)
 - `featureType` for Systems must be from `SystemTypeUris` (`sosa:Sensor`, `sosa:Platform`, `sosa:Actuator`, `sosa:Sampler`, `sosa:System`, or full URI equivalents)
 - `featureType` for Deployments must be from `DeploymentTypeUris` (`sosa:Deployment`)
@@ -3015,6 +3174,7 @@ Resource-specific properties:
 **Implementation Type:** EXTENDING EXISTING CODE
 
 **References:**
+
 - [RFC 7946 (GeoJSON)](https://tools.ietf.org/html/rfc7946): Normative specification for GeoJSON format
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html): CSAPI-specific GeoJSON property requirements
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml): GeoJSON schema definitions for Part 1 resources
@@ -3028,6 +3188,7 @@ Resource-specific properties:
 The SensorML handler is new code we need to build to parse [OGC SensorML 3.0](https://docs.ogc.org/is/23-000/23-000.html) format documents that describe sensor systems, components, and processes in detail. SensorML 3.0 is the latest version of the JSON-native format from the Sensor Web Enablement (SWE) standards family, published in 2024, that provides rich metadata about sensors, actuators, and processing chains. CSAPI servers return SensorML 3.0 documents when describing Systems or Procedures, providing detailed technical specifications beyond what GeoJSON can express. We will build a parser that handles all four SensorML 3.0 concrete process types (SimpleProcess, AggregateProcess, PhysicalComponent, PhysicalSystem), component descriptions, capability specifications, input/output specifications, configuration parameters, operational modes, component connections, and temporal validity periods. The parser must convert SensorML 3.0 JSON documents into TypeScript objects that the library can work with.
 
 **SensorML 3.0 Process Types to Parse (per Part 1 `procedure-2`/`system-2` oneOf):**
+
 - **SimpleProcess**: Non-physical single process with method description (extends AbstractProcess)
 - **AggregateProcess**: Non-physical composite process with sub-process components and connections (extends AbstractProcess)
 - **PhysicalComponent**: Single physical sensor or actuator with position, method, and operating characteristics (extends AbstractPhysicalProcess)
@@ -3036,6 +3197,7 @@ The SensorML handler is new code we need to build to parse [OGC SensorML 3.0](ht
 > **Note:** Configuration profiles and mode definitions are modeled as `Settings` and `Mode` properties within `AbstractProcess`, not as standalone document types. The abstract bases `DescribedObject`, `AbstractProcess`, and `AbstractPhysicalProcess` are not directly instantiated — the four types above are the only concrete process types in the OGC Part 1 spec.
 
 **SensorML 3.0 Elements to Extract:**
+
 - **Identification**: `uid` (unique identifier), `label`, `description`, `identifiers` (array of alternate identifiers)
 - **Classification**: `classifiers` array with type definitions, intended applications, sensor taxonomies
 - **ValidTime**: Temporal period when description is valid (ISO 8601 period)
@@ -3055,6 +3217,7 @@ The SensorML handler is new code we need to build to parse [OGC SensorML 3.0](ht
 - **Position**: Location and orientation using GeoJSON Point or more complex positioning models
 
 **Parsing Capabilities:**
+
 - **Recursive component parsing**: Nested AggregateProcesses and PhysicalSystems with full component hierarchy
 - **SWE Common 3.0 DataComponent integration**: Complete parsing of all DataComponent types
 - **Unit of measure parsing**: UCUM code support ([UCUM codes](http://unitsofmeasure.org/))
@@ -3065,6 +3228,7 @@ The SensorML handler is new code we need to build to parse [OGC SensorML 3.0](ht
 - **Vocabulary resolution**: Automatic fetching of vocabulary terms from code spaces (SOSA, SSN, CF, QUDT)
 
 **References:**
+
 - [OGC SensorML 3.0](https://docs.ogc.org/is/23-000/23-000.html): Normative specification for SensorML 3.0 format
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html): Requirements for SensorML encoding in CSAPI
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml): SensorML media type definitions
@@ -3083,6 +3247,7 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 **SWE Common 3.0 Data Components to Parse:**
 
 **Simple Components:**
+
 - **Quantity**: Numeric measurement with unit of measure (temperature, pressure, voltage)
 - **Count**: Integer count value (particle count, event count)
 - **Boolean**: True/false indicator (on/off status, alarm state)
@@ -3091,12 +3256,14 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 - **Category**: Categorical value from controlled vocabulary (weather condition, quality flag)
 
 **Range Components (new in 3.0):**
+
 - **QuantityRange**: Range of numeric values with units (temperature range)
 - **CountRange**: Range of integer count values (count interval)
 - **CategoryRange**: Range of categorical values (quality range indicators)
 - **TimeRange**: Temporal interval (observation period, validity period)
 
 **Complex Components:**
+
 - **DataRecord**: Structured record containing multiple named fields (multi-property observation)
 - **DataArray**: Array of measurements with variable or fixed element count (time series, profile, trajectory)
 - **Vector**: Positional vector with coordinate reference system (3D location, velocity)
@@ -3107,20 +3274,23 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 **SWE Common 3.0 Encodings to Support:**
 
 **JSON Encoding** (human-readable):
+
 ```json
 {
-  "temperature": {"uom": {"code": "Cel"}, "value": 23.5},
-  "humidity": {"uom": {"code": "%"}, "value": 65.2}
+  "temperature": { "uom": { "code": "Cel" }, "value": 23.5 },
+  "humidity": { "uom": { "code": "%" }, "value": 65.2 }
 }
 ```
 
 **Text Encoding** (CSV-style compact):
+
 ```
 23.5,65.2
 24.1,63.8
 ```
 
 **Binary Encoding** (efficient streaming):
+
 - IEEE 754 floating point (32-bit, 64-bit)
 - Integer encodings (signed/unsigned, 8/16/32/64-bit)
 - Base64 encoded blocks
@@ -3128,6 +3298,7 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 - Little-endian and big-endian byte order support
 
 **Schema Validation Requirements:**
+
 - **Result structure validation**: Matching result structure against DataStream schema
 - **Range validation**: Values within allowed ranges
 - **Unit validation**: UCUM code validation
@@ -3139,6 +3310,7 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 - **Geometry validation**: GeometryData follows GeoJSON spec
 
 **Advanced 3.0 Features Support:**
+
 - **NilValues**: Representation of missing/invalid data with reason codes
 - **Quality**: Associated quality indicators (accuracy, precision, confidence, flags)
 - **Constraints**: AllowedValues (enumeration lists), AllowedIntervals (numeric ranges), AllowedTimes (temporal constraints), AllowedTokens (text patterns)
@@ -3149,6 +3321,7 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 - **Performance optimization**: Binary encoding for high-volume data
 
 **References:**
+
 - [OGC SWE Common 3.0](https://docs.ogc.org/is/24-014/24-014.html): Normative specification for SWE Common data encodings
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html): Requirements for SWE Common in DataStreams/Observations
 - [OGC API - Connected Systems Part 2: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml): SWE Common media type definitions
@@ -3165,6 +3338,7 @@ The SWE Common handler is new code we need to build to parse [OGC SWE Common 3.0
 The format detector is existing code that examines HTTP response headers (Content-Type) and document structure to determine what format a server returned. For CSAPI, we will extend this detector to recognize CSAPI media types. The extension will recognize new media types used by CSAPI servers: `application/sml+json` (SensorML-JSON encoding), `application/swe+json` (SWE Common JSON encoding), `application/swe+text` (SWE Common Text encoding), `application/swe+csv` (SWE Common CSV encoding — a constrained variant of Text encoding with `tokenSeparator=","` and `blockSeparator="\n"`), and `application/swe+binary` (SWE Common Binary encoding). The extension will add these media types to the library's format registry and route them to the appropriate new format handlers (SensorML handler, SWE Common handler). This follows the existing pattern where the detector checks Content-Type headers first, then falls back to document structure analysis if headers are missing or ambiguous.
 
 **Media Type Recognition:**
+
 - `application/sml+json` → Route to SensorML Handler
 - `application/swe+json` → Route to SWE Common Handler (JSON encoding)
 - `application/swe+text` → Route to SWE Common Handler (Text encoding)
@@ -3173,6 +3347,7 @@ The format detector is existing code that examines HTTP response headers (Conten
 - `application/geo+json` with CSAPI `featureType` → Route to GeoJSON Handler with CSAPI extensions
 
 **Detection Strategy:**
+
 1. **Content-Type header parsing** (primary method): Full media type parsing with parameter extraction
 2. **Accept header negotiation**: Server-driven content negotiation with quality factors
 3. **Document structure analysis** (fallback): Root JSON property examination (SensorML: `type: PhysicalSystem`, SWE Common: `type: DataRecord`, CSAPI GeoJSON: `featureType` property)
@@ -3183,6 +3358,7 @@ The format detector is existing code that examines HTTP response headers (Conten
 **Implementation Type:** EXTENDING EXISTING CODE
 
 **References:**
+
 - [RFC 6838 (Media Type Specifications)](https://tools.ietf.org/html/rfc6838): Media type format and registration
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html): CSAPI media types for Part 1
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml): Part 1 media type definitions
@@ -3208,6 +3384,7 @@ The validation rules documented below are retained as **reference material** for
 **CSAPI Validation Rules:**
 
 **Part 1 Resource Validation:**
+
 - Systems: `uid` (required URI), `featureType` (required, from `SystemTypeUris`), `name` (required string)
 - Deployments: `uid` (required URI), `featureType` (required, from `DeploymentTypeUris`), `name` (required string), `validTime` (required timePeriod)
 - Procedures: `uid` (required URI), `featureType` (required, from `ProcedureTypeUris`), `name` (required string); geometry constrained to `null`
@@ -3215,12 +3392,14 @@ The validation rules documented below are retained as **reference material** for
 - Properties: `uniqueId` (required URI), `label` (required string), `baseProperty` (required URI)
 
 **Part 2 Resource Validation:**
+
 - DataStreams: schema validation (result schema must be valid SWE Common DataComponent), observed properties must reference existing Property resources
 - Observations: result validation (must conform to DataStream schema), temporal validation (phenomenonTime required)
 - Control Streams: schema validation (parameter schema must be valid SWE Common), system association (required)
 - Commands: parameter validation (must conform to ControlStream schema), execution time validation
 
 **Cross-Reference Validation:**
+
 - **Association links**: All links must have valid href, valid rel, optional type
 - **Resource references**: Referenced resources must exist or be valid external URIs
 - **Hierarchical integrity**: Parent-child relationships are consistent, no circular references
@@ -3233,6 +3412,7 @@ The validation rules documented below are retained as **reference material** for
 - **External references**: HTTP/HTTPS links reachable (optional validation)
 
 **Validation Error Reporting:**
+
 - **Error severity**: Error (invalid/unusable), Warning (questionable/suboptimal), Info (recommendations)
 - **Error context**: JSON path to error location, line/column numbers, surrounding context
 - **Error messages**: Clear description of problem, expected vs actual values, suggested fixes
@@ -3243,6 +3423,7 @@ The validation rules documented below are retained as **reference material** for
 **Implementation Type:** EXTENDING EXISTING CODE
 
 **References:**
+
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html): Validation requirements for Part 1 resources
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml): Part 1 schema definitions for validation
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html): Validation requirements for Part 2 resources
@@ -3264,6 +3445,7 @@ The background processing component extends the existing Web Worker infrastructu
 **CSAPI Operations to Move to Worker:**
 
 **Format Parsing (Heavy Operations):**
+
 - **SensorML 3.0 parsing**: Complex hierarchical JSON document parsing with recursive PhysicalSystem component trees
 - **SWE Common 3.0 parsing**: Binary encoding decoding (IEEE 754 float, multi-byte integers, byte order handling), Text/CSV parsing, JSON encoding with schema-driven validation
 - **Large observation arrays**: Parsing thousands of observations with result validation against DataStream schemas
@@ -3271,17 +3453,20 @@ The background processing component extends the existing Web Worker infrastructu
 - **GeoJSON feature collections**: Large spatial datasets with CSAPI-specific property extraction
 
 **Validation Operations (CPU-Intensive):**
+
 - **Schema validation**: Complex SWE Common DataComponent schema validation with constraint checking
 - **Observation result validation**: Validate observation results against DataStream result schemas
 - **Command parameter validation**: Validate command parameters against ControlStream parameter schemas
 - **Cross-reference validation**: Check resource association integrity across hierarchies
 
 **Query Operations (Memory/CPU Intensive):**
+
 - **Recursive hierarchy traversal**: Deep system/deployment trees with all descendants
 - **Spatial filtering**: bbox intersection calculations across large feature collections
 - **Temporal filtering**: phenomenonTime/resultTime interval matching across large observation sets
 
 **Worker Message Types to Add:**
+
 - `PARSE_SENSORML_3`: Input SensorML 3.0 JSON, output parsed System/PhysicalComponent/PhysicalSystem object
 - `PARSE_SWE_RESULT`: Input SWE Common encoded result (JSON/Text/Binary) + schema, output validated parsed values
 - `PARSE_SWE_BINARY`: Input Base64 binary block + schema, output decoded observation array
@@ -3293,12 +3478,14 @@ The background processing component extends the existing Web Worker infrastructu
 - `FILTER_TEMPORAL`: Input observation array + temporal interval, output filtered observations
 
 **Performance Benefits:**
+
 - Prevent main thread blocking during large data operations
 - Enable responsive UIs during heavy parsing
 - Parallel processing of multiple requests
 - Better utilization of multi-core CPUs
 
 **Fallback for Non-Worker Environments:**
+
 - Provide synchronous fallback implementation
 - Maintain same API surface
 - Graceful degradation in environments without Web Worker support
@@ -3308,6 +3495,7 @@ The background processing component extends the existing Web Worker infrastructu
 > **🚫 Scope Decision:** Worker extensions have been removed from the CSAPI contribution scope entirely. The content above is retained for reference only. All CSAPI parsing and validation runs on the main thread following the upstream EDR pattern. See ROADMAP v3.1 for rationale.
 
 **References:**
+
 - [pr114-analysis.md](../research/upstream/pr114-analysis.md): Worker patterns for EDR implementation
 - [csapi-part2-requirements.md](../research/requirements/csapi-part2-requirements.md): Performance requirements for large observation datasets
 
@@ -3322,6 +3510,7 @@ The test coverage component extends the existing Jest test suite to cover all CS
 **CSAPI Test Suites to Create:**
 
 **Format Parser Tests:**
+
 - **GeoJSON CSAPI extensions**: All Part 1 resource types, all CSAPI-specific properties, all geometry types, validation rules
 - **SensorML 3.0 parser**: All system models, all elements, recursive component parsing, SWE Common integration
 - **SWE Common 3.0 parser**: All data components, all encodings (JSON, Text, Binary), constraint validation, quality indicators
@@ -3329,6 +3518,7 @@ The test coverage component extends the existing Jest test suite to cover all CS
 - **Validator**: All Part 1 validation rules, all Part 2 validation rules, cross-reference validation
 
 **Resource Method Tests (All CRUD + All Query Parameters):**
+
 - **Systems**: CRUD, subsystem hierarchy, all query parameters, pagination, format negotiation, error cases
 - **Deployments**: CRUD, subdeployment hierarchy, all query parameters, pagination, error cases
 - **Procedures**: CRUD, all query parameters, pagination, format negotiation, error cases
@@ -3340,6 +3530,7 @@ The test coverage component extends the existing Jest test suite to cover all CS
 - **Commands**: CRUD, status tracking, result retrieval, all temporal queries, both pagination modes, bulk operations, sync vs async, error cases
 
 **Query Builder Tests:**
+
 - **Canonical endpoints**: URL construction for all 9 resource types
 - **Nested endpoints**: All nesting patterns
 - **Query parameter encoding**: All spatial, temporal, relationship, common, hierarchical, pagination, format parameters
@@ -3349,6 +3540,7 @@ The test coverage component extends the existing Jest test suite to cover all CS
 - **Error cases**: Invalid parameters, malformed URLs
 
 **Integration Tests (Multi-Component Workflows):**
+
 - **Discovery workflows**: Connect → check conformance → list collections → filter by type → retrieve resources
 - **Observation workflows**: Discover systems → find datastreams → query observations → paginate → parse results
 - **Command workflows**: Discover systems → find control streams → check feasibility → submit → track status → retrieve results
@@ -3358,6 +3550,7 @@ The test coverage component extends the existing Jest test suite to cover all CS
 - **Error handling**: Server errors, validation errors, network errors, malformed responses
 
 **Test Fixtures:**
+
 - **Specification examples**: All example responses from CSAPI Parts 1 & 2 specifications
 - **Edge cases**: Empty collections, minimal resources, malformed data, boundary conditions
 - **Large datasets**: Paginated collections, large observation sets, complex hierarchies
@@ -3366,6 +3559,7 @@ The test coverage component extends the existing Jest test suite to cover all CS
 - **Schema fixtures**: DataStream schema examples, ControlStream parameter schemas
 
 **Test Scope Exclusions:**
+
 - **Performance testing** is OUT OF SCOPE for the initial contribution. Performance profiling and benchmarking may be added post-merge as a separate effort. (See Doc 33 — retained as reference only, not actionable.)
 - **Real-world server testing** is OUT OF SCOPE — all tests use mocked HTTP responses per AP2 (no live server dependencies). Real-server compatibility validation is deferred to post-merge integration testing. (See Doc 32 — AP2-bannered, retained as reference only.)
 
@@ -3406,6 +3600,7 @@ This convention ensures fixture paths are predictable from the API endpoint bein
 **Estimated fixture count:** ~80-100 JSON/XML files covering all 9 resource types, all format variations (GeoJSON, SensorML, SWE Common), error responses, and edge cases.
 
 **Test Coverage Targets:**
+
 - **Code coverage**: >80% statement coverage, >80% branch coverage, 100% public API coverage
 - **Resource coverage**: 100% of all CSAPI resource types, 100% of all query parameters, 100% of all format types
 - **Error coverage**: All error conditions documented in CSAPI specification
@@ -3413,6 +3608,7 @@ This convention ensures fixture paths are predictable from the API endpoint bein
 **Implementation Type:** EXTENDING EXISTING CODE (adding CSAPI test suites to existing Jest framework)
 
 **References:**
+
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html): Specification examples for test fixtures
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml): Part 1 endpoint testing specifications
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html): Part 2 examples for observation/command tests
@@ -3427,6 +3623,7 @@ This convention ensures fixture paths are predictable from the API endpoint bein
 The API documentation component extends the existing TypeDoc documentation to cover all CSAPI additions. For CSAPI, we will add documentation for all new TypeScript interfaces and types, the new factory method and getters on OgcApiEndpoint (`csapi()`, `hasConnectedSystems`, `csapiCollections`), all 80 methods on the CSAPIQueryBuilder class, usage examples for every resource type and query pattern, format handler documentation, and migration guides for users of other CSAPI clients. The library uses TypeDoc to generate API documentation from TypeScript source code comments, providing type-aware documentation with cross-references and examples. The extension will add JSDoc comments to all new code, following the existing documentation standards and style.
 
 **Documentation to Add:**
+
 - **Interface Documentation**: All CSAPI TypeScript interfaces (System, Deployment, DataStream, Observation, etc.)
 - **Method Documentation**: All CSAPIQueryBuilder methods with parameter descriptions and examples
 - **Usage Examples**: Common workflows (discovery, observation queries, command submission)
@@ -3438,6 +3635,7 @@ The API documentation component extends the existing TypeDoc documentation to co
 **Implementation Type:** EXTENDING EXISTING CODE (adding CSAPI docs to existing TypeDoc setup)
 
 **References:**
+
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html): Normative references for documentation
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml): API reference documentation source
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html): Part 2 specification references
@@ -3460,24 +3658,24 @@ import { OgcApiEndpoint, CSAPIQueryBuilder } from '@camptocamp/ogc-client';
 const endpoint = new OgcApiEndpoint('https://api.example.com/csapi');
 
 // 2. Check conformance
-const hasCSAPI = await endpoint.hasConnectedSystems;  // true/false
+const hasCSAPI = await endpoint.hasConnectedSystems; // true/false
 
 // 3. List available collections
-const collections = await endpoint.csapiCollections;  // ['sensors', 'stations', ...]
+const collections = await endpoint.csapiCollections; // ['sensors', 'stations', ...]
 
 // 4. Get builder for collection
 const builder: CSAPIQueryBuilder = await endpoint.csapi('sensors');
 
 // 5. Check available resources (automatic validation)
-console.log(builder.availableResources); 
+console.log(builder.availableResources);
 // Set { 'systems', 'deployments', 'datastreams', 'observations' }
 
 // 6. Use builder methods (with automatic validation)
 try {
   const systemsUrl = await builder.getSystems({ limit: 10 });
   const systemUrl = await builder.getSystem('sensor-123');
-  const historyUrl = await builder.getSystemHistory('sensor-123', { 
-    datetime: { start: new Date('2024-01-01'), end: new Date('2024-12-31') } 
+  const historyUrl = await builder.getSystemHistory('sensor-123', {
+    datetime: { start: new Date('2024-01-01'), end: new Date('2024-12-31') },
   });
 } catch (error) {
   // Fail-fast with clear error if resource unavailable
@@ -3492,11 +3690,11 @@ try {
 **GeoJSON Resource Types with Full IntelliSense:**
 
 ```typescript
-import type { 
-  System, 
+import type {
+  System,
   SystemCollection,
   Deployment,
-  Datastream 
+  Datastream
 } from '@camptocamp/ogc-client';
 
 // Fetch and parse GeoJSON
@@ -3514,10 +3712,10 @@ systems.features.forEach((system: System) => {
   console.log(system.properties.validTime);    // TimeInterval | undefined
   console.log(system.geometry?.coordinates);   // number[] | undefined
   console.log(system.links);                   // ResourceLink[]
-  
+
   // ✅ TypeScript catches errors at compile time
   // console.log(system.properties.invalid);   // ❌ Compile error
-  
+
   // ✅ Safe navigation with optional chaining
   const startTime = system.properties.validTime?.start;
   const longitude = system.geometry?.coordinates?.[0];
@@ -3546,7 +3744,10 @@ console.log(datastream.properties.observedPropertyId); // ✅ Full type safety
 
 ```typescript
 import { parseSensorML30 } from '@camptocamp/ogc-client/csapi/formats/sensorml';
-import type { PhysicalSystem, Capability } from '@camptocamp/ogc-client/csapi/formats/sensorml';
+import type {
+  PhysicalSystem,
+  Capability,
+} from '@camptocamp/ogc-client/csapi/formats/sensorml';
 
 // Fetch SensorML 3.0 format
 const smlUrl = await builder.getSystem('sensor-123', { f: 'sml' });
@@ -3555,23 +3756,23 @@ const smlJson = await smlResponse.json();
 const system: PhysicalSystem = parseSensorML30(smlJson);
 
 // Type-safe SensorML access with full IntelliSense
-console.log(system.type);                    // 'PhysicalSystem'
-console.log(system.description);             // string | undefined
-console.log(system.classification);          // Classification[] | undefined
-console.log(system.capabilities);            // CapabilityList[] | undefined
-console.log(system.components);              // ComponentList[] | undefined
+console.log(system.type); // 'PhysicalSystem'
+console.log(system.description); // string | undefined
+console.log(system.classification); // Classification[] | undefined
+console.log(system.capabilities); // CapabilityList[] | undefined
+console.log(system.components); // ComponentList[] | undefined
 
 // Navigate nested structures safely
 system.capabilities?.forEach((capList) => {
   capList.capabilities.forEach((cap: Capability) => {
-    console.log(cap.name);                   // string
-    console.log(cap.definition);             // string | undefined
-    console.log(cap.value.type);             // 'Quantity' | 'Count' | ...
-    
+    console.log(cap.name); // string
+    console.log(cap.definition); // string | undefined
+    console.log(cap.value.type); // 'Quantity' | 'Count' | ...
+
     // ✅ TypeScript narrows types based on discriminator
     if (cap.value.type === 'Quantity') {
-      console.log(cap.value.uom.code);       // UCUM code (e.g., "m/s")
-      console.log(cap.value.value);          // number | undefined
+      console.log(cap.value.uom.code); // UCUM code (e.g., "m/s")
+      console.log(cap.value.value); // number | undefined
     }
   });
 });
@@ -3581,7 +3782,7 @@ system.components?.forEach((compList) => {
   compList.components.forEach((comp) => {
     if (comp.process?.type === 'PhysicalSystem') {
       // ✅ Recursive type safety for nested systems
-      console.log(comp.process.components);  // ComponentList[] | undefined
+      console.log(comp.process.components); // ComponentList[] | undefined
     }
   });
 });
@@ -3591,7 +3792,11 @@ system.components?.forEach((compList) => {
 
 ```typescript
 import { parseSWEDataRecord } from '@camptocamp/ogc-client/csapi/formats/swecommon';
-import type { DataRecord, Quantity, DataArray } from '@camptocamp/ogc-client/csapi/formats/swecommon';
+import type {
+  DataRecord,
+  Quantity,
+  DataArray,
+} from '@camptocamp/ogc-client/csapi/formats/swecommon';
 
 // Fetch SWE Common schema
 const schemaUrl = await builder.getDatastreamSchema('ds-456');
@@ -3601,29 +3806,29 @@ const schema: DataRecord = parseSWEDataRecord(schemaJson);
 
 // Type-safe SWE Common access
 schema.fields.forEach((field) => {
-  console.log(field.name);                   // string
-  console.log(field.component.type);         // 'Quantity' | 'Count' | ...
-  
+  console.log(field.name); // string
+  console.log(field.component.type); // 'Quantity' | 'Count' | ...
+
   // ✅ Type narrowing based on discriminator
   if (field.component.type === 'Quantity') {
     const quantity = field.component as Quantity;
-    console.log(quantity.uom.code);          // UCUM code
-    console.log(quantity.constraint);        // AllowedValues | undefined
-    console.log(quantity.quality);           // Quality[] | undefined
+    console.log(quantity.uom.code); // UCUM code
+    console.log(quantity.constraint); // AllowedValues | undefined
+    console.log(quantity.quality); // Quality[] | undefined
   }
-  
+
   if (field.component.type === 'DataArray') {
     const array = field.component as DataArray;
-    console.log(array.elementType.name);              // Element type name
-    console.log(array.elementType.component.type);    // Element component type
-    console.log(array.encoding?.type);                // 'JSONEncoding' | 'TextEncoding' | 'BinaryEncoding'
+    console.log(array.elementType.name); // Element type name
+    console.log(array.elementType.component.type); // Element component type
+    console.log(array.encoding?.type); // 'JSONEncoding' | 'TextEncoding' | 'BinaryEncoding'
   }
 });
 
 // Parse observation results using schema
-const obsUrl = await builder.getObservations('ds-456', { 
+const obsUrl = await builder.getObservations('ds-456', {
   phenomenonTime: '2024-01-01/2024-01-31',
-  limit: 100 
+  limit: 100,
 });
 const obsResponse = await fetch(obsUrl);
 const observations = await obsResponse.json();
@@ -3642,7 +3847,10 @@ observations.features.forEach((obs) => {
 **Extraction — Tolerant by Design (Issue #52):**
 
 ```typescript
-import { extractCSAPIFeature, getCSAPIResourceType } from '@camptocamp/ogc-client/csapi/formats';
+import {
+  extractCSAPIFeature,
+  getCSAPIResourceType,
+} from '@camptocamp/ogc-client/csapi/formats';
 
 // Extraction succeeds for any recognized feature
 // No validation gate — follows upstream tolerant extraction pattern
@@ -3675,9 +3883,9 @@ try {
   if (error instanceof EndpointError) {
     // Clear, actionable error message
     console.error(error.message);
-    // "Collection 'weather-stations' does not support 'systems' resource. 
+    // "Collection 'weather-stations' does not support 'systems' resource.
     //  Available resources: datastreams, observations"
-    
+
     // Programmatic access to available resources
     console.log(builder.availableResources);
     // Set { 'datastreams', 'observations' }
@@ -3689,15 +3897,15 @@ try {
 
 ```typescript
 try {
-  const url = await builder.getObservations('ds-123', { 
-    phenomenonTime: '2024-01-01/2024-01-31' 
+  const url = await builder.getObservations('ds-123', {
+    phenomenonTime: '2024-01-01/2024-01-31',
   });
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
-  
+
   const observations = await response.json();
 } catch (error) {
   console.error('Failed to fetch observations:', error.message);
@@ -3707,7 +3915,10 @@ try {
 **Format Parsing Errors:**
 
 ```typescript
-import { parseSensorML30, SensorMLParseError } from '@camptocamp/ogc-client/csapi/formats/sensorml';
+import {
+  parseSensorML30,
+  SensorMLParseError,
+} from '@camptocamp/ogc-client/csapi/formats/sensorml';
 
 try {
   const smlUrl = await builder.getSystem('sys-123', { f: 'sml' });
@@ -3730,15 +3941,15 @@ try {
 
 **Evidence from smoke tests (Findings F6–F9, F12):**
 
-| Endpoint Pattern | OSH | 52North | Conclusion |
-|-----------------|-----|---------|-----------|
-| `systems/{id}/deployments` | ❌ 400 | ✅ 200 | Server-selective support |
-| `systems/{id}/procedures` | ❌ 400 | ❌ 400 | Neither implements |
-| `systems/{id}/datastreams` | ✅ 200 | ❌ 500 | Server-selective support |
-| `systems/{id}/history` | ✅ 200 | ❌ 400 | Server-selective support |
-| `samplingFeatures/{id}/systems` | ❌ 400 | N/A | OSH rejects |
-| `samplingFeatures/{id}/history` | ❌ 400 | N/A | OSH rejects |
-| `samplingFeatures/{id}/observations` | ✅ 200 | N/A | OSH accepts |
+| Endpoint Pattern                     | OSH    | 52North | Conclusion               |
+| ------------------------------------ | ------ | ------- | ------------------------ |
+| `systems/{id}/deployments`           | ❌ 400 | ✅ 200  | Server-selective support |
+| `systems/{id}/procedures`            | ❌ 400 | ❌ 400  | Neither implements       |
+| `systems/{id}/datastreams`           | ✅ 200 | ❌ 500  | Server-selective support |
+| `systems/{id}/history`               | ✅ 200 | ❌ 400  | Server-selective support |
+| `samplingFeatures/{id}/systems`      | ❌ 400 | N/A     | OSH rejects              |
+| `samplingFeatures/{id}/history`      | ❌ 400 | N/A     | OSH rejects              |
+| `samplingFeatures/{id}/observations` | ✅ 200 | N/A     | OSH accepts              |
 
 The same URL pattern works on one server and fails on another — proving the URLs are correct and the variability is purely server-side. Phase 3 response-layer methods **must** treat 400/404 from nested sub-resource endpoints as an expected condition, not an error.
 
@@ -3747,32 +3958,32 @@ The same URL pattern works on one server and fails on another — proving the UR
 ```typescript
 // Phase 3 response-layer method (conceptual design)
 async function getSystemDeployments(
-  systemId: string, 
+  systemId: string,
   params?: CSAPIQueryParams
 ): Promise<CSAPICollectionResult<Deployment>> {
   const url = builder.getSystemDeployments(systemId, params);
   const response = await fetch(url);
-  
+
   // 400/404 from a nested endpoint = server doesn't support this route
   // Return empty result with metadata, NOT an unhandled exception
   if (response.status === 400 || response.status === 404) {
     return {
       items: [],
       links: [],
-      supported: false,  // Caller can distinguish "empty" from "unsupported"
+      supported: false, // Caller can distinguish "empty" from "unsupported"
       statusCode: response.status,
     };
   }
-  
+
   if (!response.ok) {
     // 500, 503, etc. = genuine server error — throw
     throw new EndpointError(
       `Server error fetching deployments for system '${systemId}': ` +
-      `HTTP ${response.status}`,
+        `HTTP ${response.status}`,
       { statusCode: response.status }
     );
   }
-  
+
   const data = await response.json();
   return parseCollectionResponse<Deployment>(data);
 }
@@ -3832,49 +4043,55 @@ async function monitorTemperatures(
 ): Promise<void> {
   // 1. Connect to CSAPI endpoint
   const endpoint = new OgcApiEndpoint(endpointUrl);
-  if (!await endpoint.hasConnectedSystems) {
+  if (!(await endpoint.hasConnectedSystems)) {
     throw new Error('Endpoint does not support Connected Systems API');
   }
-  
+
   // 2. Get CSAPI client
   const client = await endpoint.csapi('weather-sensors');
-  
+
   // 3. Discover all temperature-capable systems in region
   const systemsUrl = await client.getSystems({
     bbox: bbox,
     observedProperty: 'temperature',
-    limit: 50
+    limit: 50,
   });
   const systemsResponse = await fetch(systemsUrl);
   const systems = await systemsResponse.json();
-  
+
   console.log(`Found ${systems.features.length} temperature sensors`);
-  
+
   // 4. For each system, get temperature datastreams and latest observations
   for (const system of systems.features) {
     // Get system's temperature datastreams
     const dsUrl = await client.getSystemDataStreams(system.id, {
-      observedProperty: 'temperature'
+      observedProperty: 'temperature',
     });
     const dsResponse = await fetch(dsUrl);
     const datastreams = await dsResponse.json();
-    
+
     // For each datastream, get latest observation
     for (const ds of datastreams.features) {
       const obsUrl = await client.getDataStreamObservations(ds.id, {
         resultTime: 'latest',
-        limit: 1
+        limit: 1,
       });
       const obsResponse = await fetch(obsUrl);
       const observations = await obsResponse.json();
-      
+
       if (observations.features.length > 0) {
         const obs = observations.features[0];
-        console.log(`${system.properties.name} - ${ds.properties.name}: ` +
-                   `${obs.properties.result} ${ds.properties.unitOfMeasurement.symbol}`);
-        
+        console.log(
+          `${system.properties.name} - ${ds.properties.name}: ` +
+            `${obs.properties.result} ${ds.properties.unitOfMeasurement.symbol}`
+        );
+
         // Update dashboard UI
-        updateDashboard(system.id, obs.properties.result, obs.properties.phenomenonTime);
+        updateDashboard(
+          system.id,
+          obs.properties.result,
+          obs.properties.phenomenonTime
+        );
       }
     }
   }
@@ -3885,18 +4102,21 @@ monitorTemperatures('https://api.weather.com/csapi', [-122, 37, -121, 38]);
 ```
 
 **Why Single-Class Works:**
+
 - ✅ All methods on same `client` object - no builder switching
 - ✅ Natural workflow: Systems → DataStreams → Observations
 - ✅ Type-safe throughout (no casting needed)
 - ✅ Clear method names (`getSystemDataStreams`, `getDataStreamObservations`)
 
 **Alternative Multi-Class Would Require:**
+
 - ❌ Switch from `SystemsBuilder` → `DatastreamsBuilder` → `ObservationsBuilder`
 - ❌ Unclear how to navigate between builders
 - ❌ Must filter datastreams by `system` parameter (inefficient)
 - ❌ Context lost at each builder boundary
 
 **Scenario Metrics:**
+
 - Resources accessed: 3 (Systems, DataStreams, Observations)
 - API calls: 1 + N + M (1 systems, N datastreams, M observations)
 - Lines of code: ~45 lines
@@ -3921,84 +4141,93 @@ import { OgcApiEndpoint } from '@camptocamp/ogc-client';
 async function taskUAV(
   endpointUrl: string,
   uavId: string,
-  missionParams: { altitude: number; speed: number; waypoints: [number, number][] }
+  missionParams: {
+    altitude: number;
+    speed: number;
+    waypoints: [number, number][];
+  }
 ): Promise<void> {
   const endpoint = new OgcApiEndpoint(endpointUrl);
   const client = await endpoint.csapi('uav-fleet');
-  
+
   // 1. Verify UAV system exists and supports commands
   const systemUrl = await client.getSystem(uavId);
   const systemResponse = await fetch(systemUrl);
   const uav = await systemResponse.json();
   console.log(`Tasking ${uav.properties.name}...`);
-  
+
   // 2. Get flight control stream for UAV
   const controlStreamsUrl = await client.getSystemControlStreams(uavId, {
-    controlledProperty: 'flight-control'
+    controlledProperty: 'flight-control',
   });
   const csResponse = await fetch(controlStreamsUrl);
   const controlStreams = await csResponse.json();
-  
+
   if (controlStreams.features.length === 0) {
     throw new Error(`UAV ${uavId} does not support flight control`);
   }
-  
+
   const controlStream = controlStreams.features[0];
-  
+
   // 3. Check command feasibility before issuing
-  const feasibilityUrl = await client.checkCommandFeasibility(controlStream.id, {
-    parameters: missionParams
-  });
+  const feasibilityUrl = await client.checkCommandFeasibility(
+    controlStream.id,
+    {
+      parameters: missionParams,
+    }
+  );
   const feasibilityResponse = await fetch(feasibilityUrl, { method: 'POST' });
   const feasibility = await feasibilityResponse.json();
-  
+
   if (!feasibility.feasible) {
     throw new Error(`Mission not feasible: ${feasibility.reason}`);
   }
-  
+
   // 4. Issue flight command
   const commandUrl = await client.createCommand(controlStream.id, {
-    parameters: missionParams
+    parameters: missionParams,
   });
   const commandResponse = await fetch(commandUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ parameters: missionParams })
+    body: JSON.stringify({ parameters: missionParams }),
   });
   const command = await commandResponse.json();
-  
+
   console.log(`Command ${command.id} issued, tracking status...`);
-  
+
   // 5. Poll command status until completion
   let status;
   let attempts = 0;
   const maxAttempts = 60; // 5 minutes
-  
+
   while (attempts < maxAttempts) {
     const statusUrl = await client.getCommandStatus(command.id);
     const statusResponse = await fetch(statusUrl);
     status = await statusResponse.json();
-    
+
     console.log(`Status: ${status.state} (attempt ${attempts + 1})`);
-    
+
     if (status.state === 'completed') {
       console.log('Mission completed successfully');
       break;
     } else if (status.state === 'failed') {
       throw new Error(`Mission failed: ${status.errorMessage}`);
     }
-    
-    await new Promise(resolve => setTimeout(resolve, 5000)); // Poll every 5s
+
+    await new Promise((resolve) => setTimeout(resolve, 5000)); // Poll every 5s
     attempts++;
   }
-  
+
   // 6. Retrieve command result (telemetry datastream)
   if (status.state === 'completed' && status.resultDatastream) {
     const resultUrl = await client.getCommandResult(command.id);
     const resultResponse = await fetch(resultUrl);
     const telemetry = await resultResponse.json();
-    
-    console.log(`Telemetry collected: ${telemetry.features.length} observations`);
+
+    console.log(
+      `Telemetry collected: ${telemetry.features.length} observations`
+    );
     processTelemetry(telemetry);
   }
 }
@@ -4007,23 +4236,30 @@ async function taskUAV(
 taskUAV('https://api.uav-fleet.com/csapi', 'uav-007', {
   altitude: 500,
   speed: 15,
-  waypoints: [[-122.5, 37.7], [-122.4, 37.8], [-122.5, 37.9]]
+  waypoints: [
+    [-122.5, 37.7],
+    [-122.4, 37.8],
+    [-122.5, 37.9],
+  ],
 });
 ```
 
 **Why Single-Class Works:**
+
 - ✅ Seamless navigation: System → ControlStream → Command → Status → Result
 - ✅ All on same `client` object throughout workflow
 - ✅ Clear progression through command lifecycle
 - ✅ No type casting or builder management
 
 **Alternative Multi-Class Would Require:**
+
 - ❌ Navigate: `SystemsBuilder` → `ControlStreamsBuilder` → `CommandsBuilder` → `StatusBuilder` → `ResultBuilder`
 - ❌ 4 builder switches in single workflow
 - ❌ Circular dependencies between all 5 builder classes
 - ❌ Context management complexity (carry IDs between builders)
 
 **Scenario Metrics:**
+
 - Resources accessed: 4 (Systems, ControlStreams, Commands, Status/Result)
 - API calls: 6+ (1 system, 1 control stream, 1 feasibility, 1 command, N status, 1 result)
 - Lines of code: ~75 lines
@@ -4053,47 +4289,49 @@ async function analyzeHistoricalTemperatures(
 ): Promise<void> {
   const endpoint = new OgcApiEndpoint(endpointUrl);
   const client = await endpoint.csapi('climate-stations');
-  
+
   // 1. Find all temperature sensors in region
   const systemsUrl = await client.getSystems({
     bbox: region,
-    observedProperty: 'temperature'
+    observedProperty: 'temperature',
   });
   const systemsResponse = await fetch(systemsUrl);
   const systems = await systemsResponse.json();
-  
+
   console.log(`Analyzing ${systems.features.length} climate stations...`);
-  
+
   const allObservations: Observation[] = [];
-  
+
   // 2. For each system, get temperature datastreams
   for (const system of systems.features) {
     const dsUrl = await client.getSystemDataStreams(system.id, {
-      observedProperty: 'temperature'
+      observedProperty: 'temperature',
     });
     const dsResponse = await fetch(dsUrl);
     const datastreams = await dsResponse.json();
-    
+
     // 3. For each datastream, get historical observations
     for (const ds of datastreams.features) {
       // Use cursor-based pagination for large datasets
       let cursor = null;
       let hasMore = true;
-      
+
       while (hasMore) {
         const obsUrl = await client.getDataStreamObservations(ds.id, {
           phenomenonTime: `${startDate}/${endDate}`,
           limit: 1000,
-          cursor: cursor
+          cursor: cursor,
         });
         const obsResponse = await fetch(obsUrl);
         const observations = await obsResponse.json();
-        
+
         allObservations.push(...observations.features);
-        console.log(`Retrieved ${observations.features.length} observations from ${system.properties.name}`);
-        
+        console.log(
+          `Retrieved ${observations.features.length} observations from ${system.properties.name}`
+        );
+
         // Check for more data
-        const nextLink = observations.links.find(l => l.rel === 'next');
+        const nextLink = observations.links.find((l) => l.rel === 'next');
         if (nextLink) {
           const url = new URL(nextLink.href);
           cursor = url.searchParams.get('cursor');
@@ -4103,20 +4341,24 @@ async function analyzeHistoricalTemperatures(
       }
     }
   }
-  
+
   // 4. Perform statistical analysis
-  const temperatures = allObservations.map(obs => obs.properties.result);
+  const temperatures = allObservations.map((obs) => obs.properties.result);
   const stats = {
     count: temperatures.length,
     mean: temperatures.reduce((a, b) => a + b, 0) / temperatures.length,
     min: Math.min(...temperatures),
     max: Math.max(...temperatures),
-    std: calculateStdDev(temperatures)
+    std: calculateStdDev(temperatures),
   };
-  
+
   console.log(`Analysis complete: ${stats.count} observations`);
-  console.log(`Temperature range: ${stats.min}°C to ${stats.max}°C (mean: ${stats.mean.toFixed(2)}°C)`);
-  
+  console.log(
+    `Temperature range: ${stats.min}°C to ${
+      stats.max
+    }°C (mean: ${stats.mean.toFixed(2)}°C)`
+  );
+
   return stats;
 }
 
@@ -4130,17 +4372,20 @@ analyzeHistoricalTemperatures(
 ```
 
 **Why Single-Class Works:**
+
 - ✅ Natural pagination workflow with cursor support
 - ✅ Consistent method names across resources
 - ✅ Clear parent-child relationships (system → datastream → observations)
 - ✅ Type-safe aggregation across multiple sources
 
 **Alternative Multi-Class Would Require:**
+
 - ❌ Manage 3 builder types simultaneously
 - ❌ Unclear pagination API across builder boundaries
 - ❌ Context management for cursor state
 
 **Scenario Metrics:**
+
 - Resources accessed: 3 (Systems, DataStreams, Observations)
 - API calls: 1 + N + M×P (1 systems, N datastreams, M datastreams × P pages)
 - Dataset size: Potentially millions of observations
@@ -4169,93 +4414,109 @@ async function trackDeploymentNetwork(
 ): Promise<void> {
   const endpoint = new OgcApiEndpoint(endpointUrl);
   const client = await endpoint.csapi('ocean-sensors');
-  
+
   // 1. Get deployment information
   const deploymentUrl = await client.getDeployment(deploymentId);
   const deploymentResponse = await fetch(deploymentUrl);
   const deployment = await deploymentResponse.json();
-  
+
   console.log(`Tracking deployment: ${deployment.properties.name}`);
   console.log(`Deployed: ${deployment.properties.validTime.start}`);
-  
+
   // 2. Get all systems in deployment
   const systemsUrl = await client.getDeploymentSystems(deploymentId);
   const systemsResponse = await fetch(systemsUrl);
   const systems = await systemsResponse.json();
-  
+
   console.log(`Deployment contains ${systems.features.length} systems`);
-  
+
   const deploymentStatus = {
     totalSystems: systems.features.length,
     activeDatastreams: 0,
     samplingFeatures: new Set(),
-    recentObservations: 0
+    recentObservations: 0,
   };
-  
+
   // 3. For each system, verify data collection
   for (const system of systems.features) {
     // Get system's sampling features (e.g., buoy locations)
     const sfUrl = await client.getSystemSamplingFeatures(system.id);
     const sfResponse = await fetch(sfUrl);
     const samplingFeatures = await sfResponse.json();
-    
-    samplingFeatures.features.forEach(sf => {
+
+    samplingFeatures.features.forEach((sf) => {
       deploymentStatus.samplingFeatures.add(sf.id);
     });
-    
+
     // Get system's datastreams
     const dsUrl = await client.getSystemDataStreams(system.id);
     const dsResponse = await fetch(dsUrl);
     const datastreams = await dsResponse.json();
-    
+
     deploymentStatus.activeDatastreams += datastreams.features.length;
-    
+
     // Check recent observations (last 24 hours)
     for (const ds of datastreams.features) {
-      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const yesterday = new Date(
+        Date.now() - 24 * 60 * 60 * 1000
+      ).toISOString();
       const obsUrl = await client.getDataStreamObservations(ds.id, {
         phenomenonTime: `${yesterday}/..`,
-        limit: 1
+        limit: 1,
       });
       const obsResponse = await fetch(obsUrl);
       const observations = await obsResponse.json();
-      
+
       if (observations.features.length > 0) {
         deploymentStatus.recentObservations++;
-        console.log(`✓ ${system.properties.name} - ${ds.properties.name}: Active`);
+        console.log(
+          `✓ ${system.properties.name} - ${ds.properties.name}: Active`
+        );
       } else {
-        console.log(`✗ ${system.properties.name} - ${ds.properties.name}: No recent data`);
+        console.log(
+          `✗ ${system.properties.name} - ${ds.properties.name}: No recent data`
+        );
       }
     }
   }
-  
+
   // 4. Generate deployment health report
   console.log('\n=== Deployment Health Report ===');
   console.log(`Total Systems: ${deploymentStatus.totalSystems}`);
   console.log(`Sampling Features: ${deploymentStatus.samplingFeatures.size}`);
   console.log(`Active Datastreams: ${deploymentStatus.activeDatastreams}`);
-  console.log(`Reporting (24h): ${deploymentStatus.recentObservations}/${deploymentStatus.activeDatastreams}`);
-  
-  const healthPercentage = (deploymentStatus.recentObservations / deploymentStatus.activeDatastreams) * 100;
+  console.log(
+    `Reporting (24h): ${deploymentStatus.recentObservations}/${deploymentStatus.activeDatastreams}`
+  );
+
+  const healthPercentage =
+    (deploymentStatus.recentObservations / deploymentStatus.activeDatastreams) *
+    100;
   console.log(`Network Health: ${healthPercentage.toFixed(1)}%`);
 }
 
 // Usage
-trackDeploymentNetwork('https://api.ocean-data.org/csapi', 'atlantic-array-2024');
+trackDeploymentNetwork(
+  'https://api.ocean-data.org/csapi',
+  'atlantic-array-2024'
+);
 ```
 
 **Why Single-Class Works:**
+
 - ✅ Complex navigation: Deployment → Systems → SamplingFeatures/DataStreams → Observations
 - ✅ All relationships accessible from single client object
 - ✅ No ambiguity about how to access related resources
 - ✅ Type-safe across 5 resource types
 
 **Alternative Multi-Class Would Require:**
+
 - ❌ Navigate through 5 different builder classes
 - ❌ Manage relationships across builder boundaries
 - ❌ Unclear how to get from Deployment to Systems to DataStreams
 
 **Scenario Metrics:**
+
 - Resources accessed: 5 (Deployments, Systems, SamplingFeatures, DataStreams, Observations)
 - API calls: 1 + 1 + N×(2 + M) (deployment, systems, N systems × (SF + DS), M datastreams)
 - Complexity: High (multi-resource health check)
@@ -4284,61 +4545,61 @@ async function buildCityDashboard(
 ): Promise<DashboardData> {
   const endpoint = new OgcApiEndpoint(endpointUrl);
   const client = await endpoint.csapi('smart-city-sensors');
-  
+
   const dashboard: DashboardData = {
     weather: [],
     traffic: [],
     airQuality: [],
-    noise: []
+    noise: [],
   };
-  
+
   // 1. Discover all systems in city bounds
   const systemsUrl = await client.getSystems({
     bbox: cityBounds,
-    limit: 100
+    limit: 100,
   });
   const systemsResponse = await fetch(systemsUrl);
   const systems = await systemsResponse.json();
-  
+
   console.log(`Processing ${systems.features.length} sensor systems...`);
-  
+
   // 2. Build category-to-property mapping
   const propertyCategories = {
     weather: ['temperature', 'humidity', 'pressure', 'windSpeed'],
     traffic: ['vehicleCount', 'averageSpeed', 'congestionLevel'],
     airQuality: ['pm25', 'pm10', 'no2', 'co', 'o3'],
-    noise: ['soundLevel', 'noiseFrequency']
+    noise: ['soundLevel', 'noiseFrequency'],
   };
-  
+
   // 3. For each system, get categorized datastreams and latest observations
   const promises = systems.features.map(async (system) => {
     const dsUrl = await client.getSystemDataStreams(system.id);
     const dsResponse = await fetch(dsUrl);
     const datastreams = await dsResponse.json();
-    
+
     // Group datastreams by category
     for (const ds of datastreams.features) {
       const property = ds.properties.observedPropertyId;
-      
+
       // Determine category
       let category = null;
       for (const [cat, props] of Object.entries(propertyCategories)) {
-        if (props.some(p => property.includes(p))) {
+        if (props.some((p) => property.includes(p))) {
           category = cat;
           break;
         }
       }
-      
+
       if (!category) continue;
-      
+
       // Get latest observation for this datastream
       const obsUrl = await client.getDataStreamObservations(ds.id, {
         resultTime: 'latest',
-        limit: 1
+        limit: 1,
       });
       const obsResponse = await fetch(obsUrl);
       const observations = await obsResponse.json();
-      
+
       if (observations.features.length > 0) {
         const obs = observations.features[0];
         dashboard[category].push({
@@ -4347,51 +4608,65 @@ async function buildCityDashboard(
           value: obs.properties.result,
           unit: ds.properties.unitOfMeasurement?.symbol,
           timestamp: obs.properties.phenomenonTime,
-          location: system.geometry?.coordinates
+          location: system.geometry?.coordinates,
         });
       }
     }
   });
-  
+
   // 4. Execute all requests in parallel for performance
   await Promise.all(promises);
-  
+
   // 5. Calculate aggregates per category
   const aggregates = {
     weather: calculateAggregates(dashboard.weather),
     traffic: calculateAggregates(dashboard.traffic),
     airQuality: calculateAggregates(dashboard.airQuality),
-    noise: calculateAggregates(dashboard.noise)
+    noise: calculateAggregates(dashboard.noise),
   };
-  
+
   console.log('\n=== City Dashboard Summary ===');
   console.log(`Weather sensors: ${dashboard.weather.length}`);
   console.log(`Traffic sensors: ${dashboard.traffic.length}`);
   console.log(`Air quality sensors: ${dashboard.airQuality.length}`);
   console.log(`Noise sensors: ${dashboard.noise.length}`);
-  console.log(`\nAvg temperature: ${aggregates.weather.temperature?.mean.toFixed(1)}°C`);
-  console.log(`Avg traffic speed: ${aggregates.traffic.averageSpeed?.mean.toFixed(1)} km/h`);
-  console.log(`Avg PM2.5: ${aggregates.airQuality.pm25?.mean.toFixed(1)} μg/m³`);
-  
+  console.log(
+    `\nAvg temperature: ${aggregates.weather.temperature?.mean.toFixed(1)}°C`
+  );
+  console.log(
+    `Avg traffic speed: ${aggregates.traffic.averageSpeed?.mean.toFixed(
+      1
+    )} km/h`
+  );
+  console.log(
+    `Avg PM2.5: ${aggregates.airQuality.pm25?.mean.toFixed(1)} μg/m³`
+  );
+
   return { dashboard, aggregates };
 }
 
 // Usage
-buildCityDashboard('https://api.smartcity.gov/csapi', [-122.5, 37.7, -122.3, 37.9]);
+buildCityDashboard(
+  'https://api.smartcity.gov/csapi',
+  [-122.5, 37.7, -122.3, 37.9]
+);
 ```
 
 **Why Single-Class Works:**
+
 - ✅ Parallel processing with same client object
 - ✅ Consistent API across all sensor types
 - ✅ Type-safe aggregation across heterogeneous data
 - ✅ Clear performance characteristics
 
 **Alternative Multi-Class Would Require:**
+
 - ❌ Manage multiple builder instances simultaneously
 - ❌ Coordinate parallel requests across builder boundaries
 - ❌ Complex type casting for aggregation
 
 **Scenario Metrics:**
+
 - Resources accessed: 3 (Systems, DataStreams, Observations)
 - API calls: 1 + N×2 (1 systems, N systems × (datastreams + observations))
 - Scale: 100+ systems, 200+ datastreams, 200+ observations
@@ -4405,13 +4680,13 @@ buildCityDashboard('https://api.smartcity.gov/csapi', [-122.5, 37.7, -122.3, 37.
 
 **Evidence Summary from 5 Representative Scenarios:**
 
-| Scenario | Priority | Resources | API Calls | Complexity | Builder Switches (Multi-Class) |
-|----------|----------|-----------|-----------|------------|-------------------------------|
-| Temperature Monitoring | P0 | 3 | 1 + N + M | Medium | 2 per system |
-| UAV Command & Control | P0 | 4 | 6+ | High | 4 per workflow |
-| Historical Analysis | P0 | 3 | 1 + N + M×P | Medium | 2 per system |
-| Deployment Tracking | P1 | 5 | Complex | Medium-High | 4 per system |
-| Dashboard Aggregation | P0 | 3 | 1 + N×2 | High | 200+ total |
+| Scenario               | Priority | Resources | API Calls   | Complexity  | Builder Switches (Multi-Class) |
+| ---------------------- | -------- | --------- | ----------- | ----------- | ------------------------------ |
+| Temperature Monitoring | P0       | 3         | 1 + N + M   | Medium      | 2 per system                   |
+| UAV Command & Control  | P0       | 4         | 6+          | High        | 4 per workflow                 |
+| Historical Analysis    | P0       | 3         | 1 + N + M×P | Medium      | 2 per system                   |
+| Deployment Tracking    | P1       | 5         | Complex     | Medium-High | 4 per system                   |
+| Dashboard Aggregation  | P0       | 3         | 1 + N×2     | High        | 200+ total                     |
 
 **Key Findings:**
 
@@ -4431,6 +4706,7 @@ buildCityDashboard('https://api.smartcity.gov/csapi', [-122.5, 37.7, -122.3, 37.
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Real-world scenarios provide conclusive evidence for single-class architecture
 
 **References:**
+
 - [Architecture Decision - Part 3: Usage Scenario Validation](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part3-validation.md#decision-1-usage-scenario-validation) - Complete analysis of all 15 scenarios
 - [Research Plan 14](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/research-plan-14-usage-scenarios.md) - Original usage scenario research with P0/P1/P2 prioritization
 
@@ -4442,36 +4718,36 @@ buildCityDashboard('https://api.smartcity.gov/csapi', [-122.5, 37.7, -122.3, 37.
 
 ### Implementation Files
 
-| Category | Files | Lines | Complexity | Status |
-|----------|-------|-------|------------|--------|
-| **Core Implementation** | **3** | **1,100-1,280** | **Medium** | **Structure complete** |
-| url_builder.ts | 1 | 700-800 | Medium | 80 methods |
-| model.ts | 1 | 350-400 | Low | Type definitions |
-| helpers.ts | 1 | 50-80 | Low | Utilities |
-| **Format Implementation** | **18** | **3,450-4,750** | **High** | **Structure complete** |
-| SensorML types | 1 | 800-1,200 | Medium | Interface definitions |
-| SensorML parsers | 5 | 800-1,000 | High | Recursive parsing |
-| SWE Common types | 1 | 600-800 | Medium | Interface definitions |
-| SWE Common parsers | 5 | 1,000-1,250 | High | Encoding support |
-| GeoJSON utilities | 1 | 50-100 | Low | Extensions |
-| Constants | 1 | 50-100 | Low | Media types |
-| Index files | 3 | 150-300 | Low | Exports |
-| **Integration** | **3** | **64** | **Low** | **Pattern decided** |
-| endpoint.ts changes | 1 | 35 | Low | Factory method |
-| info.ts changes | 1 | 12 | Low | Conformance |
-| index.ts changes | 1 | 17 | Low | Exports |
-| **TOTAL IMPLEMENTATION** | **24** | **4,614-6,094** | **Mixed** | **Ready** |
+| Category                  | Files  | Lines           | Complexity | Status                 |
+| ------------------------- | ------ | --------------- | ---------- | ---------------------- |
+| **Core Implementation**   | **3**  | **1,100-1,280** | **Medium** | **Structure complete** |
+| url_builder.ts            | 1      | 700-800         | Medium     | 80 methods             |
+| model.ts                  | 1      | 350-400         | Low        | Type definitions       |
+| helpers.ts                | 1      | 50-80           | Low        | Utilities              |
+| **Format Implementation** | **18** | **3,450-4,750** | **High**   | **Structure complete** |
+| SensorML types            | 1      | 800-1,200       | Medium     | Interface definitions  |
+| SensorML parsers          | 5      | 800-1,000       | High       | Recursive parsing      |
+| SWE Common types          | 1      | 600-800         | Medium     | Interface definitions  |
+| SWE Common parsers        | 5      | 1,000-1,250     | High       | Encoding support       |
+| GeoJSON utilities         | 1      | 50-100          | Low        | Extensions             |
+| Constants                 | 1      | 50-100          | Low        | Media types            |
+| Index files               | 3      | 150-300         | Low        | Exports                |
+| **Integration**           | **3**  | **64**          | **Low**    | **Pattern decided**    |
+| endpoint.ts changes       | 1      | 35              | Low        | Factory method         |
+| info.ts changes           | 1      | 12              | Low        | Conformance            |
+| index.ts changes          | 1      | 17              | Low        | Exports                |
+| **TOTAL IMPLEMENTATION**  | **24** | **4,614-6,094** | **Mixed**  | **Ready**              |
 
 ### Test Files
 
-| Category | Files | Lines | Complexity | Status |
-|----------|-------|-------|------------|--------|
-| Core unit tests | 3 | 450-650 | Medium | Patterns complete |
-| URL builder tests | 9 | 1,390-1,790 | Medium | Patterns complete |
-| Format parser tests | 3 | 1,000-1,300 | High | Patterns complete |
-| Integration tests | 4 | 900-1,150 | Medium | Multi-component workflows |
-| Test utilities | 3 | 300-450 | Low | Helper infrastructure |
-| **TOTAL TESTS** | **22** | **4,040-5,340** | **High** | **Ready** |
+| Category            | Files  | Lines           | Complexity | Status                    |
+| ------------------- | ------ | --------------- | ---------- | ------------------------- |
+| Core unit tests     | 3      | 450-650         | Medium     | Patterns complete         |
+| URL builder tests   | 9      | 1,390-1,790     | Medium     | Patterns complete         |
+| Format parser tests | 3      | 1,000-1,300     | High       | Patterns complete         |
+| Integration tests   | 4      | 900-1,150       | Medium     | Multi-component workflows |
+| Test utilities      | 3      | 300-450         | Low        | Helper infrastructure     |
+| **TOTAL TESTS**     | **22** | **4,040-5,340** | **High**   | **Ready**                 |
 
 ### Grand Total
 
@@ -4481,11 +4757,11 @@ buildCityDashboard('https://api.smartcity.gov/csapi', [-122.5, 37.7, -122.3, 37.
 
 **Comparison to Original Estimates:**
 
-| Estimate | Original (v2.0) | Research-Validated (v3.0) | Difference |
-|----------|----------------|---------------------------|------------|
-| QueryBuilder | ~10,000-14,000 lines | ~700-800 lines | -93% |
-| Total Implementation | ~15,000-20,000 lines | ~4,614-6,094 lines | -69% |
-| Total with Tests | ~21,000-27,900 lines | ~8,654-11,434 lines | -59% |
+| Estimate             | Original (v2.0)      | Research-Validated (v3.0) | Difference |
+| -------------------- | -------------------- | ------------------------- | ---------- |
+| QueryBuilder         | ~10,000-14,000 lines | ~700-800 lines            | -93%       |
+| Total Implementation | ~15,000-20,000 lines | ~4,614-6,094 lines        | -69%       |
+| Total with Tests     | ~21,000-27,900 lines | ~8,654-11,434 lines       | -59%       |
 
 **Why More Accurate:**
 
@@ -4506,6 +4782,7 @@ buildCityDashboard('https://api.smartcity.gov/csapi', [-122.5, 37.7, -122.3, 37.
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Based on 13 research plans
 
 **References:**
+
 - [Architecture Decision - Part 1: Code Volume Summary](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#code-volume-summary) - Detailed breakdown with component-level estimates
 - [Architecture Decision - Part 2: Implementation Complexity](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-4-implementation-complexity-metrics) - Complexity analysis by component
 
@@ -4514,6 +4791,7 @@ buildCityDashboard('https://api.smartcity.gov/csapi', [-122.5, 37.7, -122.3, 37.
 ## Summary: Build vs Extend Breakdown
 
 ### Components Extending Existing Code (9 components):
+
 1. **Conformance Reader** - Add CSAPI conformance class checks (`hasConnectedSystems` getter, ~12 lines in `info.ts`)
 2. **Collections Reader** - Parse CSAPI collection metadata (`csapiCollections` getter, ~6 lines in `endpoint.ts`)
 3. **OgcApiEndpoint Integration** - Add `csapi(collectionId)` factory method (64 lines total: endpoint.ts 35 + info.ts 12 + index.ts 17)
@@ -4525,7 +4803,9 @@ buildCityDashboard('https://api.smartcity.gov/csapi', [-122.5, 37.7, -122.3, 37.
 9. **API Documentation** - Add CSAPI docs to TypeDoc (extend existing documentation)
 
 ### Components Building New Code (3 components):
+
 1. **CSAPIQueryBuilder** - New query builder class (~1,100-1,280 lines)
+
    - url_builder.ts: ~700-800 lines (includes validation)
    - model.ts: ~350-400 lines (GeoJSON types)
    - helpers.ts: ~50-80 lines (utilities)
@@ -4536,6 +4816,7 @@ buildCityDashboard('https://api.smartcity.gov/csapi', [-122.5, 37.7, -122.3, 37.
    - **Three-tier type system** with 1,750-2,400 total lines
 
 2. **SensorML Handler** - New format parser for SensorML 3.0 (~1,600-2,200 lines)
+
    - types.ts: ~800-1,200 lines (interfaces)
    - parser.ts: ~600-800 lines (main parser)
    - Sub-parsers: ~550-700 lines (simple-process, aggregate-process, physical-system)
@@ -4564,11 +4845,13 @@ buildCityDashboard('https://api.smartcity.gov/csapi', [-122.5, 37.7, -122.3, 37.
 **File Organization:** Flat core (url_builder.ts, model.ts, helpers.ts) + formats/ subfolder (sensorml/, swecommon/, geojson.ts, constants.ts, 3 index files) for tree-shaking and maintainability. Total: 21 implementation files.
 
 **Type System:** Three-tier hierarchy (Shared → OGC API → CSAPI) with 1,750-2,400 total lines:
+
 - model.ts: ~350-400 lines (GeoJSON resources)
 - formats/sensorml/types.ts: ~800-1,200 lines (SensorML interfaces)
 - formats/swecommon/types.ts: ~600-800 lines (SWE Common interfaces)
 
 **Scope Understanding:** While the summary lists "3 components building new code" (architecturally accurate), the implementation totals ~4,614-6,094 lines:
+
 - QueryBuilder core: ~1,100-1,280 lines (21%)
 - Format parsers: ~3,450-4,750 lines (76-78%)
 - Integration: 64 lines (1%)
@@ -4576,6 +4859,7 @@ buildCityDashboard('https://api.smartcity.gov/csapi', [-122.5, 37.7, -122.3, 37.
 The format parsers represent ~76-78% of new code because CSAPI requires full parsing of SensorML 3.0 and SWE Common 3.0 (unlike other OGC APIs that only build URLs). This consolidated single-class architecture follows the upstream EDR pattern (one QueryBuilder per API family) but delivers functionally extensive capabilities across all CSAPI resources. Clients evaluating scope should understand that while architecturally elegant (3 new classes), the functional scope is substantial - implementing complete CSAPI Part 1 and Part 2 specifications with full query, filter, and pagination support across all resource types.
 
 ### Estimated Scope:
+
 - **Extending existing code:** ~20% of effort (9 small extensions, 64 total lines modified in existing files + ~4,040-5,340 test lines)
 - **Building new code:** ~80% of effort (QueryBuilder: ~1,100-1,280 lines + Format parsers: ~3,450-4,750 lines)
 - **Total estimated lines of code:** ~8,654-11,434 lines (implementation + tests)
@@ -4585,6 +4869,7 @@ The format parsers represent ~76-78% of new code because CSAPI requires full par
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - All estimates validated through 13 research plans
 
 **References:**
+
 - [Architecture Decision - Part 1: Code Volume](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#code-volume-summary) - Component-level breakdown
 - [Architecture Decision - Part 2: Implementation Complexity](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-4-implementation-complexity-metrics) - Detailed complexity analysis
 
@@ -4609,19 +4894,21 @@ Every component described above aligns with these core project goals:
 ## Development Standards
 
 **Recommended Development Workflow:**
+
 1. Write method signatures before implementation
-3. Add comprehensive JSDoc comments with parameters, return types, examples
-4. Implement functionality with inline documentation for complex logic
-5. Write tests as you implement (not deferred to later) — **max 2-3 hours or 800 LOC between test runs** (incremental cadence from ROADMAP v3, 31 checkpoints)
-6. Document edge cases and validation rules as discovered
-7. Add usage examples to JSDoc for common scenarios
-8. Validate against spec examples throughout
-9. Update documentation as you go - don't defer
+2. Add comprehensive JSDoc comments with parameters, return types, examples
+3. Implement functionality with inline documentation for complex logic
+4. Write tests as you implement (not deferred to later) — **max 2-3 hours or 800 LOC between test runs** (incremental cadence from ROADMAP v3, 31 checkpoints)
+5. Document edge cases and validation rules as discovered
+6. Add usage examples to JSDoc for common scenarios
+7. Validate against spec examples throughout
+8. Update documentation as you go - don't defer
 
 **Code Quality Standards:**
+
 - TypeScript strict mode enabled
 - 100% public API JSDoc coverage
-- >80% test coverage (statement and branch)
+- > 80% test coverage (statement and branch)
 - Lint-clean code (ESLint configuration)
 - No magic numbers or strings (use constants)
 - Consistent error handling patterns
@@ -4631,6 +4918,7 @@ Every component described above aligns with these core project goals:
 - **Meaningful vs trivial** testing standard: every test must validate meaningful client behavior (parsing correctness, URL construction, error handling), not trivial assertions like "object exists" or "type is defined." See [Doc 06 — Meaningful vs Trivial Definition](../research/testing/findings/06-meaningful-vs-trivial-definition.md) for the "meaningful vs trivial" distinction and upstream examples.
 
 **Documentation Standards:**
+
 - Clear, concise method descriptions
 - Parameter descriptions with types and constraints
 - Return type documentation
@@ -4641,6 +4929,7 @@ Every component described above aligns with these core project goals:
 - Type system documentation with IntelliSense examples
 
 **Research-Validated Standards:**
+
 - All architectural decisions backed by research (⭐⭐⭐⭐⭐ confidence)
 - Follow upstream patterns (100% consistency)
 - Helper methods for code reuse (0% inheritance)
@@ -4653,13 +4942,13 @@ Every component described above aligns with these core project goals:
 **Anti-Pattern Catalog (AP1-AP5):**
 All test design must avoid these 5 anti-patterns identified in the Phase 0 test-research report. Violations are flagged during code review.
 
-| ID | Anti-Pattern | Description | Risk |
-|----|-------------|-------------|------|
-| AP1 | Testing Response Content | Asserting specific fixture data values instead of parsing behavior | Tests break when fixtures change |
-| AP2 | Live Server Dependencies | Making real HTTP calls in unit/integration tests | Flaky tests, network dependency |
-| AP3 | Server Conformance Testing | Testing whether a server meets the specification (server's job, not client's) | Scope creep, untestable |
-| AP4 | Asserting Data Shape | Testing that data has specific structure rather than testing client behavior | Brittle, tests fixtures not code |
-| AP5 | Over-Engineered Test Infra | Building custom test frameworks instead of using Jest patterns | Maintenance overhead |
+| ID  | Anti-Pattern               | Description                                                                   | Risk                             |
+| --- | -------------------------- | ----------------------------------------------------------------------------- | -------------------------------- |
+| AP1 | Testing Response Content   | Asserting specific fixture data values instead of parsing behavior            | Tests break when fixtures change |
+| AP2 | Live Server Dependencies   | Making real HTTP calls in unit/integration tests                              | Flaky tests, network dependency  |
+| AP3 | Server Conformance Testing | Testing whether a server meets the specification (server's job, not client's) | Scope creep, untestable          |
+| AP4 | Asserting Data Shape       | Testing that data has specific structure rather than testing client behavior  | Brittle, tests fixtures not code |
+| AP5 | Over-Engineered Test Infra | Building custom test frameworks instead of using Jest patterns                | Maintenance overhead             |
 
 See the [Phase 0 Test-Research Report](../research/testing/review/phase-0-lessons-from-failed-attempt.md) for full anti-pattern definitions, examples, and remediation guidance.
 
@@ -4673,6 +4962,7 @@ See the [Phase 0 Test-Research Report](../research/testing/review/phase-0-lesson
 **Status:** ✅ **ARCHITECTURE VALIDATED** with real-world scenarios and quantitative evidence
 
 **Version 7.2 - Feature-Level Validators Removed from Scope (February 15, 2026):**
+
 - **§7 Validator section marked OUT OF SCOPE** — no formal validation framework in any upstream handler; STAC has inline checks, WMS/WFS/WMTS/TMS have zero
 - Updated §7 GeoJSON Handler design decision: handler provides recognition + extraction only, no validation
 - Updated §11 Error Handling: removed validate patterns, extraction is tolerant by design
@@ -4681,6 +4971,7 @@ See the [Phase 0 Test-Research Report](../research/testing/review/phase-0-lesson
 - Related: Issue #52, ROADMAP v3.6, Phase 3.2 smoke test finding F49
 
 **Version 7.1 - Validation/Extraction Decoupling Design Decision (February 15, 2026):**
+
 - Added design decision note to §7 GeoJSON Handler: extraction depends only on recognition, not validation
 - Added design decision note to §7 Validator: validators are opt-in diagnostics, never extraction gates
 - Added extraction vs validation usage patterns to §11 Error Handling Patterns
@@ -4688,6 +4979,7 @@ See the [Phase 0 Test-Research Report](../research/testing/review/phase-0-lesson
 - Related: Issue #52, Phase 3.2 smoke test finding F49
 
 **Version 7.0 - Query Parameters Restoration (February 5, 2026):**
+
 - Restored "Complete Query Parameter Support" section accidentally removed in v3
 - Section was replaced with "Type System Architecture" in v3 commit 61d027a
 - ToC link remained but pointed to non-existent section (broken since v3)
@@ -4697,6 +4989,7 @@ See the [Phase 0 Test-Research Report](../research/testing/review/phase-0-lesson
 - Completes the restoration work from v6.0
 
 **Version 6.0 Restoration (February 5, 2026):**
+
 - Restored 17 detailed implementation sections intentionally removed in v2.0
 - All resource method sections restored (Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands)
 - All format handler sections restored (GeoJSON Handler, SensorML Handler, SWE Common Handler, Format Detector, Validator)
@@ -4706,6 +4999,7 @@ See the [Phase 0 Test-Research Report](../research/testing/review/phase-0-lesson
 - See [Phase 1 Reconnaissance Report](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/archive/phase1-reconnaissance-report.md) for restoration methodology
 
 **Previous Versions:**
+
 - [v6.0 (archived)](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/archive/csapi-implementation-guide-v6.md) - Complete self-contained guide (17 sections restored)
 - [v5.0 (archived)](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/archive/csapi-implementation-guide-v5.md) - Architecture-validated with real-world scenarios (pre-restoration)
 - [v4.0 (archived)](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/archive/csapi-implementation-guide-v4.md) - Hybrid file structure diagram

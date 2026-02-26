@@ -13,6 +13,7 @@
 **Implementation Scope:** Implement **ALL CSAPI resources** (Part 1 + Part 2) with comprehensive format abstraction (GeoJSON, SensorML, SWE Common parsing). This includes Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, and Commands.
 
 **Rationale:**
+
 1. Complete CSAPI spec coverage (all resource types)
 2. Full format abstraction (all SensorML types, all SWE Common components, all encodings)
 3. Production-ready from day one
@@ -28,6 +29,7 @@
 ### 1.1 Part 1 Resources (Discovery & Catalog)
 
 **Systems (`/systems`)**
+
 - **Priority:** P0 (CRITICAL)
 - **Justification:** Core discovery resource, required for all workflows
 - **Operations:** GET collection, GET by ID, POST create, PUT update, DELETE
@@ -35,6 +37,7 @@
 - **Status:** ✅ FULL IMPLEMENTATION
 
 **Deployments (`/deployments`)**
+
 - **Priority:** P0 (CRITICAL)
 - **Justification:** Describes where/when systems are deployed
 - **Operations:** GET collection, GET by ID, POST create, PUT update, DELETE
@@ -43,6 +46,7 @@
 - **Status:** ✅ FULL IMPLEMENTATION
 
 **Procedures (`/procedures`)**
+
 - **Priority:** P0 (CRITICAL)
 - **Justification:** Describes measurement methodologies, referenced by systems
 - **Operations:** GET collection, GET by ID, POST create, PUT update, DELETE
@@ -51,6 +55,7 @@
 - **Status:** ✅ FULL IMPLEMENTATION
 
 **Sampling Features (`/samplingFeatures`)**
+
 - **Priority:** P0 (CRITICAL)
 - **Justification:** Describes feature of interest being observed
 - **Operations:** GET collection, GET by ID, POST create, PUT update, DELETE
@@ -59,6 +64,7 @@
 - **Status:** ✅ FULL IMPLEMENTATION
 
 **Properties (`/properties`)**
+
 - **Priority:** P0 (CRITICAL)
 - **Justification:** Defines observable properties, referenced by datastreams
 - **Operations:** GET collection, GET by ID
@@ -69,6 +75,7 @@
 ### 1.2 Part 2 Resources (Data & Control)
 
 **DataStreams (`/datastreams`, `/systems/{id}/datastreams`)**
+
 - **Priority:** P0 (CRITICAL)
 - **Justification:** Describes observation streams, links to observations
 - **Operations:** GET collection, GET by ID, POST create, PUT update, DELETE
@@ -77,6 +84,7 @@
 - **Status:** ✅ FULL IMPLEMENTATION
 
 **Observations (`/observations`, `/datastreams/{id}/observations`)**
+
 - **Priority:** P0 (CRITICAL)
 - **Justification:** Actual measurement data, bulk operations
 - **Operations:** GET collection, GET by ID, POST create (bulk)
@@ -85,6 +93,7 @@
 - **Status:** ✅ FULL IMPLEMENTATION
 
 **Control Streams (`/controlStreams`, `/systems/{id}/controlStreams`)**
+
 - **Priority:** P1 (HIGH)
 - **Justification:** Describes control channels, essential for actuator control
 - **Operations:** GET collection, GET by ID, POST create, PUT update, DELETE
@@ -93,6 +102,7 @@
 - **Status:** ✅ FULL IMPLEMENTATION
 
 **Commands (`/commands`, `/controlStreams/{id}/commands`)**
+
 - **Priority:** P1 (HIGH)
 - **Justification:** Tasking/control messages, essential for actuator control
 - **Operations:** GET collection, GET by ID, POST create (bulk)
@@ -102,17 +112,17 @@
 
 ### 1.3 Full Scope Implementation Matrix
 
-| Resource | Part | Priority | Complexity | Dependencies | Status |
-|----------|------|----------|------------|--------------|--------|
-| Systems | 1 | P0 | Medium | None | ✅ FULL |
-| Deployments | 1 | P0 | Medium | Systems | ✅ FULL |
-| Procedures | 1 | P0 | Medium | Systems | ✅ FULL |
-| Sampling Features | 1 | P0 | Medium | Systems | ✅ FULL |
-| Properties | 1 | P0 | Low | None | ✅ FULL |
-| DataStreams | 2 | P0 | High | Systems, Props | ✅ FULL |
-| Observations | 2 | P0 | Very High | DataStreams | ✅ FULL |
-| Control Streams | 2 | P1 | High | Systems | ✅ FULL |
-| Commands | 2 | P1 | Very High | Control Streams | ✅ FULL |
+| Resource          | Part | Priority | Complexity | Dependencies    | Status  |
+| ----------------- | ---- | -------- | ---------- | --------------- | ------- |
+| Systems           | 1    | P0       | Medium     | None            | ✅ FULL |
+| Deployments       | 1    | P0       | Medium     | Systems         | ✅ FULL |
+| Procedures        | 1    | P0       | Medium     | Systems         | ✅ FULL |
+| Sampling Features | 1    | P0       | Medium     | Systems         | ✅ FULL |
+| Properties        | 1    | P0       | Low        | None            | ✅ FULL |
+| DataStreams       | 2    | P0       | High       | Systems, Props  | ✅ FULL |
+| Observations      | 2    | P0       | Very High  | DataStreams     | ✅ FULL |
+| Control Streams   | 2    | P1       | High       | Systems         | ✅ FULL |
+| Commands          | 2    | P1       | Very High  | Control Streams | ✅ FULL |
 
 ---
 
@@ -121,6 +131,7 @@
 ### 2.1 GeoJSON Parser (Full Implementation)
 
 **Geometry Types:**
+
 - ✅ Point
 - ✅ LineString
 - ✅ Polygon
@@ -130,10 +141,12 @@
 - ✅ GeometryCollection
 
 **Feature Types:**
+
 - ✅ Feature
 - ✅ FeatureCollection
 
 **Validation:**
+
 - ✅ Structural validation (required properties)
 - ✅ Geometry validation (coordinate arrays)
 - ✅ CRS validation (if present)
@@ -145,6 +158,7 @@
 ### 2.2 SensorML Parser (Full Implementation)
 
 **Process Types (All Versions):**
+
 - ✅ SimpleProcess (basic metadata)
 - ✅ PhysicalSystem (systems with components)
 - ✅ PhysicalComponent (individual sensors)
@@ -152,11 +166,13 @@
 - ✅ ProcessChain (processing workflows)
 
 **SensorML Versions:**
+
 - ✅ SensorML 2.0 (JSON)
 - ✅ SensorML 2.1 (JSON)
 - ✅ All version-specific features
 
 **Key Elements:**
+
 - ✅ Identification (identifiers, classifiers)
 - ✅ Classification (system type, sensor type)
 - ✅ Characteristics (physical properties)
@@ -173,6 +189,7 @@
 ### 2.3 SWE Common Parser (Full Implementation)
 
 **Component Types (All Types):**
+
 - ✅ DataRecord (structured data)
 - ✅ DataArray (arrays of data)
 - ✅ Vector (position, velocity)
@@ -187,12 +204,14 @@
 - ✅ All component types from SWE Common 2.0
 
 **Encoding Types (All Encodings):**
+
 - ✅ JSON encoding (CSAPI default)
 - ✅ Text encoding (CSV-like)
 - ✅ Binary encoding (packed binary)
 - ✅ XML encoding (if needed for compatibility)
 
 **Use Cases (All):**
+
 - ✅ Parse DataStream schemas (result schemas)
 - ✅ Parse System characteristics/capabilities
 - ✅ Parse Position (location, orientation)
@@ -206,6 +225,7 @@
 ### 2.4 Format Detection (Full Implementation)
 
 **Detection Strategies:**
+
 - ✅ Content-Type header inspection
 - ✅ Body structure analysis (JSON keys)
 - ✅ Context-based inference (resource type)
@@ -214,6 +234,7 @@
 - ✅ Custom format registration
 
 **Supported Formats (All):**
+
 - ✅ `application/geo+json` → GeoJSON
 - ✅ `application/sensorml+json` → SensorML
 - ✅ `application/swe+json` → SWE Common
@@ -226,6 +247,7 @@
 ### 2.5 Format Validation (Full Implementation)
 
 **Validation Types:**
+
 - ✅ Structural validation (JSON schema-like)
 - ✅ Type validation (field types, required fields)
 - ✅ Pre-request validation (client-side catch errors early)
@@ -235,12 +257,14 @@
 - ✅ Schema-based validation (DataStream schemas)
 
 **Validation Modes:**
+
 - ✅ Strict mode (throw on any error)
 - ✅ Lenient mode (log warnings, continue)
 - ✅ Configurable per-endpoint
 - ✅ Custom validation rules
 
 **Error Reporting:**
+
 - ✅ JSON path to error location
 - ✅ Expected vs actual values
 - ✅ Actionable error messages
@@ -256,19 +280,22 @@
 ### 3.1 Core Capabilities (Full Implementation)
 
 **Endpoint Initialization:**
+
 - ✅ Parse `/` landing page
-- ✅ Parse `/conformance` 
+- ✅ Parse `/conformance`
 - ✅ Parse `/collections` (all resource types)
 - ✅ Cache parsed metadata
 - ✅ `isReady()` async pattern
 
 **Service Metadata:**
+
 - ✅ `getServiceInfo()` - GenericEndpointInfo
 - ✅ `getConformanceClasses()` - array of URIs
 - ✅ `getCollections()` - all collections
 - ✅ `getVersion()` - API version (if available)
 
 **Part 1 Resource Discovery:**
+
 - ✅ `getSystems()` - list all systems
 - ✅ `getSystemById(id)` - get single system
 - ✅ `getDeployments()` - list all deployments
@@ -281,6 +308,7 @@
 - ✅ `getPropertyById(id)` - get single property
 
 **Part 2 Resource Access:**
+
 - ✅ `getDataStreams()` - list all datastreams
 - ✅ `getDataStreamById(id)` - get single datastream
 - ✅ `getSystemDataStreams(systemId)` - nested resource
@@ -295,6 +323,7 @@
 - ✅ `getControlStreamCommands(controlStreamId)` - nested resource
 
 **Query Parameters (All):**
+
 - ✅ `bbox` - bounding box filter
 - ✅ `datetime` - temporal filter
 - ✅ `limit` - pagination limit
@@ -304,6 +333,7 @@
 - ✅ `sortby` - sorting
 
 **CRUD Operations (All):**
+
 - ✅ GET (read)
 - ✅ POST (create) - URL builder + body
 - ✅ PUT (update) - URL builder + body
@@ -311,12 +341,14 @@
 - ✅ PATCH (partial update) - URL builder + body
 
 **Bulk Operations:**
+
 - ✅ Observation bulk insert
 - ✅ Command bulk submission
 - ✅ Bulk validation
 - ✅ Error handling for partial failures
 
 **Advanced Features:**
+
 - ✅ Streaming observation updates
 - ✅ Observation aggregation queries
 - ✅ Command status polling
@@ -332,7 +364,9 @@
 **Timeline:** 8-10 weeks for full CSAPI implementation
 
 **Deliverables:**
+
 1. **Core Infrastructure** (~1 week)
+
    - CSAPIEndpoint class
    - Parse `/`, `/conformance`, `/collections`
    - Cache implementation
@@ -340,6 +374,7 @@
    - HTTP utilities (fetch wrapper, headers, auth)
 
 2. **Complete Format Abstraction** (~3 weeks)
+
    - GeoJSON parser (500 lines) - all geometry types
    - SensorML parser FULL (1,500 lines) - all process types, all versions
    - SWE Common parser FULL (2,000 lines) - all components, all encodings
@@ -348,6 +383,7 @@
    - Unit tests for all parsers
 
 3. **All Part 1 Resources** (~1 week)
+
    - Systems (collection, by ID, CRUD URLs + bodies)
    - Deployments (collection, by ID, CRUD URLs + bodies)
    - Procedures (collection, by ID, CRUD URLs + bodies)
@@ -356,6 +392,7 @@
    - Query parameter support (bbox, datetime, limit, offset, filter, properties, sortby)
 
 4. **All Part 2 Resources** (~2 weeks)
+
    - DataStreams (collection, by ID, CRUD, nested)
    - DataStream schema parsing (SWE Common components)
    - Observations (collection, by ID, nested)
@@ -367,6 +404,7 @@
    - Pagination for large observation sets
 
 5. **Advanced Features** (~1 week)
+
    - CQL2 filter support
    - Property selection (sparse fieldsets)
    - Sorting
@@ -375,6 +413,7 @@
    - Full-text search support (if server supports)
 
 6. **Worker Support** (~3 days)
+
    - Register handlers in `worker/worker.ts`
    - Export functions from `worker/index.ts`
    - Parse conformance/collections in worker
@@ -393,6 +432,7 @@
    - Migration guide (from V1 if needed)
 
 **Success Criteria:**
+
 - ✅ All Part 1 resources accessible via CSAPIEndpoint
 - ✅ All Part 2 resources accessible via CSAPIEndpoint
 - ✅ GeoJSON, SensorML, SWE Common parsing fully functional (all types, all encodings)
@@ -404,6 +444,7 @@
 - ✅ PR ready for camptocamp/ogc-client
 
 **Lines of Code Estimate:** ~10,000 lines
+
 - Core infrastructure: ~800 lines
 - Format abstraction: ~5,000 lines
 - Part 1 resources: ~1,200 lines
@@ -419,6 +460,7 @@
 ### 5.1 P0 - Critical (Week 1-4)
 
 **Core Endpoint:**
+
 - Parse landing page, conformance, collections
 - Async initialization (`isReady()`)
 - Service metadata getters
@@ -426,6 +468,7 @@
 - Error handling
 
 **Part 1 Resources:**
+
 - Systems (GET collection, GET by ID, CRUD)
 - Deployments (GET collection, GET by ID, CRUD)
 - Procedures (GET collection, GET by ID, CRUD)
@@ -433,6 +476,7 @@
 - Properties (GET collection, GET by ID, CRUD)
 
 **Format Abstraction (Full):**
+
 - GeoJSON parser (all geometry types)
 - SensorML parser (all process types, all versions)
 - SWE Common parser (all component types, all encodings)
@@ -440,22 +484,26 @@
 - Format validation (structural + type + semantic)
 
 **Testing:**
+
 - Unit tests (90%+ coverage)
 - Integration tests with fixtures
 
 **Documentation:**
+
 - JSDoc on all public APIs
 - README with examples
 
 ### 5.2 P0 - Critical (Week 5-7)
 
 **Part 2 Resources:**
+
 - DataStreams (GET collection, GET by ID, CRUD, nested)
 - Observations (GET collection, GET by ID, POST bulk, nested)
 - Control Streams (GET collection, GET by ID, CRUD, nested)
 - Commands (GET collection, GET by ID, POST bulk, nested)
 
 **Query Parameters (All):**
+
 - `bbox` filter
 - `datetime` filter
 - `limit` pagination
@@ -465,10 +513,12 @@
 - `sortby` - sorting
 
 **Worker Support:**
+
 - Heavy parsing in workers (all formats)
 - Fallback mode
 
 **Bulk Operations:**
+
 - Observation bulk insert
 - Command bulk submission
 - Partial failure handling
@@ -476,6 +526,7 @@
 ### 5.3 P1 - High Priority (Week 8-9)
 
 **Advanced Features:**
+
 - Streaming observation updates
 - Observation aggregation queries
 - Command status polling
@@ -483,11 +534,13 @@
 - Association helper methods
 
 **Advanced Validation:**
+
 - Cross-resource validation (foreign keys)
 - Schema-based validation (DataStream schemas)
 - Custom validation rules
 
 **Performance:**
+
 - Streaming observations
 - Incremental parsing
 - Lazy loading
@@ -495,6 +548,7 @@
 ### 5.4 P2 - Nice to Have (Week 10+)
 
 **Extended Features:**
+
 - Full-text search support (if server supports)
 - Spatial relationship queries (intersects, within)
 - Aggregation queries
@@ -508,42 +562,49 @@
 ### 6.1 Implementation Risks
 
 **Risk: SensorML Parser Complexity (All Process Types)**
+
 - **Probability:** Medium
 - **Impact:** High
 - **Mitigation:** Start with SimpleProcess, iterate to PhysicalSystem, then AggregateProcess/ProcessChain
 - **Timeline Impact:** +3-5 days if complex edge cases found
 
 **Risk: SWE Common Full Scope (All Components + Encodings)**
+
 - **Probability:** High
 - **Impact:** High
 - **Mitigation:** Define clear parsing strategy, extensive unit tests, reference implementations
 - **Timeline Impact:** +5-7 days if binary encoding proves complex
 
 **Risk: Observation Volume Performance**
+
 - **Probability:** Medium
 - **Impact:** High
 - **Mitigation:** Implement pagination, streaming, worker-based parsing from day one
 - **Timeline Impact:** +2-3 days if streaming proves complex
 
 **Risk: Test Coverage Target (90%+) Across Full Codebase**
+
 - **Probability:** Low
 - **Impact:** High (blocks PR acceptance)
 - **Mitigation:** Write tests alongside implementation, use coverage tools, focus on critical paths
 - **Timeline Impact:** +3-5 days if coverage gaps found late
 
 **Risk: CQL2 Filter Complexity**
+
 - **Probability:** Medium
 - **Impact:** Medium
 - **Mitigation:** Start with simple CQL2 subset (property comparisons), iterate to complex expressions
 - **Timeline Impact:** +2-3 days if full CQL2 support needed
 
 **Risk: Upstream Pattern Mismatch**
+
 - **Probability:** Low
 - **Impact:** High
 - **Mitigation:** Section 18 validates pattern compatibility, engage maintainers early
 - **Timeline Impact:** +5-10 days if major refactor requested
 
 **Risk: Binary Encoding Edge Cases (SWE Common)**
+
 - **Probability:** Medium
 - **Impact:** Medium
 - **Mitigation:** Extensive testing with real server data, reference to spec
@@ -552,26 +613,31 @@
 ### 6.2 Risk Mitigation Strategies
 
 **Strategy 1: Incremental Development**
+
 - Build parsers incrementally (simple → complex)
 - Test each component thoroughly before moving on
 - Get feedback early and often
 
 **Strategy 2: Reference Implementation Validation**
+
 - Test against 52°North demo server (Section 16.1)
 - Validate all parsers with real server responses
 - Document any spec deviations found
 
 **Strategy 3: Upstream Engagement**
+
 - Share design doc before heavy coding
 - Weekly check-ins with maintainers
 - Address feedback promptly
 
 **Strategy 4: Test-Driven Development**
+
 - Write tests before implementation
 - Use fixtures from real servers
 - Target 90%+ coverage from start
 
 **Strategy 5: Performance Baseline**
+
 - Set performance targets early (e.g., 10K obs < 5s)
 - Profile regularly
 - Optimize hot paths
@@ -583,6 +649,7 @@
 ### 7.1 Full Implementation Success Metrics
 
 **Code Quality:**
+
 - ✅ 90%+ test coverage (all modules)
 - ✅ 0 TypeScript errors
 - ✅ 0 ESLint errors
@@ -590,6 +657,7 @@
 - ✅ All JSDoc complete
 
 **Functionality (Part 1):**
+
 - ✅ All Part 1 resources accessible
 - ✅ GeoJSON parsing works (all geometry types)
 - ✅ SensorML parsing works (all process types, all versions)
@@ -599,6 +667,7 @@
 - ✅ CRUD operations work (GET, POST, PUT, DELETE, PATCH)
 
 **Functionality (Part 2):**
+
 - ✅ All Part 2 resources accessible
 - ✅ DataStreams work (collection, by ID, nested, CRUD)
 - ✅ Observations work (collection, by ID, nested, bulk)
@@ -607,6 +676,7 @@
 - ✅ Advanced queries work (CQL2, properties, sortby)
 
 **Performance:**
+
 - ✅ Endpoint init < 2 seconds (typical server)
 - ✅ Format parsing < 100ms (typical document)
 - ✅ 10K observations parsed < 5 seconds
@@ -616,6 +686,7 @@
 - ✅ Memory usage acceptable for large datasets
 
 **Documentation:**
+
 - ✅ README with installation + examples (all resources)
 - ✅ JSDoc on all public APIs
 - ✅ Type definitions exported
@@ -624,12 +695,14 @@
 - ✅ Performance guidance (large datasets)
 
 **Upstream Acceptance:**
+
 - ✅ PR passes CI/CD checks
 - ✅ PR approved by maintainer(s)
 - ✅ No major revision requests
 - ✅ Merged to main branch
 
 **User Adoption (Post-Merge):**
+
 - ✅ 10+ GitHub stars on PR
 - ✅ Positive community feedback
 - ✅ 0 critical bugs reported in first month
@@ -645,6 +718,7 @@
 **IMPLEMENTATION: Complete CSAPI Specification (Part 1 + Part 2)**
 
 **Include in Full Implementation:**
+
 1. Core infrastructure (endpoint, caching, errors)
 2. Complete format abstraction (GeoJSON, SensorML FULL, SWE Common FULL)
 3. All Part 1 resources (Systems, Deployments, Procedures, Sampling Features, Properties)
@@ -658,6 +732,7 @@
 11. Full documentation (JSDoc, README, examples)
 
 **Nothing Deferred:**
+
 - All resources implemented
 - All format parsers complete (all types, all encodings)
 - All query capabilities supported
@@ -665,6 +740,7 @@
 - Production-ready from day one
 
 **Rationale:**
+
 - **Complete Value:** Full CSAPI spec coverage provides complete functionality
 - **No Gaps:** Users get everything they need in one implementation
 - **Production Ready:** No "coming soon" features or incomplete parsers
@@ -675,18 +751,21 @@
 ### 8.2 Why Full Implementation (Not Phased)
 
 **Technical Reasons:**
+
 1. **Format Abstraction is Indivisible:** SWE Common must support all components for DataStream schemas to work - can't do "partial" SWE Common
 2. **Resource Dependencies:** DataStreams need Properties, Procedures already implemented - natural to continue
 3. **Testing Efficiency:** Test infrastructure built once, used for all resources
 4. **Worker Setup:** Worker support needed anyway - might as well parse everything there
 
 **Business Reasons:**
+
 1. **User Expectations:** Users expect complete CSAPI support, not partial
 2. **Competitive Position:** Other OGC clients (WFS, WMS) are complete implementations
 3. **Adoption:** Complete features drive adoption better than "coming soon"
 4. **Maintenance:** Single PR easier to review/merge than multiple PRs
 
 **Risk Mitigation:**
+
 1. **Incremental Development:** Build simple → complex even within single implementation
 2. **Early Validation:** Get upstream feedback on design before heavy coding
 3. **Modular Architecture:** Each resource module independent, can be built/tested separately
@@ -699,51 +778,61 @@
 ### 9.1 Full Implementation Timeline (8-10 weeks)
 
 **Week 1: Core Infrastructure + GeoJSON**
+
 - Days 1-2: Project setup, TypeScript config, test framework, CSAPIEndpoint skeleton
 - Days 3-4: Landing page, conformance, collections parsing
 - Day 5: GeoJSON parser (all geometry types)
 
 **Week 2: SensorML Parser (Complete)**
+
 - Days 1-2: SimpleProcess parsing (basic metadata)
 - Days 3-4: PhysicalSystem parsing (components, connections)
 - Day 5: PhysicalComponent, AggregateProcess, ProcessChain
 
 **Week 3: SWE Common Parser (Core Components)**
+
 - Days 1-2: Basic types (Quantity, Count, Boolean, Text, Category, Time)
 - Days 3-4: Structured types (DataRecord, Vector, DataArray)
 - Day 5: Advanced types (DataChoice, Matrix)
 
 **Week 4: SWE Common Encodings + Format Validation**
+
 - Days 1-2: JSON encoding (complete)
 - Days 3-4: Text encoding (CSV-like), Binary encoding (packed)
 - Day 5: Format detector, format validator (structural + semantic)
 
 **Week 5: Part 1 Resources (Complete)**
+
 - Days 1-2: Systems, Deployments (collection, by ID, CRUD URLs + bodies)
 - Days 3-4: Procedures, Sampling Features (collection, by ID, CRUD URLs + bodies)
 - Day 5: Properties (collection, by ID), query parameters (bbox, datetime, limit, offset)
 
 **Week 6: Part 2 Resources (DataStreams + Observations Start)**
+
 - Days 1-2: DataStreams (collection, by ID, CRUD, nested)
 - Days 3-4: DataStream schema parsing (SWE Common components integration)
 - Day 5: Observations (collection, by ID, nested) - basic GET
 
 **Week 7: Part 2 Resources (Observations Complete + Control)**
+
 - Days 1-2: Observation bulk insert, pagination, streaming
 - Days 3-4: Control Streams (collection, by ID, CRUD, nested)
 - Day 5: Commands (collection, by ID, nested, bulk submission)
 
 **Week 8: Advanced Features + Worker Support**
+
 - Days 1-2: CQL2 filter support, property selection, sorting
 - Days 3-4: Association helpers, link traversal utilities
 - Day 5: Worker handlers for all parsers, fallback mode
 
 **Week 9: Comprehensive Testing**
+
 - Days 1-2: Unit tests for all modules (target 90%+ coverage)
 - Days 3-4: Integration tests with real server fixtures (52°North)
 - Day 5: Performance tests (10K+ observations), profiling, optimization
 
 **Week 10: Documentation + Polish**
+
 - Days 1-2: JSDoc on all public APIs, type definitions
 - Days 3-4: README with comprehensive examples (all resources)
 - Day 5: Final polish, PR preparation, upstream review request
@@ -753,46 +842,56 @@
 ### 9.2 Weekly Milestones
 
 **Week 1 Complete:**
+
 - ✅ CSAPIEndpoint class functional
 - ✅ Landing page, conformance, collections parsing works
 - ✅ GeoJSON parser complete (all geometry types)
 
 **Week 2 Complete:**
+
 - ✅ SensorML parser complete (all process types, all versions)
 - ✅ Can parse real 52°North system descriptions
 
 **Week 3 Complete:**
+
 - ✅ SWE Common core components parsing works
 - ✅ Can parse DataRecord, Vector, Quantity, etc.
 
 **Week 4 Complete:**
+
 - ✅ All SWE Common encodings work (JSON, Text, Binary)
 - ✅ Format detection/validation complete
 
 **Week 5 Complete:**
+
 - ✅ All Part 1 resources accessible via CSAPIEndpoint
 - ✅ CRUD operations functional
 - ✅ Query parameters working
 
 **Week 6 Complete:**
+
 - ✅ DataStreams accessible, schemas parsed correctly
 - ✅ Observations basic access works
 
 **Week 7 Complete:**
+
 - ✅ All Part 2 resources accessible
 - ✅ Bulk operations working
 - ✅ Observation streaming functional
 
 **Week 8 Complete:**
+
 - ✅ All advanced features working (CQL2, associations)
 - ✅ Worker support complete
 
 **Week 9 Complete:**
+
 - ✅ 90%+ test coverage achieved
 - ✅ All integration tests passing
 - ✅ Performance validated
 
 **Week 10 Complete:**
+
 - ✅ Documentation complete
 - ✅ PR ready for submission
 - ✅ Upstream review requested
@@ -804,6 +903,7 @@
 **Implementation Scope:** Complete CSAPI specification implementation - **ALL resources (Part 1 + Part 2), ALL format abstraction, ALL features**.
 
 **Justification:**
+
 1. **Complete Specification Coverage:** Full CSAPI spec implementation (all 9 resource types)
 2. **No Partial Implementations:** All format parsers complete (GeoJSON, SensorML, SWE Common - all types, all encodings)
 3. **Production Ready:** Users get everything they need from day one
@@ -812,6 +912,7 @@
 6. **Clear Timeline:** 8-10 weeks is achievable for ~10,000 lines with proper planning
 
 **Implementation Details:**
+
 - **Timeline:** 8-10 weeks
 - **Lines of Code:** ~10,000 lines
 - **Test Coverage:** 90%+
@@ -820,6 +921,7 @@
 - **Worker Support:** All heavy parsing offloaded to workers
 
 **What Gets Built:**
+
 1. ✅ Core Infrastructure (CSAPIEndpoint, caching, errors)
 2. ✅ Complete Format Abstraction (~5,000 lines)
    - GeoJSON: All geometry types
@@ -834,7 +936,8 @@
 9. ✅ Worker Support + Fallback
 10. ✅ Comprehensive Tests + Documentation
 
-**Success Criteria:** 
+**Success Criteria:**
+
 - 90%+ test coverage
 - Comprehensive JSDoc
 - Upstream patterns followed (Section 18)

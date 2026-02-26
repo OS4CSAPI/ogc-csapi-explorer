@@ -41,6 +41,7 @@ Must occur after pattern research (Sections 1-3) and architectural integration (
 ### Detailed Questions
 
 **Senior Dev Feedback Analysis (7 questions):**
+
 1. What specific feedback was given on previous tests being "not meaningful"?
 2. What examples were cited as "trivial"?
 3. What was missing that would make tests "useful"?
@@ -49,84 +50,23 @@ Must occur after pattern research (Sections 1-3) and architectural integration (
 6. Are there specific patterns to avoid?
 7. Are there specific patterns to adopt?
 
-**Meaningful Definition (6 questions):**
-8. What makes a test "meaningful"?
-9. What characteristics define meaningfulness?
-10. How deep should assertions go?
-11. What makes assertions meaningful vs superficial?
-12. What edge cases indicate meaningful coverage?
-13. What test structure indicates meaningful intent?
+**Meaningful Definition (6 questions):** 8. What makes a test "meaningful"? 9. What characteristics define meaningfulness? 10. How deep should assertions go? 11. What makes assertions meaningful vs superficial? 12. What edge cases indicate meaningful coverage? 13. What test structure indicates meaningful intent?
 
-**Useful Definition (6 questions):**
-14. What makes a test "useful"?
-15. Useful to whom? (developers, maintainers, future contributors)
-16. How do tests provide value?
-17. What makes tests useful for regression detection?
-18. What makes tests useful for refactoring?
-19. What makes tests useful for understanding code?
+**Useful Definition (6 questions):** 14. What makes a test "useful"? 15. Useful to whom? (developers, maintainers, future contributors) 16. How do tests provide value? 17. What makes tests useful for regression detection? 18. What makes tests useful for refactoring? 19. What makes tests useful for understanding code?
 
-**Deep Definition (7 questions):**
-20. What makes a test "deep"?
-21. What assertion depth is "deep" for URL construction?
-22. What assertion depth is "deep" for format parsing?
-23. What assertion depth is "deep" for type validation?
-24. How many test cases per method indicate depth?
-25. What edge case coverage indicates depth?
-26. What error condition coverage indicates depth?
+**Deep Definition (7 questions):** 20. What makes a test "deep"? 21. What assertion depth is "deep" for URL construction? 22. What assertion depth is "deep" for format parsing? 23. What assertion depth is "deep" for type validation? 24. How many test cases per method indicate depth? 25. What edge case coverage indicates depth? 26. What error condition coverage indicates depth?
 
-**End-to-End Definition (6 questions):**
-27. What makes a test "end-to-end" for a URL-building library?
-28. What's the scope of e2e for CSAPI client?
-29. Is e2e about multi-component interaction?
-30. Is e2e about complete workflows?
-31. What's the boundary between integration and e2e?
-32. What makes an e2e test meaningful vs trivial?
+**End-to-End Definition (6 questions):** 27. What makes a test "end-to-end" for a URL-building library? 28. What's the scope of e2e for CSAPI client? 29. Is e2e about multi-component interaction? 30. Is e2e about complete workflows? 31. What's the boundary between integration and e2e? 32. What makes an e2e test meaningful vs trivial?
 
-**Trivial Test Patterns (6 questions):**
-33. What patterns define "trivial" tests?
-34. What assertions are too superficial?
-35. What test coverage is too shallow?
-36. What test cases are too happy-path only?
-37. What test organization indicates trivial approach?
-38. What fixture quality indicates trivial tests?
+**Trivial Test Patterns (6 questions):** 33. What patterns define "trivial" tests? 34. What assertions are too superficial? 35. What test coverage is too shallow? 36. What test cases are too happy-path only? 37. What test organization indicates trivial approach? 38. What fixture quality indicates trivial tests?
 
-**Assertion Depth Analysis (4 questions with examples):**
-39. **URL Construction:**
-    - ❌ Trivial: `expect(url).toContain('systems')`
-    - ✅ Meaningful: `expect(parseUrl(url).pathname).toBe('/collections/sensors/systems')`
-    - What's the standard?
-40. **Query Parameters:**
-    - ❌ Trivial: `expect(url).toContain('limit=10')`
-    - ✅ Meaningful: `expect(parseUrl(url).query).toEqual({limit: '10', bbox: '...', ...})`
-    - What's the standard?
-41. **Format Parsing:**
-    - ❌ Trivial: `expect(result).toBeTruthy()`
-    - ✅ Meaningful: `expect(result.type).toBe('PhysicalSystem'); expect(result.components[0].name).toBe('...')`
-    - What's the standard?
-42. **Error Handling:**
-    - ❌ Trivial: `expect(() => fn()).toThrow()`
-    - ✅ Meaningful: `expect(() => fn()).toThrow(EndpointError); expect(error.message).toMatch(/resource not available/)`
-    - What's the standard?
+**Assertion Depth Analysis (4 questions with examples):** 39. **URL Construction:** - ❌ Trivial: `expect(url).toContain('systems')` - ✅ Meaningful: `expect(parseUrl(url).pathname).toBe('/collections/sensors/systems')` - What's the standard? 40. **Query Parameters:** - ❌ Trivial: `expect(url).toContain('limit=10')` - ✅ Meaningful: `expect(parseUrl(url).query).toEqual({limit: '10', bbox: '...', ...})` - What's the standard? 41. **Format Parsing:** - ❌ Trivial: `expect(result).toBeTruthy()` - ✅ Meaningful: `expect(result.type).toBe('PhysicalSystem'); expect(result.components[0].name).toBe('...')` - What's the standard? 42. **Error Handling:** - ❌ Trivial: `expect(() => fn()).toThrow()` - ✅ Meaningful: `expect(() => fn()).toThrow(EndpointError); expect(error.message).toMatch(/resource not available/)` - What's the standard?
 
-**Fixture Quality Analysis (5 questions):**
-43. What fixture quality is "meaningful"?
-44. Real spec examples vs synthetic mocks - which is meaningful?
-45. Minimal fixtures vs comprehensive fixtures - what's the balance?
-46. How do fixture variations indicate meaningful testing?
-47. What fixture provenance indicates quality?
+**Fixture Quality Analysis (5 questions):** 43. What fixture quality is "meaningful"? 44. Real spec examples vs synthetic mocks - which is meaningful? 45. Minimal fixtures vs comprehensive fixtures - what's the balance? 46. How do fixture variations indicate meaningful testing? 47. What fixture provenance indicates quality?
 
-**Coverage Depth Analysis (5 questions):**
-48. What coverage % indicates meaningful testing?
-49. What coverage types matter (statement, branch, function)?
-50. Is 100% coverage meaningful or overkill?
-51. What uncovered code is acceptable?
-52. What edge case coverage is required?
+**Coverage Depth Analysis (5 questions):** 48. What coverage % indicates meaningful testing? 49. What coverage types matter (statement, branch, function)? 50. Is 100% coverage meaningful or overkill? 51. What uncovered code is acceptable? 52. What edge case coverage is required?
 
-**Test Organization Quality (4 questions):**
-53. What test organization indicates meaningful approach?
-54. What describe/it structure indicates meaningful intent?
-55. What test naming indicates clarity?
-56. What setup/teardown indicates thoroughness?
+**Test Organization Quality (4 questions):** 53. What test organization indicates meaningful approach? 54. What describe/it structure indicates meaningful intent? 55. What test naming indicates clarity? 56. What setup/teardown indicates thoroughness?
 
 ---
 
@@ -155,6 +95,7 @@ Must occur after pattern research (Sections 1-3) and architectural integration (
 **Objective:** Extract specific feedback and anti-patterns from previous iteration
 
 **Tasks:**
+
 1. Review lessons learned document for specific "trivial" feedback
 2. Extract specific "trivial" test examples (if available in previous iteration)
 3. Identify what was missing from previous tests
@@ -167,6 +108,7 @@ Must occur after pattern research (Sections 1-3) and architectural integration (
 **Objective:** Synthesize meaningful test criteria from proven patterns
 
 **Tasks:**
+
 1. **Review Section 1: EDR Test Blueprint**
    - Extract meaningful assertion patterns (accepted by upstream maintainers)
    - Extract meaningful test depth examples
@@ -187,6 +129,7 @@ Must occur after pattern research (Sections 1-3) and architectural integration (
 **Objective:** Create side-by-side meaningful vs trivial examples
 
 **Tasks:**
+
 1. Create 10+ side-by-side "trivial vs meaningful" examples
 2. Cover all major test types:
    - URL construction (parseUrl vs toContain)
@@ -204,6 +147,7 @@ Must occur after pattern research (Sections 1-3) and architectural integration (
 **Objective:** Create comprehensive, actionable quality guide
 
 **Tasks:**
+
 1. Synthesize findings into definition guide document
 2. Create quick-reference quality checklist (objective criteria)
 3. Document objective criteria (not subjective opinions)
@@ -240,12 +184,14 @@ This research is complete when:
 Content includes:
 
 1. **Executive Summary**
+
    - Senior dev feedback theme
    - Core quality criteria (meaningful, useful, deep, end-to-end)
    - Objective vs subjective measures
    - Quick validation checklist
 
 2. **Definitions**
+
    - **Meaningful:** [Concrete definition with objective characteristics]
    - **Useful:** [Concrete definition with value propositions]
    - **Deep:** [Concrete definition with depth criteria]
@@ -253,6 +199,7 @@ Content includes:
    - **Trivial:** [Concrete definition with anti-patterns]
 
 3. **Meaningful Test Characteristics**
+
    - Assertion depth criteria (parseUrl vs toContain)
    - Edge case coverage criteria (minimal, typical, maximal, edge, error)
    - Error handling criteria (typed errors + message validation)
@@ -261,6 +208,7 @@ Content includes:
    - Documentation criteria (self-documenting tests)
 
 4. **Trivial Test Anti-Patterns**
+
    - Superficial assertions (with specific examples: toContain, toBeTruthy)
    - Happy-path-only coverage (missing edge cases)
    - Synthetic fixtures without edge cases
@@ -269,17 +217,22 @@ Content includes:
    - Incomplete validation (partial structure checks)
 
 5. **Side-by-Side Examples: URL Construction**
-   ```markdown
+
+   ````markdown
    ❌ **Trivial:**
+
    ```typescript
    it('should build systems URL', () => {
      const url = builder.getSystems();
      expect(url).toContain('systems');
    });
    ```
+   ````
+
    **Why trivial:** Only checks substring existence, doesn't validate structure
 
    ✅ **Meaningful:**
+
    ```typescript
    it('should build systems URL with correct structure', () => {
      const url = builder.getSystems();
@@ -288,38 +241,48 @@ Content includes:
      expect(parsed.search).toBe('');
    });
    ```
+
    **Why meaningful:** Validates complete URL structure, ensures no unexpected query params
+
+   ```
+
    ```
 
 6. **Side-by-Side Examples: Query Parameters**
+
    - Trivial vs meaningful for bbox (toContain vs parseUrl object comparison)
    - Trivial vs meaningful for temporal parameters (string match vs parsed validation)
    - Trivial vs meaningful for parameter combinations (single param vs full query object)
    - Trivial vs meaningful for encoding edge cases (no encoding test vs special chars)
 
 7. **Side-by-Side Examples: Format Parsing**
+
    - Trivial vs meaningful for SensorML parsing (toBeTruthy vs structure validation)
    - Trivial vs meaningful for SWE Common parsing (existence vs component validation)
    - Trivial vs meaningful for GeoJSON extensions (type check vs coordinate validation)
    - Trivial vs meaningful for nested structure validation (top-level vs deep navigation)
 
 8. **Side-by-Side Examples: Error Handling**
+
    - Trivial vs meaningful for validation errors (toThrow() vs toThrow(EndpointError))
    - Trivial vs meaningful for missing resource errors (generic error vs specific error type + message)
    - Trivial vs meaningful for malformed data errors (throw check vs error content validation)
    - Trivial vs meaningful for error messages (no message check vs regex match)
 
 9. **Side-by-Side Examples: Type Validation**
+
    - Trivial vs meaningful for interface testing (compile-time only vs runtime validation)
    - Trivial vs meaningful for type constraints (TypeScript assumes vs test validates)
    - Trivial vs meaningful for union types (single case vs all cases)
 
 10. **Side-by-Side Examples: Integration Tests**
+
     - Trivial vs meaningful for multi-component workflows (single method vs full workflow)
     - Trivial vs meaningful for e2e scenarios (isolated test vs realistic scenario)
     - Trivial vs meaningful for state management (stateless vs stateful interactions)
 
 11. **Coverage Depth Standards**
+
     - What % is meaningful? (>80% statement/branch - validated by Section 3)
     - What edge cases are required? (minimal, typical, maximal, edge, error cases)
     - What error conditions are required? (all expected error types)
@@ -327,18 +290,21 @@ Content includes:
     - When is 100% overkill vs required? (context-dependent guidance)
 
 12. **Fixture Quality Standards**
+
     - Real spec examples (meaningful) vs synthetic mocks (potentially trivial)
     - Fixture variations required (minimal, typical, maximal, edge, error)
     - Fixture provenance documentation (where did fixture come from?)
     - Fixture maintenance approach (update with spec changes)
 
 13. **Test Organization Standards**
+
     - Meaningful describe/it structure (hierarchical grouping by feature)
     - Meaningful test naming (clear intent, specific scenario)
     - Meaningful setup/teardown (DRY without obscuring test logic)
     - Meaningful test grouping (related scenarios together)
 
 14. **Objective Quality Checklist**
+
     - [ ] Assertions validate complete structure (not substrings)
     - [ ] Edge cases covered (not just happy paths)
     - [ ] Error conditions covered (all expected errors with messages)
@@ -351,6 +317,7 @@ Content includes:
     - [ ] Integration scenarios test multi-component interaction
 
 15. **Application to CSAPI**
+
     - QueryBuilder method testing standards (parseUrl validation)
     - Format parser testing standards (structure depth requirements)
     - Resource method testing standards (CRUD operation validation)
@@ -368,6 +335,7 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis (PR #114) - provides meaningful assertion patterns
 - Section 2: Upstream Test Consistency - provides mature pattern examples
 - Section 3: TypeScript Testing Standards - provides industry quality benchmarks
@@ -375,6 +343,7 @@ Content includes:
 - Lessons Learned Analysis - provides specific feedback from previous iteration
 
 **Blocks:**
+
 - Section 36: Test Quality Checklist (uses these quality criteria directly)
 - All test writing sections (apply these standards for all tests)
 
@@ -397,6 +366,7 @@ Content includes:
 <!-- Add notes and unresolved questions here as research progresses -->
 
 **Initial Observations:**
+
 - Senior dev feedback provides critical constraint: avoid trivial tests
 - Previous implementation rejected - specific examples needed
 - Must synthesize upstream + industry patterns into objective criteria
@@ -417,6 +387,7 @@ Content includes:
 **Mitigation:** Prioritize critical items; separate "must have" from "nice to have"; create quick-reference version
 
 **Validation Strategy:**
+
 - Definitions are objective (measurable criteria, not opinions)
 - Examples are concrete (actual code, not descriptions)
 - Criteria can be applied consistently across all tests
@@ -425,6 +396,7 @@ Content includes:
 - Senior dev feedback addressed specifically with anti-patterns
 
 **Next Steps After Completion:**
+
 1. Use as validation criteria for all test sections
 2. Apply checklist during test writing (every test)
 3. Reference in code reviews (reject trivial tests)
@@ -438,6 +410,7 @@ Content includes:
 **Completed:** February 5, 2026
 
 **Key Achievements:**
+
 - Created comprehensive guide with 17 side-by-side examples (exceeded 10+ target)
 - Defined all 5 quality dimensions (Meaningful, Useful, Deep, End-to-End, Trivial) with objective criteria
 - Synthesized patterns from previous iteration feedback, EDR PR #114, upstream consistency, and TypeScript industry standards
@@ -446,6 +419,7 @@ Content includes:
 - Provided concrete review criteria with red flags and green flags
 
 **Findings Summary:**
+
 - Previous tests rejected for checking method existence, not behavior
 - EDR PR #114 shows complete URL validation pattern (parseUrl vs toContain)
 - Industry standard: 85-90% coverage, 1.0-2.0× test-to-code ratio

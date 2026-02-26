@@ -13,6 +13,7 @@
 **CRITICAL FINDING:** ogc-client uses a **universal single-class pattern** for ALL OGC API implementations. Zero multi-class examples exist. The pattern is lightweight, modular, and proven across WFS, WMS, WMTS, EDR.
 
 **Key Architectural Characteristics:**
+
 - **Composition over Inheritance:** No endpoint subclassing
 - **QueryBuilder Pattern:** Single standalone class per API family
 - **Minimal Core Impact:** ~115 lines to integrate new API (~55 lines to endpoint.ts, ~10 lines to info.ts, ~50 lines to model.ts)
@@ -31,6 +32,7 @@
 ### Evidence from All Implementations
 
 **1. EDR Implementation:**
+
 ```
 src/ogc-api/edr/
 ├── url_builder.ts      # Single EDRQueryBuilder class (561 lines)
@@ -39,16 +41,19 @@ src/ogc-api/edr/
 ```
 
 **2. Features Implementation (Implicit in endpoint.ts):**
+
 - Single `getCollectionItemsUrl()` method
 - No separate FeaturesQueryBuilder class
 - Direct URL building in endpoint
 
 **3. Tiles Implementation (Implicit in endpoint.ts):**
+
 - Single `getTileUrl()` method
 - No separate TilesQueryBuilder class
 - Direct URL building in endpoint
 
 **4. Styles Implementation (Implicit in endpoint.ts):**
+
 - Single `getStyleUrl()` method
 - No separate StylesQueryBuilder class
 - Direct URL building in endpoint
@@ -56,6 +61,7 @@ src/ogc-api/edr/
 ### Pattern Structure (Consistent Across All)
 
 **Core Components:**
+
 1. **Conformance Check Function** (`info.ts`)
 2. **Capability Getter** (`endpoint.ts`)
 3. **Collection Filter Getter** (`endpoint.ts`)
@@ -64,16 +70,17 @@ src/ogc-api/edr/
 
 **Integration Code: ~115 lines across 3 files**
 
-| File | Lines Added | Purpose |
-|------|-------------|---------|
-| `src/ogc-api/info.ts` | ~10 | Conformance check function |
-| `src/ogc-api/endpoint.ts` | ~55 | Getters + factory method + caching |
-| `src/ogc-api/model.ts` | ~50 | Collection metadata enrichment |
-| **Total Core Impact** | **~115 lines** | **Minimal modification** |
+| File                      | Lines Added    | Purpose                            |
+| ------------------------- | -------------- | ---------------------------------- |
+| `src/ogc-api/info.ts`     | ~10            | Conformance check function         |
+| `src/ogc-api/endpoint.ts` | ~55            | Getters + factory method + caching |
+| `src/ogc-api/model.ts`    | ~50            | Collection metadata enrichment     |
+| **Total Core Impact**     | **~115 lines** | **Minimal modification**           |
 
 ### QueryBuilder Structure (Consistent Pattern)
 
 **Standard Structure:**
+
 ```typescript
 export default class {APIName}QueryBuilder {
   constructor(private collection: OgcApiCollectionInfo) {
@@ -90,6 +97,7 @@ export default class {APIName}QueryBuilder {
 ```
 
 **EDR Example:**
+
 ```typescript
 export default class EDRQueryBuilder {
   constructor(private collection: OgcApiCollectionInfo) {
@@ -114,6 +122,7 @@ export default class EDRQueryBuilder {
 ### Key Architectural Principle: Composition Over Inheritance
 
 **❌ NOT Used (Inheritance):**
+
 ```typescript
 // This pattern is NEVER used in ogc-client
 class EDREndpoint extends OgcApiEndpoint {
@@ -122,6 +131,7 @@ class EDREndpoint extends OgcApiEndpoint {
 ```
 
 **✅ Used Universally (Composition):**
+
 ```typescript
 // This pattern is ALWAYS used
 class OgcApiEndpoint {
@@ -137,6 +147,7 @@ class EDRQueryBuilder {
 ```
 
 **Advantages:**
+
 1. **Minimal Core Impact:** Core endpoint class stays lean
 2. **Isolation:** Each API family is self-contained
 3. **Clarity:** Clear separation of concerns
@@ -150,6 +161,7 @@ class EDRQueryBuilder {
 **All implementations use exactly one of these patterns:**
 
 1. **Standalone QueryBuilder Class** (EDR)
+
    - Single class with all query types
    - Helper functions allowed
    - No helper classes for delegation
@@ -160,6 +172,7 @@ class EDRQueryBuilder {
    - No separate QueryBuilder class needed
 
 **NO implementations use:**
+
 - Multiple QueryBuilder classes
 - Multiple resource client classes
 - Facade pattern with delegation
@@ -173,6 +186,7 @@ class EDRQueryBuilder {
 ### Consistent Signature Across All Implementations
 
 **Pattern:**
+
 ```typescript
 public async {apiName}(collection_id: string): Promise<{API}QueryBuilder>
 ```
@@ -180,6 +194,7 @@ public async {apiName}(collection_id: string): Promise<{API}QueryBuilder>
 **Examples:**
 
 **EDR:**
+
 ```typescript
 public async edr(collection_id: string): Promise<EDRQueryBuilder> {
   if (!this.hasEnvironmentalDataRetrieval) {
@@ -197,6 +212,7 @@ public async edr(collection_id: string): Promise<EDRQueryBuilder> {
 ```
 
 **CSAPI (Projected):**
+
 ```typescript
 public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
   if (!this.hasConnectedSystems) {
@@ -216,6 +232,7 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
 ### Standard Factory Method Structure (7 Steps)
 
 **Step 1: Conformance Guard**
+
 ```typescript
 if (!this.hasEnvironmentalDataRetrieval) {
   throw new EndpointError('Endpoint does not support EDR');
@@ -223,6 +240,7 @@ if (!this.hasEnvironmentalDataRetrieval) {
 ```
 
 **Step 2: Check Cache**
+
 ```typescript
 const cache = this.collection_id_to_edr_builder_;
 if (cache.has(collection_id)) {
@@ -231,26 +249,31 @@ if (cache.has(collection_id)) {
 ```
 
 **Step 3: Fetch Collection Metadata**
+
 ```typescript
 const collection = await this.getCollectionInfo(collection_id);
 ```
 
 **Step 4: Instantiate QueryBuilder**
+
 ```typescript
 const result = new EDRQueryBuilder(collection);
 ```
 
 **Step 5: Cache Instance**
+
 ```typescript
 cache.set(collection_id, result);
 ```
 
 **Step 6: Return**
+
 ```typescript
 return result;
 ```
 
 **Step 7: Cache Declaration (Class-Level)**
+
 ```typescript
 private collection_id_to_edr_builder_: Map<string, EDRQueryBuilder> = new Map();
 ```
@@ -258,17 +281,20 @@ private collection_id_to_edr_builder_: Map<string, EDRQueryBuilder> = new Map();
 ### Why Map-Based Caching?
 
 **Performance:**
+
 - Avoid repeated collection metadata fetches
 - Avoid repeated QueryBuilder instantiation
 - Collection metadata is immutable (safe to cache)
 
 **Pattern:**
+
 - Cache key: `collection_id` (string)
 - Cache value: QueryBuilder instance
 - Cache lifetime: Endpoint instance lifetime
 - No cache invalidation needed
 
 **For CSAPI:**
+
 ```typescript
 private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Map();
 ```
@@ -317,6 +343,7 @@ if (!collection.data_queries) {
 ### Conformance Check Patterns
 
 **Pattern 1: Single Conformance Class**
+
 ```typescript
 export function checkHasEnvironmentalDataRetrieval([conformance]: [
   ConformanceClass[]
@@ -330,6 +357,7 @@ export function checkHasEnvironmentalDataRetrieval([conformance]: [
 ```
 
 **Pattern 2: Multiple Conformance Classes (OR)**
+
 ```typescript
 export function checkStyleConformance(conformance: ConformanceClass[]) {
   return (
@@ -344,6 +372,7 @@ export function checkStyleConformance(conformance: ConformanceClass[]) {
 ```
 
 **Pattern 3: Conformance + Collection Check (AND)**
+
 ```typescript
 export function checkHasFeatures([collections, conformance]: [
   OgcApiCollectionInfo[],
@@ -363,11 +392,13 @@ export function checkHasFeatures([collections, conformance]: [
 ### CSAPI Conformance URIs
 
 **Core Conformance:**
+
 ```
 http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core
 ```
 
 **Part-Specific Conformance (May be required):**
+
 ```
 http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/system-features
 http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/sampling-features
@@ -375,10 +406,9 @@ http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/datastream-schema
 ```
 
 **CSAPI Check Function:**
+
 ```typescript
-export function checkHasConnectedSystems([conformance]: [
-  ConformanceClass[]
-]) {
+export function checkHasConnectedSystems([conformance]: [ConformanceClass[]]) {
   return (
     conformance.indexOf(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
@@ -390,6 +420,7 @@ export function checkHasConnectedSystems([conformance]: [
 ### Collection Filtering Pattern
 
 **Pattern:**
+
 ```typescript
 get {api}Collections(): Promise<string[]> {
   return Promise.all([this.data, this.has{API}])
@@ -401,6 +432,7 @@ get {api}Collections(): Promise<string[]> {
 ```
 
 **EDR Example:**
+
 ```typescript
 get edrCollections(): Promise<string[]> {
   return Promise.all([this.data, this.hasEnvironmentalDataRetrieval])
@@ -412,6 +444,7 @@ get edrCollections(): Promise<string[]> {
 ```
 
 **CSAPI Example:**
+
 ```typescript
 get csapiCollections(): Promise<string[]> {
   return Promise.all([this.data, this.hasConnectedSystems])
@@ -429,12 +462,14 @@ get csapiCollections(): Promise<string[]> {
 ### Core Principle: NEVER Construct URLs
 
 **❌ Bad Practice (URL Construction):**
+
 ```typescript
 const itemsUrl = `${baseUrl}/collections/${collectionId}/items`;
 const systemUrl = `${baseUrl}/collections/${collectionId}/systems/${systemId}`;
 ```
 
 **✅ Standard Practice (Link Following):**
+
 ```typescript
 const itemsUrl = getLinkUrl(collectionDoc, 'items', this.baseUrl);
 const systemUrl = getLinkUrl(systemDoc, 'self', this.baseUrl);
@@ -443,16 +478,19 @@ const systemUrl = getLinkUrl(systemDoc, 'self', this.baseUrl);
 ### Why Link-Driven Navigation?
 
 **1. Flexibility:**
+
 - Server can structure URLs however it wants
 - Works with non-standard URL patterns
 - Supports proxies, URL rewriting, etc.
 
 **2. Robustness:**
+
 - Doesn't break if server changes URL structure
 - Works with custom path prefixes
 - Handles edge cases automatically
 
 **3. Standard Compliance:**
+
 - OGC APIs are hypermedia-driven (HATEOAS)
 - Links are the primary navigation mechanism
 - Conformance classes require specific link relations
@@ -462,16 +500,18 @@ const systemUrl = getLinkUrl(systemDoc, 'self', this.baseUrl);
 **Available Functions (`src/ogc-api/link-utils.ts`):**
 
 **1. fetchLink() - Fetch document by following link:**
+
 ```typescript
 export function fetchLink(
   doc: OgcApiDocument,
   rels: string | string[],
   baseUrl: string,
   type?: MimeType
-): Promise<OgcApiDocument>
+): Promise<OgcApiDocument>;
 ```
 
 **2. getLinkUrl() - Extract URL from link:**
+
 ```typescript
 export function getLinkUrl(
   doc: OgcApiDocument,
@@ -479,30 +519,30 @@ export function getLinkUrl(
   baseUrl: string,
   type?: MimeType,
   ignoreErrors?: boolean
-): string | null
+): string | null;
 ```
 
 **3. getLinks() - Get all matching links:**
+
 ```typescript
 export function getLinks(
   doc: OgcApiDocument,
   rels: string | string[],
   type?: MimeType,
   ignoreErrors?: boolean
-): Array<{ rel: string; href: string; type?: string }>
+): Array<{ rel: string; href: string; type?: string }>;
 ```
 
 **4. hasLinks() - Check if links exist:**
+
 ```typescript
-export function hasLinks(
-  doc: OgcApiDocument,
-  rels: string | string[]
-): boolean
+export function hasLinks(doc: OgcApiDocument, rels: string | string[]): boolean;
 ```
 
 ### Link Relations Used
 
 **Standard Link Relations:**
+
 - `self` - The document itself
 - `items` - Collection items endpoint
 - `conformance` - Conformance classes
@@ -511,11 +551,13 @@ export function hasLinks(
 - `describedby` - Schema/metadata
 
 **OGC-Specific Relations:**
+
 - `http://www.opengis.net/def/rel/ogc/1.0/queryables`
 - `http://www.opengis.net/def/rel/ogc/1.0/tilesets-vector`
 - `http://www.opengis.net/def/rel/ogc/1.0/tilesets-map`
 
 **CSAPI Relations (Projected):**
+
 - `http://www.opengis.net/def/rel/ogc/1.0/systems`
 - `http://www.opengis.net/def/rel/ogc/1.0/procedures`
 - `http://www.opengis.net/def/rel/ogc/1.0/sampling-features`
@@ -529,20 +571,23 @@ class EDRQueryBuilder {
   buildAreaDownloadUrl(coords, optional_params): string {
     // Get URL from collection's data_queries links
     const url = new URL(this.collection.data_queries?.area?.link.href);
-    
+
     // Add query parameters
     url.searchParams.set('coords', coords.join(','));
     if (optional_params.datetime) {
-      url.searchParams.set('datetime', 
-        DateTimeParameterToEDRString(optional_params.datetime));
+      url.searchParams.set(
+        'datetime',
+        DateTimeParameterToEDRString(optional_params.datetime)
+      );
     }
-    
+
     return url.toString();
   }
 }
 ```
 
 **Key Points:**
+
 1. URL comes from `collection.data_queries.area.link.href`
 2. Base URL never constructed
 3. Only query parameters added
@@ -551,6 +596,7 @@ class EDRQueryBuilder {
 ### CSAPI Link Handling Pattern
 
 **Collection Document Structure (Projected):**
+
 ```json
 {
   "id": "sensor_collection",
@@ -571,6 +617,7 @@ class EDRQueryBuilder {
 ```
 
 **QueryBuilder Implementation:**
+
 ```typescript
 class CSAPIQueryBuilder {
   constructor(private collection: OgcApiCollectionInfo) {
@@ -591,7 +638,8 @@ class CSAPIQueryBuilder {
   buildSystemsUrl(options?: QueryOptions): string {
     const url = new URL(this.systemsUrl);
     if (options?.limit) url.searchParams.set('limit', options.limit.toString());
-    if (options?.offset) url.searchParams.set('offset', options.offset.toString());
+    if (options?.offset)
+      url.searchParams.set('offset', options.offset.toString());
     return url.toString();
   }
 }
@@ -656,9 +704,9 @@ export type WellKnownTextString = string;
 
 export interface optionalAreaParams {
   parameter_name?: string[];
-  datetime?: DateTimeParameter;  // Reuses shared type
+  datetime?: DateTimeParameter; // Reuses shared type
   z?: number | [number, number];
-  crs?: CrsCode;  // Reuses shared type
+  crs?: CrsCode; // Reuses shared type
   f?: string;
 }
 
@@ -685,20 +733,27 @@ src/ogc-api/edr/model.ts
 ### CSAPI Type Organization
 
 **`src/shared/models.ts`:**
+
 - No changes needed
 - Reuse `BoundingBox`, `DateTimeParameter`, `CrsCode`, `MimeType`
 
 **`src/ogc-api/model.ts`:**
+
 ```typescript
 export interface OgcApiCollectionInfo {
   // ... existing fields
-  hasConnectedSystems?: boolean;  // Add CSAPI flag
+  hasConnectedSystems?: boolean; // Add CSAPI flag
 }
 ```
 
 **`src/ogc-api/csapi/model.ts`:**
+
 ```typescript
-import { DateTimeParameter, BoundingBox, CrsCode } from '../../shared/models.js';
+import {
+  DateTimeParameter,
+  BoundingBox,
+  CrsCode,
+} from '../../shared/models.js';
 
 // Resource types
 export interface System {
@@ -746,6 +801,7 @@ export interface SWECommonDataRecord {
 ### Standard File Structure
 
 **Pattern for Simple APIs (no QueryBuilder):**
+
 ```
 src/ogc-api/
 ├── endpoint.ts         # Contains API methods directly
@@ -753,6 +809,7 @@ src/ogc-api/
 ```
 
 **Pattern for Complex APIs (with QueryBuilder):**
+
 ```
 src/ogc-api/{api}/
 ├── url_builder.ts      # {API}QueryBuilder class
@@ -794,21 +851,25 @@ src/ogc-api/csapi/
 ### Naming Conventions
 
 **Files:**
+
 - `url_builder.ts` - QueryBuilder class (not `query_builder.ts`)
 - `model.ts` - Types
 - `helpers.ts` - Utilities
 - `{file}.spec.ts` - Tests
 
 **Classes:**
+
 - `{API}QueryBuilder` - Main class (e.g., `EDRQueryBuilder`, `CSAPIQueryBuilder`)
 - No prefix/suffix beyond API name
 
 **Methods:**
+
 - `build{QueryType}DownloadUrl()` - EDR pattern
 - `get{Resource}Url()` - Features pattern
 - `build{Resource}Url()` - Alternative pattern
 
 **CSAPI Method Names:**
+
 ```typescript
 buildSystemsUrl(options?: QueryOptions): string
 buildSystemUrl(systemId: string): string
@@ -829,6 +890,7 @@ buildControlStreamsUrl(options?: QueryOptions): string
 ### Allowed Helper Organization
 
 **✅ Helper Functions (Allowed):**
+
 ```typescript
 // src/ogc-api/edr/helpers.ts
 export function DateTimeParameterToEDRString(
@@ -844,18 +906,21 @@ export function DateTimeParameterToEDRString(
 ```
 
 **Purpose:**
+
 - Format conversion
 - Parameter encoding
 - Validation
 - String manipulation
 
 **Characteristics:**
+
 - Pure functions
 - No state
 - Exported from `helpers.ts`
 - Used by QueryBuilder
 
 **❌ Helper Classes (NO Precedent):**
+
 ```typescript
 // This pattern is NOT used in ogc-client
 class SystemsClient {
@@ -875,6 +940,7 @@ class CSAPIQueryBuilder {
 ### Why No Helper Classes?
 
 **Reasons:**
+
 1. **Pattern Consistency:** ALL implementations use single class
 2. **Complexity:** Helper classes add unnecessary indirection
 3. **Testability:** Single class easier to test
@@ -884,6 +950,7 @@ class CSAPIQueryBuilder {
 ### CSAPI Helper Functions (Projected)
 
 **Potential Helpers:**
+
 ```typescript
 // src/ogc-api/csapi/helpers.ts
 
@@ -943,6 +1010,7 @@ export function parseSWECommon(json: object): DatastreamSchema {
 **Pattern Across All Implementations:**
 
 **1. Pagination:**
+
 ```typescript
 if (options.limit !== undefined)
   url.searchParams.set('limit', options.limit.toString());
@@ -951,12 +1019,13 @@ if (options.offset !== undefined)
 ```
 
 **2. BBox:**
+
 ```typescript
-if (options.bbox)
-  url.searchParams.set('bbox', options.bbox.join(','));
+if (options.bbox) url.searchParams.set('bbox', options.bbox.join(','));
 ```
 
 **3. DateTime:**
+
 ```typescript
 if (options.datetime) {
   const datetime = options.datetime;
@@ -972,47 +1041,51 @@ if (options.datetime) {
 ```
 
 **4. CRS:**
+
 ```typescript
-if (options.crs)
-  url.searchParams.set('crs', options.crs);
+if (options.crs) url.searchParams.set('crs', options.crs);
 ```
 
 **5. Format:**
+
 ```typescript
-if (options.format)
-  url.searchParams.set('f', options.format);
+if (options.format) url.searchParams.set('f', options.format);
 ```
 
 ### DateTimeParameter Encoding
 
 **Type Definition:**
+
 ```typescript
 export type DateTimeParameter = Date | { start: Date; end?: Date };
 ```
 
 **Encoding Rules:**
 
-| Input | Output |
-|-------|--------|
-| `new Date('2024-01-01')` | `2024-01-01T00:00:00.000Z` |
+| Input                                                            | Output                                              |
+| ---------------------------------------------------------------- | --------------------------------------------------- |
+| `new Date('2024-01-01')`                                         | `2024-01-01T00:00:00.000Z`                          |
 | `{ start: new Date('2024-01-01'), end: new Date('2024-12-31') }` | `2024-01-01T00:00:00.000Z/2024-12-31T00:00:00.000Z` |
-| `{ start: new Date('2024-01-01') }` | `2024-01-01T00:00:00.000Z/..` |
+| `{ start: new Date('2024-01-01') }`                              | `2024-01-01T00:00:00.000Z/..`                       |
 
 **Open-ended ranges:**
+
 - Start only: `2024-01-01T00:00:00.000Z/..`
 - End only: `../2024-12-31T00:00:00.000Z` (not common)
 
 ### BoundingBox Encoding
 
 **Type Definition:**
+
 ```typescript
 export type BoundingBox = number[];
 ```
 
 **Encoding:**
+
 ```typescript
 // Input: [minX, minY, maxX, maxY]
-[-180, -90, 180, 90]
+[-180, -90, 180, 90];
 
 // Output: "bbox=-180,-90,180,90"
 url.searchParams.set('bbox', bbox.join(','));
@@ -1021,22 +1094,24 @@ url.searchParams.set('bbox', bbox.join(','));
 ### CSAPI Parameter Encoding
 
 **Standard Parameters:**
+
 ```typescript
 interface QueryOptions {
-  limit?: number;         // ?limit=10
-  offset?: number;        // ?offset=20
-  bbox?: BoundingBox;     // ?bbox=-180,-90,180,90
-  datetime?: DateTimeParameter;  // ?datetime=2024-01-01T00:00:00.000Z/..
+  limit?: number; // ?limit=10
+  offset?: number; // ?offset=20
+  bbox?: BoundingBox; // ?bbox=-180,-90,180,90
+  datetime?: DateTimeParameter; // ?datetime=2024-01-01T00:00:00.000Z/..
 }
 ```
 
 **CSAPI-Specific Parameters (Projected):**
+
 ```typescript
 interface CSAPIQueryOptions extends QueryOptions {
-  systemType?: string;    // ?systemType=sensor
-  procedure?: string;     // ?procedure=proc123
-  foi?: string;           // ?foi=foi456 (feature of interest)
-  observedProperty?: string;  // ?observedProperty=temperature
+  systemType?: string; // ?systemType=sensor
+  procedure?: string; // ?procedure=proc123
+  foi?: string; // ?foi=foi456 (feature of interest)
+  observedProperty?: string; // ?observedProperty=temperature
   // ... more as needed
 }
 ```
@@ -1049,49 +1124,51 @@ interface CSAPIQueryOptions extends QueryOptions {
 
 **Core Modifications:**
 
-| File | Lines Added | Purpose |
-|------|-------------|---------|
-| `src/ogc-api/info.ts` | ~10 | Conformance check |
-| `src/ogc-api/endpoint.ts` | ~55 | Getters + factory + cache |
-| `src/ogc-api/model.ts` | ~50 | Collection metadata |
-| **Subtotal** | **~115 lines** | **Core integration** |
+| File                      | Lines Added    | Purpose                   |
+| ------------------------- | -------------- | ------------------------- |
+| `src/ogc-api/info.ts`     | ~10            | Conformance check         |
+| `src/ogc-api/endpoint.ts` | ~55            | Getters + factory + cache |
+| `src/ogc-api/model.ts`    | ~50            | Collection metadata       |
+| **Subtotal**              | **~115 lines** | **Core integration**      |
 
 **CSAPI Implementation:**
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `url_builder.ts` | ~850-950 | CSAPIQueryBuilder class |
-| `model.ts` | ~200-300 | TypeScript types |
-| `helpers.ts` | ~50-100 | Utility functions (optional) |
-| **Subtotal** | **~1,100-1,350 lines** | **Implementation** |
+| File             | Lines                  | Purpose                      |
+| ---------------- | ---------------------- | ---------------------------- |
+| `url_builder.ts` | ~850-950               | CSAPIQueryBuilder class      |
+| `model.ts`       | ~200-300               | TypeScript types             |
+| `helpers.ts`     | ~50-100                | Utility functions (optional) |
+| **Subtotal**     | **~1,100-1,350 lines** | **Implementation**           |
 
 **Tests:**
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `url_builder.spec.ts` | ~2,000 | QueryBuilder tests |
-| `model.spec.ts` | ~300 | Type tests |
-| `helpers.spec.ts` | ~50-100 | Helper tests (optional) |
-| **Subtotal** | **~2,350-2,400 lines** | **Tests** |
+| File                  | Lines                  | Purpose                 |
+| --------------------- | ---------------------- | ----------------------- |
+| `url_builder.spec.ts` | ~2,000                 | QueryBuilder tests      |
+| `model.spec.ts`       | ~300                   | Type tests              |
+| `helpers.spec.ts`     | ~50-100                | Helper tests (optional) |
+| **Subtotal**          | **~2,350-2,400 lines** | **Tests**               |
 
 **Total Project Size:**
 
-| Category | Lines | Percentage |
-|----------|-------|------------|
-| Core modifications | ~115 | 3% |
-| Implementation | ~1,100-1,350 | 32% |
-| Tests | ~2,350-2,400 | 65% |
-| **TOTAL** | **~3,565-3,865 lines** | **100%** |
+| Category           | Lines                  | Percentage |
+| ------------------ | ---------------------- | ---------- |
+| Core modifications | ~115                   | 3%         |
+| Implementation     | ~1,100-1,350           | 32%        |
+| Tests              | ~2,350-2,400           | 65%        |
+| **TOTAL**          | **~3,565-3,865 lines** | **100%**   |
 
 ### Comparison to EDR
 
 **EDR Actual:**
+
 - Core: ~115 lines
 - Implementation: ~811 lines (561 + 200 + 50)
 - Tests: ~1,800 lines
 - Total: ~2,726 lines
 
 **CSAPI Projected:**
+
 - Core: ~115 lines (same)
 - Implementation: ~1,100-1,350 lines (40% more - 9 resources vs 7 query types)
 - Tests: ~2,350-2,400 lines (30% more)
@@ -1106,52 +1183,62 @@ interface CSAPIQueryOptions extends QueryOptions {
 ### Mandatory Patterns (Non-Negotiable)
 
 **1. Single QueryBuilder Class**
+
 - ✅ All implementations use single class
 - ❌ Zero multi-class examples
 - Pattern: One main class with all query methods
 
 **2. Factory Method with Caching**
+
 - ✅ Signature: `async {api}(collection_id: string): Promise<{API}QueryBuilder>`
 - ✅ Map-based caching by collection_id
 - ✅ Conformance guard before instantiation
 
 **3. Composition Over Inheritance**
+
 - ✅ QueryBuilder is standalone (not endpoint subclass)
 - ✅ Endpoint contains QueryBuilder instances (composition)
 - ❌ Never subclass OgcApiEndpoint
 
 **4. Link-Driven Navigation**
+
 - ✅ Follow links from collection metadata
 - ❌ Never construct URLs from patterns
 - ✅ Use `getLinkUrl()`, `fetchLink()`, etc.
 
 **5. Conformance-Based Capability Detection**
+
 - ✅ Check endpoint conformance classes
 - ✅ Check collection metadata
 - ✅ Guard factory method with conformance check
 
 **6. Minimal Core Impact**
+
 - ✅ ~115 lines to integrate new API
 - ✅ Changes isolated to 3 files (info.ts, endpoint.ts, model.ts)
 - ✅ All implementation in subfolder
 
 **7. Type Organization Hierarchy**
+
 - ✅ Shared types in `src/shared/models.ts`
 - ✅ OGC API types in `src/ogc-api/model.ts`
 - ✅ Implementation types in `src/ogc-api/{api}/model.ts`
 
 **8. Standard Parameter Encoding**
+
 - ✅ `limit`, `offset` for pagination
 - ✅ `bbox` for spatial filter
 - ✅ `datetime` for temporal filter
 - ✅ Standard encoding formats
 
 **9. Async Everywhere**
+
 - ✅ All public methods return Promises
 - ✅ Factory method is async
 - ✅ Collection fetching is async
 
 **10. TypeScript Type Safety**
+
 - ✅ Strong typing for all resources
 - ✅ Type exports in model.ts
 - ✅ Interface definitions for options
@@ -1159,20 +1246,24 @@ interface CSAPIQueryOptions extends QueryOptions {
 ### Flexible Patterns (Allowed Variation)
 
 **1. File Organization**
+
 - ✅ Can organize helpers differently
 - ✅ Can split tests differently
 - ✅ Can add additional utility files
 
 **2. Helper Functions**
+
 - ✅ Can use helper functions
 - ✅ Can organize in separate file
 - ✅ Can inline if simple
 
 **3. Method Naming**
+
 - ✅ Can use `build{Resource}Url()` or `get{Resource}Url()`
 - ✅ Can use consistent prefix
 
 **4. Type Organization**
+
 - ✅ Can organize types by category
 - ✅ Can split into multiple model files
 - ✅ Can use interfaces vs types
@@ -1184,7 +1275,9 @@ interface CSAPIQueryOptions extends QueryOptions {
 ### Single vs Multi-Class: Clear Answer
 
 **Evidence from ALL implementations:**
+
 - ✅ **Single class pattern: 100% (4/4 implementations)**
+
   - EDR: Single EDRQueryBuilder (561 lines, 7 query types)
   - Features: Single endpoint methods
   - Tiles: Single endpoint methods
@@ -1198,26 +1291,31 @@ interface CSAPIQueryOptions extends QueryOptions {
 ### Why Single Class Pattern is Universal
 
 **1. Architectural Simplicity**
+
 - One entry point per API family
 - Clear API surface
 - Minimal indirection
 
 **2. Minimal Core Impact**
+
 - ~115 lines to integrate new API
 - Changes isolated to 3 files
 - Core endpoint stays lean
 
 **3. Pattern Consistency**
+
 - Same pattern across all implementations
 - Predictable structure
 - Easy to understand
 
 **4. Composition Over Inheritance**
+
 - No subclassing complexity
 - Clear separation of concerns
 - Each API is isolated
 
 **5. Proven Scalability**
+
 - EDR: 561 lines for 7 query types = ~80 lines/type
 - CSAPI: Projected ~850-950 lines for 9 resources = ~95-105 lines/resource
 - Within reasonable bounds
@@ -1225,6 +1323,7 @@ interface CSAPIQueryOptions extends QueryOptions {
 ### Risk Assessment
 
 **Single CSAPIQueryBuilder Class:**
+
 - ✅ **Pattern Match:** 100% consistent with upstream
 - ✅ **Precedent:** Proven in EDR (similar complexity)
 - ✅ **Integration:** Minimal core changes (~115 lines)
@@ -1233,6 +1332,7 @@ interface CSAPIQueryOptions extends QueryOptions {
 - 🟢 **RISK: LOW** - Follows universal pattern
 
 **Multiple Resource Client Classes:**
+
 - ❌ **Pattern Match:** Zero precedent in ogc-client
 - ❌ **Integration:** No established integration pattern
 - ❌ **Complexity:** More files, more indirection
@@ -1245,6 +1345,7 @@ interface CSAPIQueryOptions extends QueryOptions {
 **STRONG RECOMMENDATION: Single CSAPIQueryBuilder class**
 
 **Structure:**
+
 ```typescript
 export default class CSAPIQueryBuilder {
   constructor(private collection: OgcApiCollectionInfo) {
@@ -1292,6 +1393,7 @@ export default class CSAPIQueryBuilder {
 **Estimated Size:** ~850-950 lines (9 resources × 2 methods × ~50 lines)
 
 **File Structure:**
+
 ```
 src/ogc-api/csapi/
 ├── url_builder.ts      # CSAPIQueryBuilder (~850-950 lines)
@@ -1301,11 +1403,13 @@ src/ogc-api/csapi/
 ```
 
 **Integration:**
+
 - Core changes: ~115 lines across info.ts, endpoint.ts, model.ts
 - Factory method: `async csapi(collection_id: string): Promise<CSAPIQueryBuilder>`
 - Pattern matches EDR exactly
 
 **Justification:**
+
 - 100% pattern consistency with upstream
 - Proven scalable in EDR (561 lines for similar complexity)
 - Minimal core impact (~115 lines)
@@ -1317,18 +1421,23 @@ src/ogc-api/csapi/
 ## Key Quotes from Source Document
 
 **On Pattern Consistency:**
+
 > "ogc-client uses a **lightweight extension pattern** where new API families are integrated into the existing `OgcApiEndpoint` class via conformance checking functions, capability getter properties, factory methods that return specialized query builders, and minimal modifications to core files."
 
 **On Endpoint Extension:**
+
 > "**OgcApiEndpoint is NOT extended via inheritance.** Instead: QueryBuilder Pattern: Specialized classes (e.g., `EDRQueryBuilder`) are instantiated and returned by endpoint methods. Composition over Inheritance: Endpoint contains references to QueryBuilders, doesn't inherit from them. Standalone Classes: QueryBuilders are self-contained with no dependency on endpoint instance."
 
 **On Link Following:**
+
 > "**Pattern: Follow Links, Don't Construct URLs**. Why This Matters: 1. Flexibility: Server can structure URLs however it wants. 2. Robustness: Works with non-standard URL patterns. 3. Standard Compliance: OGC APIs are hypermedia-driven."
 
 **On Implementation Size:**
+
 > "**Total Implementation:** ~3000-3500 lines (matches projection)"
 
 **On Critical Patterns:**
+
 > "The ogc-client architecture uses a **lightweight, modular pattern** for adding new OGC API support: Minimal core impact (~55 lines to existing files), Isolated implementation (Each API family in its own subfolder), QueryBuilder pattern (Specialized classes for each API), Link-driven navigation (Follow hypermedia, don't construct URLs)"
 
 ---
@@ -1348,6 +1457,7 @@ src/ogc-api/csapi/
 **Signature:** `public async {apiName}(collection_id: string): Promise<{API}QueryBuilder>`
 
 **Structure:**
+
 1. Conformance guard
 2. Check cache (Map by collection_id)
 3. Fetch collection metadata
@@ -1359,6 +1469,7 @@ src/ogc-api/csapi/
 ### ✅ How are types organized across implementations?
 
 **Three-level hierarchy:**
+
 1. **Shared** (`src/shared/models.ts`): Cross-API primitives (BoundingBox, DateTimeParameter, etc.)
 2. **OGC API Common** (`src/ogc-api/model.ts`): OGC API family types (OgcApiCollectionInfo, etc.)
 3. **Implementation-Specific** (`src/ogc-api/{api}/model.ts`): API-specific types
@@ -1368,6 +1479,7 @@ src/ogc-api/csapi/
 ### ✅ What file structure is standard?
 
 **For complex APIs:**
+
 ```
 src/ogc-api/{api}/
 ├── url_builder.ts      # QueryBuilder class
@@ -1385,6 +1497,7 @@ src/ogc-api/{api}/
 ### ✅ How consistent are naming conventions?
 
 **Very consistent:**
+
 - Files: `url_builder.ts`, `model.ts`, `helpers.ts`
 - Classes: `{API}QueryBuilder` (e.g., EDRQueryBuilder)
 - Methods: `build{Type}Url()` or `get{Type}Url()`
@@ -1403,10 +1516,12 @@ src/ogc-api/{api}/
 **For CSAPI:** Must follow single CSAPIQueryBuilder class pattern. This is not a preference—it's the established architecture that ALL implementations follow.
 
 **Risk Assessment:**
+
 - Single class: 🟢 LOW risk (universal pattern, proven scalable)
 - Multi-class: 🔴 HIGH risk (no precedent, likely rejection)
 
 **Estimated Implementation:**
+
 - Core: ~115 lines (info.ts, endpoint.ts, model.ts)
 - QueryBuilder: ~850-950 lines (single class, 9 resources)
 - Types: ~200-300 lines

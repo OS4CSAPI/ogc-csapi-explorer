@@ -11,6 +11,7 @@
 ## Executive Summary
 
 **Core Finding:** camptocamp/ogc-client expects implementations to provide **endpoint-oriented API** with:
+
 1. Capabilities parsing (extract server metadata)
 2. URL builders (construct request URLs with parameters)
 3. Typed models (TypeScript interfaces for all entities)
@@ -34,13 +35,13 @@ export default class WmsEndpoint {
   private _capabilitiesPromise: Promise<void>;
   private _info: GenericEndpointInfo;
   private _layers: WmsLayerFull[];
-  
+
   constructor(url: string) {
     this._capabilitiesUrl = setQueryParams(url, {
       SERVICE: 'WMS',
       REQUEST: 'GetCapabilities',
     });
-    
+
     this._capabilitiesPromise = useCache(
       () => parseWmsCapabilities(this._capabilitiesUrl),
       'WMS',
@@ -53,15 +54,15 @@ export default class WmsEndpoint {
       this._version = version;
     });
   }
-  
+
   isReady(): Promise<WmsEndpoint> {
     return this._capabilitiesPromise.then(() => this);
   }
-  
+
   getServiceInfo(): GenericEndpointInfo {
     return this._info;
   }
-  
+
   getLayers(): WmsLayerSummary[] {
     return this._layers;
   }
@@ -72,21 +73,33 @@ export default class WfsEndpoint {
   constructor(url: string) {
     // Similar pattern - parse capabilities, cache results
   }
-  
-  isReady(): Promise<WfsEndpoint> { /* ... */ }
-  getServiceInfo(): GenericEndpointInfo { /* ... */ }
-  getFeatureTypes(): WfsFeatureTypeBrief[] { /* ... */ }
+
+  isReady(): Promise<WfsEndpoint> {
+    /* ... */
+  }
+  getServiceInfo(): GenericEndpointInfo {
+    /* ... */
+  }
+  getFeatureTypes(): WfsFeatureTypeBrief[] {
+    /* ... */
+  }
 }
 
-// WMTS Example  
+// WMTS Example
 export default class WmtsEndpoint {
   constructor(url: string) {
     // Similar pattern
   }
-  
-  isReady(): Promise<WmtsEndpoint> { /* ... */ }
-  getServiceInfo(): GenericEndpointInfo { /* ... */ }
-  getLayers(): WmtsLayer[] { /* ... */ }
+
+  isReady(): Promise<WmtsEndpoint> {
+    /* ... */
+  }
+  getServiceInfo(): GenericEndpointInfo {
+    /* ... */
+  }
+  getLayers(): WmtsLayer[] {
+    /* ... */
+  }
 }
 
 // OGC API Example
@@ -94,14 +107,21 @@ export default class OgcApiEndpoint {
   constructor(url: string) {
     // Parses landing page, conformance, collections
   }
-  
-  get allCollections(): Promise<OgcApiCollectionInfo[]> { /* ... */ }
-  get featureCollections(): Promise<OgcApiCollectionInfo[]> { /* ... */ }
-  getCollectionItems(collectionId: string): Promise<FeatureCollection> { /* ... */ }
+
+  get allCollections(): Promise<OgcApiCollectionInfo[]> {
+    /* ... */
+  }
+  get featureCollections(): Promise<OgcApiCollectionInfo[]> {
+    /* ... */
+  }
+  getCollectionItems(collectionId: string): Promise<FeatureCollection> {
+    /* ... */
+  }
 }
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - Endpoint class: `CSAPIEndpoint`
 - Constructor takes base URL
 - Async initialization: `isReady()` returns Promise
@@ -143,6 +163,7 @@ export function readLayersFromCapabilities(doc: XmlDocument): WmtsLayer[] {
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - Parse `/` (landing page) for service info
 - Parse `/conformance` for capability detection
 - Parse `/collections` for resource catalogs
@@ -181,7 +202,7 @@ export function generateGetFeatureUrl(
   featureType: string,
   outputFormat?: MimeType,
   maxFeatures?: number,
-  bbox?: BoundingBox,
+  bbox?: BoundingBox
   // ... more parameters
 ): string {
   // Build URL with parameters
@@ -195,7 +216,9 @@ export default class EDRQueryBuilder {
   ): string {
     let url = `${this.base_collection_url}/position?coords=${coords}`;
     if (optional_params.datetime) {
-      url += `&datetime=${DateTimeParameterToEDRString(optional_params.datetime)}`;
+      url += `&datetime=${DateTimeParameterToEDRString(
+        optional_params.datetime
+      )}`;
     }
     // ... more parameters
     return url;
@@ -204,6 +227,7 @@ export default class EDRQueryBuilder {
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - URL builder functions for each operation
 - Parameter encoding (bbox, datetime, arrays, etc.)
 - Format negotiation (f parameter, Accept header)
@@ -239,6 +263,7 @@ export function parseWmsCapabilities(capabilitiesUrl: string): Promise<{
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - Register task handlers in `worker/worker.ts`
 - Export functions in `worker/index.ts`
 - Parse conformance/collections in worker
@@ -297,6 +322,7 @@ export type GenericEndpointInfo = {
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - Extend `GenericEndpointInfo` for CSAPI service info
 - Use `BoundingBox`, `CrsCode`, `MimeType` types
 - Add CSAPI-specific shared types: `Feature`, `Geometry`, `Link`
@@ -360,6 +386,7 @@ export interface OgcApiCollectionInfo {
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - Define `CSAPIEndpointInfo extends GenericEndpointInfo`
 - Define resource types: `System`, `Deployment`, `Procedure`, etc.
 - Define collection types: `SystemCollection`, `SystemFeature`
@@ -383,11 +410,7 @@ export type {
 } from './wfs/model.js';
 
 export { default as WmsEndpoint } from './wms/endpoint.js';
-export type {
-  WmsLayerFull,
-  WmsVersion,
-  WmsLayerSummary,
-} from './wms/model.js';
+export type { WmsLayerFull, WmsVersion, WmsLayerSummary } from './wms/model.js';
 
 export { default as WmtsEndpoint } from './wmts/endpoint.js';
 export type {
@@ -397,9 +420,7 @@ export type {
 } from './wmts/model.js';
 
 export { default as OgcApiEndpoint } from './ogc-api/endpoint.js';
-export type {
-  OgcApiCollectionInfo,
-} from './ogc-api/model.js';
+export type { OgcApiCollectionInfo } from './ogc-api/model.js';
 
 export type {
   BoundingBox,
@@ -412,6 +433,7 @@ export type {
 ```
 
 **Pattern Requirements for CSAPI:**
+
 ```typescript
 // Add to src/index.ts:
 export { default as CSAPIEndpoint } from './csapi/endpoint.js';
@@ -482,6 +504,7 @@ src/
 ```
 
 **Pattern Requirements for CSAPI:**
+
 ```
 src/csapi/
 ├── endpoint.ts           # CSAPIEndpoint class
@@ -509,24 +532,24 @@ src/csapi/
 
 ```typescript
 // capabilities.ts - Parse metadata
-export function readInfoFromCapabilities(doc): GenericEndpointInfo { }
-export function readLayersFromCapabilities(doc): Layer[] { }
-export function readVersionFromCapabilities(doc): Version { }
+export function readInfoFromCapabilities(doc): GenericEndpointInfo {}
+export function readLayersFromCapabilities(doc): Layer[] {}
+export function readVersionFromCapabilities(doc): Version {}
 
 // url.ts - Build request URLs
-export function generateGetMapUrl(...params): string { }
-export function generateGetFeatureInfoUrl(...params): string { }
+export function generateGetMapUrl(...params): string {}
+export function generateGetFeatureInfoUrl(...params): string {}
 
 // model.ts - Type definitions
-export interface Layer { }
-export interface LayerFull extends Layer { }
+export interface Layer {}
+export interface LayerFull extends Layer {}
 export type Version = '1.0.0' | '1.1.0';
 
 // endpoint.ts - Main API
 export default class Endpoint {
-  constructor(url: string) { }
-  isReady(): Promise<this> { }
-  getServiceInfo(): GenericEndpointInfo { }
+  constructor(url: string) {}
+  isReady(): Promise<this> {}
+  getServiceInfo(): GenericEndpointInfo {}
 }
 ```
 
@@ -584,6 +607,7 @@ describe('readInfoFromCapabilities', () => {
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - Unit tests for each module (conformance, collections, formats, resources)
 - Integration tests with fixtures (real server responses)
 - Format parser tests (SensorML, SWE Common, GeoJSON)
@@ -604,18 +628,18 @@ export default class WmsEndpoint {
    * @param url WMS endpoint url; can contain any query parameters, these will be used to
    *   initialize the endpoint
    */
-  constructor(url: string) { }
+  constructor(url: string) {}
 
   /**
    * Resolves when the endpoint is ready to use. Returns the same endpoint object for convenience.
    * @throws {EndpointError}
    */
-  isReady(): Promise<WmsEndpoint> { }
+  isReady(): Promise<WmsEndpoint> {}
 
   /**
    * Returns an array of layers, same as WmsEndpoint.getLayers(), but flattened
    */
-  getFlattenedLayers(): WmsLayerSummary[] { }
+  getFlattenedLayers(): WmsLayerSummary[] {}
 
   /**
    * Returns a URL that can be used to query an image from one or several layers
@@ -628,14 +652,12 @@ export default class WmsEndpoint {
    * @param {MimeType} options.outputFormat
    * @param {string} [options.styles] List of styles to use, one for each layer requested
    */
-  getMapUrl(
-    layers: string[],
-    options: GetMapOptions
-  ): string { }
+  getMapUrl(layers: string[], options: GetMapOptions): string {}
 }
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - JSDoc on all exported classes, methods, types
 - Parameter descriptions with types
 - Return value descriptions
@@ -672,7 +694,7 @@ async isReady(): Promise<this> {
 // XML validation
 export function check(xmlDoc: XmlDocument, url: string): XmlDocument {
   const rootEl = getRootElement(xmlDoc);
-  if (rootEl.name === 'ServiceExceptionReport' || 
+  if (rootEl.name === 'ServiceExceptionReport' ||
       rootEl.name === 'ExceptionReport') {
     const exception = getElementText(rootEl);
     throw new Error(`Service exception: ${exception}`);
@@ -682,6 +704,7 @@ export function check(xmlDoc: XmlDocument, url: string): XmlDocument {
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - Custom error types: `CSAPIError`, `FormatParseError`, `ValidationError`
 - Include original error as cause
 - Include request context (URL, resource type)
@@ -721,6 +744,7 @@ this._capabilitiesPromise = useCache(
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - Cache conformance responses
 - Cache collection metadata
 - Cache format detection results
@@ -744,6 +768,7 @@ export function parseWmsCapabilities(url: string): Promise<ParsedCapabilities> {
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - Parse SensorML in worker
 - Parse SWE Common in worker
 - Parse large observation collections in worker
@@ -769,6 +794,7 @@ export * from './wms';
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - Individual module exports (not barrel exports)
 - Lazy load format parsers when needed
 - Tree-shakeable utility functions
@@ -807,6 +833,7 @@ export * from '../src/index.js';
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - ES modules (no CommonJS)
 - Works in browser (fetch API)
 - Works in Node.js (node-fetch polyfill if needed)
@@ -834,12 +861,13 @@ export function setFetchOptions(options: FetchOptions) {
 
 export function queryXmlDocument(url: string): Promise<XmlDocument> {
   return fetch(url, globalFetchOptions)
-    .then(resp => resp.text())
-    .then(text => parseXmlString(text));
+    .then((resp) => resp.text())
+    .then((text) => parseXmlString(text));
 }
 ```
 
 **Pattern Requirements for CSAPI:**
+
 - Support custom headers (Authorization, etc.)
 - Support CORS mode configuration
 - Support credentials mode
@@ -855,36 +883,43 @@ export function queryXmlDocument(url: string): Promise<XmlDocument> {
 **Non-negotiable requirements for PR acceptance:**
 
 1. **Endpoint Class Pattern**
+
    - `CSAPIEndpoint` class with async initialization
    - `isReady()` returns Promise
    - Consistent with WFS/WMS/WMTS pattern
 
 2. **TypeScript Types**
+
    - Export all types from `src/csapi/model.ts`
    - Use shared types (`BoundingBox`, `CrsCode`, `MimeType`)
    - Comprehensive type coverage
 
 3. **Web Worker Support**
+
    - Register handlers in `worker/worker.ts`
    - Export functions from `worker/index.ts`
    - Support fallback mode
 
 4. **Testing**
+
    - Unit tests for all modules
    - Integration tests with fixtures
    - 90%+ code coverage
 
 5. **Documentation**
+
    - JSDoc on all public APIs
    - README with examples
    - Type documentation
 
 6. **Error Handling**
+
    - Custom error types
    - Parse OGC exceptions
    - Detailed error messages
 
 7. **Caching**
+
    - Use `useCache()` utility
    - Cache conformance/collections
    - Cache parsed responses
@@ -899,11 +934,13 @@ export function queryXmlDocument(url: string): Promise<XmlDocument> {
 **Not required but appreciated:**
 
 1. **Performance Optimizations**
+
    - Lazy loading
    - Streaming responses
    - Incremental parsing
 
 2. **Developer Experience**
+
    - Fluent API
    - Helper methods
    - TypeScript inference
@@ -918,15 +955,18 @@ export function queryXmlDocument(url: string): Promise<XmlDocument> {
 **Explicitly not expected:**
 
 1. **UI Components**
+
    - No React/Vue/Angular components
    - Pure TypeScript library only
 
 2. **Data Visualization**
+
    - No charting/graphing
    - No map rendering
    - Leave to users
 
 3. **Storage/Persistence**
+
    - No IndexedDB/LocalStorage
    - Caching only (in-memory)
 
@@ -948,10 +988,10 @@ export function parseFeatureProps(
   featureCollection: FeatureCollection,
   featureType: WfsFeatureTypeFull
 ): WfsFeatureWithProps[] {
-  return featureCollection.features.map(feature => ({
+  return featureCollection.features.map((feature) => ({
     id: feature.id,
     geometry: feature.geometry,
-    properties: extractProperties(feature.properties, featureType.properties)
+    properties: extractProperties(feature.properties, featureType.properties),
   }));
 }
 
@@ -969,9 +1009,7 @@ function extractProperties(
 
 ```typescript
 // wmts/ol-tilegrid.ts
-export function buildOpenLayersTileGrid(
-  matrixSet: WmtsMatrixSet
-): TileGrid {
+export function buildOpenLayersTileGrid(matrixSet: WmtsMatrixSet): TileGrid {
   // Complex calculations for tile matrices
   // Converts WMTS spec to OpenLayers format
 }
@@ -998,11 +1036,13 @@ export default class EDRQueryBuilder {
 **CSAPI format abstraction aligns with existing patterns:**
 
 1. **WFS parses GML** → CSAPI parses SensorML
+
    - Both are XML-based OGC formats
    - Both require schema interpretation
    - Both convert to canonical models
 
 2. **WMTS handles tile matrices** → CSAPI handles SWE Common components
+
    - Both require complex structure parsing
    - Both provide abstraction over spec complexity
    - Both enable user-friendly API
@@ -1022,7 +1062,7 @@ export default class EDRQueryBuilder {
 
 - [ ] `CSAPIEndpoint` class following endpoint pattern
 - [ ] Parse `/` landing page for service info
-- [ ] Parse `/conformance` for capability detection  
+- [ ] Parse `/conformance` for capability detection
 - [ ] Parse `/collections` for resource catalogs
 - [ ] Implement `isReady()` async initialization
 - [ ] Implement `getServiceInfo()` metadata getter
@@ -1105,6 +1145,7 @@ export default class EDRQueryBuilder {
 ## 10. Conclusion
 
 **Upstream Expectations:** camptocamp/ogc-client expects CSAPI to follow established patterns:
+
 - Endpoint class with async initialization
 - Capabilities/metadata parsing
 - URL builders with parameter encoding
@@ -1115,6 +1156,7 @@ export default class EDRQueryBuilder {
 - Browser/Node.js compatibility
 
 **Format Abstraction:** CSAPI's comprehensive format abstraction (SensorML, SWE Common, GeoJSON parsing) **aligns perfectly** with existing upstream patterns:
+
 - WFS parses GML (XML-based OGC format)
 - WMTS handles tile matrices (complex spec structures)
 - EDR handles WKT (domain-specific format)

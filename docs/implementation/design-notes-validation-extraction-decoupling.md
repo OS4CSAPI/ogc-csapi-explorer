@@ -48,7 +48,7 @@ The mature, established handlers perform **no validation** of server response da
 The STAC handler (`src/stac/info.ts`) is a **notable exception**. It performs spec-level structural validation before allowing extraction:
 
 - `parseStacCatalog()` — checks 5 required fields (`stac_version`, `type`, `id`, `description`, `links`)
-- `parseStacCollection()` — checks 7 required fields (`stac_version`, `type`, `id`, `description`, `license`, `extent`, `links`), with the explicit comment: *"After validation, we know the document has the correct structure"*
+- `parseStacCollection()` — checks 7 required fields (`stac_version`, `type`, `id`, `description`, `license`, `extent`, `links`), with the explicit comment: _"After validation, we know the document has the correct structure"_
 - `parseStacItem()` — checks 4 required fields (`type`, `id`, `properties`, `links`)
 - `parseEndpointInfo()` — checks 3 required fields (`id`, `description`, `stac_version`)
 
@@ -56,13 +56,13 @@ This is validate-then-extract in the same function — if a required field is mi
 
 ### How STAC Validation Differs from CSAPI Validation
 
-| Aspect | STAC validation | CSAPI validation |
-|--------|----------------|-----------------|
-| **Structure** | Inline `if/throw` in each parse function | Separate `validate*()` functions returning `ValidationError[]` |
-| **Granularity** | ~20 presence checks (truthy / is-array) | ~50+ checks including URI format, nested objects, cross-field |
-| **Error type** | Simple `EndpointError` (string message) | Structured `ValidationError` (severity, path, message) |
-| **Coupling** | Validation IS extraction (same function) | Validation separate, then gated extraction |
-| **Formality** | Ad-hoc | Formal validation framework |
+| Aspect          | STAC validation                          | CSAPI validation                                               |
+| --------------- | ---------------------------------------- | -------------------------------------------------------------- |
+| **Structure**   | Inline `if/throw` in each parse function | Separate `validate*()` functions returning `ValidationError[]` |
+| **Granularity** | ~20 presence checks (truthy / is-array)  | ~50+ checks including URI format, nested objects, cross-field  |
+| **Error type**  | Simple `EndpointError` (string message)  | Structured `ValidationError` (severity, path, message)         |
+| **Coupling**    | Validation IS extraction (same function) | Validation separate, then gated extraction                     |
+| **Formality**   | Ad-hoc                                   | Formal validation framework                                    |
 
 ### EDR — Client-Side Input Validation Only
 
@@ -80,7 +80,7 @@ The earlier claim of "zero validation across all upstream handlers" was inaccura
 
 ### Why We Still Remove (Not Adopt the STAC Pattern)
 
-The STAC handler demonstrates that upstream *has* used inline required-field checks. But adopting that pattern for CSAPI would reproduce the F49 problem:
+The STAC handler demonstrates that upstream _has_ used inline required-field checks. But adopting that pattern for CSAPI would reproduce the F49 problem:
 
 1. **STAC's pattern has the same fragility.** If a real STAC server omits `license` from a Collection response, `parseStacCollection()` throws and the caller gets nothing. That's F49 — validators blocking access to usable data.
 2. **Connected Systems servers are less mature than STAC servers.** OSH (OpenSensorHub) is an early implementation; its responses frequently omit spec-required fields like `sampledFeature@link`. STAC servers tend to be more compliant because STAC is a more mature ecosystem.
@@ -105,9 +105,9 @@ After examining the upstream patterns, the conclusion is clear: **the feature-le
 
 Initially, the plan was to decouple validation from extraction — keep the validators as opt-in diagnostics. But this still raises the question: **would the upstream accept 500+ lines of code (validators + tests) for a formal validation framework that no other handler has?**
 
-The STAC handler *does* have inline required-field checks, but those are ad-hoc `if/throw` patterns within parse functions — not a separate validation layer. Our validators are a qualitatively different thing: a formal framework with structured `ValidationError[]` objects, severity levels, property paths, per-type validator functions, and cross-field checks. Here's why that framework should be removed:
+The STAC handler _does_ have inline required-field checks, but those are ad-hoc `if/throw` patterns within parse functions — not a separate validation layer. Our validators are a qualitatively different thing: a formal framework with structured `ValidationError[]` objects, severity levels, property paths, per-type validator functions, and cross-field checks. Here's why that framework should be removed:
 
-1. **No precedent for a formal validation framework.** While STAC has inline required-field checks, no handler has separate `validate*()` functions, `ValidationError` types, or structured error arrays. The upstream reviewers would ask "why does CSAPI need a validation *framework* when STAC gets by with inline checks?"
+1. **No precedent for a formal validation framework.** While STAC has inline required-field checks, no handler has separate `validate*()` functions, `ValidationError` types, or structured error arrays. The upstream reviewers would ask "why does CSAPI need a validation _framework_ when STAC gets by with inline checks?"
 
 2. **No caller.** After decoupling from extraction, no code in the library calls the validators. They exist only for external callers who might want conformance checking — a use case the library does not serve for any other API.
 
@@ -117,7 +117,7 @@ The STAC handler *does* have inline required-field checks, but those are ad-hoc 
 
 5. **Wrong layer.** Validation is a server-side responsibility (validate inputs before persisting) or an application-side concern (the consuming app can implement its own validation rules). The client library sits between these layers — its job is transport and parsing, not enforcement.
 
-6. **STAC-style inline checks would reproduce F49.** If we simplified to STAC's pattern (`if (!field) throw`), we'd block all OSH SamplingFeatures that lack `sampledFeature@link`. The whole point of F49 is to be *more tolerant*, not to replicate a fragility pattern.
+6. **STAC-style inline checks would reproduce F49.** If we simplified to STAC's pattern (`if (!field) throw`), we'd block all OSH SamplingFeatures that lack `sampledFeature@link`. The whole point of F49 is to be _more tolerant_, not to replicate a fragility pattern.
 
 ### What Stays
 

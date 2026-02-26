@@ -61,6 +61,7 @@ Define specific coverage targets for each component type and how to measure mean
 **Objective:** Analyze coverage targets and metrics in upstream codebase
 
 **Tasks:**
+
 1. Extract coverage configuration from upstream jest.config
 2. Analyze coverage reports from upstream CI/CD
 3. Calculate coverage % per module in upstream
@@ -72,6 +73,7 @@ Define specific coverage targets for each component type and how to measure mean
 **Objective:** Understand industry best practices for TypeScript library coverage
 
 **Tasks:**
+
 1. Research recommended coverage targets for client libraries
 2. Analyze coverage approaches in comparable projects
 3. Understand branch vs statement vs function coverage trade-offs
@@ -83,6 +85,7 @@ Define specific coverage targets for each component type and how to measure mean
 **Objective:** Define coverage targets for each component type
 
 **Tasks:**
+
 1. Define QueryBuilder coverage targets and rationale
 2. Define parser (SensorML, SWE Common, GeoJSON) coverage targets
 3. Define type definition coverage approach
@@ -95,6 +98,7 @@ Define specific coverage targets for each component type and how to measure mean
 **Objective:** Define how to measure meaningful coverage beyond just %
 
 **Tasks:**
+
 1. Define edge case coverage metrics
 2. Define error path coverage requirements
 3. Define assertion quality metrics
@@ -106,6 +110,7 @@ Define specific coverage targets for each component type and how to measure mean
 **Objective:** Define how to configure and track coverage
 
 **Tasks:**
+
 1. Design Jest coverage configuration
 2. Define coverage threshold enforcement
 3. Design incremental coverage tracking per phase
@@ -117,6 +122,7 @@ Define specific coverage targets for each component type and how to measure mean
 **Objective:** Create comprehensive coverage specification
 
 **Tasks:**
+
 1. Consolidate coverage targets by component
 2. Create Jest configuration templates
 3. Document coverage validation procedures
@@ -143,6 +149,7 @@ This research is complete when:
 **Coverage target specification by component with measurement strategy**
 
 Content includes:
+
 - Overall coverage target and rationale
 - Component-specific coverage targets matrix
 - Coverage metrics definition (statement, branch, function)
@@ -158,12 +165,14 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis (coverage analysis)
 - Section 2: Existing Upstream Test Pattern Survey (coverage patterns)
 - Section 3: TypeScript Client Library Testing Best Practices (industry standards)
 - All component testing sections (8-16) to understand coverage needs
 
 **Blocks:**
+
 - Jest configuration (coverage thresholds needed)
 - CI/CD configuration (coverage reporting needed)
 - All test implementation (coverage targets guide test creation)
@@ -190,18 +199,21 @@ Content includes:
 **Key Findings:**
 
 1. **Upstream State:**
+
    - No coverage thresholds currently configured in jest.config.cjs
    - Only XML files excluded from coverage
    - No coverage scripts in package.json
    - Comprehensive testing exists but coverage not measured
 
 2. **Official Requirements:**
-   - >80% statement coverage (official CSAPI requirement)
-   - >80% branch coverage (official CSAPI requirement)
+
+   - > 80% statement coverage (official CSAPI requirement)
+   - > 80% branch coverage (official CSAPI requirement)
    - 100% public API coverage (all exports)
    - ~4,500-6,000 test lines expected
 
 3. **Component-Specific Targets Defined:**
+
    - QueryBuilders: 90-95% statement, 85-90% branch
    - Parsers (SensorML, SWE): 90-95% statement, 85-95% branch
    - Endpoint: 90-95% statement, 85-90% branch
@@ -210,6 +222,7 @@ Content includes:
    - Error Classes: 90-100% statement, 80-90% branch
 
 4. **Meaningful Coverage Metrics:**
+
    - Edge case coverage (boundary conditions, extreme values)
    - Error path coverage (all error types tested)
    - Assertion quality (specific vs trivial assertions)
@@ -225,6 +238,7 @@ Content includes:
 **Deliverable:** [17-coverage-targets-and-metrics.md](../findings/17-coverage-targets-and-metrics.md)
 
 **Impact:**
+
 - Provides ready-to-use Jest coverage configuration
 - Defines clear quality metrics beyond percentages
 - Establishes incremental path to >80% coverage

@@ -37,14 +37,14 @@ This is an implementation gap — not a design choice. OGC 23-002 (Connected Sys
 
 Issue #104 identifies an asymmetry between DataStream and ControlStream navigation methods in `CSAPIQueryBuilder`. DataStream has five sub-resource methods while ControlStream has only three:
 
-| Navigation Method | DataStream | ControlStream |
-|---|---|---|
-| Schema | `getDataStreamSchema` (L1998→L2000) | `getControlStreamSchema` (L1998→L2000) |
-| Child resources | `getDataStreamObservations` (L1571) | `getControlStreamCommands` (L2023) |
-| Systems | `getDataStreamSystems` (L1615) | **MISSING** |
-| Procedures | `getDataStreamProcedures` (L1636) | **MISSING** |
-| History | `getDataStreamHistory` (L1657) | **MISSING** |
-| Feasibility | N/A | `checkCommandFeasibility` (~L2052) |
+| Navigation Method | DataStream                          | ControlStream                          |
+| ----------------- | ----------------------------------- | -------------------------------------- |
+| Schema            | `getDataStreamSchema` (L1998→L2000) | `getControlStreamSchema` (L1998→L2000) |
+| Child resources   | `getDataStreamObservations` (L1571) | `getControlStreamCommands` (L2023)     |
+| Systems           | `getDataStreamSystems` (L1615)      | **MISSING**                            |
+| Procedures        | `getDataStreamProcedures` (L1636)   | **MISSING**                            |
+| History           | `getDataStreamHistory` (L1657)      | **MISSING**                            |
+| Feasibility       | N/A                                 | `checkCommandFeasibility` (~L2052)     |
 
 ### Context
 
@@ -136,22 +136,22 @@ The `history` sub-resource is a versioning endpoint that applies uniformly acros
 
 ## Risk Assessment
 
-| Risk Factor | Assessment |
-|---|---|
-| **Backward compatibility** | **None** — purely additive (3 new methods). No existing method is modified or removed. |
-| **Behavioral change** | **None** — all existing methods, return values, and error behaviors remain identical. |
-| **Pattern consistency** | **Improves** — eliminates the only asymmetry in the url_builder's navigation methods. |
-| **Spec conformance** | **Improves** — Tables 5 and 10 define identical associations; the implementation should reflect that. |
-| **Test coverage** | **Improves** — adds tests for previously untested navigation paths. |
-| **Estimated diff size** | ~80 lines (3 methods with JSDoc + 6–9 test cases). |
+| Risk Factor                | Assessment                                                                                            |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Backward compatibility** | **None** — purely additive (3 new methods). No existing method is modified or removed.                |
+| **Behavioral change**      | **None** — all existing methods, return values, and error behaviors remain identical.                 |
+| **Pattern consistency**    | **Improves** — eliminates the only asymmetry in the url_builder's navigation methods.                 |
+| **Spec conformance**       | **Improves** — Tables 5 and 10 define identical associations; the implementation should reflect that. |
+| **Test coverage**          | **Improves** — adds tests for previously untested navigation paths.                                   |
+| **Estimated diff size**    | ~80 lines (3 methods with JSDoc + 6–9 test cases).                                                    |
 
 ### Stop Condition Check (per AI_OPERATIONAL_CONSTRAINTS.md)
 
-| Condition | Status |
-|---|---|
-| Spec authority unclear? | **No** — Tables 5/10 are unambiguous. |
-| Risk of data loss? | **No** — URL builder is read-only (generates strings). |
-| Changes silently alter behavior? | **No** — purely additive. |
+| Condition                        | Status                                                 |
+| -------------------------------- | ------------------------------------------------------ |
+| Spec authority unclear?          | **No** — Tables 5/10 are unambiguous.                  |
+| Risk of data loss?               | **No** — URL builder is read-only (generates strings). |
+| Changes silently alter behavior? | **No** — purely additive.                              |
 
 **All stop conditions clear. Implementation may proceed.**
 
@@ -168,6 +168,7 @@ The `history` sub-resource is a versioning endpoint that applies uniformly acros
 Each method follows the exact pattern established by the DataStream equivalents: call `assertResourceAvailable('controlStreams')`, then delegate to `buildResourceUrl`.
 
 **Test additions**:
+
 - 3 happy-path URL generation tests (mirroring DataStream tests at L1896, L1906, L1917)
 - 3 EndpointError guard tests (mirroring DataStream guards at L1959–L1961)
 
@@ -194,8 +195,8 @@ Each method follows the exact pattern established by the DataStream equivalents:
 
 ### B. Files Reviewed
 
-| File | Lines | Purpose |
-|---|---|---|
-| `src/ogc-api/csapi/url_builder.ts` | 1610–1680, 1985–2095 | DataStream and ControlStream method comparison |
-| `src/ogc-api/csapi/url_builder.spec.ts` | 1896–1961, 2272–2372 | Existing test patterns |
-| `docs/governance/AI_OPERATIONAL_CONSTRAINTS.md` | 1–100 | Operational constraints verification |
+| File                                            | Lines                | Purpose                                        |
+| ----------------------------------------------- | -------------------- | ---------------------------------------------- |
+| `src/ogc-api/csapi/url_builder.ts`              | 1610–1680, 1985–2095 | DataStream and ControlStream method comparison |
+| `src/ogc-api/csapi/url_builder.spec.ts`         | 1896–1961, 2272–2372 | Existing test patterns                         |
+| `docs/governance/AI_OPERATIONAL_CONSTRAINTS.md` | 1–100                | Operational constraints verification           |

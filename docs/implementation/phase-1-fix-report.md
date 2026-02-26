@@ -50,10 +50,10 @@ Existing tests passed because test IDs (`sys-001`, `sys-002`) contained no speci
 
 **Files changed:**
 
-| File | Change |
-|------|--------|
-| `src/ogc-api/csapi/url_builder.ts` | Replaced `encodeArrayParameter(value)` with `value.join(',')` in the array branch of `buildQueryString`. Removed unused import. Added explanatory comment. |
-| `src/ogc-api/csapi/url_builder.spec.ts` | Added regression test: `'does not double-encode special characters in array values'` using IDs with spaces and colons. |
+| File                                    | Change                                                                                                                                                     |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ogc-api/csapi/url_builder.ts`      | Replaced `encodeArrayParameter(value)` with `value.join(',')` in the array branch of `buildQueryString`. Removed unused import. Added explanatory comment. |
+| `src/ogc-api/csapi/url_builder.spec.ts` | Added regression test: `'does not double-encode special characters in array values'` using IDs with spaces and colons.                                     |
 
 **Note:** The `encodeArrayParameter()` helper function in `helpers.ts` was not changed — it remains available for standalone use where manual encoding is desired. It is simply no longer called inside `buildQueryString` since `URLSearchParams` handles encoding.
 
@@ -61,11 +61,11 @@ Existing tests passed because test IDs (`sys-001`, `sys-002`) contained no speci
 
 ## Verification
 
-| Check | Result |
-|-------|--------|
-| CSAPI unit tests (77 = 76 original + 1 new) | **PASS** |
-| ESLint (3 modified files) | **CLEAN** |
-| `tsc --noEmit` (full project) | **CLEAN** |
+| Check                                       | Result    |
+| ------------------------------------------- | --------- |
+| CSAPI unit tests (77 = 76 original + 1 new) | **PASS**  |
+| ESLint (3 modified files)                   | **CLEAN** |
+| `tsc --noEmit` (full project)               | **CLEAN** |
 
 ---
 
@@ -73,10 +73,10 @@ Existing tests passed because test IDs (`sys-001`, `sys-002`) contained no speci
 
 The following review findings remain deferred as planned:
 
-| Finding | Status | Action |
-|---------|--------|--------|
-| F2 — `as unknown as` cast in `csapi()` | Deferred | Revisit in Phase 2 if builder needs typed collection properties |
-| F3 — EDR `edr()` missing await | No action | Pre-existing upstream bug, not ours |
-| F4 — Missing collection type exports | Deferred | Export when Phase 2 adds methods that return parsed data |
-| F6 — Hardcoded temporal keys | Deferred | Refactor to `Set` when adding more resource methods in Phase 2 |
-| F7, F8, F9 — Positive findings | N/A | No action needed |
+| Finding                                | Status    | Action                                                          |
+| -------------------------------------- | --------- | --------------------------------------------------------------- |
+| F2 — `as unknown as` cast in `csapi()` | Deferred  | Revisit in Phase 2 if builder needs typed collection properties |
+| F3 — EDR `edr()` missing await         | No action | Pre-existing upstream bug, not ours                             |
+| F4 — Missing collection type exports   | Deferred  | Export when Phase 2 adds methods that return parsed data        |
+| F6 — Hardcoded temporal keys           | Deferred  | Refactor to `Set` when adding more resource methods in Phase 2  |
+| F7, F8, F9 — Positive findings         | N/A       | No action needed                                                |

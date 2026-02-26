@@ -16,12 +16,15 @@ Read the full research plan first to understand the complete scope, then execute
 ### Documents to read:
 
 **Read first:**
+
 - `docs/research/pre-implementation-alignment/findings/A1-test-research-vs-implementation-guide-report.md` (~465 lines) — understand what A1 already resolved so you don't re-flag resolved items
 
 **Anchor document:**
+
 - `docs/planning/ROADMAP.md` (v3.0, ~712 lines) — read in full. Extract all 34 tasks, all estimates, all "Test immediately" sections, all file paths.
 
 **Source of Truth #1:**
+
 - `docs/planning/csapi-implementation-guide.md` (~4,488 lines) — read these sections:
   - §5 (Service Discovery & Integration, lines ~303-478) — for Check 1
   - §6 (QueryBuilder, lines ~481-2000) — for Checks 1, 3 (method inventory at lines ~1193-1715)
@@ -31,6 +34,7 @@ Read the full research plan first to understand the complete scope, then execute
   - §14 (File Inventory) — for Check 4
 
 **Source of Truth #2 (for Checks 6-7):**
+
 - `docs/research/testing/findings/19-test-organization-file-structure.md` (~1,488 lines) — authoritative test file inventory
 
 ### Important context:
@@ -50,7 +54,8 @@ Read the full research plan first to understand the complete scope, then execute
 
 3. **Check 3 (Method Count Accuracy):** Sum the method counts listed in ROADMAP Phase 2 tasks (Systems: 12, Deployments: 8, Procedures: 8, Sampling Features: 8, Properties: 6, DataStreams: 11, Observations: 9, Control Streams: 8, Commands: 10 = 80 total). For each resource type, go to the corresponding section in Implementation Guide §6 (lines ~1193-1715) and count the actual methods listed. Compare per-resource-type counts. Check that method names match. Produce a per-resource reconciliation table.
 
-4. **Check 4 (File/Directory Structure):** Extract every file path mentioned or implied by ROADMAP tasks (model.ts, helpers.ts, url_builder.ts, endpoint.ts, info.ts, index.ts, formats/sensorml/*.ts, formats/swecommon/*.ts, formats/constants.ts, formats/index.ts, test files). Compare against Implementation Guide §14 file inventory. Pay special attention to:
+4. **Check 4 (File/Directory Structure):** Extract every file path mentioned or implied by ROADMAP tasks (model.ts, helpers.ts, url*builder.ts, endpoint.ts, info.ts, index.ts, formats/sensorml/*.ts, formats/swecommon/\_.ts, formats/constants.ts, formats/index.ts, test files). Compare against Implementation Guide §14 file inventory. Pay special attention to:
+
    - Fixture directory: should be `fixtures/csapi/sample-server/` with URL-path-mirroring convention (per A1 Prompt 3 C7-M1 update)
    - `formats/` subdirectory structure consistency
    - Any files in one document but not the other
@@ -65,7 +70,7 @@ Read the full research plan first to understand the complete scope, then execute
    - (a) Estimated implementation lines for that task
    - (b) Estimated hours for that task
    - (c) Whether the task has a "Test immediately" section
-   Verify: no single task produces >800 implementation lines without tests, no task exceeds ~3 hours without a test checkpoint. Count total test checkpoints (should be ~34, one per task). Produce a cadence compliance matrix.
+     Verify: no single task produces >800 implementation lines without tests, no task exceeds ~3 hours without a test checkpoint. Count total test checkpoints (should be ~34, one per task). Produce a cadence compliance matrix.
 
 ### Output format:
 

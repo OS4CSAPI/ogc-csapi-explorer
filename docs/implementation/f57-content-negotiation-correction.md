@@ -45,22 +45,22 @@
 
 52North's Connected Systems API (`connected-systems-pygeoapi`) runs two data providers side by side:
 
-| Provider | Content Type | Response Shape | Data |
-|----------|-------------|----------------|------|
-| **pygeoapi GeoJSON** | `application/json` | `{ type: "FeatureCollection", features: [...], links: [...] }` | **Empty** (no features loaded) |
-| **SensorML** | `application/sml+json` | `{ items: [...], links: [...] }` | **3 systems, 1 deployment, 1 procedure** |
+| Provider             | Content Type           | Response Shape                                                 | Data                                     |
+| -------------------- | ---------------------- | -------------------------------------------------------------- | ---------------------------------------- |
+| **pygeoapi GeoJSON** | `application/json`     | `{ type: "FeatureCollection", features: [...], links: [...] }` | **Empty** (no features loaded)           |
+| **SensorML**         | `application/sml+json` | `{ items: [...], links: [...] }`                               | **3 systems, 1 deployment, 1 procedure** |
 
 The `Accept` header determines which provider handles the request. With no `Accept` header, the server defaults to `application/sml+json` (the SensorML provider with data).
 
 ### What Changed Between Smoke Tests
 
-| Aspect | Phase 3.3 (data found) | Phase 3.4 (data "lost") |
-|--------|----------------------|------------------------|
-| Accept header | None (server chooses default) | `application/json` (explicit) |
-| Server default | `application/sml+json` | `application/sml+json` |
-| Effective provider | SensorML → **has data** | GeoJSON → **empty** |
-| Response Content-Type | `application/sml+json` | `application/json` |
-| Response shape | `{ items: [...] }` | `{ type: "FeatureCollection", features: [] }` |
+| Aspect                | Phase 3.3 (data found)        | Phase 3.4 (data "lost")                       |
+| --------------------- | ----------------------------- | --------------------------------------------- |
+| Accept header         | None (server chooses default) | `application/json` (explicit)                 |
+| Server default        | `application/sml+json`        | `application/sml+json`                        |
+| Effective provider    | SensorML → **has data**       | GeoJSON → **empty**                           |
+| Response Content-Type | `application/sml+json`        | `application/json`                            |
+| Response shape        | `{ items: [...] }`            | `{ type: "FeatureCollection", features: [] }` |
 
 The AI changed the Accept header between sessions. This was not a deliberate decision documented in the test methodology — it was an untracked drift in request construction.
 
@@ -69,6 +69,7 @@ The AI changed the Accept header between sessions. This was not a deliberate dec
 The "independent re-verification" noted in F57 was performed in the same session by the same agent using the same request pattern (`Accept: application/json`). Because the verification method was identical to the original observation, it confirmed the same wrong result.
 
 True independent verification would have required:
+
 - Testing with a different `Accept` header
 - Testing with `?f=application/sml+json` query parameter
 - Testing with no `Accept` header at all
@@ -106,31 +107,31 @@ systems:      Content-Type: application/sml+json → 3 items (data present)
 
 ### Documents Corrected
 
-| Document | Change |
-|----------|--------|
-| Phase 3.4 smoke test — F57 | Struck through original finding, added correction note |
-| Phase 3.4 smoke test — 52N Server Profile | Struck through "data loss" warning, added correction note |
-| Phase 3.4 smoke test — Summary | Struck through "cannot verify" conclusions, added correction note |
-| Phase 3.4 smoke test — Verdict | Struck through data loss narrative, added correction note |
-| Phase 3.5 code review — Smoke Test section | Added correction header noting F57 was incorrect |
-| Phase 3 Lessons Learned | Added L13: "AI Drift Can Fabricate Findings That Survive Re-Verification" |
+| Document                                   | Change                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------- |
+| Phase 3.4 smoke test — F57                 | Struck through original finding, added correction note                    |
+| Phase 3.4 smoke test — 52N Server Profile  | Struck through "data loss" warning, added correction note                 |
+| Phase 3.4 smoke test — Summary             | Struck through "cannot verify" conclusions, added correction note         |
+| Phase 3.4 smoke test — Verdict             | Struck through data loss narrative, added correction note                 |
+| Phase 3.5 code review — Smoke Test section | Added correction header noting F57 was incorrect                          |
+| Phase 3 Lessons Learned                    | Added L13: "AI Drift Can Fabricate Findings That Survive Re-Verification" |
 
 ### Findings Affected by F57 Correction
 
 These findings were marked as "cannot verify" or "reversed" based on F57. Their actual status should be re-evaluated in the next smoke test:
 
-| Finding | F57-Based Status | Actual Status |
-|---------|-----------------|---------------|
-| F10 (52N has real data) | "Reversed" | **Still true** — data present via `application/sml+json` |
-| F11 (52N uses SensorML format) | "Changed" | **Still true** — SML is the default and data-bearing format |
-| F15 (52N adds third system) | "Reversed" | **Still true** — 3 systems present |
-| F41 (null featureType) | "Cannot verify" | **Should be re-verifiable** via SML responses |
-| F42 (null validTime) | "Cannot verify" | **Should be re-verifiable** via SML responses |
-| F43 (Procedures misclassified) | "Cannot verify" | **Should be re-verifiable** via SML responses |
-| F44 (CURIE + full URI forms) | "Cannot verify" | **Should be re-verifiable** via SML responses |
-| F47 (GeoJSON `@link` notation) | "Cannot verify" | **Requires GeoJSON format** — may still need `application/geo+json` Accept header test |
-| F50 (default content type changed) | "Changed" | **Nuanced** — default is still `application/sml+json`, but `application/json` goes to a separate empty provider |
-| F55 (F42 no longer blocking) | "Cannot verify" | **Should be re-verifiable** |
+| Finding                            | F57-Based Status | Actual Status                                                                                                   |
+| ---------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| F10 (52N has real data)            | "Reversed"       | **Still true** — data present via `application/sml+json`                                                        |
+| F11 (52N uses SensorML format)     | "Changed"        | **Still true** — SML is the default and data-bearing format                                                     |
+| F15 (52N adds third system)        | "Reversed"       | **Still true** — 3 systems present                                                                              |
+| F41 (null featureType)             | "Cannot verify"  | **Should be re-verifiable** via SML responses                                                                   |
+| F42 (null validTime)               | "Cannot verify"  | **Should be re-verifiable** via SML responses                                                                   |
+| F43 (Procedures misclassified)     | "Cannot verify"  | **Should be re-verifiable** via SML responses                                                                   |
+| F44 (CURIE + full URI forms)       | "Cannot verify"  | **Should be re-verifiable** via SML responses                                                                   |
+| F47 (GeoJSON `@link` notation)     | "Cannot verify"  | **Requires GeoJSON format** — may still need `application/geo+json` Accept header test                          |
+| F50 (default content type changed) | "Changed"        | **Nuanced** — default is still `application/sml+json`, but `application/json` goes to a separate empty provider |
+| F55 (F42 no longer blocking)       | "Cannot verify"  | **Should be re-verifiable**                                                                                     |
 
 ### Important Caveat: GeoJSON vs SensorML Response Shapes
 
@@ -190,11 +191,13 @@ This is actually a valuable interoperability finding. The same server serves dif
 ### For Our Work
 
 **Good news:**
+
 - **52North dual-server testing is restored.** We're back to two live servers for validation (OSH + 52North). The 10 findings that were marked "cannot verify" because of F57 are all potentially re-verifiable now.
 - **No code was affected.** F57 was a documentation-only finding — it never caused code changes. The parser, type system, and tests are all clean.
 - **Our SensorML parser already handles `application/sml+json`.** The `SimpleProcess` parser and format detection we built in Issue #19 target exactly the format that 52North's data-bearing provider returns.
 
 **Important forward-looking considerations:**
+
 - **Future smoke tests must document which `Accept` header was used** for every request. Header choice should never change silently between test runs.
 - **The response parser will need to handle both envelope shapes** — `{ items: [...] }` from SML responses and `{ type: "FeatureCollection", features: [...] }` from GeoJSON responses — even from the same server.
 - **Content negotiation (L9) is now proven critical for both code and testing methodology.** We wrote L9 as a parser concern, but this incident shows it's equally important for how we observe server behavior.
@@ -213,21 +216,22 @@ After the correction was complete, a review of [OS4CSAPI Discussion #2 — Sprin
 
 SpeckiJ (Jan Speckamp, 52North implementer) wrote on October 27, 2025:
 
-> *"Sorry for the confusion, i forgot to explain that I actually tested it using the url: `https://csa.demo.52north.org/?f=application/geo%2Bjson` — Which hardcodes the feature-type to geojson - this bypasses the Content-Type parsing of pygeoapi which does not really handle our mimetypes well. **Specifically our implementation does not really deal well with the `Accept` Header containing multiple different keys in the case that they are all valid, but content is only available in some types.**"*
+> _"Sorry for the confusion, i forgot to explain that I actually tested it using the url: `https://csa.demo.52north.org/?f=application/geo%2Bjson` — Which hardcodes the feature-type to geojson - this bypasses the Content-Type parsing of pygeoapi which does not really handle our mimetypes well. **Specifically our implementation does not really deal well with the `Accept` Header containing multiple different keys in the case that they are all valid, but content is only available in some types.**"_
 
 That last sentence describes exactly what we discovered: 52North has content available in `application/sml+json` but not in `application/json`, and the `Accept` header routes to different providers.
 
 ### Corroborating Evidence from the Discussion
 
-| Discussion observation (Oct 2025) | Our F57 experience (Feb 2026) |
-|---|---|
-| QGIS expects `application/json` / GeoJSON FeatureCollection | Our Phase 3.4 smoke test used `Accept: application/json` |
-| QGIS saw empty or broken collections | We saw empty FeatureCollections |
-| SpeckiJ workaround: `?f=application/geo%2Bjson` bypasses content negotiation | We found `Accept: application/sml+json` bypasses the empty GeoJSON provider |
-| "content is only available in some types" | Exactly — SML provider has data, GeoJSON provider is empty |
-| The example deployment shown is "Messtonne 1 - 2025 Test" | That's the same deployment we found when we tested with `application/sml+json` |
+| Discussion observation (Oct 2025)                                            | Our F57 experience (Feb 2026)                                                  |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| QGIS expects `application/json` / GeoJSON FeatureCollection                  | Our Phase 3.4 smoke test used `Accept: application/json`                       |
+| QGIS saw empty or broken collections                                         | We saw empty FeatureCollections                                                |
+| SpeckiJ workaround: `?f=application/geo%2Bjson` bypasses content negotiation | We found `Accept: application/sml+json` bypasses the empty GeoJSON provider    |
+| "content is only available in some types"                                    | Exactly — SML provider has data, GeoJSON provider is empty                     |
+| The example deployment shown is "Messtonne 1 - 2025 Test"                    | That's the same deployment we found when we tested with `application/sml+json` |
 
 The discussion also reveals additional context:
+
 - **All responses from the API are expected as `json` and `GeoJSON FeatureCollection`** by generic OGC API Features clients like QGIS
 - **QGIS does not do handling/setting of response formats** (via `f` parameter), just assumes valid response types
 - This is a **known limitation of 52North's pygeoapi integration**, not a server reset or database wipe

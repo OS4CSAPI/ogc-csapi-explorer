@@ -11,6 +11,7 @@
 ## Research Objectives
 
 1. **Gap Identification:**
+
    - What was incomplete in first attempt?
    - Were gaps architectural or implementation?
    - How does format abstraction relate to architecture?

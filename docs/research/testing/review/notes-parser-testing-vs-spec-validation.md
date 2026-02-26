@@ -7,21 +7,23 @@
 
 ## What We're NOT Saying
 
-We are **not** saying "ignore the spec." The spec is the entire foundation — the parser exists *because of* the spec. Every property it extracts, every structure type it recognizes, every nesting relationship it traverses — all of that comes from the SensorML 3.0 and CSAPI specifications. The spec knowledge is essential and fully retained.
+We are **not** saying "ignore the spec." The spec is the entire foundation — the parser exists _because of_ the spec. Every property it extracts, every structure type it recognizes, every nesting relationship it traverses — all of that comes from the SensorML 3.0 and CSAPI specifications. The spec knowledge is essential and fully retained.
 
 ## What We ARE Saying
 
 The distinction is between two different jobs:
 
 ### Job 1: "Is this document a valid SensorML document?" (Server/Validator concern)
+
 - Does `uniqueId` follow RFC 3986 URI format?
 - Is `validTime.start` before `validTime.end`?
 - Does this `PhysicalSystem` have all REQUIRED properties per the spec?
 - Is this enum value one of the allowed values?
 
-This is **spec conformance validation** — checking whether the *server produced correct data*. The VAL-SML and ERR-SML IDs were testing this. A client library shouldn't reject a server response because a date range is backwards or a URI has a non-standard format.
+This is **spec conformance validation** — checking whether the _server produced correct data_. The VAL-SML and ERR-SML IDs were testing this. A client library shouldn't reject a server response because a date range is backwards or a URI has a non-standard format.
 
 ### Job 2: "Does my parser correctly transform this JSON into a useful TypeScript object?" (Client/Parser concern)
+
 - Given a PhysicalSystem fixture with `uniqueId: "urn:example:sensor"`, does `parseSensorML()` return `{ uniqueId: "urn:example:sensor", type: "PhysicalSystem", ... }`?
 - Given a 3-level nested component structure, does the parser produce the correct nested TypeScript objects?
 - Given a fixture with SWE Common characteristics, are they correctly extracted into typed output?
@@ -59,7 +61,7 @@ expect(result.components).toHaveLength(3);
 expect(result.components[0].type).toBe("PhysicalComponent");
 ```
 
-Both tests require spec knowledge. But the first tests whether the *fixture data* is valid. The second tests whether *our parser code* works correctly.
+Both tests require spec knowledge. But the first tests whether the _fixture data_ is valid. The second tests whether _our parser code_ works correctly.
 
 ## What the Upstream Library Does
 
@@ -68,6 +70,7 @@ The existing `ogc-client` parsers (WMS, WFS, WMTS) follow this exact pattern. Th
 ## What Changed in Doc 09 (C2 Resolution)
 
 **Preserved (spec knowledge fully retained):**
+
 1. The **property matrices** (Section 2) — they tell us what to extract
 2. The **recursive nesting strategy** (Section 4) — it tells us how deep to parse
 3. The **SWE Common integration** (Section 5) — it tells us what sub-parsers to call
@@ -75,6 +78,7 @@ The existing `ogc-client` parsers (WMS, WFS, WMTS) follow this exact pattern. Th
 5. The **test estimates and phasing** (Section 14)
 
 **Annotated (retained as reference, reframed from test identifiers):**
+
 - VAL-SML/ERR-SML IDs → retained as **reference** (they tell us what input shapes exist), not as test identifiers
 - Enforcement levels → reframed from "parser rejects invalid documents" to "parser extracts values into typed output"
 - OpenSensorHub live sourcing → removed (anti-pattern AP2, same as upstream)
@@ -86,4 +90,4 @@ The spec correlation is **stronger** after this change, not weaker. Before, the 
 
 ---
 
-*These notes were captured during Phase 2D issue resolution to address a legitimate concern about spec correlation in our testing approach.*
+_These notes were captured during Phase 2D issue resolution to address a legitimate concern about spec correlation in our testing approach._

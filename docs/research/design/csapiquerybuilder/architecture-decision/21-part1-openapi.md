@@ -11,6 +11,7 @@
 ## Research Objectives
 
 1. **Endpoint Organization:**
+
    - How are Part 1 endpoints grouped in spec?
    - Are resources clearly separated?
    - What operation tags are used?

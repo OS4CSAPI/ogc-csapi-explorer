@@ -39,19 +39,20 @@ All 17 sections located in v1 with exact line ranges, ready for extraction and i
 **Insertion point in v6:** After "Navigation Patterns" section (line ~1197)  
 **Total size:** ~485 lines
 
-| Section | v1 Lines | Length | v6 ToC Line | Status |
-|---------|----------|--------|-------------|--------|
-| Systems Resource Methods | 435-482 | 48 lines | Line 67 | Ready |
-| Deployments Resource Methods | 483-527 | 45 lines | Line 68 | Ready |
-| Procedures Resource Methods | 528-576 | 49 lines | Line 69 | Ready |
-| Sampling Features Resource Methods | 577-627 | 51 lines | Line 70 | Ready |
-| Properties Resource Methods | 628-664 | 37 lines | Line 71 | Ready |
-| DataStreams Resource Methods | 665-729 | 65 lines | Line 72 | Ready |
-| Observations Resource Methods | 730-811 | 82 lines | Line 73 | Ready |
-| Control Streams Resource Methods | 812-871 | 60 lines | Line 74 | Ready |
-| Commands Resource Methods | 872-919 | 48 lines | Line 75 | Ready |
+| Section                            | v1 Lines | Length   | v6 ToC Line | Status |
+| ---------------------------------- | -------- | -------- | ----------- | ------ |
+| Systems Resource Methods           | 435-482  | 48 lines | Line 67     | Ready  |
+| Deployments Resource Methods       | 483-527  | 45 lines | Line 68     | Ready  |
+| Procedures Resource Methods        | 528-576  | 49 lines | Line 69     | Ready  |
+| Sampling Features Resource Methods | 577-627  | 51 lines | Line 70     | Ready  |
+| Properties Resource Methods        | 628-664  | 37 lines | Line 71     | Ready  |
+| DataStreams Resource Methods       | 665-729  | 65 lines | Line 72     | Ready  |
+| Observations Resource Methods      | 730-811  | 82 lines | Line 73     | Ready  |
+| Control Streams Resource Methods   | 812-871  | 60 lines | Line 74     | Ready  |
+| Commands Resource Methods          | 872-919  | 48 lines | Line 75     | Ready  |
 
 **Content includes:**
+
 - CRUD operations for each resource type
 - Query parameter support
 - Relationship management
@@ -66,15 +67,16 @@ All 17 sections located in v1 with exact line ranges, ready for extraction and i
 **Insertion point in v6:** Replace placeholder at line ~2095 (shifted after Group 1 insertion to ~2580)  
 **Total size:** ~247 lines
 
-| Section | v1 Lines | Length | v6 ToC Line | Status |
-|---------|----------|--------|-------------|--------|
-| GeoJSON Handler | 960-988 | 29 lines | Line 80 | Ready |
-| SensorML Handler | 989-1039 | 51 lines | Line 81 | Ready |
-| SWE Common Handler | 1040-1122 | 83 lines | Line 82 | Ready |
-| Format Detector | 1123-1152 | 30 lines | Line 83 | Ready |
-| Validator | 1153-1206 | 54 lines | Line 84 | Ready |
+| Section            | v1 Lines  | Length   | v6 ToC Line | Status |
+| ------------------ | --------- | -------- | ----------- | ------ |
+| GeoJSON Handler    | 960-988   | 29 lines | Line 80     | Ready  |
+| SensorML Handler   | 989-1039  | 51 lines | Line 81     | Ready  |
+| SWE Common Handler | 1040-1122 | 83 lines | Line 82     | Ready  |
+| Format Detector    | 1123-1152 | 30 lines | Line 83     | Ready  |
+| Validator          | 1153-1206 | 54 lines | Line 84     | Ready  |
 
 **Content includes:**
+
 - Format parsing strategies
 - Type system integration
 - Content negotiation
@@ -89,13 +91,14 @@ All 17 sections located in v1 with exact line ranges, ready for extraction and i
 **Insertion point in v6:** After Format Handlers (immediately following Group 2)  
 **Total size:** ~162 lines
 
-| Section | v1 Lines | Length | v6 ToC Line | Status |
-|---------|----------|--------|-------------|--------|
-| Background Processing | 1207-1262 | 56 lines | Line 86 | Ready |
-| Test Coverage | 1263-1329 | 67 lines | Line 88 | Ready |
-| API Documentation | 1330-1368 | 39 lines | Line 90 | Ready |
+| Section               | v1 Lines  | Length   | v6 ToC Line | Status |
+| --------------------- | --------- | -------- | ----------- | ------ |
+| Background Processing | 1207-1262 | 56 lines | Line 86     | Ready  |
+| Test Coverage         | 1263-1329 | 67 lines | Line 88     | Ready  |
+| API Documentation     | 1330-1368 | 39 lines | Line 90     | Ready  |
 
 **Content includes:**
+
 - Web Worker integration patterns
 - Test suite extensions
 - TypeDoc documentation strategy
@@ -155,8 +158,10 @@ Line 4356: [End of document - updated footer]
 ## Phase Execution Plan
 
 ### ✅ Phase 1: Reconnaissance (COMPLETE)
+
 **Duration:** 20 minutes  
 **Actions:**
+
 - ✅ Archived v5 to `csapi-implementation-guide-v5.md`
 - ✅ Created v6 base from v5
 - ✅ Mapped all 17 sections from v1
@@ -166,6 +171,7 @@ Line 4356: [End of document - updated footer]
 - ✅ Discovered Query Parameters section doesn't exist
 
 **Deliverables:**
+
 - Archived v5 (2,934 lines)
 - v6 base ready for edits
 - This reconnaissance report
@@ -173,14 +179,17 @@ Line 4356: [End of document - updated footer]
 ---
 
 ### Phase 2: Resource Methods Insertion (READY)
+
 **Estimated duration:** 20-30 minutes  
 **Actions:**
+
 1. Read lines 435-919 from v1 (9 sections)
 2. Insert after line 1197 in v6 (after Navigation Patterns)
 3. Verify insertion (should be ~485 lines added)
 4. Update 9 ToC links (lines 67-75) - verify anchors match
 
 **Expected result:**
+
 - v6 grows from 2,934 → ~3,419 lines
 - 9 resource method sections restored
 - All resource method ToC links functional
@@ -190,8 +199,10 @@ Line 4356: [End of document - updated footer]
 ---
 
 ### Phase 3: Format Handlers & Infrastructure (PENDING)
+
 **Estimated duration:** 15-20 minutes  
 **Actions:**
+
 1. Read lines 960-1368 from v1 (8 sections)
 2. Remove placeholder note at line ~2580 (shifted from 2095)
 3. Insert 8 sections at removal point
@@ -199,6 +210,7 @@ Line 4356: [End of document - updated footer]
 5. Update 8 ToC links (lines 80-84, 86, 88, 90)
 
 **Expected result:**
+
 - v6 grows from ~3,419 → ~3,828 lines
 - All format handler and infrastructure sections restored
 - All ToC links functional
@@ -208,8 +220,10 @@ Line 4356: [End of document - updated footer]
 ---
 
 ### Phase 4: Cleanup & Version Update (PENDING)
+
 **Estimated duration:** 10 minutes  
 **Actions:**
+
 1. Update version header: `Version: 5.0` → `Version: 6.0 (Complete Self-Contained Guide)`
 2. Update last updated date to February 5, 2026
 3. Update footer with v5 archive link
@@ -221,6 +235,7 @@ Line 4356: [End of document - updated footer]
 **Note:** Removal of broken "Query Parameters Reference" from ToC will be handled separately after this plan is complete.
 
 **Expected result:**
+
 - v6 finalized at ~4,356 lines
 - All 17 sections restored
 - Version history updated
@@ -233,21 +248,25 @@ Line 4356: [End of document - updated footer]
 ## Rationale for Full Restoration (Option 3)
 
 ### Why Not Option 1 (Document Reference Pattern)?
+
 - ❌ Requires users to consult archive
 - ❌ Not self-contained
 - ❌ Poor developer experience
 
 ### Why Not Option 3-Lite (Resource Methods Only)?
+
 - ❌ Still missing format handler details
 - ❌ Incomplete reference for developers
 - ❌ Partial solution creates confusion
 
 ### Why Not Option 4 (Separate API Reference)?
+
 - ❌ Two documents to maintain
 - ❌ User rejected this option explicitly
 - ❌ Splits natural flow of information
 
 ### ✅ Why Full Restoration (Option 3)?
+
 - ✅ Single source of truth
 - ✅ Self-contained for all use cases
 - ✅ Complete developer reference
@@ -262,21 +281,25 @@ Line 4356: [End of document - updated footer]
 ### Risks Identified
 
 **1. Token Exhaustion (MITIGATED)**
+
 - **Risk:** Multiple large reads/writes could exceed limits
 - **Mitigation:** Phased approach with checkpoints
 - **Status:** LOW - Phases 2-3 are manageable chunks
 
 **2. Insertion Errors (MITIGATED)**
+
 - **Risk:** Wrong insertion point breaks document structure
 - **Mitigation:** Exact line numbers identified with context
 - **Status:** LOW - Clear markers identified
 
 **3. ToC Mismatch (ADDRESSED)**
+
 - **Risk:** Section headers don't match ToC anchor links
 - **Mitigation:** Headers from v1 will match v6 ToC (both auto-generated)
 - **Status:** LOW - GitHub auto-generates consistent anchors
 
 **4. Context Loss (MITIGATED)**
+
 - **Risk:** Interruption during multi-phase work
 - **Mitigation:** This report documents all details
 - **Status:** LOW - Can resume from any phase
@@ -286,6 +309,7 @@ Line 4356: [End of document - updated footer]
 ## Success Criteria
 
 ### Phase 2 Success
+
 - [ ] 9 resource method sections inserted
 - [ ] File grows by ~485 lines
 - [ ] No syntax errors in markdown
@@ -293,6 +317,7 @@ Line 4356: [End of document - updated footer]
 - [ ] Context lines preserved (no orphaned text)
 
 ### Phase 3 Success
+
 - [ ] Placeholder note removed
 - [ ] 8 format/infrastructure sections inserted
 - [ ] File grows by ~409 lines
@@ -300,6 +325,7 @@ Line 4356: [End of document - updated footer]
 - [ ] All sections in correct order
 
 ### Phase 4 Success
+
 - [ ] Version updated to 6.0
 - [ ] Footer updated with v5 reference
 - [ ] Version history note added
@@ -309,6 +335,7 @@ Line 4356: [End of document - updated footer]
 **Note:** ToC cleanup (Query Parameters removal) deferred to separate task
 
 ### Overall Success
+
 - [ ] Final document: ~4,356 lines
 - [ ] All 17 sections restored from v1
 - [ ] No broken ToC links (except intentionally removed Query Parameters)
@@ -320,6 +347,7 @@ Line 4356: [End of document - updated footer]
 ## Appendix: Line Number Reference
 
 ### v1 Section Boundaries
+
 ```
 435-482:   Systems Resource Methods (48 lines)
 483-527:   Deployments Resource Methods (45 lines)
@@ -341,6 +369,7 @@ Line 4356: [End of document - updated footer]
 ```
 
 ### v6 Current Key Landmarks
+
 ```
 Line 1:    Document title
 Line 67:   ToC: Systems Resource Methods (broken link)

@@ -6,6 +6,7 @@
 **Last review:** `docs/implementation/phase-5.4-code-review.md` (commit `293100d`)
 
 **Commits:**
+
 - `ba989eb` — `fix(swecommon): support complex types in DataRecord fields and DataArray elements (#101)`
 - `617b42f` — `fix(part2): extract cross-reference @id fields in all 5 Part 2 parsers (#103)`
 - `33dabd0` — `feat: add ControlStream systems, procedures, and history navigation methods (#104)`
@@ -16,6 +17,7 @@
 - `6ed3e09` — `feat: extract @link properties in extractCSAPIFeature() (#109)`
 
 **Findings-only/deferred commits (no source code changes):**
+
 - `51b0a8d` — docs(findings): Issue #101 findings report
 - `3e9a854` — docs(findings): Issue #103 findings report
 - `9760c33` — docs(findings): Issue #104 findings report
@@ -34,11 +36,11 @@
 
 ## Verification Status
 
-| Check | Result |
-|-------|--------|
-| tsc --noEmit | ✅ 0 errors (clean) |
-| CSAPI unit tests (all) | ✅ 1282 passing, 29 suites |
-| CSAPI format tests | ✅ 740 passing, 20 suites |
+| Check                      | Result                                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| tsc --noEmit               | ✅ 0 errors (clean)                                                                              |
+| CSAPI unit tests (all)     | ✅ 1282 passing, 29 suites                                                                       |
+| CSAPI format tests         | ✅ 740 passing, 20 suites                                                                        |
 | Endpoint integration tests | ⚠️ 82/83 passing (1 pre-existing upstream failure — Unicode mismatch at `endpoint.spec.ts:1789`) |
 
 **Test delta from Phase 5.4:** +31 tests (1251 → 1282), 0 new suites (29 → 29).
@@ -63,121 +65,121 @@ Test additions by issue:
 
 ### Issue #101 — SWE Common Complex Type Support (callback injection)
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `src/ogc-api/csapi/formats/swecommon/data-record.ts` | +47 | Add `ComponentParser` type export; add optional `componentParser` param to `parseField()` and `parseDataRecord()`; delegate complex types to callback when provided |
-| `src/ogc-api/csapi/formats/swecommon/data-array.ts` | +29 | Import `ComponentParser` from `data-record.ts`; add optional `componentParser` param to `parseElementType()` and `parseDataArray()`; delegate complex types to callback |
-| `src/ogc-api/csapi/formats/swecommon/parser.ts` | +4 (2 modified) | Pass `parseSWEComponent` as callback to `parseDataRecord()` and `parseDataArray()` call sites |
-| `src/ogc-api/csapi/formats/swecommon/data-record.spec.ts` | +120 | 4 new tests: Vector delegation, DataArray delegation, backward-compat throw, nested callback forwarding |
-| `src/ogc-api/csapi/formats/swecommon/data-array.spec.ts` | +83 | 3 new tests: Vector delegation, backward-compat throw, nested DataRecord forwarding |
+| File                                                      | Lines Changed   | Scope                                                                                                                                                                   |
+| --------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ogc-api/csapi/formats/swecommon/data-record.ts`      | +47             | Add `ComponentParser` type export; add optional `componentParser` param to `parseField()` and `parseDataRecord()`; delegate complex types to callback when provided     |
+| `src/ogc-api/csapi/formats/swecommon/data-array.ts`       | +29             | Import `ComponentParser` from `data-record.ts`; add optional `componentParser` param to `parseElementType()` and `parseDataArray()`; delegate complex types to callback |
+| `src/ogc-api/csapi/formats/swecommon/parser.ts`           | +4 (2 modified) | Pass `parseSWEComponent` as callback to `parseDataRecord()` and `parseDataArray()` call sites                                                                           |
+| `src/ogc-api/csapi/formats/swecommon/data-record.spec.ts` | +120            | 4 new tests: Vector delegation, DataArray delegation, backward-compat throw, nested callback forwarding                                                                 |
+| `src/ogc-api/csapi/formats/swecommon/data-array.spec.ts`  | +83             | 3 new tests: Vector delegation, backward-compat throw, nested DataRecord forwarding                                                                                     |
 
 ### Issue #103 — Part 2 Cross-Reference @id Field Extraction
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `src/ogc-api/csapi/model.ts` | +10 | Add optional typed fields to 5 Part 2 interfaces (`systemId`, `datastreamId`, `samplingFeatureId`, `featureOfInterestId`, `controlStreamId`, `commandId`) |
-| `src/ogc-api/csapi/formats/part2.ts` | +21 | Add tolerant `typeof === 'string'` extraction with conditional spread to all 5 parsers |
-| `src/ogc-api/csapi/formats/part2.spec.ts` | +30/−20 | Update 5 existing cross-reference tests from `not.toHaveProperty` exclusion to positive extraction assertions; rename 1 test title |
+| File                                      | Lines Changed | Scope                                                                                                                                                     |
+| ----------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ogc-api/csapi/model.ts`              | +10           | Add optional typed fields to 5 Part 2 interfaces (`systemId`, `datastreamId`, `samplingFeatureId`, `featureOfInterestId`, `controlStreamId`, `commandId`) |
+| `src/ogc-api/csapi/formats/part2.ts`      | +21           | Add tolerant `typeof === 'string'` extraction with conditional spread to all 5 parsers                                                                    |
+| `src/ogc-api/csapi/formats/part2.spec.ts` | +30/−20       | Update 5 existing cross-reference tests from `not.toHaveProperty` exclusion to positive extraction assertions; rename 1 test title                        |
 
 ### Issue #104 — ControlStream Navigation Methods
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `src/ogc-api/csapi/url_builder.ts` | +77 | Add `getControlStreamSystems()`, `getControlStreamProcedures()`, `getControlStreamHistory()` with full JSDoc |
-| `src/ogc-api/csapi/url_builder.spec.ts` | +75 | 6 happy-path tests (2 per method) + 3 EndpointError guard assertions |
+| File                                    | Lines Changed | Scope                                                                                                        |
+| --------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------ |
+| `src/ogc-api/csapi/url_builder.ts`      | +77           | Add `getControlStreamSystems()`, `getControlStreamProcedures()`, `getControlStreamHistory()` with full JSDoc |
+| `src/ogc-api/csapi/url_builder.spec.ts` | +75           | 6 happy-path tests (2 per method) + 3 EndpointError guard assertions                                         |
 
 ### Issue #105 — Query Parameter Name Remapping
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `src/ogc-api/csapi/url_builder.ts` | +23/−6 | Add `PARAM_NAME_MAP` static readonly object (6 mappings); refactor `buildQueryString()` to resolve wire names via map |
-| `src/ogc-api/csapi/url_builder.spec.ts` | 13 lines modified | Update 13 test assertions to expect corrected OGC wire names |
+| File                                    | Lines Changed     | Scope                                                                                                                 |
+| --------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `src/ogc-api/csapi/url_builder.ts`      | +23/−6            | Add `PARAM_NAME_MAP` static readonly object (6 mappings); refactor `buildQueryString()` to resolve wire names via map |
+| `src/ogc-api/csapi/url_builder.spec.ts` | 13 lines modified | Update 13 test assertions to expect corrected OGC wire names                                                          |
 
 ### Issue #106 — Missing Part 2 Query Option Fields
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `src/ogc-api/csapi/model.ts` | +40 | Add `foiId` to 4 interfaces, `issueTime`/`executionTime` to ControlStreamQueryOptions, `sender` to CommandQueryOptions, new `CommandStatusQueryOptions` interface |
-| `src/ogc-api/csapi/url_builder.ts` | +8 (signature change) | Update `getCommandStatus()` to accept `CommandStatusQueryOptions`, import new type |
-| `src/ogc-api/csapi/url_builder.spec.ts` | +22 | 7 new tests: `foiId` on 4 resource types, `issueTime`/`executionTime`/`foiId` on ControlStream, `sender`/`foiId` on Command, `statusCode` on CommandStatus |
-| `src/index.ts` | +1 | Export `CommandStatusQueryOptions` from barrel |
+| File                                    | Lines Changed         | Scope                                                                                                                                                             |
+| --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ogc-api/csapi/model.ts`            | +40                   | Add `foiId` to 4 interfaces, `issueTime`/`executionTime` to ControlStreamQueryOptions, `sender` to CommandQueryOptions, new `CommandStatusQueryOptions` interface |
+| `src/ogc-api/csapi/url_builder.ts`      | +8 (signature change) | Update `getCommandStatus()` to accept `CommandStatusQueryOptions`, import new type                                                                                |
+| `src/ogc-api/csapi/url_builder.spec.ts` | +22                   | 7 new tests: `foiId` on 4 resource types, `issueTime`/`executionTime`/`foiId` on ControlStream, `sender`/`foiId` on Command, `statusCode` on CommandStatus        |
+| `src/index.ts`                          | +1                    | Export `CommandStatusQueryOptions` from barrel                                                                                                                    |
 
 ### Issue #107 — Narrow Nested Builder Method Option Types
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
+| File                               | Lines Changed          | Scope                                                                                                                                                     |
+| ---------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/ogc-api/csapi/url_builder.ts` | 12 signatures modified | Narrow 12 nested methods from `QueryOptions` to resource-specific types (`SystemQueryOptions`, `DatastreamQueryOptions`, `ObservationQueryOptions`, etc.) |
 
 ### Issue #108 — CSAPIResourceRef Type + Part 1 Interface Fields
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `src/ogc-api/csapi/model.ts` | +27 | Add `CSAPIResourceRef` interface with JSDoc; add `systemKindLink`, `platformLink`, `deployedSystemsLink`, `sampledFeatureLink` to 3 Part 1 interfaces |
-| `src/index.ts` | +1 | Export `CSAPIResourceRef` from barrel |
+| File                         | Lines Changed | Scope                                                                                                                                                 |
+| ---------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ogc-api/csapi/model.ts` | +27           | Add `CSAPIResourceRef` interface with JSDoc; add `systemKindLink`, `platformLink`, `deployedSystemsLink`, `sampledFeatureLink` to 3 Part 1 interfaces |
+| `src/index.ts`               | +1            | Export `CSAPIResourceRef` from barrel                                                                                                                 |
 
 ### Issue #109 — @link Property Extraction in GeoJSON Parser
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `src/ogc-api/csapi/formats/geojson.ts` | +39 | Import `CSAPIResourceRef`; add `isCSAPIResourceRef()` type guard and `parseResourceRef()` helper (private); add conditional-spread extraction in System, Deployment, and SamplingFeature switch cases |
-| `src/ogc-api/csapi/formats/geojson.spec.ts` | +125 | 9 new tests covering all @link fields with full/minimal/absent/malformed inputs |
+| File                                        | Lines Changed | Scope                                                                                                                                                                                                 |
+| ------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ogc-api/csapi/formats/geojson.ts`      | +39           | Import `CSAPIResourceRef`; add `isCSAPIResourceRef()` type guard and `parseResourceRef()` helper (private); add conditional-spread extraction in System, Deployment, and SamplingFeature switch cases |
+| `src/ogc-api/csapi/formats/geojson.spec.ts` | +125          | 9 new tests covering all @link fields with full/minimal/absent/malformed inputs                                                                                                                       |
 
 ### Supplementary — F34 Re-export Consolidation
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `src/ogc-api/csapi/formats/sensorml/physical-system.ts` | 2→1 line | Combine two re-export lines from `_helpers.js` into one |
+| File                                                    | Lines Changed | Scope                                                   |
+| ------------------------------------------------------- | ------------- | ------------------------------------------------------- |
+| `src/ogc-api/csapi/formats/sensorml/physical-system.ts` | 2→1 line      | Combine two re-export lines from `_helpers.js` into one |
 
 ---
 
 ## Overall Codebase Metrics (Cumulative)
 
-| Metric | Phase 5.4 | Phase 5.5 | Delta |
-|--------|----------:|----------:|------:|
-| Production lines (CSAPI all) | 11,469 | 11,759 | +290 |
-| Test lines (CSAPI all) | ~13,843 | 14,242 | +399 |
-| Total lines (CSAPI) | ~25,312 | 26,001 | +689 |
-| Production files | 28 | 28 | 0 |
-| Test files (suites) | 29 | 29 | 0 |
-| Test count | 1,251 | 1,282 | +31 |
-| Test:production ratio | 1.21 | 1.21 | — |
+| Metric                       | Phase 5.4 | Phase 5.5 | Delta |
+| ---------------------------- | --------: | --------: | ----: |
+| Production lines (CSAPI all) |    11,469 |    11,759 |  +290 |
+| Test lines (CSAPI all)       |   ~13,843 |    14,242 |  +399 |
+| Total lines (CSAPI)          |   ~25,312 |    26,001 |  +689 |
+| Production files             |        28 |        28 |     0 |
+| Test files (suites)          |        29 |        29 |     0 |
+| Test count                   |     1,251 |     1,282 |   +31 |
+| Test:production ratio        |      1.21 |      1.21 |     — |
 
 ### Key File Changes (Phase 5.4 → 5.5)
 
-| File | Lines (5.4) | Lines (5.5) | Delta | Purpose |
-|------|----:|----:|------:|---------|
-| `model.ts` | 653 | 730 | +77 | `CSAPIResourceRef`, Part 2 @id fields, query option fields, `CommandStatusQueryOptions` |
-| `url_builder.ts` | 2,171 | 2,307 | +136 | 3 ControlStream methods, `PARAM_NAME_MAP`, `getCommandStatus` signature, nested type narrowing |
-| `url_builder.spec.ts` | 2,711 | 2,858 | +147 | Tests for #104, #105, #106 |
-| `geojson.ts` | 420 | 459 | +39 | @link extraction (#109) |
-| `geojson.spec.ts` | 478 | 603 | +125 | 9 @link tests + 2 augmented existing tests |
-| `part2.ts` | 476 | 497 | +21 | Cross-reference @id extraction (#103) |
-| `part2.spec.ts` | 925 | 927 | +2 | Modified 5 existing tests (net +2 lines) |
-| `data-record.ts` | 178 | 225 | +47 | `ComponentParser` type, callback injection (#101) |
-| `data-array.ts` | 497 | 526 | +29 | Callback injection (#101) |
-| `data-record.spec.ts` | 223 | 343 | +120 | 4 complex type callback tests |
-| `data-array.spec.ts` | 497 | 580 | +83 | 3 complex type callback tests |
-| `parser.ts` (swecommon) | 1,305 | 1,307 | +2 | Pass `parseSWEComponent` at 2 call sites |
-| `physical-system.ts` | 623 | 622 | −1 | Combine re-export lines (F34) |
-| `index.ts` (root) | 250 | 252 | +2 | Export `CSAPIResourceRef` + `CommandStatusQueryOptions` |
+| File                    | Lines (5.4) | Lines (5.5) | Delta | Purpose                                                                                        |
+| ----------------------- | ----------: | ----------: | ----: | ---------------------------------------------------------------------------------------------- |
+| `model.ts`              |         653 |         730 |   +77 | `CSAPIResourceRef`, Part 2 @id fields, query option fields, `CommandStatusQueryOptions`        |
+| `url_builder.ts`        |       2,171 |       2,307 |  +136 | 3 ControlStream methods, `PARAM_NAME_MAP`, `getCommandStatus` signature, nested type narrowing |
+| `url_builder.spec.ts`   |       2,711 |       2,858 |  +147 | Tests for #104, #105, #106                                                                     |
+| `geojson.ts`            |         420 |         459 |   +39 | @link extraction (#109)                                                                        |
+| `geojson.spec.ts`       |         478 |         603 |  +125 | 9 @link tests + 2 augmented existing tests                                                     |
+| `part2.ts`              |         476 |         497 |   +21 | Cross-reference @id extraction (#103)                                                          |
+| `part2.spec.ts`         |         925 |         927 |    +2 | Modified 5 existing tests (net +2 lines)                                                       |
+| `data-record.ts`        |         178 |         225 |   +47 | `ComponentParser` type, callback injection (#101)                                              |
+| `data-array.ts`         |         497 |         526 |   +29 | Callback injection (#101)                                                                      |
+| `data-record.spec.ts`   |         223 |         343 |  +120 | 4 complex type callback tests                                                                  |
+| `data-array.spec.ts`    |         497 |         580 |   +83 | 3 complex type callback tests                                                                  |
+| `parser.ts` (swecommon) |       1,305 |       1,307 |    +2 | Pass `parseSWEComponent` at 2 call sites                                                       |
+| `physical-system.ts`    |         623 |         622 |    −1 | Combine re-export lines (F34)                                                                  |
+| `index.ts` (root)       |         250 |         252 |    +2 | Export `CSAPIResourceRef` + `CommandStatusQueryOptions`                                        |
 
 ---
 
 ## Phase 3 Lessons Learned Check
 
-| # | Lesson | Status | Evidence |
-|---|--------|--------|----------|
-| **L1** | Audit upstream before building new layers | ✅ PASS | No new architectural layers. Callback injection (#101) extends existing parsers. `PARAM_NAME_MAP` (#105) is a private lookup table, not an architectural layer. |
-| **L2** | Postel's Law governs client libraries | ✅ PASS | All new extraction uses tolerant conditional-spread: `typeof === 'string'` guards on @id fields (#103), `isCSAPIResourceRef()` guard on @link objects (#109). No extraction depends on validation. |
-| **L3** | Don't couple validation to extraction | ✅ PASS | `isCSAPIResourceRef()` is a type guard for extraction, not a validation gate. `parseResourceRef()` includes optional fields only when present. |
-| **L4** | Don't build parallel systems | ✅ PASS | #109 @link extraction follows the same conditional-spread pattern established by #103 @id extraction. No parallel parsing system. #101 callback injection avoids duplicate complex-type parsers. |
-| **L5** | Verify upstream claims by reading source | ✅ PASS | All 10 issue findings reports cite specific spec sections (OGC 23-001/23-002) and source code lines. |
-| **L6** | Real-world server data diverges from spec | ✅ PASS | `deployedSystems@link` uses `Array.isArray` + `filter(isCSAPIResourceRef).map(parseResourceRef)` — tolerates mixed-validity arrays. |
-| **L7** | Smoke tests are essential | ✅ PASS | This entire review covers work surfaced by ST#22 findings. |
-| **L8** | Layered architecture enables clean extension | ✅ PASS | #101 uses callback injection to break circular imports; #105 uses a private static map; both extend without disrupting layers. |
-| **L10** | Type naming must avoid built-in collisions | ✅ PASS | `CSAPIResourceRef` uses `CSAPI` prefix. `CommandStatusQueryOptions` follows existing naming convention. `ComponentParser` is exported from `data-record.ts` only. |
-| **L12** | "Build it right, but should we build it at all?" | ✅ PASS | Issues #99 (already supported), #100 (DEFERRED), #102 (DEFERRED), #110 (DEFERRED) were correctly assessed and NOT implemented. Only spec-normative gaps were fixed. |
-| **L13** | AI drift can fabricate findings | ✅ PASS | Each findings report cross-checked spec citations against the actual OGC spec text. Issue #106 corrected 5 incorrect spec citations from the original issue. |
+| #       | Lesson                                           | Status  | Evidence                                                                                                                                                                                           |
+| ------- | ------------------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **L1**  | Audit upstream before building new layers        | ✅ PASS | No new architectural layers. Callback injection (#101) extends existing parsers. `PARAM_NAME_MAP` (#105) is a private lookup table, not an architectural layer.                                    |
+| **L2**  | Postel's Law governs client libraries            | ✅ PASS | All new extraction uses tolerant conditional-spread: `typeof === 'string'` guards on @id fields (#103), `isCSAPIResourceRef()` guard on @link objects (#109). No extraction depends on validation. |
+| **L3**  | Don't couple validation to extraction            | ✅ PASS | `isCSAPIResourceRef()` is a type guard for extraction, not a validation gate. `parseResourceRef()` includes optional fields only when present.                                                     |
+| **L4**  | Don't build parallel systems                     | ✅ PASS | #109 @link extraction follows the same conditional-spread pattern established by #103 @id extraction. No parallel parsing system. #101 callback injection avoids duplicate complex-type parsers.   |
+| **L5**  | Verify upstream claims by reading source         | ✅ PASS | All 10 issue findings reports cite specific spec sections (OGC 23-001/23-002) and source code lines.                                                                                               |
+| **L6**  | Real-world server data diverges from spec        | ✅ PASS | `deployedSystems@link` uses `Array.isArray` + `filter(isCSAPIResourceRef).map(parseResourceRef)` — tolerates mixed-validity arrays.                                                                |
+| **L7**  | Smoke tests are essential                        | ✅ PASS | This entire review covers work surfaced by ST#22 findings.                                                                                                                                         |
+| **L8**  | Layered architecture enables clean extension     | ✅ PASS | #101 uses callback injection to break circular imports; #105 uses a private static map; both extend without disrupting layers.                                                                     |
+| **L10** | Type naming must avoid built-in collisions       | ✅ PASS | `CSAPIResourceRef` uses `CSAPI` prefix. `CommandStatusQueryOptions` follows existing naming convention. `ComponentParser` is exported from `data-record.ts` only.                                  |
+| **L12** | "Build it right, but should we build it at all?" | ✅ PASS | Issues #99 (already supported), #100 (DEFERRED), #102 (DEFERRED), #110 (DEFERRED) were correctly assessed and NOT implemented. Only spec-normative gaps were fixed.                                |
+| **L13** | AI drift can fabricate findings                  | ✅ PASS | Each findings report cross-checked spec citations against the actual OGC spec text. Issue #106 corrected 5 incorrect spec citations from the original issue.                                       |
 
 **Result:** 11/11 applicable lessons PASS. 0 WORSENED.
 
@@ -185,11 +187,11 @@ Test additions by issue:
 
 ## Phase 2 Lessons Learned Check
 
-| # | Lesson | Status | Evidence |
-|---|--------|--------|----------|
-| **L6** | Findings become work items | ✅ PASS | Phase 5.4 F34 (re-export consolidation) was addressed in commit `6d13268`. All 10 post-smoke-test issues had findings reports before implementation. |
-| **L7** | DRY violations compound | ✅ PASS | `parseResourceRef()` is a single private helper used by 3 @link extraction sites (#109). `PARAM_NAME_MAP` centralizes 6 name mappings (#105). |
-| **L10** | Smoke tests are read-only | ✅ PASS | All findings reports were observation-first: assess → recommend → scope → implement (or defer). |
+| #       | Lesson                     | Status  | Evidence                                                                                                                                             |
+| ------- | -------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **L6**  | Findings become work items | ✅ PASS | Phase 5.4 F34 (re-export consolidation) was addressed in commit `6d13268`. All 10 post-smoke-test issues had findings reports before implementation. |
+| **L7**  | DRY violations compound    | ✅ PASS | `parseResourceRef()` is a single private helper used by 3 @link extraction sites (#109). `PARAM_NAME_MAP` centralizes 6 name mappings (#105).        |
+| **L10** | Smoke tests are read-only  | ✅ PASS | All findings reports were observation-first: assess → recommend → scope → implement (or defer).                                                      |
 
 **Result:** 3/3 applicable lessons PASS. 0 WORSENED.
 
@@ -203,58 +205,58 @@ No Phase 5.5 commits modify any Phase 3 file except `physical-system.ts` (cosmet
 
 ### Phase 5.1 findings:
 
-| Finding | 5.4 Status | 5.5 Status | Evidence |
-|---------|-----------|-----------|----------|
-| [F1] POSITIVE: Consistent tolerant extraction pattern | ✅ Unchanged | ✅ **EXTENDED** | @id extraction (#103) and @link extraction (#109) both use same conditional-spread pattern |
-| [F2] POSITIVE: Correct instant-vs-interval distinction | ✅ Unchanged | ✅ Unchanged | No change to time handling |
-| [F3] POSITIVE: Opaque `result` pass-through | ✅ Unchanged | ✅ Unchanged | No change |
-| [F4] POSITIVE: Cross-reference exclusion tested | ✅ Unchanged | ✅ **EVOLVED** | Cross-reference tests now verify extraction, not exclusion (#103) |
-| [F5] POSITIVE: `normalizeObservedProperties()` | ✅ Unchanged | ✅ Unchanged | No change |
-| [F6] POSITIVE: `parameters` array guard | ✅ Unchanged | ✅ Unchanged | No change |
-| [F7] GAP: No test for unknown `resultType` enum → null | ✅ RESOLVED | ✅ Unchanged | Still resolved |
-| [F8] GAP: No test for unknown `type` field → omitted | ✅ RESOLVED | ✅ Unchanged | Still resolved |
-| [F9] GAP: Stale module-level JSDoc | ✅ RESOLVED | ✅ Unchanged | Still resolved |
-| [F10] INFORMATIONAL: Barrel exports deferred to Task 9a | ✅ RESOLVED | ✅ Unchanged | Still resolved |
-| [F11] INFORMATIONAL: `links` cast is trust-the-server | ℹ️ Unchanged | ℹ️ Unchanged | No change |
+| Finding                                                 | 5.4 Status   | 5.5 Status      | Evidence                                                                                   |
+| ------------------------------------------------------- | ------------ | --------------- | ------------------------------------------------------------------------------------------ |
+| [F1] POSITIVE: Consistent tolerant extraction pattern   | ✅ Unchanged | ✅ **EXTENDED** | @id extraction (#103) and @link extraction (#109) both use same conditional-spread pattern |
+| [F2] POSITIVE: Correct instant-vs-interval distinction  | ✅ Unchanged | ✅ Unchanged    | No change to time handling                                                                 |
+| [F3] POSITIVE: Opaque `result` pass-through             | ✅ Unchanged | ✅ Unchanged    | No change                                                                                  |
+| [F4] POSITIVE: Cross-reference exclusion tested         | ✅ Unchanged | ✅ **EVOLVED**  | Cross-reference tests now verify extraction, not exclusion (#103)                          |
+| [F5] POSITIVE: `normalizeObservedProperties()`          | ✅ Unchanged | ✅ Unchanged    | No change                                                                                  |
+| [F6] POSITIVE: `parameters` array guard                 | ✅ Unchanged | ✅ Unchanged    | No change                                                                                  |
+| [F7] GAP: No test for unknown `resultType` enum → null  | ✅ RESOLVED  | ✅ Unchanged    | Still resolved                                                                             |
+| [F8] GAP: No test for unknown `type` field → omitted    | ✅ RESOLVED  | ✅ Unchanged    | Still resolved                                                                             |
+| [F9] GAP: Stale module-level JSDoc                      | ✅ RESOLVED  | ✅ Unchanged    | Still resolved                                                                             |
+| [F10] INFORMATIONAL: Barrel exports deferred to Task 9a | ✅ RESOLVED  | ✅ Unchanged    | Still resolved                                                                             |
+| [F11] INFORMATIONAL: `links` cast is trust-the-server   | ℹ️ Unchanged | ℹ️ Unchanged    | No change                                                                                  |
 
 ### Phase 5.2 findings:
 
-| Finding | 5.4 Status | 5.5 Status | Evidence |
-|---------|-----------|-----------|----------|
-| [F12] POSITIVE: `normalizeStatusCode()` shared reuse | ✅ Unchanged | ✅ Unchanged | No change |
-| [F13] POSITIVE: ControlStream parallels Datastream | ✅ Unchanged | ✅ **STRENGTHENED** | #104 adds 3 navigation methods; ControlStream is now fully symmetric with DataStream |
-| [F14] POSITIVE: Time field asymmetry documented | ✅ Unchanged | ✅ Unchanged | No change |
-| [F15] POSITIVE: Required vs. optional statusCode | ✅ Unchanged | ✅ Unchanged | No change |
-| [F16] POSITIVE: Command parameters pass-through | ✅ Unchanged | ✅ Unchanged | No change |
-| [F17] POSITIVE: All cross-ref fields excluded | ✅ Unchanged | ✅ **EVOLVED** | Cross-ref fields now extracted, not excluded (#103) — finding meaning updated |
-| **[F18] GAP (minor): `@see` link precision for parseCommandStatus** | ⚠️ STILL OPEN | ⚠️ **STILL OPEN** | Issue #98 was closed as `not_planned`. Knowingly deferred — existing link is technically correct. |
-| [F19] GAP: Fixture ID collision `cs-minimal` | ✅ RESOLVED | ✅ Unchanged | Still resolved |
-| [F20] INFORMATIONAL: Part 2 suite complete | ℹ️ Unchanged | ℹ️ Unchanged | Still complete (now 43 tests + modified cross-ref assertions) |
-| [F21] INFORMATIONAL: Command parameters fallback spec-driven | ℹ️ Unchanged | ℹ️ Unchanged | No change |
+| Finding                                                             | 5.4 Status    | 5.5 Status          | Evidence                                                                                          |
+| ------------------------------------------------------------------- | ------------- | ------------------- | ------------------------------------------------------------------------------------------------- |
+| [F12] POSITIVE: `normalizeStatusCode()` shared reuse                | ✅ Unchanged  | ✅ Unchanged        | No change                                                                                         |
+| [F13] POSITIVE: ControlStream parallels Datastream                  | ✅ Unchanged  | ✅ **STRENGTHENED** | #104 adds 3 navigation methods; ControlStream is now fully symmetric with DataStream              |
+| [F14] POSITIVE: Time field asymmetry documented                     | ✅ Unchanged  | ✅ Unchanged        | No change                                                                                         |
+| [F15] POSITIVE: Required vs. optional statusCode                    | ✅ Unchanged  | ✅ Unchanged        | No change                                                                                         |
+| [F16] POSITIVE: Command parameters pass-through                     | ✅ Unchanged  | ✅ Unchanged        | No change                                                                                         |
+| [F17] POSITIVE: All cross-ref fields excluded                       | ✅ Unchanged  | ✅ **EVOLVED**      | Cross-ref fields now extracted, not excluded (#103) — finding meaning updated                     |
+| **[F18] GAP (minor): `@see` link precision for parseCommandStatus** | ⚠️ STILL OPEN | ⚠️ **STILL OPEN**   | Issue #98 was closed as `not_planned`. Knowingly deferred — existing link is technically correct. |
+| [F19] GAP: Fixture ID collision `cs-minimal`                        | ✅ RESOLVED   | ✅ Unchanged        | Still resolved                                                                                    |
+| [F20] INFORMATIONAL: Part 2 suite complete                          | ℹ️ Unchanged  | ℹ️ Unchanged        | Still complete (now 43 tests + modified cross-ref assertions)                                     |
+| [F21] INFORMATIONAL: Command parameters fallback spec-driven        | ℹ️ Unchanged  | ℹ️ Unchanged        | No change                                                                                         |
 
 ### Phase 5.3 findings:
 
-| Finding | 5.4 Status | 5.5 Status | Evidence |
-|---------|-----------|-----------|----------|
-| [F22] POSITIVE: Schema response parsers delegate to SWE Common | ✅ Unchanged | ✅ Unchanged | No change |
-| [F23] POSITIVE: Recursive delegation dispatches all 4 types | ✅ Unchanged | ✅ **STRENGTHENED** | #101 extends recursive delegation to DataRecord/DataArray via callback injection |
-| [F24] POSITIVE: Complete cross-type test coverage | ✅ Unchanged | ✅ **EXTENDED** | 7 new callback delegation tests in data-record.spec.ts and data-array.spec.ts |
-| [F25] POSITIVE: Integration wiring complete at 3 levels | ✅ Unchanged | ✅ Unchanged | No change to barrel exports structure |
-| [F26] POSITIVE: E2E pipeline tests validate full chain | ✅ Unchanged | ✅ Unchanged | No change |
-| [F27] CONSISTENCY: Duplicated `parseComponentEntry` | ✅ RESOLVED | ✅ Unchanged | Still resolved |
-| [F28] GAP: TS2352 cast in `pipeline.spec.ts` | ✅ RESOLVED | ✅ Unchanged | Still resolved |
-| [F29] POSITIVE: P4 JSDoc documentation | ✅ Unchanged | ✅ Unchanged | No change |
-| [F30] POSITIVE: Schema response inline import types | ✅ Unchanged | ✅ Unchanged | No change |
-| [F31] INFORMATIONAL: Phase 5 complete | ℹ️ Unchanged | ℹ️ Unchanged | Phase 5 parsing complete; current work is post-Phase-5 refinement |
+| Finding                                                        | 5.4 Status   | 5.5 Status          | Evidence                                                                         |
+| -------------------------------------------------------------- | ------------ | ------------------- | -------------------------------------------------------------------------------- |
+| [F22] POSITIVE: Schema response parsers delegate to SWE Common | ✅ Unchanged | ✅ Unchanged        | No change                                                                        |
+| [F23] POSITIVE: Recursive delegation dispatches all 4 types    | ✅ Unchanged | ✅ **STRENGTHENED** | #101 extends recursive delegation to DataRecord/DataArray via callback injection |
+| [F24] POSITIVE: Complete cross-type test coverage              | ✅ Unchanged | ✅ **EXTENDED**     | 7 new callback delegation tests in data-record.spec.ts and data-array.spec.ts    |
+| [F25] POSITIVE: Integration wiring complete at 3 levels        | ✅ Unchanged | ✅ Unchanged        | No change to barrel exports structure                                            |
+| [F26] POSITIVE: E2E pipeline tests validate full chain         | ✅ Unchanged | ✅ Unchanged        | No change                                                                        |
+| [F27] CONSISTENCY: Duplicated `parseComponentEntry`            | ✅ RESOLVED  | ✅ Unchanged        | Still resolved                                                                   |
+| [F28] GAP: TS2352 cast in `pipeline.spec.ts`                   | ✅ RESOLVED  | ✅ Unchanged        | Still resolved                                                                   |
+| [F29] POSITIVE: P4 JSDoc documentation                         | ✅ Unchanged | ✅ Unchanged        | No change                                                                        |
+| [F30] POSITIVE: Schema response inline import types            | ✅ Unchanged | ✅ Unchanged        | No change                                                                        |
+| [F31] INFORMATIONAL: Phase 5 complete                          | ℹ️ Unchanged | ℹ️ Unchanged        | Phase 5 parsing complete; current work is post-Phase-5 refinement                |
 
 ### Phase 5.4 findings:
 
-| Finding | 5.4 Status | 5.5 Status | Evidence |
-|---------|-----------|-----------|----------|
-| [F32] POSITIVE: Enum test gaps correctly closed | ✅ | ✅ Unchanged | No change |
-| [F33] POSITIVE: DRY extraction of parseComponentEntry | ✅ | ✅ Unchanged | No change |
-| **[F34] CONSISTENCY: Two separate re-export lines** | ⚠️ Trivial | ✅ **RESOLVED** | Commit `6d13268` combines re-export lines in `physical-system.ts` |
-| [F35] POSITIVE: Fixture ID rename eliminates ambiguity | ✅ | ✅ Unchanged | No change |
+| Finding                                                | 5.4 Status | 5.5 Status      | Evidence                                                          |
+| ------------------------------------------------------ | ---------- | --------------- | ----------------------------------------------------------------- |
+| [F32] POSITIVE: Enum test gaps correctly closed        | ✅         | ✅ Unchanged    | No change                                                         |
+| [F33] POSITIVE: DRY extraction of parseComponentEntry  | ✅         | ✅ Unchanged    | No change                                                         |
+| **[F34] CONSISTENCY: Two separate re-export lines**    | ⚠️ Trivial | ✅ **RESOLVED** | Commit `6d13268` combines re-export lines in `physical-system.ts` |
+| [F35] POSITIVE: Fixture ID rename eliminates ambiguity | ✅         | ✅ Unchanged    | No change                                                         |
 
 **Summary:** 1 finding resolved (F34). 1 finding still open (F18 — knowingly deferred). All 23 positive findings maintained. 4 findings evolved/extended/strengthened.
 
@@ -288,6 +290,7 @@ Issue #103 reverses the prior design decision to exclude cross-reference fields.
 ```
 
 Each field uses:
+
 - `typeof === 'string'` guard (tolerant — no crash on missing/non-string)
 - Conditional spread (absent when not a string, not `undefined`)
 - TypeScript property name mapped from the raw `@id` key (e.g., `system@id` → `systemId`)
@@ -303,16 +306,17 @@ The test updates correctly change from `not.toHaveProperty` exclusion assertions
 
 Issue #105 adds a static `PARAM_NAME_MAP` to `CSAPIQueryBuilder` that remaps 6 TypeScript property names to their OGC-normative wire names:
 
-| TypeScript Name | OGC Wire Name | Spec Reference |
-|----------------|---------------|----------------|
-| `currentStatus` | `statusCode` | OGC 23-002 §13.5.3 |
-| `systemId` | `system` | OGC 23-001 §16.6.3 |
-| `observedPropertyId` | `observedProperty` | OGC 23-001 §16.5.5 |
+| TypeScript Name        | OGC Wire Name        | Spec Reference     |
+| ---------------------- | -------------------- | ------------------ |
+| `currentStatus`        | `statusCode`         | OGC 23-002 §13.5.3 |
+| `systemId`             | `system`             | OGC 23-001 §16.6.3 |
+| `observedPropertyId`   | `observedProperty`   | OGC 23-001 §16.5.5 |
 | `controlledPropertyId` | `controlledProperty` | OGC 23-001 §16.5.6 |
-| `foiId` | `foi` | OGC 23-001 §16.5.4 |
-| `procedureId` | `procedure` | OGC 23-001 §16.5.3 |
+| `foiId`                | `foi`                | OGC 23-001 §16.5.4 |
+| `procedureId`          | `procedure`          | OGC 23-001 §16.5.3 |
 
 Key design choices:
+
 - `Readonly<Record<string, string>>` with `as const`-like immutability
 - Applied in `buildQueryString()` via `??` fallback (unmapped keys pass through as-is)
 - Zero TypeScript API change — consumer-facing property names are unchanged
@@ -326,15 +330,16 @@ Key design choices:
 
 Issue #106 adds 7 spec-normative query parameters plus 1 new interface:
 
-| Interface | New Fields | Spec Requirement |
-|-----------|-----------|-----------------|
-| `DatastreamQueryOptions` | `foiId` | Req 48 |
-| `ObservationQueryOptions` | `foiId` | Req 51 |
-| `ControlStreamQueryOptions` | `issueTime`, `executionTime`, `foiId` | Req 52, 53, 55 |
-| `CommandQueryOptions` | `sender`, `foiId` | Req 59, 60 |
-| `CommandStatusQueryOptions` (NEW) | `statusCode` | Req 61 |
+| Interface                         | New Fields                            | Spec Requirement |
+| --------------------------------- | ------------------------------------- | ---------------- |
+| `DatastreamQueryOptions`          | `foiId`                               | Req 48           |
+| `ObservationQueryOptions`         | `foiId`                               | Req 51           |
+| `ControlStreamQueryOptions`       | `issueTime`, `executionTime`, `foiId` | Req 52, 53, 55   |
+| `CommandQueryOptions`             | `sender`, `foiId`                     | Req 59, 60       |
+| `CommandStatusQueryOptions` (NEW) | `statusCode`                          | Req 61           |
 
 The findings report also correctly identified and REJECTED 3 non-spec-normative fields that the original issue proposed:
+
 - `dataStream` on Observations (not in §13.3)
 - `controlStream` on Commands (not in §13.5)
 - `reportTime` on CommandStatus (not in §13.6)
@@ -374,14 +379,15 @@ Issue #108 establishes the type foundation for @link property support:
 
 ```typescript
 export interface CSAPIResourceRef {
-  href: string;       // URL of the referenced resource
-  uid?: string;       // Globally unique identifier
-  title?: string;     // Human-readable title
-  rt?: string;        // Resource type URI
+  href: string; // URL of the referenced resource
+  uid?: string; // Globally unique identifier
+  title?: string; // Human-readable title
+  rt?: string; // Resource type URI
 }
 ```
 
 Key qualities:
+
 - Only `href` is required (per observed server behavior — minimal objects common)
 - Optional fields use TypeScript's `?` syntax correctly
 - JSDoc includes `@see` link to OGC 23-001 §16
@@ -402,6 +408,7 @@ Issue #109 adds @link extraction to `extractCSAPIFeature()` across 3 resource ty
 4. **Conditional spread**: absent @link → key absent from output (not `undefined`)
 
 Test coverage is comprehensive (9 tests):
+
 - Full @link with all fields (System, Deployment, SamplingFeature)
 - Minimal @link with only `href`
 - Absent @link (tolerant extraction)
@@ -416,6 +423,7 @@ Test coverage is comprehensive (9 tests):
 ### [F43] POSITIVE: ControlStream navigation methods restore full symmetry with DataStream (#104)
 
 Issue #104 adds 3 methods that DataStream already had but ControlStream lacked:
+
 - `getControlStreamSystems()`
 - `getControlStreamProcedures()`
 - `getControlStreamHistory()`
@@ -429,6 +437,7 @@ Each follows the established builder method pattern: validate resource availabil
 ### [F44] POSITIVE: Correct deferral of 3 out-of-scope issues (#99, #100/102, #110)
 
 Issues #99, #100, #102, and #110 were correctly assessed and NOT implemented:
+
 - **#99** (query format parameter): Already supported — `f` parameter passes through `buildQueryString()`
 - **#100** (assertResourceAvailable for per-ID methods): DEFERRED — holistic fix needed for all 69 methods
 - **#102** (command/observation nested paths): DEFERRED — strict subset of #100, same root cause
@@ -511,39 +520,39 @@ Most other multi-option methods have a combined test (e.g., `getCommands({ limit
 
 ### Phase 2 (URL Builder) — Updated
 
-| Dimension | Systems | Deployments | Procedures | SF | Properties | DataStreams | Observations | ControlStreams | Commands | CmdStatus |
-|-----------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| GET list URL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| GET by ID URL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Query options serialized | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Param name remapping (#105) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | n/a |
-| Nested method types (#107) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | n/a | n/a |
-| Resource validation | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Navigation methods | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (#104) | ✅ | n/a |
+| Dimension                   | Systems | Deployments | Procedures | SF  | Properties | DataStreams | Observations | ControlStreams | Commands | CmdStatus |
+| --------------------------- | :-----: | :---------: | :--------: | :-: | :--------: | :---------: | :----------: | :------------: | :------: | :-------: |
+| GET list URL                |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |    ✅     |
+| GET by ID URL               |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |    ✅     |
+| Query options serialized    |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |    ✅     |
+| Param name remapping (#105) |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |    n/a    |
+| Nested method types (#107)  |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |   n/a    |    n/a    |
+| Resource validation         |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |    ✅     |
+| Navigation methods          |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |   ✅ (#104)    |    ✅    |    n/a    |
 
 ### Phase 3 (Format Handlers) — Updated
 
-| Dimension | GeoJSON | SWE Types | SML Types | Parsers |
-|-----------|:---:|:---:|:---:|:---:|
-| Valid input → typed output | ✅ | ✅ | ✅ | ✅ |
-| Invalid/missing input | ✅ | ✅ | ✅ | ✅ |
-| Complex type delegation (#101) | n/a | ✅ | ✅ | ✅ |
-| @link extraction (#109) | ✅ | n/a | n/a | n/a |
-| Malformed @link tolerance | ✅ | n/a | n/a | n/a |
+| Dimension                      | GeoJSON | SWE Types | SML Types | Parsers |
+| ------------------------------ | :-----: | :-------: | :-------: | :-----: |
+| Valid input → typed output     |   ✅    |    ✅     |    ✅     |   ✅    |
+| Invalid/missing input          |   ✅    |    ✅     |    ✅     |   ✅    |
+| Complex type delegation (#101) |   n/a   |    ✅     |    ✅     |   ✅    |
+| @link extraction (#109)        |   ✅    |    n/a    |    n/a    |   n/a   |
+| Malformed @link tolerance      |   ✅    |    n/a    |    n/a    |   n/a   |
 
 ### Phase 5 (Parser Completion) — Updated
 
-| Dimension | parseProperty | parseDatastream | parseObservation | parseControlStream | parseCommand | parseCommandStatus |
-|-----------|:---:|:---:|:---:|:---:|:---:|:---:|
-| Fixture → typed output | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Minimal fixture | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Non-object rejection | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Cross-ref @id extraction (#103) | n/a | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Time field correctness | n/a | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Optional field handling | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Opaque pass-through | n/a | n/a | ✅ | n/a | ✅ | n/a |
-| Enum validation | n/a | ✅ | n/a | n/a | ✅ | ✅ |
-| `satisfies` typing | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Dimension                       | parseProperty | parseDatastream | parseObservation | parseControlStream | parseCommand | parseCommandStatus |
+| ------------------------------- | :-----------: | :-------------: | :--------------: | :----------------: | :----------: | :----------------: |
+| Fixture → typed output          |      ✅       |       ✅        |        ✅        |         ✅         |      ✅      |         ✅         |
+| Minimal fixture                 |      ✅       |       ✅        |        ✅        |         ✅         |      ✅      |         ✅         |
+| Non-object rejection            |      ✅       |       ✅        |        ✅        |         ✅         |      ✅      |         ✅         |
+| Cross-ref @id extraction (#103) |      n/a      |       ✅        |        ✅        |         ✅         |      ✅      |         ✅         |
+| Time field correctness          |      n/a      |       ✅        |        ✅        |         ✅         |      ✅      |         ✅         |
+| Optional field handling         |      ✅       |       ✅        |        ✅        |         ✅         |      ✅      |         ✅         |
+| Opaque pass-through             |      n/a      |       n/a       |        ✅        |        n/a         |      ✅      |        n/a         |
+| Enum validation                 |      n/a      |       ✅        |       n/a        |        n/a         |      ✅      |         ✅         |
+| `satisfies` typing              |      ✅       |       ✅        |        ✅        |         ✅         |      ✅      |         ✅         |
 
 **Changes from Phase 5.4:** "Cross-ref exclusion" row renamed to "Cross-ref @id extraction" — tests now verify extraction, not exclusion. All cells remain ✅.
 
@@ -551,13 +560,13 @@ Most other multi-option methods have a combined test (e.g., `getCommands({ limit
 
 ## Smoke Test Findings Integration
 
-| Finding | Status | Evidence |
-|---------|--------|----------|
-| F27 (Observation `foi@id`) | ✅ Addressed (Phase 5.1) | No regression. `featureOfInterestId` now extracted (#103). |
-| F30 (ControlStream `system@link`) | ✅ Addressed (Phase 5.2) | No regression. `system@link` still excluded from Part 2 model (raw @link is server-specific). |
-| F31 (Command `controlstream@id`) | ✅ Addressed (Phase 5.2) | No regression. `controlStreamId` now extracted (#103). |
-| F33 (ControlStream schema `commandFormat`/`parametersSchema`) | ✅ Addressed (Phase 5.3) | No regression. |
-| F38 (CommandStatus data shape) | ✅ Addressed (Phase 5.2) | No regression. `commandId` now extracted (#103). |
+| Finding                                                       | Status                   | Evidence                                                                                      |
+| ------------------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------- |
+| F27 (Observation `foi@id`)                                    | ✅ Addressed (Phase 5.1) | No regression. `featureOfInterestId` now extracted (#103).                                    |
+| F30 (ControlStream `system@link`)                             | ✅ Addressed (Phase 5.2) | No regression. `system@link` still excluded from Part 2 model (raw @link is server-specific). |
+| F31 (Command `controlstream@id`)                              | ✅ Addressed (Phase 5.2) | No regression. `controlStreamId` now extracted (#103).                                        |
+| F33 (ControlStream schema `commandFormat`/`parametersSchema`) | ✅ Addressed (Phase 5.3) | No regression.                                                                                |
+| F38 (CommandStatus data shape)                                | ✅ Addressed (Phase 5.2) | No regression. `commandId` now extracted (#103).                                              |
 
 All 5 smoke test findings remain addressed. ✅
 
@@ -565,14 +574,14 @@ All 5 smoke test findings remain addressed. ✅
 
 ## Summary
 
-| Category | Count | Details |
-|----------|------:|---------|
-| POSITIVE | 9 | F36 (callback injection), F37 (@id extraction), F38 (PARAM_NAME_MAP), F39 (query fields), F40 (type narrowing), F41 (CSAPIResourceRef), F42 (@link extraction), F43 (ControlStream symmetry), F44 (correct deferrals) |
-| DESIGN | 1 | F45 (getCommandStatus query string concatenation — minor) |
-| CONSISTENCY | 1 | F46 (getControlStreamProcedures uses QueryOptions — low) |
-| GAP | 1 | F47 (no combined-option test for getCommandStatus — minor) |
-| BUG | 0 | — |
-| INFORMATIONAL | 0 | — |
+| Category      | Count | Details                                                                                                                                                                                                               |
+| ------------- | ----: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POSITIVE      |     9 | F36 (callback injection), F37 (@id extraction), F38 (PARAM_NAME_MAP), F39 (query fields), F40 (type narrowing), F41 (CSAPIResourceRef), F42 (@link extraction), F43 (ControlStream symmetry), F44 (correct deferrals) |
+| DESIGN        |     1 | F45 (getCommandStatus query string concatenation — minor)                                                                                                                                                             |
+| CONSISTENCY   |     1 | F46 (getControlStreamProcedures uses QueryOptions — low)                                                                                                                                                              |
+| GAP           |     1 | F47 (no combined-option test for getCommandStatus — minor)                                                                                                                                                            |
+| BUG           |     0 | —                                                                                                                                                                                                                     |
+| INFORMATIONAL |     0 | —                                                                                                                                                                                                                     |
 
 **Prior findings resolved this review:** 1 (F34 — re-export consolidation)
 **Prior findings still open:** 1 (F18 — parseCommandStatus `@see` link precision, knowingly deferred via Issue #98 closed as not_planned)
@@ -605,7 +614,10 @@ getControlStreamProcedures(id: string, options?: ProcedureQueryOptions): string 
 
 ```typescript
 it('getCommandStatus returns correct URL with statusCode + limit', () => {
-  const url = makeCmdBuilder().getCommandStatus('cmd-001', { statusCode: 'EXECUTING', limit: 5 });
+  const url = makeCmdBuilder().getCommandStatus('cmd-001', {
+    statusCode: 'EXECUTING',
+    limit: 5,
+  });
   expect(url).toBe('..../commands/cmd-001/status?statusCode=EXECUTING&limit=5');
 });
 ```

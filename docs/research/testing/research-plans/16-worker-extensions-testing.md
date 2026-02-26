@@ -64,6 +64,7 @@ Define testing strategy for the 9 Web Worker message types and background proces
 **Objective:** Understand Worker implementation architecture and message types
 
 **Tasks:**
+
 1. ✅ Document all 9 Web Worker message types from Implementation Guide
 2. ✅ Map message types to parser operations
 3. ✅ Analyze Worker initialization and lifecycle
@@ -71,6 +72,7 @@ Define testing strategy for the 9 Web Worker message types and background proces
 5. ✅ Document Worker architecture patterns
 
 **Findings:**
+
 - Existing 4 message types: parseWmsCapabilities, parseWfsCapabilities, queryWfsFeatureTypeDetails, parseWmtsCapabilities
 - Request/response protocol via `WorkerRequest`/`WorkerResponse` with unique requestId
 - Fallback mechanism uses EventTarget for non-worker environments
@@ -81,6 +83,7 @@ Define testing strategy for the 9 Web Worker message types and background proces
 **Objective:** Analyze existing Worker test patterns in camptocamp/ogc-client
 
 **Tasks:**
+
 1. ✅ Locate Worker-related tests in upstream codebase
 2. ✅ Analyze Worker mocking approaches
 3. ✅ Document test structure patterns
@@ -88,6 +91,7 @@ Define testing strategy for the 9 Web Worker message types and background proces
 5. ✅ Extract best practices
 
 **Findings:**
+
 - Existing test: `src/worker-fallback/worker-fallback.spec.ts` (WMS/WFS endpoints)
 - Pattern: Use `enableFallbackWithoutWorker()` for testing without real worker
 - Tests actual handler code via fallback mechanism (no worker mocking needed)
@@ -98,6 +102,7 @@ Define testing strategy for the 9 Web Worker message types and background proces
 **Objective:** Understand Jest capabilities for Worker testing
 
 **Tasks:**
+
 1. ✅ Research Jest Worker testing documentation
 2. ✅ Identify Worker mocking strategies
 3. ✅ Analyze async message passing test patterns
@@ -105,6 +110,7 @@ Define testing strategy for the 9 Web Worker message types and background proces
 5. ✅ Identify performance testing capabilities
 
 **Findings:**
+
 - **Strategy 1 (Recommended):** Fallback mode testing with `enableFallbackWithoutWorker()`
 - **Strategy 2:** Mock Worker `postMessage`/`addEventListener` for message passing tests
 - **Strategy 3:** Real worker with worker_threads polyfill (performance testing)
@@ -116,6 +122,7 @@ Define testing strategy for the 9 Web Worker message types and background proces
 **Objective:** Design test scenarios for all Worker operations
 
 **Tasks:**
+
 1. ✅ Define test scenarios for each of 9 message types
 2. ✅ Design async operation test patterns
 3. ✅ Define fallback behavior test scenarios
@@ -124,6 +131,7 @@ Define testing strategy for the 9 Web Worker message types and background proces
 6. ✅ Document fixture requirements for heavy parsing
 
 **Findings:**
+
 - **Total test scenarios:** 201 (139 message type unit tests + 62 integration tests)
 - **Per message type:** 10-23 scenarios (happy path, error, performance)
 - **Integration tests:** Parser integration (12), fallback (9), concurrent (6), error (15), performance (20)
@@ -135,6 +143,7 @@ Define testing strategy for the 9 Web Worker message types and background proces
 **Objective:** Create comprehensive Worker testing strategy
 
 **Tasks:**
+
 1. ✅ Consolidate test patterns per message type
 2. ✅ Create Worker test structure templates
 3. ✅ Document mocking and assertion patterns
@@ -142,6 +151,7 @@ Define testing strategy for the 9 Web Worker message types and background proces
 5. ✅ Create deliverable document
 
 **Deliverables:**
+
 - Complete test strategy document (15 sections, ~11,000 lines)
 - Test scenarios for all 9 message types (detailed specifications)
 - Jest testing patterns (3 strategies with examples)
@@ -170,6 +180,7 @@ This research is complete when:
 **Worker testing strategy with message type test specifications**
 
 Content includes:
+
 - Test scenarios for all 9 Worker message types
 - Jest Worker testing patterns and utilities
 - Async message passing test templates
@@ -184,6 +195,7 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis (general test patterns)
 - Section 2: Existing Upstream Test Pattern Survey (Worker test patterns)
 - Section 9: SensorML 3.0 Format Testing Requirements (parser integration)
@@ -191,6 +203,7 @@ Content includes:
 - Section 11: GeoJSON CSAPI Extensions Testing Requirements (parser integration)
 
 **Blocks:**
+
 - Section 19: Test Organization and File Structure (Worker test organization)
 - Phase 4 implementation (Worker Extensions cannot be implemented without test strategy)
 
@@ -216,12 +229,14 @@ Content includes:
 <!-- Add notes and unresolved questions here as research progresses -->
 
 **Initial Observations:**
+
 - Implementation Guide Phase 4, Task 1 mentions Worker Extensions
 - 9 Web Worker message types listed in Implementation Guide
 - Need to verify Jest's capabilities for Worker testing
 - Worker fallback is critical for browser compatibility
 
 **Research Findings:**
+
 - ✅ All 9 message types cataloged with detailed specifications
 - ✅ Jest fallback testing strategy validated (existing pattern works)
 - ✅ Worker testing does NOT require complex mocking (use fallback mode)
@@ -230,6 +245,7 @@ Content includes:
 - ✅ Concurrent request testing uses Promise.all() pattern
 
 **Key Insights:**
+
 1. **Fallback Mode is Ideal:** Testing via fallback mode is simpler and more reliable than mocking workers
 2. **Fixture Reuse:** Most fixtures already exist from parser testing sections (only 10 new fixtures needed)
 3. **Test Volume:** 201 test scenarios across 13 test files (~2,310-2,860 lines)
@@ -237,6 +253,7 @@ Content includes:
 5. **Critical Priorities:** Format parsing workers (PARSE_SENSORML_3, PARSE_SWE_RESULT, PARSE_SWE_BINARY) are highest priority
 
 **Open Questions (Implementation Phase):**
+
 - ❓ Should performance tests run in CI or only locally?
 - ❓ What's the optimal worker pool size for concurrent requests?
 - ❓ Should large fixtures (10,000 observations) be generated programmatically or committed?

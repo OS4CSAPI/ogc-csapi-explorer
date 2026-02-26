@@ -24,12 +24,14 @@ OSHConnect-Python is a comprehensive Python client library for OGC API - Connect
 ### Architecture Philosophy Differences
 
 **OSHConnect-Python:**
+
 - **Domain-driven design** with resource-centric classes (System, Datastream, ControlStream)
 - **Stateful orchestration** through OSHConnect application class
 - **Active resource objects** that manage their own lifecycle and streaming
 - **Built-in MQTT/WebSocket** support for real-time data
 
 **OWSLib (Based on observed patterns):**
+
 - More **procedural/functional** approach
 - Stateless HTTP request/response model
 - Focused on standard OGC patterns across multiple API families
@@ -37,13 +39,13 @@ OSHConnect-Python is a comprehensive Python client library for OGC API - Connect
 
 ### Key Design Differentiators
 
-| Aspect | OSHConnect-Python | Typical OWSLib Pattern |
-|--------|-------------------|----------------------|
-| Resource Representation | Active objects with methods | Data containers |
-| State Management | Built-in session management | Request-per-operation |
-| Streaming | First-class MQTT/WS support | Limited/external |
-| Type Safety | Generic types + Pydantic | Basic typing |
-| Builder Pattern | Fluent RequestBuilder | Direct parameter passing |
+| Aspect                  | OSHConnect-Python           | Typical OWSLib Pattern   |
+| ----------------------- | --------------------------- | ------------------------ |
+| Resource Representation | Active objects with methods | Data containers          |
+| State Management        | Built-in session management | Request-per-operation    |
+| Streaming               | First-class MQTT/WS support | Limited/external         |
+| Type Safety             | Generic types + Pydantic    | Basic typing             |
+| Builder Pattern         | Fluent RequestBuilder       | Direct parameter passing |
 
 ---
 
@@ -52,11 +54,13 @@ OSHConnect-Python is a comprehensive Python client library for OGC API - Connect
 ### Core Principles
 
 1. **Resource-Centric OOP**
+
    - Each CSAPI resource type (`System`, `Datastream`, `ControlStream`) is a first-class object
    - Resources are **stateful** and maintain connection to their parent Node
    - Resources can **discover** their child resources
 
 2. **Separation of Concerns**
+
    ```
    OSHConnect (orchestration layer)
    └── Node (server connection)
@@ -68,6 +72,7 @@ OSHConnect-Python is a comprehensive Python client library for OGC API - Connect
    ```
 
 3. **Progressive Enhancement**
+
    - Core HTTP CRUD operations (Part 1)
    - Optional streaming capabilities (WebSocket/MQTT)
    - Time-series playback modes (real-time, archive, batch)
@@ -83,6 +88,7 @@ OSHConnect-Python is a comprehensive Python client library for OGC API - Connect
 ### Implementation Completeness
 
 **Fully Implemented (Part 1 - Feature Resources):**
+
 ```python
 # All CRUD operations for:
 - Collections
@@ -96,6 +102,7 @@ OSHConnect-Python is a comprehensive Python client library for OGC API - Connect
 ```
 
 **Fully Implemented (Part 2 - Dynamic Data):**
+
 ```python
 - Datastreams (with schema)
 - Observations (CRUD + streaming)
@@ -129,6 +136,7 @@ response = api_request.make_request()
 ### Implementation
 
 **Basic HTTP Authentication Only:**
+
 ```python
 # Node-level authentication
 class Node:
@@ -142,7 +150,7 @@ class Node:
 class APIHelper:
     username: str = None
     password: str = None
-    
+
     def get_helper_auth(self):
         if self.user_auth:
             return self.username, self.password
@@ -150,11 +158,13 @@ class APIHelper:
 ```
 
 **No OAuth/API Key Support:**
+
 - No OAuth 2.0 flows
 - No bearer token management
 - No API key authentication
 
 **Recommendation for TypeScript:**
+
 - Support **multiple auth strategies** (Basic, Bearer, OAuth2, API Key)
 - Use **strategy pattern** for authentication
 - Consider **token refresh** mechanisms for long-lived sessions
@@ -165,19 +175,19 @@ class APIHelper:
 
 ### Complete Coverage
 
-| Resource Type | Implementation | Notes |
-|---------------|----------------|-------|
-| **Systems** | ✅ Full CRUD + Discovery | With components, subsystems |
-| **Deployments** | ✅ Full CRUD | With deployed systems |
-| **Procedures** | ✅ Full CRUD | - |
-| **Sampling Features** | ✅ Full CRUD | By system |
-| **Properties** | ✅ Full CRUD | - |
-| **Datastreams** | ✅ Full CRUD + Streaming | With schema validation |
-| **Observations** | ✅ Full CRUD + Real-time | Multiple formats |
-| **Control Streams** | ✅ Full CRUD + Bidirectional | With MQTT |
-| **Commands** | ✅ Full CRUD + Status | - |
-| **System Events** | ✅ Full CRUD | OM-JSON format |
-| **Collections** | ✅ List + Retrieve | Items support |
+| Resource Type         | Implementation               | Notes                       |
+| --------------------- | ---------------------------- | --------------------------- |
+| **Systems**           | ✅ Full CRUD + Discovery     | With components, subsystems |
+| **Deployments**       | ✅ Full CRUD                 | With deployed systems       |
+| **Procedures**        | ✅ Full CRUD                 | -                           |
+| **Sampling Features** | ✅ Full CRUD                 | By system                   |
+| **Properties**        | ✅ Full CRUD                 | -                           |
+| **Datastreams**       | ✅ Full CRUD + Streaming     | With schema validation      |
+| **Observations**      | ✅ Full CRUD + Real-time     | Multiple formats            |
+| **Control Streams**   | ✅ Full CRUD + Bidirectional | With MQTT                   |
+| **Commands**          | ✅ Full CRUD + Status        | -                           |
+| **System Events**     | ✅ Full CRUD                 | OM-JSON format              |
+| **Collections**       | ✅ List + Retrieve           | Items support               |
 
 ### Resource Models (Pydantic)
 
@@ -186,7 +196,7 @@ All resources have corresponding **Pydantic models** for validation:
 ```python
 class SystemResource(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    
+
     system_id: str = Field(None, alias="id")
     name: str = Field(...)
     description: str = Field(None)
@@ -202,6 +212,7 @@ class SystemResource(BaseModel):
 ### Three-Layer Architecture
 
 #### Layer 1: Orchestration (`OSHConnect`)
+
 **High-level application interface:**
 
 ```python
@@ -215,6 +226,7 @@ class OSHConnect:
 ```
 
 #### Layer 2: Resource Classes (`System`, `Datastream`, `ControlStream`)
+
 **Active domain objects:**
 
 ```python
@@ -226,6 +238,7 @@ class System(StreamableResource[SystemResource]):
 ```
 
 #### Layer 3: API Helpers (`api_helpers.py`, `APIHelper`)
+
 **Low-level HTTP operations:**
 
 ```python
@@ -251,7 +264,7 @@ class APIHelper(ABC):
 class ConnectedSystemsRequestBuilder(BaseModel):
     api_request: ConnectedSystemAPIRequest
     endpoint: Endpoint
-    
+
     def with_server_url(self, url: str) -> Self
     def with_api_root(self, root: str) -> Self
     def for_resource_type(self, resource: str) -> Self
@@ -335,7 +348,7 @@ class DatastreamResource(BaseModel):
     ds_id: str = Field(None, alias="id")
     valid_time: TimePeriod = Field(None, alias="validTime")
     output_name: str = Field(..., alias="outputName")
-    
+
     @model_validator(mode="before")
     def handle_aliases(cls, values):
         # Handle multiple possible field names
@@ -360,11 +373,11 @@ class AnyScalarComponentSchema(AnySimpleComponentSchema): ...
 class QuantitySchema(AnyScalarComponentSchema):
     uom: UCUMCode = Field(...)
     constraint: AllowedValues = Field(None)
-    
+
 class TimeSchema(QuantitySchema):
     reference_frame: str = "http://www.opengis.net/def/trs/BIPM/0/UTC"
     local_frame: str = Field(None)
-    
+
 class DataRecordSchema(AnyComponentSchema):
     fields: list[SerializeAsAny[AnyComponentSchema]] = Field(...)
 ```
@@ -406,27 +419,29 @@ class DefaultObjectRepresentations(BaseModel):
 ### Direct Translation Opportunities
 
 1. **Builder Pattern**
+
    ```typescript
    // Similar fluent API possible
    const request = new ConnectedSystemsRequestBuilder()
-       .withServerUrl(url)
-       .forResourceType(APIResourceTypes.SYSTEM)
-       .withResourceId(id)
-       .build();
+     .withServerUrl(url)
+     .forResourceType(APIResourceTypes.SYSTEM)
+     .withResourceId(id)
+     .build();
    ```
 
 2. **Generic Type System**
+
    ```typescript
    // TypeScript generics are even more powerful
    abstract class StreamableResource<T extends BaseResource> {
-       protected resource: T;
-       
-       getResource(): T {
-           return this.resource;
-       }
+     protected resource: T;
+
+     getResource(): T {
+       return this.resource;
+     }
    }
-   
-   class System extends StreamableResource<SystemResource> { }
+
+   class System extends StreamableResource<SystemResource> {}
    ```
 
 3. **Validation Libraries**
@@ -436,23 +451,25 @@ class DefaultObjectRepresentations(BaseModel):
 ### TypeScript Advantages
 
 1. **Compile-Time Safety**
+
    ```typescript
    // TypeScript catches errors at compile time
    interface DatastreamResource {
-       id: string;
-       name: string;
-       outputName: string;  // Required
+     id: string;
+     name: string;
+     outputName: string; // Required
    }
-   
+
    // Won't compile if outputName missing
    const ds: DatastreamResource = {
-       id: "123",
-       name: "test"
-       // Error: outputName is required
+     id: '123',
+     name: 'test',
+     // Error: outputName is required
    };
    ```
 
 2. **Better Async Patterns**
+
    ```typescript
    // Native async/await with proper typing
    async discover_systems(): Promise<SystemResource[]> {
@@ -464,26 +481,29 @@ class DefaultObjectRepresentations(BaseModel):
    ```
 
 3. **Interface Segregation**
+
    ```typescript
    // Separate read/write interfaces
    interface ReadableSystem {
-       readonly id: string;
-       readonly name: string;
+     readonly id: string;
+     readonly name: string;
    }
-   
+
    interface WritableSystem extends ReadableSystem {
-       updateDescription(desc: string): Promise<void>;
+     updateDescription(desc: string): Promise<void>;
    }
    ```
 
 ### Challenges to Address
 
 1. **Pydantic Equivalence**
+
    - Python's `model_validate()` is very convenient
    - TypeScript needs explicit parsing: `zodSchema.parse(data)`
    - Consider code generation for schemas
 
 2. **Dynamic Properties**
+
    - Python allows runtime property addition
    - TypeScript requires explicit typing
    - Use `Record<string, unknown>` for flexible fields
@@ -529,7 +549,7 @@ class SWEDatastreamRecordSchema(DatastreamRecordSchema):
     obs_format: str = Field(..., alias='obsFormat')
     encoding: SerializeAsAny[Encoding] = Field(...)
     record_schema: SerializeAsAny[AnyComponentSchema] = Field(...)
-    
+
     @field_validator('obs_format')
     def check_obs_format(cls, v):
         if v not in [ObservationFormat.SWE_JSON.value, ...]:
@@ -538,6 +558,7 @@ class SWEDatastreamRecordSchema(DatastreamRecordSchema):
 ```
 
 **SensorML JSON for system descriptions:**
+
 - Full `SystemResource` model supports SML+JSON
 - Inputs, outputs, parameters, methods, history
 
@@ -551,20 +572,20 @@ class SWEDatastreamRecordSchema(DatastreamRecordSchema):
 class StreamableResource:
     async def stream(self):
         session = self._parent_node.get_session()
-        
+
         async with session.ws_connect(
-            self.ws_url, 
+            self.ws_url,
             auth=self._parent_node.get_basicauth()
         ) as ws:
             read_task = asyncio.create_task(self._read_from_ws(ws))
             write_task = asyncio.create_task(self._write_to_ws(ws))
             await asyncio.gather(read_task, write_task)
-    
+
     async def _read_from_ws(self, ws):
         while self._status == Status.STARTED:
             msg = await ws.receive()
             self._msg_reader_queue.put_nowait(msg)
-    
+
     async def _write_to_ws(self, ws):
         while self._status == Status.STARTED:
             msg = await self._msg_writer_queue.get()
@@ -577,19 +598,19 @@ class StreamableResource:
 
 ```python
 class MQTTCommClient:
-    def __init__(self, url, port=1883, username=None, 
+    def __init__(self, url, port=1883, username=None,
                  password=None, transport='tcp'):
         self.__client = mqtt.Client(
             mqtt.CallbackAPIVersion.VERSION2
         )
-        
+
     def subscribe(self, topic, qos=0, msg_callback=None):
         self.__client.subscribe(topic, qos)
         if msg_callback:
             self.__client.message_callback_add(
                 topic, msg_callback
             )
-    
+
     def publish(self, topic, payload=None, qos=0):
         self.__client.publish(topic, payload, qos)
 ```
@@ -597,14 +618,14 @@ class MQTTCommClient:
 **MQTT topic generation:**
 
 ```python
-def get_mqtt_topic(self, resource_type, subresource_type, 
+def get_mqtt_topic(self, resource_type, subresource_type,
                    resource_id: str, subresource_id: str = None):
     subresource_endpoint = f'/{resource_type_to_endpoint(subresource_type)}'
     resource_endpoint = f'/{resource_type_to_endpoint(resource_type)}'
-    
+
     resource_ident = "" if resource_id is None else f'/{resource_id}'
     subresource_ident = "" if subresource_id is None else f'/{subresource_id}'
-    
+
     topic = f'/{self.api_root}{resource_endpoint}{resource_ident}' \
             f'{subresource_endpoint}{subresource_ident}'
     return topic
@@ -636,19 +657,19 @@ class Datastream(StreamableResource):
 ```python
 class ControlStream(StreamableResource):
     _status_topic: str  # Separate topic for status
-    
+
     def publish_command(self, payload):
         self._publish_mqtt(self._topic, payload)
-    
+
     def publish_status(self, payload):
         self._publish_mqtt(self._status_topic, payload)
-    
+
     def subscribe(self, topic='command', callback=None):
         if topic == 'command':
             t = self._topic
         elif topic == 'status':
             t = self._status_topic
-        
+
         self._mqtt_client.subscribe(t, msg_callback=callback)
 ```
 
@@ -659,6 +680,7 @@ class ControlStream(StreamableResource):
 ### **Limited Explicit Error Handling**
 
 **Observation:** The library relies primarily on:
+
 1. **Pydantic validation errors** for data model issues
 2. **HTTP status code checks** (`response.ok`)
 3. **Generic exceptions** for failures
@@ -669,7 +691,7 @@ class ControlStream(StreamableResource):
 # Basic HTTP error checking
 def insert_self(self):
     res = self._parent_node.get_api_helper().create_resource(...)
-    
+
     if res.ok:
         location = res.headers['Location']
         sys_id = location.split('/')[-1]
@@ -705,13 +727,13 @@ def set_protocol(self, protocol: str):
 ```typescript
 // Custom exception hierarchy
 class CSAPIError extends Error {
-    constructor(
-        message: string,
-        public statusCode?: number,
-        public response?: Response
-    ) {
-        super(message);
-    }
+  constructor(
+    message: string,
+    public statusCode?: number,
+    public response?: Response
+  ) {
+    super(message);
+  }
 }
 
 class ResourceNotFoundError extends CSAPIError {}
@@ -719,27 +741,25 @@ class ValidationError extends CSAPIError {}
 class AuthenticationError extends CSAPIError {}
 
 // Result type pattern
-type Result<T, E = Error> = 
-    | { ok: true; value: T }
-    | { ok: false; error: E };
+type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
 
 async function getSystem(id: string): Promise<Result<System>> {
-    try {
-        const response = await fetch(`/systems/${id}`);
-        if (!response.ok) {
-            return {
-                ok: false,
-                error: new ResourceNotFoundError(
-                    `System ${id} not found`,
-                    response.status
-                )
-            };
-        }
-        const data = await response.json();
-        return { ok: true, value: parseSystem(data) };
-    } catch (error) {
-        return { ok: false, error: error as Error };
+  try {
+    const response = await fetch(`/systems/${id}`);
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: new ResourceNotFoundError(
+          `System ${id} not found`,
+          response.status
+        ),
+      };
     }
+    const data = await response.json();
+    return { ok: true, value: parseSystem(data) };
+  } catch (error) {
+    return { ok: false, error: error as Error };
+  }
 }
 ```
 
@@ -753,7 +773,7 @@ async function getSystem(id: string): Promise<Result<System>> {
 # tests/test_oshconnect.py
 class TestOSHConnect:
     TEST_PORT = 8282
-    
+
     def test_time_period(self)
     def test_oshconnect_create(self)
     def test_oshconnect_add_node(self)
@@ -778,11 +798,12 @@ def test_find_systems(self):
     )
     app.add_node(node)
     app.discover_systems()
-    
+
     assert len(app._systems) > 0
 ```
 
 **Minimal mocking:**
+
 - Tests assume **live server** running on localhost:8282
 - Real HTTP/WebSocket connections
 - Actual data validation
@@ -799,44 +820,44 @@ def test_find_systems(self):
 ```typescript
 // Unit tests with mocks
 describe('SystemResource', () => {
-    it('should validate valid system data', () => {
-        const data = {
-            id: '123',
-            name: 'Test System',
-            description: 'Test'
-        };
-        
-        const result = SystemSchema.safeParse(data);
-        expect(result.success).toBe(true);
-    });
-    
-    it('should reject invalid system data', () => {
-        const data = { id: '123' };  // Missing required fields
-        
-        const result = SystemSchema.safeParse(data);
-        expect(result.success).toBe(false);
-    });
+  it('should validate valid system data', () => {
+    const data = {
+      id: '123',
+      name: 'Test System',
+      description: 'Test',
+    };
+
+    const result = SystemSchema.safeParse(data);
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject invalid system data', () => {
+    const data = { id: '123' }; // Missing required fields
+
+    const result = SystemSchema.safeParse(data);
+    expect(result.success).toBe(false);
+  });
 });
 
 // Integration tests with MSW
 describe('SystemAPI', () => {
-    beforeEach(() => {
-        server.use(
-            http.get('/api/systems/:id', () => {
-                return HttpResponse.json({
-                    id: '123',
-                    name: 'Mock System'
-                });
-            })
-        );
-    });
-    
-    it('should fetch system by ID', async () => {
-        const api = new SystemAPI(baseUrl);
-        const system = await api.getSystem('123');
-        
-        expect(system.name).toBe('Mock System');
-    });
+  beforeEach(() => {
+    server.use(
+      http.get('/api/systems/:id', () => {
+        return HttpResponse.json({
+          id: '123',
+          name: 'Mock System',
+        });
+      })
+    );
+  });
+
+  it('should fetch system by ID', async () => {
+    const api = new SystemAPI(baseUrl);
+    const system = await api.getSystem('123');
+
+    expect(system.name).toBe('Mock System');
+  });
 });
 ```
 
@@ -847,6 +868,7 @@ describe('SystemAPI', () => {
 ### Sphinx-Based Documentation
 
 **Configuration:**
+
 ```python
 # docs/source/conf.py
 project = 'OSHConnect-Python'
@@ -876,7 +898,7 @@ def create_new_systems(
 ):
     """
     Create a new system as defined by the request body
-    
+
     :param server_addr: Server URL
     :param request_body: System definition (SML+JSON)
     :param api_root: API root path (default: 'api')
@@ -916,13 +938,13 @@ Once you have a `System` object, you can add a new datastream to it.
         definition='www.test.org/records/example',
         fields=[]
     )
-    
+
     time_schema = TimeSchema(
         label="Timestamp",
         name="timestamp",
         uom=URI(href="http://test.com/TimeUOM")
     )
-    
+
     datarecord_schema.fields.append(time_schema)
     datastream = new_system.add_insert_datastream(datarecord_schema)
 
@@ -945,26 +967,26 @@ Once you have a `System` object, you can add a new datastream to it.
 
 **Use TypeDoc + Docusaurus:**
 
-```typescript
+````typescript
 /**
  * Retrieves a system resource by its ID
- * 
+ *
  * @param id - Unique system identifier
  * @returns Promise resolving to SystemResource
- * 
+ *
  * @example
  * ```typescript
  * const system = await api.getSystem('abc123');
  * console.log(system.name);
  * ```
- * 
+ *
  * @throws {ResourceNotFoundError} If system doesn't exist
  * @throws {AuthenticationError} If credentials are invalid
  */
 async getSystem(id: string): Promise<SystemResource> {
     // ...
 }
-```
+````
 
 ---
 
@@ -973,16 +995,19 @@ async getSystem(id: string): Promise<SystemResource> {
 ### What OSHConnect Does Better
 
 1. **Domain-Driven Design**
+
    - **Advantage**: More intuitive for developers familiar with OOP
    - Resource objects feel like "real" entities
    - Natural place for business logic
 
 2. **Built-in Streaming**
+
    - **Advantage**: First-class support for real-time data
    - MQTT/WebSocket integration out of the box
    - Essential for IoT/sensor applications
 
 3. **State Management**
+
    - **Advantage**: Session persistence, configuration save/load
    - Maintains application state across operations
    - Better for long-running applications
@@ -995,11 +1020,13 @@ async getSystem(id: string): Promise<SystemResource> {
 ### What OWSLib Does Better (Assumed)
 
 1. **Broader Ecosystem Coverage**
+
    - **Advantage**: Works across many OGC APIs (WMS, WFS, WCS, etc.)
    - Consistent patterns across standards
    - Established community
 
 2. **Simpler Mental Model**
+
    - **Advantage**: Stateless functions are easier to reason about
    - No hidden state or side effects
    - Better for simple request/response scenarios
@@ -1032,18 +1059,22 @@ await system.addDatastream(schema);
 ### Design Lessons Learned
 
 1. **Builder Pattern is Valuable**
+
    - Makes complex request construction readable
    - TypeScript can make this even more type-safe
 
 2. **Generic Types Work Well**
+
    - `StreamableResource<T>` pattern is excellent
    - TypeScript generics are more powerful than Python's
 
 3. **Validation is Critical**
+
    - Use `zod` or similar for runtime validation
    - Leverage TypeScript's compile-time checking
 
 4. **Don't Over-Abstract**
+
    - OSHConnect has some complex URL construction logic
    - TypeScript can use template literals for cleaner code
 
@@ -1231,145 +1262,150 @@ response = request.make_request()
 ## Recommendations for TypeScript Implementation
 
 ### 1. **Adopt Builder Pattern**
+
 - Fluent API for request construction
 - Type-safe method chaining
 - Optional parameters via builder
 
 ### 2. **Use Zod for Validation**
+
 ```typescript
 import { z } from 'zod';
 
 const SystemSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    description: z.string().optional(),
-    properties: z.record(z.unknown())
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  properties: z.record(z.unknown()),
 });
 
 type System = z.infer<typeof SystemSchema>;
 ```
 
 ### 3. **Implement Generic Resource Base**
+
 ```typescript
 abstract class Resource<T> {
-    protected data: T;
-    
-    constructor(data: T) {
-        this.data = data;
-    }
-    
-    getData(): T {
-        return this.data;
-    }
+  protected data: T;
+
+  constructor(data: T) {
+    this.data = data;
+  }
+
+  getData(): T {
+    return this.data;
+  }
 }
 
 class System extends Resource<SystemData> {
-    async discoverDatastreams(): Promise<Datastream[]> {
-        // ...
-    }
+  async discoverDatastreams(): Promise<Datastream[]> {
+    // ...
+  }
 }
 ```
 
 ### 4. **Support Multiple Auth Strategies**
+
 ```typescript
 interface AuthStrategy {
-    authenticate(request: Request): Promise<Request>;
+  authenticate(request: Request): Promise<Request>;
 }
 
 class BasicAuth implements AuthStrategy {
-    async authenticate(request: Request): Promise<Request> {
-        // Add Authorization header
-    }
+  async authenticate(request: Request): Promise<Request> {
+    // Add Authorization header
+  }
 }
 
 class BearerAuth implements AuthStrategy {
-    async authenticate(request: Request): Promise<Request> {
-        // Add Bearer token
-    }
+  async authenticate(request: Request): Promise<Request> {
+    // Add Bearer token
+  }
 }
 ```
 
 ### 5. **Provide Both Functional and OOP APIs**
+
 ```typescript
 // Functional
-export async function getSystem(
-    baseUrl: string,
-    id: string
-): Promise<System> { }
+export async function getSystem(baseUrl: string, id: string): Promise<System> {}
 
 // Object-oriented
 export class CSAPIClient {
-    systems: SystemAPI;
-    datastreams: DatastreamAPI;
-    
-    constructor(baseUrl: string, auth?: AuthStrategy) { }
+  systems: SystemAPI;
+  datastreams: DatastreamAPI;
+
+  constructor(baseUrl: string, auth?: AuthStrategy) {}
 }
 ```
 
 ### 6. **Use RxJS for Streaming**
+
 ```typescript
 import { Observable } from 'rxjs';
 
 class Datastream {
-    streamObservations(): Observable<Observation> {
-        return new Observable(observer => {
-            const ws = new WebSocket(this.streamUrl);
-            ws.onmessage = (msg) => observer.next(JSON.parse(msg.data));
-            ws.onerror = (err) => observer.error(err);
-            return () => ws.close();
-        });
-    }
+  streamObservations(): Observable<Observation> {
+    return new Observable((observer) => {
+      const ws = new WebSocket(this.streamUrl);
+      ws.onmessage = (msg) => observer.next(JSON.parse(msg.data));
+      ws.onerror = (err) => observer.error(err);
+      return () => ws.close();
+    });
+  }
 }
 
 // Usage
 datastream.streamObservations().subscribe({
-    next: (obs) => console.log(obs),
-    error: (err) => console.error(err)
+  next: (obs) => console.log(obs),
+  error: (err) => console.error(err),
 });
 ```
 
 ### 7. **Structured Error Handling**
+
 ```typescript
 class CSAPIError extends Error {
-    constructor(
-        message: string,
-        public code: string,
-        public statusCode?: number
-    ) {
-        super(message);
-    }
+  constructor(
+    message: string,
+    public code: string,
+    public statusCode?: number
+  ) {
+    super(message);
+  }
 }
 
 async function fetchWithRetry<T>(
-    fn: () => Promise<T>,
-    retries = 3
+  fn: () => Promise<T>,
+  retries = 3
 ): Promise<T> {
-    try {
-        return await fn();
-    } catch (error) {
-        if (retries > 0 && isRetryable(error)) {
-            await delay(1000);
-            return fetchWithRetry(fn, retries - 1);
-        }
-        throw error;
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries > 0 && isRetryable(error)) {
+      await delay(1000);
+      return fetchWithRetry(fn, retries - 1);
     }
+    throw error;
+  }
 }
 ```
 
 ### 8. **Comprehensive Testing**
+
 ```typescript
 // Unit tests
 describe('SystemSchema', () => {
-    it('validates correct data', () => {
-        expect(SystemSchema.safeParse(validData).success).toBe(true);
-    });
+  it('validates correct data', () => {
+    expect(SystemSchema.safeParse(validData).success).toBe(true);
+  });
 });
 
 // Integration tests with MSW
 setupServer(
-    http.get('/api/systems/:id', () => {
-        return HttpResponse.json(mockSystem);
-    })
+  http.get('/api/systems/:id', () => {
+    return HttpResponse.json(mockSystem);
+  })
 );
 
 // E2E tests with real server (optional)
@@ -1382,6 +1418,7 @@ setupServer(
 OSHConnect-Python demonstrates a **mature, feature-rich approach** to CSAPI client implementation with:
 
 ### Strengths
+
 - ✅ **Comprehensive resource coverage**
 - ✅ **Strong type safety** via Pydantic
 - ✅ **Built-in streaming** support
@@ -1389,6 +1426,7 @@ OSHConnect-Python demonstrates a **mature, feature-rich approach** to CSAPI clie
 - ✅ **Good separation of concerns**
 
 ### Areas for Improvement
+
 - ⚠️ **Limited auth strategies**
 - ⚠️ **Basic error handling**
 - ⚠️ **Integration-heavy testing**

@@ -16,7 +16,7 @@ P4-F1 and P4-F2 were discovered during Smoke Test #19 (the first Phase 4 CRUD te
 
 **The library is a URL builder and response parser. It does not perform HTTP fetches.**
 
-The `CSAPIQueryBuilder` methods (`createCommand()`, `updateSystem()`, etc.) return URL strings. The consumer performs the `fetch()` call and handles the response. Both P4-F1 and P4-F2 are about HTTP behavior that happens *outside the library's current responsibility boundary*:
+The `CSAPIQueryBuilder` methods (`createCommand()`, `updateSystem()`, etc.) return URL strings. The consumer performs the `fetch()` call and handles the response. Both P4-F1 and P4-F2 are about HTTP behavior that happens _outside the library's current responsibility boundary_:
 
 - P4-F1 is about what the server does after the consumer POSTs to the URL.
 - P4-F2 is about what the consumer puts in the PUT request body.
@@ -72,6 +72,7 @@ OSH rejects PUT requests if the `uid` in the request body doesn't byte-for-byte 
 ## Verdict: Not Phase 6
 
 Neither finding requires:
+
 - New planning documents or ROADMAPs
 - New TypeScript interfaces or model changes
 - New implementation files or parsers
@@ -91,7 +92,7 @@ If the library ever adds a higher-level "CRUD client" that wraps the URL builder
 
 ## Action Items
 
-| Finding | Action | Estimated Effort |
-|---------|--------|-----------------|
-| P4-F1 | GitHub issue → JSDoc warnings on `createCommand()` / `createCommands()` with timeout example | ~15-20 lines |
-| P4-F2 | GitHub issue → JSDoc warnings on all 9 `update*()` methods with uid preservation example | ~45-90 lines |
+| Finding | Action                                                                                       | Estimated Effort |
+| ------- | -------------------------------------------------------------------------------------------- | ---------------- |
+| P4-F1   | GitHub issue → JSDoc warnings on `createCommand()` / `createCommands()` with timeout example | ~15-20 lines     |
+| P4-F2   | GitHub issue → JSDoc warnings on all 9 `update*()` methods with uid preservation example     | ~45-90 lines     |

@@ -3,7 +3,7 @@
 **Version:** 1.0  
 **Date:** 2026-01-31  
 **Status:** Draft  
-**Authors:** Development Team  
+**Authors:** Development Team
 
 ---
 
@@ -12,6 +12,7 @@
 This functional specification defines the complete implementation of the Connected Systems API (CSAPI) client library for integration into [camptocamp/ogc-client](https://github.com/camptocamp/ogc-client). It translates research findings (Sections 16-19) into actionable design and implementation requirements.
 
 **Research Foundation:**
+
 - [Section 16](../research/requirements/csapi-52north-analysis.md): 52°North CSAPI server analysis
 - [Section 17](../research/requirements/csapi-gap-analysis.md): Gap analysis of previous implementation
 - [Section 18](../research/requirements/upstream-expectations.md): Upstream library expectations
@@ -41,6 +42,7 @@ This functional specification defines the complete implementation of the Connect
 **Goal:** Implement a complete TypeScript client library for the OGC Connected Systems API (CSAPI) specification, providing developers with a robust, type-safe interface to interact with CSAPI-compliant servers.
 
 **Scope:** Full CSAPI specification coverage
+
 - **Part 1 Resources:** Systems, Deployments, Procedures, Sampling Features, Properties
 - **Part 2 Resources:** DataStreams, Observations, Control Streams, Commands
 - **Format Support:** GeoJSON, SensorML 2.0+, SWE Common 2.0 (all components, all encodings)
@@ -53,6 +55,7 @@ This functional specification defines the complete implementation of the Connect
 ### 1.2 Key Requirements
 
 **Functional Requirements:**
+
 1. Parse CSAPI service metadata (landing page, conformance, collections)
 2. Access all 9 CSAPI resource types (GET collection, GET by ID, CRUD operations)
 3. Parse all CSAPI formats (GeoJSON, SensorML, SWE Common)
@@ -62,6 +65,7 @@ This functional specification defines the complete implementation of the Connect
 7. Validate requests and responses
 
 **Non-Functional Requirements:**
+
 1. Follow upstream patterns (WFS/WMS/WMTS endpoint architecture)
 2. 90%+ test coverage
 3. Comprehensive JSDoc documentation
@@ -72,6 +76,7 @@ This functional specification defines the complete implementation of the Connect
 ### 1.3 Success Criteria
 
 **Technical Criteria:**
+
 - ✅ All 9 resource types accessible via CSAPIEndpoint
 - ✅ All format parsers functional (GeoJSON, SensorML, SWE Common)
 - ✅ 90%+ test coverage
@@ -79,6 +84,7 @@ This functional specification defines the complete implementation of the Connect
 - ✅ Passes CI/CD checks
 
 **Acceptance Criteria:**
+
 - ✅ PR approved by camptocamp maintainers
 - ✅ Merged to main branch
 - ✅ Documentation complete (JSDoc + README)
@@ -155,6 +161,7 @@ src/csapi/
 ### 2.3 Design Patterns
 
 **Pattern 1: Endpoint Pattern (from Section 18)**
+
 ```typescript
 // Constructor initiates async operations
 constructor(url: string) {
@@ -174,6 +181,7 @@ getServiceInfo(): CSAPIEndpointInfo {
 ```
 
 **Pattern 2: Builder Pattern (URL construction)**
+
 ```typescript
 // Fluent API for complex queries
 const url = new DataStreamQueryBuilder(baseUrl)
@@ -184,6 +192,7 @@ const url = new DataStreamQueryBuilder(baseUrl)
 ```
 
 **Pattern 3: Strategy Pattern (format parsing)**
+
 ```typescript
 // Format-specific parsers implement common interface
 interface FormatParser<T> {
@@ -194,6 +203,7 @@ interface FormatParser<T> {
 ```
 
 **Pattern 4: Worker Delegation Pattern**
+
 ```typescript
 // Heavy parsing offloaded to worker
 export function parseSensorML(url: string): Promise<ParsedSensorML> {
@@ -210,10 +220,10 @@ export function parseSensorML(url: string): Promise<ParsedSensorML> {
 
 ### 3.1 CSAPIEndpoint Class
 
-```typescript
+````typescript
 /**
  * Represents a CSAPI endpoint providing access to connected systems resources.
- * 
+ *
  * @example
  * ```typescript
  * const endpoint = new CSAPIEndpoint('https://api.example.com/csapi');
@@ -258,7 +268,10 @@ export default class CSAPIEndpoint {
   deleteSystem(id: string): Promise<void>;
 
   getDeployments(options?: QueryOptions): Promise<DeploymentCollection>;
-  getDeploymentById(id: string, options?: GetByIdOptions): Promise<DeploymentFeature>;
+  getDeploymentById(
+    id: string,
+    options?: GetByIdOptions
+  ): Promise<DeploymentFeature>;
   createDeployment(deployment: DeploymentInput): Promise<string>;
   updateDeployment(id: string, deployment: DeploymentInput): Promise<void>;
   deleteDeployment(id: string): Promise<void>;
@@ -269,10 +282,18 @@ export default class CSAPIEndpoint {
   updateProcedure(id: string, procedure: ProcedureInput): Promise<void>;
   deleteProcedure(id: string): Promise<void>;
 
-  getSamplingFeatures(options?: QueryOptions): Promise<SamplingFeatureCollection>;
-  getSamplingFeatureById(id: string, options?: GetByIdOptions): Promise<SamplingFeatureFeature>;
+  getSamplingFeatures(
+    options?: QueryOptions
+  ): Promise<SamplingFeatureCollection>;
+  getSamplingFeatureById(
+    id: string,
+    options?: GetByIdOptions
+  ): Promise<SamplingFeatureFeature>;
   createSamplingFeature(feature: SamplingFeatureInput): Promise<string>;
-  updateSamplingFeature(id: string, feature: SamplingFeatureInput): Promise<void>;
+  updateSamplingFeature(
+    id: string,
+    feature: SamplingFeatureInput
+  ): Promise<void>;
   deleteSamplingFeature(id: string): Promise<void>;
 
   getProperties(options?: QueryOptions): Promise<PropertyCollection>;
@@ -281,33 +302,51 @@ export default class CSAPIEndpoint {
   // Part 2 Resources
   getDataStreams(options?: QueryOptions): Promise<DataStreamCollection>;
   getDataStreamById(id: string, options?: GetByIdOptions): Promise<DataStream>;
-  getSystemDataStreams(systemId: string, options?: QueryOptions): Promise<DataStreamCollection>;
+  getSystemDataStreams(
+    systemId: string,
+    options?: QueryOptions
+  ): Promise<DataStreamCollection>;
   createDataStream(datastream: DataStreamInput): Promise<string>;
   updateDataStream(id: string, datastream: DataStreamInput): Promise<void>;
   deleteDataStream(id: string): Promise<void>;
 
   getObservations(options?: QueryOptions): Promise<ObservationCollection>;
-  getObservationById(id: string, options?: GetByIdOptions): Promise<Observation>;
-  getDataStreamObservations(datastreamId: string, options?: QueryOptions): Promise<ObservationCollection>;
+  getObservationById(
+    id: string,
+    options?: GetByIdOptions
+  ): Promise<Observation>;
+  getDataStreamObservations(
+    datastreamId: string,
+    options?: QueryOptions
+  ): Promise<ObservationCollection>;
   createObservations(observations: ObservationInput[]): Promise<string[]>; // Bulk insert
-  
+
   getControlStreams(options?: QueryOptions): Promise<ControlStreamCollection>;
-  getControlStreamById(id: string, options?: GetByIdOptions): Promise<ControlStream>;
-  getSystemControlStreams(systemId: string, options?: QueryOptions): Promise<ControlStreamCollection>;
+  getControlStreamById(
+    id: string,
+    options?: GetByIdOptions
+  ): Promise<ControlStream>;
+  getSystemControlStreams(
+    systemId: string,
+    options?: QueryOptions
+  ): Promise<ControlStreamCollection>;
   createControlStream(stream: ControlStreamInput): Promise<string>;
   updateControlStream(id: string, stream: ControlStreamInput): Promise<void>;
   deleteControlStream(id: string): Promise<void>;
 
   getCommands(options?: QueryOptions): Promise<CommandCollection>;
   getCommandById(id: string, options?: GetByIdOptions): Promise<Command>;
-  getControlStreamCommands(controlStreamId: string, options?: QueryOptions): Promise<CommandCollection>;
+  getControlStreamCommands(
+    controlStreamId: string,
+    options?: QueryOptions
+  ): Promise<CommandCollection>;
   createCommands(commands: CommandInput[]): Promise<string[]>; // Bulk submit
 
   // Helper methods
   getVersion(): string | undefined;
   clearCache(): void;
 }
-```
+````
 
 ### 3.2 Query Options
 
@@ -315,25 +354,25 @@ export default class CSAPIEndpoint {
 interface QueryOptions {
   /** Bounding box filter [minx, miny, maxx, maxy] */
   bbox?: BoundingBox;
-  
+
   /** Temporal filter (ISO 8601 interval or instant) */
   datetime?: string;
-  
+
   /** Maximum number of results */
   limit?: number;
-  
+
   /** Pagination offset */
   offset?: number;
-  
+
   /** CQL2 filter expression */
   filter?: string;
-  
+
   /** Property selection (comma-separated) */
   properties?: string[];
-  
+
   /** Sort by property(s) */
   sortby?: string;
-  
+
   /** Output format (MIME type) */
   f?: string;
 }
@@ -444,12 +483,14 @@ export interface Observation {
 ### 4.1 Format Detection
 
 **Strategy:** Multi-level detection
+
 1. **Content-Type header** (most reliable)
 2. **Body structure analysis** (JSON key patterns)
 3. **Context inference** (resource type + operation)
 4. **Fallback heuristics** (educated guesses)
 
 **Implementation:**
+
 ```typescript
 export interface FormatDetector {
   detect(
@@ -473,6 +514,7 @@ export interface DetectedFormat {
 ```
 
 **Detection Rules:**
+
 ```typescript
 // Rule 1: Content-Type header
 if (contentType === 'application/geo+json') return 'geojson';
@@ -480,11 +522,17 @@ if (contentType === 'application/sensorml+json') return 'sensorml';
 if (contentType === 'application/swe+json') return 'swe-common';
 
 // Rule 2: GeoJSON structure
-if (body.type === 'Feature' || body.type === 'FeatureCollection') return 'geojson';
+if (body.type === 'Feature' || body.type === 'FeatureCollection')
+  return 'geojson';
 
 // Rule 3: SensorML structure
-if (body.definition?.startsWith('http://www.opengis.net/def/observationType/OGC-OM/2.0/')) {
-  if (body.type === 'PhysicalSystem' || body.type === 'PhysicalComponent') return 'sensorml';
+if (
+  body.definition?.startsWith(
+    'http://www.opengis.net/def/observationType/OGC-OM/2.0/'
+  )
+) {
+  if (body.type === 'PhysicalSystem' || body.type === 'PhysicalComponent')
+    return 'sensorml';
 }
 
 // Rule 4: Context-based (e.g., Systems use GeoJSON or SensorML)
@@ -496,6 +544,7 @@ if (context.resourceType === 'system' && hasGeometry(body)) return 'geojson';
 **Scope:** All geometry types + Feature/FeatureCollection
 
 **Implementation:**
+
 ```typescript
 export interface GeoJSONParser {
   parseFeature(data: unknown): Feature;
@@ -505,13 +554,13 @@ export interface GeoJSONParser {
 }
 
 // Supported geometry types
-export type Geometry = 
-  | Point 
-  | LineString 
-  | Polygon 
-  | MultiPoint 
-  | MultiLineString 
-  | MultiPolygon 
+export type Geometry =
+  | Point
+  | LineString
+  | Polygon
+  | MultiPoint
+  | MultiLineString
+  | MultiPolygon
   | GeometryCollection;
 
 export interface Point {
@@ -523,6 +572,7 @@ export interface Point {
 ```
 
 **Validation Rules:**
+
 - `type` field required
 - `coordinates` must be valid arrays
 - CRS (if present) must be valid
@@ -535,17 +585,18 @@ export interface Point {
 **Scope:** All process types (SimpleProcess, PhysicalSystem, PhysicalComponent, AggregateProcess, ProcessChain), all versions (2.0, 2.1)
 
 **Implementation:**
+
 ```typescript
 export interface SensorMLParser {
   parse(data: unknown): SensorMLProcess;
   validate(data: unknown): ValidationResult;
 }
 
-export type SensorMLProcess = 
-  | SimpleProcess 
-  | PhysicalSystem 
-  | PhysicalComponent 
-  | AggregateProcess 
+export type SensorMLProcess =
+  | SimpleProcess
+  | PhysicalSystem
+  | PhysicalComponent
+  | AggregateProcess
   | ProcessChain;
 
 export interface PhysicalSystem {
@@ -574,6 +625,7 @@ export interface PhysicalSystem {
 ```
 
 **Key Elements to Parse:**
+
 1. **Identification:** Identifiers, classifiers, long name, short name
 2. **Characteristics:** Physical properties (size, weight, power, etc.)
 3. **Capabilities:** Measurement capabilities (range, resolution, accuracy)
@@ -582,6 +634,7 @@ export interface PhysicalSystem {
 6. **Connections:** Links between components (data flow)
 
 **Validation Rules:**
+
 - `type` must be valid SensorML process type
 - `definition` must be valid URI
 - Position coordinates must be valid
@@ -595,6 +648,7 @@ export interface PhysicalSystem {
 **Scope:** All component types, all encodings (JSON, Text, Binary)
 
 **Implementation:**
+
 ```typescript
 export interface SWECommonParser {
   parseComponent(data: unknown): SWEComponent;
@@ -651,7 +705,11 @@ export interface DataArray {
 }
 
 // Encodings
-export type SWEEncoding = JSONEncoding | TextEncoding | BinaryEncoding | XMLEncoding;
+export type SWEEncoding =
+  | JSONEncoding
+  | TextEncoding
+  | BinaryEncoding
+  | XMLEncoding;
 
 export interface TextEncoding {
   type: 'TextEncoding';
@@ -670,17 +728,20 @@ export interface BinaryEncoding {
 ```
 
 **Component Parsing Logic:**
+
 1. Detect component type from `type` field
 2. Parse common properties (label, description, definition)
 3. Parse type-specific properties (uom for Quantity, fields for DataRecord, etc.)
 4. Recursively parse nested components (DataRecord fields, DataArray elements)
 
 **Encoding Support:**
+
 - **JSON Encoding:** Default, parse as JavaScript objects/arrays
 - **Text Encoding:** Parse CSV-like strings using token/block separators
 - **Binary Encoding:** Parse base64-encoded or raw binary data using member definitions
 
 **Value Parsing:**
+
 ```typescript
 // Parse observation result against DataStream schema
 const result = parseValue(observation.result, datastream.schema);
@@ -695,6 +756,7 @@ const result = parseValue(observation.result, datastream.schema);
 ```
 
 **Validation Rules:**
+
 - Component `type` must be valid
 - Quantity must have `uom`
 - DataRecord must have `fields` array
@@ -706,6 +768,7 @@ const result = parseValue(observation.result, datastream.schema);
 ### 4.5 Format Validation
 
 **Validation Levels:**
+
 1. **Structural:** JSON structure matches expected format
 2. **Type:** Field types correct (string, number, array, object)
 3. **Required:** Required fields present
@@ -714,6 +777,7 @@ const result = parseValue(observation.result, datastream.schema);
 6. **Cross-Resource:** Foreign keys valid (e.g., datastream references existing system)
 
 **Implementation:**
+
 ```typescript
 export interface Validator {
   validate(data: unknown, schema: ValidationSchema): ValidationResult;
@@ -738,6 +802,7 @@ export type ValidationMode = 'strict' | 'lenient';
 ```
 
 **Validation Strategy:**
+
 - **Pre-Request:** Validate create/update payloads before sending to server
 - **Post-Response:** Validate server responses to catch malformed data
 - **Configurable:** Allow users to set validation mode (strict vs lenient)
@@ -760,17 +825,17 @@ export async function getSystems(
 ): Promise<SystemCollection> {
   // 1. Build URL with query parameters
   const url = buildSystemsUrl(endpoint.baseUrl, options);
-  
+
   // 2. Fetch data
   const response = await fetchWithOptions(url, endpoint.fetchOptions);
-  
+
   // 3. Detect format
   const format = detectFormat(
     response.headers.get('content-type'),
     await response.json(),
     { resourceType: 'system', operation: 'list' }
   );
-  
+
   // 4. Parse based on format
   let systems: SystemCollection;
   if (format.format === 'geojson') {
@@ -779,12 +844,12 @@ export async function getSystems(
     // Convert SensorML to canonical format
     systems = convertSensorMLToCollection(parseSensorML(response.body));
   }
-  
+
   // 5. Validate (optional)
   if (endpoint.validationMode === 'strict') {
     validateSystemCollection(systems);
   }
-  
+
   // 6. Return typed result
   return systems;
 }
@@ -819,6 +884,7 @@ export function buildSystemsUrl(
 ### 5.2 Resource Modules
 
 **Part 1 Resources:**
+
 - `systems.ts` - System operations (~150 lines)
 - `deployments.ts` - Deployment operations (~150 lines)
 - `procedures.ts` - Procedure operations (~100 lines)
@@ -826,6 +892,7 @@ export function buildSystemsUrl(
 - `properties.ts` - Property operations (~80 lines)
 
 **Part 2 Resources:**
+
 - `datastreams.ts` - DataStream operations (~200 lines, includes schema parsing)
 - `observations.ts` - Observation operations (~250 lines, includes bulk insert, streaming)
 - `control-streams.ts` - Control Stream operations (~150 lines)
@@ -854,7 +921,11 @@ export async function getDataStreamObservations(
   datastreamId: string,
   options: QueryOptions = {}
 ): Promise<ObservationCollection> {
-  const url = buildDataStreamObservationsUrl(endpoint.baseUrl, datastreamId, options);
+  const url = buildDataStreamObservationsUrl(
+    endpoint.baseUrl,
+    datastreamId,
+    options
+  );
   // ... same as getObservations but different URL
 }
 ```
@@ -866,6 +937,7 @@ export async function getDataStreamObservations(
 ### 6.1 Worker Usage Strategy
 
 **What runs in worker:**
+
 - Conformance parsing (JSON parsing)
 - Collections parsing (JSON parsing + format detection)
 - SensorML parsing (heavy JSON parsing + validation)
@@ -874,6 +946,7 @@ export async function getDataStreamObservations(
 - Format validation (CPU-intensive)
 
 **What stays in main thread:**
+
 - HTTP requests (fetch API)
 - Cache management
 - URL building
@@ -882,6 +955,7 @@ export async function getDataStreamObservations(
 ### 6.2 Worker Implementation
 
 **Worker Handler Registration:**
+
 ```typescript
 // worker/worker.ts
 import * as conformance from '../csapi/conformance.js';
@@ -889,8 +963,7 @@ import * as sensorml from '../csapi/formats/sensorml.js';
 import * as sweCommon from '../csapi/formats/swe-common.js';
 
 addTaskHandler('parseConformance', globalThis, ({ url }: { url: string }) =>
-  queryJsonDocument(url)
-    .then((json) => conformance.parse(json))
+  queryJsonDocument(url).then((json) => conformance.parse(json))
 );
 
 addTaskHandler('parseSensorML', globalThis, ({ data }: { data: unknown }) =>
@@ -901,12 +974,16 @@ addTaskHandler('parseSWEComponent', globalThis, ({ data }: { data: unknown }) =>
   sweCommon.parseComponent(data)
 );
 
-addTaskHandler('parseObservations', globalThis, ({ data, schema }: { data: unknown; schema: SWEComponent }) =>
-  sweCommon.parseValues(data, schema)
+addTaskHandler(
+  'parseObservations',
+  globalThis,
+  ({ data, schema }: { data: unknown; schema: SWEComponent }) =>
+    sweCommon.parseValues(data, schema)
 );
 ```
 
 **Worker API:**
+
 ```typescript
 // worker/index.ts
 export function parseConformance(url: string): Promise<ConformanceDocument> {
@@ -930,6 +1007,7 @@ export function parseObservations(
 ```
 
 **Fallback Mode:**
+
 ```typescript
 // Enable fallback when workers not available (e.g., Node.js, old browsers)
 import { enableFallbackWithoutWorker } from '@camptocamp/ogc-client/worker';
@@ -951,11 +1029,7 @@ if (typeof Worker === 'undefined') {
  * Base error class for all CSAPI errors.
  */
 export class CSAPIError extends Error {
-  constructor(
-    message: string,
-    public code: string,
-    public cause?: Error
-  ) {
+  constructor(message: string, public code: string, public cause?: Error) {
     super(message);
     this.name = 'CSAPIError';
   }
@@ -1019,11 +1093,15 @@ export class NetworkError extends CSAPIError {
 ### 7.2 Error Handling Strategy
 
 **At HTTP Layer:**
+
 ```typescript
-async function fetchWithOptions(url: string, options: FetchOptions): Promise<Response> {
+async function fetchWithOptions(
+  url: string,
+  options: FetchOptions
+): Promise<Response> {
   try {
     const response = await fetch(url, options);
-    
+
     // Check for HTTP errors
     if (!response.ok) {
       const body = await response.text();
@@ -1035,7 +1113,7 @@ async function fetchWithOptions(url: string, options: FetchOptions): Promise<Res
         exception
       );
     }
-    
+
     return response;
   } catch (error) {
     if (error instanceof ServerError) throw error;
@@ -1045,6 +1123,7 @@ async function fetchWithOptions(url: string, options: FetchOptions): Promise<Res
 ```
 
 **At Parsing Layer:**
+
 ```typescript
 function parseSensorML(data: unknown): SensorMLProcess {
   try {
@@ -1056,7 +1135,7 @@ function parseSensorML(data: unknown): SensorMLProcess {
         '$'
       );
     }
-    
+
     // Type validation
     if (!data.type || !VALID_SENSORML_TYPES.includes(data.type)) {
       throw new FormatParseError(
@@ -1065,7 +1144,7 @@ function parseSensorML(data: unknown): SensorMLProcess {
         '$.type'
       );
     }
-    
+
     // Parse fields
     // ...
   } catch (error) {
@@ -1081,34 +1160,39 @@ function parseSensorML(data: unknown): SensorMLProcess {
 ```
 
 **At Validation Layer:**
+
 ```typescript
 function validateSystem(system: SystemFeature): ValidationResult {
   const errors: ValidationError[] = [];
-  
+
   // Required fields
   if (!system.properties?.name) {
-    errors.push(new ValidationError(
-      'System name is required',
-      '$.properties.name',
-      'string',
-      undefined
-    ));
+    errors.push(
+      new ValidationError(
+        'System name is required',
+        '$.properties.name',
+        'string',
+        undefined
+      )
+    );
   }
-  
+
   // Geometry validation
   if (system.geometry && !isValidGeometry(system.geometry)) {
-    errors.push(new ValidationError(
-      'Invalid geometry',
-      '$.geometry',
-      'valid GeoJSON geometry',
-      system.geometry
-    ));
+    errors.push(
+      new ValidationError(
+        'Invalid geometry',
+        '$.geometry',
+        'valid GeoJSON geometry',
+        system.geometry
+      )
+    );
   }
-  
+
   return {
     valid: errors.length === 0,
     errors,
-    warnings: []
+    warnings: [],
   };
 }
 ```
@@ -1125,19 +1209,18 @@ interface OGCException {
 function parseOGCException(body: string): OGCException | null {
   try {
     const json = JSON.parse(body);
-    
+
     // OGC API style exception
     if (json.code && json.description) {
       return {
         code: json.code,
         locator: json.locator,
-        message: json.description
+        message: json.description,
       };
     }
-    
+
     // Try XML format (older OGC services)
     // ...
-    
   } catch {
     return null;
   }
@@ -1151,21 +1234,25 @@ function parseOGCException(body: string): OGCException | null {
 ### 8.1 What Gets Cached
 
 **Static Metadata (cache indefinitely):**
+
 - Landing page (`/`)
 - Conformance classes (`/conformance`)
 - Collections (`/collections`)
 
 **Dynamic Resources (no caching or short TTL):**
+
 - Resource collections (systems, observations, etc.) - data changes frequently
 - Individual resources by ID - may be updated
 
 **Parsed Results (cache in memory):**
+
 - Format detection results (for same URL)
 - Parsed schemas (DataStream schemas reused for observations)
 
 ### 8.2 Cache Implementation
 
 **Use upstream cache utility:**
+
 ```typescript
 import { useCache } from '../shared/cache.js';
 
@@ -1195,6 +1282,7 @@ this._collectionsPromise = useCache(
 ```
 
 **Cache Invalidation:**
+
 ```typescript
 export class CSAPIEndpoint {
   /**
@@ -1233,6 +1321,7 @@ src/csapi/
 ### 9.2 Test Fixtures
 
 **Fixture Organization:**
+
 ```
 fixtures/csapi/
 ├── conformance.json
@@ -1261,6 +1350,7 @@ fixtures/csapi/
 ```
 
 **Fixture Sources:**
+
 1. **52°North Demo Server:** Download real responses (Section 16.1)
 2. **Spec Examples:** Use examples from CSAPI specification
 3. **Manual Creation:** Create edge cases, invalid examples
@@ -1268,28 +1358,29 @@ fixtures/csapi/
 ### 9.3 Unit Tests
 
 **Format Parser Tests:**
+
 ```typescript
 describe('SensorML Parser', () => {
   describe('PhysicalSystem', () => {
     it('parses valid PhysicalSystem', () => {
       const data = loadFixture('sensorml/physical-system.json');
       const result = parseSensorML(data);
-      
+
       expect(result.type).toBe('PhysicalSystem');
       expect(result.id).toBe('weatherStation01');
       expect(result.components).toHaveLength(3);
     });
-    
+
     it('throws on missing required fields', () => {
       const data = { type: 'PhysicalSystem' }; // Missing id, definition
-      
+
       expect(() => parseSensorML(data)).toThrow(FormatParseError);
     });
-    
+
     it('parses nested components recursively', () => {
       const data = loadFixture('sensorml/aggregate-process.json');
       const result = parseSensorML(data);
-      
+
       expect(result.components[0].type).toBe('PhysicalComponent');
     });
   });
@@ -1297,6 +1388,7 @@ describe('SensorML Parser', () => {
 ```
 
 **Resource Operation Tests:**
+
 ```typescript
 describe('Systems Resource', () => {
   beforeEach(() => {
@@ -1306,25 +1398,25 @@ describe('Systems Resource', () => {
       }
     };
   });
-  
+
   it('getSystems returns system collection', async () => {
     const endpoint = new CSAPIEndpoint('https://api.example.com/csapi');
     await endpoint.isReady();
-    
+
     const systems = await endpoint.getSystems();
-    
+
     expect(systems.type).toBe('FeatureCollection');
     expect(systems.features).toHaveLength(5);
   });
-  
+
   it('getSystems with bbox filter', async () => {
     const endpoint = new CSAPIEndpoint('https://api.example.com/csapi');
     await endpoint.isReady();
-    
+
     const systems = await endpoint.getSystems({
-      bbox: [-180, -90, 180, 90]
+      bbox: [-180, -90, 180, 90],
     });
-    
+
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('bbox=-180,-90,180,90')
     );
@@ -1335,36 +1427,40 @@ describe('Systems Resource', () => {
 ### 9.4 Integration Tests
 
 **End-to-End Workflow:**
+
 ```typescript
 describe('CSAPI Integration', () => {
   let endpoint: CSAPIEndpoint;
-  
+
   beforeAll(async () => {
     // Use mock server or real 52°North demo
     endpoint = new CSAPIEndpoint('https://ogc-demo.services.52north.org/csapi');
     await endpoint.isReady();
   });
-  
+
   it('complete workflow: discover systems, get datastreams, fetch observations', async () => {
     // 1. Get systems
     const systems = await endpoint.getSystems({ limit: 10 });
     expect(systems.features.length).toBeGreaterThan(0);
-    
+
     // 2. Get datastreams for first system
     const systemId = systems.features[0].id;
     const datastreams = await endpoint.getSystemDataStreams(systemId);
     expect(datastreams.items.length).toBeGreaterThan(0);
-    
+
     // 3. Get observations for first datastream
     const datastreamId = datastreams.items[0].id;
-    const observations = await endpoint.getDataStreamObservations(datastreamId, {
-      limit: 100
-    });
+    const observations = await endpoint.getDataStreamObservations(
+      datastreamId,
+      {
+        limit: 100,
+      }
+    );
     expect(observations.items.length).toBeGreaterThan(0);
-    
+
     // 4. Validate observation results match datastream schema
     const schema = datastreams.items[0].schema;
-    observations.items.forEach(obs => {
+    observations.items.forEach((obs) => {
       const validResult = validateValue(obs.result, schema);
       expect(validResult.valid).toBe(true);
     });
@@ -1379,29 +1475,29 @@ describe('Performance', () => {
   it('parses 10K observations in < 5 seconds', async () => {
     const data = loadFixture('observations/obs-bulk-10k.json');
     const schema = loadFixture('datastreams/datastream-datarecord.json').schema;
-    
+
     const start = Date.now();
     const results = parseObservations(data, schema);
     const duration = Date.now() - start;
-    
+
     expect(duration).toBeLessThan(5000);
     expect(results).toHaveLength(10000);
   });
-  
+
   it('worker parsing is faster than sync for large datasets', async () => {
     const data = loadFixture('observations/obs-bulk-10k.json');
     const schema = loadFixture('datastreams/datastream-datarecord.json').schema;
-    
+
     // Sync parsing
     const syncStart = Date.now();
     parseObservationsSync(data, schema);
     const syncDuration = Date.now() - syncStart;
-    
+
     // Worker parsing
     const workerStart = Date.now();
     await parseObservationsWorker(data, schema);
     const workerDuration = Date.now() - workerStart;
-    
+
     expect(workerDuration).toBeLessThan(syncDuration);
   });
 });
@@ -1412,17 +1508,20 @@ describe('Performance', () => {
 **Target: 90%+ overall coverage**
 
 **Critical Paths (100% coverage required):**
+
 - Format parsers (GeoJSON, SensorML, SWE Common)
 - Format detection
 - Error handling
 - Resource URL builders
 
 **Medium Priority (80-90% coverage):**
+
 - Validation
 - Worker handlers
 - Cache management
 
 **Lower Priority (70-80% coverage):**
+
 - Helper methods
 - Type guards
 - Utility functions
@@ -1434,51 +1533,61 @@ describe('Performance', () => {
 ### 10.1 Week-by-Week Timeline
 
 **Week 1: Core Infrastructure + GeoJSON**
+
 - Days 1-2: Project setup, CSAPIEndpoint skeleton, landing page/conformance/collections parsing
 - Days 3-4: Cache implementation, HTTP utilities, error types
 - Day 5: GeoJSON parser (all geometry types) + tests
 
 **Week 2: SensorML Parser**
+
 - Days 1-2: SimpleProcess parsing + tests
 - Days 3-4: PhysicalSystem, PhysicalComponent parsing + tests
 - Day 5: AggregateProcess, ProcessChain parsing + tests
 
 **Week 3: SWE Common Core**
+
 - Days 1-2: Basic types (Quantity, Count, Boolean, Text, Category, Time) + tests
 - Days 3-4: Structured types (DataRecord, Vector, DataArray) + tests
 - Day 5: Advanced types (DataChoice, Matrix) + tests
 
 **Week 4: SWE Common Encodings + Validation**
+
 - Days 1-2: JSON encoding (complete) + tests
 - Days 3-4: Text encoding, Binary encoding + tests
 - Day 5: Format detector, format validator + tests
 
 **Week 5: Part 1 Resources**
+
 - Days 1-2: Systems, Deployments (GET, CRUD) + tests
 - Days 3-4: Procedures, Sampling Features (GET, CRUD) + tests
 - Day 5: Properties (GET) + query parameters (bbox, datetime, limit, offset) + tests
 
 **Week 6: Part 2 Resources - DataStreams/Observations Start**
+
 - Days 1-2: DataStreams (GET, CRUD, nested) + tests
 - Days 3-4: DataStream schema parsing integration + tests
 - Day 5: Observations (GET, nested) - basic + tests
 
 **Week 7: Part 2 Resources - Observations Complete + Control**
+
 - Days 1-2: Observation bulk insert, pagination + tests
 - Days 3-4: Control Streams (GET, CRUD, nested) + tests
 - Day 5: Commands (GET, nested, bulk) + tests
 
 **Week 8: Advanced Features + Worker Support**
+
 - Days 1-2: CQL2 filter support, property selection, sorting + tests
 - Days 3-4: Association helpers, link traversal + tests
 - Day 5: Worker handlers (all parsers), fallback mode + tests
 
 **Week 9: Comprehensive Testing**
+
 - Days 1-2: Unit test coverage review (target 90%+), fix gaps
 - Days 3-4: Integration tests with 52°North demo server
 - Day 5: Performance tests (10K+ observations), profiling
 
 **Week 10: Documentation + Polish**
+
 - Days 1-2: JSDoc on all public APIs, ensure completeness
 - Days 3-4: README with comprehensive examples (all resources)
 - Day 5: Final polish, PR preparation, request upstream review
@@ -1486,6 +1595,7 @@ describe('Performance', () => {
 ### 10.2 Deliverables Checklist
 
 **Code Deliverables:**
+
 - [ ] `src/csapi/endpoint.ts` - CSAPIEndpoint class
 - [ ] `src/csapi/conformance.ts` - Conformance parsing
 - [ ] `src/csapi/collections.ts` - Collections parsing
@@ -1501,18 +1611,21 @@ describe('Performance', () => {
 - [ ] `src/worker/index.ts` - Worker API
 
 **Test Deliverables:**
+
 - [ ] Unit tests for all modules (90%+ coverage)
 - [ ] Integration tests with fixtures
 - [ ] Performance tests
 - [ ] Test fixtures from 52°North demo server
 
 **Documentation Deliverables:**
+
 - [ ] JSDoc on all public classes/methods/types
 - [ ] README with installation + examples
 - [ ] Type definitions (.d.ts files)
 - [ ] Migration guide (if applicable)
 
 **Quality Deliverables:**
+
 - [ ] 0 TypeScript errors
 - [ ] 0 ESLint errors
 - [ ] Passes Prettier formatting
@@ -1522,16 +1635,19 @@ describe('Performance', () => {
 ### 10.3 Dependencies and Blockers
 
 **External Dependencies:**
+
 - camptocamp/ogc-client repository access (for PR)
 - 52°North demo server availability (for integration testing)
 - Maintainer availability for review
 
 **Potential Blockers:**
+
 - Binary encoding complexity (SWE Common) - may need extra time
 - CQL2 filter implementation - spec still evolving
 - Performance issues with 10K+ observations - may need optimization
 
 **Mitigation:**
+
 - Engage maintainers early (Week 1-2)
 - Have backup plan for complex features (defer if needed)
 - Profile early and often (Week 6-9)
@@ -1629,26 +1745,26 @@ export interface SystemInput {
 
 ## Appendix C: Success Metrics Summary
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Test Coverage | 90%+ | Jest coverage report |
-| Lines of Code | ~10,000 | cloc tool |
-| TypeScript Errors | 0 | tsc --noEmit |
-| ESLint Errors | 0 | eslint . |
-| Bundle Size | < 150KB (gzip) | webpack-bundle-analyzer |
-| Endpoint Init Time | < 2s | Performance test |
-| 10K Observation Parse | < 5s | Performance test |
-| JSDoc Coverage | 100% public APIs | Manual review |
-| Integration Tests Pass | 100% | CI/CD |
-| PR Approval | Yes | GitHub PR |
+| Metric                 | Target           | Measurement             |
+| ---------------------- | ---------------- | ----------------------- |
+| Test Coverage          | 90%+             | Jest coverage report    |
+| Lines of Code          | ~10,000          | cloc tool               |
+| TypeScript Errors      | 0                | tsc --noEmit            |
+| ESLint Errors          | 0                | eslint .                |
+| Bundle Size            | < 150KB (gzip)   | webpack-bundle-analyzer |
+| Endpoint Init Time     | < 2s             | Performance test        |
+| 10K Observation Parse  | < 5s             | Performance test        |
+| JSDoc Coverage         | 100% public APIs | Manual review           |
+| Integration Tests Pass | 100%             | CI/CD                   |
+| PR Approval            | Yes              | GitHub PR               |
 
 ---
 
 ## Document Change Log
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2026-01-31 | Initial functional specification |
+| Version | Date       | Changes                          |
+| ------- | ---------- | -------------------------------- |
+| 1.0     | 2026-01-31 | Initial functional specification |
 
 ---
 

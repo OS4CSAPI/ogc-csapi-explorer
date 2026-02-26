@@ -28,7 +28,7 @@
 > integration tests — tests real behavior), Section 7 recommendations.
 >
 > **Key takeaway from this document's own analysis:** Types compile = types
-> work. The EDR pattern (Section 1) tests *behavior* (serialization via
+> work. The EDR pattern (Section 1) tests _behavior_ (serialization via
 > `zParameterToString`), not structure. CSAPI type tests should similarly
 > test functions that consume/produce these types, not construct and re-read
 > object literals.
@@ -42,11 +42,13 @@
 **Research Time:** 3.5 hours (February 8, 2026)
 
 **Primary Source(s):**
+
 - [TypeScript Types Analysis](../../upstream/typescript-types-analysis.md)
 - [Datatype Schema Requirements](../../requirements/csapi-datatype-schema-requirements.md)
 - [CSAPI Implementation Guide](../../../planning/csapi-implementation-guide.md) (Type system specification)
 
 **Supporting Resources:**
+
 - Section 1: [EDR Test Blueprint](01-edr-test-blueprint.md) (upstream type test patterns)
 - Section 2: [Upstream Test Consistency](02-upstream-test-consistency.md) (type testing approaches)
 - Section 8: [CSAPI Specification Reference](08-csapi-specification-test-requirements.md) (reclassified — spec property catalog, not test generator)
@@ -64,6 +66,7 @@ TypeScript type testing strategy for CSAPI implementation based on upstream patt
 ### Key Findings
 
 **Type Testing Approach:**
+
 - ✅ **Compilation-only testing** (matches upstream)
 - ✅ **Explicit type annotations** in tests (`const x: Type = ...`)
 - ✅ **Jest + ts-jest + TypeScript compiler** (no specialized tools)
@@ -71,6 +74,7 @@ TypeScript type testing strategy for CSAPI implementation based on upstream patt
 - ❌ **No tsd/dtslint** (not needed for CSAPI's type complexity)
 
 **CSAPI Type Inventory:**
+
 - **20+ interfaces** (9 resources + helpers + collections)
 - **3 discriminated unions** (minimal - mostly simple interfaces)
 - **5 type aliases** (string unions for systemType, etc.)
@@ -78,6 +82,7 @@ TypeScript type testing strategy for CSAPI implementation based on upstream patt
 - **0 generic constraints** requiring specialized testing
 
 **Testing Strategy:**
+
 - **Primary:** TypeScript compilation validates type correctness
 - **Secondary:** Runtime tests validate behavior (serialization, discrimination)
 - **Pattern:** Explicit type annotations + Jest assertions
@@ -88,6 +93,7 @@ TypeScript type testing strategy for CSAPI implementation based on upstream patt
 **Adopt upstream pattern:** Jest + TypeScript compiler, NO specialized type testing tools.
 
 **Why:**
+
 1. Upstream successfully tests complex discriminated unions (EDR ZParameter) this way
 2. CSAPI types are simpler than EDR (fewer discriminated unions)
 3. No tsd/dtslint in upstream dependencies (verified in package.json)
@@ -126,6 +132,7 @@ TypeScript type testing strategy for CSAPI implementation based on upstream patt
 ```
 
 **Key findings:**
+
 - ✅ Jest 29.7.0 + ts-jest 29.1.1 (TypeScript integration)
 - ✅ TypeScript 5.9.3 (latest)
 - ❌ **No tsd or dtslint** (no specialized type testing tools)
@@ -169,6 +176,7 @@ describe('zParameterToString', () => {
 ```
 
 **Pattern components:**
+
 1. **Explicit type annotation:** `const z: ZParameter = ...`
 2. **TypeScript validates at compile time:** Wrong structure won't compile
 3. **Jest validates runtime behavior:** Serialization correctness
@@ -223,6 +231,7 @@ describe('DateTimeParameterToEDRString', () => {
 ```
 
 **Pattern components:**
+
 1. **Union type testing:** `Date | { start: Date, end?: Date }`
 2. **Each variant tested:** Plain Date, start-only, start+end
 3. **Error case tested:** Invalid structure throws
@@ -242,7 +251,7 @@ export type DateTimeParameter = Date | { start: Date; end?: Date };
 // From endpoint.spec.ts
 it('can produce a EDR query builder', async () => {
   const builder = await endpoint.edr('reservoir-api');
-  
+
   // TypeScript validates builder has correct type
   expect(builder).toBeTruthy();
   expect(builder.supported_queries).toEqual(
@@ -252,6 +261,7 @@ it('can produce a EDR query builder', async () => {
 ```
 
 **Pattern components:**
+
 1. **No explicit interface test files**
 2. **Interfaces validated by usage** in integration tests
 3. **TypeScript compiler ensures correctness**
@@ -263,20 +273,20 @@ it('can produce a EDR query builder', async () => {
 ❌ **Not found:** `expectError()` from tsd  
 ❌ **Not found:** Type-only test files (e.g., `types.test-d.ts`)  
 ❌ **Not found:** Separate type compilation test suites  
-❌ **Not found:** Type guard compilation tests  
+❌ **Not found:** Type guard compilation tests
 
 **Conclusion:** Upstream uses **implicit type testing** via TypeScript compilation, not explicit type assertion libraries.
 
 ### Upstream Type Testing Summary
 
-| Category | Approach | Tool | Example |
-|----------|----------|------|---------|
-| **Interfaces** | Compilation-only | TypeScript compiler | N/A (compiles or fails) |
-| **Discriminated unions** | Explicit type + runtime test | Jest + TypeScript | ZParameter tests |
-| **Union types** | Runtime behavior tests | Jest + TypeScript | DateTimeParameter tests |
-| **Type aliases** | Compilation-only | TypeScript compiler | N/A |
-| **Generics** | Not applicable | N/A | No complex generics |
-| **Type guards** | Not tested | N/A | Not found in codebase |
+| Category                 | Approach                     | Tool                | Example                 |
+| ------------------------ | ---------------------------- | ------------------- | ----------------------- |
+| **Interfaces**           | Compilation-only             | TypeScript compiler | N/A (compiles or fails) |
+| **Discriminated unions** | Explicit type + runtime test | Jest + TypeScript   | ZParameter tests        |
+| **Union types**          | Runtime behavior tests       | Jest + TypeScript   | DateTimeParameter tests |
+| **Type aliases**         | Compilation-only             | TypeScript compiler | N/A                     |
+| **Generics**             | Not applicable               | N/A                 | No complex generics     |
+| **Type guards**          | Not tested                   | N/A                 | Not found in codebase   |
 
 **Key insight:** Upstream trusts TypeScript compiler for type correctness, uses Jest for runtime behavior validation.
 
@@ -289,6 +299,7 @@ it('can produce a EDR query builder', async () => {
 **Description:** Explicit type assertion library for testing TypeScript definitions.
 
 **Features:**
+
 ```typescript
 import { expectType, expectError, expectAssignable } from 'tsd';
 
@@ -309,6 +320,7 @@ expectAssignable<QueryOptions>(options);
 ```
 
 **Pros:**
+
 - ✅ Explicit type assertions in tests
 - ✅ Tests type inference
 - ✅ Tests generic constraints
@@ -316,6 +328,7 @@ expectAssignable<QueryOptions>(options);
 - ✅ Popular in TypeScript libraries (5.8M weekly downloads)
 
 **Cons:**
+
 - ❌ Additional dependency
 - ❌ Separate test execution (not Jest)
 - ❌ Learning curve
@@ -323,6 +336,7 @@ expectAssignable<QueryOptions>(options);
 - ❌ Not used by upstream
 
 **When to use:**
+
 - Complex generic type constraints
 - Type inference is critical to API usability
 - Library with heavy TypeScript API consumers
@@ -334,6 +348,7 @@ expectAssignable<QueryOptions>(options);
 **Description:** Type definition testing tool from Microsoft DefinitelyTyped.
 
 **Features:**
+
 ```typescript
 // Uses special comments for assertions
 const system: System = { ... };
@@ -348,11 +363,13 @@ builder.buildGetSystemsUrl({ invalidParam: true });
 ```
 
 **Pros:**
+
 - ✅ Microsoft-maintained
-- ✅ Used by DefinitelyTyped (@types/*)
+- ✅ Used by DefinitelyTyped (@types/\*)
 - ✅ Tests type definitions at scale
 
 **Cons:**
+
 - ❌ Designed for .d.ts files (not .ts implementation)
 - ❌ Comment-based syntax (not type-safe)
 - ❌ Deprecated in favor of newer tools
@@ -360,6 +377,7 @@ builder.buildGetSystemsUrl({ invalidParam: true });
 - ❌ Not suited for implementation testing
 
 **When to use:**
+
 - Publishing standalone .d.ts files
 - Contributing to DefinitelyTyped
 - Legacy type definition projects
@@ -371,6 +389,7 @@ builder.buildGetSystemsUrl({ invalidParam: true });
 **Description:** Rely on TypeScript compiler for type checking, Jest for runtime validation.
 
 **Features:**
+
 ```typescript
 // Compilation-based type testing
 describe('System interface', () => {
@@ -384,12 +403,12 @@ describe('System interface', () => {
       },
       links: [],
     };
-    
+
     // TypeScript validates structure at compile time
     expect(system.properties.name).toBe('Temperature Sensor');
     expect(system.properties.systemType).toBe('sensor');
   });
-  
+
   it('accepts system with optional properties', () => {
     const system: System = {
       id: 'sys-001',
@@ -402,7 +421,7 @@ describe('System interface', () => {
       geometry: { type: 'Point', coordinates: [0, 0] },
       links: [],
     };
-    
+
     expect(system.properties.description).toBe('Optional description');
     expect(system.geometry?.type).toBe('Point');
   });
@@ -410,6 +429,7 @@ describe('System interface', () => {
 ```
 
 **Pros:**
+
 - ✅ Zero additional dependencies
 - ✅ Matches upstream pattern
 - ✅ TypeScript compiler = authoritative type checker
@@ -418,11 +438,13 @@ describe('System interface', () => {
 - ✅ Fast (no separate test runner)
 
 **Cons:**
+
 - ❌ Can't explicitly test type inference
 - ❌ Can't test "this should NOT compile" scenarios
 - ❌ No explicit type assertions
 
 **When to use:**
+
 - Simple type systems (interfaces, unions, aliases)
 - No complex generic constraints
 - Following established patterns
@@ -434,6 +456,7 @@ describe('System interface', () => {
 **Description:** Lightweight type assertion library, compile-time only.
 
 **Features:**
+
 ```typescript
 import { expectTypeOf } from 'expect-type';
 
@@ -444,20 +467,25 @@ expectTypeOf<System>().toMatchTypeOf<{ id: string }>();
 expectTypeOf(builder.buildGetSystemsUrl).returns.toBeString();
 
 // Assert parameter types
-expectTypeOf(builder.buildGetSystemsUrl).parameter(0).toMatchTypeOf<SystemQueryOptions>();
+expectTypeOf(builder.buildGetSystemsUrl)
+  .parameter(0)
+  .toMatchTypeOf<SystemQueryOptions>();
 ```
 
 **Pros:**
+
 - ✅ Compile-time only (no runtime overhead)
 - ✅ TypeScript-native syntax
 - ✅ Lighter than tsd
 
 **Cons:**
+
 - ❌ Additional dependency
 - ❌ Less mature than tsd
 - ❌ Not used by upstream
 
 **When to use:**
+
 - Want type assertions without runtime overhead
 - Don't need tsd's full feature set
 
@@ -465,16 +493,17 @@ expectTypeOf(builder.buildGetSystemsUrl).parameter(0).toMatchTypeOf<SystemQueryO
 
 ### Tool Comparison Matrix
 
-| Tool | Complexity | Dependencies | Upstream Match | CSAPI Fit | Recommendation |
-|------|------------|--------------|----------------|-----------|----------------|
-| **TypeScript compiler only** | Low | None | ✅ Yes | ✅ High | ✅ **RECOMMENDED** |
-| **tsd** | Medium | tsd | ❌ No | ⚠️ Low | ❌ Not needed |
-| **dtslint** | High | dtslint | ❌ No | ❌ None | ❌ Deprecated |
-| **expect-type** | Low | expect-type | ❌ No | ⚠️ Medium | ⚠️ Optional |
+| Tool                         | Complexity | Dependencies | Upstream Match | CSAPI Fit | Recommendation     |
+| ---------------------------- | ---------- | ------------ | -------------- | --------- | ------------------ |
+| **TypeScript compiler only** | Low        | None         | ✅ Yes         | ✅ High   | ✅ **RECOMMENDED** |
+| **tsd**                      | Medium     | tsd          | ❌ No          | ⚠️ Low    | ❌ Not needed      |
+| **dtslint**                  | High       | dtslint      | ❌ No          | ❌ None   | ❌ Deprecated      |
+| **expect-type**              | Low        | expect-type  | ❌ No          | ⚠️ Medium | ⚠️ Optional        |
 
 ### Recommendation: TypeScript Compiler Only
 
 **Why:**
+
 1. ✅ **Upstream pattern:** EDR successfully tests discriminated unions this way
 2. ✅ **Zero dependencies:** No additional packages required
 3. ✅ **Simple types:** CSAPI has mostly interfaces and simple unions
@@ -482,6 +511,7 @@ expectTypeOf(builder.buildGetSystemsUrl).parameter(0).toMatchTypeOf<SystemQueryO
 5. ✅ **Industry standard:** Many TypeScript libraries follow this approach
 
 **When to reconsider:**
+
 - CSAPI adds complex generic type constraints
 - Type inference becomes critical for API usability
 - Type regressions become a recurring problem
@@ -520,6 +550,7 @@ export interface Command { ... }
 ```
 
 **Testing requirements:**
+
 - ✅ Compilation with required properties
 - ✅ Compilation with optional properties
 - ✅ Correct property types
@@ -561,6 +592,7 @@ export interface DeploymentProperties { ... }
 ```
 
 **Testing requirements:**
+
 - ✅ Compilation with required properties
 - ✅ Optional property handling
 - ✅ Nested property types
@@ -591,6 +623,7 @@ export interface ObservationQueryOptions extends QueryOptions {
 ```
 
 **Testing requirements:**
+
 - ✅ Compilation with optional parameters
 - ✅ Extended interface inheritance
 - ✅ Optional property handling
@@ -604,8 +637,15 @@ export interface ObservationQueryOptions extends QueryOptions {
 ```typescript
 // Const assertion enum
 export const CSAPIResourceTypes = [
-  'System', 'Deployment', 'SamplingFeature', 'Procedure',
-  'Datastream', 'Observation', 'Control', 'ControlStream', 'Command'
+  'System',
+  'Deployment',
+  'SamplingFeature',
+  'Procedure',
+  'Datastream',
+  'Observation',
+  'Control',
+  'ControlStream',
+  'Command',
 ] as const;
 
 export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
@@ -624,6 +664,7 @@ export type ResultValue = number | string | boolean | object;
 ```
 
 **Testing requirements:**
+
 - ✅ Each variant compiles
 - ⚠️ Runtime discrimination (if needed)
 - ✅ Type narrowing (optional)
@@ -651,6 +692,7 @@ export type DeploymentCollection = Collection<Deployment>;
 ```
 
 **Testing requirements:**
+
 - ✅ Generic type parameter works with all resource types
 - ✅ Compilation with typed arrays
 
@@ -662,11 +704,18 @@ export type DeploymentCollection = Collection<Deployment>;
 
 ```typescript
 // Already defined, imported by CSAPI
-import { BoundingBox, DateTimeParameter, CrsCode, MimeType, Contact } from '../../shared/models.js';
+import {
+  BoundingBox,
+  DateTimeParameter,
+  CrsCode,
+  MimeType,
+  Contact,
+} from '../../shared/models.js';
 import { OgcApiDocumentLink } from '../model.js';
 ```
 
 **Testing requirements:**
+
 - ❌ **Not tested in CSAPI** (tested in upstream)
 - ✅ Only test CSAPI usage of these types
 
@@ -674,19 +723,20 @@ import { OgcApiDocumentLink } from '../model.js';
 
 ### Type Inventory Summary
 
-| Category | Count | Lines | Complexity | Testing Priority |
-|----------|-------|-------|------------|-----------------|
-| **Resource interfaces** | 9 | ~250 | Low-Medium | High |
-| **Helper interfaces** | 6 | ~60 | Low | Medium |
-| **Query options** | 3 | ~30 | Low | High |
-| **Union types** | 5 | ~20 | Low | Low |
-| **Collection generics** | 2 | ~30 | Low | Medium |
-| **Reused types** | 6 | 0 (upstream) | N/A | Low |
-| **TOTAL** | **31** | **~390** | **Low-Medium** | |
+| Category                | Count  | Lines        | Complexity     | Testing Priority |
+| ----------------------- | ------ | ------------ | -------------- | ---------------- |
+| **Resource interfaces** | 9      | ~250         | Low-Medium     | High             |
+| **Helper interfaces**   | 6      | ~60          | Low            | Medium           |
+| **Query options**       | 3      | ~30          | Low            | High             |
+| **Union types**         | 5      | ~20          | Low            | Low              |
+| **Collection generics** | 2      | ~30          | Low            | Medium           |
+| **Reused types**        | 6      | 0 (upstream) | N/A            | Low              |
+| **TOTAL**               | **31** | **~390**     | **Low-Medium** |                  |
 
 ### Type Complexity Assessment
 
 **Simple interfaces (most types):**
+
 - System, Deployment, Procedure, etc.
 - QueryOptions, TimeInterval, Characteristic
 - No nested discriminated unions
@@ -694,6 +744,7 @@ import { OgcApiDocumentLink } from '../model.js';
 - Optional properties only
 
 **No complex types requiring specialized testing:**
+
 - ❌ No higher-kinded types
 - ❌ No conditional types
 - ❌ No mapped types with complex transformations
@@ -710,11 +761,11 @@ import { OgcApiDocumentLink } from '../model.js';
 > shape-assertion templates (AP4). Each constructs an object matching a
 > TypeScript interface and asserts the values it just set. For example,
 > Pattern 1 (Interface Compilation Testing) creates `const system: System = 
-> { id: 'sys-001', ... }` then asserts `expect(system.id).toBe('sys-001')`.
+{ id: 'sys-001', ... }` then asserts `expect(system.id).toBe('sys-001')`.
 >
 > The TypeScript compiler already validates that the object literal conforms
 > to the interface at compile time — no runtime test is needed. These patterns
-> should be replaced with tests of *functions that operate on these types*:
+> should be replaced with tests of _functions that operate on these types_:
 > parsers that produce them, serializers that consume them, or type guards
 > that discriminate them.
 >
@@ -736,12 +787,12 @@ describe('[InterfaceName] interface', () => {
       requiredProp1: value1,
       requiredProp2: value2,
     };
-    
+
     // Runtime validation
     expect(obj.requiredProp1).toBe(value1);
     expect(obj.requiredProp2).toBe(value2);
   });
-  
+
   it('compiles with all properties including optional', () => {
     const obj: [InterfaceName] = {
       // Required properties
@@ -751,19 +802,19 @@ describe('[InterfaceName] interface', () => {
       optionalProp1: value3,
       optionalProp2: value4,
     };
-    
+
     // Runtime validation
     expect(obj.optionalProp1).toBe(value3);
     expect(obj.optionalProp2).toBe(value4);
   });
-  
+
   it('handles optional properties as undefined', () => {
     const obj: [InterfaceName] = {
       requiredProp1: value1,
       requiredProp2: value2,
       // Optional properties omitted
     };
-    
+
     expect(obj.optionalProp1).toBeUndefined();
     expect(obj.optionalProp2).toBeUndefined();
   });
@@ -783,12 +834,12 @@ describe('System interface', () => {
       },
       links: [],
     };
-    
+
     expect(system.id).toBe('sys-001');
     expect(system.type).toBe('System');
     expect(system.properties.name).toBe('Temperature Sensor');
   });
-  
+
   it('compiles with all properties including optional', () => {
     const system: System = {
       id: 'sys-001',
@@ -805,15 +856,15 @@ describe('System interface', () => {
         coordinates: [-122.4194, 37.7749],
       },
       links: [
-        { rel: 'self', href: '/systems/sys-001', type: 'application/json' }
+        { rel: 'self', href: '/systems/sys-001', type: 'application/json' },
       ],
     };
-    
+
     expect(system.properties.description).toBe('Measures ambient temperature');
     expect(system.properties.systemType).toBe('sensor');
     expect(system.geometry?.type).toBe('Point');
   });
-  
+
   it('handles optional geometry as undefined', () => {
     const system: System = {
       id: 'sys-001',
@@ -821,7 +872,7 @@ describe('System interface', () => {
       properties: { name: 'Sensor' },
       links: [],
     };
-    
+
     expect(system.geometry).toBeUndefined();
   });
 });
@@ -839,17 +890,17 @@ describe('System interface', () => {
 describe('[UnionType] union type', () => {
   it('accepts variant 1', () => {
     const value: [UnionType] = variant1Value;
-    
+
     // Runtime validation
     expect(value).toBe(variant1Value); // or more complex validation
   });
-  
+
   it('accepts variant 2', () => {
     const value: [UnionType] = variant2Value;
-    
+
     expect(value).toBe(variant2Value);
   });
-  
+
   // ... one test per variant
 });
 ```
@@ -860,27 +911,27 @@ describe('[UnionType] union type', () => {
 describe('ResourceLink union type', () => {
   it('accepts string href', () => {
     const link: ResourceLink = 'https://example.com/systems/sys-001';
-    
+
     expect(typeof link).toBe('string');
     expect(link).toBe('https://example.com/systems/sys-001');
   });
-  
+
   it('accepts object with href and title', () => {
     const link: ResourceLink = {
       href: 'https://example.com/systems/sys-001',
       title: 'Temperature Sensor',
     };
-    
+
     expect(typeof link).toBe('object');
     expect(link.href).toBe('https://example.com/systems/sys-001');
     expect(link.title).toBe('Temperature Sensor');
   });
-  
+
   it('accepts object with href only', () => {
     const link: ResourceLink = {
       href: 'https://example.com/systems/sys-001',
     };
-    
+
     expect(link.href).toBe('https://example.com/systems/sys-001');
     expect(link.title).toBeUndefined();
   });
@@ -895,12 +946,12 @@ describe('SystemType union type', () => {
     const type: SystemType = 'sensor';
     expect(type).toBe('sensor');
   });
-  
+
   it('accepts "platform"', () => {
     const type: SystemType = 'platform';
     expect(type).toBe('platform');
   });
-  
+
   it('accepts "actuator"', () => {
     const type: SystemType = 'actuator';
     expect(type).toBe('actuator');
@@ -923,17 +974,17 @@ describe('[GenericType]<T> generic type', () => {
       // Generic properties with T1
       items: [t1Value1, t1Value2],
     };
-    
+
     expect(obj.items).toHaveLength(2);
     expect(obj.items[0]).toEqual(t1Value1);
   });
-  
+
   it('works with type parameter T2', () => {
     const obj: [GenericType]<T2> = {
       // Generic properties with T2
       items: [t2Value1, t2Value2],
     };
-    
+
     expect(obj.items).toHaveLength(2);
     expect(obj.items[0]).toEqual(t2Value1);
   });
@@ -965,12 +1016,12 @@ describe('Collection<T> generic type', () => {
       numberReturned: 2,
       timeStamp: '2024-01-01T00:00:00Z',
     };
-    
+
     expect(collection.type).toBe('FeatureCollection');
     expect(collection.features).toHaveLength(2);
     expect(collection.features[0].id).toBe('sys-001');
   });
-  
+
   it('works with Deployment type parameter', () => {
     const collection: Collection<Deployment> = {
       type: 'FeatureCollection',
@@ -986,10 +1037,10 @@ describe('Collection<T> generic type', () => {
       numberReturned: 1,
       timeStamp: '2024-01-01T00:00:00Z',
     };
-    
+
     expect(collection.features[0].type).toBe('Deployment');
   });
-  
+
   it('works with Observation type parameter', () => {
     const collection: Collection<Observation> = {
       type: 'FeatureCollection',
@@ -1008,7 +1059,7 @@ describe('Collection<T> generic type', () => {
       numberReturned: 1,
       timeStamp: '2024-01-01T00:00:00Z',
     };
-    
+
     expect(collection.features[0].properties.result).toBe(23.5);
   });
 });
@@ -1032,21 +1083,21 @@ describe('[ExtendedInterface] extends [BaseInterface]', () => {
       // Extended properties
       extendedProp1: value3,
     };
-    
+
     // Validate base properties
     expect(obj.baseProp1).toBe(value1);
     expect(obj.baseProp2).toBe(value2);
     // Validate extended properties
     expect(obj.extendedProp1).toBe(value3);
   });
-  
+
   it('is assignable to base interface', () => {
     const extended: [ExtendedInterface] = {
       baseProp1: value1,
       baseProp2: value2,
       extendedProp1: value3,
     };
-    
+
     // Should be assignable to base
     const base: [BaseInterface] = extended;
     expect(base.baseProp1).toBe(value1);
@@ -1068,7 +1119,7 @@ describe('SystemQueryOptions extends QueryOptions', () => {
       // SystemQueryOptions properties
       type: 'sensor',
     };
-    
+
     // Validate base properties
     expect(options.limit).toBe(10);
     expect(options.offset).toBe(20);
@@ -1076,23 +1127,23 @@ describe('SystemQueryOptions extends QueryOptions', () => {
     // Validate extended properties
     expect(options.type).toBe('sensor');
   });
-  
+
   it('is assignable to QueryOptions', () => {
     const systemOptions: SystemQueryOptions = {
       limit: 10,
       type: 'sensor',
     };
-    
+
     // Should be assignable to base
     const baseOptions: QueryOptions = systemOptions;
     expect(baseOptions.limit).toBe(10);
   });
-  
+
   it('accepts all SystemType values', () => {
     const sensor: SystemQueryOptions = { type: 'sensor' };
     const platform: SystemQueryOptions = { type: 'platform' };
     const actuator: SystemQueryOptions = { type: 'actuator' };
-    
+
     expect(sensor.type).toBe('sensor');
     expect(platform.type).toBe('platform');
     expect(actuator.type).toBe('actuator');
@@ -1118,10 +1169,10 @@ describe('[Interface] nested properties', () => {
         },
       },
     };
-    
+
     expect(obj.topLevel.nested.deepNested).toBe(value);
   });
-  
+
   it('handles optional nested properties', () => {
     const obj: [Interface] = {
       topLevel: {
@@ -1130,7 +1181,7 @@ describe('[Interface] nested properties', () => {
         },
       },
     };
-    
+
     expect(obj.topLevel.nested.optionalDeep).toBeUndefined();
   });
 });
@@ -1157,12 +1208,12 @@ describe('System nested properties', () => {
       },
       links: [],
     };
-    
+
     expect(system.properties.characteristics?.[0].name).toBe('Range');
     expect(system.properties.characteristics?.[0].value).toBe('0-100');
     expect(system.properties.characteristics?.[0].unit).toBe('°C');
   });
-  
+
   it('compiles with nested geometry coordinates', () => {
     const system: System = {
       id: 'sys-001',
@@ -1174,7 +1225,7 @@ describe('System nested properties', () => {
       },
       links: [],
     };
-    
+
     expect(system.geometry?.type).toBe('Point');
     expect(system.geometry?.coordinates).toEqual([-122.4194, 37.7749]);
   });
@@ -1196,25 +1247,25 @@ describe('[Interface] optional array properties', () => {
       requiredProp: value,
       optionalArray: [item1, item2],
     };
-    
+
     expect(obj.optionalArray).toHaveLength(2);
   });
-  
+
   it('compiles with empty array', () => {
     const obj: [Interface] = {
       requiredProp: value,
       optionalArray: [],
     };
-    
+
     expect(obj.optionalArray).toHaveLength(0);
   });
-  
+
   it('compiles with undefined array', () => {
     const obj: [Interface] = {
       requiredProp: value,
       // optionalArray omitted
     };
-    
+
     expect(obj.optionalArray).toBeUndefined();
   });
 });
@@ -1234,11 +1285,11 @@ describe('System optional array properties', () => {
       },
       links: [],
     };
-    
+
     expect(system.properties.keywords).toHaveLength(3);
     expect(system.properties.keywords?.[0]).toBe('temperature');
   });
-  
+
   it('compiles with empty keywords array', () => {
     const system: System = {
       id: 'sys-001',
@@ -1249,10 +1300,10 @@ describe('System optional array properties', () => {
       },
       links: [],
     };
-    
+
     expect(system.properties.keywords).toHaveLength(0);
   });
-  
+
   it('compiles with undefined keywords', () => {
     const system: System = {
       id: 'sys-001',
@@ -1260,7 +1311,7 @@ describe('System optional array properties', () => {
       properties: { name: 'Sensor' },
       links: [],
     };
-    
+
     expect(system.properties.keywords).toBeUndefined();
   });
 });
@@ -1270,14 +1321,14 @@ describe('System optional array properties', () => {
 
 ### Test Pattern Summary
 
-| Pattern | Purpose | When to Use | Example |
-|---------|---------|-------------|---------|
-| **Interface compilation** | Validate interface structure | All interfaces | System, QueryOptions |
-| **Union variant** | Test each union case | Union types | ResourceLink, SystemType |
-| **Generic type** | Test with different type params | Generic types | Collection<T> |
-| **Extended interface** | Validate inheritance | Extending interfaces | SystemQueryOptions |
-| **Nested properties** | Deep structure validation | Complex nested objects | System.characteristics |
-| **Optional arrays** | Undefined vs empty arrays | Optional array properties | System.keywords |
+| Pattern                   | Purpose                         | When to Use               | Example                  |
+| ------------------------- | ------------------------------- | ------------------------- | ------------------------ |
+| **Interface compilation** | Validate interface structure    | All interfaces            | System, QueryOptions     |
+| **Union variant**         | Test each union case            | Union types               | ResourceLink, SystemType |
+| **Generic type**          | Test with different type params | Generic types             | Collection<T>            |
+| **Extended interface**    | Validate inheritance            | Extending interfaces      | SystemQueryOptions       |
+| **Nested properties**     | Deep structure validation       | Complex nested objects    | System.characteristics   |
+| **Optional arrays**       | Undefined vs empty arrays       | Optional array properties | System.keywords          |
 
 ---
 
@@ -1286,6 +1337,7 @@ describe('System optional array properties', () => {
 ### Compile-Time Type Testing (Primary)
 
 **What TypeScript compiler validates:**
+
 - ✅ Interface structure (required properties present)
 - ✅ Property types (string, number, boolean, etc.)
 - ✅ Optional property handling (? operator)
@@ -1295,6 +1347,7 @@ describe('System optional array properties', () => {
 - ✅ Nested property structures
 
 **How it works:**
+
 ```typescript
 // TypeScript compiler validates this at compile time
 const system: System = {
@@ -1314,6 +1367,7 @@ const system: System = {
 ```
 
 **When to use:**
+
 - ✅ **All type definitions** (interfaces, unions, aliases)
 - ✅ **Static structure validation**
 - ✅ **Type correctness**
@@ -1323,6 +1377,7 @@ const system: System = {
 ### Runtime Type Validation (Secondary)
 
 **What needs runtime validation:**
+
 - ⚠️ **External data parsing** (JSON responses from API)
 - ⚠️ **Type discrimination** (identifying resource type at runtime)
 - ⚠️ **Serialization/deserialization** (e.g., Date ↔ string)
@@ -1337,6 +1392,7 @@ const system: System = {
 **Solution:** Schema validation (Zod, Joi, or custom validators).
 
 **Example:**
+
 ```typescript
 // NOT type testing - this is integration testing
 describe('parseSystemResponse', () => {
@@ -1347,20 +1403,20 @@ describe('parseSystemResponse', () => {
       properties: { name: 'Sensor' },
       links: [],
     };
-    
+
     const system = parseSystemResponse(json);
-    
+
     expect(system.id).toBe('sys-001');
     expect(system.type).toBe('System');
     expect(system.properties.name).toBe('Sensor');
   });
-  
+
   it('throws on invalid system JSON', () => {
     const invalid = {
       id: 'sys-001',
       // Missing type and properties
     };
-    
+
     expect(() => parseSystemResponse(invalid)).toThrow();
   });
 });
@@ -1375,6 +1431,7 @@ describe('parseSystemResponse', () => {
 **Solution:** Type guard functions (optional for CSAPI).
 
 **Example:**
+
 ```typescript
 // Type guard definition
 export function isSystem(resource: any): resource is System {
@@ -1395,10 +1452,10 @@ describe('isSystem type guard', () => {
       properties: { name: 'Sensor' },
       links: [],
     };
-    
+
     expect(isSystem(system)).toBe(true);
   });
-  
+
   it('returns false for Deployment', () => {
     const deployment: Deployment = {
       id: 'dep-001',
@@ -1406,10 +1463,10 @@ describe('isSystem type guard', () => {
       properties: { name: 'Deploy' },
       links: [],
     };
-    
+
     expect(isSystem(deployment)).toBe(false);
   });
-  
+
   it('returns false for invalid object', () => {
     expect(isSystem({})).toBe(false);
     expect(isSystem(null)).toBe(false);
@@ -1427,6 +1484,7 @@ describe('isSystem type guard', () => {
 **Solution:** Test serialization functions (like upstream DateTimeParameterToEDRString).
 
 **Example:**
+
 ```typescript
 // Serialization helper (if needed)
 export function serializeDateTimeParameter(dt: DateTimeParameter): string {
@@ -1447,19 +1505,22 @@ describe('serializeDateTimeParameter', () => {
     const date = new Date('2024-01-01T00:00:00Z');
     expect(serializeDateTimeParameter(date)).toBe('2024-01-01T00:00:00.000Z');
   });
-  
+
   it('serializes start-only interval', () => {
     const interval = { start: new Date('2024-01-01T00:00:00Z') };
-    expect(serializeDateTimeParameter(interval)).toBe('2024-01-01T00:00:00.000Z/..');
+    expect(serializeDateTimeParameter(interval)).toBe(
+      '2024-01-01T00:00:00.000Z/..'
+    );
   });
-  
+
   it('serializes start/end interval', () => {
     const interval = {
       start: new Date('2024-01-01T00:00:00Z'),
       end: new Date('2024-12-31T23:59:59Z'),
     };
-    expect(serializeDateTimeParameter(interval))
-      .toBe('2024-01-01T00:00:00.000Z/2024-12-31T23:59:59.000Z');
+    expect(serializeDateTimeParameter(interval)).toBe(
+      '2024-01-01T00:00:00.000Z/2024-12-31T23:59:59.000Z'
+    );
   });
 });
 ```
@@ -1468,25 +1529,27 @@ describe('serializeDateTimeParameter', () => {
 
 ### Strategy Decision Matrix
 
-| Scenario | Compile-Time | Runtime | Testing Location |
-|----------|--------------|---------|------------------|
-| **Interface structure** | ✅ Yes | ❌ No | Type tests (compilation) |
-| **Property types** | ✅ Yes | ❌ No | Type tests (compilation) |
-| **Optional properties** | ✅ Yes | ❌ No | Type tests (compilation) |
-| **Union variants** | ✅ Yes | ❌ No | Type tests (compilation) |
-| **Generic types** | ✅ Yes | ❌ No | Type tests (compilation) |
-| **External data parsing** | ❌ No | ✅ Yes | Integration tests |
-| **Type guards** | ❌ No | ✅ Yes (optional) | Type guard tests |
-| **Serialization** | ❌ No | ✅ Yes (if needed) | Helper tests |
+| Scenario                  | Compile-Time | Runtime            | Testing Location         |
+| ------------------------- | ------------ | ------------------ | ------------------------ |
+| **Interface structure**   | ✅ Yes       | ❌ No              | Type tests (compilation) |
+| **Property types**        | ✅ Yes       | ❌ No              | Type tests (compilation) |
+| **Optional properties**   | ✅ Yes       | ❌ No              | Type tests (compilation) |
+| **Union variants**        | ✅ Yes       | ❌ No              | Type tests (compilation) |
+| **Generic types**         | ✅ Yes       | ❌ No              | Type tests (compilation) |
+| **External data parsing** | ❌ No        | ✅ Yes             | Integration tests        |
+| **Type guards**           | ❌ No        | ✅ Yes (optional)  | Type guard tests         |
+| **Serialization**         | ❌ No        | ✅ Yes (if needed) | Helper tests             |
 
 ### CSAPI Runtime Validation Assessment
 
 **Required runtime validation:**
+
 - ❌ **None** - CSAPI uses standard types (no custom serialization)
 - ❌ **No type guards** needed (response type known from endpoint)
 - ❌ **No custom parsing** (JSON.parse handles standard types)
 
 **Optional runtime validation:**
+
 - ⚠️ **Type guards** (only if mixed response types become common)
 - ⚠️ **Schema validation** (only if external data validation required)
 
@@ -1502,10 +1565,12 @@ describe('serializeDateTimeParameter', () => {
 > template consists entirely of shape-assertion tests. Every test constructs
 > an object literal with an explicit type annotation, then asserts each
 > property equals the value assigned on the previous line. For example:
+>
 > ```typescript
 > const system: System = { id: 'sys-001', ... };
 > expect(system.id).toBe('sys-001'); // tests nothing
 > ```
+>
 > The TypeScript compiler already validates that `{ id: 'sys-001', ... }`
 > conforms to the `System` interface. The runtime assertion adds zero value.
 >
@@ -1537,11 +1602,10 @@ import {
 } from './model.js';
 
 describe('CSAPI Type Definitions', () => {
-  
   //═══════════════════════════════════════════════════════════
   // Resource Interfaces
   //═══════════════════════════════════════════════════════════
-  
+
   describe('System interface', () => {
     it('compiles with required properties only', () => {
       const system: System = {
@@ -1552,12 +1616,12 @@ describe('CSAPI Type Definitions', () => {
         },
         links: [],
       };
-      
+
       expect(system.id).toBe('sys-001');
       expect(system.type).toBe('System');
       expect(system.properties.name).toBe('Temperature Sensor');
     });
-    
+
     it('compiles with all optional properties', () => {
       const system: System = {
         id: 'sys-001',
@@ -1581,15 +1645,17 @@ describe('CSAPI Type Definitions', () => {
           coordinates: [-122.4194, 37.7749],
         },
         links: [
-          { rel: 'self', href: '/systems/sys-001', type: 'application/json' }
+          { rel: 'self', href: '/systems/sys-001', type: 'application/json' },
         ],
       };
-      
-      expect(system.properties.description).toBe('Measures ambient temperature');
+
+      expect(system.properties.description).toBe(
+        'Measures ambient temperature'
+      );
       expect(system.properties.systemType).toBe('sensor');
       expect(system.geometry?.type).toBe('Point');
     });
-    
+
     it('handles optional geometry as undefined', () => {
       const system: System = {
         id: 'sys-001',
@@ -1597,11 +1663,11 @@ describe('CSAPI Type Definitions', () => {
         properties: { name: 'Sensor' },
         links: [],
       };
-      
+
       expect(system.geometry).toBeUndefined();
     });
   });
-  
+
   describe('Deployment interface', () => {
     it('compiles with required properties', () => {
       const deployment: Deployment = {
@@ -1612,11 +1678,11 @@ describe('CSAPI Type Definitions', () => {
         },
         links: [],
       };
-      
+
       expect(deployment.id).toBe('dep-001');
       expect(deployment.type).toBe('Deployment');
     });
-    
+
     it('compiles with optional deployed systems', () => {
       const deployment: Deployment = {
         id: 'dep-001',
@@ -1630,11 +1696,11 @@ describe('CSAPI Type Definitions', () => {
         },
         links: [],
       };
-      
+
       expect(deployment.properties.deployedSystems).toHaveLength(2);
     });
   });
-  
+
   describe('Observation interface', () => {
     it('compiles with numeric result', () => {
       const observation: Observation = {
@@ -1646,10 +1712,10 @@ describe('CSAPI Type Definitions', () => {
         },
         links: [],
       };
-      
+
       expect(observation.properties.result).toBe(23.5);
     });
-    
+
     it('compiles with string result', () => {
       const observation: Observation = {
         id: 'obs-002',
@@ -1660,11 +1726,11 @@ describe('CSAPI Type Definitions', () => {
         },
         links: [],
       };
-      
+
       expect(observation.properties.result).toBe('clear');
     });
   });
-  
+
   // ... Similar tests for Procedure, Datastream, SamplingFeature, Control, ControlStream, Command
   //
   // ⚠️ A1 FINDING C1-M2: The following 5 resource interfaces were previously
@@ -1700,12 +1766,20 @@ describe('CSAPI Type Definitions', () => {
           identifier: 'urn:example:procedure:temp-measure',
         },
         links: [
-          { rel: 'self', href: '/procedures/proc-001', type: 'application/json' },
+          {
+            rel: 'self',
+            href: '/procedures/proc-001',
+            type: 'application/json',
+          },
         ],
       };
 
-      expect(procedure.properties.description).toBe('Standard thermometer reading procedure');
-      expect(procedure.properties.procedureType).toBe('urn:ogc:def:procedure:OGC::measurement');
+      expect(procedure.properties.description).toBe(
+        'Standard thermometer reading procedure'
+      );
+      expect(procedure.properties.procedureType).toBe(
+        'urn:ogc:def:procedure:OGC::measurement'
+      );
     });
   });
 
@@ -1726,7 +1800,9 @@ describe('CSAPI Type Definitions', () => {
       };
 
       expect(sf.id).toBe('sf-001');
-      expect(sf.properties.sampledFeature).toBe('urn:example:feature:atmosphere');
+      expect(sf.properties.sampledFeature).toBe(
+        'urn:example:feature:atmosphere'
+      );
     });
 
     it('compiles with polygon geometry', () => {
@@ -1740,11 +1816,15 @@ describe('CSAPI Type Definitions', () => {
         },
         geometry: {
           type: 'Polygon',
-          coordinates: [[
-            [-122.42, 37.77], [-122.41, 37.77],
-            [-122.41, 37.78], [-122.42, 37.78],
-            [-122.42, 37.77],
-          ]],
+          coordinates: [
+            [
+              [-122.42, 37.77],
+              [-122.41, 37.77],
+              [-122.41, 37.78],
+              [-122.42, 37.78],
+              [-122.42, 37.77],
+            ],
+          ],
         },
         links: [],
       };
@@ -1828,9 +1908,7 @@ describe('CSAPI Type Definitions', () => {
             ],
           },
         },
-        links: [
-          { rel: 'commands', href: '/controlstreams/cs-001/commands' },
-        ],
+        links: [{ rel: 'commands', href: '/controlstreams/cs-001/commands' }],
       };
 
       expect(cs.properties.commandFormat).toBe('application/swe+json');
@@ -1883,20 +1961,18 @@ describe('CSAPI Type Definitions', () => {
           parameters: { position: 100 },
           status: 'PENDING',
         },
-        links: [
-          { rel: 'status', href: '/commands/cmd-002/status' },
-        ],
+        links: [{ rel: 'status', href: '/commands/cmd-002/status' }],
       };
 
       expect(cmd.properties.status).toBe('PENDING');
       expect(cmd.properties.executionTime).toBeUndefined();
     });
   });
-  
+
   //═══════════════════════════════════════════════════════════
   // Query Options
   //═══════════════════════════════════════════════════════════
-  
+
   describe('QueryOptions interface', () => {
     it('compiles with all optional parameters', () => {
       const options: QueryOptions = {
@@ -1907,68 +1983,68 @@ describe('CSAPI Type Definitions', () => {
         properties: ['name', 'description'],
         sortby: ['name', '-updated'],
       };
-      
+
       expect(options.limit).toBe(10);
       expect(options.bbox).toEqual([-180, -90, 180, 90]);
     });
-    
+
     it('compiles with subset of parameters', () => {
       const options: QueryOptions = {
         limit: 10,
       };
-      
+
       expect(options.limit).toBe(10);
       expect(options.offset).toBeUndefined();
     });
   });
-  
+
   describe('SystemQueryOptions extends QueryOptions', () => {
     it('inherits QueryOptions properties', () => {
       const options: SystemQueryOptions = {
         limit: 10,
         type: 'sensor',
       };
-      
+
       expect(options.limit).toBe(10);
       expect(options.type).toBe('sensor');
     });
-    
+
     it('is assignable to QueryOptions', () => {
       const systemOptions: SystemQueryOptions = {
         limit: 10,
         type: 'sensor',
       };
-      
+
       const baseOptions: QueryOptions = systemOptions;
       expect(baseOptions.limit).toBe(10);
     });
   });
-  
+
   //═══════════════════════════════════════════════════════════
   // Union Types
   //═══════════════════════════════════════════════════════════
-  
+
   describe('ResourceLink union type', () => {
     it('accepts string href', () => {
       const link: ResourceLink = 'https://example.com/systems/sys-001';
-      
+
       expect(typeof link).toBe('string');
     });
-    
+
     it('accepts object with href', () => {
       const link: ResourceLink = {
         href: 'https://example.com/systems/sys-001',
         title: 'Temperature Sensor',
       };
-      
+
       expect(link.href).toBe('https://example.com/systems/sys-001');
     });
   });
-  
+
   //═══════════════════════════════════════════════════════════
   // Generic Types
   //═══════════════════════════════════════════════════════════
-  
+
   describe('Collection<T> generic type', () => {
     it('works with System type parameter', () => {
       const collection: Collection<System> = {
@@ -1985,10 +2061,10 @@ describe('CSAPI Type Definitions', () => {
         numberReturned: 1,
         timeStamp: '2024-01-01T00:00:00Z',
       };
-      
+
       expect(collection.features[0].type).toBe('System');
     });
-    
+
     it('works with Deployment type parameter', () => {
       const collection: Collection<Deployment> = {
         type: 'FeatureCollection',
@@ -2004,38 +2080,38 @@ describe('CSAPI Type Definitions', () => {
         numberReturned: 1,
         timeStamp: '2024-01-01T00:00:00Z',
       };
-      
+
       expect(collection.features[0].type).toBe('Deployment');
     });
   });
-  
+
   //═══════════════════════════════════════════════════════════
   // Helper Types
   //═══════════════════════════════════════════════════════════
-  
+
   describe('TimeInterval interface', () => {
     it('compiles with both start and end', () => {
       const interval: TimeInterval = {
         start: new Date('2024-01-01T00:00:00Z'),
         end: new Date('2024-12-31T23:59:59Z'),
       };
-      
+
       expect(interval.start).toBeInstanceOf(Date);
       expect(interval.end).toBeInstanceOf(Date);
     });
-    
+
     it('compiles with start only', () => {
       const interval: TimeInterval = {
         start: new Date('2024-01-01T00:00:00Z'),
       };
-      
+
       expect(interval.start).toBeInstanceOf(Date);
       expect(interval.end).toBeUndefined();
     });
-    
+
     it('compiles with empty object', () => {
       const interval: TimeInterval = {};
-      
+
       expect(interval.start).toBeUndefined();
       expect(interval.end).toBeUndefined();
     });
@@ -2061,7 +2137,6 @@ import {
 import type { System, Deployment, Observation } from './model.js';
 
 describe('Type Guards', () => {
-  
   describe('isSystem', () => {
     it('returns true for valid System', () => {
       const system: System = {
@@ -2070,10 +2145,10 @@ describe('Type Guards', () => {
         properties: { name: 'Sensor' },
         links: [],
       };
-      
+
       expect(isSystem(system)).toBe(true);
     });
-    
+
     it('returns false for Deployment', () => {
       const deployment: Deployment = {
         id: 'dep-001',
@@ -2081,10 +2156,10 @@ describe('Type Guards', () => {
         properties: { name: 'Deploy' },
         links: [],
       };
-      
+
       expect(isSystem(deployment)).toBe(false);
     });
-    
+
     it('returns false for invalid objects', () => {
       expect(isSystem({})).toBe(false);
       expect(isSystem(null)).toBe(false);
@@ -2092,7 +2167,7 @@ describe('Type Guards', () => {
       expect(isSystem({ type: 'System' })).toBe(false); // Missing id
     });
   });
-  
+
   // Similar tests for other guards
 });
 ```
@@ -2107,31 +2182,30 @@ describe('Type Guards', () => {
 
 ```typescript
 describe('SystemsQueryBuilder', () => {
-  
   // Existing URL construction tests...
-  
+
   describe('type safety', () => {
     it('accepts valid SystemQueryOptions', () => {
       const builder = new SystemsQueryBuilder('https://example.com');
-      
+
       const options: SystemQueryOptions = {
         limit: 10,
         type: 'sensor',
       };
-      
+
       const url = builder.buildGetSystemsUrl(options);
       expect(url).toContain('limit=10');
       expect(url).toContain('type=sensor');
     });
-    
+
     it('accepts base QueryOptions', () => {
       const builder = new SystemsQueryBuilder('https://example.com');
-      
+
       const options: QueryOptions = {
         limit: 10,
         offset: 20,
       };
-      
+
       const url = builder.buildGetSystemsUrl(options);
       expect(url).toContain('limit=10');
     });
@@ -2152,6 +2226,7 @@ describe('SystemsQueryBuilder', () => {
 **Implementation steps:**
 
 1. **Create type test file:** `src/ogc-api/csapi/model.spec.ts`
+
    - Test all resource interfaces (System, Deployment, etc.)
    - Test query options interfaces
    - Test union types (ResourceLink, SystemType)
@@ -2159,11 +2234,13 @@ describe('SystemsQueryBuilder', () => {
    - Test helper types (TimeInterval, Characteristic)
 
 2. **Add type safety tests to QueryBuilder tests:**
+
    - Test SystemQueryOptions in systems-builder.spec.ts
    - Test ObservationQueryOptions in observations-builder.spec.ts
    - Validate type annotations compile correctly
 
 3. **No type guards needed initially:**
+
    - Response type known from endpoint
    - No mixed resource type responses
    - Can add later if needed
@@ -2178,11 +2255,13 @@ describe('SystemsQueryBuilder', () => {
 ### Optional Enhancement: Type Guards
 
 **Add if needed for:**
+
 - Mixed resource type responses
 - Runtime type discrimination
 - Dynamic response parsing
 
 **Implementation:**
+
 ```typescript
 // File: src/ogc-api/csapi/guards.ts
 export function isSystem(resource: any): resource is System {
@@ -2206,11 +2285,13 @@ describe('isSystem', () => {
 ### Not Recommended: Specialized Type Testing Tools
 
 **Do NOT add:**
+
 - ❌ tsd
 - ❌ dtslint
 - ❌ expect-type
 
 **Rationale:**
+
 1. Not used by upstream
 2. CSAPI types are simple (no complex generics)
 3. Additional dependencies and configuration
@@ -2218,20 +2299,21 @@ describe('isSystem', () => {
 5. TypeScript compiler already provides type checking
 
 **Reconsider if:**
+
 - CSAPI adds complex generic type constraints
 - Type inference becomes critical for API usability
 - Type regressions become recurring problem
 
 ### Testing Strategy Summary
 
-| Type Category | Testing Approach | Tool | Location |
-|---------------|------------------|------|----------|
-| **Resource interfaces** | Compilation + runtime | TypeScript + Jest | model.spec.ts |
-| **Query options** | Compilation + runtime | TypeScript + Jest | model.spec.ts |
-| **Union types** | Compilation + runtime | TypeScript + Jest | model.spec.ts |
-| **Generic types** | Compilation + runtime | TypeScript + Jest | model.spec.ts |
-| **Helper types** | Compilation + runtime | TypeScript + Jest | model.spec.ts |
-| **Type guards** | Runtime (optional) | Jest | guards.spec.ts |
+| Type Category           | Testing Approach      | Tool              | Location       |
+| ----------------------- | --------------------- | ----------------- | -------------- |
+| **Resource interfaces** | Compilation + runtime | TypeScript + Jest | model.spec.ts  |
+| **Query options**       | Compilation + runtime | TypeScript + Jest | model.spec.ts  |
+| **Union types**         | Compilation + runtime | TypeScript + Jest | model.spec.ts  |
+| **Generic types**       | Compilation + runtime | TypeScript + Jest | model.spec.ts  |
+| **Helper types**        | Compilation + runtime | TypeScript + Jest | model.spec.ts  |
+| **Type guards**         | Runtime (optional)    | Jest              | guards.spec.ts |
 
 ---
 
@@ -2244,6 +2326,7 @@ describe('isSystem', () => {
 >
 > **Revised estimate:** If no `model.spec.ts` shape assertions are written,
 > the real effort is:
+>
 > - **Compile-time validation:** 0 hours (types compile = types work, verified
 >   by existing `tsc` in CI)
 > - **Type guard tests** (if guards are implemented): ~1 hour
@@ -2256,6 +2339,7 @@ describe('isSystem', () => {
 #### Task 1: Create model.spec.ts
 
 **Subtasks:**
+
 1. Set up test file structure (5 minutes)
 2. Write resource interface tests (9 resources × 15 minutes = 135 minutes)
    - System, Deployment, SamplingFeature, Procedure, Datastream, Observation, ControlStream, Command
@@ -2277,6 +2361,7 @@ describe('isSystem', () => {
 #### Task 2: Integrate Type Tests with QueryBuilder Tests
 
 **Subtasks:**
+
 1. Add type safety suite to systems-builder.spec.ts (15 minutes)
 2. Add type safety suite to deployments-builder.spec.ts (15 minutes)
 3. Add type safety suite to observations-builder.spec.ts (15 minutes)
@@ -2289,6 +2374,7 @@ describe('isSystem', () => {
 #### Task 3: Optional Type Guards (If Needed)
 
 **Subtasks:**
+
 1. Create guards.ts (9 guards × 5 minutes = 45 minutes)
 2. Create guards.spec.ts (9 guards × 10 minutes = 90 minutes)
 
@@ -2299,34 +2385,41 @@ describe('isSystem', () => {
 ### Total Implementation Estimate
 
 **Required tasks:**
+
 - Task 1: model.spec.ts = 4 hours
 - Task 2: QueryBuilder integration = 2 hours
 - **TOTAL: 6 hours**
 
 **Optional tasks:**
+
 - Task 3: Type guards = +2.5 hours
 - **TOTAL WITH GUARDS: 8.5 hours**
 
 ### Maintenance Estimate
 
 **Per new resource type:**
+
 - Interface tests: 15 minutes
 - QueryBuilder integration: 10 minutes
 - Type guard (optional): 15 minutes
 
 **Per new helper type:**
+
 - Interface tests: 5 minutes
 
 **Per new query option:**
+
 - Interface tests: 10 minutes
 
 ### Timeline
 
 **Phase 1: Core type tests** (6 hours)
+
 - Day 1: model.spec.ts resource interfaces (4 hours)
 - Day 2: model.spec.ts helpers + QueryBuilder integration (2 hours)
 
 **Phase 2: Optional guards** (2.5 hours, if needed)
+
 - Day 3: Type guards implementation and tests (2.5 hours)
 
 **Total:** 1-2 days of focused work
@@ -2346,6 +2439,7 @@ describe('isSystem', () => {
 ### Recommended Approach
 
 **Primary strategy:**
+
 - ✅ Jest + TypeScript compiler (upstream pattern)
 - ✅ Explicit type annotations in tests
 - ✅ Compilation validates type correctness
@@ -2353,23 +2447,28 @@ describe('isSystem', () => {
 - ✅ One test file: model.spec.ts (~400-500 lines)
 
 **Optional enhancements:**
+
 - ⚠️ Type guards (only if mixed responses)
 - ⚠️ Custom serialization tests (only if needed)
 
 **Not recommended:**
+
 - ❌ tsd or dtslint (not needed for CSAPI)
 
 ### Implementation Priority
 
 **High priority:**
+
 - Resource interface tests (System, Deployment, etc.)
 - Query options tests (SystemQueryOptions, etc.)
 
 **Medium priority:**
+
 - Generic type tests (Collection<T>)
 - Helper type tests (TimeInterval, etc.)
 
 **Low priority:**
+
 - Union type tests (simple string unions)
 - Type guards (optional, only if needed)
 
@@ -2381,7 +2480,7 @@ describe('isSystem', () => {
 ✅ Generic Collection<T> tested with 2+ type parameters  
 ✅ Pattern matches upstream (EDR model.spec.ts)  
 ✅ Zero additional dependencies  
-✅ Tests execute in <1 second  
+✅ Tests execute in <1 second
 
 ---
 

@@ -13,6 +13,7 @@
 **Finding:** TypeScript type organization is **completely independent** of single-class vs multi-class decision. Type system design follows a three-tier hierarchy with all API-specific types in one file.
 
 **Key Metrics:**
+
 - **EDR types:** 126 lines in model.ts (single QueryBuilder)
 - **CSAPI GeoJSON types:** 350-400 lines in model.ts (9 resources)
 - **CSAPI format types:** 1,400-1,600 lines (SensorML 3.0 + SWE Common 3.0)
@@ -88,6 +89,7 @@ export type GenericEndpointInfo = {
 ```
 
 **Characteristics:**
+
 - Simple types and interfaces
 - No OGC API-specific logic
 - Used by WFS, WMS, WMTS, OGC API, etc.
@@ -134,7 +136,7 @@ export interface OgcApiCollectionInfo {
   mapTileFormats: MimeType[];
   vectorTileFormats: MimeType[];
   supportedTileMatrixSets: string[];
-  
+
   // API-specific extensions
   data_queries?: {...};  // EDR
   parameter_names?: Record<string, EdrParameterInfo>;  // EDR
@@ -165,6 +167,7 @@ export interface CollectionParameter {
 ```
 
 **Characteristics:**
+
 - OGC API standard types
 - Shared by multiple OGC API implementations
 - Can be extended per-API
@@ -213,6 +216,7 @@ export interface Characteristic { ... }
 ```
 
 **Characteristics:**
+
 - Highly specific to CSAPI
 - Not used by other APIs
 - Can change without affecting other code
@@ -257,10 +261,14 @@ export type ZParameter =
 // Helper function for complex type (10 lines)
 export function zParameterToString(z: ZParameter): string {
   switch (z.type) {
-    case 'single': return `${z.level}`;
-    case 'interval': return `${z.minLevel}/${z.maxLevel}`;
-    case 'list': return z.levels.join(',');
-    case 'repeating': return `R${z.repeat}/${z.minLevel}/${z.step}`;
+    case 'single':
+      return `${z.level}`;
+    case 'interval':
+      return `${z.minLevel}/${z.maxLevel}`;
+    case 'list':
+      return z.levels.join(',');
+    case 'repeating':
+      return `R${z.repeat}/${z.minLevel}/${z.step}`;
   }
 }
 
@@ -338,22 +346,22 @@ export type optionalItemsParams = {
 ```typescript
 import { DateTimeParameter } from '../../shared/models.js';
 import { OgcApiCollectionInfo } from '../model.js';
-import { 
-  optionalAreaParams, 
+import {
+  optionalAreaParams,
   optionalPositionParams,
-  ZParameter 
+  ZParameter,
 } from './model.js';
 
 export default class EDRQueryBuilder {
   constructor(private collection: OgcApiCollectionInfo) {}
-  
+
   buildPositionDownloadUrl(
     coords: { lon: number; lat: number },
     optional_params: optionalPositionParams = {}
   ): string {
     // Use types for compile-time safety
   }
-  
+
   buildAreaDownloadUrl(
     bbox: bboxWithoutVerticalAxis,
     optional_params: optionalAreaParams = {}
@@ -373,36 +381,37 @@ export default class EDRQueryBuilder {
 
 **Complete file breakdown:**
 
-| Section | Lines | Content |
-|---------|-------|---------|
-| **Imports** | 5 | From shared, ogc-api, geojson |
-| **Resource enum** | 12 | CSAPIResourceTypes const + type |
-| **Query options** | 40 | QueryOptions + 2-3 extended versions |
-| **Helper types** | 40 | TimeInterval, ResourceLink, HistoryEvent, Characteristic |
-| **System** | 30 | Most complex resource type |
-| **Deployment** | 20 | Medium complexity |
-| **SamplingFeature** | 18 | Medium complexity |
-| **Procedure** | 15 | Simple resource |
-| **Datastream** | 28 | Complex with unit of measurement |
-| **Observation** | 22 | Variable result type |
-| **Control** | 12 | Simple resource |
-| **ControlStream** | 15 | Simple resource |
-| **Command** | 15 | Simple resource |
-| **Collection types** | 35 | Generic + 9 type aliases |
-| **Type guards** | 50 | Optional - runtime type checking |
-| **TOTAL** | **357-407** | **All CSAPI types in one file** |
+| Section              | Lines       | Content                                                  |
+| -------------------- | ----------- | -------------------------------------------------------- |
+| **Imports**          | 5           | From shared, ogc-api, geojson                            |
+| **Resource enum**    | 12          | CSAPIResourceTypes const + type                          |
+| **Query options**    | 40          | QueryOptions + 2-3 extended versions                     |
+| **Helper types**     | 40          | TimeInterval, ResourceLink, HistoryEvent, Characteristic |
+| **System**           | 30          | Most complex resource type                               |
+| **Deployment**       | 20          | Medium complexity                                        |
+| **SamplingFeature**  | 18          | Medium complexity                                        |
+| **Procedure**        | 15          | Simple resource                                          |
+| **Datastream**       | 28          | Complex with unit of measurement                         |
+| **Observation**      | 22          | Variable result type                                     |
+| **Control**          | 12          | Simple resource                                          |
+| **ControlStream**    | 15          | Simple resource                                          |
+| **Command**          | 15          | Simple resource                                          |
+| **Collection types** | 35          | Generic + 9 type aliases                                 |
+| **Type guards**      | 50          | Optional - runtime type checking                         |
+| **TOTAL**            | **357-407** | **All CSAPI types in one file**                          |
 
 **Comparison to EDR:**
 
-| Metric | EDR | CSAPI | Ratio |
-|--------|-----|-------|-------|
-| Lines in model.ts | 126 | 350-400 | 2.8-3.2x |
-| Resource types | 0 | 9 | ∞ |
-| Query option types | 7 | 3-5 | 0.4-0.7x |
-| Helper types | 3 | 4 | 1.3x |
-| **Resource count** | **1** | **9** | **9x** |
+| Metric             | EDR   | CSAPI   | Ratio    |
+| ------------------ | ----- | ------- | -------- |
+| Lines in model.ts  | 126   | 350-400 | 2.8-3.2x |
+| Resource types     | 0     | 9       | ∞        |
+| Query option types | 7     | 3-5     | 0.4-0.7x |
+| Helper types       | 3     | 4       | 1.3x     |
+| **Resource count** | **1** | **9**   | **9x**   |
 
 **Per-resource average:**
+
 - EDR: 126 lines / 1 resource = 126 lines per resource
 - CSAPI: 350-400 lines / 9 resources = 39-44 lines per resource
 
@@ -414,7 +423,11 @@ export default class EDRQueryBuilder {
 // File: src/ogc-api/csapi/model.ts
 
 import { Geometry, Point } from 'geojson';
-import { BoundingBox, DateTimeParameter, Contact } from '../../shared/models.js';
+import {
+  BoundingBox,
+  DateTimeParameter,
+  Contact,
+} from '../../shared/models.js';
 import { OgcApiDocumentLink } from '../model.js';
 
 //═══════════════════════════════════════════════════════════
@@ -445,19 +458,19 @@ export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
 export interface QueryOptions {
   /** Maximum number of items to return */
   limit?: number;
-  
+
   /** Starting index for pagination */
   offset?: number;
-  
+
   /** Bounding box filter [minX, minY, maxX, maxY] */
   bbox?: BoundingBox;
-  
+
   /** Temporal filter */
   datetime?: DateTimeParameter;
-  
+
   /** Property selection (return only specified properties) */
   properties?: string[];
-  
+
   /** Sort order (e.g., ['name', '-updated']) */
   sortby?: string[];
 }
@@ -727,6 +740,7 @@ async getDatastreams(systemId: string, options?: QueryOptions): Promise<Datastre
 ```
 
 **Benefits:**
+
 - ✅ DRY - defined once, used everywhere
 - ✅ Consistent across all 70-80 methods
 - ✅ Easy to extend (add one property, all methods get it)
@@ -759,7 +773,7 @@ export interface ObservationQueryOptions extends QueryOptions {
 // Usage
 async getSystems(options?: SystemQueryOptions): Promise<System[]>
 async getObservations(
-  datastreamId: string, 
+  datastreamId: string,
   options?: ObservationQueryOptions
 ): Promise<Observation[]>
 ```
@@ -784,6 +798,7 @@ buildPositionDownloadUrl(
 ```
 
 **Problems for CSAPI:**
+
 - ❌ Not reusable (would repeat 70-80 times)
 - ❌ Verbose
 - ❌ Hard to maintain (changes require updating many methods)
@@ -866,12 +881,12 @@ import { Observation, ObservationQueryOptions } from './model.js';
 
 ```typescript
 export default class CSAPIQueryBuilder {
-  async getSystems(options?: SystemQueryOptions): Promise<System[]>
-  async getDeployments(options?: QueryOptions): Promise<Deployment[]>
+  async getSystems(options?: SystemQueryOptions): Promise<System[]>;
+  async getDeployments(options?: QueryOptions): Promise<Deployment[]>;
   async getObservations(
-    datastreamId: string, 
+    datastreamId: string,
     options?: ObservationQueryOptions
-  ): Promise<Observation[]>
+  ): Promise<Observation[]>;
 }
 ```
 
@@ -879,18 +894,18 @@ export default class CSAPIQueryBuilder {
 
 ```typescript
 export class SystemsBuilder {
-  async getSystems(options?: SystemQueryOptions): Promise<System[]>
+  async getSystems(options?: SystemQueryOptions): Promise<System[]>;
 }
 
 export class DeploymentsBuilder {
-  async getDeployments(options?: QueryOptions): Promise<Deployment[]>
+  async getDeployments(options?: QueryOptions): Promise<Deployment[]>;
 }
 
 export class ObservationsBuilder {
   async getObservations(
     datastreamId: string,
     options?: ObservationQueryOptions
-  ): Promise<Observation[]>
+  ): Promise<Observation[]>;
 }
 ```
 
@@ -902,31 +917,31 @@ export class ObservationsBuilder {
 
 ```typescript
 const builder = await endpoint.csapi('sensors');
-builder.  // IntelliSense shows ALL 70-80 methods
-  getSystems()
-  getDeployments()
-  getSystemById()
-  getDatastreams()
-  getObservations()
-  // ... all methods visible
+builder // IntelliSense shows ALL 70-80 methods
+  .getSystems();
+getDeployments();
+getSystemById();
+getDatastreams();
+getObservations();
+// ... all methods visible
 ```
 
 **Multi-class autocomplete:**
 
 ```typescript
 const systemsBuilder = await endpoint.csapiSystems('sensors');
-systemsBuilder.  // IntelliSense shows only 8-12 methods
-  getSystems()
-  getSystemById()
-  getSystemSubsystems()
-  getSystemDatastreams()
-  // ... only system methods
+systemsBuilder // IntelliSense shows only 8-12 methods
+  .getSystems();
+getSystemById();
+getSystemSubsystems();
+getSystemDatastreams();
+// ... only system methods
 
 const deploymentsBuilder = await endpoint.csapiDeployments('sensors');
-deploymentsBuilder.  // Need separate builder for deployments
-  getDeployments()
-  getDeploymentById()
-  // ... only deployment methods
+deploymentsBuilder // Need separate builder for deployments
+  .getDeployments();
+getDeploymentById();
+// ... only deployment methods
 ```
 
 **Problem:** Multi-class requires users to know which builder to use BEFORE they can discover methods.
@@ -993,6 +1008,7 @@ export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
 ```
 
 **Benefits:**
+
 - ✅ Single source of truth
 - ✅ Can iterate array at runtime
 - ✅ Type safety at compile time
@@ -1007,15 +1023,15 @@ export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
 ```typescript
 // Optional properties use ?
 export interface System {
-  id: string;              // Required - never undefined
-  name?: string;           // Optional - string | undefined
-  description?: string;    // Optional - string | undefined
+  id: string; // Required - never undefined
+  name?: string; // Optional - string | undefined
+  description?: string; // Optional - string | undefined
 }
 
 // NOT this:
 export interface System {
   id: string;
-  name: string | undefined;  // ❌ Use ? instead
+  name: string | undefined; // ❌ Use ? instead
   description: string | null; // ❌ Use ? instead
 }
 ```
@@ -1043,6 +1059,7 @@ export type DeploymentCollection = Collection<Deployment>;
 ```
 
 **Benefits:**
+
 - ✅ Reusable for all 9 resource types
 - ✅ Type-safe array contents
 - ✅ Clear intent
@@ -1095,19 +1112,21 @@ interface GeoJSONFeature {
 
 ```typescript
 export interface System {
-  id: string;                 // GeoJSON id (required for CSAPI)
-  type: 'System';             // GeoJSON type (but resource name not 'Feature')
-  properties: {               // GeoJSON properties object
+  id: string; // GeoJSON id (required for CSAPI)
+  type: 'System'; // GeoJSON type (but resource name not 'Feature')
+  properties: {
+    // GeoJSON properties object
     name: string;
     description?: string;
     // ... CSAPI-specific properties
   };
-  geometry?: Geometry;        // GeoJSON geometry (optional for CSAPI)
+  geometry?: Geometry; // GeoJSON geometry (optional for CSAPI)
   links: OgcApiDocumentLink[]; // HATEOAS links (CSAPI addition)
 }
 ```
 
 **Why align with GeoJSON?**
+
 - ✅ Familiar structure for developers
 - ✅ Can use existing GeoJSON libraries
 - ✅ OGC API standards use GeoJSON
@@ -1145,6 +1164,7 @@ export interface SamplingFeature {
 ### Challenge: Multiple Representations
 
 **CSAPI resources can be returned in different formats:**
+
 - **[GeoJSON / JSON-FG](https://datatracker.ietf.org/doc/html/rfc7946)** - Standard spatial feature format
 - **[SensorML 3.0](https://docs.ogc.org/is/23-001/23-001.html)** ([OGC 23-001](https://docs.ogc.org/is/23-001/23-001.html)) - JSON only (`application/sml+json`)
 - **[SWE Common 3.0](https://docs.ogc.org/is/23-002/23-002.html)** ([OGC 23-002](https://docs.ogc.org/is/23-002/23-002.html))
@@ -1165,11 +1185,13 @@ async getPosition(...): Promise<any>  // Could be GeoJSON, CoverageJSON, etc.
 ```
 
 **Why EDR doesn't type formats:**
+
 - EDR has 1 query type with multiple optional format encodings
 - Most EDR users request default GeoJSON and never use other formats
 - Alternative formats are truly optional/secondary use cases
 
 **Why CSAPI is DIFFERENT:**
+
 - **100% of CSAPI users will use ALL THREE formats**
 - **SensorML 3.0:** Used almost 100% of the time for detailed system metadata
 - **SWE Common 3.0:** Used almost 100% of the time for observation data and schemas
@@ -1183,12 +1205,14 @@ async getPosition(...): Promise<any>  // Could be GeoJSON, CoverageJSON, etc.
 **Rationale for typing all formats:**
 
 1. **Core Value Proposition of TypeScript Libraries**
+
    - IntelliSense/Autocomplete for discovering properties
    - Compile-time validation catching typos and structural errors
    - Self-documenting types showing structure without reading docs
    - Refactoring safety with IDE tracking usage across codebase
 
 2. **Industry Standard Practice**
+
    - AWS SDK v3: Types every API response object
    - Google Cloud SDK: Comprehensive typing for all resources
    - Stripe SDK: Full typing for all API objects
@@ -1196,6 +1220,7 @@ async getPosition(...): Promise<any>  // Could be GeoJSON, CoverageJSON, etc.
    - **No professional TypeScript SDK ships `any` for critical data structures**
 
 3. **CSAPI Usage Pattern**
+
    - Users will work with SensorML objects constantly (system metadata, capabilities, characteristics)
    - Users will work with SWE Common objects constantly (observation schemas, data components)
    - Not typing these means users lose TypeScript benefits for their primary use cases
@@ -1204,6 +1229,7 @@ async getPosition(...): Promise<any>  // Could be GeoJSON, CoverageJSON, etc.
 4. **Type Safety Examples**
 
 **Without SensorML types (BAD):**
+
 ```typescript
 const sensorML = await getSensorML('sensor123');  // Returns any
 console.log(sensorML.capabilites);  // ❌ TYPO - no error, undefined at runtime
@@ -1211,6 +1237,7 @@ console.log(sensorML.???);  // ❌ No IntelliSense - what properties exist?
 ```
 
 **With SensorML types (GOOD):**
+
 ```typescript
 const sensorML: SystemSensorML = await getSensorML('sensor123');
 console.log(sensorML.capabilites);  // ✅ TypeScript ERROR - did you mean 'capabilities'?
@@ -1220,6 +1247,7 @@ console.log(sensorML.|);  // ✅ IntelliSense shows: type, id, capabilities, cha
 ### Type Definitions Required
 
 **1. GeoJSON Types (Already planned - 350-400 lines):**
+
 ```typescript
 // In model.ts
 export interface System {
@@ -1236,14 +1264,15 @@ export interface System {
 ```
 
 **2. SensorML 3.0 Types (NEW - 800-1200 lines):**
+
 ```typescript
 // In formats/sensorml/types.ts
 
 // Process types
-export type SensorMLProcess = 
-  | PhysicalSystem 
-  | PhysicalComponent 
-  | SimpleProcess 
+export type SensorMLProcess =
+  | PhysicalSystem
+  | PhysicalComponent
+  | SimpleProcess
   | AggregateProcess;
 
 export interface PhysicalSystem {
@@ -1291,13 +1320,14 @@ export interface Capability {
   name: string;
   description?: string;
   definition?: string;
-  value: SWEDataComponent;  // Links to SWE Common types
+  value: SWEDataComponent; // Links to SWE Common types
 }
 
 // ... 30+ more interfaces for complete SensorML schema
 ```
 
 **3. SWE Common 3.0 Types (NEW - 600-800 lines):**
+
 ```typescript
 // In formats/swecommon/types.ts
 
@@ -1357,15 +1387,12 @@ export interface Quantity {
 }
 
 export interface UnitOfMeasure {
-  code?: string;  // UCUM code
-  href?: string;  // URI to unit definition
+  code?: string; // UCUM code
+  href?: string; // URI to unit definition
 }
 
 // Encoding types
-export type DataEncoding = 
-  | JSONEncoding 
-  | TextEncoding 
-  | BinaryEncoding;
+export type DataEncoding = JSONEncoding | TextEncoding | BinaryEncoding;
 
 export interface JSONEncoding {
   type: 'JSONEncoding';
@@ -1409,6 +1436,7 @@ export interface BinaryEncoding {
 | **TOTAL PARSERS** | **3,250-4,550** | **13 files** |
 
 **Combined format handling:**
+
 - Type definitions: ~1,750-2,400 lines
 - Parser implementations: ~3,250-4,550 lines
 - **Total: ~5,000-6,950 lines** (types + parsers)
@@ -1418,52 +1446,54 @@ export interface BinaryEncoding {
 **Users import and use typed objects:**
 
 ```typescript
-import type { 
-  System,  // GeoJSON
-  SystemSensorML,  // SensorML 3.0
-  DataRecord,  // SWE Common 3.0
-  Quantity
+import type {
+  System, // GeoJSON
+  SystemSensorML, // SensorML 3.0
+  DataRecord, // SWE Common 3.0
+  Quantity,
 } from 'ogc-client';
 
 // Type-safe GeoJSON
 const system: System = await builder.getSystem('sensor123');
-console.log(system.properties.name);  // ✅ Typed
+console.log(system.properties.name); // ✅ Typed
 
 // Type-safe SensorML 3.0
 const sensorML: SystemSensorML = await builder.getSystemAsSensorML('sensor123');
-console.log(sensorML.capabilities);  // ✅ Typed - IntelliSense works
-console.log(sensorML.components[0].characteristics);  // ✅ Full type safety
+console.log(sensorML.capabilities); // ✅ Typed - IntelliSense works
+console.log(sensorML.components[0].characteristics); // ✅ Full type safety
 
 // Type-safe SWE Common 3.0
 const schema: DataRecord = await builder.getDatastreamSchema('ds123');
-console.log(schema.fields[0].component);  // ✅ Typed - can be Quantity, Count, etc.
+console.log(schema.fields[0].component); // ✅ Typed - can be Quantity, Count, etc.
 if (schema.fields[0].component.type === 'Quantity') {
   // ✅ TypeScript narrows type to Quantity
-  console.log(schema.fields[0].component.uom.code);  // Access unit code safely
+  console.log(schema.fields[0].component.uom.code); // Access unit code safely
 }
 ```
 
 ### Comparison: Typed vs Untyped
 
-| Aspect | Untyped (any) | Typed (Full Interfaces) |
-|--------|---------------|-------------------------|
-| **Compile-time safety** | ❌ No validation | ✅ Catches typos, structural errors |
-| **IntelliSense** | ❌ No autocomplete | ✅ Full property discovery |
-| **Refactoring** | ❌ Manual search | ✅ IDE tracks all usage |
-| **Documentation** | ❌ Must read specs | ✅ Self-documenting types |
-| **Developer experience** | ❌ Poor (like JavaScript) | ✅ Excellent (TypeScript benefits) |
-| **Professional quality** | ❌ Below standard | ✅ Industry standard |
-| **Code volume** | ~0 lines | ~1,750-2,400 lines |
-| **Maintenance** | ✅ None needed | ⚠️ Keep synced with specs |
+| Aspect                   | Untyped (any)             | Typed (Full Interfaces)             |
+| ------------------------ | ------------------------- | ----------------------------------- |
+| **Compile-time safety**  | ❌ No validation          | ✅ Catches typos, structural errors |
+| **IntelliSense**         | ❌ No autocomplete        | ✅ Full property discovery          |
+| **Refactoring**          | ❌ Manual search          | ✅ IDE tracks all usage             |
+| **Documentation**        | ❌ Must read specs        | ✅ Self-documenting types           |
+| **Developer experience** | ❌ Poor (like JavaScript) | ✅ Excellent (TypeScript benefits)  |
+| **Professional quality** | ❌ Below standard         | ✅ Industry standard                |
+| **Code volume**          | ~0 lines                  | ~1,750-2,400 lines                  |
+| **Maintenance**          | ✅ None needed            | ⚠️ Keep synced with specs           |
 
 ### Recommendation: FULL TYPING (USER MANDATE)
 
 **Type ALL THREE formats with complete TypeScript interfaces:**
-- ✅ GeoJSON types (350-400 lines) 
+
+- ✅ GeoJSON types (350-400 lines)
 - ✅ SensorML 3.0 types (800-1200 lines)
 - ✅ SWE Common 3.0 types (600-800 lines)
 
 **Justification:**
+
 1. **This is what professional TypeScript libraries do** - Type everything users work with
 2. **100% of users need all three formats** - Not typing = losing TypeScript benefits for primary use cases
 3. **Core value proposition** - Type safety, IntelliSense, refactoring support
@@ -1482,16 +1512,16 @@ if (schema.fields[0].component.type === 'Quantity') {
 
 ```typescript
 export interface System {
-  id: string;              // Required - always present
-  type: 'System';          // Required - always present
+  id: string; // Required - always present
+  type: 'System'; // Required - always present
   properties: {
-    name: string;          // Required
-    description?: string;  // Optional - property may not exist
-    keywords?: string[];   // Optional - array or undefined
-    contacts?: Contact[];  // Optional - array or undefined
+    name: string; // Required
+    description?: string; // Optional - property may not exist
+    keywords?: string[]; // Optional - array or undefined
+    contacts?: Contact[]; // Optional - array or undefined
   };
-  geometry?: Geometry;     // Optional - geometry or undefined
-  links: OgcApiDocumentLink[];  // Required - array (can be empty)
+  geometry?: Geometry; // Optional - geometry or undefined
+  links: OgcApiDocumentLink[]; // Required - array (can be empty)
 }
 ```
 
@@ -1501,9 +1531,9 @@ export interface System {
 // ❌ Don't do this
 export interface System {
   id: string;
-  description: string | undefined;  // Use ? instead
-  contacts: Contact[] | null;       // Use ? instead
-  keywords: string[] | undefined;   // Use ? instead
+  description: string | undefined; // Use ? instead
+  contacts: Contact[] | null; // Use ? instead
+  keywords: string[] | undefined; // Use ? instead
 }
 ```
 
@@ -1512,12 +1542,14 @@ export interface System {
 ### Required vs Optional Decision
 
 **Required properties (based on CSAPI spec):**
+
 - `id` - Unique identifier (always required)
 - `type` - Resource type discriminant (always required)
 - `links` - HATEOAS links (always required, but array can be empty)
 - `properties.name` - Human-readable name (usually required)
 
 **Optional properties (most others):**
+
 - `description` - Not all resources have descriptions
 - `geometry` - Not all resources have spatial extent
 - `keywords` - Optional metadata
@@ -1588,21 +1620,21 @@ export type CSAPIResourceType = ...;
 
 ### What Goes Where?
 
-| Type | Location | Reason |
-|------|----------|--------|
-| `System`, `Deployment`, etc. | `csapi/model.ts` | CSAPI resources |
-| `QueryOptions` | `csapi/model.ts` | CSAPI query parameters |
-| `SystemQueryOptions` | `csapi/model.ts` | CSAPI extended options |
-| `CSAPIResourceType` | `csapi/model.ts` | CSAPI enum |
-| `TimeInterval` | `csapi/model.ts` | CSAPI-specific temporal type |
-| `ResourceLink` | `csapi/model.ts` | CSAPI helper type |
-| `Collection<T>` | `csapi/model.ts` | CSAPI generic collection |
-| `BoundingBox` | `shared/models.ts` | ✅ Already exists, reuse |
-| `DateTimeParameter` | `shared/models.ts` | ✅ Already exists, reuse |
-| `Contact` | `shared/models.ts` | ✅ Already exists, reuse |
-| `OgcApiDocumentLink` | `ogc-api/model.ts` | ✅ Already exists, reuse |
-| `OgcApiCollectionInfo` | `ogc-api/model.ts` | ✅ Already exists, reuse |
-| `Geometry`, `Point` | `@types/geojson` | ✅ External package |
+| Type                         | Location           | Reason                       |
+| ---------------------------- | ------------------ | ---------------------------- |
+| `System`, `Deployment`, etc. | `csapi/model.ts`   | CSAPI resources              |
+| `QueryOptions`               | `csapi/model.ts`   | CSAPI query parameters       |
+| `SystemQueryOptions`         | `csapi/model.ts`   | CSAPI extended options       |
+| `CSAPIResourceType`          | `csapi/model.ts`   | CSAPI enum                   |
+| `TimeInterval`               | `csapi/model.ts`   | CSAPI-specific temporal type |
+| `ResourceLink`               | `csapi/model.ts`   | CSAPI helper type            |
+| `Collection<T>`              | `csapi/model.ts`   | CSAPI generic collection     |
+| `BoundingBox`                | `shared/models.ts` | ✅ Already exists, reuse     |
+| `DateTimeParameter`          | `shared/models.ts` | ✅ Already exists, reuse     |
+| `Contact`                    | `shared/models.ts` | ✅ Already exists, reuse     |
+| `OgcApiDocumentLink`         | `ogc-api/model.ts` | ✅ Already exists, reuse     |
+| `OgcApiCollectionInfo`       | `ogc-api/model.ts` | ✅ Already exists, reuse     |
+| `Geometry`, `Point`          | `@types/geojson`   | ✅ External package          |
 
 ### Single File Organization
 
@@ -1726,6 +1758,7 @@ export class DeploymentsBuilder {
 **Does type organization favor multi-class?** ❌ **NO**
 
 **Key findings:**
+
 1. ✅ Type definitions are IDENTICAL regardless of class count
 2. ✅ Single model.ts works perfectly for both approaches
 3. ✅ Single-class has simpler imports (1 import vs 9)
@@ -1742,6 +1775,7 @@ export class DeploymentsBuilder {
 ### Granularity Levels
 
 **Level 1: Coarse** (primitive type aliases)
+
 ```typescript
 export type CrsCode = string;
 export type MimeType = string;
@@ -1749,6 +1783,7 @@ export type ResourceLink = string | { href: string; title?: string };
 ```
 
 **Level 2: Medium** (simple interfaces)
+
 ```typescript
 export interface Contact {
   name?: string;
@@ -1763,6 +1798,7 @@ export interface TimeInterval {
 ```
 
 **Level 3: Fine** (detailed interfaces)
+
 ```typescript
 export interface System {
   id: string;
@@ -1779,6 +1815,7 @@ export interface System {
 ```
 
 **Level 4: Very Fine** (discriminated unions)
+
 ```typescript
 export type ZParameter =
   | { type: 'single'; level: number }
@@ -1790,20 +1827,24 @@ export type ZParameter =
 ### CSAPI Granularity Strategy
 
 **Use fine granularity (Level 3) for:**
+
 - ✅ System, Deployment, SamplingFeature (core resources)
 - ✅ Datastream, Observation (frequently used)
 - ✅ Procedure (important metadata)
 
 **Use medium granularity (Level 2) for:**
+
 - ✅ Control, ControlStream, Command (less common)
 - ✅ Helper types (TimeInterval, HistoryEvent, Characteristic)
 - ✅ Nested objects
 
 **Use coarse granularity (Level 1) for:**
+
 - ✅ ResourceLink (string or object)
 - ✅ String identifiers
 
 **Skip very fine (Level 4):**
+
 - ❌ Not needed - CSAPI has simpler parameter structures than EDR
 
 **Result:** Balanced type system with appropriate detail level for each type.
@@ -1817,6 +1858,7 @@ export type ZParameter =
 **From main `src/index.ts`:**
 
 ✅ **Always export:**
+
 - Resource types: `System`, `Deployment`, `Observation`, etc.
 - Query option types: `QueryOptions`, `SystemQueryOptions`, `ObservationQueryOptions`
 - Collection types: `SystemCollection`, `DeploymentCollection`, etc.
@@ -1824,6 +1866,7 @@ export type ZParameter =
 - Resource enum: `CSAPIResourceTypes`, `CSAPIResourceType`
 
 ❌ **Never export:**
+
 - QueryBuilder class (accessed via factory method)
 - Internal helpers
 - Type guards (unless needed by users)
@@ -1890,7 +1933,7 @@ export { default as CSAPIQueryBuilder } from './ogc-api/csapi/url_builder.js';
 **Why?** Accessed via factory method:
 
 ```typescript
-const builder = await endpoint.csapi('sensors');  // Type inferred
+const builder = await endpoint.csapi('sensors'); // Type inferred
 ```
 
 ---
@@ -1899,38 +1942,39 @@ const builder = await endpoint.csapi('sensors');  // Type inferred
 
 ### Type Organization
 
-| Aspect | Single-Class | Multi-Class | Winner |
-|--------|-------------|-------------|--------|
-| **model.ts size** | 350-400 lines | 350-400 lines | TIE |
-| **Type definitions** | Same types | Same types | TIE |
+| Aspect                | Single-Class       | Multi-Class         | Winner       |
+| --------------------- | ------------------ | ------------------- | ------------ |
+| **model.ts size**     | 350-400 lines      | 350-400 lines       | TIE          |
+| **Type definitions**  | Same types         | Same types          | TIE          |
 | **Import statements** | 1 (all types once) | 9 (one per builder) | Single-class |
-| **Type location** | One place | One place | TIE |
-| **Type reuse** | Easy | Easy | TIE |
+| **Type location**     | One place          | One place           | TIE          |
+| **Type reuse**        | Easy               | Easy                | TIE          |
 
 ### Type Safety
 
-| Aspect | Single-Class | Multi-Class | Winner |
-|--------|-------------|-------------|--------|
-| **Method signatures** | Fully typed | Fully typed | TIE |
-| **Parameter types** | QueryOptions, etc. | Same types | TIE |
-| **Return types** | System, etc. | Same types | TIE |
-| **Compile-time safety** | Full | Full | TIE |
-| **Runtime validation** | User mandate | User mandate | TIE |
+| Aspect                  | Single-Class       | Multi-Class  | Winner |
+| ----------------------- | ------------------ | ------------ | ------ |
+| **Method signatures**   | Fully typed        | Fully typed  | TIE    |
+| **Parameter types**     | QueryOptions, etc. | Same types   | TIE    |
+| **Return types**        | System, etc.       | Same types   | TIE    |
+| **Compile-time safety** | Full               | Full         | TIE    |
+| **Runtime validation**  | User mandate       | User mandate | TIE    |
 
 ### Developer Experience
 
-| Aspect | Single-Class | Multi-Class | Winner |
-|--------|-------------|-------------|--------|
-| **IntelliSense** | All 70-80 methods | Only 8-12 methods | Single-class |
-| **Method discovery** | Immediate | Must know builder first | Single-class |
-| **Type imports** | Import once | Import per file | Single-class |
-| **Autocomplete** | Full visibility | Limited visibility | Single-class |
+| Aspect               | Single-Class      | Multi-Class             | Winner       |
+| -------------------- | ----------------- | ----------------------- | ------------ |
+| **IntelliSense**     | All 70-80 methods | Only 8-12 methods       | Single-class |
+| **Method discovery** | Immediate         | Must know builder first | Single-class |
+| **Type imports**     | Import once       | Import per file         | Single-class |
+| **Autocomplete**     | Full visibility   | Limited visibility      | Single-class |
 
 ### Verdict
 
 **Type system impact on architecture:** **NEUTRAL to SLIGHT FAVOR for single-class**
 
 **Reasons:**
+
 1. ✅ Type organization is IDENTICAL regardless of class count
 2. ✅ All types live in one model.ts file for both approaches
 3. ✅ Type safety is IDENTICAL for both approaches
@@ -1951,26 +1995,31 @@ const builder = await endpoint.csapi('sensors');  // Type inferred
 **Structure:**
 
 1. **Imports** (5 lines)
+
    - geojson types
    - shared models
    - ogc-api models
 
 2. **Resource Type Enum** (12 lines)
+
    - CSAPIResourceTypes const array
    - CSAPIResourceType union type
 
 3. **Query Options** (40 lines)
+
    - QueryOptions interface (base)
    - SystemQueryOptions extends QueryOptions
    - ObservationQueryOptions extends QueryOptions
 
 4. **Helper Types** (40 lines)
+
    - TimeInterval interface
    - ResourceLink union type
    - HistoryEvent interface
    - Characteristic interface
 
 5. **9 Resource Interfaces** (225 lines, ~25 lines each)
+
    - System (30 lines - most complex)
    - Deployment (20 lines)
    - SamplingFeature (18 lines)
@@ -2022,29 +2071,29 @@ See Section 3 for full 380-line template.
 
 ### Type Size Breakdown
 
-| Type | Lines | Notes |
-|------|-------|-------|
-| Imports | 5 | 3 import statements |
-| CSAPIResourceTypes | 12 | Const array + type |
-| QueryOptions | 12 | Base interface |
-| SystemQueryOptions | 8 | Extends QueryOptions |
-| ObservationQueryOptions | 8 | Extends QueryOptions |
-| TimeInterval | 5 | Simple interface |
-| ResourceLink | 3 | Union type |
-| HistoryEvent | 5 | Simple interface |
-| Characteristic | 7 | Simple interface |
-| System | 30 | Most complex resource |
-| Deployment | 20 | Medium complexity |
-| SamplingFeature | 18 | Medium complexity |
-| Procedure | 15 | Simple resource |
-| Datastream | 28 | Complex with UoM |
-| Observation | 22 | Variable result type |
-| Control | 12 | Simple resource |
-| ControlStream | 15 | Simple resource |
-| Command | 15 | Simple resource |
-| Collection<T> | 10 | Generic interface |
-| Type aliases (9) | 27 | SystemCollection, etc. |
-| **TOTAL** | **357** | **Complete type system** |
+| Type                    | Lines   | Notes                    |
+| ----------------------- | ------- | ------------------------ |
+| Imports                 | 5       | 3 import statements      |
+| CSAPIResourceTypes      | 12      | Const array + type       |
+| QueryOptions            | 12      | Base interface           |
+| SystemQueryOptions      | 8       | Extends QueryOptions     |
+| ObservationQueryOptions | 8       | Extends QueryOptions     |
+| TimeInterval            | 5       | Simple interface         |
+| ResourceLink            | 3       | Union type               |
+| HistoryEvent            | 5       | Simple interface         |
+| Characteristic          | 7       | Simple interface         |
+| System                  | 30      | Most complex resource    |
+| Deployment              | 20      | Medium complexity        |
+| SamplingFeature         | 18      | Medium complexity        |
+| Procedure               | 15      | Simple resource          |
+| Datastream              | 28      | Complex with UoM         |
+| Observation             | 22      | Variable result type     |
+| Control                 | 12      | Simple resource          |
+| ControlStream           | 15      | Simple resource          |
+| Command                 | 15      | Simple resource          |
+| Collection<T>           | 10      | Generic interface        |
+| Type aliases (9)        | 27      | SystemCollection, etc.   |
+| **TOTAL**               | **357** | **Complete type system** |
 
 ---
 

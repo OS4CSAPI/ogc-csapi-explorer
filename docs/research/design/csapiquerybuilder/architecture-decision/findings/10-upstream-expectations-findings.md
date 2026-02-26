@@ -11,6 +11,7 @@
 **CRITICAL FINDING:** camptocamp/ogc-client has **clear, well-established expectations** for new API implementations based on patterns from WFS, WMS, WMTS, and EDR. While **single-class pattern is not explicitly mandated**, it is the **universal implementation approach** across ALL existing implementations.
 
 **Key Expectations:**
+
 1. **Endpoint Class Pattern:** Async initialization, metadata parsing, consistent API
 2. **Single Implementation Class:** ALL implementations (WFS, WMS, WMTS, EDR) use single main class
 3. **TypeScript Types:** Comprehensive type definitions for all entities
@@ -31,12 +32,13 @@
 **Evidence from ALL Implementations:**
 
 **1. WMS:**
+
 ```typescript
 export default class WmsEndpoint {
   private _capabilitiesUrl: string;
   private _info: GenericEndpointInfo;
   private _layers: WmsLayerFull[];
-  
+
   constructor(url: string) { }
   isReady(): Promise<WmsEndpoint> { }
   getServiceInfo(): GenericEndpointInfo { }
@@ -45,9 +47,11 @@ export default class WmsEndpoint {
   getFeatureInfoUrl(...): string { }
 }
 ```
+
 **Pattern:** Single `WmsEndpoint` class with all capabilities
 
 **2. WFS:**
+
 ```typescript
 export default class WfsEndpoint {
   constructor(url: string) { }
@@ -58,9 +62,11 @@ export default class WfsEndpoint {
   describeFeatureType(...): Promise<WfsFeatureTypeFull> { }
 }
 ```
+
 **Pattern:** Single `WfsEndpoint` class with all operations
 
 **3. WMTS:**
+
 ```typescript
 export default class WmtsEndpoint {
   constructor(url: string) { }
@@ -70,27 +76,31 @@ export default class WmtsEndpoint {
   getTileUrl(...): string { }
 }
 ```
+
 **Pattern:** Single `WmtsEndpoint` class
 
 **4. OGC API (includes EDR):**
+
 ```typescript
 export default class OgcApiEndpoint {
   constructor(url: string) { }
-  
+
   // Common OGC API operations
   get allCollections(): Promise<OgcApiCollectionInfo[]> { }
   get featureCollections(): Promise<string[]> { }
   getCollectionItems(...): Promise<FeatureCollection> { }
-  
+
   // EDR-specific factory method
   async edr(collection_id: string): Promise<EDRQueryBuilder> {
     // Returns QueryBuilder for collection
   }
 }
 ```
+
 **Pattern:** Single `OgcApiEndpoint` class + collection-specific QueryBuilders
 
 **EDRQueryBuilder:**
+
 ```typescript
 export default class EDRQueryBuilder {
   // Single class for all 7 query types
@@ -103,6 +113,7 @@ export default class EDRQueryBuilder {
   buildLocationsDownloadUrl(...): string { }
 }
 ```
+
 **Pattern:** Single QueryBuilder class for all query types (NOT separate classes per query type)
 
 **Conclusion:** **100% of implementations use single main class**. Zero multi-class examples.
@@ -116,6 +127,7 @@ export default class EDRQueryBuilder {
 **Core Pattern Requirements:**
 
 **1. Constructor Takes URL:**
+
 ```typescript
 // ALL implementations follow this
 constructor(url: string) {
@@ -125,6 +137,7 @@ constructor(url: string) {
 ```
 
 **2. Async Initialization:**
+
 ```typescript
 // REQUIRED: isReady() returns Promise
 isReady(): Promise<this> {
@@ -133,6 +146,7 @@ isReady(): Promise<this> {
 ```
 
 **3. Metadata Getters:**
+
 ```typescript
 // REQUIRED: getServiceInfo() for endpoint metadata
 getServiceInfo(): GenericEndpointInfo {
@@ -146,6 +160,7 @@ getCollections(): Collection[] { }
 ```
 
 **4. Operation Methods:**
+
 ```typescript
 // URL builders
 getMapUrl(...): string { }
@@ -157,29 +172,31 @@ getCollectionItems(...): Promise<Items> { }
 ```
 
 **Pattern Flow:**
+
 ```
 User creates endpoint → endpoint.isReady() → metadata parsed → methods available
 ```
 
 **CSAPI Must Follow:**
+
 ```typescript
 export default class CSAPIEndpoint {
   constructor(url: string) {
     // Parse landing page, conformance, collections
   }
-  
+
   isReady(): Promise<CSAPIEndpoint> {
     return this._initPromise.then(() => this);
   }
-  
+
   getServiceInfo(): GenericEndpointInfo {
     return this._info;
   }
-  
+
   getCollections(): CSAPICollectionInfo[] {
     return this._collections;
   }
-  
+
   // Factory method for QueryBuilder
   async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
     // Returns QueryBuilder for collection
@@ -196,6 +213,7 @@ export default class CSAPIEndpoint {
 **Finding:** Factory methods follow **consistent signature across all implementations**.
 
 **OGC API Pattern (EDR Example):**
+
 ```typescript
 export default class OgcApiEndpoint {
   // Factory method: async, takes collection_id, returns QueryBuilder
@@ -204,19 +222,19 @@ export default class OgcApiEndpoint {
     if (!this.hasEnvironmentalDataRetrieval) {
       throw new EndpointError('Endpoint does not support EDR');
     }
-    
+
     // 2. Check cache
     const cache = this.collection_id_to_edr_builder_;
     if (cache.has(collection_id)) {
       return cache.get(collection_id);
     }
-    
+
     // 3. Fetch collection metadata
     const collection = await this.getCollectionInfo(collection_id);
-    
+
     // 4. Instantiate QueryBuilder
     const result = new EDRQueryBuilder(collection);
-    
+
     // 5. Cache and return
     cache.set(collection_id, result);
     return result;
@@ -225,6 +243,7 @@ export default class OgcApiEndpoint {
 ```
 
 **Pattern Elements:**
+
 1. **Method name:** Lowercase API name (`edr`, `csapi`)
 2. **Parameter:** `collection_id: string`
 3. **Return type:** `Promise<QueryBuilder>`
@@ -233,20 +252,24 @@ export default class OgcApiEndpoint {
 6. **Validation:** Checks conformance first
 
 **CSAPI Factory Method:**
+
 ```typescript
 export default class OgcApiEndpoint {
-  private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Map();
-  
+  private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> =
+    new Map();
+
   public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
     if (!this.hasConnectedSystems) {
-      throw new EndpointError('Endpoint does not support Connected Systems API');
+      throw new EndpointError(
+        'Endpoint does not support Connected Systems API'
+      );
     }
-    
+
     const cache = this.collection_id_to_csapi_builder_;
     if (cache.has(collection_id)) {
       return cache.get(collection_id);
     }
-    
+
     const collection = await this.getCollectionInfo(collection_id);
     const result = new CSAPIQueryBuilder(collection);
     cache.set(collection_id, result);
@@ -256,6 +279,7 @@ export default class OgcApiEndpoint {
 ```
 
 **Signature Requirements:**
+
 - ✅ Method name: `csapi` (lowercase)
 - ✅ Parameter: `collection_id: string`
 - ✅ Return: `Promise<CSAPIQueryBuilder>`
@@ -274,18 +298,24 @@ export default class OgcApiEndpoint {
 **Allowed Helper Pattern:**
 
 **1. Separate Capabilities Parsing:**
+
 ```typescript
 // wms/capabilities.ts - Utility functions
-export function readInfoFromCapabilities(doc: XmlDocument): GenericEndpointInfo { }
-export function readLayersFromCapabilities(doc: XmlDocument): WmsLayerFull[] { }
-export function readVersionFromCapabilities(doc: XmlDocument): WmsVersion { }
+export function readInfoFromCapabilities(
+  doc: XmlDocument
+): GenericEndpointInfo {}
+export function readLayersFromCapabilities(doc: XmlDocument): WmsLayerFull[] {}
+export function readVersionFromCapabilities(doc: XmlDocument): WmsVersion {}
 
 // wms/endpoint.ts - Uses helpers
-import { readInfoFromCapabilities, readLayersFromCapabilities } from './capabilities';
+import {
+  readInfoFromCapabilities,
+  readLayersFromCapabilities,
+} from './capabilities';
 
 export default class WmsEndpoint {
   constructor(url: string) {
-    this._capabilitiesPromise = parseCapabilities(url).then(doc => {
+    this._capabilitiesPromise = parseCapabilities(url).then((doc) => {
       this._info = readInfoFromCapabilities(doc);
       this._layers = readLayersFromCapabilities(doc);
     });
@@ -294,10 +324,11 @@ export default class WmsEndpoint {
 ```
 
 **2. Separate URL Builders:**
+
 ```typescript
 // wms/url.ts - URL builder functions
-export function generateGetMapUrl(...params): string { }
-export function generateGetFeatureInfoUrl(...params): string { }
+export function generateGetMapUrl(...params): string {}
+export function generateGetFeatureInfoUrl(...params): string {}
 
 // wms/endpoint.ts - Uses helpers
 import { generateGetMapUrl } from './url';
@@ -310,9 +341,10 @@ export default class WmsEndpoint {
 ```
 
 **3. Separate Model Types:**
+
 ```typescript
 // wms/model.ts - Type definitions only
-export interface WmsLayerFull { }
+export interface WmsLayerFull {}
 export type WmsVersion = '1.1.0' | '1.1.1' | '1.3.0';
 
 // wms/endpoint.ts - Uses types
@@ -320,6 +352,7 @@ import { WmsLayerFull, WmsVersion } from './model';
 ```
 
 **4. Format Parsers:**
+
 ```typescript
 // wfs/featureprops.ts - Parse GML features
 export function parseFeatureProps(
@@ -345,24 +378,24 @@ export default class WfsEndpoint {
 
 // systems-client.ts
 class SystemsClient {
-  async getSystems(): Promise<System[]> { }
+  async getSystems(): Promise<System[]> {}
 }
 
 // deployments-client.ts
 class DeploymentsClient {
-  async getDeployments(): Promise<Deployment[]> { }
+  async getDeployments(): Promise<Deployment[]> {}
 }
 
 // endpoint.ts - delegates to separate classes
 class CSAPIEndpoint {
   private systemsClient: SystemsClient;
   private deploymentsClient: DeploymentsClient;
-  
+
   constructor(url: string) {
     this.systemsClient = new SystemsClient(url);
     this.deploymentsClient = new DeploymentsClient(url);
   }
-  
+
   async getSystems() {
     return this.systemsClient.getSystems(); // Delegation
   }
@@ -370,12 +403,14 @@ class CSAPIEndpoint {
 ```
 
 **Why NOT Allowed:**
+
 - Zero precedent in codebase
 - Adds complexity without clear benefit
 - More classes to maintain and test
 - Breaks from established single-class pattern
 
 **CSAPI File Structure (Allowed):**
+
 ```
 src/csapi/
 ├── endpoint.ts           # CSAPIEndpoint class (main)
@@ -402,11 +437,13 @@ src/csapi/
 **Areas WITH Flexibility:**
 
 **1. File Organization:**
+
 - Can have subfolders: `formats/`, `resources/`, etc.
 - Can split utilities into multiple files
 - Can organize by concern (parsing, formatting, validation)
 
 **Example:**
+
 ```
 src/csapi/
 ├── formats/          ← Subfolder OK
@@ -422,16 +459,19 @@ src/csapi/
 ```
 
 **2. Utility Functions:**
+
 - Can create as many helper functions as needed
 - Can organize into multiple utility files
 - Can use functional vs OOP style for helpers
 
 **3. Type Organization:**
+
 - Can split types across multiple files
 - Can have separate files per resource type
 - Can organize by domain (requests, responses, metadata)
 
 **4. Testing Organization:**
+
 - Can have multiple test files
 - Can organize by feature or file
 - Can use different test strategies
@@ -465,17 +505,17 @@ src/csapi/
 
 **Flexibility Matrix:**
 
-| Aspect | Flexible? | Notes |
-|--------|-----------|-------|
-| File organization | ✅ Yes | Subfolders, multiple files OK |
-| Helper functions | ✅ Yes | As many as needed |
-| Type organization | ✅ Yes | Multiple files OK |
-| Test organization | ✅ Yes | Multiple strategies OK |
-| Main class pattern | ❌ No | Single class required |
-| Factory method | ❌ No | Exact signature required |
-| Async init | ❌ No | isReady() required |
-| Worker support | ❌ No | Must implement |
-| Type exports | ❌ No | Standard pattern required |
+| Aspect             | Flexible? | Notes                         |
+| ------------------ | --------- | ----------------------------- |
+| File organization  | ✅ Yes    | Subfolders, multiple files OK |
+| Helper functions   | ✅ Yes    | As many as needed             |
+| Type organization  | ✅ Yes    | Multiple files OK             |
+| Test organization  | ✅ Yes    | Multiple strategies OK        |
+| Main class pattern | ❌ No     | Single class required         |
+| Factory method     | ❌ No     | Exact signature required      |
+| Async init         | ❌ No     | isReady() required            |
+| Worker support     | ❌ No     | Must implement                |
+| Type exports       | ❌ No     | Standard pattern required     |
 
 **Conclusion:** Flexibility in **implementation details**, rigidity in **architectural patterns**.
 
@@ -488,6 +528,7 @@ src/csapi/
 **Comprehensive Search Results:**
 
 **All Existing Implementations:**
+
 1. ✅ WmsEndpoint - Single class
 2. ✅ WfsEndpoint - Single class
 3. ✅ WmtsEndpoint - Single class
@@ -495,6 +536,7 @@ src/csapi/
 5. ✅ EDRQueryBuilder - Single class (7 query types)
 
 **Zero Examples of:**
+
 - ❌ Multiple client classes per resource type
 - ❌ Delegation pattern (main class → specialized classes)
 - ❌ Facade pattern (coordinator → operation classes)
@@ -504,6 +546,7 @@ src/csapi/
 **Historical Analysis:**
 
 No PR history showing:
+
 - Multi-class proposals being submitted
 - Multi-class proposals being rejected
 - Discussion of multi-class vs single-class trade-offs
@@ -512,12 +555,12 @@ No PR history showing:
 
 **Risk Assessment:**
 
-| Approach | Precedent | Acceptance Risk |
-|----------|-----------|-----------------|
-| Single CSAPIQueryBuilder | ✅ 100% | 🟢 LOW - Proven |
-| Multiple resource clients | ❌ 0% | 🔴 HIGH - Unknown territory |
-| Facade + delegation | ❌ 0% | 🔴 HIGH - Over-engineering |
-| Hybrid approach | ❌ 0% | 🔴 HIGH - Inconsistent |
+| Approach                  | Precedent | Acceptance Risk             |
+| ------------------------- | --------- | --------------------------- |
+| Single CSAPIQueryBuilder  | ✅ 100%   | 🟢 LOW - Proven             |
+| Multiple resource clients | ❌ 0%     | 🔴 HIGH - Unknown territory |
+| Facade + delegation       | ❌ 0%     | 🔴 HIGH - Over-engineering  |
+| Hybrid approach           | ❌ 0%     | 🔴 HIGH - Inconsistent      |
 
 **Conclusion:** Multi-class = **uncharted territory** with **high rejection risk**.
 
@@ -530,26 +573,31 @@ No PR history showing:
 **Explicit Requirements (Documented):**
 
 **1. TypeScript:**
+
 - All implementations must be TypeScript
 - Comprehensive type definitions required
 - Type exports from index.ts required
 
 **2. Testing:**
+
 - Jest test framework
 - 90%+ code coverage target
 - Fixtures for integration tests
 
 **3. Documentation:**
+
 - JSDoc comments on all public APIs
 - README with usage examples
 - Type documentation (TSDoc)
 
 **4. Web Worker:**
+
 - Register handlers in worker/worker.ts
 - Export functions from worker/index.ts
 - Support fallback mode
 
 **5. Compatibility:**
+
 - ES modules only
 - Browser and Node.js support
 - Configurable fetch options
@@ -557,37 +605,44 @@ No PR history showing:
 **Implicit Expectations (Pattern-Based):**
 
 **1. Single Main Class:**
+
 - Not documented as requirement
 - ALL implementations follow pattern
 - Deviation likely to cause rejection
 - **Evidence:** 100% consistency across implementations
 
 **2. Endpoint-Oriented API:**
+
 - Pattern is clear from examples
 - Not explicitly mandated in docs
 - Universal adoption = implicit requirement
 
 **3. Async Initialization:**
+
 - isReady() pattern universal
 - Constructor starts async work
 - Not explicitly required but expected
 
 **4. Factory Method Pattern:**
+
 - Exact signature across implementations
 - Caching pattern consistent
 - Not documented but universally followed
 
 **5. File Organization Conventions:**
+
 - endpoint.ts, model.ts, url.ts pattern
 - Subfolders for complex features
 - Not mandated but conventional
 
 **6. Error Handling:**
+
 - Custom error types (EndpointError, etc.)
 - Error wrapping with cause
 - Not explicitly required but standard
 
 **7. Code Style:**
+
 - Prettier formatting
 - ESLint rules
 - Naming conventions (camelCase, etc.)
@@ -601,6 +656,7 @@ No PR history showing:
 **Risk Mitigation:**
 
 For implicit expectations:
+
 1. Follow existing patterns exactly
 2. Don't innovate on architectural patterns
 3. Save innovation for helper utilities
@@ -615,6 +671,7 @@ For implicit expectations:
 ### Single-Class Pattern: Strongly Recommended
 
 **Evidence:**
+
 1. ✅ 100% of implementations use single main class
 2. ✅ EDR proves pattern scales (7 query types → 561 lines)
 3. ✅ Zero multi-class examples in history
@@ -622,17 +679,20 @@ For implicit expectations:
 5. ❌ No precedent for deviation
 
 **Risk Assessment:**
+
 - **Single class:** LOW risk (proven, universal)
 - **Multi-class:** HIGH risk (no precedent, likely rejection)
 
 ### Format Abstraction: Fully Aligned
 
 **Upstream Precedent:**
+
 - WFS parses GML (XML-based OGC format)
 - WMTS handles tile matrix calculations
 - EDR handles WKT parsing
 
 **CSAPI Equivalent:**
+
 - Parse SensorML (XML-based OGC format)
 - Parse SWE Common (complex structures)
 - Parse GeoJSON (standard geometry format)
@@ -642,12 +702,14 @@ For implicit expectations:
 ### Helper Files: Acceptable
 
 **Allowed:**
+
 - ✅ Separate files for parsing (conformance, collections, formats)
 - ✅ Separate files for URL building
 - ✅ Separate files for validation
 - ✅ Separate files for types
 
 **Not Allowed:**
+
 - ❌ Separate classes for operations (systems, deployments, etc.)
 - ❌ Delegation pattern splitting functionality
 - ❌ Facade pattern with internal clients
@@ -655,12 +717,14 @@ For implicit expectations:
 ### Integration Points: Exact Pattern Match Required
 
 **Must implement:**
+
 1. `OgcApiEndpoint.csapi(collection_id)` factory method
 2. Map-based caching by collection_id
 3. Conformance check before instantiation
 4. Return `Promise<CSAPIQueryBuilder>`
 
 **Must follow EDR pattern exactly:**
+
 ```typescript
 private collection_id_to_csapi_builder_: Map<string, CSAPIQueryBuilder> = new Map();
 
@@ -707,6 +771,7 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
 **Evidence Strength:** CRITICAL
 
 **Key Findings:**
+
 1. ✅ 100% of implementations use single class
 2. ✅ EDR proves scalability (7 types → 561 lines)
 3. ✅ CSAPI projection: 9 types → 850-950 lines (manageable)
@@ -716,6 +781,7 @@ public async csapi(collection_id: string): Promise<CSAPIQueryBuilder> {
 **Recommendation:** **STRONGLY FAVOR single CSAPIQueryBuilder class**
 
 **Risk Level:**
+
 - Single class: 🟢 **LOW** (proven, universal, expected)
 - Multi-class: 🔴 **HIGH** (no precedent, likely rejection, over-engineering)
 

@@ -13,12 +13,12 @@
 
 ## 1. Environment
 
-| Component | Version |
-|-----------|---------|
-| Node.js | v25.6.1 |
-| npm | 11.9.0 |
-| OS | Windows |
-| Package | `@camptocamp/ogc-client@1.3.1-dev` |
+| Component | Version                            |
+| --------- | ---------------------------------- |
+| Node.js   | v25.6.1                            |
+| npm       | 11.9.0                             |
+| OS        | Windows                            |
+| Package   | `@camptocamp/ogc-client@1.3.1-dev` |
 
 ---
 
@@ -37,22 +37,22 @@ up to date, audited 745 packages in 3s
 
 **Total vulnerabilities:** 15 (1 low, 10 moderate, 3 high, 1 critical)
 
-| Severity | Package | Advisory |
-|----------|---------|----------|
-| Critical | form-data 4.0.0-4.0.3 | GHSA-fjxv-7rqg-78g4 — unsafe random in boundary |
-| High | rollup 4.0.0-4.22.3 | GHSA-gcx4-mw62-g8wm — DOM clobbering XSS |
-| High | validator ≤13.15.20 | GHSA-9965-vmph-33xx — URL validation bypass |
-| High | validator ≤13.15.20 | GHSA-vghf-hv5q-vc2g — incomplete filtering |
-| High | ws 8.0.0-8.17.0 | GHSA-3h5v-q93c-6h6q — DoS via HTTP headers |
-| Moderate | brace-expansion (4 instances) | GHSA-v6h2-p8h4-qcjw — ReDoS |
-| Moderate | esbuild ≤0.24.2 | GHSA-67mh-4wv8-2f99 — dev server request access |
-| Moderate | js-yaml (2 instances) | GHSA-mh29-5h37-fv8m — prototype pollution |
-| Moderate | lodash 4.0.0-4.17.21 | GHSA-xxjr-mmjv-4gpg — prototype pollution |
-| Moderate | nanoid <3.3.8 | GHSA-mwcw-c2x4-8c55 — predictable generation |
-| Moderate | vite ≤6.1.6 | Depends on vulnerable esbuild |
-| Moderate | vue-template-compiler ≥2.0.0 | GHSA-g3ch-rx76-35fx — XSS |
-| Moderate | word-wrap <1.2.4 | GHSA-j8xg-fqg3-53r7 — ReDoS |
-| Low | brace-expansion (covered above) | Second advisory instance |
+| Severity | Package                         | Advisory                                        |
+| -------- | ------------------------------- | ----------------------------------------------- |
+| Critical | form-data 4.0.0-4.0.3           | GHSA-fjxv-7rqg-78g4 — unsafe random in boundary |
+| High     | rollup 4.0.0-4.22.3             | GHSA-gcx4-mw62-g8wm — DOM clobbering XSS        |
+| High     | validator ≤13.15.20             | GHSA-9965-vmph-33xx — URL validation bypass     |
+| High     | validator ≤13.15.20             | GHSA-vghf-hv5q-vc2g — incomplete filtering      |
+| High     | ws 8.0.0-8.17.0                 | GHSA-3h5v-q93c-6h6q — DoS via HTTP headers      |
+| Moderate | brace-expansion (4 instances)   | GHSA-v6h2-p8h4-qcjw — ReDoS                     |
+| Moderate | esbuild ≤0.24.2                 | GHSA-67mh-4wv8-2f99 — dev server request access |
+| Moderate | js-yaml (2 instances)           | GHSA-mh29-5h37-fv8m — prototype pollution       |
+| Moderate | lodash 4.0.0-4.17.21            | GHSA-xxjr-mmjv-4gpg — prototype pollution       |
+| Moderate | nanoid <3.3.8                   | GHSA-mwcw-c2x4-8c55 — predictable generation    |
+| Moderate | vite ≤6.1.6                     | Depends on vulnerable esbuild                   |
+| Moderate | vue-template-compiler ≥2.0.0    | GHSA-g3ch-rx76-35fx — XSS                       |
+| Moderate | word-wrap <1.2.4                | GHSA-j8xg-fqg3-53r7 — ReDoS                     |
+| Low      | brace-expansion (covered above) | Second advisory instance                        |
 
 **Assessment:** All vulnerabilities are in upstream dependencies. None are introduced by our fork. Most have fixes available via `npm audit fix` but we are not running that — dependency updates are an upstream concern.
 
@@ -103,17 +103,17 @@ This is a **Windows-specific path handling issue** in the esbuild worker build s
 
 ### 3.3 Test Summary
 
-| Environment | Suites | Pass | Fail | Tests | Pass | Fail | Skip |
-|-------------|--------|------|------|-------|------|------|------|
-| Browser (jsdom) | 28 | 26 | 2 | 327 | 322 | 5 | 0 |
-| Node | 31 | 30 | 1 | 406 | 401 | 1 | 4 |
+| Environment     | Suites | Pass | Fail | Tests | Pass | Fail | Skip |
+| --------------- | ------ | ---- | ---- | ----- | ---- | ---- | ---- |
+| Browser (jsdom) | 28     | 26   | 2    | 327   | 322  | 5    | 0    |
+| Node            | 31     | 30   | 1    | 406   | 401  | 1    | 4    |
 
 **Pre-existing failures:**
 
-| # | Test | Environment | Root Cause | Upstream Issue |
-|---|------|-------------|------------|----------------|
-| 1 | `endpoint.spec.ts` — `#info throws an explicit error` | Both | `Error` vs `EndpointError` class mismatch | Error wrapping bug |
-| 2 | `http-utils.spec.ts` — worker fetch options (4 tests) | Browser only | Windows esbuild path resolution | Platform-specific |
+| #   | Test                                                  | Environment  | Root Cause                                | Upstream Issue     |
+| --- | ----------------------------------------------------- | ------------ | ----------------------------------------- | ------------------ |
+| 1   | `endpoint.spec.ts` — `#info throws an explicit error` | Both         | `Error` vs `EndpointError` class mismatch | Error wrapping bug |
+| 2   | `http-utils.spec.ts` — worker fetch options (4 tests) | Browser only | Windows esbuild path resolution           | Platform-specific  |
 
 **CSAPI impact:** None. These failures are in `src/ogc-api/endpoint.spec.ts` and `src/shared/http-utils.spec.ts` — neither file is modified by CSAPI until Phase 1 Task 4 (Issue #4), and the `endpoint.spec.ts` failure is in an error-handling path unrelated to our CSAPI factory method additions. The worker path issue is entirely in the Web Worker infrastructure which CSAPI does not use.
 
@@ -174,13 +174,13 @@ X [ERROR] Invalid build flag: "-name"
 
 ## 6. Upstream Sync Status
 
-| Metric | Value |
-|--------|-------|
-| Fork source | `camptocamp/ogc-client` |
-| Fork point commit | `53a6449` (Merge pull request #132 from camptocamp/fix-bbox) |
-| Fork point date | December 17, 2025 |
-| Commits behind upstream | **0** |
-| Commits ahead of upstream | **436** (all are CSAPI planning/docs commits) |
+| Metric                    | Value                                                        |
+| ------------------------- | ------------------------------------------------------------ |
+| Fork source               | `camptocamp/ogc-client`                                      |
+| Fork point commit         | `53a6449` (Merge pull request #132 from camptocamp/fix-bbox) |
+| Fork point date           | December 17, 2025                                            |
+| Commits behind upstream   | **0**                                                        |
+| Commits ahead of upstream | **436** (all are CSAPI planning/docs commits)                |
 
 **Assessment:** ✅ Fully synced. Upstream has had zero new commits since our fork point (`53a6449`). No merge conflicts possible. The 436 commits ahead are all documentation additions in `docs/` — no source code modifications.
 
@@ -191,6 +191,7 @@ X [ERROR] Invalid build flag: "-name"
 **Files reviewed:** `jest.config.cjs`, `jest.node.config.cjs`
 
 **Key configuration:**
+
 - Test discovery: Automatic (no explicit `testMatch` or `testPathPattern` restricting to specific directories)
 - Module name mapper: `'^(..?/.+)\\.c?jsx?$': '$1'` (handles `.js` extension imports)
 - Transform: TypeScript via custom transformer (`jest.ts-transformer.cjs`)
@@ -204,17 +205,17 @@ X [ERROR] Invalid build flag: "-name"
 
 ### Baseline State
 
-| Check | Result | Pre-existing Issues |
-|-------|--------|-------------------|
-| `npm install` | ✅ Pass | 15 dependency vulnerabilities (upstream) |
+| Check                | Result        | Pre-existing Issues                                 |
+| -------------------- | ------------- | --------------------------------------------------- |
+| `npm install`        | ✅ Pass       | 15 dependency vulnerabilities (upstream)            |
 | `npm test` (browser) | ❌ 5 failures | EndpointError class mismatch + Windows esbuild path |
-| `npm test` (node) | ❌ 1 failure | EndpointError class mismatch |
-| `build:worker` | ✅ Pass | None |
-| `build:node` | ✅ Pass | None |
-| `build:browser` | ❌ Fail | Windows shell command incompatibility |
-| `npx eslint .` | ✅ Pass | None |
-| Upstream sync | ✅ Current | 0 commits behind |
-| Jest config | ✅ Compatible | No changes needed for CSAPI paths |
+| `npm test` (node)    | ❌ 1 failure  | EndpointError class mismatch                        |
+| `build:worker`       | ✅ Pass       | None                                                |
+| `build:node`         | ✅ Pass       | None                                                |
+| `build:browser`      | ❌ Fail       | Windows shell command incompatibility               |
+| `npx eslint .`       | ✅ Pass       | None                                                |
+| Upstream sync        | ✅ Current    | 0 commits behind                                    |
+| Jest config          | ✅ Compatible | No changes needed for CSAPI paths                   |
 
 ### Pre-existing Issues (inherited, not our responsibility)
 
@@ -231,6 +232,7 @@ X [ERROR] Invalid build flag: "-name"
 **Decision: ✅ GO**
 
 None of the pre-existing issues block CSAPI implementation:
+
 - The `EndpointError` test failure is unrelated to our code paths
 - The worker path issue is Windows-specific and CSAPI doesn't use workers
 - The `build:browser` failure is a Windows shell issue; CI runs on Linux
@@ -244,6 +246,6 @@ None of the pre-existing issues block CSAPI implementation:
 
 ## Version History
 
-| Version | Date | Change |
-|---------|------|--------|
-| 1.0 | February 14, 2026 | Initial baseline assessment |
+| Version | Date              | Change                      |
+| ------- | ----------------- | --------------------------- |
+| 1.0     | February 14, 2026 | Initial baseline assessment |

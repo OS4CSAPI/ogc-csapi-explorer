@@ -11,6 +11,7 @@
 ## Research Objectives
 
 1. **Complexity Assessment:**
+
    - Part 2 resource count and operations
    - Schema operations complexity
    - Temporal query patterns

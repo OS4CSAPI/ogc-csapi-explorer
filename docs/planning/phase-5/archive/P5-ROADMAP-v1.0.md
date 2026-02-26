@@ -12,11 +12,13 @@
 This roadmap covers the implementation of **9 parser gaps** identified by the Parsing Coverage Audit, organized into **9 tasks** spanning an estimated **14–22 hours of development time** (2–3 weeks calendar time).
 
 **What this covers:**
+
 - 6 resource parse functions (Property, Datastream, Observation, ControlStream, Command, CommandStatus)
 - 2 schema response parse functions (DatastreamSchemaResponse, ControlStreamSchemaResponse)
 - 1 recursive delegation fix in 2 files (physical-system.ts, aggregate-process.ts)
 
 **Estimated volume:**
+
 - ~300–500 lines of implementation across 3 new files + 2 modified files
 - ~400–600 lines of tests across 3 new spec files + 2 modified spec files
 - 2 new TypeScript interfaces (DatastreamSchemaResponse, ControlStreamSchemaResponse)
@@ -24,12 +26,14 @@ This roadmap covers the implementation of **9 parser gaps** identified by the Pa
 **What this does NOT cover:** QueryBuilder methods (complete), URL building (complete), format detection (complete), GeoJSON handler extensions (complete), SWE Common parsers (complete), SensorML parsers (complete except Gap #9), collection envelope handling (complete), content negotiation, integration tests, worker extensions, or any other work outside the 9 parser gaps. See the main [ROADMAP](../ROADMAP.md) (Version 3.4) for Phases 1–4 scope.
 
 **Key Facts:**
+
 - All 6 resource type interfaces already exist in `model.ts` — no type system work except 2 new schema response interfaces
 - `parseValidTime()` already exists in `geojson.ts` and handles all time interval cases — reuse, don't reimplement
 - `parseSWEComponent()` already exists — schema response parsers delegate to it
 - Test suite baseline: 1,525 passed, 5 failed (pre-existing, non-CSAPI), 53 suites
 
 **Success Factors:**
+
 - Write tests immediately after each parser (not batched at end)
 - Follow tolerant extraction philosophy — never gate on missing fields
 - Maintain >80% code coverage on all new parser files
@@ -255,18 +259,19 @@ Tasks are ordered by **complexity progression** and **dependency chain**:
 
 ## Deliverables Summary
 
-| Category | Files | Estimated Lines |
-|----------|-------|----------------|
-| New implementation files | 3 (`property.ts`, `part2.ts`, `schema-response.ts`) | ~300–500 |
-| Modified implementation files | 2 (`physical-system.ts`, `aggregate-process.ts`) | ~20–40 (net change) |
-| New test files | 3 (`property.spec.ts`, `part2.spec.ts`, `schema-response.spec.ts`) | ~400–600 |
-| Modified test files | 2 (`physical-system.spec.ts`, `aggregate-process.spec.ts`) | ~80–120 (net change) |
-| New interfaces | 2 (`DatastreamSchemaResponse`, `ControlStreamSchemaResponse` in `model.ts`) | ~20–30 |
-| Integration wiring | QueryBuilder call sites | ~30–60 |
-| **Total** | **~10 files touched** | **~850–1,350 lines** |
+| Category                      | Files                                                                       | Estimated Lines      |
+| ----------------------------- | --------------------------------------------------------------------------- | -------------------- |
+| New implementation files      | 3 (`property.ts`, `part2.ts`, `schema-response.ts`)                         | ~300–500             |
+| Modified implementation files | 2 (`physical-system.ts`, `aggregate-process.ts`)                            | ~20–40 (net change)  |
+| New test files                | 3 (`property.spec.ts`, `part2.spec.ts`, `schema-response.spec.ts`)          | ~400–600             |
+| Modified test files           | 2 (`physical-system.spec.ts`, `aggregate-process.spec.ts`)                  | ~80–120 (net change) |
+| New interfaces                | 2 (`DatastreamSchemaResponse`, `ControlStreamSchemaResponse` in `model.ts`) | ~20–30               |
+| Integration wiring            | QueryBuilder call sites                                                     | ~30–60               |
+| **Total**                     | **~10 files touched**                                                       | **~850–1,350 lines** |
 
 **Quality Targets:**
-- >80% code coverage on all new parser files
+
+- > 80% code coverage on all new parser files
 - All parse functions return declared interface type — no `any` or `unknown` in output
 - JSDoc on all public parse functions
 - Consistent with existing SensorML, SWE Common, and GeoJSON parser patterns
@@ -296,33 +301,34 @@ The following are explicitly NOT in Phase 5 scope (all complete in Phases 1–4 
 
 Parser-relevant findings from the [Server Quirks Reference](../../implementation/server-quirks-reference.md) that directly inform implementation:
 
-| Finding | Impact |
-|---------|--------|
-| F34 | Commands only available under nested `/controlstreams/{id}/commands` on OSH — fixtures come from nested endpoints |
-| F38 | CommandStatus shape (`command@id`, `reportTime`, `statusCode`, `executionTime` array) directly informs `parseCommandStatus()` |
-| F39 | All Part 2 resources use `items` envelope — confirms `parseCollectionResponse()` handles envelope; parsers only need item-level logic |
-| F45 | Envelope varies by server/format — already handled by `parseCollectionResponse()` |
-| F49 | Validates tolerant extraction — never gate on missing fields |
-| F85 | `validTime` absent/null from servers — validates `parseValidTime()` tolerant design, reused by new parsers |
+| Finding | Impact                                                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| F34     | Commands only available under nested `/controlstreams/{id}/commands` on OSH — fixtures come from nested endpoints                     |
+| F38     | CommandStatus shape (`command@id`, `reportTime`, `statusCode`, `executionTime` array) directly informs `parseCommandStatus()`         |
+| F39     | All Part 2 resources use `items` envelope — confirms `parseCollectionResponse()` handles envelope; parsers only need item-level logic |
+| F45     | Envelope varies by server/format — already handled by `parseCollectionResponse()`                                                     |
+| F49     | Validates tolerant extraction — never gate on missing fields                                                                          |
+| F85     | `validTime` absent/null from servers — validates `parseValidTime()` tolerant design, reused by new parsers                            |
 
 ---
 
 ## Risk Register
 
-| # | Risk | Likelihood | Impact | Mitigation |
-|---|------|-----------|--------|------------|
-| 1 | No Property test data — both servers return 0 items | Certain | Medium | Build fixtures from OGC 23-001 spec. Document as known limitation. |
-| 2 | Circular import from Gap #9 fix | Low | High | TypeScript ESM live bindings handle it. Verify with test suite. Fallback: callback parameter. |
-| 3 | `observedProperties` shape variance | Medium | Low | Handle both object array and string array in `parseDatastream()`. Test both. |
-| 4 | 52North Part 2 differences | Medium | Medium | Use OSH fixtures as primary. Tolerant extraction handles most variance. Add 52North fixtures when available. |
-| 5 | Schema response format variance | Medium | Low | Handle both `resultSchema` and `recordSchema` wrapper fields. Test both formats. |
-| 6 | `CommandStatusCodes` enum drift | Low | Low | `normalizeStatusCode()` returns undefined for unrecognized values. |
+| #   | Risk                                                | Likelihood | Impact | Mitigation                                                                                                   |
+| --- | --------------------------------------------------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| 1   | No Property test data — both servers return 0 items | Certain    | Medium | Build fixtures from OGC 23-001 spec. Document as known limitation.                                           |
+| 2   | Circular import from Gap #9 fix                     | Low        | High   | TypeScript ESM live bindings handle it. Verify with test suite. Fallback: callback parameter.                |
+| 3   | `observedProperties` shape variance                 | Medium     | Low    | Handle both object array and string array in `parseDatastream()`. Test both.                                 |
+| 4   | 52North Part 2 differences                          | Medium     | Medium | Use OSH fixtures as primary. Tolerant extraction handles most variance. Add 52North fixtures when available. |
+| 5   | Schema response format variance                     | Medium     | Low    | Handle both `resultSchema` and `recordSchema` wrapper fields. Test both formats.                             |
+| 6   | `CommandStatusCodes` enum drift                     | Low        | Low    | `normalizeStatusCode()` returns undefined for unrecognized values.                                           |
 
 ---
 
 ## Version History
 
 **Version 1.0 (February 19, 2026):**
+
 - Initial Phase 5 roadmap covering 9 parser gaps from the Parsing Coverage Audit
 - 9 tasks with time estimates and complexity ratings
 - Derived from [P5 Contribution Goal](P5-contribution-goal-and-definition.md), [P5 Implementation Guide](P5-parser-completion-implementation-guide.md), and [Task Package](parser-completion-task-package.md)

@@ -11,20 +11,20 @@ The current ROADMAP (Phases 1–4, 33 issues) builds a **client library** — UR
 
 ## What Exists Today
 
-| Layer | Status | What It Does |
-|-------|--------|-------------|
-| URL builder (`url_builder.ts`) | ✅ Complete | Produces correct POST/PUT/DELETE target URLs for all 9 resource types |
-| Response parsers (SensorML, SWE Common, GeoJSON) | ✅ Complete / In Progress | Parse server responses (JSON → typed objects) — **one-directional** |
-| Smoke tests | ✅ Read-only | Fetch JSON from live servers via GET, pipe through parsers |
+| Layer                                            | Status                    | What It Does                                                          |
+| ------------------------------------------------ | ------------------------- | --------------------------------------------------------------------- |
+| URL builder (`url_builder.ts`)                   | ✅ Complete               | Produces correct POST/PUT/DELETE target URLs for all 9 resource types |
+| Response parsers (SensorML, SWE Common, GeoJSON) | ✅ Complete / In Progress | Parse server responses (JSON → typed objects) — **one-directional**   |
+| Smoke tests                                      | ✅ Read-only              | Fetch JSON from live servers via GET, pipe through parsers            |
 
 ## What's Missing Before CRUD Smoke Tests
 
-| Prerequisite | Status | Notes |
-|---|---|---|
-| HTTP client / response handler | ❌ Not built | Nothing in the codebase calls `fetch()` with POST/PUT/DELETE or handles status codes (201, 204, 400, 404, etc.) |
-| Request body serialization | ❌ Not built | Parsers are inbound only (JSON → types). No serializer converts typed objects back to JSON/SensorML for request bodies |
-| Dedicated test server | ❌ Not available | Public demo servers (52North, OSH) are shared infrastructure — write operations would modify other users' data |
-| Phase 4 integration tests | ❌ Not started | ROADMAP Phase 4 Task 1 covers fixture-based CRUD workflow tests with mocked `fetch()` |
+| Prerequisite                   | Status           | Notes                                                                                                                  |
+| ------------------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| HTTP client / response handler | ❌ Not built     | Nothing in the codebase calls `fetch()` with POST/PUT/DELETE or handles status codes (201, 204, 400, 404, etc.)        |
+| Request body serialization     | ❌ Not built     | Parsers are inbound only (JSON → types). No serializer converts typed objects back to JSON/SensorML for request bodies |
+| Dedicated test server          | ❌ Not available | Public demo servers (52North, OSH) are shared infrastructure — write operations would modify other users' data         |
+| Phase 4 integration tests      | ❌ Not started   | ROADMAP Phase 4 Task 1 covers fixture-based CRUD workflow tests with mocked `fetch()`                                  |
 
 ## Path Forward
 
@@ -52,18 +52,18 @@ The sole HTTP utility, `sharedFetch()` in `shared/http-utils.ts`, has this TypeS
 method: 'GET' | 'HEAD' = 'GET'
 ```
 
-It literally cannot accept POST/PUT/DELETE/PATCH at the type level. The source code comment reinforces this: *"Note: this should only be used for GET requests!"*
+It literally cannot accept POST/PUT/DELETE/PATCH at the type level. The source code comment reinforces this: _"Note: this should only be used for GET requests!"_
 
 ### Every upstream module routes through that single GET-only path
 
-| Module | HTTP mechanism | Method |
-|--------|---------------|--------|
-| `ogc-api/` | `link-utils.ts` → `sharedFetch(..., 'GET', true)` | GET |
-| `stac/` | `link-utils.ts` → `sharedFetch(...)` | GET |
-| `tms/` | `link-utils.ts` → `sharedFetch(..., 'GET', true)` | GET |
-| `wfs/` | `endpoint.ts` → `queryXmlDocument(...)` → `sharedFetch` | GET |
-| `wms/` | (same pattern as WFS via worker) | GET |
-| `wmts/` | (same pattern via worker) | GET |
+| Module     | HTTP mechanism                                          | Method |
+| ---------- | ------------------------------------------------------- | ------ |
+| `ogc-api/` | `link-utils.ts` → `sharedFetch(..., 'GET', true)`       | GET    |
+| `stac/`    | `link-utils.ts` → `sharedFetch(...)`                    | GET    |
+| `tms/`     | `link-utils.ts` → `sharedFetch(..., 'GET', true)`       | GET    |
+| `wfs/`     | `endpoint.ts` → `queryXmlDocument(...)` → `sharedFetch` | GET    |
+| `wms/`     | (same pattern as WFS via worker)                        | GET    |
+| `wmts/`    | (same pattern via worker)                               | GET    |
 
 ### No write-method strings exist anywhere in `src/`
 
@@ -74,6 +74,7 @@ A regex search of the entire `src/` tree for `'POST'`, `'PUT'`, `'DELETE'`, `'PA
 `shared/models.ts` defines `type HttpMethod = 'Get' | 'Post'`, but this is used exclusively by WFS and WMS endpoints to **parse capabilities documents** that report what methods a server supports. The library records this metadata (e.g., "this WFS operation supports Get and Post") but never executes a POST — it always fetches via GET regardless.
 
 Usage is limited to:
+
 - `wfs/endpoint.ts` — `getOperationUrl(operationName, method: HttpMethod = 'Get')` to look up a URL from parsed capabilities
 - `wms/endpoint.ts` — same pattern
 
@@ -95,18 +96,19 @@ Even without live write-side smoke tests, the CRUD URL builder methods have thre
 
 The URL builder spec (`url_builder.spec.ts`) has dedicated test blocks for every CRUD method across all 9 resource types:
 
-| Method | Assertion example |
-|--------|------------------|
-| `createSystem()` | → `https://example.com/collections/iot/systems` (POST target) |
-| `updateSystem('sys-001')` | → `…/systems/sys-001` (PUT target) |
-| `deleteSystem('sys-001')` | → `…/systems/sys-001` (DELETE target) |
-| `createDataStream()` | → `…/datastreams` (POST target) |
-| `deleteDataStream('ds-001')` | → `…/datastreams/ds-001` (DELETE target) |
-| `createObservation('ds-001')` | → `…/datastreams/ds-001/observations` (POST target) |
-| `deleteObservation('obs-001')` | → `…/observations/obs-001` (DELETE target) |
-| (same pattern for deployments, procedures, sampling features, control streams) | |
+| Method                                                                         | Assertion example                                             |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| `createSystem()`                                                               | → `https://example.com/collections/iot/systems` (POST target) |
+| `updateSystem('sys-001')`                                                      | → `…/systems/sys-001` (PUT target)                            |
+| `deleteSystem('sys-001')`                                                      | → `…/systems/sys-001` (DELETE target)                         |
+| `createDataStream()`                                                           | → `…/datastreams` (POST target)                               |
+| `deleteDataStream('ds-001')`                                                   | → `…/datastreams/ds-001` (DELETE target)                      |
+| `createObservation('ds-001')`                                                  | → `…/datastreams/ds-001/observations` (POST target)           |
+| `deleteObservation('obs-001')`                                                 | → `…/observations/obs-001` (DELETE target)                    |
+| (same pattern for deployments, procedures, sampling features, control streams) |                                                               |
 
 Edge cases are also covered:
+
 - Special character encoding: `urn:example:sys:1` → `urn%3Aexample%3Asys%3A1`
 - `EndpointError` thrown when required link relations are missing
 - Guard clauses for unavailable sub-resources
@@ -125,4 +127,4 @@ The CRUD URL builder methods are **tested and verified** through unit tests. Wha
 
 ---
 
-*This note was created to clarify a scope boundary that wasn't immediately obvious from the ROADMAP task descriptions. The ROADMAP Phase 2 tasks list CRUD method names (e.g., `createSystem(body) - POST new system`) which read as if they perform HTTP operations, but they are URL builder methods that return target URL strings.*
+_This note was created to clarify a scope boundary that wasn't immediately obvious from the ROADMAP task descriptions. The ROADMAP Phase 2 tasks list CRUD method names (e.g., `createSystem(body) - POST new system`) which read as if they perform HTTP operations, but they are URL builder methods that return target URL strings._

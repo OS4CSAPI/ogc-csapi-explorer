@@ -1,4 +1,5 @@
-# AI Operational Constraints  
+# AI Operational Constraints
+
 **Mandatory Ground Rules for AI Collaboration**
 
 This document defines **non-negotiable operational constraints** for AI assistance on this project.
@@ -26,16 +27,19 @@ Do not override higher-precedence sources based on inference or convenience.
 ## 2. Mandatory Behavioral Rules
 
 ### 2.1 Assumptions and Scope
+
 - Do **not** infer unstated requirements
 - Do **not** expand scope beyond the issue description
 - When intent is unclear, **stop and ask for clarification**
 
 ### 2.2 Architectural Alignment
+
 - Preserve upstream structure, naming, and patterns unless explicitly instructed otherwise
 - Prefer **minimal diffs** over idealized rewrites
 - Do not introduce new abstractions, layers, or dependencies without approval
 
 ### 2.3 Refactoring Prohibitions
+
 - Do **not** refactor for style, clarity, or “best practice” unless explicitly requested
 - Do **not** rename files, symbols, or tests unless required by the task
 - Avoid changes that increase diff noise
@@ -87,4 +91,3 @@ The full `AI_COLLABORATION_AGREEMENT.md` provides additional context, rationale,
 Issues involving AI implementation work should follow the template defined in
 `issue-creation-prompt-template.md` (same directory) to ensure uniform scope
 boundaries, acceptance criteria, and reference documentation across all tasks.
-

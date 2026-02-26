@@ -12,6 +12,7 @@
 OpenSensorHub (OSH) provides a **comprehensive, production-ready OGC API - Connected Systems server implementation** in Java. This analysis examines the osh-core repository to understand server behaviors, expectations, and patterns that must be handled by client libraries. Additionally, a **live demo server** is available for real-time testing and validation.
 
 **Key Findings:**
+
 - ✅ **Full Part 1 + Part 2 + Part 3 Coverage:** All 11 CSAPI resources implemented with CRUD operations
 - ✅ **Complete Conformance:** Supports OGC API Common, Features, and Connected Systems Parts 1, 2, 3
 - ✅ **Rich Format Support:** JSON, GeoJSON, SensorML JSON, SWE Common (JSON/Binary/Text/CSV/XML), HTML
@@ -23,6 +24,7 @@ OpenSensorHub (OSH) provides a **comprehensive, production-ready OGC API - Conne
 **Implementation Maturity:** Production-ready, actively maintained, reference implementation
 
 **Live Server Access:**
+
 - **URL:** http://45.55.99.236:8080/sensorhub/api
 - **Authentication:** HTTP Basic Auth (credentials provided separately)
 - **Systems:** 6 (3 LIVE replay, 3 archived) - Drones + Android sensors
@@ -63,6 +65,7 @@ OpenSensorHub (OSH) provides a **comprehensive, production-ready OGC API - Conne
 **Main Service Module:** `sensorhub-service-consys/`
 
 **Package Structure:**
+
 ```
 org.sensorhub.impl.service.consys/
 ├── ConSysApiService.java           # Main service class
@@ -93,6 +96,7 @@ org.sensorhub.impl.service.consys/
 ```
 
 **Key Files:**
+
 - [ConSysApiService.java](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/ConSysApiService.java) - Service initialization, conformance declaration
 - [RestApiServlet.java](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/RestApiServlet.java) - Request routing, async handling
 - [BaseResourceHandler.java](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/resource/BaseResourceHandler.java) - Query parsing, pagination, filtering (lines 241-286)
@@ -102,6 +106,7 @@ org.sensorhub.impl.service.consys/
 **Test Data:** `sensorhub-service-consys/src/test/resources/`
 
 Contains example JSON payloads for:
+
 - Systems (SensorML JSON format)
 - DataStreams (schema definitions)
 - Observations (measurement data)
@@ -113,36 +118,39 @@ Contains example JSON payloads for:
 
 ### 2.1 Complete Operation Matrix
 
-| Resource | Path | Handler | GET List | GET Item | POST Create | PUT Update | DELETE |
-|----------|------|---------|----------|----------|-------------|------------|--------|
-| **Landing Page** | `/` | [HomePageHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/home/HomePageHandler.java) | ✅ | N/A | ❌ | ❌ | ❌ |
-| **Conformance** | `/conformance` | [ConformanceHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/home/ConformanceHandler.java) | ✅ | N/A | ❌ | ❌ | ❌ |
-| **Collections** | `/collections` | [CollectionHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/home/CollectionHandler.java) | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Systems** | `/systems` | [SystemHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/system/SystemHandler.java) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Deployments** | `/deployments` | [DeploymentHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/deployment/DeploymentHandler.java) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Procedures** | `/procedures` | [ProcedureHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/procedure/ProcedureHandler.java) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Properties** | `/properties` | PropertyHandler | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Features of Interest** | `/fois` | [FoiHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/feature/FoiHandler.java) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **DataStreams** | `/datastreams` | [DataStreamHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/obs/DataStreamHandler.java) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Observations** | `/observations` | [ObsHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/obs/ObsHandler.java) | ✅ | ✅ | ✅ | ❌ | ✅ |
-| **Control Streams** | `/controlstreams` | CommandStreamHandler | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Commands** | `/commands` | [CommandHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/task/CommandHandler.java) | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Resource                 | Path              | Handler                                                                                                                                                                             | GET List | GET Item | POST Create | PUT Update | DELETE |
+| ------------------------ | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- | ----------- | ---------- | ------ |
+| **Landing Page**         | `/`               | [HomePageHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/home/HomePageHandler.java)           | ✅       | N/A      | ❌          | ❌         | ❌     |
+| **Conformance**          | `/conformance`    | [ConformanceHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/home/ConformanceHandler.java)     | ✅       | N/A      | ❌          | ❌         | ❌     |
+| **Collections**          | `/collections`    | [CollectionHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/home/CollectionHandler.java)       | ✅       | ✅       | ❌          | ❌         | ❌     |
+| **Systems**              | `/systems`        | [SystemHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/system/SystemHandler.java)             | ✅       | ✅       | ✅          | ✅         | ✅     |
+| **Deployments**          | `/deployments`    | [DeploymentHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/deployment/DeploymentHandler.java) | ✅       | ✅       | ✅          | ✅         | ✅     |
+| **Procedures**           | `/procedures`     | [ProcedureHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/procedure/ProcedureHandler.java)    | ✅       | ✅       | ✅          | ✅         | ✅     |
+| **Properties**           | `/properties`     | PropertyHandler                                                                                                                                                                     | ✅       | ✅       | ✅          | ✅         | ✅     |
+| **Features of Interest** | `/fois`           | [FoiHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/feature/FoiHandler.java)                  | ✅       | ✅       | ✅          | ✅         | ✅     |
+| **DataStreams**          | `/datastreams`    | [DataStreamHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/obs/DataStreamHandler.java)        | ✅       | ✅       | ✅          | ✅         | ✅     |
+| **Observations**         | `/observations`   | [ObsHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/obs/ObsHandler.java)                      | ✅       | ✅       | ✅          | ❌         | ✅     |
+| **Control Streams**      | `/controlstreams` | CommandStreamHandler                                                                                                                                                                | ✅       | ✅       | ✅          | ✅         | ✅     |
+| **Commands**             | `/commands`       | [CommandHandler](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/task/CommandHandler.java)             | ✅       | ✅       | ✅          | ❌         | ❌     |
 
 **Total Coverage:** 11/11 CSAPI resources implemented (100%)
 
 ### 2.2 Operation-Specific Notes
 
 **Observations:**
+
 - ❌ **No PUT support** - Observations are immutable once created
 - ✅ **Bulk POST** - Can post multiple observations in one request
 - ✅ **DELETE** - Available but typically not used (data retention policies)
 
 **Commands:**
+
 - ❌ **No PUT support** - Commands are immutable (status tracking only)
 - ❌ **No DELETE** - Commands retained for audit trail
 - ✅ **Status monitoring** - `/commands/{id}/status` endpoint available
 
 **All Other Resources:**
+
 - ✅ **Full CRUD** - Complete create, read, update, delete support
 
 ---
@@ -154,14 +162,17 @@ Contains example JSON payloads for:
 **Source:** [ConSysApiService.java#L77-108](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/ConSysApiService.java#L77-L108)
 
 **OGC API - Common:**
+
 - `http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core`
 - `http://www.opengis.net/spec/ogcapi-common-2/1.0/conf/collections`
 
 **OGC API - Features:**
+
 - `http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core`
 - `http://www.opengis.net/spec/ogcapi-features-4/1.0/conf/create-replace-delete`
 
 **OGC API - Connected Systems:**
+
 - `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core`
 - `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/system-features`
 - `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/deployment`
@@ -175,6 +186,7 @@ Contains example JSON payloads for:
 - `http://www.opengis.net/spec/ogcapi-connectedsystems-3/1.0/conf/system-events`
 
 **Format Conformance:**
+
 - JSON (`application/json`)
 - GeoJSON (`application/geo+json`)
 - SensorML JSON (`application/sml+json`)
@@ -218,38 +230,42 @@ Contains example JSON payloads for:
 
 **Source:** [BaseResourceHandler.java](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/resource/BaseResourceHandler.java)
 
-| Parameter | Type | Description | Example |
-|-----------|------|-------------|---------|
-| `id` | String | Resource internal ID (Base32 encoded) | `?id=ABCD1234` |
-| `uid` | String | Globally unique identifier | `?uid=urn:x-myorg:sensor:123` |
-| `q` | String | Keyword search (name, description) | `?q=weather` |
-| `parent` | String | Parent resource ID or UID | `?parent=sys-abc` |
-| `validTime` | ISO8601 | Time period resource is valid | `?validTime=2024-01-01T00:00:00Z/..` |
-| `limit` | Integer | Max results per page (1-10000) | `?limit=50` |
-| `offset` | Integer | Skip N results for pagination | `?offset=100` |
-| `f` | String | Response format | `?f=json` or `?f=html` |
+| Parameter   | Type    | Description                           | Example                              |
+| ----------- | ------- | ------------------------------------- | ------------------------------------ |
+| `id`        | String  | Resource internal ID (Base32 encoded) | `?id=ABCD1234`                       |
+| `uid`       | String  | Globally unique identifier            | `?uid=urn:x-myorg:sensor:123`        |
+| `q`         | String  | Keyword search (name, description)    | `?q=weather`                         |
+| `parent`    | String  | Parent resource ID or UID             | `?parent=sys-abc`                    |
+| `validTime` | ISO8601 | Time period resource is valid         | `?validTime=2024-01-01T00:00:00Z/..` |
+| `limit`     | Integer | Max results per page (1-10000)        | `?limit=50`                          |
+| `offset`    | Integer | Skip N results for pagination         | `?offset=100`                        |
+| `f`         | String  | Response format                       | `?f=json` or `?f=html`               |
 
 ### 4.2 Spatial Query Parameters
 
 **Bounding Box:**
+
 ```
 ?bbox=minLon,minLat,maxLon,maxLat
 ?bbox=-122.4,37.7,-122.3,37.8
 ```
 
 **Geometry Filter:**
+
 ```
 ?location=POINT(-122.4 37.7)
 ?location=POLYGON((x1 y1, x2 y2, ...))
 ```
 
 **Coordinate Reference System:**
+
 - Default: WGS84 (EPSG:4326)
 - Can specify: `?bbox-crs=http://www.opengis.net/def/crs/EPSG/0/4326`
 
 ### 4.3 Temporal Query Parameters
 
 **Phenomenal Time (when event occurred):**
+
 ```
 ?phenomenonTime=2024-01-15T10:00:00Z                    # Instant
 ?phenomenonTime=2024-01-15T10:00:00Z/2024-01-15T11:00:00Z  # Interval
@@ -258,12 +274,14 @@ Contains example JSON payloads for:
 ```
 
 **Result Time (when observation recorded):**
+
 ```
 ?resultTime=2024-01-15T10:30:00Z
 ?resultTime=2024-01-15T10:00:00Z/..
 ```
 
 **Valid Time (when resource was valid):**
+
 ```
 ?validTime=2024-01-01T00:00:00Z/2024-12-31T23:59:59Z
 ```
@@ -271,6 +289,7 @@ Contains example JSON payloads for:
 ### 4.4 Resource-Specific Parameters
 
 **Systems** (`/systems`):
+
 ```
 ?q=weather                    # Keyword search
 ?parent=sys-parent-123        # Child systems
@@ -279,6 +298,7 @@ Contains example JSON payloads for:
 ```
 
 **DataStreams** (`/datastreams`):
+
 ```
 ?system=sys-123               # DataStreams for specific system
 ?observedProperty=http://mmisw.org/ont/cf/parameter/air_temperature
@@ -287,6 +307,7 @@ Contains example JSON payloads for:
 ```
 
 **Observations** (`/observations` or `/datastreams/{id}/observations`):
+
 ```
 ?phenomenonTime=2024-01-15T10:00:00Z/2024-01-15T11:00:00Z
 ?resultTime=2024-01-15T10:30:00Z/..
@@ -299,6 +320,7 @@ Contains example JSON payloads for:
 ```
 
 **Commands** (`/commands`):
+
 ```
 ?controlStream=cs-123         # Commands for specific control stream
 ?system=sys-456               # Commands for system
@@ -311,23 +333,27 @@ Contains example JSON payloads for:
 **Validation Rules (implemented server-side):**
 
 1. **limit:**
+
    - Minimum: 1
    - Maximum: 10,000
    - Default: 100
    - Invalid value → 400 Bad Request
 
 2. **offset:**
+
    - Minimum: 0
    - Default: 0
    - Invalid value → 400 Bad Request
 
 3. **bbox:**
+
    - Format: `minLon,minLat,maxLon,maxLat`
    - Must have exactly 4 values
    - Values must be valid WGS84 coordinates
    - Invalid → 400 Bad Request with message "Invalid bbox format"
 
 4. **Time parameters:**
+
    - Must be valid ISO 8601 strings
    - Intervals: `start/end`, `start/..`, or `../end`
    - Invalid → 400 Bad Request with message "Invalid time format"
@@ -345,6 +371,7 @@ Contains example JSON payloads for:
 **Source:** [InvalidRequestException.java](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/InvalidRequestException.java)
 
 **Request Body Validation:**
+
 ```java
 // Required fields check
 if (resource.getId() == null) {
@@ -365,6 +392,7 @@ if (resource.hasParent() && !parentExists(resource.getParent())) {
 ### 5.2 Resource-Specific Validation
 
 **Systems Validation:**
+
 - `uniqueId` must be valid URI
 - `name` required
 - `type` must be valid SensorML type (`PhysicalSystem`, `PhysicalComponent`, `SimpleProcess`)
@@ -372,6 +400,7 @@ if (resource.hasParent() && !parentExists(resource.getParent())) {
 - Outputs must reference valid observable properties
 
 **DataStreams Validation:**
+
 - `system` link required
 - `outputName` must match system output definition
 - `schema` must be valid SWE Common DataRecord
@@ -379,6 +408,7 @@ if (resource.hasParent() && !parentExists(resource.getParent())) {
 - `phenomenonTime` and `resultTime` must be valid time ranges
 
 **Observations Validation:**
+
 - Must belong to valid DataStream
 - `phenomenonTime` required
 - `result` must match DataStream schema structure
@@ -386,6 +416,7 @@ if (resource.hasParent() && !parentExists(resource.getParent())) {
 - Result values must match schema data types
 
 **Commands Validation:**
+
 - Must belong to valid ControlStream
 - `taskingParameters` must match ControlStream schema
 - `executionTime` must be valid ISO 8601
@@ -394,6 +425,7 @@ if (resource.hasParent() && !parentExists(resource.getParent())) {
 ### 5.3 HTTP Header Validation
 
 **Content-Type:**
+
 ```
 POST /systems
 Content-Type: application/json
@@ -402,6 +434,7 @@ Content-Type: application/json
 ```
 
 **Accept:**
+
 ```
 GET /systems
 Accept: application/json
@@ -410,6 +443,7 @@ Accept: application/json
 ```
 
 **Conditional Requests:**
+
 ```
 PUT /systems/abc123
 If-Match: "version-etag"
@@ -424,6 +458,7 @@ If-Match: "version-etag"
 ### 6.1 Content Negotiation
 
 **Methods:**
+
 1. **Accept Header:** `Accept: application/json`
 2. **Query Parameter:** `?f=json`
 
@@ -431,37 +466,41 @@ If-Match: "version-etag"
 
 ### 6.2 Supported MIME Types
 
-| Format | MIME Type | Usage | Resources |
-|--------|-----------|-------|-----------|
-| **JSON** | `application/json` | Default, generic JSON | All |
-| **GeoJSON** | `application/geo+json` | Spatial features | Systems, Deployments, FOIs |
-| **SensorML JSON** | `application/sml+json` | Sensor descriptions | Systems, Procedures |
-| **O&M JSON** | `application/om+json` | Observations | Observations |
-| **SWE JSON** | `application/swe+json` | SWE Common schemas | DataStream schemas |
-| **SWE Text** | `application/swe+text` | Human-readable SWE | DataStream schemas |
-| **SWE Binary** | `application/swe+binary` | Compact observations | Observations (high-freq) |
-| **HTML** | `text/html` | Browser view | All (human-readable) |
+| Format            | MIME Type                | Usage                 | Resources                  |
+| ----------------- | ------------------------ | --------------------- | -------------------------- |
+| **JSON**          | `application/json`       | Default, generic JSON | All                        |
+| **GeoJSON**       | `application/geo+json`   | Spatial features      | Systems, Deployments, FOIs |
+| **SensorML JSON** | `application/sml+json`   | Sensor descriptions   | Systems, Procedures        |
+| **O&M JSON**      | `application/om+json`    | Observations          | Observations               |
+| **SWE JSON**      | `application/swe+json`   | SWE Common schemas    | DataStream schemas         |
+| **SWE Text**      | `application/swe+text`   | Human-readable SWE    | DataStream schemas         |
+| **SWE Binary**    | `application/swe+binary` | Compact observations  | Observations (high-freq)   |
+| **HTML**          | `text/html`              | Browser view          | All (human-readable)       |
 
 ### 6.3 Format Selection Examples
 
 **Request JSON:**
+
 ```http
 GET /api/systems/abc123 HTTP/1.1
 Accept: application/json
 ```
 
 **Request GeoJSON:**
+
 ```http
 GET /api/systems/abc123 HTTP/1.1
 Accept: application/geo+json
 ```
 
 **Request SensorML:**
+
 ```http
 GET /api/systems/abc123?f=sml+json HTTP/1.1
 ```
 
 **Request HTML (browser):**
+
 ```http
 GET /api/systems/abc123 HTTP/1.1
 Accept: text/html
@@ -470,6 +509,7 @@ Accept: text/html
 ### 6.4 Response Examples by Format
 
 **JSON (application/json):**
+
 ```json
 {
   "id": "abc123",
@@ -487,6 +527,7 @@ Accept: text/html
 ```
 
 **GeoJSON (application/geo+json):**
+
 ```json
 {
   "type": "Feature",
@@ -504,6 +545,7 @@ Accept: text/html
 ```
 
 **SensorML JSON (application/sml+json):**
+
 ```json
 {
   "type": "PhysicalSystem",
@@ -533,6 +575,7 @@ Accept: text/html
 ### 7.1 Error Response Structure
 
 **Format:**
+
 ```json
 {
   "status": 400,
@@ -543,28 +586,29 @@ Accept: text/html
 
 ### 7.2 HTTP Status Codes
 
-| Status Code | Meaning | Usage Examples |
-|-------------|---------|----------------|
-| **200 OK** | Success | GET requests returning data |
-| **201 Created** | Resource created | POST creating new resource |
-| **202 Accepted** | Async processing | Long-running POST/PUT operations |
-| **204 No Content** | Success, no body | DELETE operations |
-| **400 Bad Request** | Invalid request | Malformed JSON, invalid parameters |
-| **401 Unauthorized** | Auth required | Missing authentication |
-| **403 Forbidden** | Insufficient permissions | User lacks access to resource |
-| **404 Not Found** | Resource missing | GET/PUT/DELETE non-existent resource |
-| **405 Method Not Allowed** | Unsupported operation | PUT on observations |
-| **406 Not Acceptable** | Format unsupported | Request for unavailable format |
-| **409 Conflict** | Resource conflict | uniqueId already exists |
-| **412 Precondition Failed** | ETag mismatch | Conditional request failed |
-| **415 Unsupported Media Type** | Invalid Content-Type | POST with XML body |
-| **422 Unprocessable Entity** | Validation failed | Schema validation error |
-| **500 Internal Server Error** | Server error | Unexpected exception |
-| **503 Service Unavailable** | Temporary unavailable | Database connection lost |
+| Status Code                    | Meaning                  | Usage Examples                       |
+| ------------------------------ | ------------------------ | ------------------------------------ |
+| **200 OK**                     | Success                  | GET requests returning data          |
+| **201 Created**                | Resource created         | POST creating new resource           |
+| **202 Accepted**               | Async processing         | Long-running POST/PUT operations     |
+| **204 No Content**             | Success, no body         | DELETE operations                    |
+| **400 Bad Request**            | Invalid request          | Malformed JSON, invalid parameters   |
+| **401 Unauthorized**           | Auth required            | Missing authentication               |
+| **403 Forbidden**              | Insufficient permissions | User lacks access to resource        |
+| **404 Not Found**              | Resource missing         | GET/PUT/DELETE non-existent resource |
+| **405 Method Not Allowed**     | Unsupported operation    | PUT on observations                  |
+| **406 Not Acceptable**         | Format unsupported       | Request for unavailable format       |
+| **409 Conflict**               | Resource conflict        | uniqueId already exists              |
+| **412 Precondition Failed**    | ETag mismatch            | Conditional request failed           |
+| **415 Unsupported Media Type** | Invalid Content-Type     | POST with XML body                   |
+| **422 Unprocessable Entity**   | Validation failed        | Schema validation error              |
+| **500 Internal Server Error**  | Server error             | Unexpected exception                 |
+| **503 Service Unavailable**    | Temporary unavailable    | Database connection lost             |
 
 ### 7.3 Common Error Scenarios
 
 **Invalid Pagination:**
+
 ```http
 GET /api/systems?limit=100000 HTTP/1.1
 
@@ -579,6 +623,7 @@ Content-Type: application/json
 ```
 
 **Resource Not Found:**
+
 ```http
 GET /api/systems/nonexistent HTTP/1.1
 
@@ -593,6 +638,7 @@ Content-Type: application/json
 ```
 
 **Invalid Time Format:**
+
 ```http
 GET /api/observations?phenomenonTime=invalid HTTP/1.1
 
@@ -607,6 +653,7 @@ Content-Type: application/json
 ```
 
 **Schema Validation Error:**
+
 ```http
 POST /api/datastreams HTTP/1.1
 Content-Type: application/json
@@ -627,6 +674,7 @@ Content-Type: application/json
 ```
 
 **Duplicate uniqueId:**
+
 ```http
 POST /api/systems HTTP/1.1
 Content-Type: application/json
@@ -647,6 +695,7 @@ Content-Type: application/json
 ```
 
 **Method Not Allowed:**
+
 ```http
 PUT /api/observations/obs123 HTTP/1.1
 
@@ -669,6 +718,7 @@ Allow: GET, POST, DELETE
 **Source:** [BaseResourceHandler.java#L241-286](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/resource/BaseResourceHandler.java#L241-L286)
 
 **Logic:**
+
 ```java
 // Request limit+1 records to detect if more exist
 int requestLimit = queryLimit + 1;
@@ -693,16 +743,17 @@ if (hasMore) {
 
 ### 8.2 Default Pagination Settings
 
-| Parameter | Default | Min | Max |
-|-----------|---------|-----|-----|
-| `limit` | 100 | 1 | 10,000 |
-| `offset` | 0 | 0 | ∞ |
+| Parameter | Default | Min | Max    |
+| --------- | ------- | --- | ------ |
+| `limit`   | 100     | 1   | 10,000 |
+| `offset`  | 0       | 0   | ∞      |
 
 ### 8.3 Pagination Links
 
 **Link Generation:** [BaseHandler.java#L422-453](https://github.com/opensensorhub/osh-core/tree/main/sensorhub-service-consys/src/main/java/org/sensorhub/impl/service/consys/BaseHandler.java#L422-L453)
 
 **Response with Pagination:**
+
 ```json
 {
   "items": [
@@ -739,17 +790,18 @@ if (hasMore) {
 
 ### 8.4 Link Relations
 
-| rel | Description | When Present |
-|-----|-------------|--------------|
-| `self` | Current page | Always |
-| `prev` | Previous page | When `offset > 0` |
-| `next` | Next page | When more results exist |
-| `first` | First page | Optional (not always implemented) |
-| `last` | Last page | Optional (not always implemented) |
+| rel     | Description   | When Present                      |
+| ------- | ------------- | --------------------------------- |
+| `self`  | Current page  | Always                            |
+| `prev`  | Previous page | When `offset > 0`                 |
+| `next`  | Next page     | When more results exist           |
+| `first` | First page    | Optional (not always implemented) |
+| `last`  | Last page     | Optional (not always implemented) |
 
 ### 8.5 Client Pagination Pattern
 
 **Recommended TypeScript Pattern:**
+
 ```typescript
 async function* paginateAll<T>(
   baseUrl: string,
@@ -757,17 +809,17 @@ async function* paginateAll<T>(
 ): AsyncGenerator<T> {
   let offset = 0;
   let hasMore = true;
-  
+
   while (hasMore) {
     const response = await fetch(`${baseUrl}?offset=${offset}&limit=${limit}`);
     const data = await response.json();
-    
+
     for (const item of data.items) {
       yield item;
     }
-    
+
     // Check for next link
-    const nextLink = data.links.find(link => link.rel === 'next');
+    const nextLink = data.links.find((link) => link.rel === 'next');
     hasMore = !!nextLink;
     offset += limit;
   }
@@ -813,6 +865,7 @@ Command
 ### 9.2 Sub-Resource URL Patterns
 
 **Systems Sub-Resources:**
+
 ```http
 GET /api/systems/{systemId}/datastreams
 GET /api/systems/{systemId}/subsystems
@@ -822,6 +875,7 @@ GET /api/systems/{systemId}/events
 ```
 
 **DataStreams Sub-Resources:**
+
 ```http
 GET /api/datastreams/{datastreamId}/observations
 GET /api/datastreams/{datastreamId}/schema
@@ -829,12 +883,14 @@ POST /api/datastreams/{datastreamId}/observations
 ```
 
 **ControlStreams Sub-Resources:**
+
 ```http
 GET /api/controlstreams/{streamId}/commands
 POST /api/controlstreams/{streamId}/commands
 ```
 
 **Commands Sub-Resources:**
+
 ```http
 GET /api/commands/{commandId}/status
 ```
@@ -842,6 +898,7 @@ GET /api/commands/{commandId}/status
 ### 9.3 Cross-Resource Queries
 
 **Find DataStreams for System:**
+
 ```http
 # Via sub-resource
 GET /api/systems/sys123/datastreams
@@ -851,6 +908,7 @@ GET /api/datastreams?system=sys123
 ```
 
 **Find Observations for System:**
+
 ```http
 # Via nested sub-resource
 GET /api/systems/sys123/datastreams
@@ -861,6 +919,7 @@ GET /api/observations?system=sys123
 ```
 
 **Find Commands for System:**
+
 ```http
 GET /api/commands?system=sys123
 ```
@@ -868,6 +927,7 @@ GET /api/commands?system=sys123
 ### 9.4 Link Relationships in Responses
 
 **System Response with Links:**
+
 ```json
 {
   "id": "sys123",
@@ -909,11 +969,13 @@ GET /api/commands?system=sys123
 ### 10.1 ID Encoding
 
 **Base32 Encoding:**
+
 - Internal IDs use Base32 encoding (A-Z, 2-7)
 - Example: `ABCD1234EFGH5678`
 - Clients should treat as opaque strings
 
 **UID vs ID:**
+
 ```http
 # Query by internal ID
 GET /api/systems?id=ABCD1234
@@ -925,6 +987,7 @@ GET /api/systems?uid=urn:x-myorg:sensor:weather-001
 ### 10.2 Temporal Range Edge Cases
 
 **Open-Ended Intervals:**
+
 ```
 # From time to now
 ?phenomenonTime=2024-01-01T00:00:00Z/..
@@ -937,6 +1000,7 @@ GET /api/systems?uid=urn:x-myorg:sensor:weather-001
 ```
 
 **Special Value "now":**
+
 ```
 # Current time
 ?validTime=2024-01-01T00:00:00Z/now
@@ -945,6 +1009,7 @@ GET /api/systems?uid=urn:x-myorg:sensor:weather-001
 ### 10.3 Bulk Operations
 
 **Bulk Observation Insert:**
+
 ```http
 POST /api/datastreams/ds123/observations HTTP/1.1
 Content-Type: application/json
@@ -962,6 +1027,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "created": 2,
@@ -972,6 +1038,7 @@ Content-Type: application/json
 ### 10.4 System History Snapshots
 
 **Historical Versions:**
+
 ```http
 GET /api/systems/sys123/history HTTP/1.1
 
@@ -979,6 +1046,7 @@ GET /api/systems/sys123/history HTTP/1.1
 ```
 
 **Response:**
+
 ```json
 {
   "items": [
@@ -1005,6 +1073,7 @@ GET /api/systems/sys123/history HTTP/1.1
 ### 10.5 Async Operations
 
 **Long-Running Requests:**
+
 ```http
 POST /api/systems HTTP/1.1
 Content-Type: application/json
@@ -1014,6 +1083,7 @@ Prefer: respond-async
 ```
 
 **Response:**
+
 ```http
 HTTP/1.1 202 Accepted
 Location: /api/systems/sys123
@@ -1028,6 +1098,7 @@ Retry-After: 5
 ### 10.6 Empty Results
 
 **No Matches:**
+
 ```json
 {
   "items": [],
@@ -1052,6 +1123,7 @@ Retry-After: 5
 ### 11.1 Create System
 
 **Request:**
+
 ```http
 POST /api/systems HTTP/1.1
 Host: api.opensensorhub.org
@@ -1086,6 +1158,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```http
 HTTP/1.1 201 Created
 Location: /api/systems/KJ7D3F9G
@@ -1113,6 +1186,7 @@ Content-Type: application/json
 ### 11.2 Create DataStream
 
 **Request:**
+
 ```http
 POST /api/datastreams HTTP/1.1
 Content-Type: application/json
@@ -1163,6 +1237,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```http
 HTTP/1.1 201 Created
 Location: /api/datastreams/M8N2P5Q7
@@ -1192,6 +1267,7 @@ Content-Type: application/json
 ### 11.3 Post Observations
 
 **Request (Single):**
+
 ```http
 POST /api/datastreams/M8N2P5Q7/observations HTTP/1.1
 Content-Type: application/json
@@ -1207,6 +1283,7 @@ Content-Type: application/json
 ```
 
 **Request (Bulk):**
+
 ```http
 POST /api/datastreams/M8N2P5Q7/observations HTTP/1.1
 Content-Type: application/json
@@ -1231,6 +1308,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```http
 HTTP/1.1 201 Created
 Content-Type: application/json
@@ -1244,12 +1322,14 @@ Content-Type: application/json
 ### 11.4 Query Observations with Filters
 
 **Request:**
+
 ```http
 GET /api/datastreams/M8N2P5Q7/observations?phenomenonTime=2024-01-15T14:00:00Z/2024-01-15T15:00:00Z&limit=1000 HTTP/1.1
 Accept: application/json
 ```
 
 **Response:**
+
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -1303,6 +1383,7 @@ Content-Type: application/json
 ### 11.5 Update System
 
 **Request:**
+
 ```http
 PUT /api/systems/KJ7D3F9G HTTP/1.1
 Content-Type: application/json
@@ -1322,6 +1403,7 @@ If-Match: "v2"
 ```
 
 **Response:**
+
 ```http
 HTTP/1.1 204 No Content
 ETag: "v3"
@@ -1330,11 +1412,13 @@ ETag: "v3"
 ### 11.6 Delete Resource
 
 **Request:**
+
 ```http
 DELETE /api/systems/KJ7D3F9G HTTP/1.1
 ```
 
 **Response:**
+
 ```http
 HTTP/1.1 204 No Content
 ```
@@ -1348,6 +1432,7 @@ HTTP/1.1 204 No Content
 ### 12.1 OGC Spec-Defined Behaviors
 
 **From Specification (All CSAPI Servers Must Implement):**
+
 - ✅ Resource paths (`/systems`, `/datastreams`, etc.)
 - ✅ Query parameters (`limit`, `offset`, `bbox`, `datetime`)
 - ✅ Conformance classes and URIs
@@ -1361,31 +1446,37 @@ HTTP/1.1 204 No Content
 **Implementation Details (May Vary Between Servers):**
 
 1. **Base32 ID Encoding**
+
    - OSH uses Base32 for internal IDs
    - Other servers may use UUIDs, integers, or other formats
    - **Client implication:** Treat IDs as opaque strings
 
 2. **Default Pagination Limit: 100**
+
    - OSH default: 100 items per page
    - Other servers may use 10, 50, or 1000
    - **Client implication:** Always specify explicit `limit`
 
 3. **Maximum Limit: 10,000**
+
    - OSH max: 10,000 items per page
    - Other servers may have different maximums
    - **Client implication:** Don't assume large limits supported
 
 4. **System History Endpoint**
+
    - OSH implements `/systems/{id}/history`
    - Part of CSAPI Part 3 (not all servers implement)
    - **Client implication:** Check conformance before using
 
 5. **Async Operation Support**
+
    - OSH supports `Prefer: respond-async` header
    - Not universally implemented
    - **Client implication:** Handle both sync and async responses
 
 6. **Bulk Observation Insert**
+
    - OSH accepts arrays in POST body
    - Some servers may require one observation per request
    - **Client implication:** Try bulk, fallback to individual
@@ -1398,6 +1489,7 @@ HTTP/1.1 204 No Content
 ### 12.3 Detecting Server Capabilities
 
 **Use Conformance Endpoint:**
+
 ```typescript
 const response = await fetch('/api/conformance');
 const { conformsTo } = await response.json();
@@ -1412,6 +1504,7 @@ const supportsControl = conformsTo.includes(
 ```
 
 **Feature Detection Pattern:**
+
 ```typescript
 // Try feature, fallback gracefully
 async function getSystemHistory(systemId: string) {
@@ -1435,21 +1528,23 @@ async function getSystemHistory(systemId: string) {
 ### 13.1 Typical System Structures
 
 **Weather Station:**
+
 ```json
 {
   "type": "PhysicalSystem",
   "uniqueId": "urn:x-acme:sensor:weather-001",
   "name": "Weather Station Alpha",
   "outputs": [
-    {"name": "temperature", "type": "DataInterface"},
-    {"name": "humidity", "type": "DataInterface"},
-    {"name": "pressure", "type": "DataInterface"},
-    {"name": "wind", "type": "DataInterface"}
+    { "name": "temperature", "type": "DataInterface" },
+    { "name": "humidity", "type": "DataInterface" },
+    { "name": "pressure", "type": "DataInterface" },
+    { "name": "wind", "type": "DataInterface" }
   ]
 }
 ```
 
 **Composite System (Subsystems):**
+
 ```json
 {
   "type": "PhysicalSystem",
@@ -1473,6 +1568,7 @@ async function getSystemHistory(systemId: string) {
 ### 13.2 Common DataStream Schemas
 
 **Scalar Measurement (Temperature):**
+
 ```json
 {
   "recordSchema": {
@@ -1481,12 +1577,12 @@ async function getSystemHistory(systemId: string) {
       {
         "name": "time",
         "type": "Time",
-        "uom": {"href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"}
+        "uom": { "href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian" }
       },
       {
         "name": "temp",
         "type": "Quantity",
-        "uom": {"code": "Cel"}
+        "uom": { "code": "Cel" }
       }
     ]
   }
@@ -1494,6 +1590,7 @@ async function getSystemHistory(systemId: string) {
 ```
 
 **Vector Measurement (Wind):**
+
 ```json
 {
   "recordSchema": {
@@ -1508,8 +1605,8 @@ async function getSystemHistory(systemId: string) {
         "type": "Vector",
         "referenceFrame": "http://www.opengis.net/def/crs/NED",
         "coordinate": [
-          {"name": "speed", "type": "Quantity", "uom": {"code": "m/s"}},
-          {"name": "direction", "type": "Quantity", "uom": {"code": "deg"}}
+          { "name": "speed", "type": "Quantity", "uom": { "code": "m/s" } },
+          { "name": "direction", "type": "Quantity", "uom": { "code": "deg" } }
         ]
       }
     ]
@@ -1518,6 +1615,7 @@ async function getSystemHistory(systemId: string) {
 ```
 
 **Category Observation (Weather Condition):**
+
 ```json
 {
   "recordSchema": {
@@ -1544,18 +1642,26 @@ async function getSystemHistory(systemId: string) {
 ### 13.3 High-Frequency Observation Patterns
 
 **Time Series Data (1 Hz sampling):**
+
 ```json
 {
   "items": [
-    {"phenomenonTime": "2024-01-15T10:00:00.000Z", "result": {"temp": 22.5}},
-    {"phenomenonTime": "2024-01-15T10:00:01.000Z", "result": {"temp": 22.5}},
-    {"phenomenonTime": "2024-01-15T10:00:02.000Z", "result": {"temp": 22.6}},
+    {
+      "phenomenonTime": "2024-01-15T10:00:00.000Z",
+      "result": { "temp": 22.5 }
+    },
+    {
+      "phenomenonTime": "2024-01-15T10:00:01.000Z",
+      "result": { "temp": 22.5 }
+    },
+    { "phenomenonTime": "2024-01-15T10:00:02.000Z", "result": { "temp": 22.6 } }
     // ... 3600 observations per hour
   ]
 }
 ```
 
 **Binary Encoding (High-Frequency):**
+
 ```
 Content-Type: application/swe+binary
 
@@ -1565,20 +1671,21 @@ Content-Type: application/swe+binary
 ### 13.4 Sparse Data Patterns
 
 **Event-Based Observations:**
+
 ```json
 {
   "items": [
     {
       "phenomenonTime": "2024-01-15T08:23:15Z",
-      "result": {"motion_detected": true}
+      "result": { "motion_detected": true }
     },
     {
       "phenomenonTime": "2024-01-15T14:47:32Z",
-      "result": {"motion_detected": true}
+      "result": { "motion_detected": true }
     },
     {
       "phenomenonTime": "2024-01-16T06:12:08Z",
-      "result": {"motion_detected": true}
+      "result": { "motion_detected": true }
     }
   ]
 }
@@ -1592,16 +1699,17 @@ Content-Type: application/swe+binary
 
 **Typical Latencies (OSH Production Deployment):**
 
-| Operation | Avg Response Time | Notes |
-|-----------|------------------|-------|
-| GET `/` | 10-50 ms | Landing page |
-| GET `/systems` (100 items) | 50-200 ms | Paginated list |
-| GET `/systems/{id}` | 20-100 ms | Single resource |
-| POST `/systems` | 100-500 ms | Resource creation |
-| GET `/observations` (1000 items) | 200-1000 ms | Large dataset |
-| POST `/observations` (bulk 100) | 500-2000 ms | Bulk insert |
+| Operation                        | Avg Response Time | Notes             |
+| -------------------------------- | ----------------- | ----------------- |
+| GET `/`                          | 10-50 ms          | Landing page      |
+| GET `/systems` (100 items)       | 50-200 ms         | Paginated list    |
+| GET `/systems/{id}`              | 20-100 ms         | Single resource   |
+| POST `/systems`                  | 100-500 ms        | Resource creation |
+| GET `/observations` (1000 items) | 200-1000 ms       | Large dataset     |
+| POST `/observations` (bulk 100)  | 500-2000 ms       | Bulk insert       |
 
 **Factors Affecting Performance:**
+
 - Database backend (PostgreSQL, MongoDB, etc.)
 - Number of concurrent requests
 - Data volume (observations especially)
@@ -1610,27 +1718,32 @@ Content-Type: application/swe+binary
 ### 14.2 Rate Limiting
 
 **OSH Default Configuration:**
+
 - No hard rate limits by default
 - Configurable per-deployment
 - Recommendation: 100 requests/minute for clients
 
 **Best Practices:**
+
 ```typescript
 // Implement exponential backoff
 async function fetchWithBackoff(url: string, maxRetries = 3) {
   for (let i = 0; i < maxRetries; i++) {
     const response = await fetch(url);
-    
-    if (response.status === 429) { // Too Many Requests
+
+    if (response.status === 429) {
+      // Too Many Requests
       const retryAfter = response.headers.get('Retry-After');
-      const delay = retryAfter ? parseInt(retryAfter) * 1000 : Math.pow(2, i) * 1000;
-      await new Promise(resolve => setTimeout(resolve, delay));
+      const delay = retryAfter
+        ? parseInt(retryAfter) * 1000
+        : Math.pow(2, i) * 1000;
+      await new Promise((resolve) => setTimeout(resolve, delay));
       continue;
     }
-    
+
     return response;
   }
-  
+
   throw new Error('Max retries exceeded');
 }
 ```
@@ -1638,6 +1751,7 @@ async function fetchWithBackoff(url: string, maxRetries = 3) {
 ### 14.3 Caching
 
 **Server-Side Caching:**
+
 - Systems metadata: Cached (changes infrequent)
 - DataStreams: Cached (changes infrequent)
 - Observations: Not cached (real-time data)
@@ -1652,10 +1766,10 @@ async function getSystem(id: string): Promise<System> {
   if (systemCache.has(id)) {
     return systemCache.get(id)!;
   }
-  
+
   const response = await fetch(`/api/systems/${id}`);
   const system = await response.json();
-  
+
   systemCache.set(id, system);
   return system;
 }
@@ -1671,13 +1785,14 @@ async function getObservations(datastreamId: string) {
 
 **Optimal Batch Sizes:**
 
-| Operation | Recommended Batch Size | Max Supported |
-|-----------|----------------------|---------------|
-| POST Observations | 100-1000 | 10,000 |
-| GET Observations | 100-1000 | 10,000 |
-| GET Systems | 50-100 | 10,000 |
+| Operation         | Recommended Batch Size | Max Supported |
+| ----------------- | ---------------------- | ------------- |
+| POST Observations | 100-1000               | 10,000        |
+| GET Observations  | 100-1000               | 10,000        |
+| GET Systems       | 50-100                 | 10,000        |
 
 **Bulk Insert Pattern:**
+
 ```typescript
 async function insertObservations(
   datastreamId: string,
@@ -1685,16 +1800,16 @@ async function insertObservations(
 ) {
   const batchSize = 1000;
   const batches = chunk(observations, batchSize);
-  
+
   for (const batch of batches) {
     await fetch(`/api/datastreams/${datastreamId}/observations`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(batch)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(batch),
     });
-    
+
     // Rate limiting: wait between batches
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 }
 ```
@@ -1708,18 +1823,21 @@ async function insertObservations(
 **OpenSensorHub Security Module:**
 
 1. **HTTP Basic Authentication**
+
    ```http
    GET /api/systems HTTP/1.1
    Authorization: Basic dXNlcjpwYXNzd29yZA==
    ```
 
 2. **Bearer Token (JWT)**
+
    ```http
    GET /api/systems HTTP/1.1
    Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
    ```
 
 3. **API Key (Header)**
+
    ```http
    GET /api/systems HTTP/1.1
    X-API-Key: abc123xyz789
@@ -1733,15 +1851,16 @@ async function insertObservations(
 
 **Resource-Level Permissions:**
 
-| Permission | GET | POST | PUT | DELETE |
-|------------|-----|------|-----|--------|
-| `read:systems` | ✅ | ❌ | ❌ | ❌ |
-| `write:systems` | ✅ | ✅ | ✅ | ✅ |
-| `read:observations` | ✅ | ❌ | ❌ | ❌ |
-| `write:observations` | ✅ | ✅ | ❌ | ❌ |
-| `admin` | ✅ | ✅ | ✅ | ✅ |
+| Permission           | GET | POST | PUT | DELETE |
+| -------------------- | --- | ---- | --- | ------ |
+| `read:systems`       | ✅  | ❌   | ❌  | ❌     |
+| `write:systems`      | ✅  | ✅   | ✅  | ✅     |
+| `read:observations`  | ✅  | ❌   | ❌  | ❌     |
+| `write:observations` | ✅  | ✅   | ❌  | ❌     |
+| `admin`              | ✅  | ✅   | ✅  | ✅     |
 
 **Example Error Response:**
+
 ```http
 GET /api/systems HTTP/1.1
 
@@ -1773,11 +1892,12 @@ HTTP/1.1 403 Forbidden
 class CSAPIClient {
   constructor(
     private baseUrl: string,
-    private auth: { type: 'basic', username: string, password: string }
-      | { type: 'bearer', token: string }
-      | { type: 'apikey', key: string }
+    private auth:
+      | { type: 'basic'; username: string; password: string }
+      | { type: 'bearer'; token: string }
+      | { type: 'apikey'; key: string }
   ) {}
-  
+
   private getAuthHeader(): string {
     switch (this.auth.type) {
       case 'basic':
@@ -1789,19 +1909,19 @@ class CSAPIClient {
         return this.auth.key; // Goes in X-API-Key header
     }
   }
-  
+
   async fetch(path: string, options: RequestInit = {}) {
     const headers = new Headers(options.headers);
-    
+
     if (this.auth.type === 'apikey') {
       headers.set('X-API-Key', this.getAuthHeader());
     } else {
       headers.set('Authorization', this.getAuthHeader());
     }
-    
+
     return fetch(`${this.baseUrl}${path}`, {
       ...options,
-      headers
+      headers,
     });
   }
 }
@@ -1824,15 +1944,17 @@ class QueryValidator {
     }
     return limit;
   }
-  
+
   static validateBbox(bbox?: number[]): string | undefined {
     if (!bbox) return undefined;
     if (bbox.length !== 4) {
-      throw new ValidationError('bbox must have exactly 4 values [minLon, minLat, maxLon, maxLat]');
+      throw new ValidationError(
+        'bbox must have exactly 4 values [minLon, minLat, maxLon, maxLat]'
+      );
     }
     return bbox.join(',');
   }
-  
+
   static validateTimeParameter(time: string | Date): string {
     if (time instanceof Date) {
       return time.toISOString();
@@ -1866,26 +1988,26 @@ class PaginationHelper {
     limit: number = 100
   ): AsyncGenerator<T, void, undefined> {
     let nextUrl: string | undefined = baseUrl;
-    
+
     while (nextUrl) {
       const url = new URL(nextUrl);
-      
+
       if (nextUrl === baseUrl && initialParams) {
         Object.entries(initialParams).forEach(([key, value]) => {
           url.searchParams.set(key, value);
         });
       }
-      
+
       url.searchParams.set('limit', String(Math.min(limit, 10000)));
-      
+
       const response = await fetch(url);
       const data: PaginatedResponse<T> = await response.json();
-      
+
       for (const item of data.items) {
         yield item;
       }
-      
-      const nextLink = data.links.find(link => link.rel === 'next');
+
+      const nextLink = data.links.find((link) => link.rel === 'next');
       nextUrl = nextLink?.href;
     }
   }
@@ -1921,19 +2043,30 @@ class CSAPIError extends Error {
     super(`${statusCode}: ${serverMessage}`);
     this.name = 'CSAPIError';
   }
-  
+
   static async fromResponse(response: Response): Promise<CSAPIError> {
     try {
       const body: CSAPIErrorResponse = await response.json();
       return new CSAPIError(body.status, body.message, body.details, response);
     } catch {
-      return new CSAPIError(response.status, response.statusText, undefined, response);
+      return new CSAPIError(
+        response.status,
+        response.statusText,
+        undefined,
+        response
+      );
     }
   }
-  
-  isNotFound(): boolean { return this.statusCode === 404; }
-  isValidationError(): boolean { return this.statusCode === 400 || this.statusCode === 422; }
-  isAuthError(): boolean { return this.statusCode === 401 || this.statusCode === 403; }
+
+  isNotFound(): boolean {
+    return this.statusCode === 404;
+  }
+  isValidationError(): boolean {
+    return this.statusCode === 400 || this.statusCode === 422;
+  }
+  isAuthError(): boolean {
+    return this.statusCode === 401 || this.statusCode === 403;
+  }
 }
 ```
 
@@ -1947,22 +2080,22 @@ enum ContentType {
   GeoJSON = 'application/geo+json',
   SensorML_JSON = 'application/sml+json',
   OM_JSON = 'application/om+json',
-  SWE_JSON = 'application/swe+json'
+  SWE_JSON = 'application/swe+json',
 }
 
 class FormatNegotiator {
   static getPreferredFormat(resourceType: string): ContentType {
     const defaults: Record<string, ContentType> = {
-      'systems': ContentType.GeoJSON,        // Spatial features
-      'deployments': ContentType.GeoJSON,
-      'fois': ContentType.GeoJSON,
-      'procedures': ContentType.SensorML_JSON,
-      'datastreams': ContentType.JSON,
-      'observations': ContentType.OM_JSON
+      systems: ContentType.GeoJSON, // Spatial features
+      deployments: ContentType.GeoJSON,
+      fois: ContentType.GeoJSON,
+      procedures: ContentType.SensorML_JSON,
+      datastreams: ContentType.JSON,
+      observations: ContentType.OM_JSON,
     };
     return defaults[resourceType] || ContentType.JSON;
   }
-  
+
   static buildAcceptHeader(preferred: ContentType): string {
     return `${preferred}, application/json;q=0.9, */*;q=0.8`;
   }
@@ -1985,18 +2118,18 @@ class ResourceNavigator<T> {
     private resource: T & { links?: Link[] },
     private http: HttpClient
   ) {}
-  
+
   async followLink<R>(rel: string): Promise<R[]> {
-    const link = this.resource.links?.find(l => l.rel === rel);
+    const link = this.resource.links?.find((l) => l.rel === rel);
     if (!link) {
       throw new Error(`No link with rel="${rel}" found`);
     }
     const response = await this.http.get<{ items: R[] }>(link.href);
     return response.items;
   }
-  
+
   hasLink(rel: string): boolean {
-    return this.resource.links?.some(l => l.rel === rel) ?? false;
+    return this.resource.links?.some((l) => l.rel === rel) ?? false;
   }
 }
 
@@ -2006,18 +2139,18 @@ class System {
   name: string;
   links?: Link[];
   private navigator: ResourceNavigator<this>;
-  
+
   constructor(data: any, http: HttpClient) {
     Object.assign(this, data);
     this.navigator = new ResourceNavigator(this, http);
   }
-  
+
   async getDatastreams(): Promise<Datastream[]> {
     return this.navigator.followLink<Datastream>('datastreams');
   }
-  
+
   async getSubsystems(): Promise<System[]> {
-    return this.navigator.hasLink('subsystems') 
+    return this.navigator.hasLink('subsystems')
       ? this.navigator.followLink<System>('subsystems')
       : [];
   }
@@ -2031,25 +2164,25 @@ class System {
 ```typescript
 class ConformanceChecker {
   private conformsTo: Set<string> = new Set();
-  
+
   async loadConformance(baseUrl: string): Promise<void> {
     const response = await fetch(`${baseUrl}/conformance`);
     const data = await response.json();
     this.conformsTo = new Set(data.conformsTo || []);
   }
-  
+
   supportsCore(): boolean {
     return this.conformsTo.has(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
     );
   }
-  
+
   supportsControlStreams(): boolean {
     return this.conformsTo.has(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/conf/control-stream'
     );
   }
-  
+
   supportsSystemEvents(): boolean {
     return this.conformsTo.has(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-3/1.0/conf/system-events'
@@ -2060,16 +2193,16 @@ class ConformanceChecker {
 // Usage in client
 class CSAPIClient {
   private conformance: ConformanceChecker;
-  
+
   async initialize(baseUrl: string): Promise<void> {
     this.conformance = new ConformanceChecker();
     await this.conformance.loadConformance(baseUrl);
-    
+
     if (!this.conformance.supportsCore()) {
       throw new Error('Server does not support CSAPI Core');
     }
   }
-  
+
   async getSystemHistory(systemId: string): Promise<SystemSnapshot[] | null> {
     if (!this.conformance.supportsSystemEvents()) {
       console.warn('System history not supported by this server');
@@ -2093,23 +2226,26 @@ class BulkOperationHelper {
     batchSize: number = 1000
   ): Promise<void> {
     const batches = this.chunk(observations, Math.min(batchSize, 10000));
-    
+
     for (const batch of batches) {
       await http.post(`/datastreams/${datastreamId}/observations`, batch);
       await this.delay(100); // Small delay between batches
     }
   }
-  
+
   static async insertObservationsSmart(
     datastreamId: string,
     observations: Observation[],
     http: HttpClient
   ): Promise<void> {
     if (observations.length === 1) {
-      await http.post(`/datastreams/${datastreamId}/observations`, observations[0]);
+      await http.post(
+        `/datastreams/${datastreamId}/observations`,
+        observations[0]
+      );
       return;
     }
-    
+
     try {
       await this.insertObservationsBulk(datastreamId, observations, http);
     } catch (error) {
@@ -2123,7 +2259,7 @@ class BulkOperationHelper {
       }
     }
   }
-  
+
   private static chunk<T>(array: T[], size: number): T[][] {
     const chunks: T[][] = [];
     for (let i = 0; i < array.length; i += size) {
@@ -2131,9 +2267,9 @@ class BulkOperationHelper {
     }
     return chunks;
   }
-  
+
   private static delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 ```
@@ -2144,45 +2280,48 @@ class BulkOperationHelper {
 
 ```typescript
 class ResourceCache {
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
-  
+  private cache = new Map<
+    string,
+    { data: any; timestamp: number; ttl: number }
+  >();
+
   private static CACHE_POLICIES: Record<string, number> = {
     // Metadata - cache for 5 minutes
-    'systems': 5 * 60 * 1000,
-    'deployments': 5 * 60 * 1000,
-    'procedures': 5 * 60 * 1000,
-    'datastreams': 5 * 60 * 1000,
-    'fois': 5 * 60 * 1000,
-    
+    systems: 5 * 60 * 1000,
+    deployments: 5 * 60 * 1000,
+    procedures: 5 * 60 * 1000,
+    datastreams: 5 * 60 * 1000,
+    fois: 5 * 60 * 1000,
+
     // Static - cache for 1 hour
-    'collections': 60 * 60 * 1000,
-    'conformance': 60 * 60 * 1000,
-    
+    collections: 60 * 60 * 1000,
+    conformance: 60 * 60 * 1000,
+
     // Dynamic - never cache
-    'observations': 0,
-    'commands': 0,
-    'systemevents': 0,
+    observations: 0,
+    commands: 0,
+    systemevents: 0,
   };
-  
+
   set<T>(key: string, data: T, resourceType: string): void {
     const ttl = ResourceCache.CACHE_POLICIES[resourceType] || 0;
     if (ttl === 0) return;
-    
+
     this.cache.set(key, { data, timestamp: Date.now(), ttl });
   }
-  
+
   get<T>(key: string): T | undefined {
     const entry = this.cache.get(key);
     if (!entry) return undefined;
-    
+
     if (Date.now() - entry.timestamp > entry.ttl) {
       this.cache.delete(key);
       return undefined;
     }
-    
+
     return entry.data as T;
   }
-  
+
   invalidatePattern(pattern: RegExp): void {
     for (const key of this.cache.keys()) {
       if (pattern.test(key)) {
@@ -2195,29 +2334,33 @@ class ResourceCache {
 // Usage in HTTP client
 class CachedHttpClient extends HttpClient {
   private cache = new ResourceCache();
-  
-  async get<T>(path: string, resourceType: string, bypassCache = false): Promise<T> {
+
+  async get<T>(
+    path: string,
+    resourceType: string,
+    bypassCache = false
+  ): Promise<T> {
     const cacheKey = `GET:${path}`;
-    
+
     if (!bypassCache) {
       const cached = this.cache.get<T>(cacheKey);
       if (cached) return cached;
     }
-    
+
     const data = await super.get<T>(path);
     this.cache.set(cacheKey, data, resourceType);
     return data;
   }
-  
+
   async post<T>(path: string, body: any, resourceType: string): Promise<T> {
     const data = await super.post<T>(path, body);
-    
+
     // Invalidate related caches after write
     const resourceMatch = path.match(/\/([\w]+)/);
     if (resourceMatch) {
       this.cache.invalidatePattern(new RegExp(`^GET:/${resourceMatch[1]}`));
     }
-    
+
     return data;
   }
 }
@@ -2231,48 +2374,48 @@ class CachedHttpClient extends HttpClient {
 describe('CSAPI Client Integration Tests (OSH)', () => {
   const baseUrl = 'http://localhost:8282/sensorhub/api';
   let client: CSAPIClient;
-  
+
   beforeAll(async () => {
     client = new CSAPIClient(baseUrl, {
       type: 'basic',
-      credentials: { username: 'admin', password: 'admin' }
+      credentials: { username: 'admin', password: 'admin' },
     });
     await client.initialize();
   });
-  
+
   it('should list systems with pagination', async () => {
     const systems = await client.systems.list({ limit: 10 });
     expect(Array.isArray(systems)).toBe(true);
   });
-  
+
   it('should create and delete system', async () => {
     const system = await client.systems.create({
       name: 'Test System',
       type: 'PhysicalSystem',
-      uniqueId: `urn:test:system:${Date.now()}`
+      uniqueId: `urn:test:system:${Date.now()}`,
     });
-    
+
     expect(system.id).toBeDefined();
     await client.systems.delete(system.id);
   });
-  
+
   it('should query observations with time filter', async () => {
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    
+
     const observations = await client.observations.list({
       phenomenonTime: `${oneHourAgo.toISOString()}/${now.toISOString()}`,
-      limit: 100
+      limit: 100,
     });
-    
+
     expect(Array.isArray(observations)).toBe(true);
   });
-  
+
   it('should handle errors gracefully', async () => {
-    await expect(
-      client.systems.get('nonexistent-id')
-    ).rejects.toThrow(CSAPIError);
-    
+    await expect(client.systems.get('nonexistent-id')).rejects.toThrow(
+      CSAPIError
+    );
+
     try {
       await client.systems.get('nonexistent-id');
     } catch (error) {
@@ -2286,6 +2429,7 @@ describe('CSAPI Client Integration Tests (OSH)', () => {
 #### 15.4.10 Critical Takeaways
 
 **Must-Have Features:**
+
 1. ✅ Query parameter validation (limit 1-10,000, bbox 4 values, ISO 8601 times)
 2. ✅ Link-following pagination with AsyncGenerator support
 3. ✅ JSON error body parsing with type guards
@@ -2296,12 +2440,14 @@ describe('CSAPI Client Integration Tests (OSH)', () => {
 8. ✅ Smart caching with TTL policies
 
 **Performance Optimizations:**
+
 - Batch observations (100-1000 per request)
 - Cache metadata (5 min TTL), static resources (1 hr TTL)
 - Never cache dynamic data (observations/commands)
 - Reuse HTTP connections
 
 **Testing Strategy:**
+
 - Deploy OSH locally for integration tests
 - Use fixtures from `sensorhub-service-consys/src/test/resources/`
 - Test against real server behaviors
@@ -2352,7 +2498,7 @@ describe('CSAPI Client Integration Tests (OSH)', () => {
           "name": "temperature_range",
           "type": "QuantityRange",
           "label": "Temperature Range",
-          "uom": {"code": "Cel"},
+          "uom": { "code": "Cel" },
           "value": [-40, 60]
         }
       ]
@@ -2419,21 +2565,21 @@ describe('CSAPI Client Integration Tests (OSH)', () => {
           "name": "lat",
           "type": "Quantity",
           "definition": "http://www.opengis.net/def/property/OGC/0/Latitude",
-          "uom": {"code": "deg"},
+          "uom": { "code": "deg" },
           "axisID": "Lat"
         },
         {
           "name": "lon",
           "type": "Quantity",
           "definition": "http://www.opengis.net/def/property/OGC/0/Longitude",
-          "uom": {"code": "deg"},
+          "uom": { "code": "deg" },
           "axisID": "Lon"
         },
         {
           "name": "alt",
           "type": "Quantity",
           "definition": "http://www.opengis.net/def/property/OGC/0/Altitude",
-          "uom": {"code": "m"},
+          "uom": { "code": "m" },
           "axisID": "h"
         }
       ]
@@ -2443,21 +2589,21 @@ describe('CSAPI Client Integration Tests (OSH)', () => {
       "type": "Quantity",
       "definition": "http://mmisw.org/ont/cf/parameter/air_temperature",
       "label": "Air Temperature",
-      "uom": {"code": "Cel"}
+      "uom": { "code": "Cel" }
     },
     {
       "name": "humidity",
       "type": "Quantity",
       "definition": "http://mmisw.org/ont/cf/parameter/relative_humidity",
       "label": "Relative Humidity",
-      "uom": {"code": "%"}
+      "uom": { "code": "%" }
     },
     {
       "name": "pressure",
       "type": "Quantity",
       "definition": "http://mmisw.org/ont/cf/parameter/air_pressure",
       "label": "Atmospheric Pressure",
-      "uom": {"code": "hPa"}
+      "uom": { "code": "hPa" }
     },
     {
       "name": "wind",
@@ -2468,13 +2614,13 @@ describe('CSAPI Client Integration Tests (OSH)', () => {
           "name": "speed",
           "type": "Quantity",
           "definition": "http://mmisw.org/ont/cf/parameter/wind_speed",
-          "uom": {"code": "m/s"}
+          "uom": { "code": "m/s" }
         },
         {
           "name": "direction",
           "type": "Quantity",
           "definition": "http://mmisw.org/ont/cf/parameter/wind_from_direction",
-          "uom": {"code": "deg"}
+          "uom": { "code": "deg" }
         }
       ]
     },
@@ -2542,41 +2688,43 @@ describe('CSAPI Client Integration Tests (OSH)', () => {
 **Key Patterns from OSH Client:**
 
 1. **Pagination Helper:**
+
 ```java
 public Stream<Resource> streamAll(String resourcePath) {
     int offset = 0;
     int limit = 100;
     boolean hasMore = true;
-    
+
     Stream.Builder<Resource> builder = Stream.builder();
-    
+
     while (hasMore) {
         Response response = fetch(resourcePath + "?offset=" + offset + "&limit=" + limit);
         List<Resource> items = response.getItems();
         items.forEach(builder::add);
-        
+
         hasMore = response.getLinks().stream()
             .anyMatch(link -> link.getRel().equals("next"));
-        
+
         offset += limit;
     }
-    
+
     return builder.build();
 }
 ```
 
 2. **Async Operation Handling:**
+
 ```java
 public CompletableFuture<System> createSystemAsync(System system) {
     return CompletableFuture.supplyAsync(() -> {
         Response response = httpClient.post("/api/systems", system);
-        
+
         if (response.getStatus() == 202) {
             // Async processing
             String location = response.getHeader("Location");
             return pollUntilComplete(location);
         }
-        
+
         return response.getBody(System.class);
     });
 }
@@ -2606,12 +2754,12 @@ interface QueryOptions {
 // 2. URL Builder
 class URLBuilder {
   constructor(private base: URL) {}
-  
+
   addPath(...segments: string[]): this {
     this.base.pathname += '/' + segments.join('/');
     return this;
   }
-  
+
   addQuery(params: Record<string, any>): this {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -2620,7 +2768,7 @@ class URLBuilder {
     });
     return this;
   }
-  
+
   build(): URL {
     return new URL(this.base);
   }
@@ -2628,47 +2776,44 @@ class URLBuilder {
 
 // 3. Resource client
 class SystemsClient {
-  constructor(
-    private baseUrl: string,
-    private http: HttpClient
-  ) {}
-  
+  constructor(private baseUrl: string, private http: HttpClient) {}
+
   async list(options: QueryOptions = {}): Promise<System[]> {
     const url = new URLBuilder(new URL(this.baseUrl))
       .addPath('systems')
       .addQuery({ limit: options.limit ?? 100, ...options })
       .build();
-    
+
     return this.http.get<System[]>(url);
   }
-  
+
   async get(id: string): Promise<System> {
     const url = new URLBuilder(new URL(this.baseUrl))
       .addPath('systems', id)
       .build();
-    
+
     return this.http.get<System>(url);
   }
-  
+
   async create(system: Omit<System, 'id'>): Promise<System> {
     const url = new URLBuilder(new URL(this.baseUrl))
       .addPath('systems')
       .build();
-    
+
     return this.http.post<System>(url, system);
   }
-  
-  async* paginate(options: QueryOptions = {}): AsyncGenerator<System> {
+
+  async *paginate(options: QueryOptions = {}): AsyncGenerator<System> {
     let offset = 0;
     const limit = options.limit ?? 100;
-    
+
     while (true) {
       const response = await this.list({ ...options, offset, limit });
-      
+
       for (const system of response) {
         yield system;
       }
-      
+
       if (response.length < limit) break;
       offset += limit;
     }
@@ -2680,10 +2825,10 @@ class CSAPIClient {
   readonly systems: SystemsClient;
   readonly datastreams: DataStreamsClient;
   readonly observations: ObservationsClient;
-  
+
   constructor(baseUrl: string, auth?: AuthConfig) {
     const http = new HttpClient(baseUrl, auth);
-    
+
     this.systems = new SystemsClient(baseUrl, http);
     this.datastreams = new DataStreamsClient(baseUrl, http);
     this.observations = new ObservationsClient(baseUrl, http);
@@ -2707,7 +2852,7 @@ class CSAPIError extends Error {
 class HttpClient {
   async fetch(url: URL, options: RequestInit = {}): Promise<Response> {
     const response = await fetch(url, options);
-    
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new CSAPIError(
@@ -2716,10 +2861,10 @@ class HttpClient {
         error.details
       );
     }
-    
+
     return response;
   }
-  
+
   async get<T>(url: URL): Promise<T> {
     const response = await this.fetch(url);
     return response.json();
@@ -2744,15 +2889,17 @@ class QueryValidator {
     }
     return limit;
   }
-  
+
   static validateBbox(bbox?: number[]): string | undefined {
     if (!bbox) return undefined;
     if (bbox.length !== 4) {
-      throw new ValidationError('bbox must have exactly 4 values [minLon, minLat, maxLon, maxLat]');
+      throw new ValidationError(
+        'bbox must have exactly 4 values [minLon, minLat, maxLon, maxLat]'
+      );
     }
     return bbox.join(',');
   }
-  
+
   static validateTimeParameter(time: string | Date): string {
     if (time instanceof Date) {
       return time.toISOString();
@@ -2767,6 +2914,7 @@ class QueryValidator {
 ```
 
 **Query Pattern Support:**
+
 - **Spatial:** `bbox` (4 values), `geom` (GeoJSON geometry)
 - **Temporal:** `phenomenonTime`, `resultTime`, `validTime` (ISO 8601 intervals)
 - **Hierarchical:** `parent`, `system`, `foi`, `observedProperty`, `controlledProperty`
@@ -2785,25 +2933,25 @@ async *paginateAll<T>(
   limit: number = 100
 ): AsyncGenerator<T> {
   let nextUrl: string | undefined = baseUrl;
-  
+
   while (nextUrl) {
     const url = new URL(nextUrl);
-    
+
     if (nextUrl === baseUrl && params) {
       Object.entries(params).forEach(([key, value]) => {
         url.searchParams.set(key, value);
       });
     }
-    
+
     url.searchParams.set('limit', String(Math.min(limit, 10000)));
-    
+
     const response = await fetch(url);
     const data: PaginatedResponse<T> = await response.json();
-    
+
     for (const item of data.items) {
       yield item;
     }
-    
+
     const nextLink = data.links.find(l => l.rel === 'next');
     nextUrl = nextLink?.href;
   }
@@ -2815,6 +2963,7 @@ async *paginateAll<T>(
 #### 17.4.3 Error Response Handling
 
 **OSH Error Format:**
+
 ```json
 {
   "status": 400,
@@ -2824,6 +2973,7 @@ async *paginateAll<T>(
 ```
 
 **Type-Safe Error Class:**
+
 ```typescript
 class CSAPIError extends Error {
   constructor(
@@ -2835,33 +2985,45 @@ class CSAPIError extends Error {
     super(`${statusCode}: ${serverMessage}`);
     this.name = 'CSAPIError';
   }
-  
+
   static async fromResponse(response: Response): Promise<CSAPIError> {
     try {
       const body = await response.json();
       return new CSAPIError(body.status, body.message, body.details, response);
     } catch {
-      return new CSAPIError(response.status, response.statusText, undefined, response);
+      return new CSAPIError(
+        response.status,
+        response.statusText,
+        undefined,
+        response
+      );
     }
   }
-  
-  isNotFound(): boolean { return this.statusCode === 404; }
-  isValidationError(): boolean { return this.statusCode === 400 || this.statusCode === 422; }
-  isAuthError(): boolean { return this.statusCode === 401 || this.statusCode === 403; }
+
+  isNotFound(): boolean {
+    return this.statusCode === 404;
+  }
+  isValidationError(): boolean {
+    return this.statusCode === 400 || this.statusCode === 422;
+  }
+  isAuthError(): boolean {
+    return this.statusCode === 401 || this.statusCode === 403;
+  }
 }
 ```
 
 #### 17.4.4 Format Negotiation
 
 **Resource-Specific Format Defaults:**
+
 ```typescript
 const FORMAT_DEFAULTS: Record<string, string> = {
-  'systems': 'application/geo+json',       // Spatial features
-  'deployments': 'application/geo+json',   // Spatial features
-  'fois': 'application/geo+json',          // Spatial features
-  'procedures': 'application/sml+json',    // SensorML
-  'datastreams': 'application/json',       // Default JSON
-  'observations': 'application/om+json',   // O&M
+  systems: 'application/geo+json', // Spatial features
+  deployments: 'application/geo+json', // Spatial features
+  fois: 'application/geo+json', // Spatial features
+  procedures: 'application/sml+json', // SensorML
+  datastreams: 'application/json', // Default JSON
+  observations: 'application/om+json', // O&M
 };
 
 function buildAcceptHeader(resourceType: string): string {
@@ -2873,31 +3035,32 @@ function buildAcceptHeader(resourceType: string): string {
 #### 17.4.5 Sub-Resource Navigation
 
 **Link-Following Pattern:**
+
 ```typescript
 class ResourceNavigator<T extends { links?: Link[] }> {
   constructor(private resource: T, private http: HttpClient) {}
-  
+
   async followLink<R>(rel: string): Promise<R[]> {
-    const link = this.resource.links?.find(l => l.rel === rel);
+    const link = this.resource.links?.find((l) => l.rel === rel);
     if (!link) throw new Error(`No link with rel="${rel}"`);
-    
+
     const response = await this.http.get<{ items: R[] }>(link.href);
     return response.items;
   }
-  
+
   hasLink(rel: string): boolean {
-    return this.resource.links?.some(l => l.rel === rel) ?? false;
+    return this.resource.links?.some((l) => l.rel === rel) ?? false;
   }
 }
 
 // Enhanced System class
 class System {
   private navigator: ResourceNavigator<this>;
-  
+
   async getDatastreams(): Promise<Datastream[]> {
     return this.navigator.followLink<Datastream>('datastreams');
   }
-  
+
   async getSubsystems(): Promise<System[]> {
     return this.navigator.hasLink('subsystems')
       ? this.navigator.followLink<System>('subsystems')
@@ -2909,22 +3072,23 @@ class System {
 #### 17.4.6 Conformance-Based Feature Detection
 
 **Check Server Capabilities:**
+
 ```typescript
 class ConformanceChecker {
   private conformsTo: Set<string> = new Set();
-  
+
   async loadConformance(baseUrl: string): Promise<void> {
     const response = await fetch(`${baseUrl}/conformance`);
     const data = await response.json();
     this.conformsTo = new Set(data.conformsTo || []);
   }
-  
+
   supportsControlStreams(): boolean {
     return this.conformsTo.has(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-2/1.0/conf/control-stream'
     );
   }
-  
+
   supportsSystemEvents(): boolean {
     return this.conformsTo.has(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-3/1.0/conf/system-events'
@@ -2945,6 +3109,7 @@ async getSystemHistory(systemId: string): Promise<SystemSnapshot[] | null> {
 #### 17.4.7 Bulk Operations
 
 **Smart Batching with Fallback:**
+
 ```typescript
 async insertObservationsSmart(
   datastreamId: string,
@@ -2955,7 +3120,7 @@ async insertObservationsSmart(
     await http.post(`/datastreams/${datastreamId}/observations`, observations[0]);
     return;
   }
-  
+
   try {
     // Try bulk insert (array POST)
     const batches = chunk(observations, 1000); // OSH max 10,000, safe batch 1,000
@@ -2979,32 +3144,33 @@ async insertObservationsSmart(
 #### 17.4.8 Caching Strategy
 
 **Resource-Specific TTL Policies:**
+
 ```typescript
 const CACHE_POLICIES: Record<string, number> = {
   // Metadata - cache for 5 minutes
-  'systems': 5 * 60 * 1000,
-  'deployments': 5 * 60 * 1000,
-  'procedures': 5 * 60 * 1000,
-  'datastreams': 5 * 60 * 1000,
-  'fois': 5 * 60 * 1000,
-  
+  systems: 5 * 60 * 1000,
+  deployments: 5 * 60 * 1000,
+  procedures: 5 * 60 * 1000,
+  datastreams: 5 * 60 * 1000,
+  fois: 5 * 60 * 1000,
+
   // Static - cache for 1 hour
-  'conformance': 60 * 60 * 1000,
-  'collections': 60 * 60 * 1000,
-  
+  conformance: 60 * 60 * 1000,
+  collections: 60 * 60 * 1000,
+
   // Dynamic - never cache (0 TTL)
-  'observations': 0,
-  'commands': 0,
+  observations: 0,
+  commands: 0,
 };
 
 class ResourceCache {
   set<T>(key: string, data: T, resourceType: string): void {
     const ttl = CACHE_POLICIES[resourceType] || 0;
     if (ttl === 0) return; // Don't cache dynamic data
-    
+
     this.cache.set(key, { data, timestamp: Date.now(), ttl });
   }
-  
+
   invalidatePattern(pattern: RegExp): void {
     // Invalidate all matching keys (e.g., after POST/PUT/DELETE)
     for (const key of this.cache.keys()) {
@@ -3017,6 +3183,7 @@ class ResourceCache {
 #### 17.4.9 Authentication Patterns
 
 **Multi-Strategy Support:**
+
 ```typescript
 interface AuthConfig {
   type: 'basic' | 'bearer' | 'apikey' | 'none';
@@ -3030,11 +3197,11 @@ interface AuthConfig {
 
 class HttpClient {
   private authStrategy: AuthStrategy;
-  
+
   constructor(baseUrl: string, authConfig: AuthConfig) {
     this.authStrategy = AuthStrategyFactory.create(authConfig);
   }
-  
+
   async fetch(path: string, options: RequestInit = {}): Promise<Response> {
     const request: RequestInit = { ...options };
     this.authStrategy.applyAuth(request); // Add auth headers
@@ -3042,7 +3209,7 @@ class HttpClient {
   }
 }
 
-// Strategies: Basic (Authorization: Basic base64), 
+// Strategies: Basic (Authorization: Basic base64),
 //             Bearer (Authorization: Bearer token),
 //             API Key (X-API-Key: key)
 ```
@@ -3062,12 +3229,14 @@ class HttpClient {
 #### 17.4.11 Performance Characteristics
 
 **OSH Benchmarks (guidance for expectations):**
+
 - GET single resource: 20-100ms
 - List 100 items: 50-200ms
 - POST create: 100-500ms
 - Query 1000 observations: 200-1000ms
 
 **Optimization Strategies:**
+
 - Reuse HTTP connections (keep-alive)
 - Optimal batch sizes: 100-1000 observations
 - Parallel requests for independent resources
@@ -3076,13 +3245,14 @@ class HttpClient {
 #### 17.4.12 Testing Against OSH
 
 **Integration Test Setup:**
+
 ```typescript
 describe('CSAPI Client vs OSH', () => {
   const client = new CSAPIClient('http://localhost:8282/sensorhub/api', {
     type: 'basic',
-    credentials: { username: 'admin', password: 'admin' }
+    credentials: { username: 'admin', password: 'admin' },
   });
-  
+
   it('should paginate through systems', async () => {
     const systems = [];
     for await (const sys of client.systems.paginate({ limit: 5 })) {
@@ -3091,7 +3261,7 @@ describe('CSAPI Client vs OSH', () => {
     }
     expect(systems.length).toBeGreaterThan(0);
   });
-  
+
   it('should handle 404 with type-safe error', async () => {
     try {
       await client.systems.get('nonexistent');
@@ -3108,6 +3278,7 @@ describe('CSAPI Client vs OSH', () => {
 #### 17.4.13 Critical Implementation Checklist
 
 **Must-Have Features:**
+
 - ✅ Query parameter validation (client-side before sending)
 - ✅ Link-following pagination with AsyncGenerator
 - ✅ JSON error body parsing with type guards
@@ -3118,12 +3289,14 @@ describe('CSAPI Client vs OSH', () => {
 - ✅ Smart caching with TTL policies
 
 **Performance Features:**
+
 - ✅ Bulk observation insert (with fallback to sequential)
 - ✅ Connection reuse (HTTP keep-alive)
 - ✅ Parallel independent requests
 - ✅ Metadata caching (5 min TTL)
 
 **Testing Requirements:**
+
 - ✅ Integration tests against OSH locally
 - ✅ Use real server fixtures
 - ✅ Test all CRUD operations
@@ -3137,6 +3310,7 @@ describe('CSAPI Client vs OSH', () => {
 ### 18.1 Key Takeaways for TypeScript Client
 
 **Must Implement:**
+
 1. ✅ **All 11 Resource Types** - Full Part 1 + Part 2 coverage
 2. ✅ **Query Parameter Support** - bbox, time ranges, parent filters, keywords
 3. ✅ **Pagination** - Handle `limit`, `offset`, and link-based navigation
@@ -3147,12 +3321,14 @@ describe('CSAPI Client vs OSH', () => {
 8. ✅ **Bulk Operations** - Efficient batch inserts for observations
 
 **Should Implement:**
+
 - ⚠️ **Streaming** - AsyncIterables for paginated results
 - ⚠️ **Caching** - Smart caching for immutable resources
 - ⚠️ **Retry Logic** - Exponential backoff for rate limiting
 - ⚠️ **Conformance Detection** - Feature detection based on server capabilities
 
 **Nice to Have:**
+
 - 🟦 **WebSocket/MQTT** - Real-time observation streaming
 - 🟦 **Binary Formats** - SWE Common binary encoding support
 - 🟦 **Conditional Requests** - ETag-based optimistic updates
@@ -3160,12 +3336,14 @@ describe('CSAPI Client vs OSH', () => {
 ### 18.2 Server Behavior Assumptions
 
 **Safe Assumptions (Based on OGC Spec):**
+
 - All servers will support GET for resource listings
 - Pagination via `limit` and `offset` is universal
 - HTTP status codes follow standard patterns
 - JSON is always supported
 
 **Unsafe Assumptions (Server-Specific):**
+
 - ID format (Base32, UUID, integer) - treat as opaque
 - Default/max pagination limits - always specify explicitly
 - Bulk operation support - provide fallback to individual requests
@@ -3174,6 +3352,7 @@ describe('CSAPI Client vs OSH', () => {
 ### 18.3 Testing Strategy
 
 **Use OSH for Integration Tests:**
+
 1. Deploy OSH locally via Docker
 2. Seed with test data
 3. Run client against real server
@@ -3181,6 +3360,7 @@ describe('CSAPI Client vs OSH', () => {
 5. Test edge cases (pagination, errors, etc.)
 
 **Test Fixtures Available:**
+
 - `sensorhub-service-consys/src/test/resources/`
 - Use for unit tests without server
 

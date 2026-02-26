@@ -12,13 +12,13 @@
 
 ## Verification Gates
 
-| Gate | Command | Result |
-|------|---------|--------|
-| TypeScript compilation | `npx tsc --noEmit` | ✅ Clean (0 errors) |
-| CSAPI test suite | `npx jest "src/ogc-api/csapi"` | ✅ **461 passed** (7 suites) |
-| Endpoint test suite | `npx jest "src/ogc-api/endpoint.spec"` | ✅ 82 passed, 1 failed (pre-existing) |
-| Format tests | `npx jest "src/ogc-api/csapi/formats"` | ✅ **147 passed** (4 suites) |
-| SimpleProcess tests | `npx jest ".../simple-process"` | ✅ **38 passed** (1 suite) |
+| Gate                   | Command                                | Result                                |
+| ---------------------- | -------------------------------------- | ------------------------------------- |
+| TypeScript compilation | `npx tsc --noEmit`                     | ✅ Clean (0 errors)                   |
+| CSAPI test suite       | `npx jest "src/ogc-api/csapi"`         | ✅ **461 passed** (7 suites)          |
+| Endpoint test suite    | `npx jest "src/ogc-api/endpoint.spec"` | ✅ 82 passed, 1 failed (pre-existing) |
+| Format tests           | `npx jest "src/ogc-api/csapi/formats"` | ✅ **147 passed** (4 suites)          |
+| SimpleProcess tests    | `npx jest ".../simple-process"`        | ✅ **38 passed** (1 suite)            |
 
 **Test delta from Phase 3.4:** +38 tests (from 109 → 147 format tests), +7 tests net in CSAPI (from 454 → 461 — note: 461 because CSAPI-only excludes endpoint tests; total CSAPI + endpoint = 543).
 
@@ -28,9 +28,9 @@
 
 ### Files Reviewed
 
-| File | Lines | Status |
-|------|-------|--------|
-| `src/ogc-api/csapi/formats/sensorml/simple-process.ts` | 332 (+331) | **NEW** |
+| File                                                        | Lines      | Status  |
+| ----------------------------------------------------------- | ---------- | ------- |
+| `src/ogc-api/csapi/formats/sensorml/simple-process.ts`      | 332 (+331) | **NEW** |
 | `src/ogc-api/csapi/formats/sensorml/simple-process.spec.ts` | 487 (+486) | **NEW** |
 
 **Total new code:** 819 lines (332 production + 487 test).
@@ -47,20 +47,20 @@
 
 Cross-referencing the 12 Phase 3 lessons learned against the SimpleProcess sub-parser:
 
-| Lesson | Applicable? | Status | Evidence |
-|--------|------------|--------|----------|
-| **L1:** Audit upstream before building new layers | ✅ | PASS | Sub-parser pattern is new (no upstream equivalent), but ROADMAP Task 6 explicitly scopes it. No ad-hoc new layer. |
-| **L2:** Postel's Law — never gate extraction on validation | ✅ | PASS | `parseSimpleProcess` validates only the 3 required fields (`type`, `label`, `uniqueId`). All optional fields use graceful defaults (`undefined`) when absent/null. |
-| **L3:** Don't couple validation to extraction | ✅ | PASS | Parser extracts what is present, rejects only structurally invalid inputs (non-object, wrong type discriminator). No validation-framework-style error arrays. |
-| **L4:** Don't build parallel systems | ✅ | PASS | Single parser entry point (`parseSimpleProcess`). No duplicate parsing surface. Internal helpers are all `function`-scoped, not exported as alternatives. |
-| **L5:** Verify upstream claims by reading source | N/A | — | No upstream claims made. |
-| **L6:** Real-world server data diverges from spec | ✅ | PASS | Null/undefined handling throughout (see edge case tests lines 383–413). `parseFeatureList` silently skips invalid links. `parseModes` silently skips invalid modes. Tolerant extraction. |
-| **L7:** Phase 3 smoke tests are essential | N/A | — | Smoke test is separate concern; sub-parser doesn't connect to live servers. |
-| **L8:** Layered architecture enables clean extension | ✅ | PASS | Parser follows layers: error class → helpers (`isRecord`, `optionalString`, `parseLink`) → component parsers (`parseIOList`, `parseSettings`, `parseFeatureList`, `parseModes`) → main parser (`parseSimpleProcess`). Each layer depends only on layers below. |
-| **L9:** Content negotiation cannot be assumed | N/A | — | Not applicable to sub-parser (no HTTP). |
-| **L10:** Type naming must avoid built-in collisions | ✅ | PASS | `SensorMLParseError` is clearly namespaced. No collisions with built-ins. |
-| **L11:** Document architectural decisions formally | N/A | — | No new architectural decisions — follows established pattern. |
-| **L12:** "Should we build it at all?" | ✅ | PASS | ROADMAP Task 6 explicitly scopes this parser. It is required for the main SensorML parser (Issue #22). |
+| Lesson                                                     | Applicable? | Status | Evidence                                                                                                                                                                                                                                                       |
+| ---------------------------------------------------------- | ----------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **L1:** Audit upstream before building new layers          | ✅          | PASS   | Sub-parser pattern is new (no upstream equivalent), but ROADMAP Task 6 explicitly scopes it. No ad-hoc new layer.                                                                                                                                              |
+| **L2:** Postel's Law — never gate extraction on validation | ✅          | PASS   | `parseSimpleProcess` validates only the 3 required fields (`type`, `label`, `uniqueId`). All optional fields use graceful defaults (`undefined`) when absent/null.                                                                                             |
+| **L3:** Don't couple validation to extraction              | ✅          | PASS   | Parser extracts what is present, rejects only structurally invalid inputs (non-object, wrong type discriminator). No validation-framework-style error arrays.                                                                                                  |
+| **L4:** Don't build parallel systems                       | ✅          | PASS   | Single parser entry point (`parseSimpleProcess`). No duplicate parsing surface. Internal helpers are all `function`-scoped, not exported as alternatives.                                                                                                      |
+| **L5:** Verify upstream claims by reading source           | N/A         | —      | No upstream claims made.                                                                                                                                                                                                                                       |
+| **L6:** Real-world server data diverges from spec          | ✅          | PASS   | Null/undefined handling throughout (see edge case tests lines 383–413). `parseFeatureList` silently skips invalid links. `parseModes` silently skips invalid modes. Tolerant extraction.                                                                       |
+| **L7:** Phase 3 smoke tests are essential                  | N/A         | —      | Smoke test is separate concern; sub-parser doesn't connect to live servers.                                                                                                                                                                                    |
+| **L8:** Layered architecture enables clean extension       | ✅          | PASS   | Parser follows layers: error class → helpers (`isRecord`, `optionalString`, `parseLink`) → component parsers (`parseIOList`, `parseSettings`, `parseFeatureList`, `parseModes`) → main parser (`parseSimpleProcess`). Each layer depends only on layers below. |
+| **L9:** Content negotiation cannot be assumed              | N/A         | —      | Not applicable to sub-parser (no HTTP).                                                                                                                                                                                                                        |
+| **L10:** Type naming must avoid built-in collisions        | ✅          | PASS   | `SensorMLParseError` is clearly namespaced. No collisions with built-ins.                                                                                                                                                                                      |
+| **L11:** Document architectural decisions formally         | N/A         | —      | No new architectural decisions — follows established pattern.                                                                                                                                                                                                  |
+| **L12:** "Should we build it at all?"                      | ✅          | PASS   | ROADMAP Task 6 explicitly scopes this parser. It is required for the main SensorML parser (Issue #22).                                                                                                                                                         |
 
 **Result: 7/7 applicable lessons pass. 5 not applicable.**
 
@@ -80,36 +80,36 @@ Both files read in full (332 + 487 = 819 lines). See File Inventory below.
 
 **`simple-process.ts` (332 lines) — Production Code**
 
-| Section | Lines | Purpose |
-|---------|-------|---------|
-| Module JSDoc | 1–17 | Purpose, scope, spec links, `@module` |
-| Imports | 19–31 | 10 type-only imports from `./types.js` |
-| `SensorMLParseError` class | 41–47 | Custom error with `name = 'SensorMLParseError'` |
-| `isRecord()` helper | 55–57 | Type guard: non-null, non-array object |
-| `optionalString()` helper | 62–64 | String coercion or `undefined` |
-| `parseLink()` helper | 72–82 | `Link` object parser (href required, 5 optional fields) |
-| `parseProcessMethod()` (exported) | 91–98 | `ProcessMethod` parser (algorithm + description) |
-| `parseIOComponentChoice()` (exported) | 112–127 | `IOComponentChoice` parser with name validation |
-| `parseIOList()` internal | 138–155 | Array of IOComponentChoice with indexed errors |
-| `parseSettings()` internal | 163–166 | Pass-through cast (SWE Common deferred) |
-| `parseFeatureList()` internal | 174–183 | Array of links, filters valid only |
-| `parseMode()` internal | 194–202 | Mode requires type, label, uniqueId |
-| `parseModes()` internal | 210–219 | Array of Mode, filters valid only |
-| `parseSimpleProcess()` (exported) | 246–332 | Main parser: validate required → parse optional → spread + delete + assign |
+| Section                               | Lines   | Purpose                                                                    |
+| ------------------------------------- | ------- | -------------------------------------------------------------------------- |
+| Module JSDoc                          | 1–17    | Purpose, scope, spec links, `@module`                                      |
+| Imports                               | 19–31   | 10 type-only imports from `./types.js`                                     |
+| `SensorMLParseError` class            | 41–47   | Custom error with `name = 'SensorMLParseError'`                            |
+| `isRecord()` helper                   | 55–57   | Type guard: non-null, non-array object                                     |
+| `optionalString()` helper             | 62–64   | String coercion or `undefined`                                             |
+| `parseLink()` helper                  | 72–82   | `Link` object parser (href required, 5 optional fields)                    |
+| `parseProcessMethod()` (exported)     | 91–98   | `ProcessMethod` parser (algorithm + description)                           |
+| `parseIOComponentChoice()` (exported) | 112–127 | `IOComponentChoice` parser with name validation                            |
+| `parseIOList()` internal              | 138–155 | Array of IOComponentChoice with indexed errors                             |
+| `parseSettings()` internal            | 163–166 | Pass-through cast (SWE Common deferred)                                    |
+| `parseFeatureList()` internal         | 174–183 | Array of links, filters valid only                                         |
+| `parseMode()` internal                | 194–202 | Mode requires type, label, uniqueId                                        |
+| `parseModes()` internal               | 210–219 | Array of Mode, filters valid only                                          |
+| `parseSimpleProcess()` (exported)     | 246–332 | Main parser: validate required → parse optional → spread + delete + assign |
 
 **4 exports:** `SensorMLParseError`, `parseProcessMethod`, `parseIOComponentChoice`, `parseSimpleProcess`
 
 **`simple-process.spec.ts` (487 lines) — Test Code**
 
-| Section | Lines | Tests | Purpose |
-|---------|-------|-------|---------|
-| Fixtures | 23–107 | — | MINIMAL (3 fields) + FULL (all optional properties) |
-| Valid documents | 112–210 | 10 | Minimal, full, typeOf, configuration, features, inputs (2 types), outputs, parameters, DescribedObject passthrough |
-| Method parsing | 215–262 | 4 | Algorithm only, description only, both, absent |
-| Invalid documents | 267–363 | 11 | null, non-object, array, missing type, wrong type, missing label, missing uniqueId, non-array inputs, missing name, non-object entry, error class identity |
-| Edge cases | 370–420 | 4 | Empty arrays, null optional fields, unknown properties passthrough, empty method |
-| `parseProcessMethod` standalone | 428–457 | 5 | Non-object, algorithm only, description only, both, empty |
-| `parseIOComponentChoice` standalone | 463–487 | 4 | AnyComponent, ObservableProperty, non-object, missing name |
+| Section                             | Lines   | Tests | Purpose                                                                                                                                                    |
+| ----------------------------------- | ------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fixtures                            | 23–107  | —     | MINIMAL (3 fields) + FULL (all optional properties)                                                                                                        |
+| Valid documents                     | 112–210 | 10    | Minimal, full, typeOf, configuration, features, inputs (2 types), outputs, parameters, DescribedObject passthrough                                         |
+| Method parsing                      | 215–262 | 4     | Algorithm only, description only, both, absent                                                                                                             |
+| Invalid documents                   | 267–363 | 11    | null, non-object, array, missing type, wrong type, missing label, missing uniqueId, non-array inputs, missing name, non-object entry, error class identity |
+| Edge cases                          | 370–420 | 4     | Empty arrays, null optional fields, unknown properties passthrough, empty method                                                                           |
+| `parseProcessMethod` standalone     | 428–457 | 5     | Non-object, algorithm only, description only, both, empty                                                                                                  |
+| `parseIOComponentChoice` standalone | 463–487 | 4     | AnyComponent, ObservableProperty, non-object, missing name                                                                                                 |
 
 **Total: 38 tests across 6 describe blocks.**
 
@@ -124,21 +124,22 @@ All Phase 2 accumulated findings (36 unchanged + 10 moot + 1 resolved) carry for
 ### Phase 3.1–3.3 Findings — Unchanged
 
 All Phase 3.1 through 3.3 findings carry forward. Key items:
+
 - **Phase 3.1 F7 / Phase 3.4 F14:** `as` type assertions in `extractCSAPIFeature` — **still open, carried forward**
 - **Phase 3.3 F12 / Phase 3.4 F12:** Exports not in barrel — **still correct** (exports deferred to Issue #28/barrel update)
 - **Phase 3.2 F1–F11:** Moot (validator removal) — **still moot**
 
 ### Phase 3.4 Findings — Unchanged
 
-| Finding | Status | Notes |
-|---------|--------|-------|
-| F1 (POSITIVE type hierarchy) | Unchanged | Types consumed by simple-process.ts |
-| F2 (POSITIVE discriminators) | Unchanged | `type: 'SimpleProcess'` validated line 256 |
-| F3 (DESIGN Document name) | **ACCEPTED-BY-DESIGN** | Unchanged |
-| F4 (POSITIVE SWE integration) | Unchanged | Not exercised by sub-parser |
-| F5–F10 (POSITIVE) | Unchanged | Type layer findings |
-| F11–F13 (INFORMATIONAL) | Unchanged | |
-| F14 (DESIGN `as` casts) | **Carried forward** | Not in scope |
+| Finding                       | Status                 | Notes                                      |
+| ----------------------------- | ---------------------- | ------------------------------------------ |
+| F1 (POSITIVE type hierarchy)  | Unchanged              | Types consumed by simple-process.ts        |
+| F2 (POSITIVE discriminators)  | Unchanged              | `type: 'SimpleProcess'` validated line 256 |
+| F3 (DESIGN Document name)     | **ACCEPTED-BY-DESIGN** | Unchanged                                  |
+| F4 (POSITIVE SWE integration) | Unchanged              | Not exercised by sub-parser                |
+| F5–F10 (POSITIVE)             | Unchanged              | Type layer findings                        |
+| F11–F13 (INFORMATIONAL)       | Unchanged              |                                            |
+| F14 (DESIGN `as` casts)       | **Carried forward**    | Not in scope                               |
 
 ---
 
@@ -182,6 +183,7 @@ if (definition !== undefined) result.definition = definition;
 ```
 
 This pattern:
+
 1. **Preserves DescribedObject-level properties** (`id`, `lang`, `keywords`, `identifiers`, `classifiers`, `validTime`, etc.) without explicitly parsing them — delegated to the main parser (Issue #22)
 2. **Prevents null leakage** — raw `null` values from server JSON are deleted before parsed `undefined` values are conditionally assigned
 3. **Allows unknown/extension properties** to pass through (verified by edge case test at line 406)
@@ -217,6 +219,7 @@ return value as unknown as IOComponentChoice;
 ```
 
 The JSDoc at line 104 explicitly documents this is intentional:
+
 > "SWE Common sub-component parsing will be handled by Issues #24-#28; for now we preserve the raw structure cast to the typed union."
 
 This follows L3 (don't couple validation to extraction) — the sub-parser extracts what it can validate (the `name` field) and defers deeper SWE Common parsing to the appropriate future issue. The `as unknown as` double cast is necessary because `IOComponentChoice` is a union type and TypeScript cannot structurally match the raw object to all union branches.
@@ -228,6 +231,7 @@ This follows L3 (don't couple validation to extraction) — the sub-parser extra
 ### [F5] DESIGN (low): `parseSettings` uses pass-through cast without any field validation
 
 `parseSettings()` (line 163):
+
 ```typescript
 function parseSettings(value: unknown): Settings | undefined {
   if (!isRecord(value)) return undefined;
@@ -282,12 +286,12 @@ Both fixtures are declared as `const` literals with inline comments. No external
 
 The edge case tests (lines 370–420) directly address known server behaviors:
 
-| Test | Server Behavior Addressed |
-|------|--------------------------|
-| Empty arrays for inputs/outputs/parameters | Servers returning `[]` instead of omitting the field |
-| Null optional fields | 52North-style `null` for optional fields (F41, F42 from smoke tests) |
-| Unknown extra properties passthrough | Servers including extension properties not in the OAS schema |
-| Empty method object `{}` | Servers providing an empty method stub |
+| Test                                       | Server Behavior Addressed                                            |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| Empty arrays for inputs/outputs/parameters | Servers returning `[]` instead of omitting the field                 |
+| Null optional fields                       | 52North-style `null` for optional fields (F41, F42 from smoke tests) |
+| Unknown extra properties passthrough       | Servers including extension properties not in the OAS schema         |
+| Empty method object `{}`                   | Servers providing an empty method stub                               |
 
 The null handling test (line 383) is particularly important — it verifies that 9 optional fields all gracefully handle `null` input, producing `undefined` in the output rather than propagating `null` or throwing.
 
@@ -298,12 +302,14 @@ The null handling test (line 383) is particularly important — it verifies that
 ### [F10] POSITIVE: JSDoc is comprehensive with spec cross-references
 
 Every exported function has:
+
 - A `/** ... */` JSDoc comment describing purpose and behavior
 - `@param` and `@returns` annotations
 - `@throws` annotations where applicable
 - `@see` links to OAS line numbers (e.g., `@see OAS: ProcessMethod (L3671)`)
 
 The module-level JSDoc (lines 1–17) includes:
+
 - Clear description of what the module parses
 - Scope statement ("sub-parser — intended to be called by the main SensorML parser")
 - Forward reference to Issue #22
@@ -330,10 +336,13 @@ Same as Phase 3.3 F12 and Phase 3.4 F12.
 ### [F12] INFORMATIONAL: `parseIOList` uses `as InputList | undefined` type casts
 
 Lines 274–279:
+
 ```typescript
 const inputs = parseIOList(json.inputs, 'inputs') as InputList | undefined;
 const outputs = parseIOList(json.outputs, 'outputs') as OutputList | undefined;
-const parameters = parseIOList(json.parameters, 'parameters') as ParameterList | undefined;
+const parameters = parseIOList(json.parameters, 'parameters') as
+  | ParameterList
+  | undefined;
 ```
 
 `parseIOList` returns `IOComponentChoice[] | undefined`, but the assignment targets are `InputList | undefined`, `OutputList | undefined`, `ParameterList | undefined`. These type aliases are all defined as `IOComponentChoice[]` in `types.ts`, so the casts are semantically safe.
@@ -370,14 +379,14 @@ No changes from Phase 3.4 heatmap. All entries unchanged.
 
 **Category C — SimpleProcess Sub-Parser** — NEW
 
-| Dimension | Status | Evidence |
-|-----------|--------|---------|
-| Valid input → correct typed output | ✅ | 10 valid document tests + 4 method parsing tests = **14 happy-path tests** |
-| Invalid input → `SensorMLParseError` | ✅ | **11 invalid document tests** covering null, non-object, array, missing type, wrong type, missing label, missing uniqueId, non-array inputs, missing name, non-object entry, error class identity |
-| All spec-level properties parsed | ✅ | 10 valid tests cover: definition, typeOf, configuration, featuresOfInterest, inputs (AnyComponent + ObservableProperty), outputs, parameters, modes, method (algorithm + description), DescribedObject passthrough |
-| Fixture → assertion pattern | ✅ | 2 inline fixtures (MINIMAL + FULL), all assertions on specific property values |
-| Standalone helper tests | ✅ | `parseProcessMethod` (5 tests) + `parseIOComponentChoice` (4 tests) = **9 standalone helper tests** |
-| Edge cases (null, empty, unknown) | ✅ | **4 edge case tests**: empty arrays, null optional fields, unknown property passthrough, empty method object |
+| Dimension                            | Status | Evidence                                                                                                                                                                                                           |
+| ------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Valid input → correct typed output   | ✅     | 10 valid document tests + 4 method parsing tests = **14 happy-path tests**                                                                                                                                         |
+| Invalid input → `SensorMLParseError` | ✅     | **11 invalid document tests** covering null, non-object, array, missing type, wrong type, missing label, missing uniqueId, non-array inputs, missing name, non-object entry, error class identity                  |
+| All spec-level properties parsed     | ✅     | 10 valid tests cover: definition, typeOf, configuration, featuresOfInterest, inputs (AnyComponent + ObservableProperty), outputs, parameters, modes, method (algorithm + description), DescribedObject passthrough |
+| Fixture → assertion pattern          | ✅     | 2 inline fixtures (MINIMAL + FULL), all assertions on specific property values                                                                                                                                     |
+| Standalone helper tests              | ✅     | `parseProcessMethod` (5 tests) + `parseIOComponentChoice` (4 tests) = **9 standalone helper tests**                                                                                                                |
+| Edge cases (null, empty, unknown)    | ✅     | **4 edge case tests**: empty arrays, null optional fields, unknown property passthrough, empty method object                                                                                                       |
 
 **SimpleProcess Sub-Parser: 6/6 dimensions (100%)**
 
@@ -387,14 +396,14 @@ No changes from Phase 3.4 heatmap. All entries unchanged.
 
 > **⚠️ CORRECTION (2026-02-15):** F57 ("52North data loss") in the Phase 3.4 smoke test was incorrect. The 52North data was never lost — the smoke test changed its `Accept` header from none (defaulting to `application/sml+json`, which returns real data) to `Accept: application/json` (which routes to 52North's empty pygeoapi GeoJSON provider). All findings below that referenced F57 or "52N data loss" were based on this incorrect conclusion. The 52North server still has 3 systems, 1 deployment, and 1 procedure accessible via `application/sml+json`. See [F57 correction report](f57-content-negotiation-correction.md) and Lessons Learned L13.
 
-| Finding | Status | Evidence |
-|---------|--------|----------|
-| F4 (validTime array format) | ✅ **Addressed** | `parseValidTime` in geojson.ts (unchanged) |
-| F33-F39 | N/A | Scoped to later Phase 3/4 tasks |
-| F40 (SensorML featureType) | ✅ **Addressed** | `SENSORML_NS` + `toSensormlLocalName()` (unchanged) |
-| F41 (null featureType in GeoJSON) | N/A | Requires design decision — tracked in roadmap |
+| Finding                           | Status                | Evidence                                                |
+| --------------------------------- | --------------------- | ------------------------------------------------------- |
+| F4 (validTime array format)       | ✅ **Addressed**      | `parseValidTime` in geojson.ts (unchanged)              |
+| F33-F39                           | N/A                   | Scoped to later Phase 3/4 tasks                         |
+| F40 (SensorML featureType)        | ✅ **Addressed**      | `SENSORML_NS` + `toSensormlLocalName()` (unchanged)     |
+| F41 (null featureType in GeoJSON) | N/A                   | Requires design decision — tracked in roadmap           |
 | F49 (validators block extraction) | ✅ **Fully resolved** | Validators removed (Issue #52), confirmed by smoke test |
-| F50 (content type change) | N/A | Response parser scope |
+| F50 (content type change)         | N/A                   | Response parser scope                                   |
 
 **3 of 6 relevant findings addressed.** No change from Phase 3.4.
 
@@ -402,33 +411,33 @@ No changes from Phase 3.4 heatmap. All entries unchanged.
 
 ## Summary
 
-| Category | Count | Items |
-|----------|-------|-------|
-| Prior findings unchanged | **36** | All Phase 2–3.1 accumulated findings |
-| Prior findings moot | **10** | Phase 3.2 validator-related |
-| Prior findings resolved | **1** | Phase 3.2 F12 |
-| Phase 3.3 findings unchanged | **13** | F1–F13 (all re-confirmed) |
-| Phase 3.4 findings unchanged | **14** | F1–F14 (all re-confirmed) |
-| **New — positive findings** | **9** | F1 (Postel's Law), F2 (passthrough), F3 (error messages), F4 (IOComponentChoice deferral), F6 (Mode validation), F7 (Link parsing), F8 (fixtures), F9 (edge cases), F10 (JSDoc) |
-| **New — design (resolved)** | **1** | F5 (parseSettings JSDoc — fixed in post-review commit) |
-| **New — informational** | **2** | F11 (exports deferred), F12 (InputList casts) |
-| **New — carried forward** | **1** | F13 (`as` casts — from Phase 3.1 F7) |
-| **New bugs** | **0** | — |
+| Category                     | Count  | Items                                                                                                                                                                           |
+| ---------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prior findings unchanged     | **36** | All Phase 2–3.1 accumulated findings                                                                                                                                            |
+| Prior findings moot          | **10** | Phase 3.2 validator-related                                                                                                                                                     |
+| Prior findings resolved      | **1**  | Phase 3.2 F12                                                                                                                                                                   |
+| Phase 3.3 findings unchanged | **13** | F1–F13 (all re-confirmed)                                                                                                                                                       |
+| Phase 3.4 findings unchanged | **14** | F1–F14 (all re-confirmed)                                                                                                                                                       |
+| **New — positive findings**  | **9**  | F1 (Postel's Law), F2 (passthrough), F3 (error messages), F4 (IOComponentChoice deferral), F6 (Mode validation), F7 (Link parsing), F8 (fixtures), F9 (edge cases), F10 (JSDoc) |
+| **New — design (resolved)**  | **1**  | F5 (parseSettings JSDoc — fixed in post-review commit)                                                                                                                          |
+| **New — informational**      | **2**  | F11 (exports deferred), F12 (InputList casts)                                                                                                                                   |
+| **New — carried forward**    | **1**  | F13 (`as` casts — from Phase 3.1 F7)                                                                                                                                            |
+| **New bugs**                 | **0**  | —                                                                                                                                                                               |
 
 ---
 
 ## Codebase Metrics
 
-| Metric | Phase 3.4 | Phase 3.5 | Delta |
-|--------|-----------|-----------|-------|
-| Production code (CSAPI) | 4,453 lines | 4,784 lines | +331 |
-| Test code (CSAPI) | 3,890 lines | 4,376 lines | +486 |
-| Total lines | ~8,343 | ~9,160 | +817 |
-| CSAPI tests | 454 | 461 | +7 net (was counted differently — now 461 CSAPI-only + 82 endpoint = 543 total) |
-| Format tests | 109 | 147 | +38 |
-| Test suites | 7 | 8 (7 CSAPI + 1 endpoint) | +1 |
-| Production files | 7 | 8 | +1 |
-| Public API elements | 192 + 110 = 302 | 302 + 4 = **306** | +4 |
+| Metric                  | Phase 3.4       | Phase 3.5                | Delta                                                                           |
+| ----------------------- | --------------- | ------------------------ | ------------------------------------------------------------------------------- |
+| Production code (CSAPI) | 4,453 lines     | 4,784 lines              | +331                                                                            |
+| Test code (CSAPI)       | 3,890 lines     | 4,376 lines              | +486                                                                            |
+| Total lines             | ~8,343          | ~9,160                   | +817                                                                            |
+| CSAPI tests             | 454             | 461                      | +7 net (was counted differently — now 461 CSAPI-only + 82 endpoint = 543 total) |
+| Format tests            | 109             | 147                      | +38                                                                             |
+| Test suites             | 7               | 8 (7 CSAPI + 1 endpoint) | +1                                                                              |
+| Production files        | 7               | 8                        | +1                                                                              |
+| Public API elements     | 192 + 110 = 302 | 302 + 4 = **306**        | +4                                                                              |
 
 ---
 
@@ -463,6 +472,7 @@ Phase 3.5 is the **twelfth consecutive phase** with zero new defects. The streak
 ### Why this issue was clean
 
 **Issue #19 (SimpleProcess Sub-Parser):**
+
 1. **Complete type foundation** — The SensorML types (Issue #18) and SWE Common types (Issue #17) provided a fully typed target (`SimpleProcess`, `ProcessMethod`, `IOComponentChoice`, `Mode`, `Settings`, `Link`, etc.). The parser maps raw JSON to well-defined types rather than inventing structure.
 2. **Established extraction pattern** — The GeoJSON handler (Issue #14) established the tolerant-extraction philosophy: validate minimally, extract gracefully, don't gate on validation. The SimpleProcess parser follows this exactly — 3 required-field checks, everything else graceful.
 3. **Explicit scope boundaries** — The JSDoc and code comments clearly mark what is deferred (SWE Common sub-component parsing to Issues #24-#28, DescribedObject shared helpers to Issue #22). This prevented scope creep and kept the parser focused on AbstractProcess + SimpleProcess-level properties.
@@ -483,6 +493,7 @@ Phase 3.5 is the **twelfth consecutive phase** with zero new defects. The streak
 4. **The only finding requiring action is F5** — a missing JSDoc comment on `parseSettings()` explaining the deferral. This is purely a documentation consistency issue.
 
 **Cumulative project quality:**
+
 - **12 consecutive phases** with zero defects (Phase 2.3 → Phase 3.5)
 - **0 open bug or gap findings**
 - **1 new low-severity design finding** (F5: parseSettings JSDoc) + **1 carried forward** (F13: `as` casts)

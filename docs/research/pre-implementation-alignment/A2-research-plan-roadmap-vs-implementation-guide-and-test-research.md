@@ -15,6 +15,7 @@ Cross-reference the **ROADMAP** (v3.0, 713 lines, 4 phases, 34 tasks) against th
 **Directionality:** This step is **primarily one-directional** — the Implementation Guide and Test Research (once reconciled from A1) are the stronger sources of truth. The ROADMAP is the document most likely to need updates. A small reverse check verifies whether the ROADMAP contains any phase-level sequencing or structural decisions that the other documents should acknowledge.
 
 **Core Questions:**
+
 - Does every ROADMAP task map to a real component in the Implementation Guide?
 - Are the ROADMAP's estimates (time, lines, files) consistent with both source documents?
 - Does the ROADMAP's testing model reflect what the test research established?
@@ -45,27 +46,28 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 
 ### Cross-Reference Map
 
-| ROADMAP Section | Implementation Guide Section | Test Research Docs |
-|-----------------|-----------------------------|--------------------|
-| Phase 1: Core Structure (Tasks 1-4) | §5 (Service Discovery), §6 (QueryBuilder stub), model.ts | Docs 04, 05, 21, 22 |
-| Phase 2: QueryBuilder (Tasks 1-9) | §6 (QueryBuilder, ~70-80 methods, 9 resource types) | Docs 08, 12, 13, 23-29 |
-| Phase 3: Format Handling (Tasks 1-17) | §7 (Format Handlers), SensorML/SWE/GeoJSON | Docs 09, 10, 11, 25 |
-| Phase 4: Worker & Tests (Tasks 1-4) | §8 (Worker), §9 (Testing), §16 (Standards) | Docs 16, 17, 19, 20, 34 |
-| Roadmap Summary table | §13 (Timeline/Estimates) | Doc 19 (file inventory), Doc 20 (ratios) |
-| Development Standards section | §16 (Development Standards) | Phase 0 (anti-patterns), Doc 06 (meaningful tests) |
-| Key Dependencies section | §14 (Dependencies) | — |
+| ROADMAP Section                       | Implementation Guide Section                             | Test Research Docs                                 |
+| ------------------------------------- | -------------------------------------------------------- | -------------------------------------------------- |
+| Phase 1: Core Structure (Tasks 1-4)   | §5 (Service Discovery), §6 (QueryBuilder stub), model.ts | Docs 04, 05, 21, 22                                |
+| Phase 2: QueryBuilder (Tasks 1-9)     | §6 (QueryBuilder, ~70-80 methods, 9 resource types)      | Docs 08, 12, 13, 23-29                             |
+| Phase 3: Format Handling (Tasks 1-17) | §7 (Format Handlers), SensorML/SWE/GeoJSON               | Docs 09, 10, 11, 25                                |
+| Phase 4: Worker & Tests (Tasks 1-4)   | §8 (Worker), §9 (Testing), §16 (Standards)               | Docs 16, 17, 19, 20, 34                            |
+| Roadmap Summary table                 | §13 (Timeline/Estimates)                                 | Doc 19 (file inventory), Doc 20 (ratios)           |
+| Development Standards section         | §16 (Development Standards)                              | Phase 0 (anti-patterns), Doc 06 (meaningful tests) |
+| Key Dependencies section              | §14 (Dependencies)                                       | —                                                  |
 
 ---
 
 ## Part I: Forward Checks (ROADMAP → Implementation Guide)
 
-*"Does the ROADMAP accurately reflect what the Implementation Guide specifies?"*
+_"Does the ROADMAP accurately reflect what the Implementation Guide specifies?"_
 
 ### Check 1: Task-to-Component Mapping
 
 **Question:** Does every ROADMAP task correspond to a real, current component in the Implementation Guide? Are there Implementation Guide components with no ROADMAP task?
 
 **Procedure:**
+
 1. Extract every ROADMAP task (34 tasks across 4 phases) and identify the component it implements
 2. For each task, verify the component exists in the Implementation Guide at the referenced section/lines
 3. Check the reverse: extract all 12 Implementation Guide components and verify each has at least one ROADMAP task
@@ -73,28 +75,28 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 
 **Task inventory (34 tasks):**
 
-| Phase | Task | Component | Impl Guide Section |
-|-------|------|-----------|--------------------|
-| 1.1 | Create Type System | model.ts | §6, lines 1960-2248 |
-| 1.2 | Create Helper Utilities | helpers.ts | §6, lines 603-712 |
-| 1.3 | Create Stub QueryBuilder | url_builder.ts (stub) | §6, lines 481-602 |
-| 1.4 | Integrate with OgcApiEndpoint | endpoint.ts, info.ts, index.ts | §5, lines 303-478 |
-| 2.1-2.9 | QueryBuilder Methods (9 resource types) | url_builder.ts (full) | §6, lines 1193-1715 |
-| 3.1 | GeoJSON Handler Extensions | GeoJSON handler | §7, lines 2682-2710 |
-| 3.2 | Format Detector Extensions | Format detector | §7, lines 2845-2874 |
-| 3.3 | Validator Extensions | Validator | §7, lines 2875-2926 |
-| 3.4 | SWE Common Types | swecommon/types.ts | §7 |
-| 3.5 | SensorML Types | sensorml/types.ts | §7 |
-| 3.6-3.9 | SensorML Parsers (4 tasks) | sensorml/*.ts | §7, lines 2711-2761 |
-| 3.10 | SensorML Index | sensorml/index.ts | §7 |
-| 3.11-3.14 | SWE Common Parsers (4 tasks) | swecommon/*.ts | §7, lines 2762-2844 |
-| 3.15 | SWE Common Index | swecommon/index.ts | §7 |
-| 3.16 | Format Constants | formats/constants.ts | §7 |
-| 3.17 | Format Index | formats/index.ts | §7 |
-| 4.1 | Worker Extensions | worker/ | §8, lines 2929-2982 |
-| 4.2 | Integration Tests | test files | §9 |
-| 4.3 | Unit Tests Completion | test files | §9 |
-| 4.4 | API Documentation | TypeDoc, JSDoc | §16 |
+| Phase     | Task                                    | Component                      | Impl Guide Section  |
+| --------- | --------------------------------------- | ------------------------------ | ------------------- |
+| 1.1       | Create Type System                      | model.ts                       | §6, lines 1960-2248 |
+| 1.2       | Create Helper Utilities                 | helpers.ts                     | §6, lines 603-712   |
+| 1.3       | Create Stub QueryBuilder                | url_builder.ts (stub)          | §6, lines 481-602   |
+| 1.4       | Integrate with OgcApiEndpoint           | endpoint.ts, info.ts, index.ts | §5, lines 303-478   |
+| 2.1-2.9   | QueryBuilder Methods (9 resource types) | url_builder.ts (full)          | §6, lines 1193-1715 |
+| 3.1       | GeoJSON Handler Extensions              | GeoJSON handler                | §7, lines 2682-2710 |
+| 3.2       | Format Detector Extensions              | Format detector                | §7, lines 2845-2874 |
+| 3.3       | Validator Extensions                    | Validator                      | §7, lines 2875-2926 |
+| 3.4       | SWE Common Types                        | swecommon/types.ts             | §7                  |
+| 3.5       | SensorML Types                          | sensorml/types.ts              | §7                  |
+| 3.6-3.9   | SensorML Parsers (4 tasks)              | sensorml/\*.ts                 | §7, lines 2711-2761 |
+| 3.10      | SensorML Index                          | sensorml/index.ts              | §7                  |
+| 3.11-3.14 | SWE Common Parsers (4 tasks)            | swecommon/\*.ts                | §7, lines 2762-2844 |
+| 3.15      | SWE Common Index                        | swecommon/index.ts             | §7                  |
+| 3.16      | Format Constants                        | formats/constants.ts           | §7                  |
+| 3.17      | Format Index                            | formats/index.ts               | §7                  |
+| 4.1       | Worker Extensions                       | worker/                        | §8, lines 2929-2982 |
+| 4.2       | Integration Tests                       | test files                     | §9                  |
+| 4.3       | Unit Tests Completion                   | test files                     | §9                  |
+| 4.4       | API Documentation                       | TypeDoc, JSDoc                 | §16                 |
 
 **Deliverable:** Mapping matrix showing each task's corresponding Implementation Guide component, with gaps flagged.
 
@@ -105,6 +107,7 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 **Question:** Do the ROADMAP's time and line count estimates match the Implementation Guide's estimates?
 
 **Procedure:**
+
 1. Extract ROADMAP summary table estimates:
    - Total time: 60-88 hours
    - Implementation lines: ~4,850-6,500
@@ -118,13 +121,13 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 
 **Key numbers to reconcile:**
 
-| Metric | ROADMAP | Impl Guide §13 | Delta |
-|--------|---------|-----------------|-------|
-| Total hours | 60-88 | ? | ? |
-| Impl lines | ~4,850-6,500 | ~4,614-6,094 | ? |
-| Test lines | ~4,400-6,300 | ~4,500-6,000 | ? |
-| Impl files | 24 | 24 | ? |
-| Test files | 17 | 17 | ? |
+| Metric      | ROADMAP      | Impl Guide §13 | Delta |
+| ----------- | ------------ | -------------- | ----- |
+| Total hours | 60-88        | ?              | ?     |
+| Impl lines  | ~4,850-6,500 | ~4,614-6,094   | ?     |
+| Test lines  | ~4,400-6,300 | ~4,500-6,000   | ?     |
+| Impl files  | 24           | 24             | ?     |
+| Test files  | 17           | 17             | ?     |
 
 **Deliverable:** Estimate reconciliation table with identified discrepancies and recommended resolution.
 
@@ -135,6 +138,7 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 **Question:** Does the ROADMAP's claim of "70-80 methods across 9 resource types" match the Implementation Guide's actual method inventory? Does each ROADMAP Phase 2 task list the correct number of methods?
 
 **Procedure:**
+
 1. Sum all methods listed in ROADMAP Phase 2 tasks (Systems: 12, Deployments: 8, etc.)
 2. Sum all methods listed in the Implementation Guide §6 resource type sections
 3. Compare totals — flag if they differ
@@ -143,18 +147,18 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 
 **Per-resource-type check:**
 
-| Resource Type | ROADMAP Methods Count | Impl Guide Methods Count | Match? |
-|---------------|----------------------|--------------------------|--------|
-| Systems | 12 | ? | ? |
-| Deployments | 8 | ? | ? |
-| Procedures | 8 | ? | ? |
-| Sampling Features | 8 | ? | ? |
-| Properties | 6 | ? | ? |
-| DataStreams | 11 | ? | ? |
-| Observations | 9 | ? | ? |
-| Control Streams | 8 | ? | ? |
-| Commands | 10 | ? | ? |
-| **TOTAL** | **80** | ? | ? |
+| Resource Type     | ROADMAP Methods Count | Impl Guide Methods Count | Match? |
+| ----------------- | --------------------- | ------------------------ | ------ |
+| Systems           | 12                    | ?                        | ?      |
+| Deployments       | 8                     | ?                        | ?      |
+| Procedures        | 8                     | ?                        | ?      |
+| Sampling Features | 8                     | ?                        | ?      |
+| Properties        | 6                     | ?                        | ?      |
+| DataStreams       | 11                    | ?                        | ?      |
+| Observations      | 9                     | ?                        | ?      |
+| Control Streams   | 8                     | ?                        | ?      |
+| Commands          | 10                    | ?                        | ?      |
+| **TOTAL**         | **80**                | ?                        | ?      |
 
 **Deliverable:** Method-count reconciliation and per-method name check.
 
@@ -165,6 +169,7 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 **Question:** Does the ROADMAP's implied file/directory structure match the Implementation Guide's §14 file inventory?
 
 **Procedure:**
+
 1. Extract every file path mentioned or implied in ROADMAP tasks
 2. Extract the Implementation Guide's §14 file inventory
 3. Compare — flag any files the ROADMAP assumes but the guide doesn't define, or vice versa
@@ -180,6 +185,7 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 **Question:** Are the ROADMAP's stated phase dependencies still correct and complete?
 
 **Procedure:**
+
 1. Extract stated dependencies: Phase 1 → Phase 2, Phase 2 → Phase 3, Phases 1-3 → Phase 4
 2. Verify each by checking what actual components each phase's tasks consume from prior phases
 3. Check for intra-phase dependencies not stated (e.g., Phase 3 Task 4 SWE Types before Task 5 SensorML Types)
@@ -192,13 +198,14 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 
 ## Part II: Forward Checks (ROADMAP → Test Research)
 
-*"Does the ROADMAP's testing model match what the test research established?"*
+_"Does the ROADMAP's testing model match what the test research established?"_
 
 ### Check 6: Test File Inventory Alignment
 
 **Question:** Does the ROADMAP's test file count (17 files) match the authoritative file inventory from Doc 19 (22 files)?
 
 **Procedure:**
+
 1. Extract ROADMAP's implied test file inventory from task descriptions (each "Test immediately" section)
 2. Extract Doc 19's authoritative file inventory
 3. Compare — identify files present in one but not the other
@@ -216,6 +223,7 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 **Question:** Does the ROADMAP's task structure enforce the testing cadence established by the test research (31 checkpoints, max 2-3 hours between tests, never >800 lines without tests)?
 
 **Procedure:**
+
 1. Extract the ROADMAP's testing rhythm (every task has "Test immediately" guidance)
 2. Calculate the maximum gap between test checkpoints per phase:
    - Phase 1: 4 tasks × ~3-4 hrs each → test every task
@@ -235,6 +243,7 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 **Question:** Does the ROADMAP include tasks for anything the test research marked OUT OF SCOPE, or omit anything the test research says is IN SCOPE?
 
 **Procedure:**
+
 1. Extract OUT OF SCOPE items from test research:
    - Performance testing (Doc 33)
    - Real-world server testing (Doc 32, AP2)
@@ -253,6 +262,7 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 **Question:** Does the ROADMAP's test guidance (per-task "Test immediately" sections) avoid recommending patterns that would produce anti-pattern violations (AP1-AP5)?
 
 **Procedure:**
+
 1. Scan every "Test immediately" section in the ROADMAP (34 tasks)
 2. Check each for language that could produce:
    - AP1: Testing Response Content — e.g., "Test that response contains expected data"
@@ -270,6 +280,7 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 **Question:** Do the ROADMAP's coverage targets and test estimates match the reconciled numbers from the test research?
 
 **Procedure:**
+
 1. Extract ROADMAP coverage target: >80%
 2. Extract test research reconciled targets (Doc 20): >80% mandatory floor, 85-95% aspirational
 3. Verify alignment
@@ -279,14 +290,14 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 
 **Key estimates to reconcile:**
 
-| Source | Test Lines | Test Files |
-|--------|-----------|------------|
-| ROADMAP Phase 1 | ~400-550 | ? |
-| ROADMAP Phase 2 | ~800-1,000 | ? |
-| ROADMAP Phase 3 | ~2,400-3,500 | ? |
-| ROADMAP Phase 4 | ~800-1,250 | ? |
-| **ROADMAP Total** | **~4,400-6,300** | **17** |
-| Doc 19 Authoritative | ~4,040-5,340 | 22 |
+| Source               | Test Lines       | Test Files |
+| -------------------- | ---------------- | ---------- |
+| ROADMAP Phase 1      | ~400-550         | ?          |
+| ROADMAP Phase 2      | ~800-1,000       | ?          |
+| ROADMAP Phase 3      | ~2,400-3,500     | ?          |
+| ROADMAP Phase 4      | ~800-1,250       | ?          |
+| **ROADMAP Total**    | **~4,400-6,300** | **17**     |
+| Doc 19 Authoritative | ~4,040-5,340     | 22         |
 
 **Deliverable:** Estimate reconciliation with recommended authoritative numbers.
 
@@ -297,6 +308,7 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 **Question:** Does the ROADMAP's Development Standards section match the Implementation Guide's §16, and does it incorporate test research conventions?
 
 **Procedure:**
+
 1. Compare ROADMAP "Development Standards" section (lines ~647-697) against Implementation Guide §16
 2. Identify any standards in one but not the other
 3. Check whether the ROADMAP references:
@@ -313,13 +325,14 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 
 ## Part III: Reverse Check (ROADMAP → Implementation Guide + Test Research)
 
-*"Are there ROADMAP-level decisions that the other documents should acknowledge?"*
+_"Are there ROADMAP-level decisions that the other documents should acknowledge?"_
 
 ### Check 12: Phase Structure and Sequencing Feedback
 
 **Question:** Does the ROADMAP contain phase-level structural decisions that should be reflected in the Implementation Guide or test research?
 
 **Procedure:**
+
 1. Identify ROADMAP-specific structural decisions:
    - 4-phase sequential model with explicit dependencies
    - Phase 3 restructure from 7 tasks to 17 (v3.0 change)
@@ -353,6 +366,7 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 **Estimated effort:** 2-3 hours (shorter than A1 — less bidirectional, ROADMAP is smaller, and many A1 findings will pre-resolve overlap areas)
 
 **Output:** Alignment report with severity-rated findings (Critical/High/Medium/Low):
+
 - **Part I findings:** ROADMAP vs Implementation Guide discrepancies
 - **Part II findings:** ROADMAP vs Test Research discrepancies
 - **Part III findings:** Reverse feedback items (expected to be minimal)
@@ -364,6 +378,7 @@ After A1 resolution, scope decisions, anti-pattern rules, fixture strategy, test
 The cross-reference is complete when:
 
 **ROADMAP ↔ Implementation Guide:**
+
 - [ ] All 34 ROADMAP tasks map to real Implementation Guide components (Check 1)
 - [ ] Time and line estimates consistent within 20% (Check 2)
 - [ ] Method counts match per resource type (Check 3)
@@ -371,6 +386,7 @@ The cross-reference is complete when:
 - [ ] Phase dependencies verified as correct (Check 5)
 
 **ROADMAP ↔ Test Research:**
+
 - [ ] Test file inventory reconciled (Check 6)
 - [ ] Testing cadence compliance verified (Check 7)
 - [ ] Scope boundaries consistent — no OUT OF SCOPE items in ROADMAP (Check 8)
@@ -379,9 +395,11 @@ The cross-reference is complete when:
 - [ ] Development standards consistent across all three documents (Check 11)
 
 **Reverse:**
+
 - [ ] ROADMAP-specific decisions documented for cross-reference (Check 12)
 
 **Final:**
+
 - [ ] Report generated with severity-rated findings
 - [ ] All Critical and High findings resolved
 - [ ] ROADMAP updated where warranted

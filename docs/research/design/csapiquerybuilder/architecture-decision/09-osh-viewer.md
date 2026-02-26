@@ -11,11 +11,13 @@
 ## Research Objectives
 
 1. **Access Pattern Analysis:**
+
    - How does osh-viewer access different resource types?
    - Navigation patterns (System → Datastream → Observations)
    - Object-oriented wrapper usage?
 
 2. **Organization Strategy:**
+
    - Separate service classes per resource?
    - Consolidated service?
    - Component-level organization?

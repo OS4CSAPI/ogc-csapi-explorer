@@ -3,11 +3,13 @@
 **Date:** February 19, 2026  
 **Purpose:** Cross-reference smoke test findings flagged as "fixable issues" within CSAPI client library scope against the Phase 5 ROADMAP to identify what is covered and what remains.  
 **Source Documents:**
+
 - [P5 ROADMAP v1.1](../planning/phase-5/P5-ROADMAP.md)
 - [Smoke Test #19 (Post Phase 4.1)](live-server-smoke-test-post-phase-4.1.md)
 - [Server Quirks Reference](server-quirks-reference.md)
 
 **See also:**
+
 - [Deferred Findings — Final Disposition](deferred-findings-final-disposition.md) for definitive verdicts on all 6 findings not covered by P5.
 - [P4 Findings: Code vs Documentation Reassessment](p4-findings-code-vs-docs-reassessment.md) for the analysis confirming documentation-only is the correct approach for P4-F1/P4-F2.
 
@@ -17,19 +19,19 @@
 
 The following findings were assessed as being within scope and lane for the CSAPI client library contribution — i.e., they are "fixable issues" from the library's perspective:
 
-| Finding | Description | Category |
-|---------|-------------|----------|
-| P4-F2 | OSH PUT rejects uid changes — stricter than documented | CRUD correctness |
-| F82 | OSH items envelope sometimes has no `links` key | Pagination / envelope handling |
-| F5 | Missing pagination metadata (`numberMatched`/`numberReturned`) | Pagination handling |
-| P4-F1 | Command POST hangs — connection never returns | CRUD / command lifecycle |
-| F84 | 52N procedure `featureType: sosa:Sensor` misclassified as System | Classification |
-| F14 | Properties not discoverable via any link detection convention | Discovery / link scanning |
-| F27 | Observation `foi@id` abbreviated notation | Part 2 data shape |
-| F30 | ControlStream `system@link` cross-reference | Part 2 data shape |
-| F31 | Command entity data shape (`controlstream@id`) | Part 2 data shape |
-| F33 | ControlStream schema returns SWE DataRecord (`commandFormat`/`parametersSchema`) | Part 2 data shape |
-| F38 | CommandStatus data shape (`command@id`, `reportTime`, `statusCode`, `executionTime`) | Part 2 data shape |
+| Finding | Description                                                                          | Category                       |
+| ------- | ------------------------------------------------------------------------------------ | ------------------------------ |
+| P4-F2   | OSH PUT rejects uid changes — stricter than documented                               | CRUD correctness               |
+| F82     | OSH items envelope sometimes has no `links` key                                      | Pagination / envelope handling |
+| F5      | Missing pagination metadata (`numberMatched`/`numberReturned`)                       | Pagination handling            |
+| P4-F1   | Command POST hangs — connection never returns                                        | CRUD / command lifecycle       |
+| F84     | 52N procedure `featureType: sosa:Sensor` misclassified as System                     | Classification                 |
+| F14     | Properties not discoverable via any link detection convention                        | Discovery / link scanning      |
+| F27     | Observation `foi@id` abbreviated notation                                            | Part 2 data shape              |
+| F30     | ControlStream `system@link` cross-reference                                          | Part 2 data shape              |
+| F31     | Command entity data shape (`controlstream@id`)                                       | Part 2 data shape              |
+| F33     | ControlStream schema returns SWE DataRecord (`commandFormat`/`parametersSchema`)     | Part 2 data shape              |
+| F38     | CommandStatus data shape (`command@id`, `reportTime`, `statusCode`, `executionTime`) | Part 2 data shape              |
 
 ---
 
@@ -37,13 +39,13 @@ The following findings were assessed as being within scope and lane for the CSAP
 
 The P5 ROADMAP is scoped to **9 parser gaps** — building parse functions that transform raw JSON into typed TypeScript objects for 6 resource types, 2 schema response types, and 1 recursive delegation fix. It covers **5 of the 11 findings** above:
 
-| Finding | What P5 Covers | P5 Task | GitHub Issue |
-|---------|----------------|---------|--------------|
-| **F27** | `parseObservation()` handles the `foi@id` field shape tolerantly | Task 3 | [#81](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/81) |
-| **F30** | `parseControlStream()` extracts fields from this data shape | Task 4 | [#82](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/82) |
-| **F31** | `parseCommand()` models this data shape | Tasks 5a/5b | [#83](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/83), [#84](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/84) |
-| **F33** | `parseControlStreamSchemaResponse()` handles `commandFormat`/`parametersSchema` variant | Task 7b | [#87](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/87) |
-| **F38** | `parseCommandStatus()` models `command@id`, `reportTime`, `statusCode`, `executionTime` | Task 6 | [#85](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/85) |
+| Finding | What P5 Covers                                                                          | P5 Task     | GitHub Issue                                                                                                                     |
+| ------- | --------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **F27** | `parseObservation()` handles the `foi@id` field shape tolerantly                        | Task 3      | [#81](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/81)                                                                  |
+| **F30** | `parseControlStream()` extracts fields from this data shape                             | Task 4      | [#82](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/82)                                                                  |
+| **F31** | `parseCommand()` models this data shape                                                 | Tasks 5a/5b | [#83](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/83), [#84](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/84) |
+| **F33** | `parseControlStreamSchemaResponse()` handles `commandFormat`/`parametersSchema` variant | Task 7b     | [#87](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/87)                                                                  |
+| **F38** | `parseCommandStatus()` models `command@id`, `reportTime`, `statusCode`, `executionTime` | Task 6      | [#85](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/85)                                                                  |
 
 These 5 findings (F27, F30, F31, F33, F38) are **directly addressed** by Phase 5 — they are the data shapes the parsers are being built to handle.
 
@@ -53,24 +55,24 @@ These 5 findings (F27, F30, F31, F33, F38) are **directly addressed** by Phase 5
 
 Six findings are **not covered** by the P5 ROADMAP:
 
-| Finding | Description | Why Not in P5 | Current Status (ST#19) | Recommended Target |
-|---------|-------------|---------------|------------------------|-------------------|
-| **P4-F2** | OSH PUT rejects uid changes | CRUD/write-path concern, not a parser gap | Moderate — new Phase 4 finding | JSDoc issue ([#92](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/92)) |
-| **F82** | OSH items envelope sometimes omits `links` | Already mitigated — `parseCollectionResponse()` defaults to `[]` | Confirmed Low — no code change needed | None (resolved) |
-| **F5** | Missing pagination metadata | Pagination touches upstream `shared`/`ogc-api` code — out of scope | Deferred | None (out of scope) |
-| **P4-F1** | Command POST hangs (OSH holds connection open) | CRUD/write-path concern — needs timeout strategy or SSE-aware handler | Moderate — new Phase 4 finding | JSDoc issue ([#93](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/93)) |
-| **F84** | 52N procedure misclassification (`sosa:Sensor`) | Upstream server bug, reported, fallback already works — no remaining work | Deferred — still present | None (complete) |
-| **F14** | Properties not discoverable via links | Server-side gap — scanner is spec-correct, workaround exists, no remaining work | Deferred — still present | None (complete) |
+| Finding   | Description                                     | Why Not in P5                                                                   | Current Status (ST#19)                | Recommended Target                                                            |
+| --------- | ----------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------- |
+| **P4-F2** | OSH PUT rejects uid changes                     | CRUD/write-path concern, not a parser gap                                       | Moderate — new Phase 4 finding        | JSDoc issue ([#92](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/92)) |
+| **F82**   | OSH items envelope sometimes omits `links`      | Already mitigated — `parseCollectionResponse()` defaults to `[]`                | Confirmed Low — no code change needed | None (resolved)                                                               |
+| **F5**    | Missing pagination metadata                     | Pagination touches upstream `shared`/`ogc-api` code — out of scope              | Deferred                              | None (out of scope)                                                           |
+| **P4-F1** | Command POST hangs (OSH holds connection open)  | CRUD/write-path concern — needs timeout strategy or SSE-aware handler           | Moderate — new Phase 4 finding        | JSDoc issue ([#93](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/93)) |
+| **F84**   | 52N procedure misclassification (`sosa:Sensor`) | Upstream server bug, reported, fallback already works — no remaining work       | Deferred — still present              | None (complete)                                                               |
+| **F14**   | Properties not discoverable via links           | Server-side gap — scanner is spec-correct, workaround exists, no remaining work | Deferred — still present              | None (complete)                                                               |
 
 ### Disposition Summary
 
-| Category | Count | Findings |
-|----------|-------|----------|
-| **Covered by P5** | 5 | F27, F30, F31, F33, F38 |
-| **Phase 4 CRUD concerns (JSDoc issues)** | 2 | P4-F1, P4-F2 |
-| **Already mitigated (no action needed)** | 3 | F82, F84, F14 |
-| **Out of scope (upstream concern)** | 1 | F5 |
-| **Total** | **11** | |
+| Category                                 | Count  | Findings                |
+| ---------------------------------------- | ------ | ----------------------- |
+| **Covered by P5**                        | 5      | F27, F30, F31, F33, F38 |
+| **Phase 4 CRUD concerns (JSDoc issues)** | 2      | P4-F1, P4-F2            |
+| **Already mitigated (no action needed)** | 3      | F82, F84, F14           |
+| **Out of scope (upstream concern)**      | 1      | F5                      |
+| **Total**                                | **11** |                         |
 
 ---
 

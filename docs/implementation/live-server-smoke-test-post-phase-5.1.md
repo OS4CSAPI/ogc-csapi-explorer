@@ -6,7 +6,7 @@
 **Commit:** `178bde2` (Phase 5 smoke test prompt template)  
 **Template:** `docs/governance/smoke-test-prompt-template-phase-5.md` v1.0  
 **Previous Smoke Test:** ST#19 (Phase 4.1) at commit `9950f82`  
-**Test Baseline:** 1,190 CSAPI tests (27 suites), 668 format tests (19 suites)  
+**Test Baseline:** 1,190 CSAPI tests (27 suites), 668 format tests (19 suites)
 
 ## Verdict: PASS
 
@@ -35,14 +35,14 @@
 
 ## 1. Required Reading Confirmation
 
-| Document | Status |
-|---|---|
-| `docs/governance/known-server-quirks.md` (367 lines) | ✅ Read in full |
+| Document                                                                                 | Status          |
+| ---------------------------------------------------------------------------------------- | --------------- |
+| `docs/governance/known-server-quirks.md` (367 lines)                                     | ✅ Read in full |
 | ST#19 report (`docs/implementation/live-server-smoke-test-post-phase-4.1.md`, 639 lines) | ✅ Read in full |
-| `src/ogc-api/csapi/formats/property.ts` (60 lines) | ✅ Read in full |
-| `src/ogc-api/csapi/formats/part2.ts` (233 lines) | ✅ Read in full |
-| `src/ogc-api/csapi/formats/property.spec.ts` (131 lines) | ✅ Read in full |
-| `src/ogc-api/csapi/formats/part2.spec.ts` (385 lines) | ✅ Read in full |
+| `src/ogc-api/csapi/formats/property.ts` (60 lines)                                       | ✅ Read in full |
+| `src/ogc-api/csapi/formats/part2.ts` (233 lines)                                         | ✅ Read in full |
+| `src/ogc-api/csapi/formats/property.spec.ts` (131 lines)                                 | ✅ Read in full |
+| `src/ogc-api/csapi/formats/part2.spec.ts` (385 lines)                                    | ✅ Read in full |
 
 ---
 
@@ -51,10 +51,12 @@
 All 90 prior findings (F1–F90) plus 5 Phase 4 findings (P4-F1 through P4-F5) reviewed against ST#19 baselines.
 
 **Fixed findings confirmed still fixed:**
+
 - F83 (SSN namespace in CSAPI index barrel) — ✅ still fixed
 - F85 (validTime assertion in endpoint tests) — ✅ still fixed
 
 **Server limitations unchanged:**
+
 - F6–F9, F16–F18, F20–F24, F26, F28, F32, F34–F36, F46, F72, F76, F86 — all present
 
 **No library regressions detected.** TypeScript compiles clean; all 1,190 CSAPI tests pass.
@@ -81,17 +83,17 @@ Conformance classes: 1
 
 ### Resource Inventory
 
-| Resource | OSH Count | 52N Count | ST#19 OSH | ST#19 52N | Delta |
-|---|---|---|---|---|---|
-| Systems | 33 | 3 | 33 | 3 | — |
-| Deployments | 16 | 1 | 16 | 1 | — |
-| Procedures | 15 | 1 | 15 | 1 | — |
-| Sampling Features | 66 | 0 | 66 | 0 | — |
-| Properties | 0 | 400 (err) | 0 | 400 (err) | — |
-| Datastreams | 100 | 400 (err) | 100 | 400 (err) | — |
-| Observations | 100 | 400 (err) | 100 | 400 (err) | — |
-| Control Streams | 18 | 404 | 18 | 404 | — |
-| Commands | 400 (err) | N/A | 400 (err) | N/A | — |
+| Resource          | OSH Count | 52N Count | ST#19 OSH | ST#19 52N | Delta |
+| ----------------- | --------- | --------- | --------- | --------- | ----- |
+| Systems           | 33        | 3         | 33        | 3         | —     |
+| Deployments       | 16        | 1         | 16        | 1         | —     |
+| Procedures        | 15        | 1         | 15        | 1         | —     |
+| Sampling Features | 66        | 0         | 66        | 0         | —     |
+| Properties        | 0         | 400 (err) | 0         | 400 (err) | —     |
+| Datastreams       | 100       | 400 (err) | 100       | 400 (err) | —     |
+| Observations      | 100       | 400 (err) | 100       | 400 (err) | —     |
+| Control Streams   | 18        | 404       | 18        | 404       | —     |
+| Commands          | 400 (err) | N/A       | 400 (err) | N/A       | —     |
 
 All counts match ST#19 exactly. No data changes on either server.
 
@@ -110,6 +112,7 @@ Extensive live data fetched to validate parser implementations against real serv
 ### Datastreams Fetched (4 of 100)
 
 **DS 1 — Temperature (`03tbj7mvqg50`)**
+
 ```json
 {
   "id": "03tbj7mvqg50",
@@ -125,9 +128,11 @@ Extensive live data fetched to validate parser implementations against real serv
   "formats": ["application/json", "application/swe+json", ...]
 }
 ```
+
 > **Notable:** `observedProperties[0]` has NO `definition` field.
 
 **DS 2 — StatusEvent (`02au905kq85g`)**
+
 ```json
 {
   "observedProperties": [
@@ -138,9 +143,11 @@ Extensive live data fetched to validate parser implementations against real serv
   "phenomenonTime": ["2025-07-02T16:47:25.015Z", "2025-07-02T16:48:13.037Z"]
 }
 ```
+
 > **Notable:** Two observedProperties objects, both without `definition`.
 
 **DS 3 — gps_data (`021qpiurq85g`)**
+
 ```json
 {
   "observedProperties": [
@@ -150,18 +157,24 @@ Extensive live data fetched to validate parser implementations against real serv
   "phenomenonTime": ["2025-05-02T04:39:06.008Z", "2025-07-11T21:33:04.08Z"]
 }
 ```
+
 > Standard form: `definition` field present.
 
 **DS 4 — Acceleration (`02vp7efvjs70`)**
+
 ```json
 {
   "observedProperties": [
-    { "definition": "http://qudt.org/vocab/quantitykind/LinearAcceleration",
-      "label": "Linear Acceleration", "description": "..." }
+    {
+      "definition": "http://qudt.org/vocab/quantitykind/LinearAcceleration",
+      "label": "Linear Acceleration",
+      "description": "..."
+    }
   ],
   "resultType": "vector"
 }
 ```
+
 > Full form: `definition` + `label` + `description`.
 
 ### resultType Coverage
@@ -171,6 +184,7 @@ Queried all 100 datastreams: `coverage`, `measure`, `record`, `vector` — all 4
 ### Observations Fetched (4)
 
 **Obs 1 — StatusEvent**
+
 ```json
 {
   "id": "...",
@@ -182,6 +196,7 @@ Queried all 100 datastreams: `coverage`, `measure`, `record`, `vector` — all 4
 ```
 
 **Obs 2 — gps_data**
+
 ```json
 {
   "id": "...",
@@ -193,6 +208,7 @@ Queried all 100 datastreams: `coverage`, `measure`, `record`, `vector` — all 4
 ```
 
 **Obs 3 — Top-level (with foi@id)**
+
 ```json
 {
   "id": "...",
@@ -203,9 +219,11 @@ Queried all 100 datastreams: `coverage`, `measure`, `record`, `vector` — all 4
   "result": { "location": { "lat": 34.7109, "lon": -86.6374, "alt": 223.11 } }
 }
 ```
+
 > **Notable:** `foi@id` cross-reference present — correctly excluded by `parseObservation()`.
 
 **Obs 4 — Orientation**
+
 ```json
 {
   "id": "...",
@@ -234,6 +252,7 @@ Queried all 100 datastreams: `coverage`, `measure`, `record`, `vector` — all 4
   "links": [...]
 }
 ```
+
 > **Notable:** `issueTime` is an array (time interval). Some controlstreams have `controlledProperties: [{label: "..."}]`.
 
 ### Commands Fetched (3)
@@ -246,12 +265,17 @@ Queried all 100 datastreams: `coverage`, `measure`, `record`, `vector` — all 4
   "sender": "admin",
   "currentStatus": "COMPLETED",
   "parameters": {
-    "locationVectorLLA": { "Latitude": 34.71, "Longitude": -86.64, "AltitudeAGL": 10 },
+    "locationVectorLLA": {
+      "Latitude": 34.71,
+      "Longitude": -86.64,
+      "AltitudeAGL": 10
+    },
     "returnToStart": false,
     "hoverSeconds": 20
   }
 }
 ```
+
 > **Notable:** `sender` and `currentStatus` fields. `parameters` is deeply nested.
 
 ### Command Statuses Fetched (2)
@@ -265,6 +289,7 @@ Queried all 100 datastreams: `coverage`, `measure`, `record`, `vector` — all 4
   "executionTime": ["2025-07-02T17:30:55.614Z", "2025-07-02T17:31:31.814Z"]
 }
 ```
+
 > **Notable:** `executionTime` is an array (time interval). `statusCode: "COMPLETED"` only value seen.
 
 ---
@@ -282,22 +307,22 @@ No changes.
 
 ### Part 1 Creates (All Succeeded)
 
-| Resource | POST URL | Status | ID |
-|---|---|---|---|
-| System | `/systems` | 201 ✅ | `04fg` |
-| Procedure | `/procedures` | 201 ✅ | `0480` |
-| Deployment | `/deployments` | 201 ✅ | `049g` |
+| Resource         | POST URL            | Status | ID     |
+| ---------------- | ------------------- | ------ | ------ |
+| System           | `/systems`          | 201 ✅ | `04fg` |
+| Procedure        | `/procedures`       | 201 ✅ | `0480` |
+| Deployment       | `/deployments`      | 201 ✅ | `049g` |
 | Sampling Feature | `/samplingFeatures` | 201 ✅ | `050g` |
 
 ### Part 2 Creates (All Failed — Server Regression)
 
-| Resource | POST URL | Status | Error |
-|---|---|---|---|
-| Datastream (test system) | `/systems/04fg/datastreams` | **500** ❌ | Internal Server Error |
-| Datastream (existing system) | `/systems/03bc5ofvvstg/datastreams` | **500** ❌ | Internal Server Error |
-| ControlStream (test system) | `/systems/04fg/controlstreams` | **500** ❌ | Internal Server Error |
-| ControlStream (existing system) | `/systems/03bc5ofvvstg/controlstreams` | **500** ❌ | Internal Server Error |
-| Observation (existing DS) | `/datastreams/02au905kq85g/observations` | **400** ❌ | "Resource is not writable" |
+| Resource                        | POST URL                                 | Status     | Error                      |
+| ------------------------------- | ---------------------------------------- | ---------- | -------------------------- |
+| Datastream (test system)        | `/systems/04fg/datastreams`              | **500** ❌ | Internal Server Error      |
+| Datastream (existing system)    | `/systems/03bc5ofvvstg/datastreams`      | **500** ❌ | Internal Server Error      |
+| ControlStream (test system)     | `/systems/04fg/controlstreams`           | **500** ❌ | Internal Server Error      |
+| ControlStream (existing system) | `/systems/03bc5ofvvstg/controlstreams`   | **500** ❌ | Internal Server Error      |
+| Observation (existing DS)       | `/datastreams/02au905kq85g/observations` | **400** ❌ | "Resource is not writable" |
 
 > In ST#19, datastream, controlstream, and observation creation all returned 201. This is a **server-side regression** — no client code changes were made to CRUD operations.
 
@@ -312,22 +337,22 @@ Read-back confirmed updated name ✅
 
 ### Cleanup
 
-| Resource | DELETE Status | Verify 404 |
-|---|---|---|
-| System `04fg` | 204 ✅ | 404 ✅ |
-| Procedure `0480` | 204 ✅ | 404 ✅ |
-| Deployment `049g` | 204 ✅ | 404 ✅ |
-| Sampling Feature `050g` | 204 ✅ | 404 ✅ |
+| Resource                | DELETE Status | Verify 404 |
+| ----------------------- | ------------- | ---------- |
+| System `04fg`           | 204 ✅        | 404 ✅     |
+| Procedure `0480`        | 204 ✅        | 404 ✅     |
+| Deployment `049g`       | 204 ✅        | 404 ✅     |
+| Sampling Feature `050g` | 204 ✅        | 404 ✅     |
 
 Inventory restored to pre-test counts.
 
 ### CRUD Summary
 
-| Category | Operations | Passed | Rate |
-|---|---|---|---|
-| Part 1 (Create/Read/Update/Delete) | 13 | 13 | 100% |
-| Part 2 (Create) | 5 | 0 | 0% |
-| **Total** | **18** | **13** | **72%** |
+| Category                           | Operations | Passed | Rate    |
+| ---------------------------------- | ---------- | ------ | ------- |
+| Part 1 (Create/Read/Update/Delete) | 13         | 13     | 100%    |
+| Part 2 (Create)                    | 5          | 0      | 0%      |
+| **Total**                          | **18**     | **13** | **72%** |
 
 ST#19 was 36/37 (97.3%). The decline is entirely due to server-side Part 2 write regression.
 
@@ -345,21 +370,21 @@ OSH `/properties` returns 0 items. 52N `/properties` returns 400.
 
 **Field-by-field validation against 4 live datastreams:**
 
-| Field | Fixture | Live Data | Match |
-|---|---|---|---|
-| `id` | string | string | ✅ |
-| `name` | string | string | ✅ |
-| `description` | string (optional) | string or absent | ✅ |
-| `type` | string (optional) | absent in all 4 | ✅ |
-| `validTime` | `["ISO", "now"]` | `["ISO", "now"]` (DS1) | ✅ |
-| `phenomenonTime` | `["ISO", "ISO"]` or null | array or absent | ✅ |
-| `resultTime` | `["ISO", "ISO"]` or absent | absent in all 4 | ✅ |
-| `observedProperties` | `[{definition, label}]` | Mixed (see P5-F2) | ⚠️ |
-| `resultType` | string from RESULT_TYPES | `measure`/`record`/`vector` | ✅ |
-| `formats` | string[] | string[] | ✅ |
-| `links` | CsapiLink[] (optional) | absent in list view | ✅ |
-| `system@id` (excluded) | — | present in live data | ✅ Excluded |
-| `system@link` (excluded) | — | present in live data | ✅ Excluded |
+| Field                    | Fixture                    | Live Data                   | Match       |
+| ------------------------ | -------------------------- | --------------------------- | ----------- |
+| `id`                     | string                     | string                      | ✅          |
+| `name`                   | string                     | string                      | ✅          |
+| `description`            | string (optional)          | string or absent            | ✅          |
+| `type`                   | string (optional)          | absent in all 4             | ✅          |
+| `validTime`              | `["ISO", "now"]`           | `["ISO", "now"]` (DS1)      | ✅          |
+| `phenomenonTime`         | `["ISO", "ISO"]` or null   | array or absent             | ✅          |
+| `resultTime`             | `["ISO", "ISO"]` or absent | absent in all 4             | ✅          |
+| `observedProperties`     | `[{definition, label}]`    | Mixed (see P5-F2)           | ⚠️          |
+| `resultType`             | string from RESULT_TYPES   | `measure`/`record`/`vector` | ✅          |
+| `formats`                | string[]                   | string[]                    | ✅          |
+| `links`                  | CsapiLink[] (optional)     | absent in list view         | ✅          |
+| `system@id` (excluded)   | —                          | present in live data        | ✅ Excluded |
+| `system@link` (excluded) | —                          | present in live data        | ✅ Excluded |
 
 **Gap:** `observedProperties` objects without `definition` produce empty strings → see P5-F2.
 
@@ -367,16 +392,16 @@ OSH `/properties` returns 0 items. 52N `/properties` returns 400.
 
 **Field-by-field validation against 4 live observations:**
 
-| Field | Fixture | Live Data | Match |
-|---|---|---|---|
-| `id` | string | string | ✅ |
-| `phenomenonTime` | ISO instant string | ISO instant string | ✅ |
-| `resultTime` | ISO instant string | ISO instant string | ✅ |
-| `result` | object (opaque) | object (opaque) | ✅ |
-| `parameters` | object (optional) | absent in all 4 | ✅ |
-| `links` | CsapiLink[] (optional) | absent in all 4 | ✅ |
-| `datastream@id` (excluded) | — | present in live data | ✅ Excluded |
-| `foi@id` (excluded) | — | present in 2 of 4 | ✅ Excluded |
+| Field                      | Fixture                | Live Data            | Match       |
+| -------------------------- | ---------------------- | -------------------- | ----------- |
+| `id`                       | string                 | string               | ✅          |
+| `phenomenonTime`           | ISO instant string     | ISO instant string   | ✅          |
+| `resultTime`               | ISO instant string     | ISO instant string   | ✅          |
+| `result`                   | object (opaque)        | object (opaque)      | ✅          |
+| `parameters`               | object (optional)      | absent in all 4      | ✅          |
+| `links`                    | CsapiLink[] (optional) | absent in all 4      | ✅          |
+| `datastream@id` (excluded) | —                      | present in live data | ✅ Excluded |
+| `foi@id` (excluded)        | —                      | present in 2 of 4    | ✅ Excluded |
 
 **Time handling:** Live observations have instant strings (not intervals), matching the `string` type in the `Observation` interface. Correct distinction from `Datastream.validTime` which is `TimeInterval`.
 
@@ -384,22 +409,22 @@ OSH `/properties` returns 0 items. 52N `/properties` returns 400.
 
 ### Fixture Shape Comparison Summary
 
-| Aspect | Fixtures | Live Data | Status |
-|---|---|---|---|
-| DS observedProperties always have `definition` | Yes | No (5 of 100 lack it) | **Gap** (P5-F2) |
-| DS `links` present in list responses | Yes (in fixtures) | No (only in individual resource GET) | Handled (optional field) |
-| Obs `foi@id` cross-reference | Not in fixtures | Present in some live obs | Correctly excluded |
-| Obs `datastream@id` | In fixtures (for exclusion test) | Present in all live obs | Correctly excluded |
+| Aspect                                         | Fixtures                         | Live Data                            | Status                   |
+| ---------------------------------------------- | -------------------------------- | ------------------------------------ | ------------------------ |
+| DS observedProperties always have `definition` | Yes                              | No (5 of 100 lack it)                | **Gap** (P5-F2)          |
+| DS `links` present in list responses           | Yes (in fixtures)                | No (only in individual resource GET) | Handled (optional field) |
+| Obs `foi@id` cross-reference                   | Not in fixtures                  | Present in some live obs             | Correctly excluded       |
+| Obs `datastream@id`                            | In fixtures (for exclusion test) | Present in all live obs              | Correctly excluded       |
 
 ---
 
 ## 9. Steps 13–15 — Build, Test Suite, Compilation
 
-| Check | Result |
-|---|---|
-| `tsc --noEmit` | ✅ Clean (0 errors) |
-| CSAPI tests | ✅ 1,190 passing, 27 suites |
-| Format tests | ✅ 668 passing, 19 suites |
+| Check                     | Result                                                              |
+| ------------------------- | ------------------------------------------------------------------- |
+| `tsc --noEmit`            | ✅ Clean (0 errors)                                                 |
+| CSAPI tests               | ✅ 1,190 passing, 27 suites                                         |
+| Format tests              | ✅ 668 passing, 19 suites                                           |
 | Parser tests specifically | ✅ 6 (property) + 8 (datastream) + 7 (observation) = 21 all passing |
 
 ---
@@ -411,11 +436,12 @@ OSH `/properties` returns 0 items. 52N `/properties` returns 400.
 **Category:** Server Limitation  
 **Severity:** Moderate  
 **Owner:** Server  
-**Affects:** CRUD testing completeness  
+**Affects:** CRUD testing completeness
 
 **Description:** OSH server returns HTTP 500 for Datastream and ControlStream POST requests (both on newly created test systems and existing systems). Observation POST returns 400 "Resource is not writable" on existing datastreams. In ST#19 (Phase 4.1), all three operations returned 201 Created successfully.
 
 **Evidence:**
+
 - `POST /systems/04fg/datastreams` → 500
 - `POST /systems/03bc5ofvvstg/datastreams` → 500
 - `POST /systems/04fg/controlstreams` → 500
@@ -433,11 +459,12 @@ OSH `/properties` returns 0 items. 52N `/properties` returns 400.
 **Category:** Code Gap (Ours)  
 **Severity:** Low  
 **Owner:** CSAPI team  
-**Affects:** `parseDatastream()` output for datastreams with label-only observedProperties  
+**Affects:** `parseDatastream()` output for datastreams with label-only observedProperties
 
 **Description:** The `normalizeObservedProperties()` helper in `part2.ts` extracts the `definition` field from observedProperties objects and falls back to empty string when `definition` is absent. The `.filter(Boolean)` call then removes these empty strings. Live OSH data includes observedProperties objects with `{label, description}` but no `definition` field (e.g., Temperature, StatusEvent datastreams — approximately 5 of 100 datastreams).
 
 **Code path:**
+
 ```typescript
 // part2.ts line ~17
 function normalizeObservedProperties(raw: unknown): string[] {
@@ -445,11 +472,12 @@ function normalizeObservedProperties(raw: unknown): string[] {
   if (typeof item === 'object' && item !== null && 'definition' in item) {
     return (item as { definition: string }).definition;
   }
-  return '';  // ← label-only objects hit this path
+  return ''; // ← label-only objects hit this path
 }
 ```
 
 **Live data example:**
+
 ```json
 {
   "observedProperties": [
@@ -457,6 +485,7 @@ function normalizeObservedProperties(raw: unknown): string[] {
   ]
 }
 ```
+
 Result after parsing: `observedProperties: []` (empty) instead of preserving the label.
 
 **Impact:** Low — the parsed `observedProperties` array loses human-readable labels for affected datastreams. The `definition` URI (which is the primary identifier per the spec) is genuinely absent in these cases. The behavior is technically correct (no definition = no string to return) but could be improved by falling back to `label` when `definition` is absent.
@@ -469,33 +498,33 @@ Result after parsing: `observedProperties: []` (empty) instead of preserving the
 
 ### Scorecard
 
-| Metric | Value | ST#19 Value | Delta |
-|---|---|---|---|
-| Library regressions | 0 | 0 | — |
-| CSAPI tests passing | 1,190 | 1,190 | — |
-| TypeScript compilation | Clean | Clean | — |
-| CRUD success rate | 72% (13/18) | 97.3% (36/37) | ↓ (server regression) |
-| New findings (Total) | 2 | 5 | — |
-| New findings (Ours) | 1 (Low) | 0 | +1 |
-| New findings (Server) | 1 (Moderate) | 5 | — |
+| Metric                 | Value        | ST#19 Value   | Delta                 |
+| ---------------------- | ------------ | ------------- | --------------------- |
+| Library regressions    | 0            | 0             | —                     |
+| CSAPI tests passing    | 1,190        | 1,190         | —                     |
+| TypeScript compilation | Clean        | Clean         | —                     |
+| CRUD success rate      | 72% (13/18)  | 97.3% (36/37) | ↓ (server regression) |
+| New findings (Total)   | 2            | 5             | —                     |
+| New findings (Ours)    | 1 (Low)      | 0             | +1                    |
+| New findings (Server)  | 1 (Moderate) | 5             | —                     |
 
 ### Parser Validation Scorecard
 
-| Parser | Live Data Available | Validation Result | Findings |
-|---|---|---|---|
-| `parseProperty()` | No (0 items) | Fixture-only ✅ | None |
-| `parseDatastream()` | Yes (4 samples) | **PASS** ⚠️ | P5-F2 (label-only gap) |
-| `parseObservation()` | Yes (4 samples) | **PASS** ✅ | None |
+| Parser               | Live Data Available | Validation Result | Findings               |
+| -------------------- | ------------------- | ----------------- | ---------------------- |
+| `parseProperty()`    | No (0 items)        | Fixture-only ✅   | None                   |
+| `parseDatastream()`  | Yes (4 samples)     | **PASS** ⚠️       | P5-F2 (label-only gap) |
+| `parseObservation()` | Yes (4 samples)     | **PASS** ✅       | None                   |
 
 ### Phase 5 Parsers Not Yet Implemented (Tasks 4–6)
 
 Live data shapes documented above for future implementation reference:
 
-| Parser | Live Shape |
-|---|---|
+| Parser                 | Live Shape                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | `parseControlStream()` | `{id, name, inputName, validTime, controlledProperties, formats, [description], [issueTime], [links]}` |
-| `parseCommand()` | `{id, controlstream@id, issueTime, sender, currentStatus, parameters}` |
-| `parseCommandStatus()` | `{id, command@id, reportTime, statusCode, executionTime}` |
+| `parseCommand()`       | `{id, controlstream@id, issueTime, sender, currentStatus, parameters}`                                 |
+| `parseCommandStatus()` | `{id, command@id, reportTime, statusCode, executionTime}`                                              |
 
 ### Key Observations for Future Tasks
 
@@ -511,8 +540,8 @@ Live data shapes documented above for future implementation reference:
 
 ### Cumulative Finding Count
 
-| Source | Count |
-|---|---|
-| ST#1–ST#19 (F1–F90, P4-F1–P4-F5) | 95 |
-| ST#20 (P5-F1, P5-F2) | 2 |
-| **Total** | **97** |
+| Source                           | Count  |
+| -------------------------------- | ------ |
+| ST#1–ST#19 (F1–F90, P4-F1–P4-F5) | 95     |
+| ST#20 (P5-F1, P5-F2)             | 2      |
+| **Total**                        | **97** |

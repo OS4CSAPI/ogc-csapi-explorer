@@ -1,8 +1,7 @@
 # Findings Report: Issue #16 — Schema Method JSDoc `f` vs `obsFormat`/`cmdFormat` Parameter Confusion (F-13)
 
 > **Date**: 2025-02-17
-> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#16](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/16)
-> **Finding ID**: F-13 (from [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/main/docs/webapp-demo/schema-display-findings.md))
+> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#16](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/16) > **Finding ID**: F-13 (from [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/main/docs/webapp-demo/schema-display-findings.md))
 > **Upstream Finding ID**: F-13 in [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/main/docs/upstream-findings.md) — Priority #2 (High)
 
 ---
@@ -36,11 +35,11 @@ The `getDataStreamSchema()` JSDoc at `url_builder.ts` L1303–1321 states:
 
 But the `@param` description and code example then tell the consumer to use `{ f: 'application/swe+json' }`, which appends `?f=application%2Fswe%2Bjson` to the URL. These are **two different query parameters**:
 
-| Parameter | Purpose | OGC Spec |
-|---|---|---|
-| `f` | Generic response format negotiation (JSON vs XML vs HTML) | OGC API — Common |
+| Parameter   | Purpose                                                   | OGC Spec           |
+| ----------- | --------------------------------------------------------- | ------------------ |
+| `f`         | Generic response format negotiation (JSON vs XML vs HTML) | OGC API — Common   |
 | `obsFormat` | Specifies which observation encoding the schema describes | OGC 23-002 §Req 11 |
-| `cmdFormat` | Specifies which command encoding the schema describes | OGC 23-002 §Req 25 |
+| `cmdFormat` | Specifies which command encoding the schema describes     | OGC 23-002 §Req 25 |
 
 The same issue affects `getControlStreamSchema()` at `url_builder.ts` L1732–1757, where the JSDoc mentions `cmdFormat` (Part 2, Req 25) but the example uses `f`.
 
@@ -60,8 +59,12 @@ The test at `url_builder.spec.ts` L1656–1658 is named `"returns correct URL wi
 
 ```typescript
 it('returns correct URL with obsFormat parameter', () => {
-  const url = makeDsBuilder().getDataStreamSchema('ds-001', { f: 'application/swe+json' });
-  expect(url).toBe('https://example.com/collections/iot/datastreams/ds-001/schema?f=application%2Fswe%2Bjson');
+  const url = makeDsBuilder().getDataStreamSchema('ds-001', {
+    f: 'application/swe+json',
+  });
+  expect(url).toBe(
+    'https://example.com/collections/iot/datastreams/ds-001/schema?f=application%2Fswe%2Bjson'
+  );
 });
 ```
 
@@ -73,7 +76,7 @@ The same mismatch exists at `url_builder.spec.ts` L2135–2137 for `getControlSt
 
 ### Affected method: `getDataStreamSchema()` (`url_builder.ts` L1303–1325)
 
-```typescript
+````typescript
 /**
  * Returns the URL for retrieving a datastream's result schema.
  *
@@ -98,9 +101,10 @@ getDataStreamSchema(id: string, options?: QueryOptions): string {
   this.assertResourceAvailable('datastreams');
   return this.buildResourceUrl('datastreams', id, 'schema', options);
 }
-```
+````
 
 **Problems identified:**
+
 1. Line 1305: Says `obsFormat` is "required" — but real servers work fine without it (they default)
 2. Line 1305: Claims omitting it causes 400 — this is the opposite of reality (including `f` caused 400)
 3. Line 1310: Says to use `f` for "desired observation format" — `f` is response format, not observation format
@@ -158,6 +162,7 @@ This means TypeScript's excess property checking would **reject** `{ obsFormat: 
 ### 2. Upstream Findings (`upstream-findings.md`)
 
 F-13 is listed in the consolidated upstream findings at **Priority #2 (High)** under "Should Address":
+
 - Classified as "Bug / Documentation"
 - Identified through real-world demo app testing
 - Part of the broader body of 13 findings (F-1 through F-12 + F-13/F-14)
@@ -165,6 +170,7 @@ F-13 is listed in the consolidated upstream findings at **Priority #2 (High)** u
 ### 3. Schema Display Findings (`schema-display-findings.md`)
 
 Provides the detailed breakdown of F-13:
+
 - Documents the exact JSDoc text, the real-world 400 error, and the root cause
 - Notes the test name mismatch
 - Identifies that `buildQueryString()` serializes all option keys generically — confirming that the URL builder itself is not broken, only the documentation is wrong
@@ -172,6 +178,7 @@ Provides the detailed breakdown of F-13:
 ### 4. Library Source Changes Audit (`library-source-changes-audit.md`)
 
 Confirms:
+
 - **Exactly one commit** (`e73cff8`) has modified library source during the entire demo development lifecycle
 - The schema JSDoc fix described in the demo app's workaround table: "Schema URL `f=` param removal" was implemented in `demo/src/csapi-bridge.ts` — **not** in the library source
 - The library source remains suitable for clean upstream contribution
@@ -179,6 +186,7 @@ Confirms:
 ### 5. Contribution Goal Accuracy Assessment (`contribution-goal-accuracy-assessment.md`)
 
 Notes under "Format Support":
+
 - "Content negotiation guidance exists via constants and the `f` query parameter, but HTTP-level Accept header management is outside the library's scope as a URL builder"
 - The `f` query parameter is explicitly identified as OGC API Common response format, **not** schema format — reinforcing that the current JSDoc guidance is incorrect
 
@@ -188,23 +196,23 @@ Notes under "Format Support":
 
 ### Risk of making the fix
 
-| Risk Factor | Assessment | Rating |
-|---|---|---|
-| Runtime behavioral change | **None** — JSDoc and test name changes have zero runtime impact | **Minimal** |
-| API surface change | **None** — method signatures, return types, and parameter types are unchanged | **Minimal** |
-| Test behavior change | **None** — only test names change; assertions and expected URLs are unchanged | **Minimal** |
-| Upstream compatibility | **Improved** — corrected JSDoc provides accurate guidance to upstream consumers | **Positive** |
-| Diff size | **Very small** — ~20 lines of JSDoc text + 2 test name strings | **Minimal** |
-| Regression potential | **None** — no executable code is modified | **Minimal** |
+| Risk Factor               | Assessment                                                                      | Rating       |
+| ------------------------- | ------------------------------------------------------------------------------- | ------------ |
+| Runtime behavioral change | **None** — JSDoc and test name changes have zero runtime impact                 | **Minimal**  |
+| API surface change        | **None** — method signatures, return types, and parameter types are unchanged   | **Minimal**  |
+| Test behavior change      | **None** — only test names change; assertions and expected URLs are unchanged   | **Minimal**  |
+| Upstream compatibility    | **Improved** — corrected JSDoc provides accurate guidance to upstream consumers | **Positive** |
+| Diff size                 | **Very small** — ~20 lines of JSDoc text + 2 test name strings                  | **Minimal**  |
+| Regression potential      | **None** — no executable code is modified                                       | **Minimal**  |
 
 ### Risk of NOT making the fix
 
-| Risk Factor | Assessment | Rating |
-|---|---|---|
-| Consumers hit 400 errors | **Real** — any consumer following JSDoc guidance will get 400 from real servers | **Medium** |
-| Misleading test names | **Real** — tests named "obsFormat" but test `f`, creating false confidence | **Low** |
-| Upstream reviewer confusion | **Real** — reviewers reading JSDoc will see contradictory guidance | **Medium** |
-| Spec compliance perception | **Real** — JSDoc incorrectly claims parameter is "required" when servers work without it | **Low** |
+| Risk Factor                 | Assessment                                                                               | Rating     |
+| --------------------------- | ---------------------------------------------------------------------------------------- | ---------- |
+| Consumers hit 400 errors    | **Real** — any consumer following JSDoc guidance will get 400 from real servers          | **Medium** |
+| Misleading test names       | **Real** — tests named "obsFormat" but test `f`, creating false confidence               | **Low**    |
+| Upstream reviewer confusion | **Real** — reviewers reading JSDoc will see contradictory guidance                       | **Medium** |
+| Spec compliance perception  | **Real** — JSDoc incorrectly claims parameter is "required" when servers work without it | **Low**    |
 
 ### Overall risk assessment
 
@@ -239,6 +247,7 @@ The fix is **pure documentation correction** with **zero executable code changes
 ### Should we fix the TypeScript types too (Option B from the issue)?
 
 **Not in this fix.** Option B (adding `DatastreamSchemaOptions` and `ControlStreamSchemaOptions` interfaces) is an enhancement that adds new types to `model.ts` and changes method signatures. While the enhancement has merit, it:
+
 - Introduces new types (violates minimal-diff principle per §2.2)
 - Changes method parameter types (non-trivial API surface modification)
 - Goes beyond correcting the documented error
@@ -253,12 +262,12 @@ Option B should be tracked as a separate enhancement if desired. The JSDoc corre
 
 ### What to fix
 
-| File | Lines | Change | Risk |
-|---|---|---|---|
-| `src/ogc-api/csapi/url_builder.ts` | L1303–1321 | Fix `getDataStreamSchema()` JSDoc: remove false "required" claim, correct parameter guidance from `f` to `obsFormat`, update example | Zero runtime impact |
-| `src/ogc-api/csapi/url_builder.ts` | L1732–1757 | Fix `getControlStreamSchema()` JSDoc: same pattern as above, correct from `f` to `cmdFormat` | Zero runtime impact |
-| `src/ogc-api/csapi/url_builder.spec.ts` | L1656 | Fix test name to accurately reflect what is being tested | Zero behavioral impact |
-| `src/ogc-api/csapi/url_builder.spec.ts` | L2135 | Fix test name to accurately reflect what is being tested | Zero behavioral impact |
+| File                                    | Lines      | Change                                                                                                                               | Risk                   |
+| --------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
+| `src/ogc-api/csapi/url_builder.ts`      | L1303–1321 | Fix `getDataStreamSchema()` JSDoc: remove false "required" claim, correct parameter guidance from `f` to `obsFormat`, update example | Zero runtime impact    |
+| `src/ogc-api/csapi/url_builder.ts`      | L1732–1757 | Fix `getControlStreamSchema()` JSDoc: same pattern as above, correct from `f` to `cmdFormat`                                         | Zero runtime impact    |
+| `src/ogc-api/csapi/url_builder.spec.ts` | L1656      | Fix test name to accurately reflect what is being tested                                                                             | Zero behavioral impact |
+| `src/ogc-api/csapi/url_builder.spec.ts` | L2135      | Fix test name to accurately reflect what is being tested                                                                             | Zero behavioral impact |
 
 ### What NOT to fix in this task
 
@@ -269,14 +278,14 @@ Option B should be tracked as a separate enhancement if desired. The JSDoc corre
 
 ### Priority assessment
 
-| Factor | Assessment |
-|---|---|
-| **Finding ID** | F-13 |
-| **Priority in upstream-findings.md** | #2 (High) — under "Should Address" |
-| **Effort** | Low — ~20 lines of JSDoc text + 2 test name strings |
-| **Impact** | Medium-High — prevents consumer 400 errors from following JSDoc guidance |
-| **Risk** | Negligible — zero executable code changes |
-| **Scope** | Within our CSAPI contribution scope — we wrote this JSDoc |
+| Factor                               | Assessment                                                               |
+| ------------------------------------ | ------------------------------------------------------------------------ |
+| **Finding ID**                       | F-13                                                                     |
+| **Priority in upstream-findings.md** | #2 (High) — under "Should Address"                                       |
+| **Effort**                           | Low — ~20 lines of JSDoc text + 2 test name strings                      |
+| **Impact**                           | Medium-High — prevents consumer 400 errors from following JSDoc guidance |
+| **Risk**                             | Negligible — zero executable code changes                                |
+| **Scope**                            | Within our CSAPI contribution scope — we wrote this JSDoc                |
 
 ---
 
@@ -302,22 +311,22 @@ The `f` query parameter is the standard OGC API response format negotiation para
 
 ## Appendix B: Reference Documents Consulted
 
-| # | Document | Key Relevance |
-|---|---|---|
-| 1 | [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | Behavioral rules — minimal diffs, no unauthorized refactoring |
-| 2 | [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | F-13 priority ranking (#2, High) |
-| 3 | [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | Detailed F-13 breakdown with server evidence |
-| 4 | [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | Confirms 1 commit modifying library source; schema workaround was demo-only |
-| 5 | [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Distinguishes `f` as response format vs schema format |
-| 6 | [OGC 23-002 §Req 11](https://docs.ogc.org/is/23-002/23-002.html#req_datastream_schema) | Normative: `obsFormat` parameter specification |
-| 7 | [OGC 23-002 §Req 25](https://docs.ogc.org/is/23-002/23-002.html#req_controlstream_schema) | Normative: `cmdFormat` parameter specification |
+| #   | Document                                                                                                                                                       | Key Relevance                                                               |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1   | [AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md)                        | Behavioral rules — minimal diffs, no unauthorized refactoring               |
+| 2   | [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | F-13 priority ranking (#2, High)                                            |
+| 3   | [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | Detailed F-13 breakdown with server evidence                                |
+| 4   | [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | Confirms 1 commit modifying library source; schema workaround was demo-only |
+| 5   | [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Distinguishes `f` as response format vs schema format                       |
+| 6   | [OGC 23-002 §Req 11](https://docs.ogc.org/is/23-002/23-002.html#req_datastream_schema)                                                                         | Normative: `obsFormat` parameter specification                              |
+| 7   | [OGC 23-002 §Req 25](https://docs.ogc.org/is/23-002/23-002.html#req_controlstream_schema)                                                                      | Normative: `cmdFormat` parameter specification                              |
 
 ---
 
 ## Appendix C: Relationship to Other Findings Reports
 
-| Report | Finding | Relationship |
-|---|---|---|
-| [issue-8-jsdoc-documentation.md](./issue-8-jsdoc-documentation.md) | F-8 (JSDoc) | Same category — JSDoc accuracy. Issue #8 addressed JSDoc completeness; Issue #16 addresses JSDoc correctness for schema methods specifically. |
-| [issue-6-content-type-helper.md](./issue-6-content-type-helper.md) | F-10 (Content-Type) | Related concept — Content-Type vs Accept vs `f` vs `obsFormat` are all distinct but related HTTP/OGC parameter concerns. |
-| [issue-9-accept-header-default.md](./issue-9-accept-header-default.md) | F-4 (Accept header) | Related concept — another case where the correct parameter/header matters for cross-server compatibility. |
+| Report                                                                 | Finding             | Relationship                                                                                                                                  |
+| ---------------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [issue-8-jsdoc-documentation.md](./issue-8-jsdoc-documentation.md)     | F-8 (JSDoc)         | Same category — JSDoc accuracy. Issue #8 addressed JSDoc completeness; Issue #16 addresses JSDoc correctness for schema methods specifically. |
+| [issue-6-content-type-helper.md](./issue-6-content-type-helper.md)     | F-10 (Content-Type) | Related concept — Content-Type vs Accept vs `f` vs `obsFormat` are all distinct but related HTTP/OGC parameter concerns.                      |
+| [issue-9-accept-header-default.md](./issue-9-accept-header-default.md) | F-4 (Accept header) | Related concept — another case where the correct parameter/header matters for cross-server compatibility.                                     |

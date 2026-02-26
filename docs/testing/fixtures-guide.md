@@ -167,17 +167,17 @@ Troubleshooting follows systematic diagnosis: reproduce the failure in isolation
 
 [3] React Compiler GitHub Repository, https://github.com/facebook/react/tree/main/compiler, fixture analysis conducted Feb. 2026 examining `compiler/packages/babel-plugin-react-compiler/src/__tests__/fixtures/` directory containing 1000+ fixtures.
 
-[4] Meszaros, G., *xUnit Test Patterns: Refactoring Test Code*, Addison-Wesley, 2007.
+[4] Meszaros, G., _xUnit Test Patterns: Refactoring Test Code_, Addison-Wesley, 2007.
 
-[5] Beck, K., *Test-Driven Development: By Example*, Addison-Wesley, 2002.
+[5] Beck, K., _Test-Driven Development: By Example_, Addison-Wesley, 2002.
 
-[6] ISO 1101:2017, *Geometrical product specifications (GPS) — Geometrical tolerancing — Tolerances of form, orientation, location and run-out*, International Organization for Standardization, 2017.
+[6] ISO 1101:2017, _Geometrical product specifications (GPS) — Geometrical tolerancing — Tolerances of form, orientation, location and run-out_, International Organization for Standardization, 2017.
 
-[7] Feathers, M., *Working Effectively with Legacy Code*, Prentice Hall, 2004.
+[7] Feathers, M., _Working Effectively with Legacy Code_, Prentice Hall, 2004.
 
-[8] Freeman, S. and Pryce, N., *Growing Object-Oriented Software, Guided by Tests*, Addison-Wesley, 2009.
+[8] Freeman, S. and Pryce, N., _Growing Object-Oriented Software, Guided by Tests_, Addison-Wesley, 2009.
 
-[9] Martin, R. C., *Clean Code: A Handbook of Agile Software Craftsmanship*, Prentice Hall, 2008.
+[9] Martin, R. C., _Clean Code: A Handbook of Agile Software Craftsmanship_, Prentice Hall, 2008.
 
 [10] "Fixture Documentation Best Practices," Section 15 Part 2, ogc-client project internal research documentation, Feb. 2026. Analysis of industry patterns across jest-junit, OpenLayers, and React projects.
 
@@ -187,7 +187,7 @@ Troubleshooting follows systematic diagnosis: reproduce the failure in isolation
 
 [13] Open Geospatial Consortium, "Web Map Service Implementation Specification," OGC 06-042, 2006, https://www.ogc.org/standards/wms
 
-[14] Hunt, A. and Thomas, D., *The Pragmatic Programmer*, Addison-Wesley, 1999.
+[14] Hunt, A. and Thomas, D., _The Pragmatic Programmer_, Addison-Wesley, 1999.
 
 ---
 
@@ -211,6 +211,7 @@ fixtures/
 
 **Service Type Segregation**  
 Top-level directories correspond to distinct service protocols. This enables:
+
 - Clear fixture discoverability
 - Protocol-specific fixture management
 - Parallel development across service types
@@ -226,14 +227,14 @@ Directory names omit protocol versions (e.g., `wfs/` not `wfs-2.0.0/`). Multiple
 
 As of February 2026, the project maintains 120 test fixtures distributed across service types:
 
-| Service Type | Count | Primary Formats | Specification Reference |
-|--------------|-------|-----------------|-------------------------|
-| OGC API - Features & EDR | 74 | JSON | OGC 17-069r4, OGC 19-072 [20][21] |
-| WFS | 21 | XML, JSON | OGC 04-094 (1.0.0), OGC 04-094r2 (1.1.0), OGC 09-025r2 (2.0.0) [22] |
-| WMS | 9 | XML | OGC 01-068r3 (1.1.1), OGC 06-042 (1.3.0) [23] |
-| WMTS | 8 | XML | OGC 07-057r7 [24] |
-| STAC | 6 | JSON | STAC 1.0.0 [25] |
-| TMS | 2 | XML | OSGeo TMS 1.0.0 [26] |
+| Service Type             | Count | Primary Formats | Specification Reference                                             |
+| ------------------------ | ----- | --------------- | ------------------------------------------------------------------- |
+| OGC API - Features & EDR | 74    | JSON            | OGC 17-069r4, OGC 19-072 [20][21]                                   |
+| WFS                      | 21    | XML, JSON       | OGC 04-094 (1.0.0), OGC 04-094r2 (1.1.0), OGC 09-025r2 (2.0.0) [22] |
+| WMS                      | 9     | XML             | OGC 01-068r3 (1.1.1), OGC 06-042 (1.3.0) [23]                       |
+| WMTS                     | 8     | XML             | OGC 07-057r7 [24]                                                   |
+| STAC                     | 6     | JSON            | STAC 1.0.0 [25]                                                     |
+| TMS                      | 2     | XML             | OSGeo TMS 1.0.0 [26]                                                |
 
 ### 4.3 Fixture Provenance
 
@@ -241,6 +242,7 @@ Fixtures originate from three primary sources, each serving distinct testing obj
 
 **Real-World Service Captures**  
 Responses captured from operational OGC services in production environments. These provide authentic format variations, encoding practices, and metadata structures. Examples include:
+
 - `capabilities-pigma-2-0-0.xml` - Captured from Pigma GeoServer WFS endpoint [27]
 - `gnosis-earth.json` - Captured from Gnosis Earth OGC API implementation
 
@@ -248,12 +250,14 @@ Real-world captures ensure client code handles actual service behavior, not just
 
 **Specification Examples**  
 Data structures extracted directly from OGC specification documents. These validate strict conformance to standards. Example:
+
 - `sample-data.json` - Based on OGC API - Features Part 1 specification examples [20]
 
 Specification-derived fixtures serve as reference implementations, establishing baseline conformance expectations.
 
 **Handcrafted Test Cases**  
 Fixtures specifically constructed to exercise edge cases, error conditions, or unusual but specification-compliant scenarios. Examples:
+
 - `invalid.json` - Malformed JSON to test error handling
 - `no-collection.json` - Valid API root with zero collections (edge case)
 
@@ -278,6 +282,7 @@ OGC API - Features represents the modern evolution of OGC web services, adopting
 Represent API root endpoint responses conforming to OGC API - Common requirements [29]. These fixtures enable testing of service discovery mechanisms.
 
 Examples:
+
 - `sample-data.json` - Minimal conformant landing page with core link relations
 - `root-path.json` - Landing page with explicit path structure for routing tests
 - `gnosis-earth.json` - Production landing page from Gnosis Earth service
@@ -288,6 +293,7 @@ Examples:
 Represent `/collections` endpoint responses describing available feature collections.
 
 Examples:
+
 - `sample-data-2.json` - Multiple collections with varied metadata
 - `no-collection.json` - Empty collections array (edge case validation)
 
@@ -297,6 +303,7 @@ Examples:
 Deliberately malformed or specification-violating responses for error handling validation.
 
 Example:
+
 - `invalid.json` - Malformed JSON syntax to test parser error recovery
 
 ### 5.2 Web Feature Service (WFS) Fixtures
@@ -312,12 +319,14 @@ Web Feature Service predates OGC API - Features, providing XML-based access to v
 
 **GetCapabilities Response Fixtures**  
 Comprehensive service metadata documents. These represent the most complex WFS response type, containing:
+
 - Service identification metadata (title, abstract, keywords, provider information)
 - Operations metadata (endpoints, parameters, constraints)
 - Feature type descriptions (geometry type, bounding box, CRS options)
 - Output format declarations
 
 Examples spanning versions and sources:
+
 - `capabilities-pigma-1-1-0.xml` - WFS 1.1.0 from Pigma GeoServer
 - `capabilities-pigma-2-0-0.xml` - WFS 2.0.0 from same source (version comparison)
 - `capabilities-states-2-0-0.xml` - WFS 2.0.0 canonical example
@@ -328,6 +337,7 @@ Examples spanning versions and sources:
 XML Schema Definition (XSD) documents describing feature attribute structures. Critical for clients performing schema-aware feature parsing.
 
 Examples:
+
 - `describefeaturetype-pigma-1-1-0-xsd.xml` - WFS 1.1.0 schema
 - `describefeaturetype-pigma-2-0-0-xsd.xml` - WFS 2.0.0 schema
 
@@ -337,6 +347,7 @@ Examples:
 Actual feature data in Geography Markup Language (GML) or GeoJSON encoding.
 
 Examples demonstrating format and version variations:
+
 - `getfeature-props-states-1-0-0.xml` - WFS 1.0.0 GML 2 output
 - `getfeature-props-states-1-1-0.xml` - WFS 1.1.0 GML 3.1 output
 - `getfeature-props-states-2-0-0.xml` - WFS 2.0.0 GML 3.2 output
@@ -349,6 +360,7 @@ Examples demonstrating format and version variations:
 Error responses conforming to OGC Exception Report schema.
 
 Examples:
+
 - `exception-report-1-1-0.xml` - WFS 1.1.0 error format (uses `<ows:Exception>`)
 - `exception-report-2-0-0.xml` - WFS 2.0.0 error format (uses `<ows:ExceptionReport>`)
 - `service-exception-report-1-0-0.xml` - WFS 1.0.0 error format (legacy `<ServiceException>`)
@@ -370,6 +382,7 @@ Web Map Service provides rasterized map image generation from geospatial data so
 Service metadata documents analogous to WFS capabilities.
 
 Examples:
+
 - `capabilities-brgm-1-1-1.xml` - WMS 1.1.1 from BRGM geological service
 - `capabilities-brgm-1-3-0.xml` - WMS 1.3.0 from same source
 - `capabilities-states-1-3-0.xml` - Canonical WMS 1.3.0 example
@@ -380,6 +393,7 @@ Examples:
 Deliberately varied character encodings for internationalization testing.
 
 Examples:
+
 - `capabilities-brgm-1-1-1.xml` - UTF-8 encoding (standard)
 - `capabilities-brgm-1-1-1-utf-16.xml` - UTF-16 encoding
 - `capabilities-brgm-1-1-1-iso-8859-15.xml` - ISO-8859-15 (Latin-9) encoding
@@ -390,6 +404,7 @@ Examples:
 WMS error responses. Format differs significantly from WFS/OWS exception reports.
 
 Example:
+
 - `service-exception-report-1-1-1.xml` - Uses `<ServiceExceptionReport>` element
 
 ### 5.4 Web Map Tile Service (WMTS) Fixtures
@@ -407,6 +422,7 @@ WMTS standardizes access to pre-rendered tile pyramids, analogous to commercial 
 Service metadata describing tile matrix sets and available layers.
 
 Examples:
+
 - `arcgis.xml` - WMTS from ESRI ArcGIS Server implementation
 
 **Structure:** Critical elements include `<TileMatrixSet>` definitions (tile grids, scales, extent), `<Layer>` definitions with supported formats, and resource URL templates.
@@ -426,6 +442,7 @@ STAC provides standardized metadata for Earth observation imagery and derived pr
 STAC endpoint responses for catalog navigation.
 
 Examples:
+
 - `root.json` - STAC catalog root (entry point)
 - `collections.json` - Collection listings
 - `conformance.json` - Conformance declaration
@@ -442,6 +459,7 @@ Examples:
 Pre-standard tiling specification from OSGeo, predating WMTS. Included for legacy service support.
 
 **Fixture Categories:**
+
 - `tms-resource-geopf.xml` - TMS capabilities
 - `tileMap-resource-geopf.xml` - TileMap metadata
 
@@ -471,7 +489,7 @@ function loadFixture(relativePath: string): string {
 test('parses WFS 2.0.0 capabilities', () => {
   const xml = loadFixture('wfs/capabilities-pigma-2-0-0.xml');
   const result = parseWfsCapabilities(xml);
-  
+
   expect(result.version).toBe('2.0.0');
   expect(result.serviceIdentification.title).toBeDefined();
 });
@@ -489,6 +507,7 @@ Fixture filenames encode essential metadata following the pattern identified in 
 ```
 
 Example: `capabilities-pigma-2-0-0.xml`
+
 - **Operation:** `capabilities` (GetCapabilities response)
 - **Source:** `pigma` (Pigma GeoServer)
 - **Version:** `2-0-0` (WFS 2.0.0)
@@ -498,6 +517,7 @@ Example: `capabilities-pigma-2-0-0.xml`
 To understand fixture usage:
 
 1. **Search codebase** for filename references:
+
    ```bash
    grep -r "capabilities-pigma-2-0-0.xml" src/
    ```
@@ -517,14 +537,17 @@ For unfamiliar fixtures:
 When writing tests requiring fixtures, follow this decision tree:
 
 **Does an appropriate fixture exist?**
+
 - YES → Use existing fixture (prefer reuse)
 - NO → Proceed to next question
 
 **Does the test require real-world data?**
+
 - YES → Create fixture from production service capture
 - NO → Proceed to next question
 
 **Does the test validate spec conformance?**
+
 - YES → Create fixture from specification examples
 - NO → Create handcrafted fixture for specific scenario
 
@@ -538,13 +561,15 @@ When writing tests requiring fixtures, follow this decision tree:
 
 **Step 1: Identify Source**  
 Determine fixture origin per Section 4.3 provenance categories:
+
 - Real-world capture from production service
 - Specification example extraction
 - Handcrafted test case
 
-**Step 2: Capture or Create Data**  
+**Step 2: Capture or Create Data**
 
 For real-world captures:
+
 ```bash
 # WFS GetCapabilities
 curl "https://service.example.org/wfs?SERVICE=WFS&REQUEST=GetCapabilities&VERSION=2.0.0" > capabilities-source-2-0-0.xml
@@ -554,36 +579,42 @@ curl "https://api.example.org/" > api-source.json
 ```
 
 For specification examples:
+
 - Copy directly from OGC specification documents
 - Ensure complete, valid structure
 - Note specification section in git commit
 
 For handcrafted fixtures:
+
 - Start with valid fixture
 - Modify to create desired scenario
 - Ensure resulting structure remains parseable (unless testing error handling)
 
 **Step 3: Place in Appropriate Directory**  
 Follow organization pattern from Section 4.1:
+
 ```
 fixtures/{service-type}/{descriptive-filename}
 ```
 
 **Step 4: Apply Naming Convention**  
 Follow pattern from Section 8.1. Ensure filename communicates:
+
 - Operation or response type
-- Source or distinguishing characteristic  
+- Source or distinguishing characteristic
 - Specification version
 - Format extension
 
 **Step 5: Commit with Descriptive Message**  
 Git commit message should document:
+
 - Fixture purpose
 - Source (URL for captures, spec section for examples)
 - Date captured (for real-world data)
 - Reason for addition
 
 Example:
+
 ```
 Add WFS 2.0.0 capabilities fixture from Pigma GeoServer
 
@@ -597,24 +628,28 @@ Covers: International character handling, multi-namespace features
 
 **Completeness**  
 Fixtures must represent complete, valid (or intentionally invalid) responses:
+
 - All required elements/properties present
 - Namespaces correctly declared (XML)
 - Well-formed structure (unless testing error handling)
 
 **Realism**  
 Fixtures should reflect authentic data characteristics:
+
 - Realistic string lengths and patterns
 - Authentic coordinate values
 - Representative metadata completeness
 
 **Minimalism**  
 Avoid unnecessary complexity:
+
 - Remove sensitive information (credentials, internal URLs)
 - Simplify overly large responses if size doesn't affect test
 - Retain essential structural complexity
 
 **Documentation**  
 Fixture purpose must be discoverable:
+
 - Descriptive filename per Section 8.1
 - Git commit message explaining provenance
 - Associated test providing usage context
@@ -623,17 +658,20 @@ Fixture purpose must be discoverable:
 
 **When to Modify:**  
 Modify existing fixtures only when:
+
 - Specification version update requires alignment
 - Bug discovered in fixture (malformed structure)
 - Fixture doesn't adequately test intended scenario
 
 **When to Create New:**  
 Create new fixtures (don't modify existing) when:
+
 - Test requires different data characteristics
 - Multiple tests use fixture for different purposes
 - Modification would break existing tests
 
 **Modification Process:**
+
 1. **Identify all tests using fixture** (`grep` search)
 2. **Run affected tests** before modification
 3. **Modify fixture**
@@ -656,6 +694,7 @@ Fixtures follow a structured naming convention encoding essential metadata:
 
 **Operation/Response Type**  
 Identifies the response category:
+
 - `capabilities` - Service capabilities/metadata
 - `collection` or `collections` - Collection metadata
 - `describefeaturetype` - Feature schema
@@ -665,18 +704,21 @@ Identifies the response category:
 
 **Source Identifier**  
 Distinguishes fixture origin:
+
 - Service name for real-world captures: `pigma`, `geo2france`, `brgm`
 - `sample` or `example` for specification-based fixtures
 - Descriptive term for handcrafted: `invalid`, `minimal`, `edge-case`
 
 **Version**  
 Specification version using hyphenated format:
+
 - WFS versions: `1-0-0`, `1-1-0`, `2-0-0`
 - WMS versions: `1-1-1`, `1-3-0`
 - STAC versions: `1-0-0`
 
 **Extension**  
 File format:
+
 - `.xml` - XML documents
 - `.json` - JSON documents
 - `.xsd` - XML Schema Definition
@@ -684,6 +726,7 @@ File format:
 ### 8.2 Naming Examples
 
 **Valid Names:**
+
 ```
 capabilities-pigma-2-0-0.xml                  # WFS capabilities from Pigma, version 2.0.0
 getfeature-props-states-2-0-0.json            # WFS GetFeature response, GeoJSON format
@@ -693,6 +736,7 @@ invalid.json                                  # Malformed JSON test case
 ```
 
 **Naming Anti-Patterns (Avoid):**
+
 ```
 test1.xml                                     # Non-descriptive
 wfs-data.xml                                  # Missing operation and version
@@ -702,6 +746,7 @@ capabilities_pigma.xml                        # Underscores instead of hyphens
 ### 8.3 Directory Naming
 
 Directory names use singular form of service type:
+
 - `wfs/` not `wfs-services/`
 - `ogc-api/` not `ogc-apis/`
 
@@ -715,18 +760,21 @@ Rationale: Consistency with industry patterns [18][19], clarity, brevity.
 
 **Addition**  
 New fixtures enter the repository through pull requests following guidelines in Section 7. Each addition triggers:
+
 - Automated validation (if validation tools exist)
 - Code review examining fixture quality
 - Test coverage verification
 
 **Evolution**  
 Fixtures evolve through:
+
 - Specification updates requiring alignment
 - Bug fixes addressing structural issues
 - Enhancement for additional test coverage
 
 **Deprecation**  
 Fixtures become deprecated when:
+
 - Specification version reaches end-of-life
 - Fixture superseded by superior alternative
 - Associated functionality removed from codebase
@@ -735,6 +783,7 @@ Deprecated fixtures remain in repository for historical reference but are annota
 
 **Removal**  
 Fixture removal only occurs when:
+
 - No tests reference the fixture (verified via `grep` search)
 - Deprecation period elapsed (minimum 6 months)
 - Consensus achieved among maintainers
@@ -746,12 +795,14 @@ Each fixture addition or modification should be a separate commit with descripti
 
 **Branch Strategy**  
 Fixture changes follow project branching model:
+
 - New fixtures: Feature branches
 - Bug fixes: Hotfix branches
 - Specification updates: Dedicated update branches
 
 **History Preservation**  
 Git history serves as fixture provenance documentation. Preserve history through:
+
 - Meaningful commit messages
 - Atomic commits (one fixture per commit when feasible)
 - Avoid force-pushing branches with fixture changes
@@ -765,6 +816,7 @@ Identify breaking changes, new features, deprecated elements.
 
 **Step 2: Assess Fixture Impact**  
 Determine which fixtures require updates:
+
 ```bash
 # Find fixtures for specific version
 ls fixtures/wfs/*-2-0-0.*
@@ -772,11 +824,13 @@ ls fixtures/wfs/*-2-0-0.*
 
 **Step 3: Create Updated Fixtures**  
 Either:
+
 - Modify existing fixtures (minor changes)
 - Create new fixtures alongside old (major changes)
 
 **Step 4: Update Tests**  
 Ensure tests validate both:
+
 - Backward compatibility (old spec versions)
 - Forward compatibility (new spec features)
 
@@ -789,31 +843,37 @@ Update this guide if fixture organization or naming changes.
 
 ### 10.1 Common Fixture Issues
 
-**Issue: Fixture Not Found**  
+**Issue: Fixture Not Found**
+
 ```
 Error: ENOENT: no such file or directory, open '.../fixtures/wfs/missing.xml'
 ```
 
-**Diagnosis:**  
+**Diagnosis:**
+
 - Verify fixture exists: `ls fixtures/wfs/`
 - Check filename spelling
 - Confirm relative path correctness
 
-**Resolution:**  
+**Resolution:**
+
 - Create missing fixture following Section 7
 - Correct path in test file
 - Verify fixture committed to git
 
-**Issue: Encoding Problems**  
+**Issue: Encoding Problems**
+
 ```
 Error: Invalid character in entity name
 ```
 
-**Diagnosis:**  
+**Diagnosis:**
+
 - Character encoding mismatch between file and declaration
 - Non-UTF-8 characters without proper encoding declaration
 
-**Resolution:**  
+**Resolution:**
+
 ```bash
 # Check file encoding
 file fixtures/wms/capabilities-brgm.xml
@@ -822,16 +882,19 @@ file fixtures/wms/capabilities-brgm.xml
 iconv -f ISO-8859-15 -t UTF-8 input.xml > output.xml
 ```
 
-**Issue: Malformed Structure**  
+**Issue: Malformed Structure**
+
 ```
 Error: Unexpected token } in JSON at position 1234
 ```
 
-**Diagnosis:**  
+**Diagnosis:**
+
 - JSON syntax error
 - XML not well-formed
 
-**Resolution:**  
+**Resolution:**
+
 ```bash
 # Validate JSON
 jsonlint fixtures/ogc-api/sample.json
@@ -842,7 +905,8 @@ xmllint --noout fixtures/wfs/capabilities.xml
 
 ### 10.2 Fixture Validation
 
-**Automated Validation (Recommended):**  
+**Automated Validation (Recommended):**
+
 ```bash
 # JSON schema validation
 ajv validate -s schema.json -d fixtures/ogc-api/sample.json
@@ -852,6 +916,7 @@ xmllint --schema wfs-2.0.0.xsd --noout fixtures/wfs/capabilities-2-0-0.xml
 ```
 
 **Manual Validation Checklist:**
+
 - [ ] Fixture filename follows naming convention (Section 8.1)
 - [ ] File placed in correct directory (Section 4.1)
 - [ ] Structure validates against specification
@@ -862,12 +927,14 @@ xmllint --schema wfs-2.0.0.xsd --noout fixtures/wfs/capabilities-2-0-0.xml
 
 ### 10.3 Quality Metrics
 
-**Coverage Metrics:**  
+**Coverage Metrics:**
+
 - Specification versions covered (e.g., WFS 1.0.0, 1.1.0, 2.0.0 all represented)
 - Error scenarios covered (malformed data, exception reports)
 - Real-world service diversity (multiple implementations tested)
 
-**Maintenance Metrics:**  
+**Maintenance Metrics:**
+
 - Age of fixtures (last specification alignment date)
 - Usage frequency (tests per fixture)
 - Deprecation status (fixtures marked for removal)
@@ -878,9 +945,9 @@ xmllint --schema wfs-2.0.0.xsd --noout fixtures/wfs/capabilities-2-0-0.xml
 
 [1] ISO 1101:2017, Geometrical product specifications (GPS) — Geometrical tolerancing — Tolerances of form, orientation, location and run-out. International Organization for Standardization, 2017.
 
-[2] Meszaros, G., *xUnit Test Patterns: Refactoring Test Code*. Addison-Wesley, 2007.
+[2] Meszaros, G., _xUnit Test Patterns: Refactoring Test Code_. Addison-Wesley, 2007.
 
-[3] Beck, K., *Test-Driven Development: By Example*. Addison-Wesley, 2002.
+[3] Beck, K., _Test-Driven Development: By Example_. Addison-Wesley, 2002.
 
 [4] Jest Documentation, "Setup and Teardown," https://jestjs.io/docs/setup-teardown (accessed Feb. 7, 2026).
 
@@ -888,17 +955,17 @@ xmllint --schema wfs-2.0.0.xsd --noout fixtures/wfs/capabilities-2-0-0.xml
 
 [6] Fowler, M., "Mocks Aren't Stubs," https://martinfowler.com/articles/mocksArentStubs.html, 2007.
 
-[7] Feathers, M., *Working Effectively with Legacy Code*. Prentice Hall, 2004.
+[7] Feathers, M., _Working Effectively with Legacy Code_. Prentice Hall, 2004.
 
-[8] Freeman, S. and Pryce, N., *Growing Object-Oriented Software, Guided by Tests*. Addison-Wesley, 2009.
+[8] Freeman, S. and Pryce, N., _Growing Object-Oriented Software, Guided by Tests_. Addison-Wesley, 2009.
 
-[9] Hunt, A. and Thomas, D., *The Pragmatic Programmer*. Addison-Wesley, 1999.
+[9] Hunt, A. and Thomas, D., _The Pragmatic Programmer_. Addison-Wesley, 1999.
 
-[10] Martin, R. C., *Clean Code: A Handbook of Agile Software Craftsmanship*. Prentice Hall, 2008.
+[10] Martin, R. C., _Clean Code: A Handbook of Agile Software Craftsmanship_. Prentice Hall, 2008.
 
-[11] Humble, J. and Farley, D., *Continuous Delivery: Reliable Software Releases through Build, Test, and Deployment Automation*. Addison-Wesley, 2010.
+[11] Humble, J. and Farley, D., _Continuous Delivery: Reliable Software Releases through Build, Test, and Deployment Automation_. Addison-Wesley, 2010.
 
-[12] Myers, G. J., Sandler, C., and Badgett, T., *The Art of Software Testing*, 3rd ed. Wiley, 2011.
+[12] Myers, G. J., Sandler, C., and Badgett, T., _The Art of Software Testing_, 3rd ed. Wiley, 2011.
 
 [13] jest-junit GitHub Repository, https://github.com/jest-community/jest-junit (accessed Feb. 7, 2026).
 
@@ -930,27 +997,28 @@ xmllint --schema wfs-2.0.0.xsd --noout fixtures/wfs/capabilities-2-0-0.xml
 
 [27] Pigma GeoServer, https://www.pigma.org/geoserver/ (accessed Feb. 7, 2026).
 
-[28] Portele, C., Vretanos, P., and Heazel, C., "The Next Generation of OGC Web Services," *Proceedings of the 20th AGILE Conference on Geographic Information Science*, 2017.
+[28] Portele, C., Vretanos, P., and Heazel, C., "The Next Generation of OGC Web Services," _Proceedings of the 20th AGILE Conference on Geographic Information Science_, 2017.
 
 [29] Open Geospatial Consortium, "OGC API - Common - Part 1: Core," OGC 19-072, 2022. https://docs.ogc.org/is/19-072/19-072.html
 
 [30] GeoServer Documentation, "Web Feature Service," https://docs.geoserver.org/stable/en/user/services/wfs/ (accessed Feb. 7, 2026).
 
-[31] Mitchell, T., *Web Mapping Illustrated*. O'Reilly Media, 2005.
+[31] Mitchell, T., _Web Mapping Illustrated_. O'Reilly Media, 2005.
 
 [32] W3C, "Extensible Markup Language (XML) 1.0 (Fifth Edition)," 2008. https://www.w3.org/TR/xml/
 
-[33] Baumann, P., "OGC Web Services: Architecture and Implementation," *Encyclopedia of GIS*, 2017.
+[33] Baumann, P., "OGC Web Services: Architecture and Implementation," _Encyclopedia of GIS_, 2017.
 
-[34] Holmes, C. et al., "STAC: Standardizing Access to Spatiotemporal Asset Catalogs," *FOSS4G Conference Proceedings*, 2019.
+[34] Holmes, C. et al., "STAC: Standardizing Access to Spatiotemporal Asset Catalogs," _FOSS4G Conference Proceedings_, 2019.
 
-[35] Seemann, M., *Dependency Injection Principles, Practices, and Patterns*. Manning Publications, 2019.
+[35] Seemann, M., _Dependency Injection Principles, Practices, and Patterns_. Manning Publications, 2019.
 
 ---
 
 ## Appendix A: Quick Reference
 
 ### Fixture Directory Summary
+
 ```
 fixtures/
 ├── ogc-api/    # OGC API - Features (JSON)
@@ -962,16 +1030,19 @@ fixtures/
 ```
 
 ### Naming Pattern
+
 ```
 {operation}-{source}-{version}.{ext}
 ```
 
 ### Loading Pattern
+
 ```typescript
 const data = loadFixture('wfs/capabilities-pigma-2-0-0.xml');
 ```
 
 ### Adding New Fixtures
+
 1. Identify source (real-world, spec, handcrafted)
 2. Capture or create data
 3. Place in appropriate directory
@@ -979,6 +1050,7 @@ const data = loadFixture('wfs/capabilities-pigma-2-0-0.xml');
 5. Commit with descriptive message
 
 ### Finding Fixture Usage
+
 ```bash
 grep -r "fixture-name.xml" src/
 ```
@@ -986,10 +1058,12 @@ grep -r "fixture-name.xml" src/
 ---
 
 **Document History:**
+
 - **v1.0** (Initial): February 7, 2026 - Basic guide format
 - **v2.0** (This version): February 7, 2026 - Academic narrative with citations
 
 **Maintenance:** This document should be updated when:
+
 - New service types added
 - Fixture organization changes
 - Industry best practices evolve

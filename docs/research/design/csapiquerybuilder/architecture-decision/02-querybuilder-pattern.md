@@ -11,17 +11,20 @@
 ## Research Objectives
 
 1. **Pattern Definition:**
+
    - What is a "QueryBuilder" in ogc-client terminology?
    - What responsibilities does a QueryBuilder have?
    - What distinguishes QueryBuilder from other patterns (navigator, client, handler)?
 
 2. **Lifecycle Analysis:**
+
    - How is a QueryBuilder instantiated? (factory method)
    - What state does it maintain?
    - How is caching implemented?
    - When is a QueryBuilder instance destroyed?
 
 3. **State Management:**
+
    - What metadata does QueryBuilder encapsulate from collection info?
    - Is state immutable or mutable?
    - How does it validate capabilities?
@@ -57,11 +60,13 @@
 ## Expected Findings
 
 **If pattern requires single class:**
+
 - Clear mandate for CSAPIQueryBuilder as single class
 - No flexibility for separate resource clients
 - Must consolidate all 9 resources into one class
 
 **If pattern allows multiple classes:**
+
 - Could use separate classes per resource
 - QueryBuilder could be a facade/coordinator
 - More flexibility in organization

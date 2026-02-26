@@ -26,13 +26,13 @@ However, the review identified **3 High, 4 Medium, and 3 Low priority issues** t
 
 Part 1 (lines 56-238) correctly references the essential prerequisite sections:
 
-| Referenced Section | Purpose | Correct? |
-|---|---|---|
-| Section 1: EDR Test Blueprint | Upstream patterns | ✅ |
-| Section 12: QueryBuilder Testing Strategy | Core approach | ✅ |
-| Section 34: Test Utility Design | Helper functions | ✅ |
-| Section 35: JSDoc Standards | Documentation | ✅ |
-| Section 36: Quality Checklist | Validation | ✅ |
+| Referenced Section                        | Purpose           | Correct? |
+| ----------------------------------------- | ----------------- | -------- |
+| Section 1: EDR Test Blueprint             | Upstream patterns | ✅       |
+| Section 12: QueryBuilder Testing Strategy | Core approach     | ✅       |
+| Section 34: Test Utility Design           | Helper functions  | ✅       |
+| Section 35: JSDoc Standards               | Documentation     | ✅       |
+| Section 36: Quality Checklist             | Validation        | ✅       |
 
 The test environment setup (1.2), fixture organization (1.3, correctly referencing Section 15), tool installation (1.4), and first test validation (1.5) are all well-structured and actionable.
 
@@ -47,20 +47,24 @@ The `test-utils.ts` example includes `parseAndValidateUrl()`, `loadFixture()`, a
 **Verdict:** ⚠️ PARTIAL PASS — Phase 1 and 4 align; Phase 2 summarized; Phase 3 has task count mismatch
 
 ### Phase 1: Core Structure — ✅ Accurate
+
 - Doc 38: 4 tasks, 12-16 hours — matches ROADMAP exactly
 - Task 1.1 (Type System), 1.2 (Helpers), 1.3 (Stub QueryBuilder), 1.4 (Endpoint Integration) — all correctly detailed with step-by-step workflows and code examples
 
 ### Phase 2: QueryBuilder — ✅ Accurate (abbreviated)
+
 - Doc 38: 9 tasks, 20-28 hours — matches ROADMAP header
 - Task 2.1 (Systems Methods) fully detailed; Tasks 2.2-2.9 abbreviated to single-line descriptions
 - This is appropriate for a playbook — Phase 2 follows a repetitive pattern, so detailing one task and referencing the pattern is sufficient
 
 ### Phase 3: Format Handling — 🔴 Task Count Mismatch
+
 - **Doc 38 says:** "15 subtasks" (Subtasks 3.1-3.15 grouped as SWE 3.1-3.5, SensorML 3.6-3.10, Extensions 3.11-3.15)
 - **ROADMAP v3.0 says:** **17 tasks** (GeoJSON Handler, Format Detector, Validator, SWE Common Types, SensorML Types, 3 SensorML parsers, SensorML Main Parser, SensorML Index, SWE Common Components, DataRecord, DataArray, SWE Common Main Parser, SWE Common Index, Format Constants, Format Index)
 - **Impact:** 2 tasks missing from Doc 38's count. The simplified grouping also obscures the critical ROADMAP v3.0 dependency fix: SWE Common types (Task 4) must be created **before** SensorML types (Task 5). Doc 38's grouping puts SWE Common first (3.1-3.5) which is correct ordering, but the full 17-task granularity from ROADMAP v3.0 is lost.
 
 ### Phase 4: Worker & Tests — ✅ Accurate
+
 - Doc 38: 4 tasks, 12-16 hours — matches ROADMAP
 - Worker extensions, integration tests, documentation, final validation — all correctly aligned
 
@@ -71,25 +75,33 @@ The `test-utils.ts` example includes `parseAndValidateUrl()`, `loadFixture()`, a
 **Verdict:** ⚠️ PARTIAL PASS — Patterns correct but includes out-of-scope performance content
 
 ### 3.1 QueryBuilder Testing Pattern — ✅ Correct
+
 Correctly synthesizes Section 12 recommendations:
+
 - `parseAndValidateUrl()` in every test ✅
 - Collection URL, query parameters, bbox encoding, datetime encoding, resource availability validation ✅
 - `@specification` tags ✅
 
 ### 3.2 Parser Testing Pattern — ✅ Correct
+
 Correctly synthesizes Sections 8-11, 21-22:
+
 - Fixture-based with `loadFixture()` ✅
 - Structure validation, type inference, nested parsing, error handling ✅
 - `@fixture` tags ✅
 
 ### 3.3 Integration Testing Pattern — ✅ Correct
+
 Correctly synthesizes Sections 7, 14:
+
 - End-to-end workflows (3+ operations) ✅
 - `@coverage` tags ✅
 - Multi-step validation pattern ✅
 
 ### 3.4 Test Utilities Pattern — 🔴 Contains Performance Testing
+
 The pattern includes a performance validation test:
+
 ```typescript
 it('performs efficiently for large input', () => {
   const largeInput = generateLargeInput(10000);
@@ -100,9 +112,11 @@ it('performs efficiently for large input', () => {
   expect(duration).toBeLessThan(100); // < 100ms
 });
 ```
+
 This is a performance test. Per Doc 33's banner ("⚠️ PERFORMANCE TESTING IS NOT IN SCOPE ⚠️") and the user's explicit confirmation in Phase 2F, **all performance testing is OUT OF SCOPE**. This example must be removed or clearly marked as out of scope.
 
 ### 3.5 Worker Testing Pattern — ✅ Correct
+
 Matches upstream worker conventions. Correctly deferred to Phase 4 per Phase 2F review (H1).
 
 ---
@@ -111,13 +125,14 @@ Matches upstream worker conventions. Correctly deferred to Phase 4 per Phase 2F 
 
 **Verdict:** ✅ PASS — Examples correctly demonstrate source patterns
 
-| Example | Source Sections | Alignment |
-|---|---|---|
-| Example 1: First QueryBuilder Test | Section 12 | ✅ Uses `parseAndValidateUrl()`, mock data, `@specification` tags |
-| Example 2: First Parser Test | Sections 8-11 | ✅ Uses `loadFixture()`, fixture-driven, `@fixture` tags |
-| Example 3: First Integration Test | Sections 7, 14 | ✅ Multi-step workflow, fixture-based endpoint creation |
+| Example                            | Source Sections | Alignment                                                         |
+| ---------------------------------- | --------------- | ----------------------------------------------------------------- |
+| Example 1: First QueryBuilder Test | Section 12      | ✅ Uses `parseAndValidateUrl()`, mock data, `@specification` tags |
+| Example 2: First Parser Test       | Sections 8-11   | ✅ Uses `loadFixture()`, fixture-driven, `@fixture` tags          |
+| Example 3: First Integration Test  | Sections 7, 14  | ✅ Multi-step workflow, fixture-based endpoint creation           |
 
 All three examples:
+
 - Use controlled fixtures (no live server) ✅
 - Test client behavior (URL construction, parsing output) ✅
 - Follow upstream conventions ✅
@@ -132,6 +147,7 @@ All three examples:
 **Verdict:** ⚠️ PARTIAL PASS — Philosophy correct, item count condensed without notation
 
 Part 5 presents a **27-item** pre-commit checklist across 6 categories:
+
 - Meaningful Tests: 5 items
 - Useful Tests: 4 items
 - Deep Coverage: 6 items
@@ -142,6 +158,7 @@ Part 5 presents a **27-item** pre-commit checklist across 6 categories:
 Section 36 defines a **41-item** checklist across the same 6 categories (subsequently simplified to a single-stage self-review per Phase 2C review notice). The 27-item version in Doc 38 is a reasonable condensation for a playbook, but the reduction from 41 to 27 items is not noted or justified. Some of the dropped items may contain valuable quality checks.
 
 Part 5's quality examples (5.2 Common Quality Issues) are excellent — they show clear ❌ BAD / ✅ GOOD comparisons for:
+
 - Trivial tests → meaningful tests
 - Testing mocks → testing behavior
 - Missing edge cases → comprehensive coverage
@@ -161,11 +178,11 @@ Part 5.3 Bug Detection Validation correctly describes the "break-then-fix" valid
 
 Doc 38 includes performance testing content in three locations despite the project-wide OUT OF SCOPE decision:
 
-| Location | Content | Lines |
-|---|---|---|
+| Location | Content                                                                   | Lines      |
+| -------- | ------------------------------------------------------------------------- | ---------- |
 | Part 3.4 | Performance validation test with `performance.now()` and timing assertion | ~2260-2267 |
-| Part 6.4 | "Performance Commands" section: `--logHeapUsage`, slow test detection | 2882-2893 |
-| Part 8.3 | "Performance Issues" section: slow tests, memory leaks | 3164-3196 |
+| Part 6.4 | "Performance Commands" section: `--logHeapUsage`, slow test detection     | 2882-2893  |
+| Part 8.3 | "Performance Issues" section: slow tests, memory leaks                    | 3164-3196  |
 
 **Source decision:** Doc 33 banner: "⚠️ PERFORMANCE TESTING IS NOT IN SCOPE ⚠️" — "Upstream `ogc-client` has ZERO performance tests. Performance testing adds significant complexity (46-64 hours estimated effort)."  
 **User confirmation:** Phase 2F explicitly upgraded H2 from "move to optional suite" to "OUT OF SCOPE."
@@ -184,11 +201,11 @@ Doc 38 states "15 subtasks" for Phase 3 but ROADMAP v3.0 specifies **17 tasks**.
 
 **H3: Coverage Targets Inflated Beyond ROADMAP**
 
-| Metric | Doc 38 (Part 7.3) | ROADMAP v3.0 | Section 36 |
-|---|---|---|---|
-| Statement | >90% | >80% | 85-95% (range) |
-| Branch | >85% | >80% | 80-95% (range) |
-| Function | >88% | Not specified | Not specified |
+| Metric    | Doc 38 (Part 7.3) | ROADMAP v3.0  | Section 36     |
+| --------- | ----------------- | ------------- | -------------- |
+| Statement | >90%              | >80%          | 85-95% (range) |
+| Branch    | >85%              | >80%          | 80-95% (range) |
+| Function  | >88%              | Not specified | Not specified  |
 
 Doc 38 presents specific targets (90/85/88%) that exceed ROADMAP's ">80%" guidance. While aspirational targets are fine, presenting them as firm requirements could create confusion about what constitutes "done."
 
@@ -201,6 +218,7 @@ Doc 38 presents specific targets (90/85/88%) that exceed ROADMAP's ">80%" guidan
 **M1: Phase 1 Checklist Shows Completed Checkmarks for Un-Implemented Work**
 
 Part 7.2 (lines 2957-2994) displays Phase 1 tasks with `[x]` completed checkmarks:
+
 ```markdown
 - [ ] Task 1.1: Type System ✅
   - [x] model.ts created (~350-400 lines)
@@ -234,6 +252,7 @@ Section 18 (Error Condition Testing Strategy) defines systematic error testing a
 **M4: Pre-Dates Phase 2A-2F Review Corrections**
 
 Doc 38 was written on February 6, 2026. The Phase 2A-2F reviews (February 12-13, 2026) identified and corrected numerous issues across source documents:
+
 - Doc 15 fixture naming (Phase 2A)
 - Doc 06/19 trivial test patterns (Phase 2B)
 - Doc 36 enterprise review process (Phase 2C)
@@ -279,25 +298,25 @@ This is acceptable playbook design (the pattern is established by Task 2.1), but
 
 **5 notable omissions identified:**
 
-| # | Missing Finding | Source | Impact |
-|---|---|---|---|
-| 1 | Error condition testing taxonomy (network errors, validation errors, HTTP status codes, timeout handling) | Section 18 | Medium — error testing patterns scattered rather than systematic |
-| 2 | Regression testing strategy (running existing tests before/after CSAPI additions) | Section 20 | Low — implicit in "run all tests" commands but not explicit strategy |
-| 3 | Phase 2E/2F correction notes (out-of-scope decisions, scope gates) | Phase 2A-2F reviews | Medium — playbook may guide implementers toward corrected-out patterns |
-| 4 | Fixture validation methodology (schema validation, spec conformance) | Section 15 deep content | Low — fixture naming covered but validation methodology less so |
-| 5 | Coverage target ranges vs minimums distinction | Section 17, Section 36 | Medium — covered but inflated (see H3) |
+| #   | Missing Finding                                                                                           | Source                  | Impact                                                                 |
+| --- | --------------------------------------------------------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------- |
+| 1   | Error condition testing taxonomy (network errors, validation errors, HTTP status codes, timeout handling) | Section 18              | Medium — error testing patterns scattered rather than systematic       |
+| 2   | Regression testing strategy (running existing tests before/after CSAPI additions)                         | Section 20              | Low — implicit in "run all tests" commands but not explicit strategy   |
+| 3   | Phase 2E/2F correction notes (out-of-scope decisions, scope gates)                                        | Phase 2A-2F reviews     | Medium — playbook may guide implementers toward corrected-out patterns |
+| 4   | Fixture validation methodology (schema validation, spec conformance)                                      | Section 15 deep content | Low — fixture naming covered but validation methodology less so        |
+| 5   | Coverage target ranges vs minimums distinction                                                            | Section 17, Section 36  | Medium — covered but inflated (see H3)                                 |
 
 ---
 
 ## Anti-Pattern Cross-Reference
 
-| Anti-Pattern | Status | Evidence |
-|---|---|---|
-| **AP1:** Testing Response Content | ✅ NOT PRESENT | All examples test client outputs (URLs, parsed objects), not fixture content |
-| **AP2:** Hybrid Fixture/Live | ✅ NOT PRESENT | All examples use `loadFixture()` and controlled mocks; no `maybeFetchOrLoad()` or `CSAPI_LIVE` toggle |
-| **AP3:** OGC Requirement Traceability as Test Driver | ✅ NOT PRESENT | `@specification` used as documentation tags, not as test naming/structure drivers. Tests named by behavior |
-| **AP4:** Asserting Data Shape not Transformation | ✅ NOT PRESENT | Examples use `parseAndValidateUrl()` for URL tests and `parseDataRecord()` for parser tests — testing transformation output |
-| **AP5:** Graceful Skipping | ✅ NOT PRESENT | No conditional skipping based on fixture content. All fixtures are purpose-built for specific test scenarios |
+| Anti-Pattern                                         | Status         | Evidence                                                                                                                    |
+| ---------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **AP1:** Testing Response Content                    | ✅ NOT PRESENT | All examples test client outputs (URLs, parsed objects), not fixture content                                                |
+| **AP2:** Hybrid Fixture/Live                         | ✅ NOT PRESENT | All examples use `loadFixture()` and controlled mocks; no `maybeFetchOrLoad()` or `CSAPI_LIVE` toggle                       |
+| **AP3:** OGC Requirement Traceability as Test Driver | ✅ NOT PRESENT | `@specification` used as documentation tags, not as test naming/structure drivers. Tests named by behavior                  |
+| **AP4:** Asserting Data Shape not Transformation     | ✅ NOT PRESENT | Examples use `parseAndValidateUrl()` for URL tests and `parseDataRecord()` for parser tests — testing transformation output |
+| **AP5:** Graceful Skipping                           | ✅ NOT PRESENT | No conditional skipping based on fixture content. All fixtures are purpose-built for specific test scenarios                |
 
 **Doc 38 is fully clean of all 5 anti-patterns.** This is a strong indicator that the synthesis correctly internalized the Phase 0 lessons.
 
@@ -309,13 +328,13 @@ This is acceptable playbook design (the pattern is established by Task 2.1), but
 
 Every code example in Doc 38 tests client behavior:
 
-| Test Type | What's Tested | Client-Oriented? |
-|---|---|---|
-| URL construction | `builder.getSystems()` → validates URL structure with `parseAndValidateUrl()` | ✅ Tests builder logic |
-| Type validation | TypeScript interface conformance via typed assignments | ✅ Tests type system |
-| Parsing | `parseDataRecord(fixture)` → validates parsed output | ✅ Tests parser transformation |
-| Integration | Endpoint → builder → URL → parse chain | ✅ Tests client workflow |
-| Error handling | `expect(() => builder.bad()).toThrow()` | ✅ Tests client validation |
+| Test Type        | What's Tested                                                                 | Client-Oriented?               |
+| ---------------- | ----------------------------------------------------------------------------- | ------------------------------ |
+| URL construction | `builder.getSystems()` → validates URL structure with `parseAndValidateUrl()` | ✅ Tests builder logic         |
+| Type validation  | TypeScript interface conformance via typed assignments                        | ✅ Tests type system           |
+| Parsing          | `parseDataRecord(fixture)` → validates parsed output                          | ✅ Tests parser transformation |
+| Integration      | Endpoint → builder → URL → parse chain                                        | ✅ Tests client workflow       |
+| Error handling   | `expect(() => builder.bad()).toThrow()`                                       | ✅ Tests client validation     |
 
 **No server-oriented test patterns detected.** The playbook consistently follows the upstream pattern of: fixture input → client processing → output assertion.
 
@@ -323,18 +342,18 @@ Every code example in Doc 38 tests client behavior:
 
 ## Issue Tracker
 
-| ID | Severity | Check | Description | Status |
-|---|---|---|---|---|
-| H1 | 🔴 High | 6 | Performance testing content in Parts 3.4, 6.4, 8.3 contradicts OUT OF SCOPE decision | ✅ Resolved — OUT OF SCOPE banners applied |
-| H2 | 🔴 High | 2 | Phase 3 task count: Doc 38 says 15, ROADMAP v3.0 says 17 | ✅ Resolved — corrected to "17 tasks per ROADMAP v3.0" with reference note |
-| H3 | 🔴 High | 6 | Coverage targets inflated (90/85/88%) vs ROADMAP (>80%) | ✅ Resolved — aligned all targets to >80% minimum with stretch goals labeled |
-| M1 | 🟡 Medium | 6 | Part 7.2 Phase 1 checklist shows completed checkmarks for un-implemented work | ✅ Resolved — added clarifying note: entries are "examples of completed format" |
-| M2 | 🟡 Medium | 5 | Quality checklist condensed 41→27 items without notation | ✅ Resolved — added cross-reference to Section 36's full 41-item checklist |
-| M3 | 🟡 Medium | 7 | Error condition testing (Section 18) not given dedicated coverage | ✅ Resolved — added Section 18 cross-reference in Part 5.1 |
-| M4 | 🟡 Medium | 6 | Doc 38 pre-dates Phase 2A-2F reviews; corrections not reflected | ✅ Resolved — header review notice added with key conflicts listed |
-| L1 | 🟢 Low | 7 | Regression testing strategy (Section 20) not addressed | ✅ Resolved — added Section 10.2 Regression Testing with Section 20 cross-ref |
-| L2 | 🟢 Low | 2 | Phase 3 SWE→SensorML dependency ordering implicit, not explicit | ✅ Resolved — explicit dependency note added to Phase 3 header |
-| L3 | 🟢 Low | 2 | Phase 2 Tasks 2.2-2.9 abbreviated; no ROADMAP cross-reference | ✅ Resolved — added ROADMAP v3.0 cross-reference note |
+| ID  | Severity  | Check | Description                                                                          | Status                                                                          |
+| --- | --------- | ----- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| H1  | 🔴 High   | 6     | Performance testing content in Parts 3.4, 6.4, 8.3 contradicts OUT OF SCOPE decision | ✅ Resolved — OUT OF SCOPE banners applied                                      |
+| H2  | 🔴 High   | 2     | Phase 3 task count: Doc 38 says 15, ROADMAP v3.0 says 17                             | ✅ Resolved — corrected to "17 tasks per ROADMAP v3.0" with reference note      |
+| H3  | 🔴 High   | 6     | Coverage targets inflated (90/85/88%) vs ROADMAP (>80%)                              | ✅ Resolved — aligned all targets to >80% minimum with stretch goals labeled    |
+| M1  | 🟡 Medium | 6     | Part 7.2 Phase 1 checklist shows completed checkmarks for un-implemented work        | ✅ Resolved — added clarifying note: entries are "examples of completed format" |
+| M2  | 🟡 Medium | 5     | Quality checklist condensed 41→27 items without notation                             | ✅ Resolved — added cross-reference to Section 36's full 41-item checklist      |
+| M3  | 🟡 Medium | 7     | Error condition testing (Section 18) not given dedicated coverage                    | ✅ Resolved — added Section 18 cross-reference in Part 5.1                      |
+| M4  | 🟡 Medium | 6     | Doc 38 pre-dates Phase 2A-2F reviews; corrections not reflected                      | ✅ Resolved — header review notice added with key conflicts listed              |
+| L1  | 🟢 Low    | 7     | Regression testing strategy (Section 20) not addressed                               | ✅ Resolved — added Section 10.2 Regression Testing with Section 20 cross-ref   |
+| L2  | 🟢 Low    | 2     | Phase 3 SWE→SensorML dependency ordering implicit, not explicit                      | ✅ Resolved — explicit dependency note added to Phase 3 header                  |
+| L3  | 🟢 Low    | 2     | Phase 2 Tasks 2.2-2.9 abbreviated; no ROADMAP cross-reference                        | ✅ Resolved — added ROADMAP v3.0 cross-reference note                           |
 
 **Total:** 3 High, 4 Medium, 3 Low — **10/10 resolved**
 
@@ -343,12 +362,14 @@ Every code example in Doc 38 tests client behavior:
 ## Recommendations
 
 ### Immediate Actions (Before Implementation)
+
 1. **H1:** Add OUT OF SCOPE banners to Parts 3.4 (performance test example), 6.4, and 8.3. Match Doc 33/Doc 16 Section 7 banner format.
 2. **H2:** Correct Phase 3 reference to "17 tasks per ROADMAP v3.0" or add clarifying note about the simplified grouping.
 3. **H3:** Align coverage targets with ROADMAP's ">80%" minimum. Can retain higher targets as "stretch goals" with explicit labeling.
 4. **M4:** Add header note: "This playbook was written February 6, 2026. Phase 2A-2F review corrections (February 12-13, 2026) take precedence where they conflict with this document."
 
 ### Before Phase 1 Implementation
+
 5. **M1:** Clarify Phase 1 checklist entries as examples (not actual progress).
 6. **M2:** Add cross-reference to Section 36's full 41-item checklist.
 7. **M3:** Add error condition testing subsection referencing Section 18.

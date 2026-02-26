@@ -66,6 +66,7 @@ Define testing strategy for spatial query parameters (bbox, geometry intersectio
 **Objective:** Extract spatial parameter requirements from CSAPI
 
 **Tasks:**
+
 1. Identify all spatial parameters (bbox, geometry, etc.)
 2. Document bbox parameter format specification
 3. Map spatial parameters to resource types
@@ -78,6 +79,7 @@ Define testing strategy for spatial query parameters (bbox, geometry intersectio
 **Objective:** Understand coordinate reference system requirements
 
 **Tasks:**
+
 1. Identify supported CRS (WGS 84, CRS84, etc.)
 2. Document default CRS (typically WGS 84)
 3. Identify CRS transformation requirements
@@ -89,6 +91,7 @@ Define testing strategy for spatial query parameters (bbox, geometry intersectio
 **Objective:** Identify spatial edge cases requiring testing
 
 **Tasks:**
+
 1. Document antimeridian crossing scenarios
 2. Document polar region scenarios
 3. Document bbox validation edge cases
@@ -101,6 +104,7 @@ Define testing strategy for spatial query parameters (bbox, geometry intersectio
 **Objective:** Analyze spatial query testing in upstream
 
 **Tasks:**
+
 1. Identify spatial query tests in upstream
 2. Extract bbox test patterns
 3. Extract CRS handling patterns
@@ -112,6 +116,7 @@ Define testing strategy for spatial query parameters (bbox, geometry intersectio
 **Objective:** Design test scenarios for spatial queries
 
 **Tasks:**
+
 1. Design bbox query test scenarios
 2. Design geometry intersection test scenarios
 3. Design CRS handling test scenarios
@@ -125,6 +130,7 @@ Define testing strategy for spatial query parameters (bbox, geometry intersectio
 **Objective:** Design fixtures for spatial query testing
 
 **Tasks:**
+
 1. Design bbox query string fixtures
 2. Design spatial response fixtures
 3. Design antimeridian crossing fixtures
@@ -137,6 +143,7 @@ Define testing strategy for spatial query parameters (bbox, geometry intersectio
 **Objective:** Create comprehensive spatial query testing strategy
 
 **Tasks:**
+
 1. Consolidate spatial scenarios
 2. Create spatial query test templates
 3. Document fixture requirements
@@ -165,6 +172,7 @@ This research is complete when:
 **Spatial query testing strategy with geometry scenario coverage**
 
 Content includes:
+
 - Complete spatial parameter inventory
 - Bbox parameter format specification and test patterns
 - Geometry intersection test patterns
@@ -181,6 +189,7 @@ Content includes:
 - Implementation estimates
 
 **Example Spatial Queries:**
+
 - **Simple bbox**: `bbox=-180,-90,180,90` (whole world)
 - **Regional bbox**: `bbox=-122.5,37.7,-122.3,37.9` (San Francisco area)
 - **Antimeridian**: `bbox=170,-10,-170,10` (crosses date line)
@@ -193,12 +202,14 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 24: Query Parameter Combination Testing (parameter interaction patterns)
 - Section 11: GeoJSON Testing Requirements (spatial structures)
 - Section 8: CSAPI Specification Review (spatial parameter definitions)
 - Section 23: Pagination Testing Strategy (spatial + pagination)
 
 **Blocks:**
+
 - Spatial query implementation
 - Bbox parsing implementation
 - CRS handling logic
@@ -227,19 +238,23 @@ Content includes:
 ### Key Findings
 
 **Spatial Parameters (2 total):**
+
 - **bbox** - Bounding box spatial filter (PRIMARY)
 - **geom** - Geometry intersection filter (NOT initially supported)
 
 **Bbox Format:**
+
 - 2D: `minLon,minLat,maxLon,maxLat` (4 comma-separated values)
 - 3D: `minLon,minLat,minElev,maxLon,maxLat,maxElev` (6 values)
 
 **Coordinate Reference System:**
+
 - **Only CRS:** WGS 84 (CRS84) - longitude, latitude order
 - **No CRS transformation** required (RFC 7946 constraint)
 - **Coordinate ranges:** Longitude [-180, 180], Latitude [-90, 90]
 
 **Critical Discoveries:**
+
 1. **Antimeridian crossing NOT supported** - minLon > maxLon returns 400 Bad Request
 2. **CRS simplification** - WGS 84 only, no CRS negotiation (RFC 7946)
 3. **Point bbox valid** - min = max for both lon and lat represents single point
@@ -247,6 +262,7 @@ Content includes:
 5. **Polar regions** - Valid bbox queries for Arctic/Antarctic regions
 
 **Testing Coverage:**
+
 - Basic bbox tests: 10 tests (~150-200 lines)
 - 3D bbox tests: 6 tests (~90-120 lines)
 - Validation errors: 8 tests (~120-160 lines)
@@ -257,16 +273,19 @@ Content includes:
 - **Total:** 43 tests, 650-850 lines
 
 **Fixture Requirements:** 40 fixtures
+
 - Bbox query strings: 15 fixtures
 - Spatial responses: 15 fixtures
 - Error responses: 10 fixtures
 
 **Upstream Patterns:**
+
 - Found 25 bbox tests in WMS/WMTS/WFS specs
 - Found bbox-utils.ts with clampBoundingBox function
 - Found FILTER_SPATIAL worker extension
 
 **Client Workarounds:**
+
 - Antimeridian crossing requires two separate queries (split at ±180°)
 - Client merges results from east and west queries
 
@@ -281,11 +300,13 @@ Content includes:
 - Antimeridian and polar regions require special handling
 
 **Coordinate Reference Systems:**
+
 - **WGS 84** (EPSG:4326): Latitude, longitude order (common in GIS)
 - **CRS84**: Longitude, latitude order (GeoJSON default, RFC 7946)
 - Coordinate order matters for bbox interpretation
 
 **Spatial Edge Cases:**
+
 - **Antimeridian crossing**: bbox where minLon > maxLon (e.g., 170 to -170)
 - **Polar regions**: Latitude near ±90°
 - **Coordinate wrapping**: Longitude > 180° or < -180°
@@ -293,6 +314,7 @@ Content includes:
 - **Point on boundary**: Is point exactly on bbox boundary included?
 
 **Spatial Parameter Precedence:**
+
 - If multiple spatial parameters specified, what takes precedence?
 - Can bbox and geometry be combined?
 

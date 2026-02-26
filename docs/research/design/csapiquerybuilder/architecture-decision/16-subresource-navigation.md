@@ -11,6 +11,7 @@
 ## Research Objectives
 
 1. **Navigation Pattern Analysis:**
+
    - Document nested endpoint patterns
    - Identify cross-resource relationships
    - Note navigation depth
@@ -25,6 +26,7 @@
 ## Key Questions to Answer
 
 - [x] How many nested navigation patterns exist?
+
   - **16 distinct parent→child navigation patterns**
   - 2 Hierarchical (unlimited depth): Systems→Subsystems, Deployments→Subdeployments
   - 12 Compositional (depth 1): System→SamplingFeatures, System→DataStreams, DataStream→Observations, etc.
@@ -32,6 +34,7 @@
   - Maximum navigation depth: 6+ levels (System→Subsystem→...→DataStream→Observation)
 
 - [x] Do nested patterns span resource types?
+
   - **YES - 100% of navigation patterns cross resource type boundaries**
   - Systems navigate to 5 different resource types (Subsystems, Deployments, SamplingFeatures, DataStreams, ControlStreams)
   - Multi-hop navigation (3-6 resource types) is common
@@ -39,6 +42,7 @@
   - Examples: System→DataStream→Observations (3 types), System→ControlStream→Commands→Status (4 types)
 
 - [x] Would separate classes complicate navigation?
+
   - **YES - Dramatically**
   - Multi-class requires 9 circular class dependencies (all-to-all references)
   - Method chaining breaks at every class boundary
@@ -48,6 +52,7 @@
   - Developer experience: Awkward builder switching vs natural fluent API
 
 - [x] Can single class handle all navigation cleanly?
+
   - **YES - Naturally and elegantly**
   - Seamless method chaining across all 16 navigation patterns
   - Full type safety preserved through entire chain
@@ -84,6 +89,7 @@ Nested navigation likely works in either pattern. May inform method naming more 
 Record key findings here for final synthesis document:
 
 ### Navigation Patterns Analysis
+
 - **Total patterns: 16 parent→child relationships** across Part 1 and Part 2
 - **Pattern breakdown:**
   - Hierarchical: 2 patterns (12.5%) - Unlimited depth recursion (Systems, Deployments)
@@ -93,6 +99,7 @@ Record key findings here for final synthesis document:
 - **Common depth: 2-3 levels** (most real-world usage)
 
 ### Cross-Resource Navigation
+
 - **CRITICAL FINDING: 100% of navigation patterns cross resource type boundaries**
 - Systems navigate to 5 different resource types
 - Multi-hop navigation paths span 3-6 resource types
@@ -103,6 +110,7 @@ Record key findings here for final synthesis document:
   - System → Subsystem → ... → DataStream → Observation (6+ resource types)
 
 ### Organization Impact
+
 - **STRONGLY opposes class separation**
 - **Single-class advantages:**
   - Seamless method chaining across all 16 patterns (0 breaks)
@@ -120,15 +128,17 @@ Record key findings here for final synthesis document:
   - Awkward builder switching interrupts navigation flow
 
 ### Code Complexity Comparison
-| Metric | Single-Class | Multi-Class | Difference |
-|--------|--------------|-------------|------------|
-| Navigation code | 500-600 lines | 790-1,070 lines | +60% |
-| Files | 3 files | 11 files | +733% |
-| Circular deps | 0 | 9 classes | +∞ |
-| Method chain breaks | 0 | Every boundary | +∞ |
-| Type safety | Full | Partial | -50% |
+
+| Metric              | Single-Class  | Multi-Class     | Difference |
+| ------------------- | ------------- | --------------- | ---------- |
+| Navigation code     | 500-600 lines | 790-1,070 lines | +60%       |
+| Files               | 3 files       | 11 files        | +733%      |
+| Circular deps       | 0             | 9 classes       | +∞         |
+| Method chain breaks | 0             | Every boundary  | +∞         |
+| Type safety         | Full          | Partial         | -50%       |
 
 ### Developer Experience
+
 - **Single-class: Natural, readable, type-safe**
   - One fluent chain: `client.systems('id').datastreams('id').getObservations()`
   - IDE autocomplete works perfectly at every step
@@ -140,6 +150,7 @@ Record key findings here for final synthesis document:
   - Manual builder selection required
 
 ### Architecture Decision Impact
+
 - **VERY HIGH IMPACT** - Navigation patterns fundamentally favor unified class structure
 - **Confidence: ⭐⭐⭐⭐⭐ (5/5)**
 - **Recommendation: Single-class organization**
@@ -152,4 +163,5 @@ Record key findings here for final synthesis document:
   6. Developer experience vastly superior with single-class
 
 ### Key Insight
+
 Subresource navigation provides **the strongest evidence yet AGAINST class separation**. Navigation patterns are inherently cross-resource, requiring seamless traversal across multiple resource types. Class boundaries become barriers to natural navigation, forcing complex cross-class coupling, breaking method chains, and degrading developer experience. Single-class organization enables natural, type-safe, fluent navigation APIs that match user expectations and industry standards (AWS SDK, Google Cloud SDK, Stripe).

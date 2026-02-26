@@ -11,6 +11,7 @@
 ## Research Objectives
 
 1. **Part 2 Structure:**
+
    - How are Part 2 endpoints organized?
    - Relationship to Part 1 endpoints
    - Distinct characteristics of dynamic data resources

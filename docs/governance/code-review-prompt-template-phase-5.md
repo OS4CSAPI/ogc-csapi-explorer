@@ -13,16 +13,16 @@
 
 Phase 5 code differs from Phase 3 code in key ways, even though both produce parsers:
 
-| Dimension | Phase 3 (Format Handlers) | Phase 5 (Parser Completion) |
-|-----------|--------------------------|----------------------------|
-| Primary output | Typed objects from raw JSON/XML (SWE Common, SensorML, GeoJSON) | Typed objects from Part 2 JSON (Observation, Command, etc.) |
-| Correctness check | "Does the parser produce the right typed output?" | Same + "Are instant vs interval time fields handled correctly?" |
-| Test strategy | Fixture-based input → typed output assertions | Same, but with cross-reference exclusion and opaque pass-through assertions |
-| Pattern reference | First parser completed becomes the reference | `parseDatastream()` is the explicit gold standard; `parseProperty()` for non-Part-2 |
-| Validation concern | Input validation before parsing | Same + tolerant extraction (Postel's Law) — never gate on missing fields |
-| Heatmap dimensions | Parser behavior coverage (generic) | Resource-specific: time handling, cross-ref exclusion, result pass-through, enum validation |
-| Spec references | SWE Common 3.0, SensorML 3.0, GeoJSON encoding rules | OGC API Connected Systems Part 2 (23-002) |
-| Smoke test findings | F4, F33–F39 | F27, F30, F31, F33, F38 (Part 2 data shape findings) |
+| Dimension           | Phase 3 (Format Handlers)                                       | Phase 5 (Parser Completion)                                                                 |
+| ------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Primary output      | Typed objects from raw JSON/XML (SWE Common, SensorML, GeoJSON) | Typed objects from Part 2 JSON (Observation, Command, etc.)                                 |
+| Correctness check   | "Does the parser produce the right typed output?"               | Same + "Are instant vs interval time fields handled correctly?"                             |
+| Test strategy       | Fixture-based input → typed output assertions                   | Same, but with cross-reference exclusion and opaque pass-through assertions                 |
+| Pattern reference   | First parser completed becomes the reference                    | `parseDatastream()` is the explicit gold standard; `parseProperty()` for non-Part-2         |
+| Validation concern  | Input validation before parsing                                 | Same + tolerant extraction (Postel's Law) — never gate on missing fields                    |
+| Heatmap dimensions  | Parser behavior coverage (generic)                              | Resource-specific: time handling, cross-ref exclusion, result pass-through, enum validation |
+| Spec references     | SWE Common 3.0, SensorML 3.0, GeoJSON encoding rules            | OGC API Connected Systems Part 2 (23-002)                                                   |
+| Smoke test findings | F4, F33–F39                                                     | F27, F30, F31, F33, F38 (Part 2 data shape findings)                                        |
 
 The Phase 3 test checklist Category C (Parser modules) is partially applicable but misses Phase 5-specific concerns like instant-vs-interval time distinction, opaque `result` pass-through, and cross-reference field exclusion.
 
@@ -51,7 +51,7 @@ Copy the prompt below and paste it into the conversation after completing coding
 
 ## Prompt
 
-```
+````
 Please perform a code review of the work completed since the last review.
 
 ### Scope
@@ -314,9 +314,10 @@ Use this exact structure (matching prior reviews):
 
 ## Overall Assessment
 {{2-3 paragraph assessment of code quality, patterns, and trajectory}}
-```
+````
 
 Then commit the report, push, and confirm the file is at the expected path.
+
 ```
 
 ---
@@ -352,7 +353,9 @@ Every Phase 5 code review report MUST include:
 Reports follow the same naming pattern as prior phases:
 
 ```
+
 docs/implementation/phase-{major}.{minor}-code-review.md
+
 ```
 
 Where:
@@ -404,3 +407,4 @@ For reviewers familiar with the Phase 3 template, these are the substantive chan
 | Spec references | SWE Common 3.0, SensorML 3.0, GeoJSON encoding | OGC 23-002 Part 2 (primary), OGC 23-001 Part 1 (Property only) |
 | Recommendation tiers | "Fix Before Phase 4" | "Fix Before Phase 6" |
 | Pre-existing test issues | Not documented | 4 `@types/node` tsc errors, 72 WMTS/WFS timeout failures |
+```

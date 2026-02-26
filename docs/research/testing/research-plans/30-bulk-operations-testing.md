@@ -65,6 +65,7 @@ Define testing strategy for bulk observation and command creation operations.
 **Objective:** Extract bulk operation requirements from CSAPI
 
 **Tasks:**
+
 1. Identify bulk operation endpoints (observations, commands)
 2. Document bulk request structure
 3. Document bulk response structure
@@ -77,6 +78,7 @@ Define testing strategy for bulk observation and command creation operations.
 **Objective:** Understand bulk operation error handling
 
 **Tasks:**
+
 1. Document partial success/failure semantics
 2. Identify error response structure for bulk operations
 3. Document item-level error reporting
@@ -88,6 +90,7 @@ Define testing strategy for bulk observation and command creation operations.
 **Objective:** Analyze bulk operation testing in upstream
 
 **Tasks:**
+
 1. Identify bulk operation tests in upstream
 2. Extract bulk validation test patterns
 3. Extract partial failure test patterns
@@ -99,6 +102,7 @@ Define testing strategy for bulk observation and command creation operations.
 **Objective:** Design test scenarios for bulk operations
 
 **Tasks:**
+
 1. Design all-valid bulk operation scenarios
 2. Design all-invalid bulk operation scenarios
 3. Design mixed valid/invalid scenarios
@@ -112,6 +116,7 @@ Define testing strategy for bulk observation and command creation operations.
 **Objective:** Design fixtures for bulk operation testing
 
 **Tasks:**
+
 1. Design small bulk request fixtures (10-50 items)
 2. Design large bulk request fixtures (100-1000+ items)
 3. Design mixed valid/invalid fixtures
@@ -124,6 +129,7 @@ Define testing strategy for bulk observation and command creation operations.
 **Objective:** Create comprehensive bulk operations testing strategy
 
 **Tasks:**
+
 1. Consolidate bulk operation scenarios
 2. Create bulk operation test templates
 3. Document fixture requirements
@@ -152,6 +158,7 @@ This research is complete when:
 **Bulk operations testing strategy with performance consideration**
 
 Content includes:
+
 - Bulk observation creation test patterns
 - Bulk command creation test patterns
 - Bulk request structure specification
@@ -169,6 +176,7 @@ Content includes:
 - Implementation estimates
 
 **Example Bulk Request:**
+
 ```json
 {
   "observations": [
@@ -180,6 +188,7 @@ Content includes:
 ```
 
 **Example Bulk Response (Partial Failure):**
+
 ```json
 {
   "created": ["obs-1", "obs-3"],
@@ -197,11 +206,13 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 13: Resource Method Testing Patterns (individual operation patterns)
 - Section 18: Error Condition Testing (error handling patterns)
 - Section 27: Schema-Driven Validation Testing (item validation)
 
 **Blocks:**
+
 - Bulk observation creation implementation
 - Bulk command creation implementation
 - Section 33: Performance Testing (bulk performance benchmarks)
@@ -228,25 +239,30 @@ Content includes:
 ### Key Findings
 
 1. **Bulk Operation Endpoints (2 total):**
+
    - `POST /datastreams/{id}/observations` - Bulk observation creation (array input)
    - `POST /controlstreams/{id}/commands` - Bulk command creation (array input)
 
 2. **Transaction Semantics - SPEC AMBIGUITY:**
+
    - CSAPI Part 2 does NOT explicitly define transaction semantics for bulk operations
    - Based on OpenSensorHub analysis: **Partial success is likely** (valid items created, invalid items reported)
    - NOT all-or-nothing (entire request doesn't fail if some items are invalid)
 
 3. **Size Limits (from OpenSensorHub):**
+
    - **Recommended batch size:** 100-1,000 items per request
    - **Maximum:** 10,000 items per request
    - No explicit limit in CSAPI spec (implementation-dependent)
 
 4. **Error Response Structure:**
+
    - **Success:** 201 Created with array of created IDs or full resources
    - **Partial success:** 207 Multi-Status or custom response with `created` and `failed` arrays
    - **Complete failure:** 400 Bad Request with validation errors
 
 5. **Schema Validation:**
+
    - Each item in bulk request validated against datastream/controlstream schema
    - Same validation rules as single-item POST
    - Failed items reported with index and error message
@@ -259,21 +275,21 @@ Content includes:
 ### Risks
 
 **HIGH RISK:**
+
 1. **Spec Ambiguity on Transaction Semantics**
    - CSAPI spec doesn't mandate all-or-nothing vs partial success behavior
    - Different servers may implement differently
    - **Mitigation:** Test both transaction semantics, document server behavior
-   
 2. **No Standard Bulk Error Response Format**
    - Spec doesn't define error response structure for partial failures
    - Servers may return different error formats
    - **Mitigation:** Test multiple error response formats, flexible error parsing
 
-**MEDIUM RISK:**
-3. **Implementation Variance on Size Limits**
-   - OpenSensorHub max 10,000, but other servers may differ
-   - **Mitigation:** Test various batch sizes (10, 100, 1,000, 10,000), document limits per server
-   
+**MEDIUM RISK:** 3. **Implementation Variance on Size Limits**
+
+- OpenSensorHub max 10,000, but other servers may differ
+- **Mitigation:** Test various batch sizes (10, 100, 1,000, 10,000), document limits per server
+
 4. **Performance Sensitivity**
    - Large batches can timeout or exceed memory limits
    - **Mitigation:** Test performance with realistic high-volume data, document recommended batch sizes
@@ -281,11 +297,13 @@ Content includes:
 ### Testing Priorities
 
 1. **CRITICAL (13-20 hours):**
+
    - All-valid bulk observations (8 tests, 150-200 lines)
    - Mixed valid/invalid items (6 tests, 80-120 lines)
    - Bulk commands (6 tests, 100-150 lines)
 
 2. **HIGH:**
+
    - Size limit handling (4 tests, 60-80 lines)
    - Performance testing (4 tests, 60-80 lines)
 
@@ -307,6 +325,7 @@ Content includes:
 **Primary Deliverable:** [30-bulk-operations-testing.md](../findings/30-bulk-operations-testing.md)
 
 **Contents:**
+
 1. Bulk operation endpoint specifications (observations, commands)
 2. Bulk request structure specification (array POST)
 3. Bulk response structure specification (success, partial failure, complete failure)

@@ -11,16 +11,19 @@
 ## Research Objectives
 
 1. **Pattern Identification:**
+
    - Confirm the EDR implementation used a single `EDRQueryBuilder` class
    - Document factory method signature and instantiation pattern
    - Identify how EDR handled multiple query types (position, area, cube, etc.)
 
 2. **Class Organization:**
+
    - How many classes were created for EDR support?
    - Was there one class per query type or one consolidated class?
    - How were methods organized within the QueryBuilder?
 
 3. **Integration Points:**
+
    - What files were modified to integrate EDR? (endpoint.ts, info.ts, index.ts)
    - How many lines of integration code were required?
    - What conformance checking pattern was used?
@@ -56,11 +59,13 @@
 ## Expected Findings
 
 **If EDR uses single class:**
+
 - Confirms upstream expectation for consolidated pattern
 - Provides direct blueprint for CSAPIQueryBuilder
 - Suggests CSAPI should follow same pattern
 
 **If EDR uses multiple classes:**
+
 - Questions current CSAPI design assumptions
 - Suggests separate resource clients might be acceptable
 - Requires deeper investigation into why
@@ -70,6 +75,7 @@
 ## Architecture Decision Impact
 
 **HIGH IMPACT** - This determines whether we:
+
 - Follow proven EDR pattern (single QueryBuilder)
 - Deviate and potentially face rejection
 - Need to justify any architectural differences

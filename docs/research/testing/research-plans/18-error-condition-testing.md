@@ -64,6 +64,7 @@ Comprehensive strategy for testing all error conditions across all components.
 **Objective:** Categorize all error types across the CSAPI client
 
 **Tasks:**
+
 1. Extract error schemas from CSAPI OpenAPI specifications
 2. Categorize errors by type (validation, network, parse, conformance)
 3. Map errors to components (QueryBuilder, parsers, resources)
@@ -75,6 +76,7 @@ Comprehensive strategy for testing all error conditions across all components.
 **Objective:** Analyze how upstream handles and tests errors
 
 **Tasks:**
+
 1. Analyze error handling in upstream codebase
 2. Extract error test patterns from upstream tests
 3. Document error message formats and conventions
@@ -86,6 +88,7 @@ Comprehensive strategy for testing all error conditions across all components.
 **Objective:** Understand CSAPI-specific error requirements
 
 **Tasks:**
+
 1. Analyze error schemas in CSAPI OpenAPI specs
 2. Extract error examples from CSAPI specifications
 3. Identify validation error requirements
@@ -97,6 +100,7 @@ Comprehensive strategy for testing all error conditions across all components.
 **Objective:** Define error scenarios for each component type
 
 **Tasks:**
+
 1. Define QueryBuilder validation error scenarios
 2. Define SensorML parser error scenarios
 3. Define SWE Common parser error scenarios
@@ -110,6 +114,7 @@ Comprehensive strategy for testing all error conditions across all components.
 **Objective:** Design consistent error test patterns
 
 **Tasks:**
+
 1. Design error test structure templates
 2. Define error assertion patterns
 3. Design error message validation approach
@@ -121,6 +126,7 @@ Comprehensive strategy for testing all error conditions across all components.
 **Objective:** Create comprehensive error testing strategy
 
 **Tasks:**
+
 1. Consolidate error taxonomy and scenarios
 2. Create error test pattern catalog
 3. Document error test priorities
@@ -148,6 +154,7 @@ This research is complete when:
 **Error condition test matrix with test patterns for each error type**
 
 Content includes:
+
 - Error taxonomy (validation, network, parse, conformance)
 - CSAPI error specification analysis
 - Upstream error pattern catalog
@@ -164,6 +171,7 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis (error test patterns)
 - Section 2: Existing Upstream Test Pattern Survey (error handling patterns)
 - Section 12: QueryBuilder URL Construction Testing Strategy (validation errors)
@@ -171,6 +179,7 @@ Content includes:
 - Section 14: Integration Test Workflow Design (workflow errors)
 
 **Blocks:**
+
 - Section 19: Test Organization and File Structure (error test organization)
 - All test implementation (error scenarios guide test creation)
 
@@ -200,29 +209,34 @@ Content includes:
 **Key Findings:**
 
 1. **Error Philosophy:**
+
    - Follow upstream pattern: minimal, targeted error handling
    - Throw only when library can't proceed
    - Trust server validation, let HTTP errors propagate
    - Reuse existing EndpointError class (no new error classes)
 
 2. **Error Taxonomy:**
+
    - 5 primary categories: Validation, Conformance, Network, Parse, HTTP
    - 15 specific error types mapped to components
    - Clear responsibility assignment (Library vs Server vs Browser)
 
 3. **Test Coverage:**
+
    - ~101 error tests across all components
    - ~1,545-2,050 lines of error test code
    - ~245-480 lines of error fixtures
    - ~13-15% of total testing effort
 
 4. **Test Patterns:**
+
    - 5 error test structure templates defined
    - 3 error assertion helpers documented
    - 4 validation levels (basic → complete)
    - Embed error tests in component files (20% of tests per file)
 
 5. **Component Distribution:**
+
    - QueryBuilder: ~30 error tests
    - Parsers (GeoJSON/SensorML/SWE): ~40 error tests
    - Resource Methods: ~18 error tests
@@ -238,12 +252,14 @@ Content includes:
 **Deliverable:** [18-error-condition-testing-strategy.md](../findings/18-error-condition-testing-strategy.md)
 
 **Impact:**
+
 - Provides comprehensive error testing strategy aligned with upstream patterns
 - Ensures clear, actionable error messages for developers
 - Prevents common developer mistakes (invalid bbox, temporal intervals)
 - Maintains minimal error handling philosophy (trust server validation)
 
 **What This Unblocks:**
+
 - Section 19: Test Organization and File Structure (error test placement)
 - All test implementation (error scenarios guide test creation)
 

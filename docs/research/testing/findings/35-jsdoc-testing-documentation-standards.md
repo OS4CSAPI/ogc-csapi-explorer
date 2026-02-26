@@ -9,12 +9,14 @@
 **Research Time:** 60 minutes – February 6, 2026
 
 **Primary Source(s):**
+
 - [Implementation Guide](../../../planning/csapi-implementation-guide.md)
 - Section 1-2 deliverables: Upstream test documentation patterns
 - [TypeDoc documentation standards](https://typedoc.org/)
 - [JSDoc specification](https://jsdoc.app/)
 
 **Supporting Resources:**
+
 - Section 19: [Test Organization and File Structure](19-test-organization-file-structure.md) (test file patterns)
 - Section 34: [Test Utility and Helper Design](34-test-utility-helper-design.md) (utility documentation)
 
@@ -44,16 +46,16 @@
 
 **Analysis of 7 Upstream Test Suites:**
 
-| Test Suite | Files | Total Lines | JSDoc Blocks | Inline Comments | Documentation Density |
-|------------|-------|-------------|--------------|-----------------|----------------------|
-| **WFS** | 7 | ~1,500 | 0 | ~5 | 0.3% |
-| **WMS** | 4 | ~800 | 1 | ~3 | 0.5% |
-| **WMTS** | 3 | ~600 | 0 | ~2 | 0.3% |
-| **TMS** | 2 | ~400 | 0 | ~1 | 0.3% |
-| **STAC** | 3 | ~800 | 0 | ~4 | 0.5% |
-| **OGC-API** | 5 | ~3,500 | 0 | ~8 | 0.2% |
-| **Shared** | 4 | ~600 | 0 | ~2 | 0.3% |
-| **TOTAL** | **28** | **~8,200** | **1** | **~25** | **0.3%** |
+| Test Suite  | Files  | Total Lines | JSDoc Blocks | Inline Comments | Documentation Density |
+| ----------- | ------ | ----------- | ------------ | --------------- | --------------------- |
+| **WFS**     | 7      | ~1,500      | 0            | ~5              | 0.3%                  |
+| **WMS**     | 4      | ~800        | 1            | ~3              | 0.5%                  |
+| **WMTS**    | 3      | ~600        | 0            | ~2              | 0.3%                  |
+| **TMS**     | 2      | ~400        | 0            | ~1              | 0.3%                  |
+| **STAC**    | 3      | ~800        | 0            | ~4              | 0.5%                  |
+| **OGC-API** | 5      | ~3,500      | 0            | ~8              | 0.2%                  |
+| **Shared**  | 4      | ~600        | 0            | ~2              | 0.3%                  |
+| **TOTAL**   | **28** | **~8,200**  | **1**        | **~25**         | **0.3%**              |
 
 **Key Finding:** Upstream has **NEAR-ZERO formal documentation** in test files (0.3% documentation density).
 
@@ -64,6 +66,7 @@
 All 28 upstream test files have **NO** `@fileoverview`, `@module`, or file-level JSDoc comments. Files start directly with imports and test setup.
 
 **Example from ogc-api/endpoint.spec.ts:**
+
 ```typescript
 import OgcApiEndpoint from './endpoint.js';
 import { readFile, stat } from 'fs/promises';
@@ -91,7 +94,7 @@ describe('#info', () => {
     expect(info).toHaveProperty('title');
     expect(info).toHaveProperty('description');
   });
-  
+
   it('should throw error if info endpoint fails', async () => {
     // Test implementation...
   });
@@ -140,13 +143,15 @@ This is the **ONLY** formal JSDoc in 8,200+ lines of test code.
 ### 1.3 Implications for CSAPI
 
 **Upstream Demonstrates:**
+
 1. ✅ **Tests CAN be self-documenting** through clear naming and structure
 2. ✅ **Minimal documentation works** for straightforward test suites
 3. ✅ **Comments focus on "why"** not "what" when they exist
 4. ✅ **No file-level boilerplate** reduces maintenance burden
 
 **CSAPI Context:**
-- CSAPI has more complex specs than upstream's WMS/WFS/WMTS, but this does not change the documentation approach — it changes test *design*, not test *comments*
+
+- CSAPI has more complex specs than upstream's WMS/WFS/WMTS, but this does not change the documentation approach — it changes test _design_, not test _comments_
 - Spec complexity is handled by descriptive test names and clear test structure, not by JSDoc tags
 - Fixture provenance (where test data came from) can be noted in a brief comment if non-obvious
 
@@ -165,7 +170,8 @@ The **only** place JSDoc is required is on exported functions in test utility mo
 **Optional tags:** `@deprecated`, `@see`
 
 **Example:**
-```typescript
+
+````typescript
 /**
  * Parse URL and validate expected components
  *
@@ -190,7 +196,7 @@ export function parseAndValidateUrl(
 ): ParsedURL {
   // Implementation...
 }
-```
+````
 
 ### 2.2 Where JSDoc Is Not Needed: Test Files
 
@@ -203,8 +209,12 @@ Following upstream practice, test files (`*.spec.ts`) should **not** have:
 - Custom tags (`@fixture`, `@coverage`, `@scenario`) — these create documentation infrastructure that must be maintained but doesn't improve test quality
 
 **Self-documenting test example (upstream pattern):**
+
 ```typescript
-import { createTestQueryBuilder, parseAndValidateUrl } from '../test-utils/index.js';
+import {
+  createTestQueryBuilder,
+  parseAndValidateUrl,
+} from '../test-utils/index.js';
 
 describe('CSAPIQueryBuilder - Systems', () => {
   let builder: CSAPIQueryBuilder;
@@ -259,11 +269,13 @@ await jest.runAllTimersAsync();
 ```
 
 **Use a comment when:**
+
 - Non-obvious behavior needs a one-line explanation
 - A spec section informed the test design (use `// Spec context:` prefix)
 - Setup/teardown logic has a subtle purpose
 
 **Don't use a comment when:**
+
 - The test name already explains intent
 - The assertion is self-evident from the code
 - You're describing what the code does rather than why
@@ -339,15 +351,15 @@ it('should filter systems by bbox', async () => { ... });
 
 ## 4. Summary
 
-| Context | Approach |
-|---------|----------|
-| **Exported test helpers** (`test-utils/`) | JSDoc with `@param`, `@returns`, `@example` |
-| **Test files** (`*.spec.ts`) | No JSDoc — self-documenting via naming |
-| **Non-obvious behavior** | Brief `//` comment explaining "why" |
-| **Spec context** | `// Spec context: OGC 23-001 §X.Y` when helpful |
-| **Complex setup** | Brief `//` comment on the non-obvious line |
-| **File-level docs** | Not needed (upstream has zero) |
-| **Custom JSDoc tags** | Not recommended |
+| Context                                   | Approach                                        |
+| ----------------------------------------- | ----------------------------------------------- |
+| **Exported test helpers** (`test-utils/`) | JSDoc with `@param`, `@returns`, `@example`     |
+| **Test files** (`*.spec.ts`)              | No JSDoc — self-documenting via naming          |
+| **Non-obvious behavior**                  | Brief `//` comment explaining "why"             |
+| **Spec context**                          | `// Spec context: OGC 23-001 §X.Y` when helpful |
+| **Complex setup**                         | Brief `//` comment on the non-obvious line      |
+| **File-level docs**                       | Not needed (upstream has zero)                  |
+| **Custom JSDoc tags**                     | Not recommended                                 |
 
 **Upstream evidence:** 28 test files, ~8,200 lines, 1 JSDoc block (on a helper function), ~25 inline comments. This approach works for a production library with 7 protocol implementations. CSAPI should follow the same pattern.
 
@@ -379,4 +391,3 @@ it('should filter systems by bbox', async () => { ... });
 ---
 
 **END OF DOCUMENT**
-

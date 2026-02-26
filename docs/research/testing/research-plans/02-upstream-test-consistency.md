@@ -15,6 +15,7 @@
 Survey and document consistent testing patterns across all existing ogc-client implementations (WFS, WMS, WMTS, STAC, EDR). Identify library-wide conventions, test-to-code ratios, shared utilities, and quality standards that define the expected testing approach for any new OGC API implementation.
 
 **Why 2nd:** After understanding EDR (Section 1) - the newest and closest match to CSAPI - we need to validate those patterns are consistent across the entire library. This identifies:
+
 - **Library-wide conventions** that all implementations follow
 - **Mature patterns** from older implementations (WFS, WMS, WMTS)
 - **Evolution** of testing practices over time
@@ -39,99 +40,41 @@ Survey and document consistent testing patterns across all existing ogc-client i
 ### Detailed Questions
 
 **Implementation Inventory:**
+
 1. What implementations exist in camptocamp/ogc-client?
 2. When was each implementation added (chronological order)?
 3. What's the maturity level of each (lines of code, features)?
 4. Which implementations have the most comprehensive tests?
 
-**Test File Consistency:**
-5. What test file naming conventions are consistent across implementations?
-6. Where are test files located (always colocated? always separate?)?
-7. What's the standard test file structure template?
-8. Are there variations in organization? Why?
+**Test File Consistency:** 5. What test file naming conventions are consistent across implementations? 6. Where are test files located (always colocated? always separate?)? 7. What's the standard test file structure template? 8. Are there variations in organization? Why?
 
-**Coverage Consistency:**
-9. What's the coverage % for each implementation?
-10. Is there a consistent coverage target?
-11. Which implementations exceed/fall short of targets?
-12. How does coverage vary by component type (QueryBuilder vs parsers vs types)?
+**Coverage Consistency:** 9. What's the coverage % for each implementation? 10. Is there a consistent coverage target? 11. Which implementations exceed/fall short of targets? 12. How does coverage vary by component type (QueryBuilder vs parsers vs types)?
 
-**Test Structure Patterns:**
-13. Are describe/it block patterns consistent?
-14. Do all implementations use the same test framework (Jest)?
-15. Are there consistent setup/teardown patterns?
-16. How are tests grouped (by file? by describe block?)?
+**Test Structure Patterns:** 13. Are describe/it block patterns consistent? 14. Do all implementations use the same test framework (Jest)? 15. Are there consistent setup/teardown patterns? 16. How are tests grouped (by file? by describe block?)?
 
-**Assertion Patterns:**
-17. What assertion patterns are used consistently across implementations?
-18. Are URL validation patterns consistent?
-19. Are query parameter validation patterns consistent?
-20. Are error assertion patterns consistent?
-21. What assertion depth is standard?
+**Assertion Patterns:** 17. What assertion patterns are used consistently across implementations? 18. Are URL validation patterns consistent? 19. Are query parameter validation patterns consistent? 20. Are error assertion patterns consistent? 21. What assertion depth is standard?
 
-**Fixture Organization:**
-22. How are fixtures organized in each implementation?
-23. Is there a standard fixture directory structure?
-24. Are fixtures real spec examples or synthetic mocks (consistent approach)?
-25. How are fixtures named?
-26. Are fixtures shared across implementations?
+**Fixture Organization:** 22. How are fixtures organized in each implementation? 23. Is there a standard fixture directory structure? 24. Are fixtures real spec examples or synthetic mocks (consistent approach)? 25. How are fixtures named? 26. Are fixtures shared across implementations?
 
-**Test Utility Patterns:**
-27. What shared test utilities exist?
-28. What test helpers are implementation-specific?
-29. Are there mock creation utilities?
-30. Are there fixture loading utilities?
-31. What assertion helpers exist?
+**Test Utility Patterns:** 27. What shared test utilities exist? 28. What test helpers are implementation-specific? 29. Are there mock creation utilities? 30. Are there fixture loading utilities? 31. What assertion helpers exist?
 
-**Test-to-Code Ratios:**
-32. What's the test-to-code ratio for each implementation?
-33. Is there a consistent ratio across implementations?
-34. How does ratio correlate with implementation complexity?
-35. What's considered "good" coverage ratio?
+**Test-to-Code Ratios:** 32. What's the test-to-code ratio for each implementation? 33. Is there a consistent ratio across implementations? 34. How does ratio correlate with implementation complexity? 35. What's considered "good" coverage ratio?
 
-**Type System Testing:**
-36. How are TypeScript types tested across implementations?
-37. Are type tests consistent?
-38. What's the standard approach for interface testing?
-39. Are generic types tested? How?
+**Type System Testing:** 36. How are TypeScript types tested across implementations? 37. Are type tests consistent? 38. What's the standard approach for interface testing? 39. Are generic types tested? How?
 
-**Integration Test Patterns:**
-40. What qualifies as "integration" test across implementations?
-41. Are integration tests consistently structured?
-42. What integration scenarios are common?
-43. Is there a standard integration test file?
+**Integration Test Patterns:** 40. What qualifies as "integration" test across implementations? 41. Are integration tests consistently structured? 42. What integration scenarios are common? 43. Is there a standard integration test file?
 
-**Error Handling Patterns:**
-44. How are errors tested across implementations?
-45. What error types are consistently tested?
-46. Are error messages validated consistently?
-47. What error assertion patterns are standard?
+**Error Handling Patterns:** 44. How are errors tested across implementations? 45. What error types are consistently tested? 46. Are error messages validated consistently? 47. What error assertion patterns are standard?
 
-**Conformance Testing:**
-48. How is conformance detection tested in each implementation?
-49. Are conformance tests consistent?
-50. What conformance scenarios are tested?
+**Conformance Testing:** 48. How is conformance detection tested in each implementation? 49. Are conformance tests consistent? 50. What conformance scenarios are tested?
 
-**Format Handling:**
-51. How are format parsers tested across implementations?
-52. Are format tests consistent in structure?
-53. What format validation depth is standard?
+**Format Handling:** 51. How are format parsers tested across implementations? 52. Are format tests consistent in structure? 53. What format validation depth is standard?
 
-**QueryBuilder/Navigator Testing:**
-54. How are QueryBuilder classes tested consistently?
-55. What method testing patterns are universal?
-56. Are parameter testing approaches consistent?
+**QueryBuilder/Navigator Testing:** 54. How are QueryBuilder classes tested consistently? 55. What method testing patterns are universal? 56. Are parameter testing approaches consistent?
 
-**Documentation Standards:**
-57. What test documentation exists across implementations?
-58. Are tests documented with JSDoc consistently?
-59. How is test intent communicated?
+**Documentation Standards:** 57. What test documentation exists across implementations? 58. Are tests documented with JSDoc consistently? 59. How is test intent communicated?
 
-**Evolution Analysis:**
-60. How have testing patterns evolved from oldest to newest implementations?
-61. What patterns were deprecated?
-62. What new patterns emerged with EDR?
-63. What should CSAPI adopt vs avoid?
+**Evolution Analysis:** 60. How have testing patterns evolved from oldest to newest implementations? 61. What patterns were deprecated? 62. What new patterns emerged with EDR? 63. What should CSAPI adopt vs avoid?
 
 ---
 
@@ -164,6 +107,7 @@ Survey and document consistent testing patterns across all existing ogc-client i
 **Objective:** Create complete inventory of ogc-client implementations with metadata
 
 **Tasks:**
+
 1. Survey camptocamp/ogc-client repository structure
 2. List all OGC API implementations with test files
 3. Use git history to identify implementation dates (git log for each implementation)
@@ -176,6 +120,7 @@ Survey and document consistent testing patterns across all existing ogc-client i
 
 **Tasks:**
 For each implementation (WFS, WMS, WMTS, STAC, EDR):
+
 1. Locate all test files and count
 2. Count test file lines and test case count
 3. Measure coverage % (use coverage tools if available)
@@ -191,6 +136,7 @@ For each implementation (WFS, WMS, WMTS, STAC, EDR):
 **Objective:** Create comprehensive consistency comparison matrix
 
 **Tasks:**
+
 1. Create comparison matrix table across all implementations
 2. Identify universal patterns (present in 100% of implementations)
 3. Identify standard patterns (present in 80%+ implementations)
@@ -205,6 +151,7 @@ For each implementation (WFS, WMS, WMTS, STAC, EDR):
 **Objective:** Create comprehensive deliverable document
 
 **Tasks:**
+
 1. Synthesize findings into consistency matrix document
 2. Document universal patterns CSAPI MUST follow
 3. Document standard patterns CSAPI SHOULD follow
@@ -242,6 +189,7 @@ This research is complete when:
 Content includes:
 
 1. **Executive Summary**
+
    - Implementations surveyed (count, names, dates added)
    - Key consistency findings
    - Universal patterns identified
@@ -249,6 +197,7 @@ Content includes:
    - High-level recommendations for CSAPI
 
 2. **Implementation Inventory**
+
    - Complete list with metadata (name, date added, maturity)
    - Lines of code per implementation
    - Test file count per implementation
@@ -264,22 +213,25 @@ Content includes:
    - Consistency percentage for each pattern
 
 **Matrix Format Example:**
+
 ```markdown
-| Pattern | WFS | WMS | WMTS | STAC | EDR | Consistency | Recommendation |
-|---------|-----|-----|------|------|-----|-------------|----------------|
-| Colocated test files | ✅ | ✅ | ✅ | ✅ | ✅ | 100% | MUST |
-| Jest framework | ✅ | ✅ | ✅ | ✅ | ✅ | 100% | MUST |
-| >80% coverage | ✅ | ⚠️ | ✅ | ✅ | ✅ | 80% | SHOULD |
-| URL parseUrl() validation | ❌ | ❌ | ✅ | ✅ | ✅ | 60% | CONSIDER |
+| Pattern                   | WFS | WMS | WMTS | STAC | EDR | Consistency | Recommendation |
+| ------------------------- | --- | --- | ---- | ---- | --- | ----------- | -------------- |
+| Colocated test files      | ✅  | ✅  | ✅   | ✅   | ✅  | 100%        | MUST           |
+| Jest framework            | ✅  | ✅  | ✅   | ✅   | ✅  | 100%        | MUST           |
+| >80% coverage             | ✅  | ⚠️  | ✅   | ✅   | ✅  | 80%         | SHOULD         |
+| URL parseUrl() validation | ❌  | ❌  | ✅   | ✅   | ✅  | 60%         | CONSIDER       |
 ```
 
 4. **Test File Organization**
+
    - Naming conventions (consistent patterns vs variations)
    - Location patterns (colocated vs separate test/)
    - Structure patterns (file organization strategies)
    - Recommendations for CSAPI
 
 5. **Coverage Analysis**
+
    - Coverage % per implementation (table)
    - Coverage targets identified from patterns
    - Coverage consistency assessment
@@ -287,6 +239,7 @@ Content includes:
    - Recommended coverage targets for CSAPI
 
 6. **Test Structure Standards**
+
    - Describe/it block patterns (consistent conventions)
    - Setup/teardown patterns (beforeEach, afterEach usage)
    - Test naming conventions
@@ -295,6 +248,7 @@ Content includes:
    - Recommended structure template for CSAPI
 
 7. **Assertion Standards**
+
    - URL validation patterns (consistent approaches)
    - Query parameter validation patterns
    - Error assertion patterns
@@ -303,6 +257,7 @@ Content includes:
    - Recommended assertion approaches for CSAPI
 
 8. **Fixture Standards**
+
    - Fixture organization patterns (directory structure)
    - Fixture naming patterns
    - Fixture quality standards (real spec examples vs synthetic mocks)
@@ -311,6 +266,7 @@ Content includes:
    - Recommended fixture approach for CSAPI
 
 9. **Test Utility Analysis**
+
    - Shared utilities inventory (library-wide utilities)
    - Implementation-specific utilities
    - Common utility patterns
@@ -320,6 +276,7 @@ Content includes:
    - Recommended utilities for CSAPI to leverage or create
 
 10. **Test-to-Code Ratios**
+
     - Test-to-code ratio per implementation (table)
     - Average ratio across all implementations
     - Ratio by component type (QueryBuilder vs parsers vs types)
@@ -327,6 +284,7 @@ Content includes:
     - Recommended ratio range for CSAPI
 
 11. **Pattern Evolution Timeline**
+
     - Chronological evolution of testing practices
     - Patterns from oldest implementations (WFS, WMS, WMTS)
     - New patterns in newer implementations (STAC, EDR)
@@ -349,9 +307,11 @@ Content includes:
 ## 8. Dependencies
 
 **Must Complete Before Starting:**
+
 - Section 1: Upstream Blueprint Analysis (PR #114) - provides EDR baseline to validate against
 
 **Blocks:**
+
 - Section 4: Implementation Guide requirements validation (uses consistency findings)
 - Section 12: QueryBuilder testing strategy (follows consistent patterns)
 - Section 19: Test organization and file structure (uses naming conventions)
@@ -371,6 +331,7 @@ Content includes:
 - [x] Section 1 EDR patterns validated against consistency matrix
 
 **Actual Time Taken:**
+
 - Phase 1: 20 minutes
 - Phase 2: 1 hour 10 minutes
 - Phase 3: 35 minutes
@@ -384,6 +345,7 @@ Content includes:
 **Final Research Findings:**
 
 **1. Universal Patterns Identified (100% consistency):**
+
 - Jest framework with .spec.ts colocated files
 - describe/it/beforeEach structure
 - Mock fetch with fixtures in fixtures/<protocol>/
@@ -392,6 +354,7 @@ Content includes:
 - Integration and error handling tests
 
 **2. Emerging Patterns from Newer Implementations:**
+
 - Async fixture loading with fs/promises (STAC, EDR, OGC-API)
 - jest.fn() mocks instead of globalThis factories
 - afterEach with jest.runAllTimersAsync()
@@ -400,27 +363,32 @@ Content includes:
 - Type-safe parameter interfaces (EDR innovation)
 
 **3. Test-to-Code Ratio Standards:**
+
 - Mature implementations: 1.0-2.4× (average 1.44×)
 - EDR at 0.53× is below average (new implementation, tests still being added)
 - CSAPI should target 1.2-1.6× from the start (~1,400-1,800 test lines)
 
 **4. EDR Patterns Validated:**
+
 - ✅ EDR patterns align with library standards
 - ✅ EDR innovations (model.spec.ts, helpers.spec.ts, type-safe params) are good patterns for CSAPI
 - ✅ EDR's lower test ratio explained (new implementation, will mature to 1.0-2.0×)
 
 **5. Pattern Evolution Timeline:**
+
 - **2022-2023:** XML fixtures, sync loading, basic patterns (WFS, WMS)
 - **2024:** Refinement, mix of XML/JSON (WMTS, TMS)
 - **2025:** Modern async patterns, JSON-only for OGC APIs (STAC, EDR)
 
 **Deliverable Created:**
+
 - `docs/research/testing/findings/02-upstream-test-consistency.md` (1,595 lines)
 - Comprehensive consistency matrix with 12 sections
 - All 63 research questions answered
 - Clear MUST/SHOULD/CONSIDER/AVOID recommendations for CSAPI
 
 **Sections Unblocked:**
+
 - Section 4: Implementation Guide requirements validation
 - Section 12: QueryBuilder testing strategy
 - Section 19: Test organization and file structure
@@ -428,6 +396,7 @@ Content includes:
 - All subsequent testing sections
 
 **Key Insights:**
+
 - Library has strong, consistent testing conventions
 - Newer implementations show clear evolution toward better patterns
 - EDR serves as good CSAPI baseline with validated patterns
@@ -435,6 +404,7 @@ Content includes:
 - Test coverage should start at 1.2-1.6×, not grow into it
 
 **Initial Observations:**
+
 - Survey covered 6 implementations (WFS, WMS, WMTS, TMS, STAC, EDR) spanning 3 years
 - Older implementations (WFS, WMS) established foundation patterns
 - Recent implementations (STAC, EDR) reflect current best practices
@@ -455,6 +425,7 @@ Content includes:
 **Mitigation:** ✅ Focused on pattern presence/absence with quantitative metrics; sampled representative tests from oldest (WFS), middle (WMTS), newest (STAC, EDR) for depth
 
 **Validation Against Section 1:**
+
 - ✅ Section 1 EDR patterns align with library standards
 - ✅ EDR innovations validated as good patterns for CSAPI
 - ✅ EDR's lower test ratio explained (new, will mature)
@@ -464,6 +435,7 @@ Content includes:
 - If EDR introduces new patterns not in older implementations, document as emerging patterns
 
 **Next Steps After Completion:**
+
 1. Compare consistency matrix findings with Section 1 EDR blueprint
 2. Validate universal patterns are present in EDR
 3. Identify and explain any EDR deviations from standard patterns

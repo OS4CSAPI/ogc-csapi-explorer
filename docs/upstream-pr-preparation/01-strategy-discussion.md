@@ -14,16 +14,16 @@
 
 ## Analysis Context
 
-| Metric | Value |
-|--------|-------|
-| Total commits in `ogc-client-CSAPI_2` | 1,179 |
-| Commits ahead of upstream | **698** |
-| Upstream commits ahead of us | 0 (we're current with `camptocamp/ogc-client`) |
-| Non-docs files changed vs upstream | **69 files** (29,768 insertions, 225 deletions) |
-| Docs files (exclusion zone) | **371 files** (~286,000+ lines) |
-| Upstream repo | `camptocamp/ogc-client` |
-| Prior exploratory fork | `OS4CSAPI/ogc-client-homework` |
-| Prior clean fork (submitted PR from) | `OS4CSAPI/ogc-client` |
+| Metric                                | Value                                           |
+| ------------------------------------- | ----------------------------------------------- |
+| Total commits in `ogc-client-CSAPI_2` | 1,179                                           |
+| Commits ahead of upstream             | **698**                                         |
+| Upstream commits ahead of us          | 0 (we're current with `camptocamp/ogc-client`)  |
+| Non-docs files changed vs upstream    | **69 files** (29,768 insertions, 225 deletions) |
+| Docs files (exclusion zone)           | **371 files** (~286,000+ lines)                 |
+| Upstream repo                         | `camptocamp/ogc-client`                         |
+| Prior exploratory fork                | `OS4CSAPI/ogc-client-homework`                  |
+| Prior clean fork (submitted PR from)  | `OS4CSAPI/ogc-client`                           |
 
 ---
 
@@ -83,20 +83,20 @@ Squash and reorder 698 commits interactively. Drop docs-only commits.
 
 ## Proposed Commit Plan (Draft)
 
-| # | Commit Message | Key Files |
-|---|----------------|-----------|
-| 1 | `feat(csapi): add type definitions and model interfaces` | `model.ts`, `model.spec.ts` |
-| 2 | `feat(csapi): add URL builder with CRUD query support` | `url_builder.ts`, `url_builder.spec.ts` |
-| 3 | `feat(csapi): add helper utilities and command routing` | `helpers.ts`, `command-routing.ts` + specs |
-| 4 | `feat(csapi): add GeoJSON Part 1 format extraction` | `formats/geojson.ts`, `constants.ts`, `property.ts`, `classification.ts` + specs |
-| 5 | `feat(csapi): add SWE Common data model parsers` | `formats/swecommon/*` |
-| 6 | `feat(csapi): add SensorML procedure description parsers` | `formats/sensorml/*` |
-| 7 | `feat(csapi): add Part 2 dynamic data format handlers` | `formats/part2.ts` + spec |
-| 8 | `feat(csapi): add schema-response and format pipeline` | `formats/schema-response.ts`, `response.ts`, `formats/index.ts` + specs |
-| 9 | `test(csapi): add CSAPI test fixtures` | `fixtures/ogc-api/csapi/*` |
-| 10 | `test(csapi): add integration test suites` | `integration/*.spec.ts` |
-| 11 | `feat(csapi): integrate CSAPI detection into OgcApiEndpoint` | `endpoint.ts`, `info.ts`, `mime-type.ts` + specs |
-| 12 | `feat(csapi): export CSAPI from main library index` | `src/index.ts` |
+| #   | Commit Message                                               | Key Files                                                                        |
+| --- | ------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| 1   | `feat(csapi): add type definitions and model interfaces`     | `model.ts`, `model.spec.ts`                                                      |
+| 2   | `feat(csapi): add URL builder with CRUD query support`       | `url_builder.ts`, `url_builder.spec.ts`                                          |
+| 3   | `feat(csapi): add helper utilities and command routing`      | `helpers.ts`, `command-routing.ts` + specs                                       |
+| 4   | `feat(csapi): add GeoJSON Part 1 format extraction`          | `formats/geojson.ts`, `constants.ts`, `property.ts`, `classification.ts` + specs |
+| 5   | `feat(csapi): add SWE Common data model parsers`             | `formats/swecommon/*`                                                            |
+| 6   | `feat(csapi): add SensorML procedure description parsers`    | `formats/sensorml/*`                                                             |
+| 7   | `feat(csapi): add Part 2 dynamic data format handlers`       | `formats/part2.ts` + spec                                                        |
+| 8   | `feat(csapi): add schema-response and format pipeline`       | `formats/schema-response.ts`, `response.ts`, `formats/index.ts` + specs          |
+| 9   | `test(csapi): add CSAPI test fixtures`                       | `fixtures/ogc-api/csapi/*`                                                       |
+| 10  | `test(csapi): add integration test suites`                   | `integration/*.spec.ts`                                                          |
+| 11  | `feat(csapi): integrate CSAPI detection into OgcApiEndpoint` | `endpoint.ts`, `info.ts`, `mime-type.ts` + specs                                 |
+| 12  | `feat(csapi): export CSAPI from main library index`          | `src/index.ts`                                                                   |
 
 Each commit compiles. Each tells one chapter of the story: types → builder → helpers → format parsers (layered) → tests → integration → export.
 

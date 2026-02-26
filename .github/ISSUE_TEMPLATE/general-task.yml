@@ -1,22 +1,22 @@
 name: General Task or Feature
 description: Standard issue template for development tasks, features, and enhancements
-title: "[Task]: "
+title: '[Task]: '
 labels: []
 body:
   - type: markdown
     attributes:
       value: |
         ## Instructions
-        
+
         Complete all required sections. Use clear, specific language.
-        
+
         **Good issues:**
         - State the problem or goal explicitly
         - Define scope boundaries (what's in, what's out)
         - Reference relevant standards, specs, or upstream context
         - Include acceptance criteria (how do we know when it's done?)
         - Distinguish facts from assumptions
-        
+
         **This template supports the AI Operational Constraints defined in `/docs/governance/`.**
 
   - type: textarea
@@ -24,7 +24,7 @@ body:
     attributes:
       label: Goal
       description: What is the objective of this issue? State in 1-2 clear sentences.
-      placeholder: "Example: Implement STAC API search endpoint with filtering support per STAC spec 1.0.0"
+      placeholder: 'Example: Implement STAC API search endpoint with filtering support per STAC spec 1.0.0'
     validations:
       required: true
 
@@ -40,7 +40,7 @@ body:
         - Links to relevant discussions, specs, or documentation
       placeholder: |
         The current implementation only supports basic queries. STAC clients expect full filter support as defined in the STAC API spec.
-        
+
         Related: #123
         Spec: https://github.com/radiantearth/stac-api-spec/tree/main/fragments/filter
     validations:
@@ -49,7 +49,7 @@ body:
   - type: textarea
     id: scope-in
     attributes:
-      label: "In Scope"
+      label: 'In Scope'
       description: What WILL be included in this work? Be specific about deliverables.
       placeholder: |
         - Implement CQL2-JSON filter parsing
@@ -62,7 +62,7 @@ body:
   - type: textarea
     id: scope-out
     attributes:
-      label: "Out of Scope"
+      label: 'Out of Scope'
       description: What will NOT be included? This prevents scope creep.
       placeholder: |
         - CQL2-TEXT format (defer to future issue)
@@ -135,17 +135,17 @@ body:
     attributes:
       value: |
         ---
-        
+
         ## AI Assistant Entry Procedure
-        
+
         If AI assistance (Claude Sonnet 4.5) is involved in this issue, the following acknowledgment is **required** at the start of work:
-        
+
         ```
         I have reviewed the AI Operational Constraints.
         Issue goal: [restate in one sentence]
         Assumptions requiring confirmation: [list or "none"]
         ```
-        
+
         See `/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md` for full details.
 
   - type: checkboxes

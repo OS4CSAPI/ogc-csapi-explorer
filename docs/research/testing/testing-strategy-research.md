@@ -16,6 +16,7 @@
 **Primary Constraint:** Tests must be **meaningful, useful, deep, and end-to-end** as defined by senior dev feedback and upstream maintainer expectations.
 
 **Success Criteria:** After completing this research, we can answer:
+
 1. What specific patterns define "meaningful" vs "trivial" tests in this codebase?
 2. What coverage targets and test structures will upstream maintainers accept?
 3. What fixtures, assertions, and test depth are required for each component?
@@ -36,6 +37,7 @@
 **Why First:** This is our direct pattern reference. EDR was accepted by upstream maintainers, so their test strategy is proven. Everything else validates against this.
 
 **Key Questions:**
+
 - What test file structure did EDR use?
 - What test-to-code ratio did they achieve?
 - What coverage % did they target?
@@ -46,6 +48,7 @@
 - What makes their tests "end-to-end" for a URL-building library?
 
 **Resources:**
+
 - [PR #114 Analysis](../../upstream/pr114-analysis.md) (starting point, needs deep dive)
 - camptocamp/ogc-client PR #114 diff and review comments
 - EDR test files in upstream repository
@@ -61,6 +64,7 @@
 **Why Second:** After understanding EDR (newest, closest match), validate patterns are consistent across WFS, WMS, WMTS, STAC implementations. Identifies library-wide conventions.
 
 **Key Questions:**
+
 - What patterns are consistent across ALL implementations?
 - What test file naming conventions are used?
 - How are fixtures organized?
@@ -71,6 +75,7 @@
 - What's the typical test-to-code ratio?
 
 **Resources:**
+
 - camptocamp/ogc-client existing test files (WFS, WMS, WMTS, STAC, EDR)
 - [Architecture Patterns Analysis](../../upstream/architecture-patterns-analysis.md)
 - [File Organization Strategy](../../upstream/file-organization-analysis.md)
@@ -86,6 +91,7 @@
 **Why Third:** Provides broader context beyond OGC-specific patterns. Validates upstream patterns align with industry standards or identifies gaps.
 
 **Key Questions:**
+
 - What defines "production-quality" testing for client libraries?
 - What coverage targets are industry standard?
 - How to test without actual HTTP calls (mocking strategies)?
@@ -95,6 +101,7 @@
 - How to test error conditions comprehensively?
 
 **Resources:**
+
 - TypeScript testing guides and documentation
 - Client library examples (axios, @octokit/rest, aws-sdk)
 - Testing best practices articles
@@ -111,6 +118,7 @@
 **Why Fourth:** Now that we understand external patterns (upstream + industry), analyze our own architectural decisions and how they constrain testing strategy.
 
 **Key Questions:**
+
 - What test structure does the Implementation Guide specify?
 - What are the test line estimates by phase?
 - What coverage targets are documented?
@@ -119,6 +127,7 @@
 - How does the 34-task roadmap structure inform test organization?
 
 **Resources:**
+
 - [CSAPI Implementation Guide](../../planning/csapi-implementation-guide.md) (Section 9: Testing Components)
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Component specifications with test requirements)
 
@@ -133,6 +142,7 @@
 **Why Fifth:** The roadmap specifies "test immediately after each subtask" - need to understand how this incremental approach affects test organization, when to write what tests, and how to avoid test debt.
 
 **Key Questions:**
+
 - How does "test after each subtask" affect test file organization?
 - When do we write unit tests vs integration tests in the roadmap?
 - How do Phase 1-4 testing requirements differ?
@@ -141,6 +151,7 @@
 - What's the commit strategy for tests (per subtask vs per phase)?
 
 **Resources:**
+
 - [ROADMAP.md](../../planning/ROADMAP.md) (All 4 phases with test-immediately pattern)
 - [ROADMAP.md](../../planning/ROADMAP.md) (Development Standards section)
 
@@ -155,6 +166,7 @@
 **Why Sixth:** After understanding all patterns (upstream + industry + our architecture), synthesize specific criteria for test quality. This is the core constraint from senior dev feedback.
 
 **Key Questions:**
+
 - What specific patterns define "trivial" tests? (concrete examples)
 - What specific patterns define "meaningful" tests? (concrete examples)
 - How deep should assertions go? (URL structure validation depth)
@@ -164,6 +176,7 @@
 - What makes tests "deep" for a URL-building library?
 
 **Resources:**
+
 - Section 1 deliverable (PR #114 patterns)
 - Section 2 deliverable (upstream consistency)
 - Section 3 deliverable (industry standards)
@@ -182,6 +195,7 @@
 **Why Seventh:** Senior dev specifically criticized lack of "end-to-end" tests. After understanding test quality (Section 6), define scope and boundaries of e2e tests.
 
 **Key Questions:**
+
 - What is "end-to-end" for a library that builds URLs but doesn't make HTTP calls?
 - What's the boundary between integration and e2e tests?
 - Do e2e tests mock HTTP responses or use real servers?
@@ -191,6 +205,7 @@
 - What's the test pyramid distribution (unit/integration/e2e)?
 
 **Resources:**
+
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Integration Tests section - 4 workflow types)
 - Section 1-2 deliverables (upstream e2e patterns)
 - Section 3 deliverable (industry e2e standards)
@@ -206,6 +221,7 @@
 **Why Eighth:** After understanding test patterns and quality standards, extract what MUST be tested from the normative specifications.
 
 **Key Questions:**
+
 - What are the normative testing requirements in CSAPI specs?
 - Are there conformance test suites we should reference?
 - What specification examples can be used as test fixtures?
@@ -214,6 +230,7 @@
 - What format validation rules are normative?
 
 **Resources:**
+
 - [CSAPI Part 1 Specification](https://docs.ogc.org/is/23-001/23-001.html)
 - [CSAPI Part 1 OpenAPI](../standards/ogcapi-connectedsystems-1.bundled.oas31.yaml)
 - [CSAPI Part 2 Specification](https://docs.ogc.org/is/23-002/23-002.html)
@@ -232,6 +249,7 @@
 **Why Ninth:** Format parsing is a major rejection risk from previous iteration. Need deep understanding of what "complete" SensorML testing looks like.
 
 **Key Questions:**
+
 - What SensorML 3.0 structures must be tested?
 - What specification examples can be used as fixtures?
 - What edge cases exist in SensorML (recursive components, missing properties)?
@@ -241,6 +259,7 @@
 - What validation rules are normative?
 
 **Resources:**
+
 - [SensorML 3.0 Specification](https://docs.ogc.org/is/23-000r1/23-000r1.html)
 - SensorML 3.0 JSON Schema: https://schemas.opengis.net/sensorml/3.0/
 - [Format Requirements Analysis](../requirements/csapi-format-requirements.md)
@@ -258,6 +277,7 @@
 **Why Tenth:** SWE Common is the most complex format (3 encodings, 12+ component types). Binary encoding is particularly critical and error-prone.
 
 **Key Questions:**
+
 - What SWE Common structures must be tested (DataRecord, DataArray, all 12 components)?
 - How to test all three encodings (JSON, Text, Binary)?
 - What binary encoding edge cases exist (endianness, IEEE 754, multi-byte)?
@@ -267,6 +287,7 @@
 - What error cases must be handled per encoding?
 
 **Resources:**
+
 - [SWE Common 3.0 Specification](https://docs.ogc.org/is/23-011r1/23-011r1.html)
 - SWE Common 3.0 JSON Schema: https://schemas.opengis.net/sweCommon/3.0/
 - [Format Requirements Analysis](../requirements/csapi-format-requirements.md)
@@ -284,6 +305,7 @@
 **Why Eleventh:** GeoJSON is the primary format for Part 1 resources. Need to test CSAPI property extraction and validation while reusing existing parser.
 
 **Key Questions:**
+
 - What CSAPI properties must be extracted from GeoJSON features?
 - What validation rules are specific to CSAPI (uniqueIdentifier URI format, systemType vocab)?
 - How to test all Part 1 resource types (Systems, Deployments, etc.)?
@@ -292,6 +314,7 @@
 - What featureType values must be recognized?
 
 **Resources:**
+
 - [CSAPI Part 1 Specification](https://docs.ogc.org/is/23-001/23-001.html) (GeoJSON encoding requirements)
 - [GeoJSON RFC 7946](https://tools.ietf.org/html/rfc7946)
 - [Format Requirements Analysis](../requirements/csapi-format-requirements.md)
@@ -311,6 +334,7 @@
 **Why Twelfth:** QueryBuilder is the core API surface. After understanding format testing (Sections 9-11), define URL construction testing patterns.
 
 **Key Research Completed:**
+
 - ✅ All 80 methods inventoried across 9 resource types (Systems, Deployments, Procedures, SamplingFeatures, Properties, DataStreams, Observations, ControlStreams, Commands)
 - ✅ "Meaningful" URL testing approach defined (parseAndValidateUrl utility)
 - ✅ Query parameter testing strategy for 10 parameter categories
@@ -323,6 +347,7 @@
 - ✅ Testing estimates (188 tests, 1,880-2,256 lines, 22-29 hours)
 
 **Key Findings:**
+
 - **Method Count:** 80 methods total (12 Systems, 8 Deployments, 8 Procedures, 8 SamplingFeatures, 6 Properties, 11 DataStreams, 9 Observations, 8 ControlStreams, 10 Commands)
 - **Test Scenarios:** ~188 tests with 2.4 tests per method average
 - **URL Validation Depth:** Parse URL into components (protocol, host, pathname, query), validate query parameters as objects, verify encoding
@@ -331,6 +356,7 @@
 - **Fixtures Needed:** 5 JSON files (conformance-all-resources, conformance-part1-only, collection-info-all-resources, collection-info-part1-only, collection-info-no-csapi)
 
 **Resources:**
+
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (CSAPIQueryBuilder specification)
 - [ROADMAP.md](../../planning/ROADMAP.md) (Phase 2: 9 resource type tasks)
 - [URL Building Architecture](../../upstream/url-building-analysis.md)
@@ -348,6 +374,7 @@
 **Why Thirteenth:** After QueryBuilder URL testing strategy (Section 12), define testing for the resource operations built on those URLs.
 
 **Key Questions:**
+
 - What CRUD operations exist per resource type?
 - How to test GET/POST/PUT/PATCH/DELETE systematically?
 - What request body validation is needed for write operations?
@@ -356,6 +383,7 @@
 - How to structure tests consistently across 9 resource types?
 
 **Resources:**
+
 - [CRUD Operations Requirements](../requirements/csapi-crud-operations.md)
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Resource Method Tests specification)
 - [Part 1 Requirements](../requirements/csapi-part1-requirements.md)
@@ -372,6 +400,7 @@
 **Why Fourteenth:** After unit-level testing patterns (Sections 12-13), design multi-component workflows that test interactions.
 
 **Key Questions:**
+
 - How to structure Discovery workflow tests?
 - How to structure Observation workflow tests?
 - How to structure Command workflow tests?
@@ -381,6 +410,7 @@
 - How to validate state changes across workflow steps?
 
 **Resources:**
+
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Integration Tests section - 4 workflows)
 - [Usage Scenarios](../requirements/csapi-usage-scenarios.md)
 - Section 7 deliverable (e2e scope definition)
@@ -397,6 +427,7 @@
 **Why Fifteenth:** After defining all test requirements (Sections 8-14), identify what fixtures are needed and where to source them.
 
 **Key Questions:**
+
 - What fixtures can be extracted from CSAPI specifications?
 - What fixtures can be sourced from OpenSensorHub demo server?
 - What fixtures need to be hand-crafted (edge cases, errors)?
@@ -406,6 +437,7 @@
 - How to keep fixtures in sync with spec updates?
 
 **Resources:**
+
 - [OpenSensorHub Analysis](../requirements/csapi-opensensorhub-analysis.md) (live server access)
 - [52°North Analysis](../requirements/csapi-52north-analysis.md) (server examples)
 - All CSAPI specification example sections
@@ -424,6 +456,7 @@
 **Why Sixteenth:** Worker testing has unique challenges (async, message passing, fallback behavior). Address after core testing patterns established.
 
 **Key Questions:**
+
 - How to test Worker message types in Jest?
 - How to test async parsing operations?
 - How to test fallback for non-worker environments?
@@ -432,6 +465,7 @@
 - What integration tests needed with parsers?
 
 **Resources:**
+
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Worker Extensions section)
 - [ROADMAP.md](../../planning/ROADMAP.md) (Phase 4: Task 1)
 - Existing worker tests in camptocamp/ogc-client
@@ -447,6 +481,7 @@
 **Why Seventeenth:** After defining all test types, set concrete coverage targets validated against upstream standards.
 
 **Key Questions:**
+
 - What overall coverage % is required?
 - What coverage targets per component type (QueryBuilder, parsers, types)?
 - How to measure branch coverage vs statement coverage?
@@ -456,6 +491,7 @@
 - How to track coverage by phase during incremental development?
 
 **Resources:**
+
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Coverage targets: >80%)
 - Section 1-2 deliverables (upstream coverage analysis)
 - Section 3 deliverable (industry standards)
@@ -472,6 +508,7 @@
 **Why Eighteenth:** Error handling is often under-tested. After all component testing patterns defined, systematically address error scenarios.
 
 **Key Questions:**
+
 - What error types must be tested (validation, network, parse, conformance)?
 - How to test error messages are meaningful?
 - What error conditions does CSAPI spec define?
@@ -481,6 +518,7 @@
 - How to structure error tests consistently?
 
 **Resources:**
+
 - [Error Handling Design Analysis](../../upstream/error-handling-analysis.md)
 - [CSAPI Part 1 OpenAPI](../standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) (error schemas)
 - [CSAPI Part 2 OpenAPI](../standards/ogcapi-connectedsystems-2.bundled.oas31.yaml) (error schemas)
@@ -497,6 +535,7 @@
 **Why Nineteenth:** After all test content defined, organize it into coherent file structure matching upstream patterns.
 
 **Key Questions:**
+
 - What test files are needed? (names and purposes)
 - How to organize tests by component vs resource type?
 - Where to locate test files (colocated vs separate test/ directory)?
@@ -506,6 +545,7 @@
 - How to organize fixtures?
 
 **Resources:**
+
 - [File Organization Strategy](../../upstream/file-organization-analysis.md)
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Test file specifications)
 - Section 1-2 deliverables (upstream test file patterns)
@@ -522,6 +562,7 @@
 **Why Twentieth:** Implementation Guide estimates ~4,850-6,500 implementation lines + ~4,500-6,000 test lines. Validate this is appropriate.
 
 **Key Questions:**
+
 - What's the test-to-code ratio in EDR implementation?
 - What's the ratio in other ogc-client implementations?
 - Is ~0.9:1 reasonable for a client library?
@@ -530,6 +571,7 @@
 - Are our estimates missing any test types?
 
 **Resources:**
+
 - Section 1-2 deliverables (upstream ratio analysis)
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (line estimates)
 - [ROADMAP.md](../../planning/ROADMAP.md) (phase-by-phase estimates)
@@ -545,6 +587,7 @@
 **Why 21st:** Type testing is often overlooked but critical for TypeScript libraries. Address after concrete component testing patterns established.
 
 **Key Questions:**
+
 - How to test TypeScript interfaces compile correctly?
 - How to test type discrimination (union types)?
 - How to test generic type constraints?
@@ -553,6 +596,7 @@
 - Are compilation tests sufficient or runtime tests needed?
 
 **Resources:**
+
 - [TypeScript Types Analysis](../../upstream/typescript-types-analysis.md)
 - [Datatype Schema Requirements](../requirements/csapi-datatype-schema-requirements.md)
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Type system specification)
@@ -569,6 +613,7 @@
 **Why 22nd:** Client must adapt to different server capabilities. After all component testing defined, test adaptive behavior.
 
 **Key Questions:**
+
 - How to test conformance class detection from /conformance endpoint?
 - How to test `hasConnectedSystems` method?
 - How to test resource availability checking?
@@ -577,6 +622,7 @@
 - How to mock different server capability profiles?
 
 **Resources:**
+
 - [Conformance Capabilities Requirements](../requirements/csapi-conformance-capabilities.md)
 - [52°North Analysis](../requirements/csapi-52north-analysis.md) (partial conformance example)
 - [OpenSensorHub Analysis](../requirements/csapi-opensensorhub-analysis.md) (full conformance example)
@@ -593,6 +639,7 @@
 **Why 23rd:** Pagination is critical for large datasets. After resource method testing defined (Section 13), test pagination thoroughly.
 
 **Key Questions:**
+
 - How to test offset-based pagination (limit/offset)?
 - How to test cursor-based pagination (limit/cursor)?
 - What edge cases exist (empty pages, boundary conditions)?
@@ -601,6 +648,7 @@
 - What fixtures needed for multi-page scenarios?
 
 **Resources:**
+
 - [CSAPI Part 2 Specification](https://docs.ogc.org/is/23-002/23-002.html) (cursor-based pagination)
 - [Part 2 Requirements](../requirements/csapi-part2-requirements.md)
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Pagination specifications)
@@ -616,6 +664,7 @@
 **Why 24th:** CSAPI has 30+ query parameters with complex interactions. After individual parameter testing (Section 12), test combinations.
 
 **Key Questions:**
+
 - What query parameter combinations are valid?
 - What combinations are invalid/conflicting?
 - How to test parameter precedence rules?
@@ -624,6 +673,7 @@
 - How to structure combination tests systematically (not exhaustive)?
 
 **Resources:**
+
 - [Query Parameter Requirements](../requirements/csapi-query-parameters.md)
 - [CSAPI Part 1 OpenAPI](../standards/ogcapi-connectedsystems-1.bundled.oas31.yaml)
 - [CSAPI Part 2 OpenAPI](../standards/ogcapi-connectedsystems-2.bundled.oas31.yaml)
@@ -640,6 +690,7 @@
 **Why 25th:** Multiple formats per resource type require negotiation. After format parsing testing (Sections 9-11), test negotiation.
 
 **Key Questions:**
+
 - How to test Accept header format selection?
 - How to test query parameter format selection (`f=geojson` vs `f=sensorml`)?
 - How to test link-based format discovery?
@@ -648,6 +699,7 @@
 - What fixtures needed for format negotiation scenarios?
 
 **Resources:**
+
 - [Format Negotiation Architecture](../../upstream/format-negotiation-analysis.md)
 - [Format Requirements](../requirements/csapi-format-requirements-3.1.md)
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Format negotiation specifications)
@@ -663,6 +715,7 @@
 **Why 26th:** CSAPI has rich hierarchical relationships. After resource method testing (Section 13), test navigation.
 
 **Key Questions:**
+
 - How to test all nested endpoint patterns?
 - How to test bidirectional navigation?
 - How to test query parameters on nested endpoints?
@@ -671,6 +724,7 @@
 - What fixtures needed for hierarchy scenarios?
 
 **Resources:**
+
 - [Sub-Resource Navigation Requirements](../requirements/csapi-subresource-navigation.md)
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Navigation methods)
 - [ROADMAP.md](../../planning/ROADMAP.md) (Phase 2: All navigation methods)
@@ -686,6 +740,7 @@
 **Why 27th:** Schema validation is unique to CSAPI Part 2. After format testing (Section 10), test schema-driven validation.
 
 **Key Questions:**
+
 - How to test observation result validation against DataStream schema?
 - How to test command parameter validation against ControlStream schema?
 - What schema mismatch scenarios must be tested?
@@ -694,6 +749,7 @@
 - How to test error messages for schema violations?
 
 **Resources:**
+
 - [CSAPI Part 2 Specification](https://docs.ogc.org/is/23-002/23-002.html) (schema requirements)
 - [Part 2 Requirements](../requirements/csapi-part2-requirements.md)
 - [SWE Common 3.0 Specification](https://docs.ogc.org/is/23-011r1/23-011r1.html)
@@ -710,6 +766,7 @@
 **Why 28th:** Temporal queries are critical for observations and commands. After query parameter testing (Section 24), deep dive on temporal.
 
 **Key Questions:**
+
 - How to test all ISO 8601 interval formats?
 - How to test open-ended intervals (`../..`, `2024-01-01/..`, `../2024-12-31`)?
 - How to test instant vs interval queries?
@@ -718,6 +775,7 @@
 - How to test temporal validation errors?
 
 **Resources:**
+
 - [Query Parameter Requirements](../requirements/csapi-query-parameters.md) (temporal parameters)
 - ISO 8601 specification
 - [CSAPI Part 2 Specification](https://docs.ogc.org/is/23-002/23-002.html) (temporal queries)
@@ -733,6 +791,7 @@
 **Why 29th:** Spatial queries are critical for Part 1 resources. After query parameter testing (Section 24), deep dive on spatial.
 
 **Key Questions:**
+
 - How to test bbox query parameter?
 - How to test geometry intersection queries?
 - What CRS handling is required?
@@ -741,6 +800,7 @@
 - What fixtures needed for spatial scenarios?
 
 **Resources:**
+
 - [Query Parameter Requirements](../requirements/csapi-query-parameters.md) (spatial parameters)
 - [CSAPI Part 1 Specification](https://docs.ogc.org/is/23-001/23-001.html) (spatial queries)
 - GeoJSON RFC 7946 (spatial structures)
@@ -756,6 +816,7 @@
 **Why 30th:** Bulk operations have unique performance and validation considerations. After individual operation testing (Section 13), test bulk.
 
 **Key Questions:**
+
 - How to test bulk observation creation?
 - How to test bulk command creation?
 - What request size limits must be tested?
@@ -764,6 +825,7 @@
 - What fixtures needed for bulk scenarios?
 
 **Resources:**
+
 - [CSAPI Part 2 Specification](https://docs.ogc.org/is/23-002/23-002.html) (bulk operations)
 - [Part 2 Requirements](../requirements/csapi-part2-requirements.md)
 - [CRUD Operations Requirements](../requirements/csapi-crud-operations.md)
@@ -779,6 +841,7 @@
 **Why 31st:** Command lifecycle is unique to CSAPI. After individual operations tested (Section 13), test complete workflow.
 
 **Key Questions:**
+
 - How to test command submission?
 - How to test status tracking (pending → executing → completed)?
 - How to test result retrieval?
@@ -787,6 +850,7 @@
 - What fixtures needed for lifecycle scenarios?
 
 **Resources:**
+
 - [CSAPI Part 2 Specification](https://docs.ogc.org/is/23-002/23-002.html) (command operations)
 - [Part 2 Requirements](../requirements/csapi-part2-requirements.md)
 - [Usage Scenarios](../requirements/csapi-usage-scenarios.md) (command workflows)
@@ -802,6 +866,7 @@
 **Why 32nd:** After all component testing defined, validate against real servers to catch interoperability issues.
 
 **Key Questions:**
+
 - How to test against OpenSensorHub demo server?
 - How to test against 52°North demo server?
 - What server variations must be accommodated?
@@ -810,6 +875,7 @@
 - How to structure compatibility test suite?
 
 **Resources:**
+
 - [OpenSensorHub Analysis](../requirements/csapi-opensensorhub-analysis.md) (live server: http://45.55.99.236:8080/sensorhub/api)
 - [52°North Analysis](../requirements/csapi-52north-analysis.md) (live server: https://csa.demo.52north.org/)
 - [Conformance Capabilities](../requirements/csapi-conformance-capabilities.md)
@@ -825,6 +891,7 @@
 **Why 33rd:** After functional testing defined, address non-functional requirements like performance.
 
 **Key Questions:**
+
 - What performance benchmarks are required?
 - How to test parser performance (especially Binary SWE Common)?
 - How to test with large datasets (1000+ observations)?
@@ -833,6 +900,7 @@
 - What performance regression tests are needed?
 
 **Resources:**
+
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (performance characteristics)
 - [SWE Common Specification](https://docs.ogc.org/is/23-011r1/23-011r1.html) (Binary encoding efficiency)
 - Section 16 deliverable (Worker testing strategy)
@@ -848,6 +916,7 @@
 **Why 34th:** After all test patterns defined, identify common utilities needed across test suites.
 
 **Key Questions:**
+
 - What test utilities are needed for URL validation?
 - What fixtures loading helpers are needed?
 - What assertion helpers improve test readability?
@@ -856,6 +925,7 @@
 - What utilities exist upstream we can reuse?
 
 **Resources:**
+
 - Section 1-2 deliverables (upstream test utilities)
 - All previous section deliverables (common test patterns)
 - [File Organization Strategy](../../upstream/file-organization-analysis.md)
@@ -871,6 +941,7 @@
 **Why 35th:** After test organization defined (Section 19), establish documentation standards for test maintainability.
 
 **Key Questions:**
+
 - What JSDoc comments are needed in test files?
 - How to document test intent and expected behavior?
 - How to document fixture provenance in tests?
@@ -879,6 +950,7 @@
 - How do upstream implementations document tests?
 
 **Resources:**
+
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (Documentation standards)
 - Section 1-2 deliverables (upstream test documentation patterns)
 - TypeDoc documentation standards
@@ -894,6 +966,7 @@
 **Why 36th:** Final validation tool. After all testing patterns and standards defined, create quality gate.
 
 **Key Questions:**
+
 - What specific checklist items validate "meaningful" tests?
 - What defines "useful" tests objectively?
 - What constitutes "deep" testing for each component type?
@@ -902,6 +975,7 @@
 - What's the sign-off process before tests are considered done?
 
 **Resources:**
+
 - Section 6 deliverable ("Meaningful vs Trivial" guide)
 - Section 7 deliverable (e2e scope definition)
 - All previous section deliverables (component-specific quality criteria)
@@ -918,6 +992,7 @@
 **Why 37th:** Tests must remain valuable long-term. After all testing defined, plan for maintenance.
 
 **Key Questions:**
+
 - How to keep tests in sync with spec updates?
 - How to handle upstream library changes?
 - How to refactor tests when implementation changes?
@@ -926,6 +1001,7 @@
 - How to document test maintenance responsibilities?
 
 **Resources:**
+
 - [Lessons Learned Analysis](../requirements/lessons-learned-analysis.md) (maintenance issues from previous iteration)
 - Section 15 deliverable (fixture maintenance)
 
@@ -940,6 +1016,7 @@
 **Why Last:** After all research complete, create the practical guide that developers will follow during Phase 1-4 implementation.
 
 **Key Questions:**
+
 - What's the step-by-step process for writing tests for each component?
 - What's the workflow for each roadmap phase?
 - How to validate tests as you write them?
@@ -948,6 +1025,7 @@
 - What examples illustrate each pattern?
 
 **Resources:**
+
 - ALL previous section deliverables (comprehensive synthesis)
 - [ROADMAP.md](../../planning/ROADMAP.md) (34-task implementation plan)
 - [Implementation Guide](../../planning/csapi-implementation-guide.md) (complete specifications)
@@ -959,17 +1037,20 @@
 ## Research Execution Plan
 
 **Phase 1: Critical Foundation (Sections 1-3, ~6-8 hours)**
+
 - Section 1: PR #114 Analysis (Blueprint)
 - Section 2: Upstream Test Survey (Consistency)
 - Section 3: TypeScript Best Practices (Industry standards)
 
 **Phase 2: Architecture Integration (Sections 4-7, ~4-6 hours)**
+
 - Section 4: Implementation Guide Analysis
 - Section 5: Roadmap Integration Strategy
 - Section 6: "Meaningful vs Trivial" Definition
 - Section 7: E2E Testing Scope
 
 **Phase 3: Component Requirements (Sections 8-13, ~8-10 hours)**
+
 - Section 8: CSAPI Spec Test Requirements
 - Section 9: SensorML Testing Requirements
 - Section 10: SWE Common Testing Requirements
@@ -978,6 +1059,7 @@
 - Section 13: Resource Method Testing Patterns
 
 **Phase 4: Integration & Organization (Sections 14-20, ~6-8 hours)**
+
 - Section 14: Integration Test Workflow Design
 - Section 15: Fixture Sourcing Strategy
 - Section 16: Worker Extensions Testing
@@ -987,6 +1069,7 @@
 - Section 20: Test-to-Code Ratio Validation
 
 **Phase 5: Specialized Testing (Sections 21-31, ~10-12 hours)**
+
 - Section 21: TypeScript Type Testing
 - Section 22: Conformance Testing
 - Section 23: Pagination Testing
@@ -1000,11 +1083,13 @@
 - Section 31: Command Lifecycle Testing
 
 **Phase 6: Quality & Compatibility (Sections 32-34, ~4-6 hours)**
+
 - Section 32: Real-World Server Compatibility
 - Section 33: Performance Testing
 - Section 34: Test Utility Design
 
 **Phase 7: Documentation & Synthesis (Sections 35-38, ~4-6 hours)**
+
 - Section 35: JSDoc Testing Standards
 - Section 36: Test Quality Checklist
 - Section 37: Test Maintenance Strategy
@@ -1030,7 +1115,7 @@ Research is complete and ready for implementation when:
 ✅ **Coverage Targeted:** Specific % targets set per component type  
 ✅ **Organization Defined:** Complete test file structure and naming conventions  
 ✅ **Quality Validated:** Checklist created to validate test quality before completion  
-✅ **Playbook Ready:** Step-by-step testing guide ready for Phase 1 implementation  
+✅ **Playbook Ready:** Step-by-step testing guide ready for Phase 1 implementation
 
 **Final Gate:** Can answer "What would a maintainer expect to see?" with concrete specifications and examples, not vague descriptions.
 
@@ -1039,6 +1124,7 @@ Research is complete and ready for implementation when:
 ## Version History
 
 **Version 1.0 (February 5, 2026):**
+
 - Initial research plan outline with 38 sections
 - Structured by dependency order (upstream patterns first, specialized testing last)
 - Integrated with Implementation Guide and Roadmap as resources
@@ -1046,4 +1132,5 @@ Research is complete and ready for implementation when:
 - 42-56 hour research estimate before implementation begins
 
 **Previous Versions:**
+
 - [v1.0 (archived)](archive/testing-strategy-research-v1.md) - Original high-level research questions document (outdated)

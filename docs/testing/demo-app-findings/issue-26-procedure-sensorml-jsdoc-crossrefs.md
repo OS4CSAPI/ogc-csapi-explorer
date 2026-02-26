@@ -1,8 +1,7 @@
 # Findings Report: Issue #26 — Add JSDoc Cross-References Between Procedure (model.ts) and SensorML Process Types (sensorml/types.ts)
 
 > **Date**: 2026-02-18
-> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#26](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/26)
-> **Labels on source issue**: `documentation`, `enhancement`
+> **Source Issue**: [OS4CSAPI/ogc-csapi-explorer#26](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/26) > **Labels on source issue**: `documentation`, `enhancement`
 
 ---
 
@@ -30,14 +29,15 @@ Issue #26 identifies a genuine documentation gap in our CSAPI client library. Th
 
 Two files in our library describe the same concept (Procedure/process methodology) from different angles but never cross-reference each other:
 
-| File | What it describes | Cross-reference gap |
-|---|---|---|
-| `model.ts` (~L312–L343) | `Procedure` interface — GeoJSON representation | Says "detailed descriptions use SensorML" but links to no SensorML types |
-| `sensorml/types.ts` (916 lines) | `SensorMLProcess` union — SensorML representation | The word "Procedure" never appears in the file |
+| File                            | What it describes                                 | Cross-reference gap                                                      |
+| ------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
+| `model.ts` (~L312–L343)         | `Procedure` interface — GeoJSON representation    | Says "detailed descriptions use SensorML" but links to no SensorML types |
+| `sensorml/types.ts` (916 lines) | `SensorMLProcess` union — SensorML representation | The word "Procedure" never appears in the file                           |
 
 ### The conceptual relationship
 
 The same Procedure resource is returned in different formats depending on the `Accept` header:
+
 - `Accept: application/geo+json` → `Procedure` interface (model.ts)
 - `Accept: application/sml+json` → `SensorMLProcess` union — one of `SimpleProcess`, `AggregateProcess`, `PhysicalComponent`, `PhysicalSystem` (sensorml/types.ts)
 
@@ -83,7 +83,7 @@ The phrase "detailed descriptions use SensorML" is a dead end — a developer re
 
 Current state of the `SensorMLProcess` JSDoc (sensorml/types.ts L799–L818):
 
-```typescript
+````typescript
 /**
  * Discriminated union of all four concrete SensorML process types.
  *
@@ -99,7 +99,7 @@ Current state of the `SensorMLProcess` JSDoc (sensorml/types.ts L799–L818):
  * }
  * ```
  */
-```
+````
 
 No mention of "Procedure" anywhere — a developer looking at this type has no indication that it represents the SensorML view of a CSAPI Procedure resource.
 
@@ -112,14 +112,14 @@ The proposed changes follow the established documentation patterns. They are not
 
 ### Risk assessment: Minimal
 
-| Risk factor | Assessment |
-|---|---|
-| Compilation impact | **None** — JSDoc comments are stripped by the TypeScript compiler |
-| Test impact | **None** — JSDoc changes cannot affect runtime behavior |
-| Behavioral impact | **None** — no type signatures, no runtime code, no exports change |
-| Diff size | **Small** — approximately 15–20 lines of JSDoc additions across 2 files |
-| Pattern consistency | **High** — follows existing `@see`/`@link` conventions in both files |
-| Reversibility | **Trivial** — comment-only changes are easily reverted |
+| Risk factor         | Assessment                                                              |
+| ------------------- | ----------------------------------------------------------------------- |
+| Compilation impact  | **None** — JSDoc comments are stripped by the TypeScript compiler       |
+| Test impact         | **None** — JSDoc changes cannot affect runtime behavior                 |
+| Behavioral impact   | **None** — no type signatures, no runtime code, no exports change       |
+| Diff size           | **Small** — approximately 15–20 lines of JSDoc additions across 2 files |
+| Pattern consistency | **High** — follows existing `@see`/`@link` conventions in both files    |
+| Reversibility       | **Trivial** — comment-only changes are easily reverted                  |
 
 ### This is distinct from prior "no action required" findings
 
@@ -132,12 +132,12 @@ Prior findings (Issues #18, #19, #21, #22) were about demo app concerns that did
 
 ### Operational constraints compliance
 
-| Constraint | Compliance |
-|---|---|
-| §2.1 "Do not expand scope beyond the issue description" | **Compliant** — changes are limited to the 3 JSDoc blocks identified in the issue |
-| §2.2 "Prefer minimal diffs over idealized rewrites" | **Compliant** — adds JSDoc lines to existing comment blocks; no structural changes |
-| §2.2 "Do not introduce new abstractions, layers, or dependencies" | **Compliant** — no new code, types, or dependencies |
-| §2.3 "Do not refactor for style" | **Compliant** — this is not a style refactor; it adds factual cross-references between related types |
+| Constraint                                                        | Compliance                                                                                           |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| §2.1 "Do not expand scope beyond the issue description"           | **Compliant** — changes are limited to the 3 JSDoc blocks identified in the issue                    |
+| §2.2 "Prefer minimal diffs over idealized rewrites"               | **Compliant** — adds JSDoc lines to existing comment blocks; no structural changes                   |
+| §2.2 "Do not introduce new abstractions, layers, or dependencies" | **Compliant** — no new code, types, or dependencies                                                  |
+| §2.3 "Do not refactor for style"                                  | **Compliant** — this is not a style refactor; it adds factual cross-references between related types |
 
 ---
 
@@ -160,6 +160,7 @@ Prior findings (Issues #18, #19, #21, #22) were about demo app concerns that did
 ### Scope guard
 
 The fix should be limited to exactly what Issue #26 describes:
+
 - Add `@link` and `@see` to the `Procedure` interface JSDoc in model.ts
 - Add a "CSAPI Relationship" note to the module-level JSDoc in sensorml/types.ts
 - Add a `Procedure` cross-reference to the `SensorMLProcess` union JSDoc in sensorml/types.ts
@@ -170,20 +171,20 @@ No other changes should be made. No type signatures, no runtime code, no new exp
 
 ## Cross-References
 
-| Document | Relevance |
-|---|---|
-| [AI Operational Constraints §2.1, §2.2, §2.3](../../governance/AI_OPERATIONAL_CONSTRAINTS.md) | Scope boundaries, minimal diffs, no style refactoring — all satisfied by JSDoc-only changes |
-| [procedure-sensorml-type-mapping.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/procedure-sensorml-type-mapping.md) | **Primary reference** — documents the Procedure↔SensorML relationship, identifies the JSDoc cross-reference gap, and provides the conceptual mapping |
-| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Verifies "JSDoc documentation for all public APIs" claim; adding cross-references strengthens this claim |
-| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md) | F-9 mentions `Procedure` in the union return type context; unrelated to JSDoc cross-references |
-| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md) | Comprehensive gap analysis; does not identify this specific JSDoc gap |
-| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md) | Finding #10 discusses `Procedure` type properties; unrelated to JSDoc cross-references |
-| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | Conformance gating architecture; unrelated |
-| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md) | F-15, F-16 CRUD findings; unrelated |
-| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md) | Cross-server testing; Finding #6 mentions SensorML parse failure but about runtime parsing, not JSDoc |
-| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md) | Write operation testing; unrelated |
-| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md) | EndpointError module refactor; unrelated |
-| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md) | Confirms only 1 source commit during demo development; unrelated |
-| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md) | F-13 identifies JSDoc issues in schema methods (different area); unrelated to Procedure/SensorML |
-| [model.ts](../../src/ogc-api/csapi/model.ts) | `Procedure` interface at L323 — JSDoc mentions SensorML but has no cross-references to SensorML types |
-| [sensorml/types.ts](../../src/ogc-api/csapi/formats/sensorml/types.ts) | `SensorMLProcess` union at L814 — JSDoc never mentions "Procedure"; module JSDoc has no CSAPI relationship note |
+| Document                                                                                                                                                       | Relevance                                                                                                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [AI Operational Constraints §2.1, §2.2, §2.3](../../governance/AI_OPERATIONAL_CONSTRAINTS.md)                                                                  | Scope boundaries, minimal diffs, no style refactoring — all satisfied by JSDoc-only changes                                                          |
+| [procedure-sensorml-type-mapping.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/procedure-sensorml-type-mapping.md)             | **Primary reference** — documents the Procedure↔SensorML relationship, identifies the JSDoc cross-reference gap, and provides the conceptual mapping |
+| [contribution-goal-accuracy-assessment.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/contribution-goal-accuracy-assessment.md) | Verifies "JSDoc documentation for all public APIs" claim; adding cross-references strengthens this claim                                             |
+| [upstream-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/upstream-findings.md)                                                     | F-9 mentions `Procedure` in the union return type context; unrelated to JSDoc cross-references                                                       |
+| [library-findings-gap-analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-findings-gap-analysis.md)                 | Comprehensive gap analysis; does not identify this specific JSDoc gap                                                                                |
+| [library-integration-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-integration-report.md)                       | Finding #10 discusses `Procedure` type properties; unrelated to JSDoc cross-references                                                               |
+| [conformance-bypass-architecture-notes.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/conformance-bypass-architecture-notes.md) | Conformance gating architecture; unrelated                                                                                                           |
+| [crud-smoke-test-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/crud-smoke-test-findings.md)                           | F-15, F-16 CRUD findings; unrelated                                                                                                                  |
+| [e2e-cross-server-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-cross-server-report.md)                             | Cross-server testing; Finding #6 mentions SensorML parse failure but about runtime parsing, not JSDoc                                                |
+| [e2e-write-operations-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/e2e-write-operations-report.md)                     | Write operation testing; unrelated                                                                                                                   |
+| [endpoint-error-isolation-report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/endpoint-error-isolation-report.md)             | EndpointError module refactor; unrelated                                                                                                             |
+| [library-source-changes-audit.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/library-source-changes-audit.md)                   | Confirms only 1 source commit during demo development; unrelated                                                                                     |
+| [schema-display-findings.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/webapp-demo/schema-display-findings.md)                             | F-13 identifies JSDoc issues in schema methods (different area); unrelated to Procedure/SensorML                                                     |
+| [model.ts](../../src/ogc-api/csapi/model.ts)                                                                                                                   | `Procedure` interface at L323 — JSDoc mentions SensorML but has no cross-references to SensorML types                                                |
+| [sensorml/types.ts](../../src/ogc-api/csapi/formats/sensorml/types.ts)                                                                                         | `SensorMLProcess` union at L814 — JSDoc never mentions "Procedure"; module JSDoc has no CSAPI relationship note                                      |

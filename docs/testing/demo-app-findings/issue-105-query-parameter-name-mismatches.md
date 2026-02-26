@@ -29,11 +29,11 @@ This report was triggered by [ogc-csapi-explorer#35](https://github.com/OS4CSAPI
 
 ### Verification Summary
 
-| Category | Count | Details |
-|---|---|---|
-| **Confirmed spec mismatches** | 6 | Wire name differs from OGC normative requirement |
-| **Non-spec extensions** | 2 | Parameters not defined in OGC spec (OSH-specific) |
-| **Correctly named** | 12+ | Already match spec |
+| Category                      | Count | Details                                           |
+| ----------------------------- | ----- | ------------------------------------------------- |
+| **Confirmed spec mismatches** | 6     | Wire name differs from OGC normative requirement  |
+| **Non-spec extensions**       | 2     | Parameters not defined in OGC spec (OSH-specific) |
+| **Correctly named**           | 12+   | Already match spec                                |
 
 **Recommendation**: FIX — Add a `PARAM_NAME_MAP` remapping layer inside `buildQueryString()` to translate TypeScript property names to OGC-spec parameter names. Do **NOT** rename TypeScript interface properties (that would be a breaking API change). Model property names (e.g., `Command.currentStatus`, `DataStream.systemId`) remain unchanged — those are internal representations, not query parameters.
 
@@ -78,28 +78,28 @@ There is no remapping step between the TypeScript property name (`key`) and the 
 
 The interfaces define property names that sometimes match the spec and sometimes don't:
 
-| Interface | Property | Matches spec? |
-|---|---|---|
-| `SystemQueryOptions` | `parent` | ✅ |
-| `SystemQueryOptions` | `procedureId` | ❌ (spec: `procedure`) |
-| `SystemQueryOptions` | `foiId` | ❌ (spec: `foi`) |
-| `SystemQueryOptions` | `observedPropertyId` | ❌ (spec: `observedProperty`) |
-| `SystemQueryOptions` | `controlledPropertyId` | ❌ (spec: `controlledProperty`) |
-| `SystemQueryOptions` | `recursive` | ✅ |
-| `DeploymentQueryOptions` | `parent` | ✅ |
-| `DeploymentQueryOptions` | `systemId` | ❌ (spec: `system`) |
-| `DeploymentQueryOptions` | `recursive` | ✅ |
-| `PropertyQueryOptions` | `system` | ✅ |
-| `PropertyQueryOptions` | `baseProperty` | ✅ |
-| `DatastreamQueryOptions` | `systemId` | ⚠️ Not a spec parameter |
-| `DatastreamQueryOptions` | `observedPropertyId` | ❌ (spec: `observedProperty`) |
-| `DatastreamQueryOptions` | `phenomenonTime` | ✅ |
-| `DatastreamQueryOptions` | `resultTime` | ✅ |
-| `ControlStreamQueryOptions` | `systemId` | ⚠️ Not a spec parameter |
+| Interface                   | Property               | Matches spec?                   |
+| --------------------------- | ---------------------- | ------------------------------- |
+| `SystemQueryOptions`        | `parent`               | ✅                              |
+| `SystemQueryOptions`        | `procedureId`          | ❌ (spec: `procedure`)          |
+| `SystemQueryOptions`        | `foiId`                | ❌ (spec: `foi`)                |
+| `SystemQueryOptions`        | `observedPropertyId`   | ❌ (spec: `observedProperty`)   |
+| `SystemQueryOptions`        | `controlledPropertyId` | ❌ (spec: `controlledProperty`) |
+| `SystemQueryOptions`        | `recursive`            | ✅                              |
+| `DeploymentQueryOptions`    | `parent`               | ✅                              |
+| `DeploymentQueryOptions`    | `systemId`             | ❌ (spec: `system`)             |
+| `DeploymentQueryOptions`    | `recursive`            | ✅                              |
+| `PropertyQueryOptions`      | `system`               | ✅                              |
+| `PropertyQueryOptions`      | `baseProperty`         | ✅                              |
+| `DatastreamQueryOptions`    | `systemId`             | ⚠️ Not a spec parameter         |
+| `DatastreamQueryOptions`    | `observedPropertyId`   | ❌ (spec: `observedProperty`)   |
+| `DatastreamQueryOptions`    | `phenomenonTime`       | ✅                              |
+| `DatastreamQueryOptions`    | `resultTime`           | ✅                              |
+| `ControlStreamQueryOptions` | `systemId`             | ⚠️ Not a spec parameter         |
 | `ControlStreamQueryOptions` | `controlledPropertyId` | ❌ (spec: `controlledProperty`) |
-| `CommandQueryOptions` | `issueTime` | ✅ |
-| `CommandQueryOptions` | `executionTime` | ✅ |
-| `CommandQueryOptions` | `currentStatus` | ❌ (spec: `statusCode`) |
+| `CommandQueryOptions`       | `issueTime`            | ✅                              |
+| `CommandQueryOptions`       | `executionTime`        | ✅                              |
+| `CommandQueryOptions`       | `currentStatus`        | ❌ (spec: `statusCode`)         |
 
 Note that `PropertyQueryOptions` already uses the correct spec names (`system`, `baseProperty`), demonstrating that the inconsistency is accidental, not a deliberate design pattern.
 
@@ -119,7 +119,7 @@ Each mismatch was verified against the normative requirement text in the OGC sta
 - **OpenAPI fragment in spec**: `name: statusCode`
 - **Wire example**: `{api_root}/commands?statusCode=PENDING`
 - **Our wire output**: `?currentStatus=PENDING`
-- **Note**: The Command *resource property* is correctly named `currentStatus` (Table 11 in §10.7.1). The distinction is: the resource attribute is `currentStatus`, but the query filter parameter is `statusCode`. These are deliberately different names in the spec.
+- **Note**: The Command _resource property_ is correctly named `currentStatus` (Table 11 in §10.7.1). The distinction is: the resource attribute is `currentStatus`, but the query filter parameter is `statusCode`. These are deliberately different names in the spec.
 
 #### 2. `foiId` → `foi`
 
@@ -190,14 +190,14 @@ The `systemId` property on these QueryOptions interfaces appears to be an OpenSe
 
 ### Scope of Affected Code
 
-| Component | Impact |
-|---|---|
-| `buildQueryString()` in `url_builder.ts` | Must add remapping layer |
-| `model.ts` interfaces | **NO CHANGE** — TypeScript property names are preserved |
-| Parsed resource objects | **NO CHANGE** — `DataStream.systemId`, `Command.currentStatus` etc. are model properties, not query params |
-| `url_builder.spec.ts` assertions | Must update expected URLs in ~17 assertions |
-| Parsers (`part1.ts`, `part2.ts`) | **NO CHANGE** — parsers populate model objects, not query params |
-| Integration tests | **NO CHANGE** — use model objects, not wire URLs |
+| Component                                | Impact                                                                                                     |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `buildQueryString()` in `url_builder.ts` | Must add remapping layer                                                                                   |
+| `model.ts` interfaces                    | **NO CHANGE** — TypeScript property names are preserved                                                    |
+| Parsed resource objects                  | **NO CHANGE** — `DataStream.systemId`, `Command.currentStatus` etc. are model properties, not query params |
+| `url_builder.spec.ts` assertions         | Must update expected URLs in ~17 assertions                                                                |
+| Parsers (`part1.ts`, `part2.ts`)         | **NO CHANGE** — parsers populate model objects, not query params                                           |
+| Integration tests                        | **NO CHANGE** — use model objects, not wire URLs                                                           |
 
 ---
 
@@ -231,12 +231,14 @@ private buildQueryString(options?: QueryOptions): string {
 ```
 
 **Advantages**:
+
 - Preserves TypeScript API — no breaking change for consumers
 - Contained to a single method
 - Trivially testable
 - Can be extended if future mismatches are discovered
 
 **Risks**:
+
 - Changes wire format for 6 parameters (this is intentional — the current wire format is incorrect)
 - Existing tests that assert URL strings must be updated (~17 assertions)
 
@@ -245,6 +247,7 @@ private buildQueryString(options?: QueryOptions): string {
 Renaming `currentStatus` to `statusCode` in `CommandQueryOptions`, `foiId` to `foi` in `SystemQueryOptions`, etc.
 
 **Why not**:
+
 - **Breaking API change** for all consumers of the library
 - Would also create naming confusion: `Command.currentStatus` (model property) would coexist with `CommandQueryOptions.statusCode` (query param) — less intuitive than hiding the remapping internally
 - Larger diff, harder to review
@@ -255,6 +258,7 @@ Renaming `currentStatus` to `statusCode` in `CommandQueryOptions`, `foiId` to `f
 The `PARAM_NAME_MAP` approach has one subtle consideration regarding the `systemId` entries in `DatastreamQueryOptions` and `ControlStreamQueryOptions`:
 
 The map entry `systemId: 'system'` would remap `systemId` universally — including for DataStream and ControlStream queries where `systemId` is an OSH extension (not a spec parameter). Remapping to `system` for these cases is reasonable because:
+
 1. If/when the spec adds this parameter, `system` is the most likely name (consistent with Deployment's `system` parameter)
 2. OSH likely accepts both forms
 3. The alternative — context-dependent remapping — adds disproportionate complexity
@@ -265,24 +269,24 @@ However, if there is concern about this, the `systemId` entry could be omitted f
 
 ## Risk Assessment
 
-| Risk Factor | Assessment |
-|---|---|
-| **Backward compatibility (TypeScript API)** | **None** — QueryOptions interface properties are not renamed. |
-| **Wire format change** | **Yes, intentional** — 6 URL parameter names change to match OGC spec. |
-| **Behavioral change for OSH users** | **None expected** — OSH accepts both forms per Issue #105 note. |
-| **Behavioral change for spec-compliant servers** | **Positive** — filters that were silently ignored will now work correctly. |
-| **Model property names** | **Unchanged** — `Command.currentStatus`, `DataStream.systemId`, etc. remain as-is. |
-| **Test maintenance** | **~17 assertions** update expected URL strings. |
-| **Pattern consistency** | **Improves** — `PropertyQueryOptions` already uses correct names; this aligns the rest. |
-| **Estimated diff size** | ~60 lines (10-line map + 2-line `buildQueryString` change + ~17 test assertion updates). |
+| Risk Factor                                      | Assessment                                                                               |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| **Backward compatibility (TypeScript API)**      | **None** — QueryOptions interface properties are not renamed.                            |
+| **Wire format change**                           | **Yes, intentional** — 6 URL parameter names change to match OGC spec.                   |
+| **Behavioral change for OSH users**              | **None expected** — OSH accepts both forms per Issue #105 note.                          |
+| **Behavioral change for spec-compliant servers** | **Positive** — filters that were silently ignored will now work correctly.               |
+| **Model property names**                         | **Unchanged** — `Command.currentStatus`, `DataStream.systemId`, etc. remain as-is.       |
+| **Test maintenance**                             | **~17 assertions** update expected URL strings.                                          |
+| **Pattern consistency**                          | **Improves** — `PropertyQueryOptions` already uses correct names; this aligns the rest.  |
+| **Estimated diff size**                          | ~60 lines (10-line map + 2-line `buildQueryString` change + ~17 test assertion updates). |
 
 ### Stop Condition Check (per AI_OPERATIONAL_CONSTRAINTS.md)
 
-| Condition | Status |
-|---|---|
-| Spec authority unclear? | **No** — all 6 mismatches traced to normative requirements with OpenAPI fragments. |
-| Risk of data loss? | **No** — the fix *prevents* current silent data loss. Without the fix, filters are silently ignored. |
-| Changes silently alter library behavior? | **No** — the wire format change is deliberate and documented. The TypeScript API is unchanged. |
+| Condition                                | Status                                                                                               |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Spec authority unclear?                  | **No** — all 6 mismatches traced to normative requirements with OpenAPI fragments.                   |
+| Risk of data loss?                       | **No** — the fix _prevents_ current silent data loss. Without the fix, filters are silently ignored. |
+| Changes silently alter library behavior? | **No** — the wire format change is deliberate and documented. The TypeScript API is unchanged.       |
 
 **All stop conditions clear. Implementation may proceed with explicit caution.**
 
@@ -295,11 +299,13 @@ However, if there is concern about this, the `systemId` entry could be omitted f
 ### Scope Boundaries
 
 **MUST change**:
+
 1. Add `PARAM_NAME_MAP` static dictionary to `CSAPIQueryBuilder`
 2. Apply remapping in `buildQueryString()` before `params.append()`
 3. Update ~17 test assertions in `url_builder.spec.ts` to expect corrected parameter names
 
 **MUST NOT change**:
+
 1. TypeScript interface property names in `model.ts` — no breaking API changes
 2. Model property names on parsed resource objects (`Command.currentStatus`, `DataStream.systemId`, etc.)
 3. Parser logic in `part1.ts`, `part2.ts`, `part1.spec.ts`, `part2.spec.ts`
@@ -315,12 +321,12 @@ This is a correctness bug that causes silent filter failures. It should be addre
 
 ## Related Issues
 
-| Issue | Relationship |
-|---|---|
-| [#105](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/105) | Source issue for this report |
-| [#106](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/106) | Missing Part 2 query option fields — dependent on #105 (new params should use correct names) |
-| [#107](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/107) | Nested builder methods accept base QueryOptions — related but independent |
-| [ogc-csapi-explorer#35](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/35) | Demo app issue that discovered the mismatch |
+| Issue                                                                             | Relationship                                                                                 |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [#105](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/105)                 | Source issue for this report                                                                 |
+| [#106](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/106)                 | Missing Part 2 query option fields — dependent on #105 (new params should use correct names) |
+| [#107](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/107)                 | Nested builder methods accept base QueryOptions — related but independent                    |
+| [ogc-csapi-explorer#35](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/35) | Demo app issue that discovered the mismatch                                                  |
 
 ---
 
@@ -328,48 +334,48 @@ This is a correctness bug that causes silent filter failures. It should be addre
 
 ### A. Reference Documents
 
-| # | Document | Relevance |
-|---|---|---|
-| 1 | [OGC 23-001 — Connected Systems API Part 1](https://docs.ogc.org/is/23-001/23-001.html) | §16 Advanced Filtering — normative query parameter definitions for Systems, Deployments, Procedures, SamplingFeatures, Properties |
-| 2 | [OGC 23-002 — Connected Systems API Part 2](https://docs.ogc.org/is/23-002/23-002.html) | §13 Advanced Filtering — normative query parameter definitions for DataStreams, Observations, ControlStreams, Commands, CommandStatus |
-| 3 | [AI_OPERATIONAL_CONSTRAINTS.md](../../governance/AI_OPERATIONAL_CONSTRAINTS.md) | Mandatory operational constraints governing this assessment |
-| 4 | [Issue #105](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/105) | Source issue identifying the parameter name mismatches |
-| 5 | [ogc-csapi-explorer#35](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/35) | Demo app issue where filter failure was observed in practice |
-| 6 | [Issue #106](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/106) | Downstream issue — missing query option fields that depend on correct naming |
+| #   | Document                                                                                | Relevance                                                                                                                             |
+| --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | [OGC 23-001 — Connected Systems API Part 1](https://docs.ogc.org/is/23-001/23-001.html) | §16 Advanced Filtering — normative query parameter definitions for Systems, Deployments, Procedures, SamplingFeatures, Properties     |
+| 2   | [OGC 23-002 — Connected Systems API Part 2](https://docs.ogc.org/is/23-002/23-002.html) | §13 Advanced Filtering — normative query parameter definitions for DataStreams, Observations, ControlStreams, Commands, CommandStatus |
+| 3   | [AI_OPERATIONAL_CONSTRAINTS.md](../../governance/AI_OPERATIONAL_CONSTRAINTS.md)         | Mandatory operational constraints governing this assessment                                                                           |
+| 4   | [Issue #105](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/105)                 | Source issue identifying the parameter name mismatches                                                                                |
+| 5   | [ogc-csapi-explorer#35](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/35)       | Demo app issue where filter failure was observed in practice                                                                          |
+| 6   | [Issue #106](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/106)                 | Downstream issue — missing query option fields that depend on correct naming                                                          |
 
 ### B. Files Reviewed
 
-| File | Lines | Purpose |
-|---|---|---|
-| `src/ogc-api/csapi/url_builder.ts` | 260–316 | `buildQueryString()` implementation — the serialization method with no remapping |
-| `src/ogc-api/csapi/model.ts` | 119–250 | QueryOptions interfaces — property names that become wire parameter names |
-| `src/ogc-api/csapi/url_builder.spec.ts` | 380–420, 915–920, 1680–1715, 2180–2190, 2485–2520 | Test assertions verifying current (incorrect) URL output |
-| `src/ogc-api/csapi/formats/part2.ts` | 164, 257, 272–365 | Parser code using `systemId` and `currentStatus` as model properties (NOT query params — no change needed) |
-| `docs/governance/AI_OPERATIONAL_CONSTRAINTS.md` | 1–100 | Operational constraints verification |
+| File                                            | Lines                                             | Purpose                                                                                                    |
+| ----------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `src/ogc-api/csapi/url_builder.ts`              | 260–316                                           | `buildQueryString()` implementation — the serialization method with no remapping                           |
+| `src/ogc-api/csapi/model.ts`                    | 119–250                                           | QueryOptions interfaces — property names that become wire parameter names                                  |
+| `src/ogc-api/csapi/url_builder.spec.ts`         | 380–420, 915–920, 1680–1715, 2180–2190, 2485–2520 | Test assertions verifying current (incorrect) URL output                                                   |
+| `src/ogc-api/csapi/formats/part2.ts`            | 164, 257, 272–365                                 | Parser code using `systemId` and `currentStatus` as model properties (NOT query params — no change needed) |
+| `docs/governance/AI_OPERATIONAL_CONSTRAINTS.md` | 1–100                                             | Operational constraints verification                                                                       |
 
 ### C. Complete Parameter Name Verification Table
 
-| TypeScript Property | Interface(s) | Current Wire Name | OGC Spec Wire Name | Spec Reference | Verdict |
-|---|---|---|---|---|---|
-| `currentStatus` | `CommandQueryOptions` | `?currentStatus=PENDING` | `?statusCode=PENDING` | 23-002 §13.5.3 | **MISMATCH** |
-| `foiId` | `SystemQueryOptions` | `?foiId=x` | `?foi=x` | 23-001 §16.5.4 | **MISMATCH** |
-| `observedPropertyId` | `SystemQueryOptions`, `DatastreamQueryOptions` | `?observedPropertyId=x` | `?observedProperty=x` | 23-001 §16.5.5, 23-002 §13.2.3 | **MISMATCH** |
-| `controlledPropertyId` | `SystemQueryOptions`, `ControlStreamQueryOptions` | `?controlledPropertyId=x` | `?controlledProperty=x` | 23-001 §16.5.6, 23-002 §13.4.3 | **MISMATCH** |
-| `systemId` | `DeploymentQueryOptions` | `?systemId=x` | `?system=x` | 23-001 §16.6.3 | **MISMATCH** |
-| `procedureId` | `SystemQueryOptions` | `?procedureId=x` | `?procedure=x` | 23-001 §16.5.3 | **MISMATCH** |
-| `systemId` | `DatastreamQueryOptions` | `?systemId=x` | (not defined) | — | ⚠️ OSH extension |
-| `systemId` | `ControlStreamQueryOptions` | `?systemId=x` | (not defined) | — | ⚠️ OSH extension |
-| `parent` | `SystemQueryOptions`, `DeploymentQueryOptions` | `?parent=x` | `?parent=x` | 23-001 §16.5.2, §16.6.2 | ✅ Correct |
-| `recursive` | `SystemQueryOptions`, `DeploymentQueryOptions` | `?recursive=true` | `?recursive=true` | 23-001 §10.6 | ✅ Correct |
-| `system` | `PropertyQueryOptions` | `?system=x` | `?system=x` | — | ✅ Correct |
-| `baseProperty` | `PropertyQueryOptions` | `?baseProperty=x` | `?baseProperty=x` | 23-001 §16.9.2 | ✅ Correct |
-| `phenomenonTime` | `DatastreamQueryOptions`, `ObservationQueryOptions` | `?phenomenonTime=x` | `?phenomenonTime=x` | 23-002 §13.2.1, §13.3.1 | ✅ Correct |
-| `resultTime` | `DatastreamQueryOptions`, `ObservationQueryOptions` | `?resultTime=x` | `?resultTime=x` | 23-002 §13.2.2, §13.3.2 | ✅ Correct |
-| `issueTime` | `CommandQueryOptions` | `?issueTime=x` | `?issueTime=x` | 23-002 §13.5.1 | ✅ Correct |
-| `executionTime` | `CommandQueryOptions` | `?executionTime=x` | `?executionTime=x` | 23-002 §13.5.2 | ✅ Correct |
-| `q` | `QueryOptions` | `?q=x` | `?q=x` | 23-001 §16.3.3 | ✅ Correct |
-| `bbox` | `QueryOptions` | `?bbox=x` | `?bbox=x` | OGC API Features §7.15.3 | ✅ Correct |
-| `datetime` | `QueryOptions` | `?datetime=x` | `?datetime=x` | 23-001 §8.7 | ✅ Correct |
-| `limit` | `QueryOptions` | `?limit=x` | `?limit=x` | OGC API Features §7.15.2 | ✅ Correct |
-| `id` | `QueryOptions` | `?id=x` | `?id=x` | 23-001 §16.3.2 | ✅ Correct |
-| `uid` | `QueryOptions` | `?uid=x` | `?uid=x` | — | ✅ Correct |
+| TypeScript Property    | Interface(s)                                        | Current Wire Name         | OGC Spec Wire Name      | Spec Reference                 | Verdict          |
+| ---------------------- | --------------------------------------------------- | ------------------------- | ----------------------- | ------------------------------ | ---------------- |
+| `currentStatus`        | `CommandQueryOptions`                               | `?currentStatus=PENDING`  | `?statusCode=PENDING`   | 23-002 §13.5.3                 | **MISMATCH**     |
+| `foiId`                | `SystemQueryOptions`                                | `?foiId=x`                | `?foi=x`                | 23-001 §16.5.4                 | **MISMATCH**     |
+| `observedPropertyId`   | `SystemQueryOptions`, `DatastreamQueryOptions`      | `?observedPropertyId=x`   | `?observedProperty=x`   | 23-001 §16.5.5, 23-002 §13.2.3 | **MISMATCH**     |
+| `controlledPropertyId` | `SystemQueryOptions`, `ControlStreamQueryOptions`   | `?controlledPropertyId=x` | `?controlledProperty=x` | 23-001 §16.5.6, 23-002 §13.4.3 | **MISMATCH**     |
+| `systemId`             | `DeploymentQueryOptions`                            | `?systemId=x`             | `?system=x`             | 23-001 §16.6.3                 | **MISMATCH**     |
+| `procedureId`          | `SystemQueryOptions`                                | `?procedureId=x`          | `?procedure=x`          | 23-001 §16.5.3                 | **MISMATCH**     |
+| `systemId`             | `DatastreamQueryOptions`                            | `?systemId=x`             | (not defined)           | —                              | ⚠️ OSH extension |
+| `systemId`             | `ControlStreamQueryOptions`                         | `?systemId=x`             | (not defined)           | —                              | ⚠️ OSH extension |
+| `parent`               | `SystemQueryOptions`, `DeploymentQueryOptions`      | `?parent=x`               | `?parent=x`             | 23-001 §16.5.2, §16.6.2        | ✅ Correct       |
+| `recursive`            | `SystemQueryOptions`, `DeploymentQueryOptions`      | `?recursive=true`         | `?recursive=true`       | 23-001 §10.6                   | ✅ Correct       |
+| `system`               | `PropertyQueryOptions`                              | `?system=x`               | `?system=x`             | —                              | ✅ Correct       |
+| `baseProperty`         | `PropertyQueryOptions`                              | `?baseProperty=x`         | `?baseProperty=x`       | 23-001 §16.9.2                 | ✅ Correct       |
+| `phenomenonTime`       | `DatastreamQueryOptions`, `ObservationQueryOptions` | `?phenomenonTime=x`       | `?phenomenonTime=x`     | 23-002 §13.2.1, §13.3.1        | ✅ Correct       |
+| `resultTime`           | `DatastreamQueryOptions`, `ObservationQueryOptions` | `?resultTime=x`           | `?resultTime=x`         | 23-002 §13.2.2, §13.3.2        | ✅ Correct       |
+| `issueTime`            | `CommandQueryOptions`                               | `?issueTime=x`            | `?issueTime=x`          | 23-002 §13.5.1                 | ✅ Correct       |
+| `executionTime`        | `CommandQueryOptions`                               | `?executionTime=x`        | `?executionTime=x`      | 23-002 §13.5.2                 | ✅ Correct       |
+| `q`                    | `QueryOptions`                                      | `?q=x`                    | `?q=x`                  | 23-001 §16.3.3                 | ✅ Correct       |
+| `bbox`                 | `QueryOptions`                                      | `?bbox=x`                 | `?bbox=x`               | OGC API Features §7.15.3       | ✅ Correct       |
+| `datetime`             | `QueryOptions`                                      | `?datetime=x`             | `?datetime=x`           | 23-001 §8.7                    | ✅ Correct       |
+| `limit`                | `QueryOptions`                                      | `?limit=x`                | `?limit=x`              | OGC API Features §7.15.2       | ✅ Correct       |
+| `id`                   | `QueryOptions`                                      | `?id=x`                   | `?id=x`                 | 23-001 §16.3.2                 | ✅ Correct       |
+| `uid`                  | `QueryOptions`                                      | `?uid=x`                  | `?uid=x`                | —                              | ✅ Correct       |

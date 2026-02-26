@@ -7,6 +7,7 @@
 **Purpose:** Validate the 8 new standalone Observations methods (second Part 2 resource type), confirm `resultTime=latest` type fix (Issue #43), and verify no regressions across all 61 methods.
 
 > This is smoke test #7 in the series. See also:
+>
 > - [Post Phase 2.6](live-server-smoke-test-post-phase-2.6.md) — validated 53 methods, DataStreams focus
 > - [Post Phase 2.5](live-server-smoke-test-post-phase-2.5.md) — validated 42 methods, Properties focus
 > - [Post Phase 2.4](live-server-smoke-test-post-phase-2.4.md) — validated 36 methods, SamplingFeatures focus
@@ -35,61 +36,61 @@ No code changes were made during testing. All tests were run from the terminal u
 
 ### OpenSensorHub (OSH)
 
-| Property | Value |
-|----------|-------|
-| URL | `http://45.55.99.236:8080/sensorhub/api` |
-| Auth | Basic (credentials not stored in repo) |
-| Root status | ✅ 200 — 10 links in root document |
-| Conformance classes | 33 (unchanged) |
+| Property            | Value                                    |
+| ------------------- | ---------------------------------------- |
+| URL                 | `http://45.55.99.236:8080/sensorhub/api` |
+| Auth                | Basic (credentials not stored in repo)   |
+| Root status         | ✅ 200 — 10 links in root document       |
+| Conformance classes | 33 (unchanged)                           |
 
 **Top-level resource links in root document (Convention 2) — unchanged:**
 
-| Resource Type | Present | Link |
-|--------------|---------|------|
-| systems | ✅ | `.../systems` |
-| deployments | ✅ | `.../deployments` |
-| procedures | ✅ | `.../procedures` |
-| samplingFeatures | ✅ | `.../samplingFeatures` |
-| datastreams | ✅ | `.../datastreams` |
-| observations | ✅ | `.../observations` |
-| properties | ❌ | Not in root document |
-| controlstreams | ❌ | Not in root document |
+| Resource Type    | Present | Link                   |
+| ---------------- | ------- | ---------------------- |
+| systems          | ✅      | `.../systems`          |
+| deployments      | ✅      | `.../deployments`      |
+| procedures       | ✅      | `.../procedures`       |
+| samplingFeatures | ✅      | `.../samplingFeatures` |
+| datastreams      | ✅      | `.../datastreams`      |
+| observations     | ✅      | `.../observations`     |
+| properties       | ❌      | Not in root document   |
+| controlstreams   | ❌      | Not in root document   |
 
 **Server resource inventory:**
 
-| Resource Type | Count | Status | Change from Phase 2.6 |
-|--------------|-------|--------|----------------------|
-| Systems | 12 | ✅ Has data | Unchanged |
-| Deployments | 0 | ✅ Endpoint functional | Unchanged |
-| Procedures | 0 | ✅ Endpoint functional | Unchanged |
-| SamplingFeatures | 51+ | ✅ Has data | Unchanged |
-| DataStreams | 100+ | ✅ Has data | Unchanged |
-| **Observations** | **100+** | **✅ Has data** | **Primary focus of this test — now tested as standalone** |
-| ControlStreams | 8 | ✅ Has data | Unchanged |
-| Properties | 0 | ✅ Endpoint functional | Unchanged |
+| Resource Type    | Count    | Status                 | Change from Phase 2.6                                     |
+| ---------------- | -------- | ---------------------- | --------------------------------------------------------- |
+| Systems          | 12       | ✅ Has data            | Unchanged                                                 |
+| Deployments      | 0        | ✅ Endpoint functional | Unchanged                                                 |
+| Procedures       | 0        | ✅ Endpoint functional | Unchanged                                                 |
+| SamplingFeatures | 51+      | ✅ Has data            | Unchanged                                                 |
+| DataStreams      | 100+     | ✅ Has data            | Unchanged                                                 |
+| **Observations** | **100+** | **✅ Has data**        | **Primary focus of this test — now tested as standalone** |
+| ControlStreams   | 8        | ✅ Has data            | Unchanged                                                 |
+| Properties       | 0        | ✅ Endpoint functional | Unchanged                                                 |
 
 ### 52North CSA Demo
 
-| Property | Value |
-|----------|-------|
-| URL | `https://csa.demo.52north.org` |
-| Auth | None required |
-| SSL | Expired certificate — requires `-SkipCertificateCheck` |
-| Root status | ✅ 200 — 7 links in root document |
-| Conformance classes | 1 (`ogcapi-common-1/1.0/conf/core`) — unchanged |
+| Property            | Value                                                  |
+| ------------------- | ------------------------------------------------------ |
+| URL                 | `https://csa.demo.52north.org`                         |
+| Auth                | None required                                          |
+| SSL                 | Expired certificate — requires `-SkipCertificateCheck` |
+| Root status         | ✅ 200 — 7 links in root document                      |
+| Conformance classes | 1 (`ogcapi-common-1/1.0/conf/core`) — unchanged        |
 
 **Server resource inventory:**
 
-| Resource Type | Count | Status | Change from Phase 2.6 |
-|--------------|-------|--------|----------------------|
-| Systems | 3 | ✅ Has data | Unchanged |
-| Deployments | 1 | ✅ Has data | Unchanged |
-| Procedures | 1 | ✅ Has data | Unchanged |
-| SamplingFeatures | 0 | ✅ Endpoint functional | Unchanged |
-| DataStreams | — | ❌ 500 Server Error | Unchanged |
+| Resource Type    | Count | Status                  | Change from Phase 2.6           |
+| ---------------- | ----- | ----------------------- | ------------------------------- |
+| Systems          | 3     | ✅ Has data             | Unchanged                       |
+| Deployments      | 1     | ✅ Has data             | Unchanged                       |
+| Procedures       | 1     | ✅ Has data             | Unchanged                       |
+| SamplingFeatures | 0     | ✅ Endpoint functional  | Unchanged                       |
+| DataStreams      | —     | ❌ 500 Server Error     | Unchanged                       |
 | **Observations** | **—** | **❌ 500 Server Error** | **Cannot test (server broken)** |
-| ControlStreams | — | ❌ 404 Not Found | Unchanged |
-| Properties | 0 | ✅ Endpoint functional | Unchanged |
+| ControlStreams   | —     | ❌ 404 Not Found        | Unchanged                       |
+| Properties       | 0     | ✅ Endpoint functional  | Unchanged                       |
 
 ---
 
@@ -97,28 +98,28 @@ No code changes were made during testing. All tests were run from the terminal u
 
 ### Prior Findings — Regression Check
 
-| Finding | Status | Evidence |
-|---------|--------|----------|
-| **F1: Link relation prefix mismatch** (Critical) | **Still Fixed** ✅ | `scanCsapiLinks` detects 6 resource types from OSH root via Convention 2 |
-| **F2: Top-level vs. collection-scoped URLs** (Critical) | **Still Fixed** ✅ | `extractRootResourceUrls` returns correct mappings |
-| **F3: Response envelope uses `items`** (Moderate) | **Still deferred** | OSH observations list: `{ items: [...], links: [...] }`. Phase 3 concern. |
-| **F4: `validTime` is an array** (Moderate) | **Still deferred** | Phase 3 concern — unchanged |
-| **F5: Missing pagination metadata** (Low) | **Still deferred** | Observations use link-based pagination: `rel: "next"` with offset. Phase 3 concern. |
-| **F6: OSH rejects `systems/{id}/deployments`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F7: OSH rejects `systems/{id}/procedures`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F8: OSH rejects `samplingFeatures/{id}/systems`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F9: OSH rejects `samplingFeatures/{id}/history`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F10: 52North now has real data** | **Still true** ✅ | 3 systems, 1 deployment, 1 procedure |
-| **F11: 52North uses SensorML format** | **Still true** ✅ | Unchanged |
-| **F12: 52North `systems/{id}/deployments` works** | **Still true** ✅ | 200 — confirmed |
-| **F13: Both servers use `items` envelope** | **Still true** ✅ | Confirmed for observations on OSH |
-| **F14: Properties not discoverable via links** | **Still true** ✅ | Both servers still lack properties in link structures |
-| **F15: 52North adds third system** | **Still true** ✅ | 3 systems present |
-| **F16: OSH rejects `datastreams/{id}/systems`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F17: OSH rejects `datastreams/{id}/procedures`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F18: OSH rejects `datastreams/{id}/history`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F19: `resultTime=latest` accepted by OSH** | **NOW VALIDATED** ✅ | Issue #43 resolved the type gap. `resultTime=latest` returns real data (see below) |
-| **F20: 52North DataStreams still broken (500)** | **Still present** ✅ | 52North observations also 500 |
+| Finding                                                 | Status               | Evidence                                                                            |
+| ------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------- |
+| **F1: Link relation prefix mismatch** (Critical)        | **Still Fixed** ✅   | `scanCsapiLinks` detects 6 resource types from OSH root via Convention 2            |
+| **F2: Top-level vs. collection-scoped URLs** (Critical) | **Still Fixed** ✅   | `extractRootResourceUrls` returns correct mappings                                  |
+| **F3: Response envelope uses `items`** (Moderate)       | **Still deferred**   | OSH observations list: `{ items: [...], links: [...] }`. Phase 3 concern.           |
+| **F4: `validTime` is an array** (Moderate)              | **Still deferred**   | Phase 3 concern — unchanged                                                         |
+| **F5: Missing pagination metadata** (Low)               | **Still deferred**   | Observations use link-based pagination: `rel: "next"` with offset. Phase 3 concern. |
+| **F6: OSH rejects `systems/{id}/deployments`**          | **Still present** ✅ | 400 — server limitation unchanged                                                   |
+| **F7: OSH rejects `systems/{id}/procedures`**           | **Still present** ✅ | 400 — server limitation unchanged                                                   |
+| **F8: OSH rejects `samplingFeatures/{id}/systems`**     | **Still present** ✅ | 400 — server limitation unchanged                                                   |
+| **F9: OSH rejects `samplingFeatures/{id}/history`**     | **Still present** ✅ | 400 — server limitation unchanged                                                   |
+| **F10: 52North now has real data**                      | **Still true** ✅    | 3 systems, 1 deployment, 1 procedure                                                |
+| **F11: 52North uses SensorML format**                   | **Still true** ✅    | Unchanged                                                                           |
+| **F12: 52North `systems/{id}/deployments` works**       | **Still true** ✅    | 200 — confirmed                                                                     |
+| **F13: Both servers use `items` envelope**              | **Still true** ✅    | Confirmed for observations on OSH                                                   |
+| **F14: Properties not discoverable via links**          | **Still true** ✅    | Both servers still lack properties in link structures                               |
+| **F15: 52North adds third system**                      | **Still true** ✅    | 3 systems present                                                                   |
+| **F16: OSH rejects `datastreams/{id}/systems`**         | **Still present** ✅ | 400 — server limitation unchanged                                                   |
+| **F17: OSH rejects `datastreams/{id}/procedures`**      | **Still present** ✅ | 400 — server limitation unchanged                                                   |
+| **F18: OSH rejects `datastreams/{id}/history`**         | **Still present** ✅ | 400 — server limitation unchanged                                                   |
+| **F19: `resultTime=latest` accepted by OSH**            | **NOW VALIDATED** ✅ | Issue #43 resolved the type gap. `resultTime=latest` returns real data (see below)  |
+| **F20: 52North DataStreams still broken (500)**         | **Still present** ✅ | 52North observations also 500                                                       |
 
 **No regressions.** All prior fixes remain working. All prior server limitations remain unchanged. **F19 status upgraded** from "confirms type gap" to "validated" — Issue #43 resolved the type system limitation and `resultTime=latest` now works end-to-end.
 
@@ -130,20 +131,20 @@ No code changes were made during testing. All tests were run from the terminal u
 
 **OSH** (System ID: `03bc5ofvvstg`):
 
-| Method | Result |
-|--------|--------|
-| `getSystems({ limit: 1 })` | ✅ 200 |
-| `getSystem('03bc5ofvvstg')` | ✅ 200 |
-| `createSystem()` | ✅ URL valid |
-| `updateSystem(id)` | ✅ URL valid |
-| `deleteSystem(id)` | ✅ URL valid |
-| `getSystemHistory(id)` | ✅ 200 |
-| `getSubsystems(id)` | ✅ 200 — 0 items |
-| `getSystemDatastreams(id)` | ✅ 200 |
-| `getSystemControlstreams(id)` | ✅ 200 |
-| `getSystemSamplingFeatures(id)` | ✅ 200 |
-| `getSystemDeployments(id)` | ❌ 400 (known F6) |
-| `getSystemProcedures(id)` | ❌ 400 (known F7) |
+| Method                          | Result            |
+| ------------------------------- | ----------------- |
+| `getSystems({ limit: 1 })`      | ✅ 200            |
+| `getSystem('03bc5ofvvstg')`     | ✅ 200            |
+| `createSystem()`                | ✅ URL valid      |
+| `updateSystem(id)`              | ✅ URL valid      |
+| `deleteSystem(id)`              | ✅ URL valid      |
+| `getSystemHistory(id)`          | ✅ 200            |
+| `getSubsystems(id)`             | ✅ 200 — 0 items  |
+| `getSystemDatastreams(id)`      | ✅ 200            |
+| `getSystemControlstreams(id)`   | ✅ 200            |
+| `getSystemSamplingFeatures(id)` | ✅ 200            |
+| `getSystemDeployments(id)`      | ❌ 400 (known F6) |
+| `getSystemProcedures(id)`       | ❌ 400 (known F7) |
 
 **52North** (System ID: `5400-526`): `getSystems` ✅, `getSystem` ✅, `getSystemDeployments` ✅ (F12).
 
@@ -176,25 +177,25 @@ No code changes were made during testing. All tests were run from the terminal u
 
 **OSH** (Observation ID: `0829d6supc31trqfo0`):
 
-| Method | URL Pattern | Result |
-|--------|------------|--------|
-| `getObservations()` | `.../observations` | ✅ 200 — 100+ items |
-| `getObservations({ limit: 2 })` | `.../observations?limit=2` | ✅ 200 — 2 items |
-| `getObservation('0829d6supc31trqfo0')` | `.../observations/0829d6supc31trqfo0` | ✅ 200 |
-| `updateObservation(id)` | `.../observations/0829d6supc31trqfo0` (PUT target) | ✅ URL valid |
-| `deleteObservation(id)` | `.../observations/0829d6supc31trqfo0` (DELETE target) | ✅ URL valid |
-| `getObservationDatastream(id)` | `.../observations/0829d6supc31trqfo0/datastream` | ❌ 400 — **NEW: Server limitation** |
-| `getObservationSamplingFeature(id)` | `.../observations/0829d6supc31trqfo0/samplingFeature` | ❌ 400 — **NEW: Server limitation** |
-| `getObservationSystem(id)` | `.../observations/0829d6supc31trqfo0/system` | ❌ 400 — **NEW: Server limitation** |
-| `getObservationHistory(id)` | `.../observations/0829d6supc31trqfo0/history` | ❌ 400 — **NEW: Server limitation** |
+| Method                                 | URL Pattern                                           | Result                              |
+| -------------------------------------- | ----------------------------------------------------- | ----------------------------------- |
+| `getObservations()`                    | `.../observations`                                    | ✅ 200 — 100+ items                 |
+| `getObservations({ limit: 2 })`        | `.../observations?limit=2`                            | ✅ 200 — 2 items                    |
+| `getObservation('0829d6supc31trqfo0')` | `.../observations/0829d6supc31trqfo0`                 | ✅ 200                              |
+| `updateObservation(id)`                | `.../observations/0829d6supc31trqfo0` (PUT target)    | ✅ URL valid                        |
+| `deleteObservation(id)`                | `.../observations/0829d6supc31trqfo0` (DELETE target) | ✅ URL valid                        |
+| `getObservationDatastream(id)`         | `.../observations/0829d6supc31trqfo0/datastream`      | ❌ 400 — **NEW: Server limitation** |
+| `getObservationSamplingFeature(id)`    | `.../observations/0829d6supc31trqfo0/samplingFeature` | ❌ 400 — **NEW: Server limitation** |
+| `getObservationSystem(id)`             | `.../observations/0829d6supc31trqfo0/system`          | ❌ 400 — **NEW: Server limitation** |
+| `getObservationHistory(id)`            | `.../observations/0829d6supc31trqfo0/history`         | ❌ 400 — **NEW: Server limitation** |
 
 **52North:**
 
-| Method | URL Pattern | Result |
-|--------|------------|--------|
-| `getObservations()` | `.../observations` | ❌ 500 — Server error |
-| `getObservations({ limit: 1 })` | `.../observations?limit=1` | ❌ 500 |
-| All other Observation methods | N/A | ❌ 500 — Cannot test (server broken) |
+| Method                          | URL Pattern                | Result                               |
+| ------------------------------- | -------------------------- | ------------------------------------ |
+| `getObservations()`             | `.../observations`         | ❌ 500 — Server error                |
+| `getObservations({ limit: 1 })` | `.../observations?limit=1` | ❌ 500                               |
+| All other Observation methods   | N/A                        | ❌ 500 — Cannot test (server broken) |
 
 ---
 
@@ -202,16 +203,16 @@ No code changes were made during testing. All tests were run from the terminal u
 
 Tested on OSH (52North Observations endpoint returns 500 for all requests):
 
-| Parameter | Method | URL | OSH | 52North |
-|-----------|--------|-----|-----|---------|
-| No params | `getObservations()` | `.../observations` | ✅ 200 | ❌ 500 |
-| `limit=2` | `getObservations({ limit: 2 })` | `.../observations?limit=2` | ✅ 200 (2 items) | ❌ 500 |
-| `offset=1` | `getObservations({ offset: 1 })` | `.../observations?offset=1&limit=1` | ✅ 200 | ❌ 500 |
-| `q=drone` | `getObservations({ q: 'drone' })` | `.../observations?q=drone` | ✅ 200 (1 item) | ❌ 500 |
-| `f=application/json` | `getObservations({ f: ... })` | `.../observations?f=application/json` | ✅ 200 | ❌ 500 |
-| `id` (single) | `getObservations({ id: ... })` | `.../observations?id=0829d6supc31trqfo0` | ✅ 200 (100 items) | ❌ 500 |
-| `resultTime=latest` | `getObservations({ resultTime: 'latest' })` | `.../observations?resultTime=latest` | ✅ 200 (2 items — **real data!**) | ❌ 400 |
-| `phenomenonTime` (interval) | `getObservations({ phenomenonTime: ... })` | `.../observations?phenomenonTime=2024-01-01...` | ✅ 200 (0 items — accepted) | ❌ 500 |
+| Parameter                   | Method                                      | URL                                             | OSH                               | 52North |
+| --------------------------- | ------------------------------------------- | ----------------------------------------------- | --------------------------------- | ------- |
+| No params                   | `getObservations()`                         | `.../observations`                              | ✅ 200                            | ❌ 500  |
+| `limit=2`                   | `getObservations({ limit: 2 })`             | `.../observations?limit=2`                      | ✅ 200 (2 items)                  | ❌ 500  |
+| `offset=1`                  | `getObservations({ offset: 1 })`            | `.../observations?offset=1&limit=1`             | ✅ 200                            | ❌ 500  |
+| `q=drone`                   | `getObservations({ q: 'drone' })`           | `.../observations?q=drone`                      | ✅ 200 (1 item)                   | ❌ 500  |
+| `f=application/json`        | `getObservations({ f: ... })`               | `.../observations?f=application/json`           | ✅ 200                            | ❌ 500  |
+| `id` (single)               | `getObservations({ id: ... })`              | `.../observations?id=0829d6supc31trqfo0`        | ✅ 200 (100 items)                | ❌ 500  |
+| `resultTime=latest`         | `getObservations({ resultTime: 'latest' })` | `.../observations?resultTime=latest`            | ✅ 200 (2 items — **real data!**) | ❌ 400  |
+| `phenomenonTime` (interval) | `getObservations({ phenomenonTime: ... })`  | `.../observations?phenomenonTime=2024-01-01...` | ✅ 200 (0 items — accepted)       | ❌ 500  |
 
 **All query parameters accepted by OSH.** `resultTime=latest` on the standalone observations endpoint returns **real data** (2 items with the most recent result times) — validating both the Issue #43 type fix and the OSH server capability.
 
@@ -229,6 +230,7 @@ Tested on OSH (52North Observations endpoint returns 500 for all requests):
 **Ownership:** Upstream (server-side)
 
 **Evidence:**
+
 ```
 GET .../observations/0829d6supc31trqfo0/datastream → 400
 ```
@@ -247,6 +249,7 @@ Our URL uses the **singular** sub-path `/datastream` because each observation be
 **Ownership:** Upstream
 
 **Evidence:**
+
 ```
 GET .../observations/0829d6supc31trqfo0/samplingFeature → 400
 ```
@@ -265,6 +268,7 @@ Same pattern as F21. The observation contains `foi@id: "080g"`, confirming the r
 **Ownership:** Upstream
 
 **Evidence:**
+
 ```
 GET .../observations/0829d6supc31trqfo0/system → 400
 ```
@@ -283,6 +287,7 @@ Same pattern as F21/F22. The parent system can be traversed via `datastream@id` 
 **Ownership:** Upstream
 
 **Evidence:**
+
 ```
 GET .../observations/0829d6supc31trqfo0/history → 400
 ```
@@ -301,6 +306,7 @@ Consistent with F9 (`samplingFeatures/{id}/history`) and F18 (`datastreams/{id}/
 **Ownership:** N/A (validation of Issue #43 fix)
 
 **Evidence:**
+
 ```
 GET .../observations?resultTime=latest&limit=2 → 200
 Response: 2 observations with most recent resultTime values
@@ -309,6 +315,7 @@ Response: 2 observations with most recent resultTime values
 ```
 
 In Phase 2.6 (F19), `resultTime=latest` was tested only via `datastreams/{id}/observations` and returned 0 items. Now, on the standalone `observations` endpoint, it returns **real data**. This confirms:
+
 1. Issue #43's `CsapiDateTimeParameter` type fix is working correctly
 2. `resultTime=latest` is a meaningful query that returns the most recent observations across all datastreams
 3. The standalone observations endpoint may be more useful for `latest` queries than the per-datastream endpoint
@@ -325,6 +332,7 @@ In Phase 2.6 (F19), `resultTime=latest` was tested only via `datastreams/{id}/ob
 **Ownership:** Upstream
 
 **Evidence:**
+
 ```
 GET https://csa.demo.52north.org/observations → 500
 GET https://csa.demo.52north.org/observations?limit=1 → 500
@@ -344,6 +352,7 @@ GET https://csa.demo.52north.org/observations?limit=1 → 500
 **Ownership:** Client (Phase 3)
 
 **Evidence:**
+
 ```json
 {
   "id": "0829d6supc31trqfo0",
@@ -351,7 +360,7 @@ GET https://csa.demo.52north.org/observations?limit=1 → 500
   "foi@id": "080g",
   "phenomenonTime": "2026-01-14T12:35:34.519Z",
   "resultTime": "2026-01-14T12:35:34.519Z",
-  "result": { "location": { "lat": 24.18, "lon": 120.65, "alt": 127.90 } }
+  "result": { "location": { "lat": 24.18, "lon": 120.65, "alt": 127.9 } }
 }
 ```
 
@@ -366,6 +375,7 @@ Where DataStreams use `system@id` for the parent system cross-reference, Observa
 1. **Standalone observation list envelope:** `{ items: [...], links: [...] }` — same `items` pattern as all other resource types (F3/F13). Pagination via `rel: "next"` link with offset parameter.
 
 2. **Single observation shape (confirmed from standalone endpoint):**
+
    ```json
    {
      "id": "0829d6supc31trqfo0",
@@ -373,9 +383,10 @@ Where DataStreams use `system@id` for the parent system cross-reference, Observa
      "foi@id": "080g",
      "phenomenonTime": "2026-01-14T12:35:34.519Z",
      "resultTime": "2026-01-14T12:35:34.519Z",
-     "result": { "location": { "lat": 24.18, "lon": 120.65, "alt": 127.90 } }
+     "result": { "location": { "lat": 24.18, "lon": 120.65, "alt": 127.9 } }
    }
    ```
+
    Key fields: `id`, `datastream@id`, `foi@id`, `phenomenonTime`, `resultTime`, `result`.
 
 3. **`foi@id` cross-reference notation:** Uses `foi@id` (Feature of Interest), not `samplingFeature@id`. This is a naming variation from the `system@id` / `datastream@id` pattern. Phase 3 must map `foi@id` ↔ `samplingFeature` in the response parser.
@@ -390,21 +401,21 @@ Where DataStreams use `system@id` for the parent system cross-reference, Observa
 
 ## Cross-Server Comparison
 
-| Dimension | OpenSensorHub | 52North | Match? |
-|-----------|--------------|---------|--------|
-| Root API status | ✅ 200 | ✅ 200 | ✅ |
-| Conformance classes | 33 | 1 | ❌ |
-| Observations list | ✅ 200 (100+ items) | ❌ 500 | ❌ |
-| Observations single | ✅ 200 | ❌ 500 | ❌ |
-| Observation→datastream | ❌ 400 | ❌ 500 | ❌ (both fail, different reasons) |
-| Observation→samplingFeature | ❌ 400 | ❌ 500 | ❌ (both fail, different reasons) |
-| Observation→system | ❌ 400 | ❌ 500 | ❌ (both fail, different reasons) |
-| Observation→history | ❌ 400 | ❌ 500 | ❌ (both fail, different reasons) |
-| `resultTime=latest` (observations) | ✅ 200 (2 items) | ❌ 400 | ❌ |
-| `phenomenonTime` filter | ✅ 200 | ❌ 500 | ❌ |
-| All query params (observations) | ✅ All accepted | ❌ All fail | ❌ |
-| Part 1 methods | ✅ All working | ✅ All working | ✅ |
-| DataStreams | ✅ (8/11 pass) | ❌ All 500 | ❌ |
+| Dimension                          | OpenSensorHub       | 52North        | Match?                            |
+| ---------------------------------- | ------------------- | -------------- | --------------------------------- |
+| Root API status                    | ✅ 200              | ✅ 200         | ✅                                |
+| Conformance classes                | 33                  | 1              | ❌                                |
+| Observations list                  | ✅ 200 (100+ items) | ❌ 500         | ❌                                |
+| Observations single                | ✅ 200              | ❌ 500         | ❌                                |
+| Observation→datastream             | ❌ 400              | ❌ 500         | ❌ (both fail, different reasons) |
+| Observation→samplingFeature        | ❌ 400              | ❌ 500         | ❌ (both fail, different reasons) |
+| Observation→system                 | ❌ 400              | ❌ 500         | ❌ (both fail, different reasons) |
+| Observation→history                | ❌ 400              | ❌ 500         | ❌ (both fail, different reasons) |
+| `resultTime=latest` (observations) | ✅ 200 (2 items)    | ❌ 400         | ❌                                |
+| `phenomenonTime` filter            | ✅ 200              | ❌ 500         | ❌                                |
+| All query params (observations)    | ✅ All accepted     | ❌ All fail    | ❌                                |
+| Part 1 methods                     | ✅ All working      | ✅ All working | ✅                                |
+| DataStreams                        | ✅ (8/11 pass)      | ❌ All 500     | ❌                                |
 
 **Key insight:** Observations (Part 2) follow the exact same interoperability pattern as DataStreams — can only be validated against OSH. 52North's Part 2 endpoints remain broken. OSH accepts all observations query parameters but rejects all singular association sub-endpoints and history, continuing the pattern established by F6–F9 and F16–F18.
 
@@ -412,50 +423,50 @@ Where DataStreams use `system@id` for the parent system cross-reference, Observa
 
 ## What WORKS (Verified)
 
-| Capability | Status |
-|------------|--------|
-| All 61 builder methods generate valid URLs | ✅ |
-| Observations list endpoint (OSH) | ✅ |
-| Observations single resource retrieval (OSH) | ✅ |
-| Observation CRUD URL patterns | ✅ (verified as valid paths) |
-| `resultTime=latest` on standalone observations (OSH) | ✅ — **returns real data** |
-| `phenomenonTime` interval filter on observations | ✅ |
-| `q`, `offset`, `f`, `id`, `limit` on observations | ✅ |
-| `CsapiDateTimeParameter` type system (Issue #43 fix) | ✅ — end-to-end validated |
-| All Part 1 methods — no regressions | ✅ |
-| All DataStreams methods — no regressions | ✅ |
-| Prior F1/F2 fixes still working | ✅ |
-| Convention 3 normalization still working | ✅ |
+| Capability                                           | Status                       |
+| ---------------------------------------------------- | ---------------------------- |
+| All 61 builder methods generate valid URLs           | ✅                           |
+| Observations list endpoint (OSH)                     | ✅                           |
+| Observations single resource retrieval (OSH)         | ✅                           |
+| Observation CRUD URL patterns                        | ✅ (verified as valid paths) |
+| `resultTime=latest` on standalone observations (OSH) | ✅ — **returns real data**   |
+| `phenomenonTime` interval filter on observations     | ✅                           |
+| `q`, `offset`, `f`, `id`, `limit` on observations    | ✅                           |
+| `CsapiDateTimeParameter` type system (Issue #43 fix) | ✅ — end-to-end validated    |
+| All Part 1 methods — no regressions                  | ✅                           |
+| All DataStreams methods — no regressions             | ✅                           |
+| Prior F1/F2 fixes still working                      | ✅                           |
+| Convention 3 normalization still working             | ✅                           |
 
 ## What Remains (Phase 3 Concerns)
 
-| Issue | Severity | Component | Target Phase |
-|-------|----------|-----------|-------------|
-| Response envelope parsing (`items` vs `features`) | Moderate | Response parser | Phase 3 |
-| Dual format handling (GeoJSON vs SensorML) | Moderate | Response parser | Phase 3 |
-| `validTime` array format (including `"now"` string) | Moderate | Type mapping | Phase 3 |
-| Link-based pagination | Low | Pagination helper | Phase 3 |
-| Properties not discoverable via links | Moderate | Fallback/probing strategy | Phase 3 |
-| Nested endpoint graceful degradation | Moderate | Error handling | Phase 3 |
-| `@` notation cross-references (`system@id`, `datastream@id`, `foi@id`) | Moderate | Response parser | Phase 3 |
-| Observation `result` is arbitrary JSON per schema | Moderate | Response parser | Phase 3 |
-| `foi@id` vs `samplingFeature` naming mismatch | Moderate | Response parser | Phase 3 |
-| 52North Part 2 endpoints broken (500) — no cross-validation | Moderate | Testing strategy | Ongoing |
+| Issue                                                                  | Severity | Component                 | Target Phase |
+| ---------------------------------------------------------------------- | -------- | ------------------------- | ------------ |
+| Response envelope parsing (`items` vs `features`)                      | Moderate | Response parser           | Phase 3      |
+| Dual format handling (GeoJSON vs SensorML)                             | Moderate | Response parser           | Phase 3      |
+| `validTime` array format (including `"now"` string)                    | Moderate | Type mapping              | Phase 3      |
+| Link-based pagination                                                  | Low      | Pagination helper         | Phase 3      |
+| Properties not discoverable via links                                  | Moderate | Fallback/probing strategy | Phase 3      |
+| Nested endpoint graceful degradation                                   | Moderate | Error handling            | Phase 3      |
+| `@` notation cross-references (`system@id`, `datastream@id`, `foi@id`) | Moderate | Response parser           | Phase 3      |
+| Observation `result` is arbitrary JSON per schema                      | Moderate | Response parser           | Phase 3      |
+| `foi@id` vs `samplingFeature` naming mismatch                          | Moderate | Response parser           | Phase 3      |
+| 52North Part 2 endpoints broken (500) — no cross-validation            | Moderate | Testing strategy          | Ongoing      |
 
 ---
 
 ## Comparison: Phase 2.6 → Phase 2.7
 
-| Dimension | Phase 2.6 | Phase 2.7 |
-|-----------|----------|----------|
-| Methods implemented | 53 | **61** (+8 Observations) |
-| CSAPI unit tests | 242 | **267** (+25 from Issues #11, #43, #44) |
-| Endpoint tests verified (OSH) | 58 | **66** (+8 new Observations endpoints) |
-| Server limitations found | 7 (F6–F9, F16–F18) | **11** (+F21, F22, F23, F24 Observations associations) |
-| New code bugs found | 0 | **0** |
-| New interop findings | 1 (F19) | **3** (F25 latest validated, F26 52N obs broken, F27 foi@id) |
-| Resource types tested | 6 (5 Part 1 + 1 Part 2) | **7** (5 Part 1 + 2 Part 2) |
-| `resultTime=latest` | Accepted (0 items) | **Returns real data (2 items)** |
+| Dimension                     | Phase 2.6               | Phase 2.7                                                    |
+| ----------------------------- | ----------------------- | ------------------------------------------------------------ |
+| Methods implemented           | 53                      | **61** (+8 Observations)                                     |
+| CSAPI unit tests              | 242                     | **267** (+25 from Issues #11, #43, #44)                      |
+| Endpoint tests verified (OSH) | 58                      | **66** (+8 new Observations endpoints)                       |
+| Server limitations found      | 7 (F6–F9, F16–F18)      | **11** (+F21, F22, F23, F24 Observations associations)       |
+| New code bugs found           | 0                       | **0**                                                        |
+| New interop findings          | 1 (F19)                 | **3** (F25 latest validated, F26 52N obs broken, F27 foi@id) |
+| Resource types tested         | 6 (5 Part 1 + 1 Part 2) | **7** (5 Part 1 + 2 Part 2)                                  |
+| `resultTime=latest`           | Accepted (0 items)      | **Returns real data (2 items)**                              |
 
 ---
 
@@ -463,56 +474,56 @@ Where DataStreams use `system@id` for the parent system cross-reference, Observa
 
 ### Test Coverage
 
-| Category | Tested | Passed | Failed | N/A |
-|----------|--------|--------|--------|-----|
-| **OSH — Systems (12)** | 12 | 10 | 2 (F6/F7) | 0 |
-| **OSH — Deployments (8)** | 1 | 1 | 0 | 7 (no data) |
-| **OSH — Procedures (8)** | 1 | 1 | 0 | 7 (no data) |
-| **OSH — SamplingFeatures (8)** | 8 | 6 | 2 (F8/F9) | 0 |
-| **OSH — Properties (6)** | 1 | 1 | 0 | 5 (no data) |
-| **OSH — DataStreams (11)** | 11 | 8 | 3 (F16/F17/F18) | 0 |
-| **OSH — Observations (8)** | **8** | **4** | **4 (F21/F22/F23/F24)** | **0** |
-| **52N — Systems (12)** | 4 | 3 | 1 (server limit) | 8 |
-| **52N — Deployments (8)** | 2 | 2 | 0 | 6 |
-| **52N — Procedures (8)** | 2 | 2 | 0 | 6 |
-| **52N — SamplingFeatures (8)** | 1 | 1 | 0 | 7 (no data) |
-| **52N — Properties (6)** | 1 | 1 | 0 | 5 (no data) |
-| **52N — DataStreams (11)** | 6 | 0 | 6 (all 500) | 5 |
-| **52N — Observations (8)** | **2** | **0** | **2 (all 500)** | **6** |
-| **Query params (Observations)** | **8** | **8** | **0** | **0** |
-| **Total** | **69** | **48** | **21** | **55** |
+| Category                        | Tested | Passed | Failed                  | N/A         |
+| ------------------------------- | ------ | ------ | ----------------------- | ----------- |
+| **OSH — Systems (12)**          | 12     | 10     | 2 (F6/F7)               | 0           |
+| **OSH — Deployments (8)**       | 1      | 1      | 0                       | 7 (no data) |
+| **OSH — Procedures (8)**        | 1      | 1      | 0                       | 7 (no data) |
+| **OSH — SamplingFeatures (8)**  | 8      | 6      | 2 (F8/F9)               | 0           |
+| **OSH — Properties (6)**        | 1      | 1      | 0                       | 5 (no data) |
+| **OSH — DataStreams (11)**      | 11     | 8      | 3 (F16/F17/F18)         | 0           |
+| **OSH — Observations (8)**      | **8**  | **4**  | **4 (F21/F22/F23/F24)** | **0**       |
+| **52N — Systems (12)**          | 4      | 3      | 1 (server limit)        | 8           |
+| **52N — Deployments (8)**       | 2      | 2      | 0                       | 6           |
+| **52N — Procedures (8)**        | 2      | 2      | 0                       | 6           |
+| **52N — SamplingFeatures (8)**  | 1      | 1      | 0                       | 7 (no data) |
+| **52N — Properties (6)**        | 1      | 1      | 0                       | 5 (no data) |
+| **52N — DataStreams (11)**      | 6      | 0      | 6 (all 500)             | 5           |
+| **52N — Observations (8)**      | **2**  | **0**  | **2 (all 500)**         | **6**       |
+| **Query params (Observations)** | **8**  | **8**  | **0**                   | **0**       |
+| **Total**                       | **69** | **48** | **21**                  | **55**      |
 
 ### Findings Ledger (Cumulative)
 
-| ID | Description | Severity | Status | Owner |
-|----|-------------|----------|--------|-------|
-| F1 | Link relation prefix mismatch | Critical | **Fixed** (Issue #34) | Client |
-| F2 | Top-level vs. collection-scoped URLs | Critical | **Fixed** (Issue #35) | Client |
-| F3 | Response envelope uses `items` | Moderate | Deferred to Phase 3 | Client |
-| F4 | `validTime` is an array | Moderate | Deferred to Phase 3 | Client |
-| F5 | Missing pagination metadata | Low | Deferred to Phase 3 | Client |
-| F6 | OSH rejects `systems/{id}/deployments` | Moderate | Server limitation | Server |
-| F7 | OSH rejects `systems/{id}/procedures` | Moderate | Server limitation | Server |
-| F8 | OSH rejects `samplingFeatures/{id}/systems` | Moderate | Server limitation | Server |
-| F9 | OSH rejects `samplingFeatures/{id}/history` | Moderate | Server limitation | Server |
-| F10 | 52North now has real data | Informational | Positive change | — |
-| F11 | 52North uses SensorML format | Moderate | Phase 3 concern | Client |
-| F12 | 52North `systems/{id}/deployments` works | Informational | Positive finding | — |
-| F13 | Both servers use `items` envelope | Informational | Confirms F3 | — |
-| F14 | Properties not discoverable via links | Moderate | Phase 3 concern | Shared |
-| F15 | 52North adds third system | Informational | Positive change | — |
-| F16 | OSH rejects `datastreams/{id}/systems` | Moderate | Server limitation | Server |
-| F17 | OSH rejects `datastreams/{id}/procedures` | Moderate | Server limitation | Server |
-| F18 | OSH rejects `datastreams/{id}/history` | Moderate | Server limitation | Server |
-| F19 | `resultTime=latest` accepted by OSH | Informational | **Validated** ✅ (Issue #43) | **Resolved** |
-| F20 | 52North DataStreams still broken (500) | Informational | Unchanged | Server |
-| **F21** | **OSH rejects `observations/{id}/datastream`** | **Moderate** | **Server limitation** | **Server** |
-| **F22** | **OSH rejects `observations/{id}/samplingFeature`** | **Moderate** | **Server limitation** | **Server** |
-| **F23** | **OSH rejects `observations/{id}/system`** | **Moderate** | **Server limitation** | **Server** |
-| **F24** | **OSH rejects `observations/{id}/history`** | **Moderate** | **Server limitation** | **Server** |
-| **F25** | **`resultTime=latest` returns real data (standalone)** | **Informational** | **Positive validation** | **—** |
-| **F26** | **52North Observations broken (500)** | **Informational** | **Server limitation** | **Server** |
-| **F27** | **Observation `foi@id` naming variation** | **Informational** | **Phase 3 concern** | **Client** |
+| ID      | Description                                            | Severity          | Status                       | Owner        |
+| ------- | ------------------------------------------------------ | ----------------- | ---------------------------- | ------------ |
+| F1      | Link relation prefix mismatch                          | Critical          | **Fixed** (Issue #34)        | Client       |
+| F2      | Top-level vs. collection-scoped URLs                   | Critical          | **Fixed** (Issue #35)        | Client       |
+| F3      | Response envelope uses `items`                         | Moderate          | Deferred to Phase 3          | Client       |
+| F4      | `validTime` is an array                                | Moderate          | Deferred to Phase 3          | Client       |
+| F5      | Missing pagination metadata                            | Low               | Deferred to Phase 3          | Client       |
+| F6      | OSH rejects `systems/{id}/deployments`                 | Moderate          | Server limitation            | Server       |
+| F7      | OSH rejects `systems/{id}/procedures`                  | Moderate          | Server limitation            | Server       |
+| F8      | OSH rejects `samplingFeatures/{id}/systems`            | Moderate          | Server limitation            | Server       |
+| F9      | OSH rejects `samplingFeatures/{id}/history`            | Moderate          | Server limitation            | Server       |
+| F10     | 52North now has real data                              | Informational     | Positive change              | —            |
+| F11     | 52North uses SensorML format                           | Moderate          | Phase 3 concern              | Client       |
+| F12     | 52North `systems/{id}/deployments` works               | Informational     | Positive finding             | —            |
+| F13     | Both servers use `items` envelope                      | Informational     | Confirms F3                  | —            |
+| F14     | Properties not discoverable via links                  | Moderate          | Phase 3 concern              | Shared       |
+| F15     | 52North adds third system                              | Informational     | Positive change              | —            |
+| F16     | OSH rejects `datastreams/{id}/systems`                 | Moderate          | Server limitation            | Server       |
+| F17     | OSH rejects `datastreams/{id}/procedures`              | Moderate          | Server limitation            | Server       |
+| F18     | OSH rejects `datastreams/{id}/history`                 | Moderate          | Server limitation            | Server       |
+| F19     | `resultTime=latest` accepted by OSH                    | Informational     | **Validated** ✅ (Issue #43) | **Resolved** |
+| F20     | 52North DataStreams still broken (500)                 | Informational     | Unchanged                    | Server       |
+| **F21** | **OSH rejects `observations/{id}/datastream`**         | **Moderate**      | **Server limitation**        | **Server**   |
+| **F22** | **OSH rejects `observations/{id}/samplingFeature`**    | **Moderate**      | **Server limitation**        | **Server**   |
+| **F23** | **OSH rejects `observations/{id}/system`**             | **Moderate**      | **Server limitation**        | **Server**   |
+| **F24** | **OSH rejects `observations/{id}/history`**            | **Moderate**      | **Server limitation**        | **Server**   |
+| **F25** | **`resultTime=latest` returns real data (standalone)** | **Informational** | **Positive validation**      | **—**        |
+| **F26** | **52North Observations broken (500)**                  | **Informational** | **Server limitation**        | **Server**   |
+| **F27** | **Observation `foi@id` naming variation**              | **Informational** | **Phase 3 concern**          | **Client**   |
 
 ---
 

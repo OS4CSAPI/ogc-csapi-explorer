@@ -12,6 +12,7 @@ This implementation adds Connected Systems API (CSAPI) support to the Camptocamp
 > **📊 RESEARCH FOUNDATION**
 >
 > This implementation guide is built on **13 completed research plans** (Plans 01-04, 10-16) with **⭐⭐⭐⭐⭐ confidence ratings (98-100%)** for all architectural and implementation decisions. Every design choice documented here has been validated through systematic analysis of:
+>
 > - Upstream library patterns (100% consistency with existing code)
 > - CSAPI specification requirements (complete Parts 1 & 2 coverage)
 > - Real-world usage scenarios (validated workflows)
@@ -24,10 +25,12 @@ This implementation adds Connected Systems API (CSAPI) support to the Camptocamp
 > **See:** [Architecture Decision Documents](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/tree/main/docs/research/design/csapiquerybuilder/architecture-decision/results) for complete research foundation.
 
 **What We're Building:**
+
 - **9 components extending existing code** - Small, targeted enhancements to conformance checking, collection parsing, format detection, validation, and worker infrastructure (~50 lines of modifications total)
 - **3 components building new code** - CSAPIQueryBuilder class for URL construction, SensorML 3.0 parser, and SWE Common 3.0 parser
 
 **Key Architectural Facts:**
+
 - **Integration Footprint:** 64 lines across 3 files (`endpoint.ts`: 35 lines, `info.ts`: 12 lines, `index.ts`: 17 lines)
 - **QueryBuilder Pattern:** Single `CSAPIQueryBuilder` class accessed via `endpoint.csapi(collectionId)` (follows upstream EDR pattern from PR #114)
 - **9 Resource Types:** Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands - all as methods within one QueryBuilder class
@@ -108,6 +111,7 @@ This implementation adds Connected Systems API (CSAPI) support to the Camptocamp
 This document describes every component needed to implement CSAPI support in the Camptocamp OGC Client Library, explaining which components extend existing code versus which require building new code from scratch. **This is a complete implementation manual with actionable roadmap.**
 
 **What This Document Provides:**
+
 - Complete component inventory for CSAPI implementation
 - Clear identification of "extend" vs "build" work
 - Integration points with existing library code
@@ -120,6 +124,7 @@ This document describes every component needed to implement CSAPI support in the
 
 **Scope Statement:**
 This implementation provides **COMPLETE CSAPI Parts 1 & 2 support** including:
+
 - ✅ All query parameters (spatial, temporal, hierarchical, relationship-based, property-based)
 - ✅ Full filtering capabilities (bbox, datetime, recursive, parent, system, foi, observedProperty, etc.)
 - ✅ Both pagination modes (offset-based and cursor-based)
@@ -132,6 +137,7 @@ This implementation provides **COMPLETE CSAPI Parts 1 & 2 support** including:
 **This is NOT an MVP** - this is a production-ready, specification-complete implementation suitable for enterprise use.
 
 **References:**
+
 - [OGC API - Connected Systems Part 1: Feature Resources](https://docs.ogc.org/is/23-001/23-001.html) - Standard defining Systems, Deployments, Procedures, Sampling Features, Properties
 - [OGC API - Connected Systems Part 2: Dynamic Data](https://docs.ogc.org/is/23-002/23-002.html) - Standard defining DataStreams, Observations, Control Streams, Commands
 - [Full Implementation Scope Definition](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/requirements/contribution-definition.md) - Complete vs partial implementation rationale
@@ -255,19 +261,19 @@ This implementation is built on extensive research with 98-100% confidence level
 
 **Completed Research Plans (13 of 22):**
 
-| Plan | Title | Confidence | Key Finding |
-|------|-------|------------|-------------|
-| 01 | PR#114 EDR Pattern | ⭐⭐⭐⭐⭐ | Factory method template, caching pattern |
-| 02 | QueryBuilder Pattern | ⭐⭐⭐⭐⭐ | Single builder class per API |
-| 03 | CSAPI Architecture | ⭐⭐⭐⭐⭐ | 9 resources, format handling required |
-| 04 | Architecture Patterns | ⭐⭐⭐⭐⭐ | 100% use helper methods, 0% inheritance |
-| 10 | Upstream Expectations | ⭐⭐⭐⭐⭐ | Minimal validation, trust server |
-| 11 | Integration Requirements | ⭐⭐⭐⭐⭐ | EDR pattern exactly (64 lines) |
-| 12 | File Organization | ⭐⭐⭐⭐⭐ | Flat structure + formats/ subfolder |
-| 13 | TypeScript Types | ⭐⭐⭐⭐⭐ | Three-tier hierarchy, single model.ts |
-| 14 | Usage Scenarios | ⭐⭐⭐⭐⭐ | 100% multi-resource workflows |
-| 15 | Query Parameters | ⭐⭐⭐⭐⭐ | 47% shared, type-based clustering |
-| 16 | Subresource Navigation | ⭐⭐⭐⭐⭐ | 100% cross-boundary navigation |
+| Plan | Title                    | Confidence | Key Finding                              |
+| ---- | ------------------------ | ---------- | ---------------------------------------- |
+| 01   | PR#114 EDR Pattern       | ⭐⭐⭐⭐⭐ | Factory method template, caching pattern |
+| 02   | QueryBuilder Pattern     | ⭐⭐⭐⭐⭐ | Single builder class per API             |
+| 03   | CSAPI Architecture       | ⭐⭐⭐⭐⭐ | 9 resources, format handling required    |
+| 04   | Architecture Patterns    | ⭐⭐⭐⭐⭐ | 100% use helper methods, 0% inheritance  |
+| 10   | Upstream Expectations    | ⭐⭐⭐⭐⭐ | Minimal validation, trust server         |
+| 11   | Integration Requirements | ⭐⭐⭐⭐⭐ | EDR pattern exactly (64 lines)           |
+| 12   | File Organization        | ⭐⭐⭐⭐⭐ | Flat structure + formats/ subfolder      |
+| 13   | TypeScript Types         | ⭐⭐⭐⭐⭐ | Three-tier hierarchy, single model.ts    |
+| 14   | Usage Scenarios          | ⭐⭐⭐⭐⭐ | 100% multi-resource workflows            |
+| 15   | Query Parameters         | ⭐⭐⭐⭐⭐ | 47% shared, type-based clustering        |
+| 16   | Subresource Navigation   | ⭐⭐⭐⭐⭐ | 100% cross-boundary navigation           |
 
 **Key Decisions Validated:**
 
@@ -280,12 +286,14 @@ This implementation is built on extensive research with 98-100% confidence level
 - **Type System:** Three-tier hierarchy with 1,750-2,400 lines
 
 **References:**
+
 - [Architecture Decision - Part 1](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md) - Structural design with confidence ratings
 - [Architecture Decision - Part 2](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md) - Implementation details
 - [Architecture Decision - Part 3](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part3-validation.md) - Usage scenario validation
 - [Lessons Learned](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/LESSONS-LEARNED-multi-class-failure.md) - Why previous multi-class attempts failed
 
 **References (Architecture Patterns):**
+
 - [Architecture Patterns Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/architecture-patterns-analysis.md) - Consistent patterns used in ogc-client for adding new OGC API support
 - [PR #114 (EDR Implementation) Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/pr114-analysis.md) - Direct blueprint for CSAPI implementation, factory method pattern
 - [QueryBuilder Pattern Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/querybuilder-pattern-analysis.md) - Core pattern for CSAPIQueryBuilder implementation
@@ -302,6 +310,7 @@ This implementation is built on extensive research with 98-100% confidence level
 The conformance reader is existing code in `OgcApiEndpoint` that checks which OGC API standards a server implements by reading its conformance document. For CSAPI support, we will extend this reader by adding new conformance class checks that detect CSAPI Part 1 (Systems, Deployments, Procedures, Sampling Features, Properties) and Part 2 (DataStreams, Observations, Control Streams, Commands) capabilities. This follows the exact pattern already used for EDR detection - adding a `hasConnectedSystems` method similar to the existing `hasEnvironmentalDataRetrieval` method. The extension integrates seamlessly into the upstream repository's architecture without breaking existing functionality for Features, Tiles, Records, or EDR. This approach aligns with the project goal of making CSAPI support feel like a natural part of the existing library rather than a bolt-on addition.
 
 **CSAPI Conformance Classes to Detect:**
+
 - Part 1 Core: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/core`
 - Part 1 Systems: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/system`
 - Part 1 Deployments: `http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/req/deployment`
@@ -316,6 +325,7 @@ The conformance reader is existing code in `OgcApiEndpoint` that checks which OG
 **Implementation Type:** EXTENDING EXISTING CODE (~12 lines in `info.ts`)
 
 **References:**
+
 - [OGC API - Connected Systems Part 1](https://docs.ogc.org/is/23-001/23-001.html) - Conformance classes for Part 1 resources
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](../research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) - Machine-readable API definition for Part 1
 - [OGC API - Connected Systems Part 2](https://docs.ogc.org/is/23-002/23-002.html) - Conformance classes for Part 2 resources
@@ -330,6 +340,7 @@ The conformance reader is existing code in `OgcApiEndpoint` that checks which OG
 The collections reader is existing code that fetches and parses the `/collections` endpoint to discover what data is available on a server. For CSAPI, we will extend this parser to recognize and extract CSAPI-specific metadata that indicates whether a collection contains Systems, DataStreams, Observations, or other CSAPI resources. This is primarily an extension of existing parsing logic rather than building something entirely new - we're adding new properties to the collection info objects and new filter methods like `csapiSystemCollections`, `csapiDataStreamCollections`, and `csapiObservationCollections` alongside the existing `featureCollections` and `edrCollections` getters. The extension reuses the upstream repository's established patterns for handling different resource types within the unified collections framework. This approach supports the project goal of providing developers a consistent experience across all OGC API standards through one endpoint class.
 
 **CSAPI Collection Properties to Parse:**
+
 - `featureType` property indicating resource type (e.g., `sosa:System`, `sosa:Deployment`, `sosa:ObservationCollection`)
 - Links to CSAPI-specific operations (create, update, delete, schema endpoints for Part 2 resources)
 - Temporal extent for observation collections
@@ -341,6 +352,7 @@ The collections reader is existing code that fetches and parses the `/collection
 **Implementation Type:** EXTENDING EXISTING CODE (~6 lines in `endpoint.ts`)
 
 **References:**
+
 - [SOSA/SSN Ontology](https://www.w3.org/TR/vocab-ssn/) - Semantic foundation for featureType values (sosa:System, sosa:Deployment, etc.)
 - [OGC API - Features](https://docs.ogc.org/is/17-069r4/17-069r4.html) - Collections endpoint patterns CSAPI extends
 - [Architecture Patterns Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/architecture-patterns-analysis.md) - Collection capability determination patterns
@@ -403,9 +415,7 @@ import {
 #### info.ts Changes (+12 lines)
 
 ```typescript
-export function checkHasConnectedSystems([conformance]: [
-  ConformanceClass[]
-]) {
+export function checkHasConnectedSystems([conformance]: [ConformanceClass[]]) {
   return (
     conformance.indexOf(
       'http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/core'
@@ -444,6 +454,7 @@ export type {
 **Total Integration Code:** 64 lines (35 + 12 + 17)
 
 **Developer Usage Pattern:**
+
 ```typescript
 import { OgcApiEndpoint } from '@camptocamp/ogc-client';
 
@@ -454,7 +465,7 @@ await endpoint.isReady();
 if (await endpoint.hasConnectedSystems) {
   // Get CSAPI query builder for a collection
   const csapi = await endpoint.csapi('sensors-collection');
-  
+
   // Use builder methods to construct URLs for all 9 resource types
   const systemsUrl = csapi.getSystems({ bbox: [...], recursive: true });
   const observationsUrl = csapi.getObservations(datastreamId, { phenomenonTime: '2024-01-01/..' });
@@ -464,6 +475,7 @@ if (await endpoint.hasConnectedSystems) {
 **Implementation Type:** EXTENDING EXISTING CODE (64 lines total across 3 files)
 
 **References:**
+
 - [PR #114 (EDR Implementation) Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/pr114-analysis.md) - **PRIMARY REFERENCE** - Direct blueprint for factory method pattern
 - [Architecture Decision - Part 2: Integration](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-1-integration-pattern) - Complete integration code with line-by-line breakdown
 - [Integration with Existing Code](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/integration-analysis.md) - Line-by-line integration requirements for endpoint.ts, info.ts, index.ts
@@ -478,16 +490,17 @@ if (await endpoint.hasConnectedSystems) {
 ### CSAPIQueryBuilder: Building New Query Construction Class
 
 > **📋 STRUCTURE NOTE**
-> 
+>
 > The following sections (Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands) are **methods within this single CSAPIQueryBuilder class**, not separate components.
-> 
+>
 > This follows the upstream EDR pattern where `EDRQueryBuilder` contains methods like `getCubeUrl()`, `getCorridorUrl()`, etc. Similarly, `CSAPIQueryBuilder` contains methods like `getSystems()`, `getObservations()`, `getCommands()`, etc.
-> 
+>
 > Each subsection below describes a **method group** within the QueryBuilder class.
 
 The CSAPIQueryBuilder is new code we need to build as a single comprehensive class containing URL-building methods for all 9 CSAPI resource types, following the pattern established by the existing `EDRQueryBuilder` class. This QueryBuilder class is instantiated by the `OgcApiEndpoint.csapi()` factory method and provides developers with all the methods needed to construct URLs for CSAPI operations: querying Systems with spatial/temporal filters, creating Observations in DataStreams, retrieving historical observations with temporal ranges, sending Commands to Control Streams, and accessing all other CSAPI resources. The class consolidates URL construction for approximately 60-70 unique URL patterns across Part 1 resources (Systems, Deployments, Procedures, Sampling Features, Properties) and Part 2 resources (DataStreams, Observations, Control Streams, Commands), including canonical endpoints, nested resource endpoints, schema endpoints, and special-purpose endpoints like command status/result tracking. This single-class design follows the upstream repository's architecture pattern where one QueryBuilder per API family handles all URL construction for that API, keeping the implementation focused and maintainable rather than splitting across multiple handler classes. The following sections detail the URL construction requirements for each of the 9 resource types as methods within this one CSAPIQueryBuilder class.
 
 **URL Construction Requirements:**
+
 - Canonical resource endpoints: `/systems`, `/deployments`, `/procedures`, `/samplingFeatures`, `/properties`, `/datastreams`, `/observations`, `/controlstreams`, `/commands`
 - Nested resource endpoints: `/systems/{id}/subsystems`, `/systems/{id}/datastreams`, `/datastreams/{id}/observations`, `/controlstreams/{id}/commands`
 - Schema endpoints: `/datastreams/{id}/schema`, `/controlstreams/{id}/schema`
@@ -497,6 +510,7 @@ The CSAPIQueryBuilder is new code we need to build as a single comprehensive cla
 **Implementation Type:** BUILDING NEW CODE (following EDRQueryBuilder pattern)
 
 **Code Volume:**
+
 - url_builder.ts: ~700-800 lines
 - model.ts: ~350-400 lines (GeoJSON types)
 - helpers.ts: ~50-80 lines
@@ -504,6 +518,7 @@ The CSAPIQueryBuilder is new code we need to build as a single comprehensive cla
 - **Total: ~4,550-6,030 lines**
 
 **References:**
+
 - [OGC API - Connected Systems Part 1: OpenAPI Specification](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) - Machine-readable API definition for Part 1 endpoints
 - [OGC API - Connected Systems Part 2: OpenAPI Specification](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml) - Machine-readable API definition for Part 2 endpoints
 - [QueryBuilder Pattern Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/querybuilder-pattern-analysis.md) - Core pattern for implementation
@@ -527,32 +542,36 @@ This decision differs from the upstream EDR pattern (which has no validation) bu
 export default class CSAPIQueryBuilder {
   // Public property for users to check available resources
   public readonly availableResources: Set<string>;
-  
+
   constructor(private collection_: OgcApiCollectionInfo) {
     this.availableResources = this.extractAvailableResources();
   }
-  
+
   // Validate in ALL 70-80 methods before building URLs
   async getSystems(options?: QueryOptions): Promise<string> {
     if (!this.availableResources.has('systems')) {
       throw new EndpointError(
         `Collection '${this.collection_.id}' does not support 'systems' resource. ` +
-        `Available resources: ${Array.from(this.availableResources).join(', ')}`
+          `Available resources: ${Array.from(this.availableResources).join(
+            ', '
+          )}`
       );
     }
     return this.buildResourceUrl('systems', undefined, undefined, options);
   }
-  
+
   async getDeployments(options?: QueryOptions): Promise<string> {
     if (!this.availableResources.has('deployments')) {
       throw new EndpointError(
         `Collection '${this.collection_.id}' does not support 'deployments' resource. ` +
-        `Available resources: ${Array.from(this.availableResources).join(', ')}`
+          `Available resources: ${Array.from(this.availableResources).join(
+            ', '
+          )}`
       );
     }
     return this.buildResourceUrl('deployments', undefined, undefined, options);
   }
-  
+
   // ... validation in all 70-80 methods (~2 lines per method = ~140-160 lines total)
 }
 ```
@@ -593,6 +612,7 @@ try {
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - User mandate, clear UX benefit
 
 **References:**
+
 - [Architecture Decision - Part 1: Resource Validation](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#decision-4-resource-validation-user-mandate) - Complete rationale and implementation pattern
 
 ---
@@ -610,7 +630,7 @@ export default class CSAPIQueryBuilder {
   // ========================================
   // PRIVATE HELPERS (2-3 methods)
   // ========================================
-  
+
   /**
    * Core URL construction helper
    * Handles canonical and nested resource endpoints
@@ -631,7 +651,7 @@ export default class CSAPIQueryBuilder {
     if (subPath) url += `/${subPath}`;
     return url + this.buildQueryString(options);
   }
-  
+
   /**
    * Query parameter serialization helper
    * Handles encoding, arrays, special characters
@@ -641,7 +661,7 @@ export default class CSAPIQueryBuilder {
   private buildQueryString(options?: QueryOptions): string {
     if (!options) return '';
     const params = new URLSearchParams();
-    
+
     for (const [key, value] of Object.entries(options)) {
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
@@ -652,11 +672,11 @@ export default class CSAPIQueryBuilder {
         }
       }
     }
-    
+
     const queryString = params.toString();
     return queryString ? `?${queryString}` : '';
   }
-  
+
   /**
    * Resource discovery helper
    * Extracts available resources from collection links
@@ -664,7 +684,7 @@ export default class CSAPIQueryBuilder {
    */
   private extractAvailableResources(): Set<string> {
     const resources = new Set<string>();
-    
+
     // Parse collection links to find CSAPI resources
     for (const link of this.collection_.links) {
       const match = link.rel?.match(/^ogc-cs:(.+)$/);
@@ -672,14 +692,14 @@ export default class CSAPIQueryBuilder {
         resources.add(match[1]); // e.g., 'systems', 'datastreams'
       }
     }
-    
+
     return resources;
   }
-  
+
   // ========================================
   // PUBLIC METHODS (70-80 methods)
   // ========================================
-  
+
   // All public methods use the helpers above for code reuse
 }
 ```
@@ -702,6 +722,7 @@ export default class CSAPIQueryBuilder {
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Zero inheritance precedent in codebase
 
 **References:**
+
 - [Architecture Decision - Part 1: Helper Methods](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#decision-2-helper-methods-not-inheritance) - Complete analysis of helper methods vs inheritance
 - [Architecture Patterns Analysis](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/architecture-patterns-analysis.md) - 0% inheritance usage in upstream
 
@@ -743,11 +764,13 @@ src/ogc-api/csapi/
 **File Purposes:**
 
 **Core files (3):**
+
 - `model.ts` - All TypeScript type definitions (GeoJSON-based resources)
 - `url_builder.ts` - CSAPIQueryBuilder class with all 70-80 methods
 - `helpers.ts` - Pure utility functions (URL building, validation, etc.)
 
 **Format files (15):**
+
 - `formats/index.ts` - Barrel file for parser exports
 - `formats/geojson.ts` - GeoJSON parsing utilities (reuse geojson package)
 - `formats/constants.ts` - Media type constants, namespace URIs
@@ -755,6 +778,7 @@ src/ogc-api/csapi/
 - `formats/swecommon/` - SWE Common 3.0 parser (6 files)
 
 **Test files (2):**
+
 - `model.spec.ts` - Type validation tests
 - `url_builder.spec.ts` - QueryBuilder method tests
 
@@ -769,6 +793,7 @@ src/ogc-api/csapi/
 5. **Maintainable:** Format changes isolated from QueryBuilder
 
 **Why flat structure:**
+
 1. ✅ **100% convention compliance** - Matches all upstream APIs
 2. ✅ **Easy navigation** - No hunting through subdirectories
 3. ✅ **Clear organization** - Purpose obvious from filename
@@ -776,6 +801,7 @@ src/ogc-api/csapi/
 5. ✅ **No barrel files** - Direct imports (except formats/index.ts)
 
 **Why formats/ subfolder:**
+
 1. ✅ **Size justification** - 3,450+ lines needs organization
 2. ✅ **Separation of concerns** - URL building vs format parsing
 3. ✅ **Tree-shaking** - Users can exclude parsers
@@ -784,19 +810,20 @@ src/ogc-api/csapi/
 
 **Code Volume Breakdown:**
 
-| Component | Lines | Percentage |
-|-----------|-------|------------|
-| url_builder.ts | 700-800 | 13-15% |
-| model.ts | 350-400 | 6-8% |
-| helpers.ts | 50-80 | 1% |
-| formats/sensorml/ | 1,600-2,200 | 30-35% |
-| formats/swecommon/ | 1,600-2,250 | 30-36% |
-| formats/ (other) | 200-400 | 4-6% |
-| **TOTAL** | **4,500-5,130** | **100%** |
+| Component          | Lines           | Percentage |
+| ------------------ | --------------- | ---------- |
+| url_builder.ts     | 700-800         | 13-15%     |
+| model.ts           | 350-400         | 6-8%       |
+| helpers.ts         | 50-80           | 1%         |
+| formats/sensorml/  | 1,600-2,200     | 30-35%     |
+| formats/swecommon/ | 1,600-2,250     | 30-36%     |
+| formats/ (other)   | 200-400         | 4-6%       |
+| **TOTAL**          | **4,500-5,130** | **100%**   |
 
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Research Plan 12 validated structure
 
 **References:**
+
 - [Architecture Decision - Part 2: File Organization](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-2-file-organization) - Complete file structure analysis
 - [File Organization Strategy](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/file-organization-analysis.md) - Upstream file organization patterns
 
@@ -818,21 +845,21 @@ The type system is organized in three tiers for maximum reuse and clarity:
 // ========================================
 // TIER 1: SHARED PRIMITIVES (import from ../../shared/models.ts)
 // ========================================
-import { 
-  BoundingBox,           // Spatial primitive
-  DateTimeParameter,     // Temporal primitive
-  CrsCode,               // Coordinate reference system
-  MimeType,              // Format type
-  Contact                // Metadata primitive
+import {
+  BoundingBox, // Spatial primitive
+  DateTimeParameter, // Temporal primitive
+  CrsCode, // Coordinate reference system
+  MimeType, // Format type
+  Contact, // Metadata primitive
 } from '../../shared/models.js';
 
 // ========================================
 // TIER 2: OGC API COMMON (import from ../model.ts)
 // ========================================
 import {
-  OgcApiCollectionInfo,  // Collection metadata
-  OgcApiDocumentLink,    // HATEOAS links
-  ConformanceClass       // Conformance checking
+  OgcApiCollectionInfo, // Collection metadata
+  OgcApiDocumentLink, // HATEOAS links
+  ConformanceClass, // Conformance checking
 } from '../model.ts';
 
 // Import GeoJSON types from geojson package
@@ -855,7 +882,7 @@ export const CSAPIResourceTypes = [
   'commands',
 ] as const;
 
-export type CSAPIResourceType = typeof CSAPIResourceTypes[number];
+export type CSAPIResourceType = (typeof CSAPIResourceTypes)[number];
 
 // 2. Query Options (~40 lines)
 export interface QueryOptions {
@@ -999,7 +1026,7 @@ export interface Observation {
     phenomenonTime: Date;
     resultTime: Date;
     datastreamId: string;
-    result: any;  // Type depends on observed property
+    result: any; // Type depends on observed property
     resultQuality?: string[];
   };
   geometry?: Point;
@@ -1071,12 +1098,14 @@ export type CommandCollection = Collection<Command>;
 #### Why This Structure:
 
 **Three-Tier Benefits:**
+
 1. ✅ **Clear dependencies** - One-way imports (lower → higher)
 2. ✅ **Code reuse** - Shared types prevent duplication
 3. ✅ **Namespace clarity** - Types organized by scope
 4. ✅ **Maintainability** - Changes isolated to appropriate tier
 
 **Why single model.ts for GeoJSON:**
+
 1. ✅ **Convention compliance** - EDR uses single model.ts
 2. ✅ **Import simplicity** - One import for all resource types
 3. ✅ **IntelliSense efficiency** - Full autocomplete from one source
@@ -1086,6 +1115,7 @@ export type CommandCollection = Collection<Command>;
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Research Plan 13 validated structure
 
 **References:**
+
 - [Architecture Decision - Part 2: Type System](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-3-typescript-type-system) - Complete type system with all interfaces
 - [TypeScript Type System Design](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/upstream/typescript-types-analysis.md) - Three-tier hierarchy analysis
 
@@ -1102,20 +1132,20 @@ export type CommandCollection = Collection<Command>;
 import { OgcApiEndpoint, CSAPIQueryBuilder } from '@camptocamp/ogc-client';
 
 // GeoJSON types (CSAPI resources)
-import type { 
-  System, 
-  Deployment, 
+import type {
+  System,
+  Deployment,
   Datastream,
   Observation,
   SystemCollection,
-  ObservationCollection 
+  ObservationCollection,
 } from '@camptocamp/ogc-client';
 
 // Query options
-import type { 
-  QueryOptions, 
+import type {
+  QueryOptions,
   SystemQueryOptions,
-  ObservationQueryOptions 
+  ObservationQueryOptions,
 } from '@camptocamp/ogc-client';
 ```
 
@@ -1124,25 +1154,28 @@ import type {
 ```typescript
 // SensorML parsers and types
 import { parseSensorML30 } from '@camptocamp/ogc-client/csapi/formats/sensorml';
-import type { 
-  PhysicalSystem, 
+import type {
+  PhysicalSystem,
   PhysicalComponent,
-  Capability 
+  Capability,
 } from '@camptocamp/ogc-client/csapi/formats/sensorml';
 
 // SWE Common parsers and types
-import { parseSWEDataRecord, parseSWEDataArray } from '@camptocamp/ogc-client/csapi/formats/swecommon';
-import type { 
-  DataRecord, 
+import {
+  parseSWEDataRecord,
+  parseSWEDataArray,
+} from '@camptocamp/ogc-client/csapi/formats/swecommon';
+import type {
+  DataRecord,
   DataArray,
   Quantity,
-  DataEncoding 
+  DataEncoding,
 } from '@camptocamp/ogc-client/csapi/formats/swecommon';
 
 // Or barrel import (if using formats/index.ts)
-import { 
-  parseSensorML30, 
-  parseSWEDataRecord 
+import {
+  parseSensorML30,
+  parseSWEDataRecord,
 } from '@camptocamp/ogc-client/csapi/formats';
 ```
 
@@ -1150,7 +1183,11 @@ import {
 
 ```typescript
 // Three-tier hierarchy imports in model.ts
-import { BoundingBox, DateTimeParameter, Contact } from '../../shared/models.js';
+import {
+  BoundingBox,
+  DateTimeParameter,
+  Contact,
+} from '../../shared/models.js';
 import { OgcApiCollectionInfo, OgcApiDocumentLink } from '../model.js';
 import type { Geometry, Point } from 'geojson';
 
@@ -1180,11 +1217,12 @@ import { parseSensorML30 } from './csapi/formats/sensorml/parser.js';
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - 100% convention compliance
 
 **References:**
+
 - [Architecture Decision - Part 2: Import Patterns](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-5-user-experience-patterns) - Complete import pattern documentation
 
 ---
 
-*[Continue with existing resource methods sections from v2.0 - Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands, Query Parameters - these sections remain unchanged as they are already comprehensive]*
+_[Continue with existing resource methods sections from v2.0 - Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands, Query Parameters - these sections remain unchanged as they are already comprehensive]_
 
 ---
 
@@ -1202,22 +1240,26 @@ import { parseSensorML30 } from './csapi/formats/sensorml/parser.js';
 **Why CSAPI is Different:**
 
 1. **CSAPI-Specific Complexity:** SensorML 3.0 and SWE Common 3.0 are CORE to CSAPI functionality (not optional formats like WMS GetFeatureInfo XML or WFS DescribeFeatureType)
+
    - **Systems/Procedures:** Encoded in SensorML 3.0 (no simpler alternative)
    - **Observation Results:** Encoded in SWE Common 3.0 (binary/text/JSON - no alternatives)
    - **DataStream Schemas:** SWE Common DataComponents (complex type system)
 
 2. **User Experience:** Manual parsing creates significant friction
+
    - Developers would need to implement 1,600+ lines of SensorML parser themselves
    - Developers would need to implement 1,600+ lines of SWE Common parser themselves
    - No mature TypeScript libraries exist for SensorML 3.0 / SWE Common 3.0
    - CSAPI adoption severely limited without format support
 
 3. **Type Safety:** TypeScript interfaces provide strong typing
+
    - Parsed objects have full IntelliSense support
    - Compiler catches type errors
    - Better developer experience than raw JSON
 
 4. **Ecosystem Gap:** No mature TypeScript libraries for these formats
+
    - SensorML 3.0: Published 2024, no existing TypeScript parsers
    - SWE Common 3.0: Published 2024, no existing TypeScript parsers
    - Library fills critical ecosystem gap
@@ -1254,6 +1296,7 @@ const system = parseSensorML30(await response.text());
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - User mandate, clear ecosystem gap
 
 **References:**
+
 - [Architecture Decision - Part 1: Full Format Handling](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#decision-3-full-format-handling) - Complete rationale with research evolution
 
 ---
@@ -1275,10 +1318,10 @@ This section details the format-specific types that enable full IntelliSense and
 import type { SWEDataComponent } from '../swecommon/types.js';
 
 // Process base types
-export type SensorMLProcess = 
-  | PhysicalSystem 
-  | PhysicalComponent 
-  | SimpleProcess 
+export type SensorMLProcess =
+  | PhysicalSystem
+  | PhysicalComponent
+  | SimpleProcess
   | AggregateProcess;
 
 export interface PhysicalSystem {
@@ -1293,10 +1336,10 @@ export interface PhysicalSystem {
   contacts?: Contact[];
   documentation?: Documentation[];
   history?: Event[];
-  components?: ComponentList[];  // Nested systems
+  components?: ComponentList[]; // Nested systems
   connections?: ConnectionList[]; // Component connections
-  modes?: ModeList[];            // Operating modes
-  position?: Position;           // Location/orientation
+  modes?: ModeList[]; // Operating modes
+  position?: Position; // Location/orientation
 }
 
 export interface PhysicalComponent {
@@ -1323,7 +1366,7 @@ export interface Capability {
   label?: string;
   description?: string;
   definition?: string;
-  value: SWEDataComponent;  // Links to SWE Common types
+  value: SWEDataComponent; // Links to SWE Common types
 }
 
 export interface CharacteristicList {
@@ -1337,7 +1380,7 @@ export interface Characteristic {
   label?: string;
   description?: string;
   definition?: string;
-  value: SWEDataComponent;  // Links to SWE Common types
+  value: SWEDataComponent; // Links to SWE Common types
 }
 
 // Component structures
@@ -1350,14 +1393,14 @@ export interface ComponentList {
 export interface Component {
   name: string;
   label?: string;
-  href?: string;  // Reference to external component
+  href?: string; // Reference to external component
   role?: string;
-  process?: SensorMLProcess;  // Inline component definition
+  process?: SensorMLProcess; // Inline component definition
 }
 
 // ... 30+ more interfaces for complete SensorML schema
 // (Classification, TimeInterval, Contact, Documentation, Event,
-//  ConnectionList, ModeList, Position, InputList, OutputList, 
+//  ConnectionList, ModeList, Position, InputList, OutputList,
 //  ParameterList, ProcessMethod, etc.)
 ```
 
@@ -1406,7 +1449,7 @@ export interface DataRecord {
 export interface DataField {
   name: string;
   label?: string;
-  component: SWEDataComponent;  // Recursive structure
+  component: SWEDataComponent; // Recursive structure
 }
 
 export interface DataArray {
@@ -1427,29 +1470,26 @@ export interface Quantity {
   label?: string;
   description?: string;
   definition?: string;
-  uom: UnitOfMeasure;         // Unit of measure
+  uom: UnitOfMeasure; // Unit of measure
   constraint?: AllowedValues; // Value constraints
-  quality?: Quality[];        // Quality indicators
-  nilValues?: NilValues[];    // Missing data representation
+  quality?: Quality[]; // Quality indicators
+  nilValues?: NilValues[]; // Missing data representation
   value?: number;
 }
 
 // Unit of measure
 export interface UnitOfMeasure {
-  code?: string;  // UCUM code (e.g., "m/s", "degC")
-  href?: string;  // URI to unit definition
+  code?: string; // UCUM code (e.g., "m/s", "degC")
+  href?: string; // URI to unit definition
 }
 
 // Encoding types
-export type DataEncoding = 
-  | JSONEncoding 
-  | TextEncoding 
-  | BinaryEncoding;
+export type DataEncoding = JSONEncoding | TextEncoding | BinaryEncoding;
 
 export interface TextEncoding {
   type: 'TextEncoding';
-  tokenSeparator: string;   // e.g., ","
-  blockSeparator: string;   // e.g., "\n"
+  tokenSeparator: string; // e.g., ","
+  blockSeparator: string; // e.g., "\n"
   decimalSeparator?: string; // e.g., "."
   collapseWhiteSpaces?: boolean;
 }
@@ -1484,12 +1524,12 @@ export interface BinaryMember {
 
 #### Type Organization Summary
 
-| Location | Lines | Purpose |
-|----------|-------|---------|
-| `model.ts` | 350-400 | GeoJSON-based resource types |
-| `formats/sensorml/types.ts` | 800-1,200 | SensorML 3.0 interfaces |
-| `formats/swecommon/types.ts` | 600-800 | SWE Common 3.0 interfaces |
-| **TOTAL** | **1,750-2,400** | **Complete type system** |
+| Location                     | Lines           | Purpose                      |
+| ---------------------------- | --------------- | ---------------------------- |
+| `model.ts`                   | 350-400         | GeoJSON-based resource types |
+| `formats/sensorml/types.ts`  | 800-1,200       | SensorML 3.0 interfaces      |
+| `formats/swecommon/types.ts` | 600-800         | SWE Common 3.0 interfaces    |
+| **TOTAL**                    | **1,750-2,400** | **Complete type system**     |
 
 **Why Format-Specific Type Files:**
 
@@ -1506,7 +1546,7 @@ export interface BinaryMember {
 // SensorML Capability uses SWE Common DataComponent
 export interface Capability {
   name: string;
-  value: SWEDataComponent;  // Type from swecommon/types.ts
+  value: SWEDataComponent; // Type from swecommon/types.ts
 }
 
 // This integration provides seamless type flow from
@@ -1516,13 +1556,14 @@ export interface Capability {
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - User mandate + industry standard
 
 **References:**
+
 - [Architecture Decision - Part 2: Type System](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-3-typescript-type-system) - Complete type definitions with all interfaces
 - [OGC SensorML 3.0](https://docs.ogc.org/is/23-000/23-000.html) - Official SensorML specification
 - [OGC SWE Common 3.0](https://docs.ogc.org/is/24-014/24-014.html) - Official SWE Common specification
 
 ---
 
-*[Continue with existing format handler sections from v2.0 - GeoJSON Handler, SensorML Handler, SWE Common Handler, Format Detector, Validator, Worker Components, Testing Components, Documentation Components - these sections remain unchanged]*
+_[Continue with existing format handler sections from v2.0 - GeoJSON Handler, SensorML Handler, SWE Common Handler, Format Detector, Validator, Worker Components, Testing Components, Documentation Components - these sections remain unchanged]_
 
 ---
 
@@ -1541,24 +1582,24 @@ import { OgcApiEndpoint, CSAPIQueryBuilder } from '@camptocamp/ogc-client';
 const endpoint = await OgcApiEndpoint.fromUrl('https://api.example.com/csapi');
 
 // 2. Check conformance
-const hasCSAPI = await endpoint.hasConnectedSystems;  // true/false
+const hasCSAPI = await endpoint.hasConnectedSystems; // true/false
 
 // 3. List available collections
-const collections = await endpoint.csapiCollections;  // ['sensors', 'stations', ...]
+const collections = await endpoint.csapiCollections; // ['sensors', 'stations', ...]
 
 // 4. Get builder for collection
 const builder: CSAPIQueryBuilder = await endpoint.csapi('sensors');
 
 // 5. Check available resources (automatic validation)
-console.log(builder.availableResources); 
+console.log(builder.availableResources);
 // Set { 'systems', 'deployments', 'datastreams', 'observations' }
 
 // 6. Use builder methods (with automatic validation)
 try {
   const systemsUrl = await builder.getSystems({ limit: 10 });
   const systemUrl = await builder.getSystem('sensor-123');
-  const historyUrl = await builder.getSystemHistory('sensor-123', { 
-    datetime: { start: new Date('2024-01-01'), end: new Date('2024-12-31') } 
+  const historyUrl = await builder.getSystemHistory('sensor-123', {
+    datetime: { start: new Date('2024-01-01'), end: new Date('2024-12-31') },
   });
 } catch (error) {
   // Fail-fast with clear error if resource unavailable
@@ -1573,11 +1614,11 @@ try {
 **GeoJSON Resource Types with Full IntelliSense:**
 
 ```typescript
-import type { 
-  System, 
+import type {
+  System,
   SystemCollection,
   Deployment,
-  Datastream 
+  Datastream
 } from '@camptocamp/ogc-client';
 
 // Fetch and parse GeoJSON
@@ -1595,10 +1636,10 @@ systems.features.forEach((system: System) => {
   console.log(system.properties.validTime);    // TimeInterval | undefined
   console.log(system.geometry?.coordinates);   // number[] | undefined
   console.log(system.links);                   // ResourceLink[]
-  
+
   // ✅ TypeScript catches errors at compile time
   // console.log(system.properties.invalid);   // ❌ Compile error
-  
+
   // ✅ Safe navigation with optional chaining
   const startTime = system.properties.validTime?.start;
   const longitude = system.geometry?.coordinates?.[0];
@@ -1618,7 +1659,10 @@ console.log(datastream.properties.observedPropertyId); // ✅ Full type safety
 
 ```typescript
 import { parseSensorML30 } from '@camptocamp/ogc-client/csapi/formats/sensorml';
-import type { PhysicalSystem, Capability } from '@camptocamp/ogc-client/csapi/formats/sensorml';
+import type {
+  PhysicalSystem,
+  Capability,
+} from '@camptocamp/ogc-client/csapi/formats/sensorml';
 
 // Fetch SensorML 3.0 format
 const smlUrl = await builder.getSystem('sensor-123', { f: 'sml' });
@@ -1627,23 +1671,23 @@ const smlJson = await smlResponse.json();
 const system: PhysicalSystem = parseSensorML30(smlJson);
 
 // Type-safe SensorML access with full IntelliSense
-console.log(system.type);                    // 'PhysicalSystem'
-console.log(system.description);             // string | undefined
-console.log(system.classification);          // Classification[] | undefined
-console.log(system.capabilities);            // CapabilityList[] | undefined
-console.log(system.components);              // ComponentList[] | undefined
+console.log(system.type); // 'PhysicalSystem'
+console.log(system.description); // string | undefined
+console.log(system.classification); // Classification[] | undefined
+console.log(system.capabilities); // CapabilityList[] | undefined
+console.log(system.components); // ComponentList[] | undefined
 
 // Navigate nested structures safely
 system.capabilities?.forEach((capList) => {
   capList.capabilities.forEach((cap: Capability) => {
-    console.log(cap.name);                   // string
-    console.log(cap.definition);             // string | undefined
-    console.log(cap.value.type);             // 'Quantity' | 'Count' | ...
-    
+    console.log(cap.name); // string
+    console.log(cap.definition); // string | undefined
+    console.log(cap.value.type); // 'Quantity' | 'Count' | ...
+
     // ✅ TypeScript narrows types based on discriminator
     if (cap.value.type === 'Quantity') {
-      console.log(cap.value.uom.code);       // UCUM code (e.g., "m/s")
-      console.log(cap.value.value);          // number | undefined
+      console.log(cap.value.uom.code); // UCUM code (e.g., "m/s")
+      console.log(cap.value.value); // number | undefined
     }
   });
 });
@@ -1653,7 +1697,7 @@ system.components?.forEach((compList) => {
   compList.components.forEach((comp) => {
     if (comp.process?.type === 'PhysicalSystem') {
       // ✅ Recursive type safety for nested systems
-      console.log(comp.process.components);  // ComponentList[] | undefined
+      console.log(comp.process.components); // ComponentList[] | undefined
     }
   });
 });
@@ -1663,7 +1707,11 @@ system.components?.forEach((compList) => {
 
 ```typescript
 import { parseSWEDataRecord } from '@camptocamp/ogc-client/csapi/formats/swecommon';
-import type { DataRecord, Quantity, DataArray } from '@camptocamp/ogc-client/csapi/formats/swecommon';
+import type {
+  DataRecord,
+  Quantity,
+  DataArray,
+} from '@camptocamp/ogc-client/csapi/formats/swecommon';
 
 // Fetch SWE Common schema
 const schemaUrl = await builder.getDatastreamSchema('ds-456');
@@ -1673,28 +1721,28 @@ const schema: DataRecord = parseSWEDataRecord(schemaJson);
 
 // Type-safe SWE Common access
 schema.fields.forEach((field) => {
-  console.log(field.name);                   // string
-  console.log(field.component.type);         // 'Quantity' | 'Count' | ...
-  
+  console.log(field.name); // string
+  console.log(field.component.type); // 'Quantity' | 'Count' | ...
+
   // ✅ Type narrowing based on discriminator
   if (field.component.type === 'Quantity') {
     const quantity = field.component as Quantity;
-    console.log(quantity.uom.code);          // UCUM code
-    console.log(quantity.constraint);        // AllowedValues | undefined
-    console.log(quantity.quality);           // Quality[] | undefined
+    console.log(quantity.uom.code); // UCUM code
+    console.log(quantity.constraint); // AllowedValues | undefined
+    console.log(quantity.quality); // Quality[] | undefined
   }
-  
+
   if (field.component.type === 'DataArray') {
     const array = field.component as DataArray;
-    console.log(array.elementType.type);     // Element type
-    console.log(array.encoding?.type);       // 'JSON' | 'Text' | 'Binary'
+    console.log(array.elementType.type); // Element type
+    console.log(array.encoding?.type); // 'JSON' | 'Text' | 'Binary'
   }
 });
 
 // Parse observation results using schema
-const obsUrl = await builder.getObservations('ds-456', { 
+const obsUrl = await builder.getObservations('ds-456', {
   phenomenonTime: '2024-01-01/2024-01-31',
-  limit: 100 
+  limit: 100,
 });
 const obsResponse = await fetch(obsUrl);
 const observations = await obsResponse.json();
@@ -1726,9 +1774,9 @@ try {
   if (error instanceof EndpointError) {
     // Clear, actionable error message
     console.error(error.message);
-    // "Collection 'weather-stations' does not support 'systems' resource. 
+    // "Collection 'weather-stations' does not support 'systems' resource.
     //  Available resources: datastreams, observations"
-    
+
     // Programmatic access to available resources
     console.log(builder.availableResources);
     // Set { 'datastreams', 'observations' }
@@ -1740,15 +1788,15 @@ try {
 
 ```typescript
 try {
-  const url = await builder.getObservations('ds-123', { 
-    phenomenonTime: '2024-01-01/2024-01-31' 
+  const url = await builder.getObservations('ds-123', {
+    phenomenonTime: '2024-01-01/2024-01-31',
   });
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
-  
+
   const observations = await response.json();
 } catch (error) {
   console.error('Failed to fetch observations:', error.message);
@@ -1758,7 +1806,10 @@ try {
 **Format Parsing Errors:**
 
 ```typescript
-import { parseSensorML30, SensorMLParseError } from '@camptocamp/ogc-client/csapi/formats/sensorml';
+import {
+  parseSensorML30,
+  SensorMLParseError,
+} from '@camptocamp/ogc-client/csapi/formats/sensorml';
 
 try {
   const smlUrl = await builder.getSystem('sys-123', { f: 'sml' });
@@ -1803,12 +1854,10 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
   - [ ] Define all 9 resource interfaces (225 lines)
   - [ ] Define collection types (35 lines)
   - [ ] Import from three tiers (shared, ogc-api, geojson)
-  
 - [ ] **Create helpers.ts** (~50-80 lines, 1 hour)
   - [ ] Implement URL encoding helpers
   - [ ] Implement temporal parsing utilities
   - [ ] Implement validation utilities
-  
 - [ ] **Add integration code to endpoint.ts** (+35 lines, 1 hour)
   - [ ] Import CSAPIQueryBuilder (1 line)
   - [ ] Add cache field (2 lines)
@@ -1816,16 +1865,15 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
   - [ ] Add hasConnectedSystems getter (6 lines)
   - [ ] Add csapi() factory method (17 lines)
   - [ ] Update import statement (3 lines)
-  
 - [ ] **Add conformance check to info.ts** (+12 lines, 30 minutes)
   - [ ] Implement checkHasConnectedSystems function
   - [ ] Check both Part 1 and Part 2 conformance classes
-  
 - [ ] **Add exports to index.ts** (+17 lines, 30 minutes)
   - [ ] Export CSAPIQueryBuilder class
   - [ ] Export all type interfaces
 
 **Validation:**
+
 - [ ] TypeScript compiles without errors
 - [ ] All imports resolve correctly
 - [ ] Factory method instantiates builder
@@ -1845,12 +1893,10 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
   - [ ] Class structure with constructor
   - [ ] Private fields (collection, baseUrl)
   - [ ] Public field (availableResources)
-  
 - [ ] **Implement helper methods** (~50-80 lines, 2 hours)
   - [ ] buildResourceUrl() - Core URL construction (30-40 lines)
   - [ ] buildQueryString() - Parameter serialization (20-30 lines)
   - [ ] extractAvailableResources() - Resource discovery (10-15 lines)
-  
 - [ ] **Implement Part 1 methods** (~400-500 lines, 5-6 hours)
   - [ ] Systems methods (12 methods, ~120 lines)
     - [ ] getSystems, getSystem, createSystem, updateSystem, deleteSystem
@@ -1861,7 +1907,6 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
   - [ ] Procedures methods (8 methods, ~80 lines)
   - [ ] Sampling Features methods (8 methods, ~80 lines)
   - [ ] Properties methods (6 methods, ~60 lines)
-  
 - [ ] **Implement Part 2 methods** (~400-500 lines, 5-6 hours)
   - [ ] Datastreams methods (11 methods, ~110 lines)
   - [ ] Observations methods (9 methods, ~90 lines)
@@ -1873,6 +1918,7 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
     - [ ] checkFeasibility, bulkCreateCommands
 
 **Validation:**
+
 - [ ] All methods build correct URLs
 - [ ] Query parameters serialized correctly
 - [ ] Resource validation throws correct errors
@@ -1900,7 +1946,6 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
   - [ ] Create formats/index.ts (~50-100 lines)
     - [ ] Barrel file for all parsers
     - [ ] Re-export types
-  
 - [ ] **Implement SensorML parsers** (~1,600-2,200 lines, 10-12 hours)
   - [ ] Create formats/sensorml/types.ts (~800-1,200 lines, 4-5 hours)
     - [ ] PhysicalSystem interface
@@ -1918,7 +1963,6 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
   - [ ] Create formats/sensorml/aggregate-process.ts (~200-250 lines, 1 hour)
   - [ ] Create formats/sensorml/physical-system.ts (~200-250 lines, 1 hour)
   - [ ] Create formats/sensorml/index.ts (~50-100 lines, 30 minutes)
-  
 - [ ] **Implement SWE Common parsers** (~1,600-2,250 lines, 10-12 hours)
   - [ ] Create formats/swecommon/types.ts (~600-800 lines, 3-4 hours)
     - [ ] DataComponent union type
@@ -1938,6 +1982,7 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
   - [ ] Create formats/swecommon/index.ts (~50-100 lines, 30 minutes)
 
 **Validation:**
+
 - [ ] All SensorML examples parse correctly
 - [ ] All SWE Common examples parse correctly
 - [ ] Type discrimination works correctly
@@ -1960,7 +2005,6 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
   - [ ] Test query option interfaces
   - [ ] Test resource interfaces
   - [ ] Test collection types
-  
 - [ ] **Create url_builder.spec.ts** (~800-1,000 lines, 6-8 hours)
   - [ ] Test constructor and initialization
   - [ ] Test resource discovery
@@ -1971,7 +2015,6 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
   - [ ] Test schema/status endpoints
   - [ ] Test error cases
   - [ ] Test resource validation
-  
 - [ ] **Create format parser tests** (~3,500-4,700 lines, 10-12 hours)
   - [ ] Test SensorML parser (~1,500-2,000 lines)
     - [ ] Test all system models
@@ -1989,6 +2032,7 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
   - [ ] Test format detector (~200-300 lines)
 
 **Validation:**
+
 - [ ] Code coverage >80%
 - [ ] All tests pass
 - [ ] Edge cases covered
@@ -2001,13 +2045,13 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
 
 **Total Estimated Time:** 51-72 hours (6-9 weeks calendar time)
 
-| Phase | Complexity | Time | Lines | Dependencies |
-|-------|-----------|------|-------|--------------|
-| Phase 1: Core Structure | LOW | 4-6 hours | ~500-600 | None |
-| Phase 2: QueryBuilder | MEDIUM | 12-16 hours | ~900-1,180 | Phase 1 |
-| Phase 3: Format Parsers | HIGH | 20-30 hours | ~3,450-4,750 | Phase 2 |
-| Phase 4: Tests | MEDIUM-HIGH | 15-20 hours | ~4,500-6,000 | Phases 1-3 |
-| **TOTAL** | **MIXED** | **51-72 hours** | **~9,350-12,530** | **Sequential** |
+| Phase                   | Complexity  | Time            | Lines             | Dependencies   |
+| ----------------------- | ----------- | --------------- | ----------------- | -------------- |
+| Phase 1: Core Structure | LOW         | 4-6 hours       | ~500-600          | None           |
+| Phase 2: QueryBuilder   | MEDIUM      | 12-16 hours     | ~900-1,180        | Phase 1        |
+| Phase 3: Format Parsers | HIGH        | 20-30 hours     | ~3,450-4,750      | Phase 2        |
+| Phase 4: Tests          | MEDIUM-HIGH | 15-20 hours     | ~4,500-6,000      | Phases 1-3     |
+| **TOTAL**               | **MIXED**   | **51-72 hours** | **~9,350-12,530** | **Sequential** |
 
 **Complexity Distribution:**
 
@@ -2032,6 +2076,7 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
 **Confidence:** ⭐⭐⭐⭐ (4/5) - Estimates based on similar upstream implementations (EDR, WFS)
 
 **References:**
+
 - [Architecture Decision - Part 2: Implementation Roadmap](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#implementation-readiness) - Complete implementation checklist
 
 ---
@@ -2042,33 +2087,33 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
 
 ### Implementation Files
 
-| Category | Files | Lines | Complexity | Status |
-|----------|-------|-------|------------|--------|
-| **Core Implementation** | **3** | **1,100-1,280** | **Medium** | **Structure complete** |
-| url_builder.ts | 1 | 700-800 | Medium | 70-80 methods |
-| model.ts | 1 | 350-400 | Low | Type definitions |
-| helpers.ts | 1 | 50-80 | Low | Utilities |
-| **Format Implementation** | **18** | **3,450-4,750** | **High** | **Structure complete** |
-| SensorML types | 1 | 800-1,200 | Medium | Interface definitions |
-| SensorML parsers | 5 | 800-1,000 | High | Recursive parsing |
-| SWE Common types | 1 | 600-800 | Medium | Interface definitions |
-| SWE Common parsers | 5 | 1,000-1,250 | High | Encoding support |
-| GeoJSON utilities | 1 | 50-100 | Low | Extensions |
-| Constants | 1 | 50-100 | Low | Media types |
-| Index files | 3 | 150-300 | Low | Exports |
-| **Integration** | **3** | **64** | **Low** | **Pattern decided** |
-| endpoint.ts changes | 1 | 35 | Low | Factory method |
-| info.ts changes | 1 | 12 | Low | Conformance |
-| index.ts changes | 1 | 17 | Low | Exports |
-| **TOTAL IMPLEMENTATION** | **24** | **4,614-6,094** | **Mixed** | **Ready** |
+| Category                  | Files  | Lines           | Complexity | Status                 |
+| ------------------------- | ------ | --------------- | ---------- | ---------------------- |
+| **Core Implementation**   | **3**  | **1,100-1,280** | **Medium** | **Structure complete** |
+| url_builder.ts            | 1      | 700-800         | Medium     | 70-80 methods          |
+| model.ts                  | 1      | 350-400         | Low        | Type definitions       |
+| helpers.ts                | 1      | 50-80           | Low        | Utilities              |
+| **Format Implementation** | **18** | **3,450-4,750** | **High**   | **Structure complete** |
+| SensorML types            | 1      | 800-1,200       | Medium     | Interface definitions  |
+| SensorML parsers          | 5      | 800-1,000       | High       | Recursive parsing      |
+| SWE Common types          | 1      | 600-800         | Medium     | Interface definitions  |
+| SWE Common parsers        | 5      | 1,000-1,250     | High       | Encoding support       |
+| GeoJSON utilities         | 1      | 50-100          | Low        | Extensions             |
+| Constants                 | 1      | 50-100          | Low        | Media types            |
+| Index files               | 3      | 150-300         | Low        | Exports                |
+| **Integration**           | **3**  | **64**          | **Low**    | **Pattern decided**    |
+| endpoint.ts changes       | 1      | 35              | Low        | Factory method         |
+| info.ts changes           | 1      | 12              | Low        | Conformance            |
+| index.ts changes          | 1      | 17              | Low        | Exports                |
+| **TOTAL IMPLEMENTATION**  | **24** | **4,614-6,094** | **Mixed**  | **Ready**              |
 
 ### Test Files
 
-| Category | Files | Lines | Complexity | Status |
-|----------|-------|-------|------------|--------|
-| Core tests | 2 | 1,000-1,300 | Medium | Patterns complete |
-| Format tests | 15 | 3,500-4,700 | High | Patterns complete |
-| **TOTAL TESTS** | **17** | **4,500-6,000** | **High** | **Ready** |
+| Category        | Files  | Lines           | Complexity | Status            |
+| --------------- | ------ | --------------- | ---------- | ----------------- |
+| Core tests      | 2      | 1,000-1,300     | Medium     | Patterns complete |
+| Format tests    | 15     | 3,500-4,700     | High       | Patterns complete |
+| **TOTAL TESTS** | **17** | **4,500-6,000** | **High**   | **Ready**         |
 
 ### Grand Total
 
@@ -2078,11 +2123,11 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
 
 **Comparison to Original Estimates:**
 
-| Estimate | Original (v2.0) | Research-Validated (v3.0) | Difference |
-|----------|----------------|---------------------------|------------|
-| QueryBuilder | ~10,000-14,000 lines | ~700-800 lines | -93% |
-| Total Implementation | ~15,000-20,000 lines | ~4,614-6,094 lines | -69% |
-| Total with Tests | ~21,000-27,900 lines | ~9,114-12,094 lines | -56% |
+| Estimate             | Original (v2.0)      | Research-Validated (v3.0) | Difference |
+| -------------------- | -------------------- | ------------------------- | ---------- |
+| QueryBuilder         | ~10,000-14,000 lines | ~700-800 lines            | -93%       |
+| Total Implementation | ~15,000-20,000 lines | ~4,614-6,094 lines        | -69%       |
+| Total with Tests     | ~21,000-27,900 lines | ~9,114-12,094 lines       | -56%       |
 
 **Why More Accurate:**
 
@@ -2103,6 +2148,7 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - Based on 13 research plans
 
 **References:**
+
 - [Architecture Decision - Part 1: Code Volume Summary](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#code-volume-summary) - Detailed breakdown with component-level estimates
 - [Architecture Decision - Part 2: Implementation Complexity](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-4-implementation-complexity-metrics) - Complexity analysis by component
 
@@ -2111,6 +2157,7 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
 ## Summary: Build vs Extend Breakdown
 
 ### Components Extending Existing Code (9 components):
+
 1. **Conformance Reader** - Add CSAPI conformance class checks (`hasConnectedSystems` getter, ~12 lines in `info.ts`)
 2. **Collections Reader** - Parse CSAPI collection metadata (`csapiCollections` getter, ~6 lines in `endpoint.ts`)
 3. **OgcApiEndpoint Integration** - Add `csapi(collectionId)` factory method (64 lines total: endpoint.ts 35 + info.ts 12 + index.ts 17)
@@ -2122,7 +2169,9 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
 9. **API Documentation** - Add CSAPI docs to TypeDoc (extend existing documentation)
 
 ### Components Building New Code (3 components):
+
 1. **CSAPIQueryBuilder** - New query builder class (~1,100-1,280 lines)
+
    - url_builder.ts: ~700-800 lines (includes validation)
    - model.ts: ~350-400 lines (GeoJSON types)
    - helpers.ts: ~50-80 lines (utilities)
@@ -2133,6 +2182,7 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
    - **Three-tier type system** with 1,750-2,400 total lines
 
 2. **SensorML Handler** - New format parser for SensorML 3.0 (~1,600-2,200 lines)
+
    - types.ts: ~800-1,200 lines (interfaces)
    - parser.ts: ~600-800 lines (main parser)
    - Sub-parsers: ~550-700 lines (simple-process, aggregate-process, physical-system)
@@ -2161,11 +2211,13 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
 **File Organization:** Flat core (url_builder.ts, model.ts, helpers.ts) + formats/ subfolder (sensorml/, swecommon/, geojson.ts, constants.ts, 3 index files) for tree-shaking and maintainability. Total: 21 implementation files.
 
 **Type System:** Three-tier hierarchy (Shared → OGC API → CSAPI) with 1,750-2,400 total lines:
+
 - model.ts: ~350-400 lines (GeoJSON resources)
 - formats/sensorml/types.ts: ~800-1,200 lines (SensorML interfaces)
 - formats/swecommon/types.ts: ~600-800 lines (SWE Common interfaces)
 
 **Scope Understanding:** While the summary lists "3 components building new code" (architecturally accurate), the implementation totals ~4,614-6,094 lines:
+
 - QueryBuilder core: ~1,100-1,280 lines (21%)
 - Format parsers: ~3,450-4,750 lines (76-78%)
 - Integration: 64 lines (1%)
@@ -2173,6 +2225,7 @@ This section provides a complete, actionable roadmap for implementing CSAPI supp
 The format parsers represent ~76-78% of new code because CSAPI requires full parsing of SensorML 3.0 and SWE Common 3.0 (unlike other OGC APIs that only build URLs). This consolidated single-class architecture follows the upstream EDR pattern (one QueryBuilder per API family) but delivers functionally extensive capabilities across all CSAPI resources. Clients evaluating scope should understand that while architecturally elegant (3 new classes), the functional scope is substantial - implementing complete CSAPI Part 1 and Part 2 specifications with full query, filter, and pagination support across all resource types.
 
 ### Estimated Scope:
+
 - **Extending existing code:** ~20% of effort (9 small extensions, 64 total lines modified in existing files + ~4,500-6,000 test lines)
 - **Building new code:** ~80% of effort (QueryBuilder: ~1,100-1,280 lines + Format parsers: ~3,450-4,750 lines)
 - **Total estimated lines of code:** ~9,114-12,094 lines (implementation + tests)
@@ -2182,6 +2235,7 @@ The format parsers represent ~76-78% of new code because CSAPI requires full par
 **Confidence:** ⭐⭐⭐⭐⭐ (5/5) - All estimates validated through 13 research plans
 
 **References:**
+
 - [Architecture Decision - Part 1: Code Volume](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part1-structure.md#code-volume-summary) - Component-level breakdown
 - [Architecture Decision - Part 2: Implementation Complexity](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/csapiquerybuilder/architecture-decision/results/DECISION-part2-implementation.md#decision-4-implementation-complexity-metrics) - Detailed complexity analysis
 
@@ -2206,6 +2260,7 @@ Every component described above aligns with these core project goals:
 ## Development Standards
 
 **Recommended Development Workflow:**
+
 1. Follow the [Implementation Roadmap](#implementation-roadmap) phase by phase
 2. Write method signatures before implementation
 3. Add comprehensive JSDoc comments with parameters, return types, examples
@@ -2217,9 +2272,10 @@ Every component described above aligns with these core project goals:
 9. Update documentation as you go - don't defer
 
 **Code Quality Standards:**
+
 - TypeScript strict mode enabled
 - 100% public API JSDoc coverage
-- >80% test coverage (statement and branch)
+- > 80% test coverage (statement and branch)
 - Lint-clean code (ESLint configuration)
 - No magic numbers or strings (use constants)
 - Consistent error handling patterns
@@ -2228,6 +2284,7 @@ Every component described above aligns with these core project goals:
 - Use helper methods for code reuse (no inheritance)
 
 **Documentation Standards:**
+
 - Clear, concise method descriptions
 - Parameter descriptions with types and constraints
 - Return type documentation
@@ -2238,6 +2295,7 @@ Every component described above aligns with these core project goals:
 - Type system documentation with IntelliSense examples
 
 **Research-Validated Standards:**
+
 - All architectural decisions backed by research (⭐⭐⭐⭐⭐ confidence)
 - Follow upstream patterns (100% consistency)
 - Helper methods for code reuse (0% inheritance)
@@ -2250,9 +2308,10 @@ Every component described above aligns with these core project goals:
 ---
 
 **Document Version:** 3.0 (Implementation-Ready)  
-**Previous Versions:** 
-- [v1.0 (archived)](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/archive/csapi-implementation-guide-v1.md) - Original architecture  
-- [v2.0 (archived)](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/archive/csapi-implementation-guide-v2.md) - Research-validated structure  
+**Previous Versions:**
+
+- [v1.0 (archived)](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/archive/csapi-implementation-guide-v1.md) - Original architecture
+- [v2.0 (archived)](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/archive/csapi-implementation-guide-v2.md) - Research-validated structure
 
 **Date:** 2026-02-04  
 **Research Foundation:** 13 completed research plans with ⭐⭐⭐⭐⭐ confidence (98-100%)  

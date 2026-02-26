@@ -7,6 +7,7 @@
 **Purpose:** Validate the 11 new DataStreams methods (first Part 2 resource type) and verify no regressions after Issues #41 (Phase 2.5 review findings fix) and #42 (DataStreams test backfill).
 
 > This is smoke test #6 in the series. See also:
+>
 > - [Post Phase 2.5](live-server-smoke-test-post-phase-2.5.md) — validated 42 methods, Properties focus
 > - [Post Phase 2.4](live-server-smoke-test-post-phase-2.4.md) — validated 36 methods, SamplingFeatures focus
 > - [Post Phase 2.3](live-server-smoke-test-post-phase-2.3.md) — validated Procedures
@@ -33,70 +34,70 @@ No code changes were made. All tests were run from the terminal using raw HTTP c
 
 ### OpenSensorHub (OSH)
 
-| Property | Value |
-|----------|-------|
-| URL | `http://45.55.99.236:8080/sensorhub/api` |
-| Auth | Basic (credentials not stored in repo) |
-| Root status | ✅ 200 — 10 links in root document |
-| Conformance classes | 33 (unchanged) |
+| Property            | Value                                    |
+| ------------------- | ---------------------------------------- |
+| URL                 | `http://45.55.99.236:8080/sensorhub/api` |
+| Auth                | Basic (credentials not stored in repo)   |
+| Root status         | ✅ 200 — 10 links in root document       |
+| Conformance classes | 33 (unchanged)                           |
 
 **Top-level resource links in root document (Convention 2):**
 
-| Resource Type | Present | Link |
-|--------------|---------|------|
-| systems | ✅ | `.../systems` |
-| deployments | ✅ | `.../deployments` |
-| procedures | ✅ | `.../procedures` |
-| samplingFeatures | ✅ | `.../samplingFeatures` |
-| datastreams | ✅ | `.../datastreams` |
-| observations | ✅ | `.../observations` |
-| properties | ❌ | Not in root document |
-| controlstreams | ❌ | Not in root document |
+| Resource Type    | Present | Link                   |
+| ---------------- | ------- | ---------------------- |
+| systems          | ✅      | `.../systems`          |
+| deployments      | ✅      | `.../deployments`      |
+| procedures       | ✅      | `.../procedures`       |
+| samplingFeatures | ✅      | `.../samplingFeatures` |
+| datastreams      | ✅      | `.../datastreams`      |
+| observations     | ✅      | `.../observations`     |
+| properties       | ❌      | Not in root document   |
+| controlstreams   | ❌      | Not in root document   |
 
 **Collections (Convention 3) — unchanged:**
 
-| Collection | `rel: "items"` href |
-|-----------|---------------------|
-| `all_systems` | `systems` |
-| `all_datastreams` | `datastreams` |
-| `all_fois` | `samplingFeatures` |
-| `all_procedures` | `procedures` |
+| Collection        | `rel: "items"` href |
+| ----------------- | ------------------- |
+| `all_systems`     | `systems`           |
+| `all_datastreams` | `datastreams`       |
+| `all_fois`        | `samplingFeatures`  |
+| `all_procedures`  | `procedures`        |
 
 **Server resource inventory:**
 
-| Resource Type | Count | Status | Change from Phase 2.5 |
-|--------------|-------|--------|----------------------|
-| Systems | 12 | ✅ Has data | Unchanged |
-| Deployments | 0 | ✅ Endpoint functional | Unchanged |
-| Procedures | 0 | ✅ Endpoint functional | Unchanged |
-| SamplingFeatures | 51+ | ✅ Has data | Unchanged |
-| **Datastreams** | **100+** | **✅ Has data** | **Unchanged — primary focus of this test** |
-| **Observations** | **100+** | **✅ Has data** | **Unchanged — tested via datastream nesting** |
-| ControlStreams | 8 | ✅ Has data | Unchanged |
-| Properties | 0 | ✅ Endpoint functional | Unchanged |
+| Resource Type    | Count    | Status                 | Change from Phase 2.5                         |
+| ---------------- | -------- | ---------------------- | --------------------------------------------- |
+| Systems          | 12       | ✅ Has data            | Unchanged                                     |
+| Deployments      | 0        | ✅ Endpoint functional | Unchanged                                     |
+| Procedures       | 0        | ✅ Endpoint functional | Unchanged                                     |
+| SamplingFeatures | 51+      | ✅ Has data            | Unchanged                                     |
+| **Datastreams**  | **100+** | **✅ Has data**        | **Unchanged — primary focus of this test**    |
+| **Observations** | **100+** | **✅ Has data**        | **Unchanged — tested via datastream nesting** |
+| ControlStreams   | 8        | ✅ Has data            | Unchanged                                     |
+| Properties       | 0        | ✅ Endpoint functional | Unchanged                                     |
 
 ### 52North CSA Demo
 
-| Property | Value |
-|----------|-------|
-| URL | `https://csa.demo.52north.org` |
-| Auth | None required |
-| SSL | Expired certificate — requires `-SkipCertificateCheck` |
-| Root status | ✅ 200 — 7 links in root document |
-| Conformance classes | 1 (`ogcapi-common-1/1.0/conf/core`) — unchanged |
+| Property            | Value                                                  |
+| ------------------- | ------------------------------------------------------ |
+| URL                 | `https://csa.demo.52north.org`                         |
+| Auth                | None required                                          |
+| SSL                 | Expired certificate — requires `-SkipCertificateCheck` |
+| Root status         | ✅ 200 — 7 links in root document                      |
+| Conformance classes | 1 (`ogcapi-common-1/1.0/conf/core`) — unchanged        |
 
 **Server resource inventory:**
 
-| Resource Type | Count | Status | Change from Phase 2.5 |
-|--------------|-------|--------|----------------------|
-| Systems | 3 | ✅ Has data | Unchanged |
-| Deployments | 1 | ✅ Has data | Unchanged |
-| Procedures | 1 | ✅ Has data | Unchanged |
-| SamplingFeatures | 0 | ✅ Endpoint functional | Unchanged |
-| **Datastreams** | **—** | **❌ 500 Server Error** | **Unchanged — known server limitation** |
-| **Observations** | **—** | **❌ 500 Server Error** | **Unchanged** |
-| ControlStreams | — | ❌ 404 Not Found | Unchanged |
-| Properties | 0 | ✅ Endpoint functional | Unchanged |
+| Resource Type    | Count | Status                  | Change from Phase 2.5                   |
+| ---------------- | ----- | ----------------------- | --------------------------------------- |
+| Systems          | 3     | ✅ Has data             | Unchanged                               |
+| Deployments      | 1     | ✅ Has data             | Unchanged                               |
+| Procedures       | 1     | ✅ Has data             | Unchanged                               |
+| SamplingFeatures | 0     | ✅ Endpoint functional  | Unchanged                               |
+| **Datastreams**  | **—** | **❌ 500 Server Error** | **Unchanged — known server limitation** |
+| **Observations** | **—** | **❌ 500 Server Error** | **Unchanged**                           |
+| ControlStreams   | —     | ❌ 404 Not Found        | Unchanged                               |
+| Properties       | 0     | ✅ Endpoint functional  | Unchanged                               |
 
 ---
 
@@ -104,23 +105,23 @@ No code changes were made. All tests were run from the terminal using raw HTTP c
 
 ### Prior Findings — Regression Check
 
-| Finding | Status | Evidence |
-|---------|--------|----------|
-| **F1: Link relation prefix mismatch** (Critical) | **Still Fixed** ✅ | `scanCsapiLinks` detects 6 resource types from OSH root via Convention 2 |
-| **F2: Top-level vs. collection-scoped URLs** (Critical) | **Still Fixed** ✅ | `extractRootResourceUrls` returns correct mappings |
-| **F3: Response envelope uses `items`** (Moderate) | **Still deferred** | OSH datastreams list: `{ items: [...], links: [...] }`. Phase 3 concern. |
-| **F4: `validTime` is an array** (Moderate) | **Still deferred** | Confirmed on single datastream: `"validTime": ["2026-01-26T18:32:01.56Z", "now"]`. Phase 3 concern. |
-| **F5: Missing pagination metadata** (Low) | **Still deferred** | Link-based pagination confirmed: `rel: "next"` with `offset` parameter. Phase 3 concern. |
-| **F6: OSH rejects `systems/{id}/deployments`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F7: OSH rejects `systems/{id}/procedures`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F8: OSH rejects `samplingFeatures/{id}/systems`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F9: OSH rejects `samplingFeatures/{id}/history`** | **Still present** ✅ | 400 — server limitation unchanged |
-| **F10: 52North now has real data** | **Still true** ✅ | 3 systems, 1 deployment, 1 procedure |
-| **F11: 52North uses SensorML format** | **Still true** ✅ | Unchanged |
-| **F12: 52North `systems/{id}/deployments` works** | **Still true** ✅ | 200 — confirmed |
-| **F13: Both servers use `items` envelope** | **Still true** ✅ | Confirmed for datastreams on OSH |
-| **F14: Properties not discoverable via links** | **Still true** ✅ | Both servers still lack properties in link structures |
-| **F15: 52North adds third system** | **Still true** ✅ | 3 systems present |
+| Finding                                                 | Status               | Evidence                                                                                            |
+| ------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------- |
+| **F1: Link relation prefix mismatch** (Critical)        | **Still Fixed** ✅   | `scanCsapiLinks` detects 6 resource types from OSH root via Convention 2                            |
+| **F2: Top-level vs. collection-scoped URLs** (Critical) | **Still Fixed** ✅   | `extractRootResourceUrls` returns correct mappings                                                  |
+| **F3: Response envelope uses `items`** (Moderate)       | **Still deferred**   | OSH datastreams list: `{ items: [...], links: [...] }`. Phase 3 concern.                            |
+| **F4: `validTime` is an array** (Moderate)              | **Still deferred**   | Confirmed on single datastream: `"validTime": ["2026-01-26T18:32:01.56Z", "now"]`. Phase 3 concern. |
+| **F5: Missing pagination metadata** (Low)               | **Still deferred**   | Link-based pagination confirmed: `rel: "next"` with `offset` parameter. Phase 3 concern.            |
+| **F6: OSH rejects `systems/{id}/deployments`**          | **Still present** ✅ | 400 — server limitation unchanged                                                                   |
+| **F7: OSH rejects `systems/{id}/procedures`**           | **Still present** ✅ | 400 — server limitation unchanged                                                                   |
+| **F8: OSH rejects `samplingFeatures/{id}/systems`**     | **Still present** ✅ | 400 — server limitation unchanged                                                                   |
+| **F9: OSH rejects `samplingFeatures/{id}/history`**     | **Still present** ✅ | 400 — server limitation unchanged                                                                   |
+| **F10: 52North now has real data**                      | **Still true** ✅    | 3 systems, 1 deployment, 1 procedure                                                                |
+| **F11: 52North uses SensorML format**                   | **Still true** ✅    | Unchanged                                                                                           |
+| **F12: 52North `systems/{id}/deployments` works**       | **Still true** ✅    | 200 — confirmed                                                                                     |
+| **F13: Both servers use `items` envelope**              | **Still true** ✅    | Confirmed for datastreams on OSH                                                                    |
+| **F14: Properties not discoverable via links**          | **Still true** ✅    | Both servers still lack properties in link structures                                               |
+| **F15: 52North adds third system**                      | **Still true** ✅    | 3 systems present                                                                                   |
 
 **No regressions.** All prior fixes remain working. All prior server limitations remain unchanged.
 
@@ -132,29 +133,29 @@ No code changes were made. All tests were run from the terminal using raw HTTP c
 
 **OSH** (System ID: `03bc5ofvvstg`):
 
-| Method | Result |
-|--------|--------|
-| `getSystems({ limit: 1 })` | ✅ 200 |
-| `getSystem('03bc5ofvvstg')` | ✅ 200 |
-| `createSystem()` | ✅ URL valid |
-| `updateSystem(id)` | ✅ URL valid |
-| `deleteSystem(id)` | ✅ URL valid |
-| `getSystemHistory(id)` | ✅ 200 |
-| `getSubsystems(id)` | ✅ 200 — 0 items |
-| `getSystemDatastreams(id)` | ✅ 200 — 2 items |
-| `getSystemControlstreams(id)` | ✅ 200 — 0 items |
-| `getSystemSamplingFeatures(id)` | ✅ 200 — 0 items |
-| `getSystemDeployments(id)` | ❌ 400 (known F6) |
-| `getSystemProcedures(id)` | ❌ 400 (known F7) |
+| Method                          | Result            |
+| ------------------------------- | ----------------- |
+| `getSystems({ limit: 1 })`      | ✅ 200            |
+| `getSystem('03bc5ofvvstg')`     | ✅ 200            |
+| `createSystem()`                | ✅ URL valid      |
+| `updateSystem(id)`              | ✅ URL valid      |
+| `deleteSystem(id)`              | ✅ URL valid      |
+| `getSystemHistory(id)`          | ✅ 200            |
+| `getSubsystems(id)`             | ✅ 200 — 0 items  |
+| `getSystemDatastreams(id)`      | ✅ 200 — 2 items  |
+| `getSystemControlstreams(id)`   | ✅ 200 — 0 items  |
+| `getSystemSamplingFeatures(id)` | ✅ 200 — 0 items  |
+| `getSystemDeployments(id)`      | ❌ 400 (known F6) |
+| `getSystemProcedures(id)`       | ❌ 400 (known F7) |
 
 **52North** (System ID: `5400-526`):
 
-| Method | Result |
-|--------|--------|
-| `getSystems({ limit: 1 })` | ✅ 200 |
-| `getSystem('5400-526')` | ✅ 200 |
-| `getSystemDeployments(id)` | ✅ 200 |
-| Other nested methods | ❌ Known server limitations (unchanged) |
+| Method                     | Result                                  |
+| -------------------------- | --------------------------------------- |
+| `getSystems({ limit: 1 })` | ✅ 200                                  |
+| `getSystem('5400-526')`    | ✅ 200                                  |
+| `getSystemDeployments(id)` | ✅ 200                                  |
+| Other nested methods       | ❌ Known server limitations (unchanged) |
 
 #### Deployments Methods (8 methods) — Regression only
 
@@ -180,32 +181,32 @@ No code changes were made. All tests were run from the terminal using raw HTTP c
 
 **OSH** (Datastream ID: `03tbj7mvqg50` — "LIVE - Field Drone - Temperature"):
 
-| Method | URL Pattern | Result |
-|--------|------------|--------|
-| `getDataStreams()` | `.../datastreams` | ✅ 200 — 100+ items |
-| `getDataStreams({ limit: 2 })` | `.../datastreams?limit=2` | ✅ 200 — 2 items |
-| `getDataStream('03tbj7mvqg50')` | `.../datastreams/03tbj7mvqg50` | ✅ 200 |
-| `createDataStream()` | `.../datastreams` (POST target) | ✅ URL valid |
-| `updateDataStream(id)` | `.../datastreams/03tbj7mvqg50` (PUT target) | ✅ URL valid |
-| `deleteDataStream(id)` | `.../datastreams/03tbj7mvqg50` (DELETE target) | ✅ URL valid |
-| `getDataStreamSchema(id)` | `.../datastreams/03tbj7mvqg50/schema` | ✅ 200 — SWE DataRecord |
-| `getDataStreamObservations(id)` | `.../datastreams/03tbj7mvqg50/observations` | ✅ 200 |
-| `createObservation(id)` | `.../datastreams/03tbj7mvqg50/observations` (POST target) | ✅ URL valid |
-| `getDataStreamSystems(id)` | `.../datastreams/03tbj7mvqg50/systems` | ❌ 400 — **NEW: Server limitation** |
-| `getDataStreamProcedures(id)` | `.../datastreams/03tbj7mvqg50/procedures` | ❌ 400 — **NEW: Server limitation** |
-| `getDataStreamHistory(id)` | `.../datastreams/03tbj7mvqg50/history` | ❌ 400 — **NEW: Server limitation** |
+| Method                          | URL Pattern                                               | Result                              |
+| ------------------------------- | --------------------------------------------------------- | ----------------------------------- |
+| `getDataStreams()`              | `.../datastreams`                                         | ✅ 200 — 100+ items                 |
+| `getDataStreams({ limit: 2 })`  | `.../datastreams?limit=2`                                 | ✅ 200 — 2 items                    |
+| `getDataStream('03tbj7mvqg50')` | `.../datastreams/03tbj7mvqg50`                            | ✅ 200                              |
+| `createDataStream()`            | `.../datastreams` (POST target)                           | ✅ URL valid                        |
+| `updateDataStream(id)`          | `.../datastreams/03tbj7mvqg50` (PUT target)               | ✅ URL valid                        |
+| `deleteDataStream(id)`          | `.../datastreams/03tbj7mvqg50` (DELETE target)            | ✅ URL valid                        |
+| `getDataStreamSchema(id)`       | `.../datastreams/03tbj7mvqg50/schema`                     | ✅ 200 — SWE DataRecord             |
+| `getDataStreamObservations(id)` | `.../datastreams/03tbj7mvqg50/observations`               | ✅ 200                              |
+| `createObservation(id)`         | `.../datastreams/03tbj7mvqg50/observations` (POST target) | ✅ URL valid                        |
+| `getDataStreamSystems(id)`      | `.../datastreams/03tbj7mvqg50/systems`                    | ❌ 400 — **NEW: Server limitation** |
+| `getDataStreamProcedures(id)`   | `.../datastreams/03tbj7mvqg50/procedures`                 | ❌ 400 — **NEW: Server limitation** |
+| `getDataStreamHistory(id)`      | `.../datastreams/03tbj7mvqg50/history`                    | ❌ 400 — **NEW: Server limitation** |
 
 **52North:**
 
-| Method | URL Pattern | Result |
-|--------|------------|--------|
-| `getDataStreams()` | `.../datastreams` | ❌ 500 — Known server error |
-| `getDataStreams({ limit: 2 })` | `.../datastreams?limit=2` | ❌ 500 |
-| `getDataStreams({ q: 'test' })` | `.../datastreams?q=test` | ❌ 500 |
-| `getDataStreams({ offset: 1 })` | `.../datastreams?offset=1` | ❌ 500 |
-| `getDataStreams({ f: 'json' })` | `.../datastreams?f=application/json` | ❌ 500 |
-| `getDataStreams({ systemId: ... })` | `.../datastreams?systemId=5400-526` | ❌ 500 |
-| All other DataStream methods | N/A | ❌ 500 — Cannot test (server broken) |
+| Method                              | URL Pattern                          | Result                               |
+| ----------------------------------- | ------------------------------------ | ------------------------------------ |
+| `getDataStreams()`                  | `.../datastreams`                    | ❌ 500 — Known server error          |
+| `getDataStreams({ limit: 2 })`      | `.../datastreams?limit=2`            | ❌ 500                               |
+| `getDataStreams({ q: 'test' })`     | `.../datastreams?q=test`             | ❌ 500                               |
+| `getDataStreams({ offset: 1 })`     | `.../datastreams?offset=1`           | ❌ 500                               |
+| `getDataStreams({ f: 'json' })`     | `.../datastreams?f=application/json` | ❌ 500                               |
+| `getDataStreams({ systemId: ... })` | `.../datastreams?systemId=5400-526`  | ❌ 500                               |
+| All other DataStream methods        | N/A                                  | ❌ 500 — Cannot test (server broken) |
 
 ---
 
@@ -213,19 +214,19 @@ No code changes were made. All tests were run from the terminal using raw HTTP c
 
 Tested on OSH (52North DataStreams endpoint returns 500 for all requests):
 
-| Parameter | Method | URL | OSH | 52North |
-|-----------|--------|-----|-----|---------|
-| No params | `getDataStreams()` | `.../datastreams` | ✅ 200 | ❌ 500 |
-| `limit=2` | `getDataStreams({ limit: 2 })` | `.../datastreams?limit=2` | ✅ 200 | ❌ 500 |
-| `offset=1` | `getDataStreams({ offset: 1 })` | `.../datastreams?offset=1&limit=1` | ✅ 200 | ❌ 500 |
-| `q=drone` | `getDataStreams({ q: 'drone' })` | `.../datastreams?q=drone` | ✅ 200 | ❌ 500 |
-| `f=application/json` | `getDataStreams({ f: ... })` | `.../datastreams?f=application/json` | ✅ 200 | ❌ 500 |
-| `systemId` | `getDataStreams({ systemId: ... })` | `.../datastreams?systemId=03bc5ofvvstg` | ✅ 200 | ❌ 500 |
-| `phenomenonTime` (interval) | `getDataStreamObservations(id, ...)` | `.../observations?phenomenonTime=...` | ✅ 200 | ❌ 500 |
-| `resultTime` (instant) | `getDataStreamObservations(id, ...)` | `.../observations?resultTime=...` | ✅ 200 | ❌ 500 |
-| `resultTime=latest` | `getDataStreamObservations(id, ...)` | `.../observations?resultTime=latest` | ✅ 200 — 0 items (accepted!) | ❌ 500 |
-| `limit` (observations) | `getDataStreamObservations(id, ...)` | `.../observations?limit=1` | ✅ 200 | ❌ 500 |
-| `obsFormat` (schema) | `getDataStreamSchema(id, { f: ... })` | `.../schema?obsFormat=application/swe+json` | ✅ 200 | ❌ 500 |
+| Parameter                   | Method                                | URL                                         | OSH                          | 52North |
+| --------------------------- | ------------------------------------- | ------------------------------------------- | ---------------------------- | ------- |
+| No params                   | `getDataStreams()`                    | `.../datastreams`                           | ✅ 200                       | ❌ 500  |
+| `limit=2`                   | `getDataStreams({ limit: 2 })`        | `.../datastreams?limit=2`                   | ✅ 200                       | ❌ 500  |
+| `offset=1`                  | `getDataStreams({ offset: 1 })`       | `.../datastreams?offset=1&limit=1`          | ✅ 200                       | ❌ 500  |
+| `q=drone`                   | `getDataStreams({ q: 'drone' })`      | `.../datastreams?q=drone`                   | ✅ 200                       | ❌ 500  |
+| `f=application/json`        | `getDataStreams({ f: ... })`          | `.../datastreams?f=application/json`        | ✅ 200                       | ❌ 500  |
+| `systemId`                  | `getDataStreams({ systemId: ... })`   | `.../datastreams?systemId=03bc5ofvvstg`     | ✅ 200                       | ❌ 500  |
+| `phenomenonTime` (interval) | `getDataStreamObservations(id, ...)`  | `.../observations?phenomenonTime=...`       | ✅ 200                       | ❌ 500  |
+| `resultTime` (instant)      | `getDataStreamObservations(id, ...)`  | `.../observations?resultTime=...`           | ✅ 200                       | ❌ 500  |
+| `resultTime=latest`         | `getDataStreamObservations(id, ...)`  | `.../observations?resultTime=latest`        | ✅ 200 — 0 items (accepted!) | ❌ 500  |
+| `limit` (observations)      | `getDataStreamObservations(id, ...)`  | `.../observations?limit=1`                  | ✅ 200                       | ❌ 500  |
+| `obsFormat` (schema)        | `getDataStreamSchema(id, { f: ... })` | `.../schema?obsFormat=application/swe+json` | ✅ 200                       | ❌ 500  |
 
 **All query parameters accepted by OSH.** Notably, `resultTime=latest` is accepted (200 response) — confirming that the `resultTime: 'latest'` type gap documented in the implementation guide is a real server capability that our type system cannot yet represent.
 
@@ -241,6 +242,7 @@ Tested on OSH (52North DataStreams endpoint returns 500 for all requests):
 **Ownership:** Upstream (server-side)
 
 **Evidence:**
+
 ```
 GET http://45.55.99.236:8080/sensorhub/api/datastreams/03tbj7mvqg50/systems → 400
 ```
@@ -259,6 +261,7 @@ The URL pattern is spec-correct per Part 2. OSH returns 400 for the `datastreams
 **Ownership:** Upstream
 
 **Evidence:**
+
 ```
 GET http://45.55.99.236:8080/sensorhub/api/datastreams/03tbj7mvqg50/procedures → 400
 ```
@@ -277,6 +280,7 @@ Same pattern as F16. The URL is spec-correct; OSH does not implement this sub-en
 **Ownership:** Upstream
 
 **Evidence:**
+
 ```
 GET http://45.55.99.236:8080/sensorhub/api/datastreams/03tbj7mvqg50/history → 400
 ```
@@ -295,6 +299,7 @@ Same pattern as F16/F17. Also consistent with F9 (`samplingFeatures/{id}/history
 **Ownership:** Ours (type system limitation)
 
 **Evidence:**
+
 ```
 GET .../datastreams/03tbj7mvqg50/observations?resultTime=latest&limit=1 → 200 (0 items)
 ```
@@ -338,21 +343,21 @@ OSH accepts `resultTime=latest` as a valid parameter value. This confirms that t
 
 ## Cross-Server Comparison
 
-| Dimension | OpenSensorHub | 52North | Match? |
-|-----------|--------------|---------|--------|
-| Root API status | ✅ 200 | ✅ 200 | ✅ |
-| Conformance classes | 33 | 1 | ❌ |
-| DataStreams list | ✅ 200 (100+ items) | ❌ 500 | ❌ |
-| DataStreams single | ✅ 200 | ❌ 500 | ❌ |
-| DataStream schema | ✅ 200 | ❌ 500 | ❌ |
-| DataStream observations | ✅ 200 | ❌ 500 | ❌ |
-| DataStream→systems | ❌ 400 | ❌ 500 | ❌ (both fail, different reasons) |
-| DataStream→procedures | ❌ 400 | ❌ 500 | ❌ (both fail, different reasons) |
-| DataStream→history | ❌ 400 | ❌ 500 | ❌ (both fail, different reasons) |
-| `resultTime=latest` | ✅ Accepted | ❌ 500 | ❌ |
-| `phenomenonTime` filter | ✅ Accepted | ❌ 500 | ❌ |
-| All query params | ✅ All accepted | ❌ All 500 | ❌ |
-| Part 1 methods | ✅ All working | ✅ All working | ✅ |
+| Dimension               | OpenSensorHub       | 52North        | Match?                            |
+| ----------------------- | ------------------- | -------------- | --------------------------------- |
+| Root API status         | ✅ 200              | ✅ 200         | ✅                                |
+| Conformance classes     | 33                  | 1              | ❌                                |
+| DataStreams list        | ✅ 200 (100+ items) | ❌ 500         | ❌                                |
+| DataStreams single      | ✅ 200              | ❌ 500         | ❌                                |
+| DataStream schema       | ✅ 200              | ❌ 500         | ❌                                |
+| DataStream observations | ✅ 200              | ❌ 500         | ❌                                |
+| DataStream→systems      | ❌ 400              | ❌ 500         | ❌ (both fail, different reasons) |
+| DataStream→procedures   | ❌ 400              | ❌ 500         | ❌ (both fail, different reasons) |
+| DataStream→history      | ❌ 400              | ❌ 500         | ❌ (both fail, different reasons) |
+| `resultTime=latest`     | ✅ Accepted         | ❌ 500         | ❌                                |
+| `phenomenonTime` filter | ✅ Accepted         | ❌ 500         | ❌                                |
+| All query params        | ✅ All accepted     | ❌ All 500     | ❌                                |
+| Part 1 methods          | ✅ All working      | ✅ All working | ✅                                |
 
 **Key insight:** DataStreams (Part 2) can only be validated against OSH. 52North's DataStreams endpoint has been broken (500) since the first smoke test. This is a significant interoperability limitation for Part 2 validation — we have no second server to cross-verify DataStreams URL patterns.
 
@@ -360,52 +365,52 @@ OSH accepts `resultTime=latest` as a valid parameter value. This confirms that t
 
 ## What WORKS (Verified)
 
-| Capability | Status |
-|------------|--------|
-| All 53 builder methods generate valid URLs | ✅ |
-| DataStreams list endpoint (OSH) | ✅ |
-| DataStreams single resource retrieval (OSH) | ✅ |
-| DataStream CRUD URL patterns | ✅ (verified as valid paths) |
-| DataStream schema retrieval (OSH) | ✅ |
-| DataStream observations listing (OSH) | ✅ |
-| Observation creation URL pattern | ✅ (verified as valid path) |
-| `systemId` filter on datastreams | ✅ |
-| `phenomenonTime` interval filter on observations | ✅ |
-| `resultTime` instant filter on observations | ✅ |
-| `resultTime=latest` accepted by OSH | ✅ |
-| `q`, `offset`, `f`, `limit` on datastreams | ✅ |
-| All Part 1 methods — no regressions | ✅ |
-| Prior F1/F2 fixes still working | ✅ |
-| Convention 3 normalization (featuresOfInterest, query params) still working | ✅ |
+| Capability                                                                  | Status                       |
+| --------------------------------------------------------------------------- | ---------------------------- |
+| All 53 builder methods generate valid URLs                                  | ✅                           |
+| DataStreams list endpoint (OSH)                                             | ✅                           |
+| DataStreams single resource retrieval (OSH)                                 | ✅                           |
+| DataStream CRUD URL patterns                                                | ✅ (verified as valid paths) |
+| DataStream schema retrieval (OSH)                                           | ✅                           |
+| DataStream observations listing (OSH)                                       | ✅                           |
+| Observation creation URL pattern                                            | ✅ (verified as valid path)  |
+| `systemId` filter on datastreams                                            | ✅                           |
+| `phenomenonTime` interval filter on observations                            | ✅                           |
+| `resultTime` instant filter on observations                                 | ✅                           |
+| `resultTime=latest` accepted by OSH                                         | ✅                           |
+| `q`, `offset`, `f`, `limit` on datastreams                                  | ✅                           |
+| All Part 1 methods — no regressions                                         | ✅                           |
+| Prior F1/F2 fixes still working                                             | ✅                           |
+| Convention 3 normalization (featuresOfInterest, query params) still working | ✅                           |
 
 ## What Remains (Phase 3 Concerns)
 
-| Issue | Severity | Component | Target Phase |
-|-------|----------|-----------|-------------|
-| Response envelope parsing (`items` vs `features`) | Moderate | Response parser | Phase 3 |
-| Dual format handling (GeoJSON vs SensorML) | Moderate | Response parser | Phase 3 |
-| `validTime` array format (including `"now"` string) | Moderate | Type mapping | Phase 3 |
-| Link-based pagination | Low | Pagination helper | Phase 3 |
-| Properties not discoverable via links | Moderate | Fallback/probing strategy | Phase 3 |
-| Nested endpoint graceful degradation | Moderate | Error handling | Phase 3 |
-| `resultTime: 'latest'` type gap | Low | `DateTimeParameter` type | Pre-Phase 3 |
-| `@` notation cross-references (`system@id`, `datastream@id`) | Moderate | Response parser | Phase 3 |
-| Observation `result` is arbitrary JSON per schema | Moderate | Response parser | Phase 3 |
-| 52North DataStreams broken (500) — no cross-validation | Moderate | Testing strategy | Ongoing |
+| Issue                                                        | Severity | Component                 | Target Phase |
+| ------------------------------------------------------------ | -------- | ------------------------- | ------------ |
+| Response envelope parsing (`items` vs `features`)            | Moderate | Response parser           | Phase 3      |
+| Dual format handling (GeoJSON vs SensorML)                   | Moderate | Response parser           | Phase 3      |
+| `validTime` array format (including `"now"` string)          | Moderate | Type mapping              | Phase 3      |
+| Link-based pagination                                        | Low      | Pagination helper         | Phase 3      |
+| Properties not discoverable via links                        | Moderate | Fallback/probing strategy | Phase 3      |
+| Nested endpoint graceful degradation                         | Moderate | Error handling            | Phase 3      |
+| `resultTime: 'latest'` type gap                              | Low      | `DateTimeParameter` type  | Pre-Phase 3  |
+| `@` notation cross-references (`system@id`, `datastream@id`) | Moderate | Response parser           | Phase 3      |
+| Observation `result` is arbitrary JSON per schema            | Moderate | Response parser           | Phase 3      |
+| 52North DataStreams broken (500) — no cross-validation       | Moderate | Testing strategy          | Ongoing      |
 
 ---
 
 ## Comparison: Phase 2.5 → Phase 2.6
 
-| Dimension | Phase 2.5 | Phase 2.6 |
-|-----------|----------|----------|
-| Methods implemented | 42 | **53** (+11 DataStreams) |
-| CSAPI unit tests | 209 | **242** (+33 from Issues #10, #41, #42) |
-| Endpoint tests verified (OSH) | 50 | **58** (+8 new DataStreams endpoints) |
-| Server limitations found | 4 (F6–F9) | **7** (+F16, F17, F18 DataStreams associations) |
-| New code bugs found | 0 | **0** |
-| New interop findings | 1 (F14) | **1** (F19 — `resultTime=latest` confirmation) |
-| Resource types tested | 5 (Part 1 only) | **6** (5 Part 1 + 1 Part 2) |
+| Dimension                     | Phase 2.5       | Phase 2.6                                       |
+| ----------------------------- | --------------- | ----------------------------------------------- |
+| Methods implemented           | 42              | **53** (+11 DataStreams)                        |
+| CSAPI unit tests              | 209             | **242** (+33 from Issues #10, #41, #42)         |
+| Endpoint tests verified (OSH) | 50              | **58** (+8 new DataStreams endpoints)           |
+| Server limitations found      | 4 (F6–F9)       | **7** (+F16, F17, F18 DataStreams associations) |
+| New code bugs found           | 0               | **0**                                           |
+| New interop findings          | 1 (F14)         | **1** (F19 — `resultTime=latest` confirmation)  |
+| Resource types tested         | 5 (Part 1 only) | **6** (5 Part 1 + 1 Part 2)                     |
 
 ---
 
@@ -413,47 +418,47 @@ OSH accepts `resultTime=latest` as a valid parameter value. This confirms that t
 
 ### Test Coverage
 
-| Category | Tested | Passed | Failed | N/A |
-|----------|--------|--------|--------|-----|
-| **OSH — Systems (12)** | 12 | 10 | 2 (F6/F7) | 0 |
-| **OSH — Deployments (8)** | 1 | 1 | 0 | 7 (no data) |
-| **OSH — Procedures (8)** | 1 | 1 | 0 | 7 (no data) |
-| **OSH — SamplingFeatures (8)** | 8 | 6 | 2 (F8/F9) | 0 |
-| **OSH — Properties (6)** | 1 | 1 | 0 | 5 (no data) |
-| **OSH — DataStreams (11)** | **11** | **8** | **3 (F16/F17/F18)** | **0** |
-| **52N — Systems (12)** | 4 | 3 | 1 (server limit) | 8 |
-| **52N — Deployments (8)** | 2 | 2 | 0 | 6 |
-| **52N — Procedures (8)** | 2 | 2 | 0 | 6 |
-| **52N — SamplingFeatures (8)** | 1 | 1 | 0 | 7 (no data) |
-| **52N — Properties (6)** | 1 | 1 | 0 | 5 (no data) |
-| **52N — DataStreams (11)** | **6** | **0** | **6 (all 500)** | **5** |
-| **Query params (DataStreams)** | **11** | **11** | **0** | **0** |
-| **Total** | **61** | **47** | **14** | **49** |
+| Category                       | Tested | Passed | Failed              | N/A         |
+| ------------------------------ | ------ | ------ | ------------------- | ----------- |
+| **OSH — Systems (12)**         | 12     | 10     | 2 (F6/F7)           | 0           |
+| **OSH — Deployments (8)**      | 1      | 1      | 0                   | 7 (no data) |
+| **OSH — Procedures (8)**       | 1      | 1      | 0                   | 7 (no data) |
+| **OSH — SamplingFeatures (8)** | 8      | 6      | 2 (F8/F9)           | 0           |
+| **OSH — Properties (6)**       | 1      | 1      | 0                   | 5 (no data) |
+| **OSH — DataStreams (11)**     | **11** | **8**  | **3 (F16/F17/F18)** | **0**       |
+| **52N — Systems (12)**         | 4      | 3      | 1 (server limit)    | 8           |
+| **52N — Deployments (8)**      | 2      | 2      | 0                   | 6           |
+| **52N — Procedures (8)**       | 2      | 2      | 0                   | 6           |
+| **52N — SamplingFeatures (8)** | 1      | 1      | 0                   | 7 (no data) |
+| **52N — Properties (6)**       | 1      | 1      | 0                   | 5 (no data) |
+| **52N — DataStreams (11)**     | **6**  | **0**  | **6 (all 500)**     | **5**       |
+| **Query params (DataStreams)** | **11** | **11** | **0**               | **0**       |
+| **Total**                      | **61** | **47** | **14**              | **49**      |
 
 ### Findings Ledger (Cumulative)
 
-| ID | Description | Severity | Status | Owner |
-|----|-------------|----------|--------|-------|
-| F1 | Link relation prefix mismatch | Critical | **Fixed** (Issue #34) | Client |
-| F2 | Top-level vs. collection-scoped URLs | Critical | **Fixed** (Issue #35) | Client |
-| F3 | Response envelope uses `items` | Moderate | Deferred to Phase 3 | Client |
-| F4 | `validTime` is an array | Moderate | Deferred to Phase 3 | Client |
-| F5 | Missing pagination metadata | Low | Deferred to Phase 3 | Client |
-| F6 | OSH rejects `systems/{id}/deployments` | Moderate | Server limitation | Server |
-| F7 | OSH rejects `systems/{id}/procedures` | Moderate | Server limitation | Server |
-| F8 | OSH rejects `samplingFeatures/{id}/systems` | Moderate | Server limitation | Server |
-| F9 | OSH rejects `samplingFeatures/{id}/history` | Moderate | Server limitation | Server |
-| F10 | 52North now has real data | Informational | Positive change | — |
-| F11 | 52North uses SensorML format | Moderate | Phase 3 concern | Client |
-| F12 | 52North `systems/{id}/deployments` works | Informational | Positive finding | — |
-| F13 | Both servers use `items` envelope | Informational | Confirms F3 | — |
-| F14 | Properties not discoverable via links | Moderate | Phase 3 concern | Shared |
-| F15 | 52North adds third system | Informational | Positive change | — |
-| **F16** | **OSH rejects `datastreams/{id}/systems`** | **Moderate** | **Server limitation** | **Server** |
-| **F17** | **OSH rejects `datastreams/{id}/procedures`** | **Moderate** | **Server limitation** | **Server** |
-| **F18** | **OSH rejects `datastreams/{id}/history`** | **Moderate** | **Server limitation** | **Server** |
-| **F19** | **`resultTime=latest` accepted by OSH** | **Informational** | **Confirms type gap** | **Ours** |
-| **F20** | **52North DataStreams still broken (500)** | **Informational** | **Unchanged** | **Server** |
+| ID      | Description                                   | Severity          | Status                | Owner      |
+| ------- | --------------------------------------------- | ----------------- | --------------------- | ---------- |
+| F1      | Link relation prefix mismatch                 | Critical          | **Fixed** (Issue #34) | Client     |
+| F2      | Top-level vs. collection-scoped URLs          | Critical          | **Fixed** (Issue #35) | Client     |
+| F3      | Response envelope uses `items`                | Moderate          | Deferred to Phase 3   | Client     |
+| F4      | `validTime` is an array                       | Moderate          | Deferred to Phase 3   | Client     |
+| F5      | Missing pagination metadata                   | Low               | Deferred to Phase 3   | Client     |
+| F6      | OSH rejects `systems/{id}/deployments`        | Moderate          | Server limitation     | Server     |
+| F7      | OSH rejects `systems/{id}/procedures`         | Moderate          | Server limitation     | Server     |
+| F8      | OSH rejects `samplingFeatures/{id}/systems`   | Moderate          | Server limitation     | Server     |
+| F9      | OSH rejects `samplingFeatures/{id}/history`   | Moderate          | Server limitation     | Server     |
+| F10     | 52North now has real data                     | Informational     | Positive change       | —          |
+| F11     | 52North uses SensorML format                  | Moderate          | Phase 3 concern       | Client     |
+| F12     | 52North `systems/{id}/deployments` works      | Informational     | Positive finding      | —          |
+| F13     | Both servers use `items` envelope             | Informational     | Confirms F3           | —          |
+| F14     | Properties not discoverable via links         | Moderate          | Phase 3 concern       | Shared     |
+| F15     | 52North adds third system                     | Informational     | Positive change       | —          |
+| **F16** | **OSH rejects `datastreams/{id}/systems`**    | **Moderate**      | **Server limitation** | **Server** |
+| **F17** | **OSH rejects `datastreams/{id}/procedures`** | **Moderate**      | **Server limitation** | **Server** |
+| **F18** | **OSH rejects `datastreams/{id}/history`**    | **Moderate**      | **Server limitation** | **Server** |
+| **F19** | **`resultTime=latest` accepted by OSH**       | **Informational** | **Confirms type gap** | **Ours**   |
+| **F20** | **52North DataStreams still broken (500)**    | **Informational** | **Unchanged**         | **Server** |
 
 ---
 

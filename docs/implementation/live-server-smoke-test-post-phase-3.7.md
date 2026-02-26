@@ -8,6 +8,7 @@
 **Components tested:** `physical-system.ts` (parsePhysicalSystem, parsePhysicalComponent, parsePosition, parseProcessMethod, parseComponentList, parseConnectionList), `aggregate-process.ts` (parseAggregateProcess), `simple-process.ts` (parseSimpleProcess), shared utilities (`parseLink`, `parseDescribedObject`)
 
 > This is smoke test #15 in the series. See also:
+>
 > - [Previous smoke test](live-server-smoke-test-post-phase-3.5.md)
 
 ## Test Methodology
@@ -21,25 +22,25 @@ Read-only observation per Lesson 10. Fetched real responses from both servers us
 **Root:** 200 OK, 10 links
 **Content-Type behavior:** Always returns `application/json` regardless of `Accept` header (F64 confirmed). However, `?f=sml3` query parameter returns `Content-Type: application/sml+json` — this is the way to get SML data from OSH.
 
-| Resource Type | Count | Accept Header Used | Content-Type Returned | Notes |
-|---------------|-------|--------------------|-----------------------|-------|
-| Systems | 12 | `application/json` | `application/json` | All GeoJSON Feature objects |
-| SamplingFeatures | 51 | `application/json` | `application/json` | |
-| Deployments | 0 | `application/json` | `application/json` | |
-| Procedures | 0 | `application/json` | `application/json` | |
-| Properties | 0 | `application/json` | `application/json` | |
-| Datastreams | 100 | `application/json` | `application/json` | |
-| Observations | 100 | `application/json` | `application/json` | |
-| ControlStreams | 8 | `application/json` | `application/json` | |
+| Resource Type    | Count | Accept Header Used | Content-Type Returned | Notes                       |
+| ---------------- | ----- | ------------------ | --------------------- | --------------------------- |
+| Systems          | 12    | `application/json` | `application/json`    | All GeoJSON Feature objects |
+| SamplingFeatures | 51    | `application/json` | `application/json`    |                             |
+| Deployments      | 0     | `application/json` | `application/json`    |                             |
+| Procedures       | 0     | `application/json` | `application/json`    |                             |
+| Properties       | 0     | `application/json` | `application/json`    |                             |
+| Datastreams      | 100   | `application/json` | `application/json`    |                             |
+| Observations     | 100   | `application/json` | `application/json`    |                             |
+| ControlStreams   | 8     | `application/json` | `application/json`    |                             |
 
 **OSH `?f=` parameter support:**
 
-| Parameter | Status | Content-Type Returned |
-|-----------|--------|-----------------------|
-| `?f=json` | ✅ 200 | `application/json` |
+| Parameter    | Status | Content-Type Returned  |
+| ------------ | ------ | ---------------------- |
+| `?f=json`    | ✅ 200 | `application/json`     |
 | `?f=geojson` | ✅ 200 | `application/geo+json` |
-| `?f=sml3` | ✅ 200 | `application/sml+json` |
-| `?f=swe` | ❌ 400 | Bad Request |
+| `?f=sml3`    | ✅ 200 | `application/sml+json` |
+| `?f=swe`     | ❌ 400 | Bad Request            |
 
 ### 52North
 
@@ -48,112 +49,112 @@ Read-only observation per Lesson 10. Fetched real responses from both servers us
 
 **Content negotiation mapping:**
 
-| Accept Header | Content-Type Returned | Has Data? | Envelope |
-|---------------|-----------------------|-----------|----------|
-| *(none)* | `application/sml+json` | **Yes** | `{ items: [...] }` |
-| `application/sml+json` | `application/sml+json` | **Yes** | `{ items: [...] }` |
-| `application/geo+json` | `application/geo+json` | **Yes** | `{ type: "FeatureCollection", features: [...] }` |
-| `application/json` (collection) | `application/json` | **Empty** (53 bytes) | `{ type: "FeatureCollection", features: [] }` |
-| `application/json` (individual) | — | ❌ **500 error** | Server error (F72) |
-| `application/swe+json` | — | ❌ **400 error** | Not supported |
+| Accept Header                   | Content-Type Returned  | Has Data?            | Envelope                                         |
+| ------------------------------- | ---------------------- | -------------------- | ------------------------------------------------ |
+| _(none)_                        | `application/sml+json` | **Yes**              | `{ items: [...] }`                               |
+| `application/sml+json`          | `application/sml+json` | **Yes**              | `{ items: [...] }`                               |
+| `application/geo+json`          | `application/geo+json` | **Yes**              | `{ type: "FeatureCollection", features: [...] }` |
+| `application/json` (collection) | `application/json`     | **Empty** (53 bytes) | `{ type: "FeatureCollection", features: [] }`    |
+| `application/json` (individual) | —                      | ❌ **500 error**     | Server error (F72)                               |
+| `application/swe+json`          | —                      | ❌ **400 error**     | Not supported                                    |
 
 **Resource inventory (using `Accept: application/sml+json`):**
 
-| Resource Type | Count | Status |
-|---------------|-------|--------|
-| Systems | 3 | ✅ 200 |
-| Deployments | 1 | ✅ 200 |
-| Procedures | 1 | ✅ 200 |
-| Properties | 0 | ✅ 200 (empty) |
-| SamplingFeatures | — | ❌ 400 (F63: unchanged from Phase 3.5) |
-| Datastreams | — | ❌ 400 (F63: unchanged) |
-| Observations | — | ❌ 400 (F63: unchanged) |
-| ControlStreams | — | ❌ 404 (F32: unchanged) |
+| Resource Type    | Count | Status                                 |
+| ---------------- | ----- | -------------------------------------- |
+| Systems          | 3     | ✅ 200                                 |
+| Deployments      | 1     | ✅ 200                                 |
+| Procedures       | 1     | ✅ 200                                 |
+| Properties       | 0     | ✅ 200 (empty)                         |
+| SamplingFeatures | —     | ❌ 400 (F63: unchanged from Phase 3.5) |
+| Datastreams      | —     | ❌ 400 (F63: unchanged)                |
+| Observations     | —     | ❌ 400 (F63: unchanged)                |
+| ControlStreams   | —     | ❌ 404 (F32: unchanged)                |
 
 ## Results
 
 ### Prior Findings — Regression Check
 
-| Finding | Description | Prior Status | Current Status | Evidence |
-|---------|-------------|-------------|----------------|----------|
-| F1 | Link relation prefix mismatch | ✅ Fixed (Issue #34) | ✅ Still fixed | No regression |
-| F2 | Top-level vs. collection-scoped URLs | ✅ Fixed (Issue #35) | ✅ Still fixed | No regression |
-| F3 | Response envelope uses `items` | ⏳ Deferred | ⏳ Still deferred | OSH: `items`; 52N: `items` for SML, `features` for GeoJSON |
-| F4 | `validTime` is an array | ✅ Addressed | ✅ Still addressed | OSH `["2026-01-26T18:32:01.56Z","now"]` parsed correctly |
-| F5 | Missing pagination metadata | ⏳ Deferred | ⏳ Still deferred | OSH uses `links[rel=next]` |
-| F6 | OSH rejects `systems/{id}/deployments` | ⚠️ Server limitation | ⚠️ Still present | OSH has 0 deployments |
-| F7 | OSH rejects `systems/{id}/procedures` | ⚠️ Server limitation | ⚠️ Still present | OSH has 0 procedures |
-| F8 | OSH rejects `samplingFeatures/{id}/systems` | ⚠️ Server limitation | ⚠️ Still present | Not retested |
-| F9 | OSH rejects `samplingFeatures/{id}/history` | ⚠️ Server limitation | ⚠️ Still present | Not retested |
-| F10 | 52N has real data (was "Reversed") | ✅ Confirmed | ✅ Still confirmed | Data via `sml+json` and `geo+json` |
-| F11 | 52N uses SensorML format | ✅ Confirmed | ✅ Still confirmed | Default is `application/sml+json` |
-| F12 | 52N `systems/{id}/deployments` works | ❓ Not tested | ❓ Not tested | Focused on SML parser validation |
-| F13 | Envelope varies by format | ✅ Refined | ✅ Unchanged | OSH: `items`, 52N: depends on format |
-| F14 | Properties not discoverable via links | ⏳ Still present | ⏳ Still present | No property links |
-| F15 | 52N has 3 systems | ✅ Confirmed | ✅ Still confirmed | 5400-526, YSI599503-00-1, 5300-909 |
-| F16 | OSH rejects `datastreams/{id}/systems` | ⚠️ Server limitation | ⚠️ Still present | Not retested |
-| F17 | OSH rejects `datastreams/{id}/procedures` | ⚠️ Server limitation | ⚠️ Still present | Not retested |
-| F18 | OSH rejects `datastreams/{id}/history` | ⚠️ Server limitation | ⚠️ Still present | Not retested |
-| F19 | `resultTime=latest` accepted by OSH | ✅ Valid | ✅ Still valid | Not retested (no regression expected) |
-| F20 | 52N DataStreams broken | ⚠️ Changed to 400 | ⚠️ Still 400 | F63 covers this |
-| F21 | OSH rejects `observations/{id}/datastream` | ⚠️ Server limitation | ⚠️ Still present | Not retested |
-| F22 | OSH rejects `observations/{id}/samplingFeature` | ⚠️ Server limitation | ⚠️ Still present | Not retested |
-| F23 | OSH rejects `observations/{id}/system` | ⚠️ Server limitation | ⚠️ Still present | Not retested |
-| F24 | OSH rejects `observations/{id}/history` | ⚠️ Server limitation | ⚠️ Still present | Not retested |
-| F25 | `resultTime=latest` returns real data | ✅ Valid | ✅ Still valid | Not retested |
-| F26 | 52N Observations broken | ⚠️ Changed to 400 | ⚠️ Still 400 | F63 covers this |
-| F27 | Observation `foi@id` naming variation | ⏳ Deferred | ⏳ Still deferred | |
-| F28 | OSH rejects `controlstreams/{id}/feasibility` | ⚠️ Server limitation | ⚠️ Still present | Not retested |
-| F29 | ControlStream schema works | ✅ Valid | ✅ Still valid | Not retested |
-| F30 | ControlStream `system@link` cross-reference | ⏳ Deferred | ⏳ Still deferred | |
-| F31 | Command entity data shape | ⏳ Deferred | ⏳ Still deferred | |
-| F32 | 52N ControlStreams not implemented (404) | ⚠️ Present | ⚠️ Still 404 | |
-| F33 | ControlStream schema returns SWE DataRecord | ⏳ Deferred | ⏳ Still deferred | |
-| F34 | OSH no top-level `/commands` | ⚠️ Present | ⚠️ Still present | |
-| F35 | OSH no `/commands/{id}/cancel` | ⚠️ Server limitation | ⚠️ Still present | |
-| F36 | OSH ignores `id` query param on commands | ⚠️ Server limitation | ⚠️ Still present | |
-| F37 | Command `/result` returns 404 | ✅ Expected | ✅ Still expected | |
-| F38 | Command status data shape | ⏳ Deferred | ⏳ Still deferred | |
-| F39 | Commands use `items` envelope | ✅ Confirms F3 | ✅ Still confirms F3 | |
-| F40 | OSH SamplingFeatures non-SOSA vocabulary | ✅ Fixed (Issue #49) | ✅ Still fixed | `sensorml/2.0#Feature` mapped to SamplingFeature |
-| F41 | 52N Systems have null featureType in GeoJSON | ✅ Confirmed live | ✅ Still present | 3/3 systems via `geo+json` have `featureType: null` |
-| F42 | 52N Deployment has null validTime | ✅ Confirmed live | ✅ Still present | Deployment validTime remains null |
-| F43 | 52N Procedures misclassified as System | ✅ Confirmed live | ✅ **Re-confirmed** | SML: `type: "PhysicalSystem"`, `procedureType: "sosa:Sensor"` — our parser accepts it as PhysicalSystem (server-side misclassification, not parser bug) |
-| F44 | 52N mixes CURIE and full URI forms | ✅ Confirmed live | ✅ Still present | SML: `sosa:Sensor`, `sosa:Platform` (CURIEs) vs `http://www.w3.org/ns/sosa/Deployment` (full URI) |
-| F45 | Response envelope varies by server AND format | ✅ Refined | ✅ Unchanged | |
-| F46 | OSH ignores SensorML Accept header | ⚠️ Refined → F64 | ⚠️ **Refined further** | OSH ignores ALL Accept headers but supports `?f=sml3` for SML (F71) |
-| F47 | 52N GeoJSON includes `@link` notation | ✅ Confirmed live | ✅ Still present | Not re-verified in this test |
-| F48 | OSH features have empty links arrays | ✅ Still true | ✅ Still true | |
-| F49 | OSH SamplingFeatures lack `sampledFeature@link` | ✅ Resolved (Issue #52) | ✅ Still resolved | |
-| F50 | 52N default content type changed to SML | ✅ Confirmed | ✅ Still confirmed | Default → `application/sml+json` |
-| F51 | 52N `/samplingFeatures` broken | ⚠️ 400 | ⚠️ Still 400 | F63 covers this |
-| F52 | 52N returns `Content-Type: None` on root | ✅ Present | ✅ Still present | |
-| F53 | OSH data inventory has grown | ✅ Continued | ✅ Continued | 12 sys, 51 SF, 100 DS, 100 obs, 8 CS |
-| F54 | F49 confirmed RESOLVED | ✅ Reconfirmed | ✅ Still resolved | |
-| F55 | F42 no longer blocking | ✅ Confirmed | ✅ Still confirmed | |
-| F56 | OSH schema returns `Content-Type: auto` | ✅ Present | ✅ Not retested | |
-| F57 | ~~52N data removed~~ CORRECTED (our error) | ❌ Retracted | ❌ Remains retracted | |
-| F58 | SensorML type definitions align with real OSH data | ✅ Positive | ✅ **Strengthened** | OSH SML data via `?f=sml3` now validated by our parser (F71) |
-| F59 | OSH SamplingFeatures at 51 | ✅ Positive | ✅ Confirmed | Still 51 |
-| F60 | OSH SensorML content-type partially corrected | ℹ️ Informational | ℹ️ **Superseded by F71** | `?f=sml3` is the reliable path |
-| F61 | 52N default changed from SML to JSON | ℹ️ Superseded | ℹ️ Still superseded | Was based on F57 misunderstanding |
-| F62 | 52N `geo+json` returns data | ℹ️ Informational | ✅ Still confirmed | `Accept: application/geo+json` returns populated FeatureCollection |
-| F63 | 52N error codes changed 500→400 | ℹ️ Low | ℹ️ Still 400 | samplingFeatures, datastreams, observations |
-| F64 | OSH ignores ALL Accept headers | ℹ️ Informational | ✅ **Confirmed and extended** | All 4 Accept values return Content-Type: `auto`; only `?f=` controls format |
-| F65 | 52N SML uses non-standard "Deployment" type | ℹ️ Informational | ✅ **Confirmed** | All 4 sub-parsers correctly reject `type: "Deployment"` |
-| F66 | SimpleProcess parser validated | ✅ Positive | ✅ Still positive | No regression |
+| Finding | Description                                        | Prior Status            | Current Status                | Evidence                                                                                                                                                |
+| ------- | -------------------------------------------------- | ----------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1      | Link relation prefix mismatch                      | ✅ Fixed (Issue #34)    | ✅ Still fixed                | No regression                                                                                                                                           |
+| F2      | Top-level vs. collection-scoped URLs               | ✅ Fixed (Issue #35)    | ✅ Still fixed                | No regression                                                                                                                                           |
+| F3      | Response envelope uses `items`                     | ⏳ Deferred             | ⏳ Still deferred             | OSH: `items`; 52N: `items` for SML, `features` for GeoJSON                                                                                              |
+| F4      | `validTime` is an array                            | ✅ Addressed            | ✅ Still addressed            | OSH `["2026-01-26T18:32:01.56Z","now"]` parsed correctly                                                                                                |
+| F5      | Missing pagination metadata                        | ⏳ Deferred             | ⏳ Still deferred             | OSH uses `links[rel=next]`                                                                                                                              |
+| F6      | OSH rejects `systems/{id}/deployments`             | ⚠️ Server limitation    | ⚠️ Still present              | OSH has 0 deployments                                                                                                                                   |
+| F7      | OSH rejects `systems/{id}/procedures`              | ⚠️ Server limitation    | ⚠️ Still present              | OSH has 0 procedures                                                                                                                                    |
+| F8      | OSH rejects `samplingFeatures/{id}/systems`        | ⚠️ Server limitation    | ⚠️ Still present              | Not retested                                                                                                                                            |
+| F9      | OSH rejects `samplingFeatures/{id}/history`        | ⚠️ Server limitation    | ⚠️ Still present              | Not retested                                                                                                                                            |
+| F10     | 52N has real data (was "Reversed")                 | ✅ Confirmed            | ✅ Still confirmed            | Data via `sml+json` and `geo+json`                                                                                                                      |
+| F11     | 52N uses SensorML format                           | ✅ Confirmed            | ✅ Still confirmed            | Default is `application/sml+json`                                                                                                                       |
+| F12     | 52N `systems/{id}/deployments` works               | ❓ Not tested           | ❓ Not tested                 | Focused on SML parser validation                                                                                                                        |
+| F13     | Envelope varies by format                          | ✅ Refined              | ✅ Unchanged                  | OSH: `items`, 52N: depends on format                                                                                                                    |
+| F14     | Properties not discoverable via links              | ⏳ Still present        | ⏳ Still present              | No property links                                                                                                                                       |
+| F15     | 52N has 3 systems                                  | ✅ Confirmed            | ✅ Still confirmed            | 5400-526, YSI599503-00-1, 5300-909                                                                                                                      |
+| F16     | OSH rejects `datastreams/{id}/systems`             | ⚠️ Server limitation    | ⚠️ Still present              | Not retested                                                                                                                                            |
+| F17     | OSH rejects `datastreams/{id}/procedures`          | ⚠️ Server limitation    | ⚠️ Still present              | Not retested                                                                                                                                            |
+| F18     | OSH rejects `datastreams/{id}/history`             | ⚠️ Server limitation    | ⚠️ Still present              | Not retested                                                                                                                                            |
+| F19     | `resultTime=latest` accepted by OSH                | ✅ Valid                | ✅ Still valid                | Not retested (no regression expected)                                                                                                                   |
+| F20     | 52N DataStreams broken                             | ⚠️ Changed to 400       | ⚠️ Still 400                  | F63 covers this                                                                                                                                         |
+| F21     | OSH rejects `observations/{id}/datastream`         | ⚠️ Server limitation    | ⚠️ Still present              | Not retested                                                                                                                                            |
+| F22     | OSH rejects `observations/{id}/samplingFeature`    | ⚠️ Server limitation    | ⚠️ Still present              | Not retested                                                                                                                                            |
+| F23     | OSH rejects `observations/{id}/system`             | ⚠️ Server limitation    | ⚠️ Still present              | Not retested                                                                                                                                            |
+| F24     | OSH rejects `observations/{id}/history`            | ⚠️ Server limitation    | ⚠️ Still present              | Not retested                                                                                                                                            |
+| F25     | `resultTime=latest` returns real data              | ✅ Valid                | ✅ Still valid                | Not retested                                                                                                                                            |
+| F26     | 52N Observations broken                            | ⚠️ Changed to 400       | ⚠️ Still 400                  | F63 covers this                                                                                                                                         |
+| F27     | Observation `foi@id` naming variation              | ⏳ Deferred             | ⏳ Still deferred             |                                                                                                                                                         |
+| F28     | OSH rejects `controlstreams/{id}/feasibility`      | ⚠️ Server limitation    | ⚠️ Still present              | Not retested                                                                                                                                            |
+| F29     | ControlStream schema works                         | ✅ Valid                | ✅ Still valid                | Not retested                                                                                                                                            |
+| F30     | ControlStream `system@link` cross-reference        | ⏳ Deferred             | ⏳ Still deferred             |                                                                                                                                                         |
+| F31     | Command entity data shape                          | ⏳ Deferred             | ⏳ Still deferred             |                                                                                                                                                         |
+| F32     | 52N ControlStreams not implemented (404)           | ⚠️ Present              | ⚠️ Still 404                  |                                                                                                                                                         |
+| F33     | ControlStream schema returns SWE DataRecord        | ⏳ Deferred             | ⏳ Still deferred             |                                                                                                                                                         |
+| F34     | OSH no top-level `/commands`                       | ⚠️ Present              | ⚠️ Still present              |                                                                                                                                                         |
+| F35     | OSH no `/commands/{id}/cancel`                     | ⚠️ Server limitation    | ⚠️ Still present              |                                                                                                                                                         |
+| F36     | OSH ignores `id` query param on commands           | ⚠️ Server limitation    | ⚠️ Still present              |                                                                                                                                                         |
+| F37     | Command `/result` returns 404                      | ✅ Expected             | ✅ Still expected             |                                                                                                                                                         |
+| F38     | Command status data shape                          | ⏳ Deferred             | ⏳ Still deferred             |                                                                                                                                                         |
+| F39     | Commands use `items` envelope                      | ✅ Confirms F3          | ✅ Still confirms F3          |                                                                                                                                                         |
+| F40     | OSH SamplingFeatures non-SOSA vocabulary           | ✅ Fixed (Issue #49)    | ✅ Still fixed                | `sensorml/2.0#Feature` mapped to SamplingFeature                                                                                                        |
+| F41     | 52N Systems have null featureType in GeoJSON       | ✅ Confirmed live       | ✅ Still present              | 3/3 systems via `geo+json` have `featureType: null`                                                                                                     |
+| F42     | 52N Deployment has null validTime                  | ✅ Confirmed live       | ✅ Still present              | Deployment validTime remains null                                                                                                                       |
+| F43     | 52N Procedures misclassified as System             | ✅ Confirmed live       | ✅ **Re-confirmed**           | SML: `type: "PhysicalSystem"`, `procedureType: "sosa:Sensor"` — our parser accepts it as PhysicalSystem (server-side misclassification, not parser bug) |
+| F44     | 52N mixes CURIE and full URI forms                 | ✅ Confirmed live       | ✅ Still present              | SML: `sosa:Sensor`, `sosa:Platform` (CURIEs) vs `http://www.w3.org/ns/sosa/Deployment` (full URI)                                                       |
+| F45     | Response envelope varies by server AND format      | ✅ Refined              | ✅ Unchanged                  |                                                                                                                                                         |
+| F46     | OSH ignores SensorML Accept header                 | ⚠️ Refined → F64        | ⚠️ **Refined further**        | OSH ignores ALL Accept headers but supports `?f=sml3` for SML (F71)                                                                                     |
+| F47     | 52N GeoJSON includes `@link` notation              | ✅ Confirmed live       | ✅ Still present              | Not re-verified in this test                                                                                                                            |
+| F48     | OSH features have empty links arrays               | ✅ Still true           | ✅ Still true                 |                                                                                                                                                         |
+| F49     | OSH SamplingFeatures lack `sampledFeature@link`    | ✅ Resolved (Issue #52) | ✅ Still resolved             |                                                                                                                                                         |
+| F50     | 52N default content type changed to SML            | ✅ Confirmed            | ✅ Still confirmed            | Default → `application/sml+json`                                                                                                                        |
+| F51     | 52N `/samplingFeatures` broken                     | ⚠️ 400                  | ⚠️ Still 400                  | F63 covers this                                                                                                                                         |
+| F52     | 52N returns `Content-Type: None` on root           | ✅ Present              | ✅ Still present              |                                                                                                                                                         |
+| F53     | OSH data inventory has grown                       | ✅ Continued            | ✅ Continued                  | 12 sys, 51 SF, 100 DS, 100 obs, 8 CS                                                                                                                    |
+| F54     | F49 confirmed RESOLVED                             | ✅ Reconfirmed          | ✅ Still resolved             |                                                                                                                                                         |
+| F55     | F42 no longer blocking                             | ✅ Confirmed            | ✅ Still confirmed            |                                                                                                                                                         |
+| F56     | OSH schema returns `Content-Type: auto`            | ✅ Present              | ✅ Not retested               |                                                                                                                                                         |
+| F57     | ~~52N data removed~~ CORRECTED (our error)         | ❌ Retracted            | ❌ Remains retracted          |                                                                                                                                                         |
+| F58     | SensorML type definitions align with real OSH data | ✅ Positive             | ✅ **Strengthened**           | OSH SML data via `?f=sml3` now validated by our parser (F71)                                                                                            |
+| F59     | OSH SamplingFeatures at 51                         | ✅ Positive             | ✅ Confirmed                  | Still 51                                                                                                                                                |
+| F60     | OSH SensorML content-type partially corrected      | ℹ️ Informational        | ℹ️ **Superseded by F71**      | `?f=sml3` is the reliable path                                                                                                                          |
+| F61     | 52N default changed from SML to JSON               | ℹ️ Superseded           | ℹ️ Still superseded           | Was based on F57 misunderstanding                                                                                                                       |
+| F62     | 52N `geo+json` returns data                        | ℹ️ Informational        | ✅ Still confirmed            | `Accept: application/geo+json` returns populated FeatureCollection                                                                                      |
+| F63     | 52N error codes changed 500→400                    | ℹ️ Low                  | ℹ️ Still 400                  | samplingFeatures, datastreams, observations                                                                                                             |
+| F64     | OSH ignores ALL Accept headers                     | ℹ️ Informational        | ✅ **Confirmed and extended** | All 4 Accept values return Content-Type: `auto`; only `?f=` controls format                                                                             |
+| F65     | 52N SML uses non-standard "Deployment" type        | ℹ️ Informational        | ✅ **Confirmed**              | All 4 sub-parsers correctly reject `type: "Deployment"`                                                                                                 |
+| F66     | SimpleProcess parser validated                     | ✅ Positive             | ✅ Still positive             | No regression                                                                                                                                           |
 
 ### GeoJSON Handler — Recognition
 
 GeoJSON handler was not the focus of this smoke test (no handler changes since Phase 3.5). Prior results carried forward:
 
-| Server | Resource Type | Features Tested | All Recognized? | Details |
-|--------|--------------|-----------------|-----------------|---------|
-| OSH | Systems | 12 | ✅ 12/12 | All `featureType=http://www.w3.org/ns/sosa/Sensor` → System |
-| OSH | SamplingFeatures | 51 | ✅ 51/51 | All `featureType=http://www.opengis.net/sensorml/2.0#Feature` → SamplingFeature |
-| 52N | Systems (geo+json) | 3 | ❌ 0/3 | `featureType=null` — F41 still present |
-| 52N | Deployments (geo+json) | 1 | ✅ 1/1 | `featureType=http://www.w3.org/ns/sosa/Deployment` → Deployment |
-| 52N | Procedures (geo+json) | 1 | ✅ 1/1 | `featureType=sosa:Sensor` → System (F43 still present) |
+| Server | Resource Type          | Features Tested | All Recognized? | Details                                                                         |
+| ------ | ---------------------- | --------------- | --------------- | ------------------------------------------------------------------------------- |
+| OSH    | Systems                | 12              | ✅ 12/12        | All `featureType=http://www.w3.org/ns/sosa/Sensor` → System                     |
+| OSH    | SamplingFeatures       | 51              | ✅ 51/51        | All `featureType=http://www.opengis.net/sensorml/2.0#Feature` → SamplingFeature |
+| 52N    | Systems (geo+json)     | 3               | ❌ 0/3          | `featureType=null` — F41 still present                                          |
+| 52N    | Deployments (geo+json) | 1               | ✅ 1/1          | `featureType=http://www.w3.org/ns/sosa/Deployment` → Deployment                 |
+| 52N    | Procedures (geo+json)  | 1               | ✅ 1/1          | `featureType=sosa:Sensor` → System (F43 still present)                          |
 
 ### ~~GeoJSON Handler — Validation~~ — N/A
 
@@ -163,13 +164,13 @@ GeoJSON handler was not the focus of this smoke test (no handler changes since P
 
 Carried forward from Phase 3.5 (no handler changes):
 
-| Server | Resource Type | Features Tested | All Extracted? | Issues |
-|--------|--------------|-----------------|----------------|--------|
-| OSH | Systems | 12 | ✅ 12/12 | Clean extraction |
-| OSH | SamplingFeatures | 51 | ✅ 51/51 | Clean extraction |
-| 52N | Systems (geo+json) | 3 | ❌ 0/3 | Unrecognized featureType (F41) |
-| 52N | Deployments (geo+json) | 1 | ✅ 1/1 | Clean extraction |
-| 52N | Procedures (geo+json) | 1 | ✅ 1/1 | Extracted as System (F43) |
+| Server | Resource Type          | Features Tested | All Extracted? | Issues                         |
+| ------ | ---------------------- | --------------- | -------------- | ------------------------------ |
+| OSH    | Systems                | 12              | ✅ 12/12       | Clean extraction               |
+| OSH    | SamplingFeatures       | 51              | ✅ 51/51       | Clean extraction               |
+| 52N    | Systems (geo+json)     | 3               | ❌ 0/3         | Unrecognized featureType (F41) |
+| 52N    | Deployments (geo+json) | 1               | ✅ 1/1         | Clean extraction               |
+| 52N    | Procedures (geo+json)  | 1               | ✅ 1/1         | Extracted as System (F43)      |
 
 ### SensorML Parser Validation — Live Data (NEW)
 
@@ -178,49 +179,51 @@ This is the core focus of smoke test #15. All four SensorML sub-parsers were tes
 #### Data Sources
 
 **52N SML Data** (via `Accept: application/sml+json`):
+
 - 3 systems: `5400-526` (DCPS), `YSI599503-00-1` (EXO3 Sonde), `5300-909` (SMARTGUARD Platform)
 - 1 deployment: `af41f84f-...` (type: "Deployment")
 - 1 procedure: `4e09de42-...` (type: "PhysicalSystem", procedureType: "sosa:Sensor")
 
 **OSH SML Data** (via `?f=sml3`):
+
 - 12 systems: All `type: "PhysicalSystem"`, `definition: "http://www.w3.org/ns/sosa/Sensor"`
 - Minimal structure: `{type, id, uniqueId, definition, label, validTime}` — no identifiers, classifiers, components
 
 #### parsePhysicalSystem Results
 
-| Test Case | Source | Input Type | Expected | Result | Details |
-|-----------|--------|-----------|----------|--------|---------|
-| 52N System 5400-526 (DCPS) | 52N SML | PhysicalSystem | Parse | ✅ PASS | All fields populated including typeOf link, identifiers |
-| 52N System YSI599503-00-1 (Sonde) | 52N SML | PhysicalSystem | Parse | ✅ PASS | Correctly parsed |
-| 52N System 5300-909 (Platform) | 52N SML | PhysicalSystem | Parse | ✅ PASS | definition=`sosa:Platform` handled |
-| 52N Procedure 4e09de42 | 52N SML | PhysicalSystem | Parse | ✅ PASS | Accepted — F43 confirmed (server labels procedure as PhysicalSystem) |
-| 52N Deployment af41f84f | 52N SML | Deployment | Reject | ✅ PASS | `SensorMLParseError: Expected type "PhysicalSystem"` |
-| OSH Drone 03bc5ofvvstg | OSH SML | PhysicalSystem | Parse | ✅ PASS | Minimal SML parsed correctly |
-| OSH all 12 systems | OSH SML | PhysicalSystem | Parse | ✅ PASS | 12/12 parsed via `?f=sml3` |
+| Test Case                         | Source  | Input Type     | Expected | Result  | Details                                                              |
+| --------------------------------- | ------- | -------------- | -------- | ------- | -------------------------------------------------------------------- |
+| 52N System 5400-526 (DCPS)        | 52N SML | PhysicalSystem | Parse    | ✅ PASS | All fields populated including typeOf link, identifiers              |
+| 52N System YSI599503-00-1 (Sonde) | 52N SML | PhysicalSystem | Parse    | ✅ PASS | Correctly parsed                                                     |
+| 52N System 5300-909 (Platform)    | 52N SML | PhysicalSystem | Parse    | ✅ PASS | definition=`sosa:Platform` handled                                   |
+| 52N Procedure 4e09de42            | 52N SML | PhysicalSystem | Parse    | ✅ PASS | Accepted — F43 confirmed (server labels procedure as PhysicalSystem) |
+| 52N Deployment af41f84f           | 52N SML | Deployment     | Reject   | ✅ PASS | `SensorMLParseError: Expected type "PhysicalSystem"`                 |
+| OSH Drone 03bc5ofvvstg            | OSH SML | PhysicalSystem | Parse    | ✅ PASS | Minimal SML parsed correctly                                         |
+| OSH all 12 systems                | OSH SML | PhysicalSystem | Parse    | ✅ PASS | 12/12 parsed via `?f=sml3`                                           |
 
 **Summary:** 16/16 PhysicalSystem tests pass (15 accepts + 1 rejection).
 
 #### parsePhysicalComponent Results
 
-| Test Case | Source | Input | Expected | Result |
-|-----------|--------|-------|----------|--------|
-| 52N Deployment af41f84f | 52N SML | type: "Deployment" | Reject | ✅ PASS |
+| Test Case               | Source  | Input              | Expected | Result  |
+| ----------------------- | ------- | ------------------ | -------- | ------- |
+| 52N Deployment af41f84f | 52N SML | type: "Deployment" | Reject   | ✅ PASS |
 
 No PhysicalComponent instances exist on either server. The parser correctly rejects Deployment type.
 
 #### parseSimpleProcess Results
 
-| Test Case | Source | Input | Expected | Result | Notes |
-|-----------|--------|-------|----------|--------|-------|
-| 52N Deployment af41f84f | 52N SML | type: "Deployment" | Reject | ✅ PASS* | *Error thrown correctly but `instanceof` fails cross-module (F69) |
+| Test Case               | Source  | Input              | Expected | Result    | Notes                                                              |
+| ----------------------- | ------- | ------------------ | -------- | --------- | ------------------------------------------------------------------ |
+| 52N Deployment af41f84f | 52N SML | type: "Deployment" | Reject   | ✅ PASS\* | \*Error thrown correctly but `instanceof` fails cross-module (F69) |
 
 No SimpleProcess instances exist on either server. The parser correctly rejects Deployment type.
 
 #### parseAggregateProcess Results
 
-| Test Case | Source | Input | Expected | Result | Notes |
-|-----------|--------|-------|----------|--------|-------|
-| 52N Deployment af41f84f | 52N SML | type: "Deployment" | Reject | ✅ PASS* | *Error thrown correctly but `instanceof` fails cross-module (F69) |
+| Test Case               | Source  | Input              | Expected | Result    | Notes                                                              |
+| ----------------------- | ------- | ------------------ | -------- | --------- | ------------------------------------------------------------------ |
+| 52N Deployment af41f84f | 52N SML | type: "Deployment" | Reject   | ✅ PASS\* | \*Error thrown correctly but `instanceof` fails cross-module (F69) |
 
 No AggregateProcess instances exist on either server. The parser correctly rejects Deployment type.
 
@@ -228,28 +231,33 @@ No AggregateProcess instances exist on either server. The parser correctly rejec
 
 Tested on 52N system 5400-526 (richest data) and 52N procedure 4e09de42:
 
-| Property | 5400-526 Value | Preserved? | 4e09de42 Value | Preserved? |
-|----------|---------------|------------|----------------|------------|
-| `identifiers` | 2 items (longName, shortName) | ✅ | 0 items | ✅ (empty array) |
-| `classifiers` | 0 items | ✅ (empty array) | 2 items (intendedApplication, sensorType) | ✅ |
-| `documents` | 0 items | ✅ (empty array) | 1 item (specsheet) | ✅ |
-| `procedureType` | undefined | ✅ | `"sosa:Sensor"` | ✅ |
-| `typeOf` | `{href: "urn:osh:sensor:hach:5400:dcps:v1", rel: "type"}` | ✅ | none | ✅ |
-| `definition` | `"sosa:Sensor"` | ✅ | `"sosa:Sensor"` | ✅ |
+| Property        | 5400-526 Value                                            | Preserved?       | 4e09de42 Value                            | Preserved?       |
+| --------------- | --------------------------------------------------------- | ---------------- | ----------------------------------------- | ---------------- |
+| `identifiers`   | 2 items (longName, shortName)                             | ✅               | 0 items                                   | ✅ (empty array) |
+| `classifiers`   | 0 items                                                   | ✅ (empty array) | 2 items (intendedApplication, sensorType) | ✅               |
+| `documents`     | 0 items                                                   | ✅ (empty array) | 1 item (specsheet)                        | ✅               |
+| `procedureType` | undefined                                                 | ✅               | `"sosa:Sensor"`                           | ✅               |
+| `typeOf`        | `{href: "urn:osh:sensor:hach:5400:dcps:v1", rel: "type"}` | ✅               | none                                      | ✅               |
+| `definition`    | `"sosa:Sensor"`                                           | ✅               | `"sosa:Sensor"`                           | ✅               |
 
 #### parsePosition Validation
 
-| Test Case | Input | Expected | Result |
-|-----------|-------|----------|--------|
-| 52N Deployment location (GeoJSON Point) | `{type:"Point",coordinates:[-76.5,42.4]}` | GeoJSON object | ✅ PASS |
-| String position | `"EPSG:4326 42.4 -76.5"` | String preserved | ✅ PASS |
-| Null position | `null` | undefined | ✅ PASS |
+| Test Case                               | Input                                     | Expected         | Result  |
+| --------------------------------------- | ----------------------------------------- | ---------------- | ------- |
+| 52N Deployment location (GeoJSON Point) | `{type:"Point",coordinates:[-76.5,42.4]}` | GeoJSON object   | ✅ PASS |
+| String position                         | `"EPSG:4326 42.4 -76.5"`                  | String preserved | ✅ PASS |
+| Null position                           | `null`                                    | undefined        | ✅ PASS |
 
 #### typeOf Link Handling
 
 52N system 5400-526 has a `typeOf` link with a non-standard `urn` property:
+
 ```json
-{ "href": "urn:osh:sensor:hach:5400:dcps:v1", "rel": "type", "urn": "urn:osh:sensor:hach:5400:dcps:v1" }
+{
+  "href": "urn:osh:sensor:hach:5400:dcps:v1",
+  "rel": "type",
+  "urn": "urn:osh:sensor:hach:5400:dcps:v1"
+}
 ```
 
 `parseLink` correctly strips the extra `urn` property, preserving only `href`, `rel`, `type`, `hreflang`, `title`, `uid` (F70).
@@ -257,35 +265,38 @@ Tested on 52N system 5400-526 (richest data) and 52N procedure 4e09de42:
 #### instanceof Cross-Module Verification
 
 Confirmed at runtime that each SensorML parser file defines its own `SensorMLParseError` class:
+
 ```
 PS===SP: false    (physical-system.SensorMLParseError !== simple-process.SensorMLParseError)
 PS===AP: false    (physical-system.SensorMLParseError !== aggregate-process.SensorMLParseError)
 SP===AP: false    (simple-process.SensorMLParseError !== aggregate-process.SensorMLParseError)
 ```
+
 An error thrown by `parseSimpleProcess` is `instanceof` its own file's `SensorMLParseError` but NOT `instanceof` the class from `physical-system.ts` or `aggregate-process.ts`. This confirms the Phase 3.6 F11 / Phase 3.7 F3 finding (triple-class problem). See F69 below.
 
 ### parseValidTime — Live Data
 
 Carried forward from Phase 3.5 (no changes to parseValidTime):
 
-| Server | Features With validTime | All Parsed? | Format Observed | Issues |
-|--------|------------------------|-------------|-----------------|--------|
-| OSH | 12 systems | ✅ | Array `["ISO","now"]` | None |
-| 52N | 3 systems, 1 procedure | ✅ | Array format | None |
-| 52N | 1 deployment | ✅ (skipped) | `null` | F42 — handler correctly handles null |
+| Server | Features With validTime | All Parsed?  | Format Observed       | Issues                               |
+| ------ | ----------------------- | ------------ | --------------------- | ------------------------------------ |
+| OSH    | 12 systems              | ✅           | Array `["ISO","now"]` | None                                 |
+| 52N    | 3 systems, 1 procedure  | ✅           | Array format          | None                                 |
+| 52N    | 1 deployment            | ✅ (skipped) | `null`                | F42 — handler correctly handles null |
 
 ### SensorML Type Alignment — Both Servers
 
-| Server | Endpoint | SML `type` | SML `definition` | URI Form |
-|--------|----------|-----------|-------------------|----------|
-| 52N | /systems (5400-526) | PhysicalSystem | `sosa:Sensor` | CURIE |
-| 52N | /systems (YSI599503) | PhysicalSystem | `sosa:Sensor` | CURIE |
-| 52N | /systems (5300-909) | PhysicalSystem | `sosa:Platform` | CURIE |
-| 52N | /deployments | **Deployment** | `http://www.w3.org/ns/sosa/Deployment` | Full URI |
-| 52N | /procedures | PhysicalSystem | `sosa:Sensor` | CURIE |
-| OSH | /systems (all 12) | PhysicalSystem | `http://www.w3.org/ns/sosa/Sensor` | Full URI |
+| Server | Endpoint             | SML `type`     | SML `definition`                       | URI Form |
+| ------ | -------------------- | -------------- | -------------------------------------- | -------- |
+| 52N    | /systems (5400-526)  | PhysicalSystem | `sosa:Sensor`                          | CURIE    |
+| 52N    | /systems (YSI599503) | PhysicalSystem | `sosa:Sensor`                          | CURIE    |
+| 52N    | /systems (5300-909)  | PhysicalSystem | `sosa:Platform`                        | CURIE    |
+| 52N    | /deployments         | **Deployment** | `http://www.w3.org/ns/sosa/Deployment` | Full URI |
+| 52N    | /procedures          | PhysicalSystem | `sosa:Sensor`                          | CURIE    |
+| OSH    | /systems (all 12)    | PhysicalSystem | `http://www.w3.org/ns/sosa/Sensor`     | Full URI |
 
 **Key observations:**
+
 - OSH and 52N both use `PhysicalSystem` as the SML `type` for systems — our parser handles both
 - OSH uses full URI for `definition`, 52N uses CURIEs (F44 still present)
 - 52N Deployment uses non-standard `type: "Deployment"` (F65 confirmed — all 4 parsers reject it)
@@ -293,42 +304,42 @@ Carried forward from Phase 3.5 (no changes to parseValidTime):
 
 ### Vocabulary Inventory
 
-| featureType / definition Value | Server(s) | Resource Type | Form | Recognized? | Classification |
-|-------------------------------|-----------|---------------|------|-------------|----------------|
-| `http://www.w3.org/ns/sosa/Sensor` | OSH (GeoJSON), OSH (SML definition) | Systems | Full URI | ✅ | System / PhysicalSystem |
-| `http://www.opengis.net/sensorml/2.0#Feature` | OSH | SamplingFeatures | Full URI | ✅ | SamplingFeature |
-| `http://www.w3.org/ns/sosa/Deployment` | 52N (GeoJSON, SML definition) | Deployments | Full URI | ✅ | Deployment |
-| `sosa:Sensor` | 52N (GeoJSON, SML definition) | Systems, Procedures | CURIE | ✅ | System / PhysicalSystem |
-| `sosa:Platform` | 52N (SML definition) | Systems | CURIE | — | (SML definition field) |
-| *(null/empty)* | 52N (GeoJSON) | Systems | N/A | ❌ | Unrecognized (F41) |
-| `Deployment` | 52N (SML type) | Deployments | Non-standard | — | Not a SensorML process type (F65) |
+| featureType / definition Value                | Server(s)                           | Resource Type       | Form         | Recognized? | Classification                    |
+| --------------------------------------------- | ----------------------------------- | ------------------- | ------------ | ----------- | --------------------------------- |
+| `http://www.w3.org/ns/sosa/Sensor`            | OSH (GeoJSON), OSH (SML definition) | Systems             | Full URI     | ✅          | System / PhysicalSystem           |
+| `http://www.opengis.net/sensorml/2.0#Feature` | OSH                                 | SamplingFeatures    | Full URI     | ✅          | SamplingFeature                   |
+| `http://www.w3.org/ns/sosa/Deployment`        | 52N (GeoJSON, SML definition)       | Deployments         | Full URI     | ✅          | Deployment                        |
+| `sosa:Sensor`                                 | 52N (GeoJSON, SML definition)       | Systems, Procedures | CURIE        | ✅          | System / PhysicalSystem           |
+| `sosa:Platform`                               | 52N (SML definition)                | Systems             | CURIE        | —           | (SML definition field)            |
+| _(null/empty)_                                | 52N (GeoJSON)                       | Systems             | N/A          | ❌          | Unrecognized (F41)                |
+| `Deployment`                                  | 52N (SML type)                      | Deployments         | Non-standard | —           | Not a SensorML process type (F65) |
 
 No new vocabulary values observed since Phase 3.5.
 
 ### Content-Type Availability
 
-| Content-Type | OSH (Accept header) | OSH (?f= param) | 52N (Accept header) | Notes |
-|-------------|---------------------|------------------|---------------------|-------|
-| `application/json` | ✅ (always returns this) | ✅ `?f=json` | ✅ (collection: empty; individual: 500) | 52N individual returns 500 (F72) |
-| `application/geo+json` | ❌ (ignored) | ✅ `?f=geojson` | ✅ (populated FeatureCollection) | |
-| `application/sml+json` | ❌ (ignored) | ✅ `?f=sml3` | ✅ (populated SML data) | **Key discovery:** OSH SML accessible via `?f=sml3` (F71) |
-| `application/swe+json` | ❌ (ignored) | ❌ `?f=swe` → 400 | ❌ 400 | Neither server supports SWE+JSON |
+| Content-Type           | OSH (Accept header)      | OSH (?f= param)   | 52N (Accept header)                     | Notes                                                     |
+| ---------------------- | ------------------------ | ----------------- | --------------------------------------- | --------------------------------------------------------- |
+| `application/json`     | ✅ (always returns this) | ✅ `?f=json`      | ✅ (collection: empty; individual: 500) | 52N individual returns 500 (F72)                          |
+| `application/geo+json` | ❌ (ignored)             | ✅ `?f=geojson`   | ✅ (populated FeatureCollection)        |                                                           |
+| `application/sml+json` | ❌ (ignored)             | ✅ `?f=sml3`      | ✅ (populated SML data)                 | **Key discovery:** OSH SML accessible via `?f=sml3` (F71) |
+| `application/swe+json` | ❌ (ignored)             | ❌ `?f=swe` → 400 | ❌ 400                                  | Neither server supports SWE+JSON                          |
 
 ### Test Suite Status
 
-| Test File | Status | Tests |
-|-----------|--------|-------|
-| `physical-system.spec.ts` | ✅ PASS | (new since last smoke test) |
-| `aggregate-process.spec.ts` | ✅ PASS | (new since last smoke test) |
-| `simple-process.spec.ts` | ✅ PASS | |
-| `geojson.spec.ts` | ✅ PASS | |
-| `helpers.spec.ts` | ✅ PASS | |
-| `url_builder.spec.ts` | ✅ PASS | |
-| `model.spec.ts` | ✅ PASS | |
-| `sensorml/types.spec.ts` | ✅ PASS | |
-| `swecommon/types.spec.ts` | ✅ PASS | |
-| **All CSAPI test files** | **✅ ALL PASS** | **9 files** |
-| **Total project** | 35 suites pass, 2 fail | 954 pass, 8 fail, 962 total |
+| Test File                   | Status                 | Tests                       |
+| --------------------------- | ---------------------- | --------------------------- |
+| `physical-system.spec.ts`   | ✅ PASS                | (new since last smoke test) |
+| `aggregate-process.spec.ts` | ✅ PASS                | (new since last smoke test) |
+| `simple-process.spec.ts`    | ✅ PASS                |                             |
+| `geojson.spec.ts`           | ✅ PASS                |                             |
+| `helpers.spec.ts`           | ✅ PASS                |                             |
+| `url_builder.spec.ts`       | ✅ PASS                |                             |
+| `model.spec.ts`             | ✅ PASS                |                             |
+| `sensorml/types.spec.ts`    | ✅ PASS                |                             |
+| `swecommon/types.spec.ts`   | ✅ PASS                |                             |
+| **All CSAPI test files**    | **✅ ALL PASS**        | **9 files**                 |
+| **Total project**           | 35 suites pass, 2 fail | 954 pass, 8 fail, 962 total |
 
 The 2 pre-existing failures are in non-CSAPI code: `endpoint.spec.ts` (EndpointError class mismatch) and `http-utils.spec.ts` (worker path resolution timeout). No regressions.
 
@@ -359,10 +370,12 @@ The 2 pre-existing failures are in non-CSAPI code: `endpoint.spec.ts` (EndpointE
 **Affects:** `physical-system.ts`, `simple-process.ts`, `aggregate-process.ts` — each defines its own `SensorMLParseError`
 **Ownership:** Ours
 **Evidence:** Runtime verification confirms all three `SensorMLParseError` constructors are distinct:
+
 ```
 PS===SP: false, PS===AP: false, SP===AP: false
 SpErr instanceof PsErr: false (even though SpErr.name === "SensorMLParseError")
 ```
+
 This means consumer code cannot use `instanceof SensorMLParseError` across parser boundaries. Error name-based checking (`err.name === "SensorMLParseError"`) works as a workaround. This was predicted in Phase 3.6 (F11 code review) and Phase 3.7 (F3 code review). The recommended fix is to extract `SensorMLParseError` to a shared module.
 **Status:** Informational — documented as known limitation. Not blocking but should be addressed before public API stabilization.
 
@@ -404,73 +417,73 @@ This means consumer code cannot use `instanceof SensorMLParseError` across parse
 
 ## Cross-Server Comparison
 
-| Dimension | OpenSensorHub | 52North | Match? |
-|-----------|--------------|---------|--------|
-| Content negotiation (Accept) | Ignores ALL Accept headers | Routes to different backends by Accept | ❌ |
-| Content negotiation (?f= param) | `?f=json`, `?f=geojson`, `?f=sml3` work | N/A (uses Accept header) | ❌ |
-| Default content type | `application/json` | `application/sml+json` | ❌ |
-| SML data availability | ✅ via `?f=sml3` | ✅ via `Accept: application/sml+json` | ✅ (different paths) |
-| SML `type` for systems | PhysicalSystem (12/12) | PhysicalSystem (3/3 + 1 procedure) | ✅ |
-| SML `definition` vocabulary | Full URI (`http://www.w3.org/ns/sosa/Sensor`) | CURIE (`sosa:Sensor`, `sosa:Platform`) | ❌ |
-| SML data richness | Minimal (type, id, uid, definition, label, validTime) | Rich (identifiers, classifiers, documents, typeOf, procedureType) | ❌ |
-| GeoJSON envelope | `{ items: [...] }` | `{ type: "FeatureCollection", features: [...] }` | ❌ |
-| SML envelope | `{ items: [...] }` (via ?f=sml3 — single item, no wrapper) | `{ items: [...] }` | ⚠️ (OSH returns unwrapped single SML object) |
-| `validTime` format | Array `["ISO","now"]` | Array format (or null on deployment) | ✅ |
-| Feature `uid` field | Present on all | Present on all | ✅ |
-| Feature `name`/`label` field | Present (`name` in GeoJSON, `label` in SML) | Present (`label` in SML) | ✅ |
-| `@link` notation | Present on datastreams | Present on deployments | ✅ (both use it) |
-| SWE+JSON support | ❌ (`?f=swe` → 400) | ❌ (400) | ✅ (neither) |
-| Systems count | 12 | 3 | — |
-| SamplingFeatures | 51 | ❌ 400 | — |
-| Deployments | 0 | 1 | — |
-| Procedures | 0 | 1 | — |
+| Dimension                       | OpenSensorHub                                              | 52North                                                           | Match?                                       |
+| ------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------- |
+| Content negotiation (Accept)    | Ignores ALL Accept headers                                 | Routes to different backends by Accept                            | ❌                                           |
+| Content negotiation (?f= param) | `?f=json`, `?f=geojson`, `?f=sml3` work                    | N/A (uses Accept header)                                          | ❌                                           |
+| Default content type            | `application/json`                                         | `application/sml+json`                                            | ❌                                           |
+| SML data availability           | ✅ via `?f=sml3`                                           | ✅ via `Accept: application/sml+json`                             | ✅ (different paths)                         |
+| SML `type` for systems          | PhysicalSystem (12/12)                                     | PhysicalSystem (3/3 + 1 procedure)                                | ✅                                           |
+| SML `definition` vocabulary     | Full URI (`http://www.w3.org/ns/sosa/Sensor`)              | CURIE (`sosa:Sensor`, `sosa:Platform`)                            | ❌                                           |
+| SML data richness               | Minimal (type, id, uid, definition, label, validTime)      | Rich (identifiers, classifiers, documents, typeOf, procedureType) | ❌                                           |
+| GeoJSON envelope                | `{ items: [...] }`                                         | `{ type: "FeatureCollection", features: [...] }`                  | ❌                                           |
+| SML envelope                    | `{ items: [...] }` (via ?f=sml3 — single item, no wrapper) | `{ items: [...] }`                                                | ⚠️ (OSH returns unwrapped single SML object) |
+| `validTime` format              | Array `["ISO","now"]`                                      | Array format (or null on deployment)                              | ✅                                           |
+| Feature `uid` field             | Present on all                                             | Present on all                                                    | ✅                                           |
+| Feature `name`/`label` field    | Present (`name` in GeoJSON, `label` in SML)                | Present (`label` in SML)                                          | ✅                                           |
+| `@link` notation                | Present on datastreams                                     | Present on deployments                                            | ✅ (both use it)                             |
+| SWE+JSON support                | ❌ (`?f=swe` → 400)                                        | ❌ (400)                                                          | ✅ (neither)                                 |
+| Systems count                   | 12                                                         | 3                                                                 | —                                            |
+| SamplingFeatures                | 51                                                         | ❌ 400                                                            | —                                            |
+| Deployments                     | 0                                                          | 1                                                                 | —                                            |
+| Procedures                      | 0                                                          | 1                                                                 | —                                            |
 
 ## Response Envelope Observations (Phase 3 Reference)
 
-| Server | Format | Endpoint | Envelope | Feature Array Key | Has Data? |
-|--------|--------|----------|----------|-------------------|-----------|
-| OSH | `?f=json` | /systems | `{ items: [...], links: [...] }` | `items` | ✅ 12 |
-| OSH | `?f=geojson` | /systems/{id} | `application/geo+json` single feature | N/A | ✅ |
-| OSH | `?f=sml3` | /systems/{id} | Unwrapped SML object (no envelope) | N/A | ✅ |
-| 52N | `sml+json` Accept | /systems | `{ items: [...], links: [...] }` | `items` | ✅ 3 |
-| 52N | `geo+json` Accept | /systems | `{ type: "FeatureCollection", features: [...] }` | `features` | ✅ 3 |
-| 52N | `json` Accept | /systems | `{ type: "FeatureCollection", features: [...] }` | `features` | ❌ 0 |
+| Server | Format            | Endpoint      | Envelope                                         | Feature Array Key | Has Data? |
+| ------ | ----------------- | ------------- | ------------------------------------------------ | ----------------- | --------- |
+| OSH    | `?f=json`         | /systems      | `{ items: [...], links: [...] }`                 | `items`           | ✅ 12     |
+| OSH    | `?f=geojson`      | /systems/{id} | `application/geo+json` single feature            | N/A               | ✅        |
+| OSH    | `?f=sml3`         | /systems/{id} | Unwrapped SML object (no envelope)               | N/A               | ✅        |
+| 52N    | `sml+json` Accept | /systems      | `{ items: [...], links: [...] }`                 | `items`           | ✅ 3      |
+| 52N    | `geo+json` Accept | /systems      | `{ type: "FeatureCollection", features: [...] }` | `features`        | ✅ 3      |
+| 52N    | `json` Accept     | /systems      | `{ type: "FeatureCollection", features: [...] }` | `features`        | ❌ 0      |
 
 **Key insight for response parser:** OSH `?f=sml3` on individual resources returns an **unwrapped SML object** (not in any envelope). The collection `?f=sml3` was not tested (may return items array). The response parser must handle both enveloped and raw responses.
 
 ## What WORKS (Verified Against Live Data)
 
-| Capability | OSH | 52North |
-|------------|-----|---------|
-| `parsePhysicalSystem` on live SML data | ✅ 12/12 systems | ✅ 3/3 systems + 1 procedure |
-| `parsePhysicalSystem` rejects Deployment | N/A (no deployments) | ✅ Correctly rejects |
-| `parseAggregateProcess` rejects non-Aggregate types | ✅ Correctly rejects | ✅ Correctly rejects |
-| `parseSimpleProcess` rejects non-Simple types | ✅ Correctly rejects | ✅ Correctly rejects |
-| `parsePhysicalComponent` rejects non-Component types | N/A | ✅ Correctly rejects |
-| `parsePosition` on GeoJSON Point | N/A (OSH SML has no position) | ✅ Parses correctly |
-| `parsePosition` on null | ✅ Returns undefined | ✅ Returns undefined |
-| `parseLink` strips extra properties | N/A | ✅ Strips `urn`, keeps standard fields |
-| DescribedObject passthrough (identifiers) | N/A (OSH SML has none) | ✅ 2 items preserved |
-| DescribedObject passthrough (classifiers) | N/A | ✅ 2 items preserved |
-| DescribedObject passthrough (documents) | N/A | ✅ 1 item preserved |
-| DescribedObject passthrough (procedureType) | N/A | ✅ `"sosa:Sensor"` preserved |
-| `isCSAPIFeature` recognition (GeoJSON) | ✅ 63/63 features | ✅ 2/5 features |
-| `extractCSAPIFeature` extraction (GeoJSON) | ✅ 63/63 features | ✅ 2/5 features |
-| `parseValidTime` on arrays | ✅ Handles `["ISO","now"]` | ✅ Handles null correctly |
-| OSH SML via `?f=sml3` | ✅ All 12 systems accessible | N/A |
-| Test suite (all 9 CSAPI files) | ✅ All pass | — |
+| Capability                                           | OSH                           | 52North                                |
+| ---------------------------------------------------- | ----------------------------- | -------------------------------------- |
+| `parsePhysicalSystem` on live SML data               | ✅ 12/12 systems              | ✅ 3/3 systems + 1 procedure           |
+| `parsePhysicalSystem` rejects Deployment             | N/A (no deployments)          | ✅ Correctly rejects                   |
+| `parseAggregateProcess` rejects non-Aggregate types  | ✅ Correctly rejects          | ✅ Correctly rejects                   |
+| `parseSimpleProcess` rejects non-Simple types        | ✅ Correctly rejects          | ✅ Correctly rejects                   |
+| `parsePhysicalComponent` rejects non-Component types | N/A                           | ✅ Correctly rejects                   |
+| `parsePosition` on GeoJSON Point                     | N/A (OSH SML has no position) | ✅ Parses correctly                    |
+| `parsePosition` on null                              | ✅ Returns undefined          | ✅ Returns undefined                   |
+| `parseLink` strips extra properties                  | N/A                           | ✅ Strips `urn`, keeps standard fields |
+| DescribedObject passthrough (identifiers)            | N/A (OSH SML has none)        | ✅ 2 items preserved                   |
+| DescribedObject passthrough (classifiers)            | N/A                           | ✅ 2 items preserved                   |
+| DescribedObject passthrough (documents)              | N/A                           | ✅ 1 item preserved                    |
+| DescribedObject passthrough (procedureType)          | N/A                           | ✅ `"sosa:Sensor"` preserved           |
+| `isCSAPIFeature` recognition (GeoJSON)               | ✅ 63/63 features             | ✅ 2/5 features                        |
+| `extractCSAPIFeature` extraction (GeoJSON)           | ✅ 63/63 features             | ✅ 2/5 features                        |
+| `parseValidTime` on arrays                           | ✅ Handles `["ISO","now"]`    | ✅ Handles null correctly              |
+| OSH SML via `?f=sml3`                                | ✅ All 12 systems accessible  | N/A                                    |
+| Test suite (all 9 CSAPI files)                       | ✅ All pass                   | —                                      |
 
 ## What Remains (Later Phase 3 Concerns)
 
-| Issue | Severity | Component | Target Task |
-|-------|----------|-----------|------------|
-| F41: 52N systems lack featureType in GeoJSON | Moderate | geojson.ts | Future: URL-based type inference |
-| F43: 52N procedure misclassified as System | Moderate | Server-side | Upstream issue |
-| F3: Response envelope detection (`items` vs `features`) | Moderate | Response parser | Issue #23 or later |
-| F65: "Deployment" as SensorML type | Low | SensorML parsers | Informational — parsers correctly reject |
-| F69: `instanceof SensorMLParseError` cross-module | Low | Shared error class | Should be addressed before API stabilization |
-| F71: OSH `?f=sml3` vs Accept header | Low | Content negotiation | Integration layer needs server-specific handling |
-| SWE Common parser smoke test | — | swecommon/ | After Issue #24+ (neither server supports `swe+json`) |
+| Issue                                                   | Severity | Component           | Target Task                                           |
+| ------------------------------------------------------- | -------- | ------------------- | ----------------------------------------------------- |
+| F41: 52N systems lack featureType in GeoJSON            | Moderate | geojson.ts          | Future: URL-based type inference                      |
+| F43: 52N procedure misclassified as System              | Moderate | Server-side         | Upstream issue                                        |
+| F3: Response envelope detection (`items` vs `features`) | Moderate | Response parser     | Issue #23 or later                                    |
+| F65: "Deployment" as SensorML type                      | Low      | SensorML parsers    | Informational — parsers correctly reject              |
+| F69: `instanceof SensorMLParseError` cross-module       | Low      | Shared error class  | Should be addressed before API stabilization          |
+| F71: OSH `?f=sml3` vs Accept header                     | Low      | Content negotiation | Integration layer needs server-specific handling      |
+| SWE Common parser smoke test                            | —        | swecommon/          | After Issue #24+ (neither server supports `swe+json`) |
 
 ## Verdict
 

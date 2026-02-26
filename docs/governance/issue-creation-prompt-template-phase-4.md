@@ -12,9 +12,9 @@
 
 ## Before Creating an Issue
 
-1. **Read the ROADMAP task** — `docs/planning/ROADMAP.md` contains the authoritative task definition *(skip for finding-driven issues)*
+1. **Read the ROADMAP task** — `docs/planning/ROADMAP.md` contains the authoritative task definition _(skip for finding-driven issues)_
 2. **Read the Guide section** — `docs/planning/csapi-implementation-guide.md` has detailed specifications for every component
-3. **Read the relevant smoke test report** — `docs/implementation/live-server-smoke-test-post-phase-*.md` documents the finding that triggered this issue *(for finding-driven issues)*
+3. **Read the relevant smoke test report** — `docs/implementation/live-server-smoke-test-post-phase-*.md` documents the finding that triggered this issue _(for finding-driven issues)_
 4. **Read server quirks** — `docs/governance/known-server-quirks.md` for any issue touching HTTP requests, content negotiation, or CRUD operations
 5. **Identify the exact files** — list every file created or modified, nothing more
 6. **Identify the scope fence** — what files/concerns belong to adjacent issues, not this one
@@ -38,10 +38,10 @@ Use this template when the issue maps to a planned ROADMAP task.
 
 ## Files to Create or Modify
 
-| File | Action | Est. Lines | Purpose |
-|------|--------|-----------|---------|
-| {{`path/to/file.ts`}} | {{Create / Modify}} | {{~N-M}} | {{Brief purpose}} |
-| {{`path/to/file.spec.ts`}} | {{Create / Modify}} | {{~N-M}} | {{Brief purpose}} |
+| File                       | Action              | Est. Lines | Purpose           |
+| -------------------------- | ------------------- | ---------- | ----------------- |
+| {{`path/to/file.ts`}}      | {{Create / Modify}} | {{~N-M}}   | {{Brief purpose}} |
+| {{`path/to/file.spec.ts`}} | {{Create / Modify}} | {{~N-M}}   | {{Brief purpose}} |
 
 ## Blueprint Reference
 
@@ -52,11 +52,13 @@ Use this template when the issue maps to a planned ROADMAP task.
 {{Organized list of exactly what to build. Use sub-headers if the task has distinct sub-parts (e.g., interfaces, methods, parsers). Include method signatures, interface names, or component names — be specific enough that the implementer has no ambiguity.}}
 
 ### JSDoc Requirements
+
 - Document {{what}} with {{what level of detail}}
 - Add `@see` links to {{which spec sections}}
 - Follow the JSDoc style in {{which blueprint file}}
 
 ### Testing Requirements
+
 - Create/extend {{test file path}} (~{{N-M}} lines)
 - {{Specific test scenarios to cover — list 3-6 concrete test cases}}
 - Follow test patterns from {{which blueprint test file}}
@@ -99,6 +101,7 @@ Use this template when the issue maps to a planned ROADMAP task.
 > **For Phase 2 issues:** Also review [`docs/governance/phase-2-lessons-learned.md`](phase-2-lessons-learned.md) — test checklist (Lesson 1) and query options table (Lesson 2) are mandatory.
 
 Key constraints for this task:
+
 - **Precedence:** OGC specifications → AI Collaboration Agreement → This issue description → Existing code → Conversational context
 - **No scope expansion:** Do not infer unstated requirements or add unrequested features
 - **No refactoring:** Do not rename, restructure, or "improve" code outside this issue's scope
@@ -125,50 +128,50 @@ Read these documents before starting implementation. They are ordered by priorit
 
 ### Primary References (must read)
 
-| # | Document | Section/Lines | What It Provides |
-|---|----------|---------------|------------------|
-| 1 | {{Guide section with code template or specification}} | {{Lines N-M}} | {{What the implementer gets from it}} |
-| 2 | {{Blueprint file to match}} | {{Full file / Lines N-M}} | {{What pattern to follow}} |
-| 3 | {{Blueprint test file}} | {{Full file / Lines N-M}} | {{What test pattern to follow}} |
+| #   | Document                                              | Section/Lines             | What It Provides                      |
+| --- | ----------------------------------------------------- | ------------------------- | ------------------------------------- |
+| 1   | {{Guide section with code template or specification}} | {{Lines N-M}}             | {{What the implementer gets from it}} |
+| 2   | {{Blueprint file to match}}                           | {{Full file / Lines N-M}} | {{What pattern to follow}}            |
+| 3   | {{Blueprint test file}}                               | {{Full file / Lines N-M}} | {{What test pattern to follow}}       |
 
 ### Server Behavior References (for issues involving HTTP interaction)
 
-| # | Document | What It Provides |
-|---|----------|------------------|
-| 1 | [`docs/governance/known-server-quirks.md`](known-server-quirks.md) | All known server behaviors, content negotiation rules, and workarounds |
-| 2 | Most recent `docs/implementation/live-server-smoke-test-post-phase-*.md` | Current state of all findings, server inventories, regression data |
-| 3 | [`docs/implementation/cross-server-interoperability-analysis.md`](../implementation/cross-server-interoperability-analysis.md) | Cross-server differences and interoperability patterns |
+| #   | Document                                                                                                                       | What It Provides                                                       |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| 1   | [`docs/governance/known-server-quirks.md`](known-server-quirks.md)                                                             | All known server behaviors, content negotiation rules, and workarounds |
+| 2   | Most recent `docs/implementation/live-server-smoke-test-post-phase-*.md`                                                       | Current state of all findings, server inventories, regression data     |
+| 3   | [`docs/implementation/cross-server-interoperability-analysis.md`](../implementation/cross-server-interoperability-analysis.md) | Cross-server differences and interoperability patterns                 |
 
 ### Upstream Type/Import References (files this task imports from)
 
-| # | Document | What to Import |
-|---|----------|----------------|
+| #     | Document                    | What to Import              |
+| ----- | --------------------------- | --------------------------- |
 | {{N}} | {{`path/to/dependency.ts`}} | {{Specific exports needed}} |
 
 ### Research References (context, not required reading)
 
-| # | Document | What It Provides |
-|---|----------|------------------|
+| #     | Document              | What It Provides                   |
+| ----- | --------------------- | ---------------------------------- |
 | {{N}} | {{Research doc path}} | {{Why a design decision was made}} |
 
 ### Specification References (for `@see` links and field accuracy)
 
-| # | Document | Use |
-|---|----------|-----|
+| #     | Document                                                                                  | Use                            |
+| ----- | ----------------------------------------------------------------------------------------- | ------------------------------ |
 | {{N}} | [OGC API - Connected Systems Part 1 (23-001)](https://docs.ogc.org/is/23-001/23-001.html) | {{Which resource definitions}} |
 | {{N}} | [OGC API - Connected Systems Part 2 (23-002)](https://docs.ogc.org/is/23-002/23-002.html) | {{Which resource definitions}} |
 
 ### Convention Quick Reference
 
-| Rule | Example |
-|------|---------|
-| Use `.js` extension for relative imports | `import { X } from './file.js'` |
-| Use `import type` for interfaces/types | `import type { Y } from './model.js'` |
-| Three-tier hierarchy: import from lower tiers only | shared → ogc-api → csapi |
-| Named exports for types and utilities | `export interface Z { ... }` |
-| `as const` arrays for enum-like values | `export const XTypes = [...] as const` |
-| HTTP mocking: `globalThis.fetch = jest.fn()` | Never use nock, msw, or other libraries |
-| Meaningful tests only | Verify behavior, not that code runs without throwing |
+| Rule                                               | Example                                              |
+| -------------------------------------------------- | ---------------------------------------------------- |
+| Use `.js` extension for relative imports           | `import { X } from './file.js'`                      |
+| Use `import type` for interfaces/types             | `import type { Y } from './model.js'`                |
+| Three-tier hierarchy: import from lower tiers only | shared → ogc-api → csapi                             |
+| Named exports for types and utilities              | `export interface Z { ... }`                         |
+| `as const` arrays for enum-like values             | `export const XTypes = [...] as const`               |
+| HTTP mocking: `globalThis.fetch = jest.fn()`       | Never use nock, msw, or other libraries              |
+| Meaningful tests only                              | Verify behavior, not that code runs without throwing |
 ```
 
 ---
@@ -195,7 +198,9 @@ Use this template when the issue is triggered by a smoke test finding, demo app 
 
 **Evidence:**
 ```
+
 {{Paste the relevant HTTP request/response or error from the smoke test}}
+
 ```
 
 **Impact:** {{What breaks or degrades if this isn't fixed. Which library methods are affected?}}
@@ -266,13 +271,13 @@ Key constraints:
 
 ### Choosing Template A vs Template B
 
-| Trigger | Template | Examples |
-|---------|----------|---------|
-| Planned ROADMAP task | **A** | "Implement SamplingFeatures CRUD methods" |
-| Smoke test finding (P4-F*, F*) | **B** | "Fix PUT uid handling (P4-F2)" |
-| Demo app finding | **B** | "Handle command POST streaming response" |
-| Bug report from testing | **B** | "classifyFeature returns wrong type for 52N procedures" |
-| Refactoring / tech debt | **A** | "Extract shared pagination logic" |
+| Trigger                        | Template | Examples                                                |
+| ------------------------------ | -------- | ------------------------------------------------------- |
+| Planned ROADMAP task           | **A**    | "Implement SamplingFeatures CRUD methods"               |
+| Smoke test finding (P4-F*, F*) | **B**    | "Fix PUT uid handling (P4-F2)"                          |
+| Demo app finding               | **B**    | "Handle command POST streaming response"                |
+| Bug report from testing        | **B**    | "classifyFeature returns wrong type for 52N procedures" |
+| Refactoring / tech debt        | **A**    | "Extract shared pagination logic"                       |
 
 ### Filling in the "Scope — What NOT to Touch" Section
 
@@ -287,11 +292,13 @@ This is the most important section for AI safety. For each issue, identify:
 ### Filling in the References Section
 
 **For ROADMAP tasks (Template A),** reference at minimum:
+
 1. **Implementation Guide** — the specific section (§5, §6, §7, etc.)
 2. **A blueprint file** — the existing file that demonstrates the pattern to follow
 3. **The OGC specification** — for `@see` links and field-level accuracy
 
 **For finding-driven issues (Template B),** reference at minimum:
+
 1. **The smoke test report** — where the finding was discovered and what evidence was gathered
 2. **Server quirks doc** — for understanding server behavior context
 3. **The affected source file** — so the implementer knows where to look
@@ -303,6 +310,7 @@ Omit research references if the task is straightforward.
 Issues are numbered sequentially as created. The original ROADMAP mapping (#1–#33) is historical context only — it does not constrain future issue numbers.
 
 **Current state (as of February 19, 2026):**
+
 - Issues #1–#33: Original ROADMAP tasks (Phases 1–4)
 - Issues #34+: Finding-driven fixes, smoke test follow-ups, interoperability improvements
 - Latest issues: #76 (SSN namespace), #77 (validTime optional)
@@ -313,10 +321,10 @@ New issues get the next available number. There is no requirement to map issue n
 
 Findings from smoke tests use these numbering series:
 
-| Series | Phase | Range | Example |
-|--------|-------|-------|---------|
-| F-series | Phase 2–3 | F1–F90 | F84 (52N procedure misclassification) |
-| P4-F-series | Phase 4 | P4-F1+ | P4-F2 (PUT uid strictness) |
+| Series      | Phase     | Range  | Example                               |
+| ----------- | --------- | ------ | ------------------------------------- |
+| F-series    | Phase 2–3 | F1–F90 | F84 (52N procedure misclassification) |
+| P4-F-series | Phase 4   | P4-F1+ | P4-F2 (PUT uid strictness)            |
 
 When creating an issue for a finding, include the finding ID in the issue title and body. Example: `"Fix PUT uid strictness (P4-F2)"`.
 
@@ -324,32 +332,32 @@ When creating an issue for a finding, include the finding ID in the issue title 
 
 Apply these labels consistently:
 
-| Label | When to Use |
-|-------|------------|
-| `phase-1` | Phase 1 tasks |
-| `phase-2` | Phase 2 tasks |
-| `phase-3` | Phase 3 tasks |
-| `phase-4` | Phase 4 tasks (including finding-driven fixes discovered during Phase 4) |
-| `implementation` | All coding tasks |
-| `documentation` | Tasks with significant documentation focus |
-| `bug` | Finding-driven issues where our code needs a fix |
+| Label               | When to Use                                                              |
+| ------------------- | ------------------------------------------------------------------------ |
+| `phase-1`           | Phase 1 tasks                                                            |
+| `phase-2`           | Phase 2 tasks                                                            |
+| `phase-3`           | Phase 3 tasks                                                            |
+| `phase-4`           | Phase 4 tasks (including finding-driven fixes discovered during Phase 4) |
+| `implementation`    | All coding tasks                                                         |
+| `documentation`     | Tasks with significant documentation focus                               |
+| `bug`               | Finding-driven issues where our code needs a fix                         |
 | `server-limitation` | Issues documenting upstream server behavior (won't be fixed client-side) |
-| `interoperability` | Issues about cross-server compatibility |
-| `smoke-test` | Issues discovered during smoke testing |
+| `interoperability`  | Issues about cross-server compatibility                                  |
+| `smoke-test`        | Issues discovered during smoke testing                                   |
 
 ---
 
 ## Changes from v1.0
 
-| Aspect | v1.0 | v2.0 |
-|--------|------|------|
-| Issue types | ROADMAP tasks only | ROADMAP tasks + finding-driven issues |
-| Templates | 1 template | 2 templates (A: ROADMAP, B: finding-driven) |
-| Server quirks reference | Not included | Required reading for HTTP-related issues |
-| Smoke test reference | Not included | Required reading for finding-driven issues |
-| Phase 4 CRUD constraints | Not included | Full section with uid, Content-Type, streaming rules |
-| Issue numbering | Fixed #1–#33 mapping | Sequential, no ROADMAP constraint |
-| Labels | 6 labels | 10 labels (added bug, server-limitation, interoperability, smoke-test) |
-| Finding ID guidance | None | Cross-reference table for F-series and P4-F-series |
-| "No server-specific branches" | Not mentioned | Explicit constraint in both templates |
-| Operational Constraints | Phase 2–3 lessons | Phase 2–4 lessons + CRUD constraints |
+| Aspect                        | v1.0                 | v2.0                                                                   |
+| ----------------------------- | -------------------- | ---------------------------------------------------------------------- |
+| Issue types                   | ROADMAP tasks only   | ROADMAP tasks + finding-driven issues                                  |
+| Templates                     | 1 template           | 2 templates (A: ROADMAP, B: finding-driven)                            |
+| Server quirks reference       | Not included         | Required reading for HTTP-related issues                               |
+| Smoke test reference          | Not included         | Required reading for finding-driven issues                             |
+| Phase 4 CRUD constraints      | Not included         | Full section with uid, Content-Type, streaming rules                   |
+| Issue numbering               | Fixed #1–#33 mapping | Sequential, no ROADMAP constraint                                      |
+| Labels                        | 6 labels             | 10 labels (added bug, server-limitation, interoperability, smoke-test) |
+| Finding ID guidance           | None                 | Cross-reference table for F-series and P4-F-series                     |
+| "No server-specific branches" | Not mentioned        | Explicit constraint in both templates                                  |
+| Operational Constraints       | Phase 2–3 lessons    | Phase 2–4 lessons + CRUD constraints                                   |

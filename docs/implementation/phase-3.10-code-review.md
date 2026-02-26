@@ -4,6 +4,7 @@
 **Reviewer:** GitHub Copilot (Claude Opus 4.6)
 **Scope:** Issue #25 (SWE Common DataRecord Parser) and Issue #54 (SensorML helper consolidation)
 **Commits:**
+
 - `0415767` — `refactor(sensorml): consolidate duplicated sub-parser helpers into _helpers.ts (Issue #54)`
 - `778b33d` — `feat(swecommon): add DataRecord parser with nested record and link reference support (#25)`
 
@@ -13,11 +14,11 @@
 
 ## Verification Status
 
-| Check | Result |
-|-------|--------|
-| tsc --noEmit | ✅ Clean (zero errors) |
-| CSAPI unit tests (all) | ✅ 726 passing, 13 suites |
-| CSAPI format tests | ✅ 412 passing, 10 suites |
+| Check                      | Result                                             |
+| -------------------------- | -------------------------------------------------- |
+| tsc --noEmit               | ✅ Clean (zero errors)                             |
+| CSAPI unit tests (all)     | ✅ 726 passing, 13 suites                          |
+| CSAPI format tests         | ✅ 412 passing, 10 suites                          |
 | Endpoint integration tests | ✅ 82/83 passing (1 pre-existing upstream failure) |
 
 **Test delta from Phase 3.9:** +20 CSAPI tests, +20 format tests, +1 suite (`data-record.spec.ts`)
@@ -28,59 +29,59 @@
 
 ### Issue #54 — SensorML Helper Consolidation
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `sensorml/_helpers.ts` | 225 (NEW) | 8 consolidated helpers: `isRecord`, `optionalString`, `parseLink`, `parseFeatureList`, `parseIOComponentChoice`, `parseIOList`, `parseSettings`, `parseMode`, `parseModes`, `parseProcessMethod` |
-| `sensorml/simple-process.ts` | −186, +12 | Replaced 8 private helpers with imports from `_helpers.js`; re-exports `parseProcessMethod`, `parseIOComponentChoice` |
-| `sensorml/aggregate-process.ts` | −161, +10 | Replaced 8 private helpers with imports from `_helpers.js` |
-| `sensorml/physical-system.ts` | −178, +12 | Replaced 8 private helpers with imports from `_helpers.js`; re-exports `parseProcessMethod` |
-| `sensorml/parser.ts` | −160, +11 | Replaced 8 private helpers with imports from `_helpers.js` |
+| File                            | Lines Changed | Scope                                                                                                                                                                                            |
+| ------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sensorml/_helpers.ts`          | 225 (NEW)     | 8 consolidated helpers: `isRecord`, `optionalString`, `parseLink`, `parseFeatureList`, `parseIOComponentChoice`, `parseIOList`, `parseSettings`, `parseMode`, `parseModes`, `parseProcessMethod` |
+| `sensorml/simple-process.ts`    | −186, +12     | Replaced 8 private helpers with imports from `_helpers.js`; re-exports `parseProcessMethod`, `parseIOComponentChoice`                                                                            |
+| `sensorml/aggregate-process.ts` | −161, +10     | Replaced 8 private helpers with imports from `_helpers.js`                                                                                                                                       |
+| `sensorml/physical-system.ts`   | −178, +12     | Replaced 8 private helpers with imports from `_helpers.js`; re-exports `parseProcessMethod`                                                                                                      |
+| `sensorml/parser.ts`            | −160, +11     | Replaced 8 private helpers with imports from `_helpers.js`                                                                                                                                       |
 
 **Net effect:** −685 lines removed, +225 added → **−460 lines of duplication eliminated**
 
 ### Issue #25 — SWE Common DataRecord Parser
 
-| File | Lines Changed | Scope |
-|------|--------------|-------|
-| `swecommon/data-record.ts` | 237 (NEW) | `parseDataRecord()` with recursive nesting, link reference support, field validation |
-| `swecommon/data-record.spec.ts` | 261 (NEW) | 20 tests: flat records, nested records, link references, error handling |
+| File                            | Lines Changed | Scope                                                                                |
+| ------------------------------- | ------------- | ------------------------------------------------------------------------------------ |
+| `swecommon/data-record.ts`      | 237 (NEW)     | `parseDataRecord()` with recursive nesting, link reference support, field validation |
+| `swecommon/data-record.spec.ts` | 261 (NEW)     | 20 tests: flat records, nested records, link references, error handling              |
 
 ---
 
 ## Overall Codebase Metrics (Cumulative)
 
-| File | Lines | Purpose |
-|------|------:|---------|
-| `csapi/url_builder.ts` | 1,863 | URL construction for 9 resource types |
-| `csapi/url_builder.spec.ts` | 2,118 | 260 URL builder tests |
-| `csapi/model.ts` | 560 | Type definitions and constants |
-| `csapi/model.spec.ts` | 377 | 44 model tests |
-| `csapi/helpers.ts` | 194 | Shared extraction helpers |
-| `csapi/helpers.spec.ts` | 268 | 30 helper tests |
-| `csapi/formats/geojson.ts` | 334 | GeoJSON handler extensions |
-| `csapi/formats/geojson.spec.ts` | 431 | 19 GeoJSON tests |
-| `csapi/formats/index.ts` | 19 | Barrel file |
-| `csapi/formats/sensorml/types.ts` | 851 | SensorML 3.0 type definitions |
-| `csapi/formats/sensorml/types.spec.ts` | 369 | 20 type tests |
-| `csapi/formats/sensorml/errors.ts` | 40 | SensorMLParseError class |
-| `csapi/formats/sensorml/_helpers.ts` | 207 | **NEW** — consolidated shared helpers |
-| `csapi/formats/sensorml/simple-process.ts` | 135 | SimpleProcess sub-parser (reduced from 321) |
-| `csapi/formats/sensorml/simple-process.spec.ts` | 438 | 41 SimpleProcess tests |
-| `csapi/formats/sensorml/aggregate-process.ts` | 286 | AggregateProcess sub-parser (reduced from 447) |
-| `csapi/formats/sensorml/aggregate-process.spec.ts` | 646 | 67 AggregateProcess tests |
-| `csapi/formats/sensorml/physical-system.ts` | 667 | PhysicalSystem/PhysicalComponent sub-parser (reduced from 845) |
-| `csapi/formats/sensorml/physical-system.spec.ts` | 1,070 | 100 PhysicalSystem tests |
-| `csapi/formats/sensorml/parser.ts` | 410 | Main SensorML parser (reduced from 570) |
-| `csapi/formats/sensorml/parser.spec.ts` | 343 | 46 parser tests |
-| `csapi/formats/sensorml/index.ts` | 122 | SensorML barrel file |
-| `csapi/formats/sensorml/index.spec.ts` | 82 | 9 barrel file tests |
-| `csapi/formats/swecommon/types.ts` | 657 | SWE Common 3.0 type definitions |
-| `csapi/formats/swecommon/types.spec.ts` | 375 | 17 type tests |
-| `csapi/formats/swecommon/components.ts` | 756 | 10 simple component parsers |
-| `csapi/formats/swecommon/components.spec.ts` | 600 | 73 component tests |
-| `csapi/formats/swecommon/data-record.ts` | 214 | **NEW** — DataRecord parser |
-| `csapi/formats/swecommon/data-record.spec.ts` | 237 | **NEW** — 20 DataRecord tests |
-| **Total** | **14,669** | **726 tests across 13 suites** |
+| File                                               |      Lines | Purpose                                                        |
+| -------------------------------------------------- | ---------: | -------------------------------------------------------------- |
+| `csapi/url_builder.ts`                             |      1,863 | URL construction for 9 resource types                          |
+| `csapi/url_builder.spec.ts`                        |      2,118 | 260 URL builder tests                                          |
+| `csapi/model.ts`                                   |        560 | Type definitions and constants                                 |
+| `csapi/model.spec.ts`                              |        377 | 44 model tests                                                 |
+| `csapi/helpers.ts`                                 |        194 | Shared extraction helpers                                      |
+| `csapi/helpers.spec.ts`                            |        268 | 30 helper tests                                                |
+| `csapi/formats/geojson.ts`                         |        334 | GeoJSON handler extensions                                     |
+| `csapi/formats/geojson.spec.ts`                    |        431 | 19 GeoJSON tests                                               |
+| `csapi/formats/index.ts`                           |         19 | Barrel file                                                    |
+| `csapi/formats/sensorml/types.ts`                  |        851 | SensorML 3.0 type definitions                                  |
+| `csapi/formats/sensorml/types.spec.ts`             |        369 | 20 type tests                                                  |
+| `csapi/formats/sensorml/errors.ts`                 |         40 | SensorMLParseError class                                       |
+| `csapi/formats/sensorml/_helpers.ts`               |        207 | **NEW** — consolidated shared helpers                          |
+| `csapi/formats/sensorml/simple-process.ts`         |        135 | SimpleProcess sub-parser (reduced from 321)                    |
+| `csapi/formats/sensorml/simple-process.spec.ts`    |        438 | 41 SimpleProcess tests                                         |
+| `csapi/formats/sensorml/aggregate-process.ts`      |        286 | AggregateProcess sub-parser (reduced from 447)                 |
+| `csapi/formats/sensorml/aggregate-process.spec.ts` |        646 | 67 AggregateProcess tests                                      |
+| `csapi/formats/sensorml/physical-system.ts`        |        667 | PhysicalSystem/PhysicalComponent sub-parser (reduced from 845) |
+| `csapi/formats/sensorml/physical-system.spec.ts`   |      1,070 | 100 PhysicalSystem tests                                       |
+| `csapi/formats/sensorml/parser.ts`                 |        410 | Main SensorML parser (reduced from 570)                        |
+| `csapi/formats/sensorml/parser.spec.ts`            |        343 | 46 parser tests                                                |
+| `csapi/formats/sensorml/index.ts`                  |        122 | SensorML barrel file                                           |
+| `csapi/formats/sensorml/index.spec.ts`             |         82 | 9 barrel file tests                                            |
+| `csapi/formats/swecommon/types.ts`                 |        657 | SWE Common 3.0 type definitions                                |
+| `csapi/formats/swecommon/types.spec.ts`            |        375 | 17 type tests                                                  |
+| `csapi/formats/swecommon/components.ts`            |        756 | 10 simple component parsers                                    |
+| `csapi/formats/swecommon/components.spec.ts`       |        600 | 73 component tests                                             |
+| `csapi/formats/swecommon/data-record.ts`           |        214 | **NEW** — DataRecord parser                                    |
+| `csapi/formats/swecommon/data-record.spec.ts`      |        237 | **NEW** — 20 DataRecord tests                                  |
+| **Total**                                          | **14,669** | **726 tests across 13 suites**                                 |
 
 **Production:** 7,315 lines (16 files) | **Test:** 7,354 lines (13 suites) | **Ratio:** 1.005:1
 
@@ -88,21 +89,21 @@
 
 ## Phase 3 Lessons Learned Check
 
-| # | Lesson | Status | Evidence |
-|---|--------|--------|----------|
-| **L1** | Audit upstream before building new layers | ✅ PASS | DataRecord parser extends existing SWE Common parser layer (Issue #24); helper consolidation is internal refactor only |
-| **L2** | Postel's Law governs client libraries | ✅ PASS | `parseDataRecord` extracts all recognizable data; unknown component types throw with context but don't block other fields |
-| **L3** | Don't couple validation to extraction | ✅ PASS | `parseField` uses structural recognition (type discriminator or href presence), not validation |
-| **L4** | Don't build parallel systems | ⚠️ NOTE | `isRecord()` and `parseBaseProperties()` in `data-record.ts` duplicate private functions in `components.ts` — see F3 below |
-| **L5** | Verify upstream claims by reading source | ✅ N/A | No upstream claims made |
-| **L6** | Real-world server data diverges from spec | ✅ PASS | Link references handled (href without type); tolerant of unknown types (throws with context, not silent) |
-| **L7** | Phase 3 smoke tests are essential | ✅ N/A | No smoke test in this phase |
-| **L8** | Layered architecture enables clean extension | ✅ PASS | DataRecord parser delegates to `parseSimpleComponent` for simple fields, calls itself recursively for nested DataRecords |
-| **L9** | Content negotiation cannot be assumed | ✅ N/A | Parser operates on already-parsed JSON |
-| **L10** | Type naming must avoid built-in collisions | ✅ PASS | `DataRecord`, `DataField`, `TypedDataField` — no JS built-in collisions |
-| **L11** | Document architectural decisions formally | ✅ PASS | `_helpers.ts` module JSDoc cites Issue #54 and Phase 3.8 F5 |
-| **L12** | "Build it right, but should we build it at all?" | ✅ PASS | DataRecord parser is a roadmap item (Issue #25); helper consolidation resolves a code review finding |
-| **L13** | AI drift can fabricate findings | ✅ N/A | No external server interaction |
+| #       | Lesson                                           | Status  | Evidence                                                                                                                   |
+| ------- | ------------------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **L1**  | Audit upstream before building new layers        | ✅ PASS | DataRecord parser extends existing SWE Common parser layer (Issue #24); helper consolidation is internal refactor only     |
+| **L2**  | Postel's Law governs client libraries            | ✅ PASS | `parseDataRecord` extracts all recognizable data; unknown component types throw with context but don't block other fields  |
+| **L3**  | Don't couple validation to extraction            | ✅ PASS | `parseField` uses structural recognition (type discriminator or href presence), not validation                             |
+| **L4**  | Don't build parallel systems                     | ⚠️ NOTE | `isRecord()` and `parseBaseProperties()` in `data-record.ts` duplicate private functions in `components.ts` — see F3 below |
+| **L5**  | Verify upstream claims by reading source         | ✅ N/A  | No upstream claims made                                                                                                    |
+| **L6**  | Real-world server data diverges from spec        | ✅ PASS | Link references handled (href without type); tolerant of unknown types (throws with context, not silent)                   |
+| **L7**  | Phase 3 smoke tests are essential                | ✅ N/A  | No smoke test in this phase                                                                                                |
+| **L8**  | Layered architecture enables clean extension     | ✅ PASS | DataRecord parser delegates to `parseSimpleComponent` for simple fields, calls itself recursively for nested DataRecords   |
+| **L9**  | Content negotiation cannot be assumed            | ✅ N/A  | Parser operates on already-parsed JSON                                                                                     |
+| **L10** | Type naming must avoid built-in collisions       | ✅ PASS | `DataRecord`, `DataField`, `TypedDataField` — no JS built-in collisions                                                    |
+| **L11** | Document architectural decisions formally        | ✅ PASS | `_helpers.ts` module JSDoc cites Issue #54 and Phase 3.8 F5                                                                |
+| **L12** | "Build it right, but should we build it at all?" | ✅ PASS | DataRecord parser is a roadmap item (Issue #25); helper consolidation resolves a code review finding                       |
+| **L13** | AI drift can fabricate findings                  | ✅ N/A  | No external server interaction                                                                                             |
 
 **Result:** 11/13 applicable lessons PASS, 1 NOTE (L4 — see F3), 3 N/A
 
@@ -117,6 +118,7 @@
 **Current status:** ✅ **Resolved by Issue #54** (commit `0415767`). All 8 shared helpers (`isRecord`, `optionalString`, `parseLink`, `parseFeatureList`, `parseIOComponentChoice`, `parseIOList`, `parseSettings`, `parseMode/parseModes`, `parseProcessMethod`) consolidated into `_helpers.ts`. All 4 consumer files import from the single source of truth. Net reduction: −460 lines.
 
 **Evidence:** All SensorML parser files now import from `./_helpers.js`:
+
 - `simple-process.ts` line 36
 - `aggregate-process.ts` line 47
 - `physical-system.ts` line 53
@@ -155,6 +157,7 @@ All 726 tests pass with no behavioral changes.
 ### [F1] POSITIVE: Helper consolidation executed correctly with zero behavioral regression
 
 The `_helpers.ts` module consolidates 8 functions previously copy-pasted across 4 files. The consolidation:
+
 - Preserves all existing test coverage (706 tests at Phase 3.9, all still passing)
 - Uses `export` visibility for all helpers (previously `function`-scoped)
 - Adds comprehensive JSDoc with `@see` spec references and consumer documentation
@@ -166,6 +169,7 @@ The `_helpers.ts` module consolidates 8 functions previously copy-pasted across 
 ### [F2] POSITIVE: DataRecord parser follows established parser architecture
 
 `parseDataRecord()` follows the exact pattern established by `parseSimpleComponent()` (Issue #24):
+
 - Input validation (null, non-object, wrong type, missing required fields) → `SweCommonParseError`
 - Structural recognition via `type` discriminator
 - Delegated parsing to existing sub-parsers (`parseSimpleComponent`)
@@ -176,9 +180,9 @@ The `_helpers.ts` module consolidates 8 functions previously copy-pasted across 
 
 `data-record.ts` defines private `isRecord()` (identical to `components.ts` line 84) and `parseBaseProperties()` (subset of `components.ts` line 290 — omits `referenceFrame` and `axisID` which are `AbstractSimpleComponent`-specific, not `AbstractDataComponent`-level).
 
-| Function | `components.ts` | `data-record.ts` | Identical? |
-|----------|-----------------|-------------------|-----------|
-| `isRecord()` | line 84 | line 56 | Yes — exact duplicate |
+| Function                | `components.ts`     | `data-record.ts`   | Identical?                               |
+| ----------------------- | ------------------- | ------------------ | ---------------------------------------- |
+| `isRecord()`            | line 84             | line 56            | Yes — exact duplicate                    |
 | `parseBaseProperties()` | line 290 (8 fields) | line 65 (6 fields) | No — subset (correct per spec hierarchy) |
 
 **Analysis:** The `parseBaseProperties` divergence is intentional and spec-correct: `DataRecord` extends `AbstractDataComponent` (6 base properties), while simple components extend `AbstractSimpleComponent` which adds `referenceFrame` and `axisID`. A shared helper would need parameterization. `isRecord()` is a trivial one-liner duplicated across SWE Common; consolidation would require either: (a) a SWE Common `_helpers.ts` module (mirroring the SensorML pattern), or (b) exporting `isRecord` from `components.ts`.
@@ -192,6 +196,7 @@ The `_helpers.ts` module consolidates 8 functions previously copy-pasted across 
 ### [F5] POSITIVE: 20 tests achieve 7/8 Category C dimensions
 
 The DataRecord test suite covers:
+
 - ✅ Valid fixture → typed output (4 flat record tests)
 - ✅ Minimal fixture (single-field record)
 - ✅ Malformed input rejection (12 error tests)
@@ -204,6 +209,7 @@ The DataRecord test suite covers:
 ### [F6] POSITIVE: Error context includes field path for all validation errors
 
 Every `SweCommonParseError` thrown by `parseField` and `parseDataRecord` includes a `path` parameter:
+
 - `fields[0]` — non-object field
 - `fields[0].name` — missing/empty name
 - `fields[0].type` — missing type, unsupported type
@@ -226,58 +232,59 @@ After consolidation, `simple-process.ts` re-exports `parseProcessMethod` and `pa
 
 ### Phase 2 (URL Builder) — Carried Forward
 
-| Dimension | Systems | Deployments | Procedures | SF | Properties | DataStreams | Observations | ControlStreams | Commands |
-|-----------|:-------:|:-----------:|:----------:|:--:|:----------:|:-----------:|:------------:|:--------------:|:--------:|
-| Exact URL assertion | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Per-field query params | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| CRUD URLs | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Nested methods | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Pagination | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Resource validation | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Temporal params | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Dimension              | Systems | Deployments | Procedures | SF  | Properties | DataStreams | Observations | ControlStreams | Commands |
+| ---------------------- | :-----: | :---------: | :--------: | :-: | :--------: | :---------: | :----------: | :------------: | :------: |
+| Exact URL assertion    |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Per-field query params |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| CRUD URLs              |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Nested methods         |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Pagination             |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Resource validation    |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
+| Temporal params        |   ✅    |     ✅      |     ✅     | ✅  |     ✅     |     ✅      |      ✅      |       ✅       |    ✅    |
 
 ### Phase 3 (Format Handlers) — Current
 
-| Dimension | GeoJSON | SML Types | SML Errors | SML Helpers | SimpleProcess | AggregateProcess | PhysicalSystem | SML Parser | SML Barrel | SWE Types | SWE Components | SWE DataRecord |
-|-----------|:-------:|:---------:|:----------:|:-----------:|:-------------:|:----------------:|:--------------:|:----------:|:----------:|:---------:|:--------------:|:--------------:|
-| Valid input → output | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Invalid input → rejection | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | ✅ | ✅ | ✅ |
-| All spec variants | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | ✅ | ✅ | ✅ |
-| All branches/types | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Error specificity | ✅ | N/A | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | N/A | N/A | ✅ | ✅ |
-| Edge cases | ✅ | ✅ | N/A | N/A | ✅ | ✅ | ✅ | ✅ | N/A | ✅ | ✅ | ✅ |
-| Nested structures | N/A | N/A | N/A | N/A | N/A | ✅ | ✅ | ✅ | N/A | N/A | ✅ | ✅ |
-| Type discrimination | N/A | N/A | N/A | N/A | N/A | N/A | ✅ | ✅ | N/A | N/A | ✅ | ✅ |
+| Dimension                 | GeoJSON | SML Types | SML Errors | SML Helpers | SimpleProcess | AggregateProcess | PhysicalSystem | SML Parser | SML Barrel | SWE Types | SWE Components | SWE DataRecord |
+| ------------------------- | :-----: | :-------: | :--------: | :---------: | :-----------: | :--------------: | :------------: | :--------: | :--------: | :-------: | :------------: | :------------: |
+| Valid input → output      |   ✅    |    ✅     |     ✅     |     ✅      |      ✅       |        ✅        |       ✅       |     ✅     |     ✅     |    ✅     |       ✅       |       ✅       |
+| Invalid input → rejection |   ✅    |    ✅     |    N/A     |     N/A     |      ✅       |        ✅        |       ✅       |     ✅     |    N/A     |    ✅     |       ✅       |       ✅       |
+| All spec variants         |   ✅    |    ✅     |    N/A     |     N/A     |      ✅       |        ✅        |       ✅       |     ✅     |    N/A     |    ✅     |       ✅       |       ✅       |
+| All branches/types        |   ✅    |    ✅     |     ✅     |     ✅      |      ✅       |        ✅        |       ✅       |     ✅     |     ✅     |    ✅     |       ✅       |       ✅       |
+| Error specificity         |   ✅    |    N/A    |     ✅     |     ✅      |      ✅       |        ✅        |       ✅       |     ✅     |    N/A     |    N/A    |       ✅       |       ✅       |
+| Edge cases                |   ✅    |    ✅     |    N/A     |     N/A     |      ✅       |        ✅        |       ✅       |     ✅     |    N/A     |    ✅     |       ✅       |       ✅       |
+| Nested structures         |   N/A   |    N/A    |    N/A     |     N/A     |      N/A      |        ✅        |       ✅       |     ✅     |    N/A     |    N/A    |       ✅       |       ✅       |
+| Type discrimination       |   N/A   |    N/A    |    N/A     |     N/A     |      N/A      |       N/A        |       ✅       |     ✅     |    N/A     |    N/A    |       ✅       |       ✅       |
 
 ---
 
 ## Smoke Test Findings Integration
 
-| Finding | Status | Evidence |
-|---------|--------|----------|
-| F4 (validTime array format) | ✅ Addressed | `parseValidTime` in geojson.ts handles `["ISO", "now"]` |
-| F33 (commandFormat vs observationFormat) | ⏳ Deferred | SWE Common parser does not yet handle schema-level variant; will be relevant when DataChoice/DataArray parsers are added |
-| F34–F39 (Commands/Validator) | ⏳ Deferred | Validator not yet implemented (Phase 3 roadmap pending) |
+| Finding                                  | Status       | Evidence                                                                                                                 |
+| ---------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| F4 (validTime array format)              | ✅ Addressed | `parseValidTime` in geojson.ts handles `["ISO", "now"]`                                                                  |
+| F33 (commandFormat vs observationFormat) | ⏳ Deferred  | SWE Common parser does not yet handle schema-level variant; will be relevant when DataChoice/DataArray parsers are added |
+| F34–F39 (Commands/Validator)             | ⏳ Deferred  | Validator not yet implemented (Phase 3 roadmap pending)                                                                  |
 
 ---
 
 ## Summary
 
-| Category | Count | Details |
-|----------|------:|---------|
-| POSITIVE | 5 | F1 (helper consolidation correct), F2 (parser architecture), F4 (link references), F5 (test coverage), F6 (error context) |
-| DESIGN (low) | 1 | F3 (`isRecord` duplication within SWE Common) |
-| INFORMATIONAL | 1 | F7 (`as any` in test code) |
-| CONSISTENCY | 1 | F8 (re-export pattern maintained) |
-| BUG | 0 | — |
-| GAP | 0 | — |
+| Category      | Count | Details                                                                                                                   |
+| ------------- | ----: | ------------------------------------------------------------------------------------------------------------------------- |
+| POSITIVE      |     5 | F1 (helper consolidation correct), F2 (parser architecture), F4 (link references), F5 (test coverage), F6 (error context) |
+| DESIGN (low)  |     1 | F3 (`isRecord` duplication within SWE Common)                                                                             |
+| INFORMATIONAL |     1 | F7 (`as any` in test code)                                                                                                |
+| CONSISTENCY   |     1 | F8 (re-export pattern maintained)                                                                                         |
+| BUG           |     0 | —                                                                                                                         |
+| GAP           |     0 | —                                                                                                                         |
 
 ---
 
 ## Recommendations
 
 ### Fix Now (before next issue)
-*None.* No bugs or blocking issues identified.
+
+_None._ No bugs or blocking issues identified.
 
 ### Fix Before Phase 4
 

@@ -40,13 +40,13 @@ This report does not expand scope beyond what Issue #101 describes. Per §2.1 (d
 
 **Issue #101 identifies a genuine specification conformance gap — `parseDataRecord()` and `parseElementType()` throw `SweCommonParseError` for valid SWE Common 3.0 component types (Vector, DataArray, Matrix, DataChoice, Geometry) when encountered as DataRecord fields or DataArray element types.** This is not a design choice or a debatable behavior — the OGC SWE Common 3.0 specification unambiguously defines DataRecord fields as containing **any** `AbstractDataComponent`.
 
-| Finding | Description | Severity | Recommendation |
-|---------|-------------|----------|----------------|
-| **F-101.1** | `data-record.ts` `parseField()` (L142–146) throws for 5 valid SWE Common component types | **BUG** | **FIX** — Option A callback injection is backward-compatible |
-| **F-101.2** | `data-array.ts` `parseElementType()` (L147–149) throws for 4 valid component types | **BUG** | **FIX** — same pattern, same solution |
-| **F-101.3** | `parser.ts` `parseField()` (L148–195) already handles all 16 types correctly | CONFIRMED | Already correct — no change needed |
-| **F-101.4** | The code comments explicitly say `"Future complex types... are not yet implemented"` — this was a known limitation, not an oversight | ACKNOWLEDGED | The "future" is now; real-world data exposes this gap |
-| **F-101.5** | Proposed fix (Option A: callback injection) is fully backward-compatible — adds an optional parameter, no existing call signatures change | LOW RISK | Safe to implement with minimal diff |
+| Finding     | Description                                                                                                                               | Severity     | Recommendation                                               |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------ |
+| **F-101.1** | `data-record.ts` `parseField()` (L142–146) throws for 5 valid SWE Common component types                                                  | **BUG**      | **FIX** — Option A callback injection is backward-compatible |
+| **F-101.2** | `data-array.ts` `parseElementType()` (L147–149) throws for 4 valid component types                                                        | **BUG**      | **FIX** — same pattern, same solution                        |
+| **F-101.3** | `parser.ts` `parseField()` (L148–195) already handles all 16 types correctly                                                              | CONFIRMED    | Already correct — no change needed                           |
+| **F-101.4** | The code comments explicitly say `"Future complex types... are not yet implemented"` — this was a known limitation, not an oversight      | ACKNOWLEDGED | The "future" is now; real-world data exposes this gap        |
+| **F-101.5** | Proposed fix (Option A: callback injection) is fully backward-compatible — adds an optional parameter, no existing call signatures change | LOW RISK     | Safe to implement with minimal diff                          |
 
 **Conclusion:** Unlike Issues #99 (no action) and #100 (deferred), Issue #101 identifies a real spec-conformance gap that affects real-world data. The proposed fix is minimal, backward-compatible, and has been independently validated. Recommend fixing with careful implementation.
 
@@ -147,11 +147,11 @@ This means DataRecords parsed through the main entry point (`parseSWEComponent()
 
 ### 4.6 Test Coverage Analysis
 
-| Test File | Complex types as fields tested? | "Unsupported type" tested? |
-|-----------|-------------------------------|---------------------------|
-| `data-record.spec.ts` (17 tests) | NO — only DataRecord nesting + simple scalars | YES — but uses `'UnknownType'`, not Vector/DataArray |
-| `data-array.spec.ts` (~38 tests) | DataRecord and DataArray only — no Vector/Matrix/DataChoice/Geometry | YES — uses `'UnknownComponent'` |
-| `parser.spec.ts` (~48 tests) | NO — DataRecord test uses only Quantity field; Vector test is standalone | N/A |
+| Test File                        | Complex types as fields tested?                                          | "Unsupported type" tested?                           |
+| -------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `data-record.spec.ts` (17 tests) | NO — only DataRecord nesting + simple scalars                            | YES — but uses `'UnknownType'`, not Vector/DataArray |
+| `data-array.spec.ts` (~38 tests) | DataRecord and DataArray only — no Vector/Matrix/DataChoice/Geometry     | YES — uses `'UnknownComponent'`                      |
+| `parser.spec.ts` (~48 tests)     | NO — DataRecord test uses only Quantity field; Vector test is standalone | N/A                                                  |
 
 **Critical gap:** There are zero tests anywhere in the suite that exercise a DataRecord containing a Vector field — the most common real-world pattern that triggers this bug.
 
@@ -185,10 +185,10 @@ A DataRecord field containing a Vector is not an edge case — it is the **stand
 
 ### Cross-Server Findings
 
-| Server | Schema with Vector in DataRecord? | `parseSWEComponent()` works? | `parseDataRecord()` works? |
-|--------|----------------------------------|------------------------------|----------------------------|
+| Server              | Schema with Vector in DataRecord?                   | `parseSWEComponent()` works?     | `parseDataRecord()` works?                       |
+| ------------------- | --------------------------------------------------- | -------------------------------- | ------------------------------------------------ |
 | OpenSensorHub (OSH) | ✅ Yes — FCU control stream has `locationVectorLLA` | ✅ Would work if called directly | ❌ Throws `unsupported component type: "Vector"` |
-| 52North CSAPI Demo | N/A — schemas use only simple types | ✅ Yes | ✅ Yes (no complex fields to trigger the bug) |
+| 52North CSAPI Demo  | N/A — schemas use only simple types                 | ✅ Yes                           | ✅ Yes (no complex fields to trigger the bug)    |
 
 ---
 
@@ -196,33 +196,33 @@ A DataRecord field containing a Vector is not an edge case — it is the **stand
 
 ### Risk of Implementing Option A (Callback Injection)
 
-| Risk | Severity | Description |
-|------|----------|-------------|
-| **Signature change** | **LOW** | `parseDataRecord(json)` → `parseDataRecord(json, componentParser?)`. The parameter is optional with identical behavior when omitted. No existing callers break. |
-| **Test updates needed** | **LOW** | Need to add new tests for complex types as fields. Existing tests are unaffected — they don't pass a callback and don't use complex field types. |
-| **Diff size** | **LOW** | ~15 lines changed in `data-record.ts`, ~15 lines in `data-array.ts`, 2 lines in `parser.ts`. Total ≈30 lines. |
-| **Circular import risk** | **NONE** | The callback pattern explicitly avoids circular imports. `parser.ts` passes `parseSWEComponent` as a function reference; `data-record.ts` and `data-array.ts` never import from `parser.ts`. |
-| **Behavioral change** | **LOW** | Only affects the code path through `parseSWEComponent()` → `parseDataRecord()` where the callback is passed. Direct callers of `parseDataRecord(json)` behave identically (throw on complex types, same as today). |
-| **Regression risk** | **LOW** | All 17 existing `data-record.spec.ts` tests, 38 `data-array.spec.ts` tests, and 48 `parser.spec.ts` tests should pass unchanged. The existing "unsupported type" tests use `'UnknownType'` which is not in any component type set and will still throw. |
+| Risk                     | Severity | Description                                                                                                                                                                                                                                             |
+| ------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Signature change**     | **LOW**  | `parseDataRecord(json)` → `parseDataRecord(json, componentParser?)`. The parameter is optional with identical behavior when omitted. No existing callers break.                                                                                         |
+| **Test updates needed**  | **LOW**  | Need to add new tests for complex types as fields. Existing tests are unaffected — they don't pass a callback and don't use complex field types.                                                                                                        |
+| **Diff size**            | **LOW**  | ~15 lines changed in `data-record.ts`, ~15 lines in `data-array.ts`, 2 lines in `parser.ts`. Total ≈30 lines.                                                                                                                                           |
+| **Circular import risk** | **NONE** | The callback pattern explicitly avoids circular imports. `parser.ts` passes `parseSWEComponent` as a function reference; `data-record.ts` and `data-array.ts` never import from `parser.ts`.                                                            |
+| **Behavioral change**    | **LOW**  | Only affects the code path through `parseSWEComponent()` → `parseDataRecord()` where the callback is passed. Direct callers of `parseDataRecord(json)` behave identically (throw on complex types, same as today).                                      |
+| **Regression risk**      | **LOW**  | All 17 existing `data-record.spec.ts` tests, 38 `data-array.spec.ts` tests, and 48 `parser.spec.ts` tests should pass unchanged. The existing "unsupported type" tests use `'UnknownType'` which is not in any component type set and will still throw. |
 
 ### Risk of NOT Implementing the Fix
 
-| Risk | Severity | Description |
-|------|----------|-------------|
-| **Spec non-conformance** | **HIGH** | Our parser rejects valid SWE Common 3.0 data. The OGC specification (authority level 1) is unambiguous — DataRecord fields can contain any `AbstractDataComponent`. |
-| **Real-world breakage** | **HIGH** | Any server returning DataRecords with Vector fields (extremely common for UAV/sensor payloads) causes parse failures. OSH's FCU schema already triggers this. |
+| Risk                        | Severity   | Description                                                                                                                                                                                                           |
+| --------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Spec non-conformance**    | **HIGH**   | Our parser rejects valid SWE Common 3.0 data. The OGC specification (authority level 1) is unambiguous — DataRecord fields can contain any `AbstractDataComponent`.                                                   |
+| **Real-world breakage**     | **HIGH**   | Any server returning DataRecords with Vector fields (extremely common for UAV/sensor payloads) causes parse failures. OSH's FCU schema already triggers this.                                                         |
 | **Upstream review concern** | **MEDIUM** | An upstream reviewer examining SWE Common compliance could flag this as an incomplete implementation. The code comments explicitly state `"Future complex types... are not yet implemented"` — they may question why. |
 
 ### Comparative Risk Summary
 
-| Metric | Implement Fix | Do Nothing |
-|--------|--------------|------------|
-| Lines changed | ~30 | 0 |
-| Existing tests affected | 0 | 0 |
-| New tests needed | ~5–8 | 0 |
-| Spec conformance | ✅ Improved | ❌ Gap remains |
-| Backward compatibility | ✅ Preserved | N/A |
-| Validated externally | ✅ Explorer app commit `5ec3df7` | N/A |
+| Metric                  | Implement Fix                    | Do Nothing     |
+| ----------------------- | -------------------------------- | -------------- |
+| Lines changed           | ~30                              | 0              |
+| Existing tests affected | 0                                | 0              |
+| New tests needed        | ~5–8                             | 0              |
+| Spec conformance        | ✅ Improved                      | ❌ Gap remains |
+| Backward compatibility  | ✅ Preserved                     | N/A            |
+| Validated externally    | ✅ Explorer app commit `5ec3df7` | N/A            |
 
 ---
 
@@ -243,18 +243,22 @@ Unlike Issues #99 (no action needed — capability already existed) and #100 (de
 If approved, the fix involves exactly three files:
 
 **1. `data-record.ts`** (~15 lines):
+
 - Add `ComponentParser` type alias
 - Add optional `componentParser?` parameter to `parseDataRecord()` and `parseField()`
 - In `parseField()`, before the throw: if `componentParser` is provided and the type is recognized, delegate to it
 
 **2. `data-array.ts`** (~15 lines):
+
 - Same callback pattern for `parseElementType()` and `parseDataArray()`
 
 **3. `parser.ts`** (2 lines):
+
 - Change `parseDataRecord(json)` → `parseDataRecord(json, parseSWEComponent)`
 - Change `parseDataArray(json)` → `parseDataArray(json, parseSWEComponent)`
 
 **Tests** (~5–8 new test cases):
+
 - DataRecord with Vector field (the triggering real-world case)
 - DataRecord with DataArray field
 - DataArray with Vector element type
@@ -270,6 +274,7 @@ If approved, the fix involves exactly three files:
 ### Implementation Caution
 
 If this fix is pursued, it should be:
+
 1. Implemented as a standalone commit with a clear message referencing Issue #101
 2. Verified against the full test suite (all 1,251 CSAPI tests + 724 format tests + 243 SensorML tests)
 3. Verified with `tsc --noEmit` for zero type errors
@@ -279,13 +284,13 @@ If this fix is pursued, it should be:
 
 ## Appendix A: Authority Precedence Analysis
 
-| Authority Level | Source | Ruling |
-|-----------------|--------|--------|
-| **1. OGC Specification** | SWE Common 3.0 (OGC 24-014) — DataRecord fields contain any `AbstractDataComponent` | **Supports fix** — current code rejects valid data |
-| **2. AI Collaboration Agreement** | §2.2 — prefer minimal diffs | **Supports fix** — Option A is ~30 lines, fully additive |
-| **3. Issue Description** | #101 — parseDataRecord rejects complex types | Defines scope; fix is within scope |
-| **4. Existing Code** | `data-record.ts` L141 comment: `"Future complex types... are not yet implemented"` | Code acknowledges this is incomplete — not a design decision to reject |
-| **5. Conversation Context** | User prioritizes protecting contribution integrity | Fix is low-risk; NOT fixing leaves a spec-compliance gap |
+| Authority Level                   | Source                                                                              | Ruling                                                                 |
+| --------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **1. OGC Specification**          | SWE Common 3.0 (OGC 24-014) — DataRecord fields contain any `AbstractDataComponent` | **Supports fix** — current code rejects valid data                     |
+| **2. AI Collaboration Agreement** | §2.2 — prefer minimal diffs                                                         | **Supports fix** — Option A is ~30 lines, fully additive               |
+| **3. Issue Description**          | #101 — parseDataRecord rejects complex types                                        | Defines scope; fix is within scope                                     |
+| **4. Existing Code**              | `data-record.ts` L141 comment: `"Future complex types... are not yet implemented"`  | Code acknowledges this is incomplete — not a design decision to reject |
+| **5. Conversation Context**       | User prioritizes protecting contribution integrity                                  | Fix is low-risk; NOT fixing leaves a spec-compliance gap               |
 
 **Conclusion:** All five authority levels either support the fix or are neutral. No authority level opposes it. The OGC specification (level 1) directly requires the capability that is currently missing.
 
@@ -293,23 +298,23 @@ If this fix is pursued, it should be:
 
 ## Appendix B: Cross-Reference to Related Issues
 
-| Issue | Repository | Relationship | Status |
-|-------|------------|-------------|--------|
-| [#101](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/101) | ogc-client-CSAPI_2 | **This issue** — `parseDataRecord()` rejects complex component types | Open |
-| [#99](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/99) | ogc-client-CSAPI_2 | **Adjacent** — `?f=` parameter support (already exists — NO ACTION) | Closed |
-| [#100](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/100) | ogc-client-CSAPI_2 | **Adjacent** — `assertResourceAvailable()` overly strict (DEFERRED) | Open |
-| [#30](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/30) | ogc-csapi-explorer | **Discovery source** — encoding display in schema views | — |
-| [`5ec3df7`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/5ec3df7) | ogc-csapi-explorer | **Validated fix** — Explorer app implemented Option A successfully | Committed |
+| Issue                                                                      | Repository         | Relationship                                                         | Status    |
+| -------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------- | --------- |
+| [#101](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/101)          | ogc-client-CSAPI_2 | **This issue** — `parseDataRecord()` rejects complex component types | Open      |
+| [#99](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/99)            | ogc-client-CSAPI_2 | **Adjacent** — `?f=` parameter support (already exists — NO ACTION)  | Closed    |
+| [#100](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/100)          | ogc-client-CSAPI_2 | **Adjacent** — `assertResourceAvailable()` overly strict (DEFERRED)  | Open      |
+| [#30](https://github.com/OS4CSAPI/ogc-csapi-explorer/issues/30)            | ogc-csapi-explorer | **Discovery source** — encoding display in schema views              | —         |
+| [`5ec3df7`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/5ec3df7) | ogc-csapi-explorer | **Validated fix** — Explorer app implemented Option A successfully   | Committed |
 
 ### Linked Reference Documents
 
-| Document | Location | Relevance |
-|----------|----------|-----------|
-| AI Operational Constraints | [docs/governance/AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | §2.1 (no scope expansion), §2.2 (minimal diffs) — both support this fix |
-| OGC SWE Common 3.0 | OGC 24-014, DataRecord / AnyComponent | DataRecord fields contain any `AbstractDataComponent` — 16 types |
-| `data-record.ts` `parseField()` | `src/ogc-api/csapi/formats/swecommon/data-record.ts` L88–146 | Bug location — throws for Vector, DataArray, Matrix, DataChoice, Geometry |
-| `data-array.ts` `parseElementType()` | `src/ogc-api/csapi/formats/swecommon/data-array.ts` L92–149 | Same gap — throws for Vector, Matrix, DataChoice, Geometry |
-| `parser.ts` `parseField()` | `src/ogc-api/csapi/formats/swecommon/parser.ts` L148–195 | Correct implementation — delegates all types via `parseSWEComponent()` |
-| `parser.ts` `parseSWEComponent()` | `src/ogc-api/csapi/formats/swecommon/parser.ts` L713–768 | Main dispatcher — correctly handles all 16 SWE Common types |
-| Issue #99 findings report | `docs/testing/demo-app-findings/issue-99-format-query-parameter.md` | NO ACTION — `?f=` already supported |
-| Issue #100 findings report | `docs/testing/demo-app-findings/issue-100-assert-resource-available.md` | DEFERRED — assertion is intentional/documented |
+| Document                             | Location                                                                                                                                                | Relevance                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| AI Operational Constraints           | [docs/governance/AI_OPERATIONAL_CONSTRAINTS.md](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md) | §2.1 (no scope expansion), §2.2 (minimal diffs) — both support this fix   |
+| OGC SWE Common 3.0                   | OGC 24-014, DataRecord / AnyComponent                                                                                                                   | DataRecord fields contain any `AbstractDataComponent` — 16 types          |
+| `data-record.ts` `parseField()`      | `src/ogc-api/csapi/formats/swecommon/data-record.ts` L88–146                                                                                            | Bug location — throws for Vector, DataArray, Matrix, DataChoice, Geometry |
+| `data-array.ts` `parseElementType()` | `src/ogc-api/csapi/formats/swecommon/data-array.ts` L92–149                                                                                             | Same gap — throws for Vector, Matrix, DataChoice, Geometry                |
+| `parser.ts` `parseField()`           | `src/ogc-api/csapi/formats/swecommon/parser.ts` L148–195                                                                                                | Correct implementation — delegates all types via `parseSWEComponent()`    |
+| `parser.ts` `parseSWEComponent()`    | `src/ogc-api/csapi/formats/swecommon/parser.ts` L713–768                                                                                                | Main dispatcher — correctly handles all 16 SWE Common types               |
+| Issue #99 findings report            | `docs/testing/demo-app-findings/issue-99-format-query-parameter.md`                                                                                     | NO ACTION — `?f=` already supported                                       |
+| Issue #100 findings report           | `docs/testing/demo-app-findings/issue-100-assert-resource-available.md`                                                                                 | DEFERRED — assertion is intentional/documented                            |
