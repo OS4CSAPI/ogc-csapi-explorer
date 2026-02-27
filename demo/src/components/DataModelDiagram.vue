@@ -334,6 +334,34 @@ function extractCount(data: any): number {
 }
 
 /**
+ * Resolve the count of deployed systems from a deployment's inline properties.
+ * Per OGC 23-001 Table 43, deployedSystems maps to properties/deployedSystems@link
+ * (a JSON Array of links to System resources), NOT to a sub-resource endpoint.
+ * Falls back to platform@link when deployedSystems@link is absent.
+ */
+async function resolveDeployedSystemsCount(deploymentId: string): Promise<number> {
+  try {
+    const path = getDetailUrl('deployments', deploymentId)
+    const acceptType = getContentType('deployments')
+    const res = await apiFetch(path, { headers: { Accept: acceptType } })
+    if (!res.ok) return 0
+    const parentProps = res.data?.properties || res.data || {}
+
+    // 1. Try deployedSystems@link — the standard-defined inline property
+    const dsLinks = parentProps['deployedSystems@link']
+    if (Array.isArray(dsLinks) && dsLinks.length > 0) {
+      return dsLinks.filter((l: any) => l?.href).length
+    }
+
+    // 2. Fallback: platform@link — identifies the platform system hosting the deployment
+    const platformLink = parentProps['platform@link']
+    if (platformLink?.href) return 1
+
+    return 0
+  } catch { return 0 }
+}
+
+/**
  * Fetch counts of related/nested resources for the currently viewed resource.
  * Fetches direct relations, then transitive grandchild counts
  * (observations via datastreams, commands via controlStreams).
@@ -370,11 +398,70 @@ async function fetchCounts() {
         const res = await apiFetch(path)
         if (gen !== fetchGeneration) return  // stale
         if (!res.ok) {
+          // --- Deployed Systems fallback (OGC 23-001 Table 43) ---
+          // /deployments/{id}/systems is non-standard; deployedSystems is an
+          // inline property.  Fetch the deployment detail and resolve @link refs.
+          if (parentType === 'deployments' && rel.relation === 'systems') {
+            const inlineCount = await resolveDeployedSystemsCount(parentId)
+            if (gen !== fetchGeneration) return
+            counts[rel.childType] = inlineCount
+            return
+          }
           counts[rel.childType] = -1
           if (isSelfHierarchy) { selfChildItems.value = []; selfChildTotal.value = 0 }
           return
         }
-        counts[rel.childType] = extractCount(res.data)
+        let count = extractCount(res.data)
+
+        // --- Subdeployments fallback ---
+        // Some servers (e.g. OSH SensorHub) return 200/{items:[]} for
+        // /deployments/{id}/subdeployments but track parentage only via
+        // the collection-level ?parent= query parameter.
+        if (count === 0 && isSelfHierarchy
+            && parentType === 'deployments' && rel.relation === 'subdeployments') {
+          try {
+            const fbPath = `/deployments?parent=${encodeURIComponent(parentId)}&limit=8`
+            const fbRes = await apiFetch(fbPath)
+            if (gen !== fetchGeneration) return
+            if (fbRes.ok && fbRes.data) {
+              const fbItems = (fbRes.data?.items || fbRes.data?.features || [])
+                .filter((it: any) => {
+                  const id = it?.id || it?.properties?.id
+                  return id && id !== parentId
+                })
+              if (fbItems.length > 0) {
+                count = fbItems.length
+                // Check if server reports more via numberMatched (minus self)
+                if (fbRes.data?.numberMatched != null) {
+                  const serverTotal = fbRes.data.numberMatched
+                  count = serverTotal > count ? serverTotal : count
+                  // Subtract self if server included it
+                  const rawLen = (fbRes.data?.items || fbRes.data?.features || []).length
+                  if (rawLen > fbItems.length) count = Math.max(0, count - (rawLen - fbItems.length))
+                }
+                // Populate self-hierarchy cluster from fallback items
+                selfChildItems.value = fbItems.map((it: any) => ({
+                  id: String(it?.id || it?.properties?.id || ''),
+                  name: it?.properties?.name || it?.name || String(it?.id || ''),
+                })).filter((it: { id: string }) => it.id)
+                selfChildTotal.value = count
+                selfChildRelation.value = rel.relation
+                if (parentId && selfChildItems.value.length > 0) {
+                  cacheParentForChildren(parentId, String(parentId), selfChildItems.value)
+                }
+              }
+            }
+          } catch { /* non-critical */ }
+        }
+
+        // --- Deployed Systems fallback (after 200 with 0 items) ---
+        if (count === 0 && parentType === 'deployments' && rel.relation === 'systems') {
+          const inlineCount = await resolveDeployedSystemsCount(parentId)
+          if (gen !== fetchGeneration) return
+          if (inlineCount > 0) count = inlineCount
+        }
+
+        counts[rel.childType] = count
 
         // Populate self-hierarchy cluster items (subsystems or subdeployments)
         if (isSelfHierarchy) {

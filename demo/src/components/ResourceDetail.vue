@@ -400,6 +400,36 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
       const parsed = parseCollectionResponse(res.data)
       let resultItems = parsed.items as any[]
 
+      // --- Subdeployments fallback ---
+      // Some servers (e.g. OSH SensorHub) return 200 with empty items for
+      // /deployments/{id}/subdeployments even though subdeployments exist.
+      // The server may support the collection-level `parent` query parameter
+      // instead.  Try deployments?parent={id} as a fallback.
+      if (resultItems.length === 0
+          && props.resourceType === 'deployments'
+          && link.relation === 'subdeployments') {
+        try {
+          const fallbackPath = `/deployments?parent=${encodeURIComponent(parentId)}`
+          const fbAccept = getContentType('deployments')
+          const fbRes = await apiFetch(fallbackPath, { headers: { Accept: fbAccept } })
+          if (fbRes.ok && fbRes.data) {
+            const fbParsed = parseCollectionResponse(fbRes.data)
+            // Filter out the resource itself (server may include it) and
+            // exclude stale smoke-test leftovers.
+            const fbItems = (fbParsed.items as any[]).filter((it: any) => {
+              const id = it?.id || it?.properties?.id
+              return id && id !== parentId
+            })
+            if (fbItems.length > 0) {
+              resultItems = fbItems
+              state.clientSideFallbackDetails.push(
+                `/subdeployments returned 0 — resolved ${fbItems.length} item(s) via deployments?parent=${parentId}`
+              )
+            }
+          }
+        } catch { /* non-critical */ }
+      }
+
       // --- Client-side fallback for servers that ignore query parameters ---
 
       // 1) Keyword filter fallback
@@ -656,7 +686,15 @@ const parentLinks = computed<ParentLink[]>(() => {
   // Check both the bare type key (e.g. "deployments") AND the id-qualified key
   // (e.g. "deployments:0480") to avoid duplicating a parent already found via
   // rel="parent" HATEOAS links which use the id-qualified format.
+  //
+  // ALSO skip the nested context entirely when the resource already has
+  // structural parents from its own data (rel="parent" links, @id/@link refs).
+  // The nested context is merely *where the user navigated from* — e.g. a
+  // deployment's systems panel — it is NOT a structural parent of the resource.
+  // Showing it alongside a real parent produces a confusing double breadcrumb.
+  const hasStructuralParent = links.length > 0
   if (props.nestedParentType && props.nestedParentId
+      && !hasStructuralParent
       && !seen.has(props.nestedParentType)
       && !seen.has(props.nestedParentType + ':' + props.nestedParentId)) {
     const typeInfo = getResourceType(props.nestedParentType)
