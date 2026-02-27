@@ -934,16 +934,24 @@ const BEARING_LINE_LENGTH_M = 1000
 
 /**
  * Extract bearing/direction information from an observation result.
- * Supports:
- *   - LOB format: bearingN objects with explicit azimuth (degrees from north)
- *   - SSL format: sourceN objects with (x,y) unit direction vectors
- *   - SST format: trackN objects with (x,y) unit direction vectors
+ * Supports both legacy (urn:x-odas:*) and v2.3 ScenarioPack formats:
+ *
+ * Legacy indexed formats:
+ *   - LOB:  numBearings + bearing0..bearingN  { azimuth, elevation, energy, sourceId }
+ *   - SSL:  numSources  + source0..sourceN    { x, y, z, energy }
+ *   - SST:  numTracks   + track0..trackN      { id, tag, x, y, z, activity }
+ *
+ * v2.3 formats:
+ *   - LOB flat:       result.bearingTrue (+ sensorLat/sensorLon)
+ *   - SSL array:      result.src[]  { x, y, z, E }
+ *   - SST array:      result.src[]  { id, tag, x, y, z, activity }
+ *   - Track update:   result.bearingTrue + result.x/y/z + result.classLabel
  */
-function extractBearings(result: any): Array<{ azimuth: number; elevation: number; energy: number; sourceId?: number }> {
-  const bearings: Array<{ azimuth: number; elevation: number; energy: number; sourceId?: number }> = []
+function extractBearings(result: any): Array<{ azimuth: number; elevation: number; energy: number; sourceId?: number; classLabel?: string; classConfidence?: number }> {
+  const bearings: Array<{ azimuth: number; elevation: number; energy: number; sourceId?: number; classLabel?: string; classConfidence?: number }> = []
   if (!result || typeof result !== 'object') return bearings
 
-  // LOB format: bearing0..bearingN with { azimuth, elevation, energy, sourceId }
+  // ── Legacy LOB: bearing0..bearingN with { azimuth, elevation, energy, sourceId } ──
   if (typeof result.numBearings === 'number') {
     for (let i = 0; i < result.numBearings; i++) {
       const b = result[`bearing${i}`]
@@ -954,8 +962,7 @@ function extractBearings(result: any): Array<{ azimuth: number; elevation: numbe
     return bearings
   }
 
-  // SSL format: source0..sourceN with { x, y, z, energy } — unit direction vectors
-  // Convention: x = East, y = North → azimuth = atan2(x, y) degrees from North
+  // ── Legacy SSL: source0..sourceN with { x, y, z, energy } ──
   if (typeof result.numSources === 'number') {
     for (let i = 0; i < result.numSources; i++) {
       const s = result[`source${i}`]
@@ -969,7 +976,7 @@ function extractBearings(result: any): Array<{ azimuth: number; elevation: numbe
     return bearings
   }
 
-  // SST format: track0..trackN with { id, tag, x, y, z, activity }
+  // ── Legacy SST: track0..trackN with { id, tag, x, y, z, activity } ──
   if (typeof result.numTracks === 'number') {
     for (let i = 0; i < result.numTracks; i++) {
       const t = result[`track${i}`]
@@ -978,6 +985,51 @@ function extractBearings(result: any): Array<{ azimuth: number; elevation: numbe
         if (mag < 0.01) continue
         const azimuth = ((Math.atan2(t.x, t.y) * 180 / Math.PI) + 360) % 360
         bearings.push({ azimuth, elevation: 0, energy: t.activity || 0, sourceId: t.id })
+      }
+    }
+    return bearings
+  }
+
+  // ── v2.3 Track Update (flat): bearingTrue + x/y/z + classLabel ──
+  // Check this BEFORE LOB flat since track updates also have bearingTrue
+  if (typeof result.bearingTrue === 'number' && typeof result.x === 'number' && typeof result.y === 'number') {
+    bearings.push({
+      azimuth: result.bearingTrue,
+      elevation: result.elevation || 0,
+      energy: result.activity || 0,
+      sourceId: result.id,
+      classLabel: result.classLabel,
+      classConfidence: result.classConfidence,
+    })
+    return bearings
+  }
+
+  // ── v2.3 LOB flat: bearingTrue (+ sensorLat/sensorLon handled by caller) ──
+  if (typeof result.bearingTrue === 'number') {
+    bearings.push({
+      azimuth: result.bearingTrue,
+      elevation: 0,
+      energy: 1.0, // LOB has no energy field; use full opacity
+      sourceId: result.trackId,
+    })
+    return bearings
+  }
+
+  // ── v2.3 SSL array: src[] with { x, y, z, E } ──
+  // ── v2.3 SST array: src[] with { id, tag, x, y, z, activity } ──
+  if (Array.isArray(result.src)) {
+    for (const s of result.src) {
+      if (s && typeof s.x === 'number' && typeof s.y === 'number') {
+        const mag = Math.sqrt(s.x * s.x + s.y * s.y)
+        if (mag < 0.01) continue
+        // x = East, y = North → atan2(x, y) = bearing from North clockwise
+        const azimuth = ((Math.atan2(s.x, s.y) * 180 / Math.PI) + 360) % 360
+        bearings.push({
+          azimuth,
+          elevation: 0,
+          energy: s.E ?? s.activity ?? 0,
+          sourceId: s.id,
+        })
       }
     }
     return bearings
@@ -1083,7 +1135,11 @@ async function loadObservationLayers(): Promise<void> {
 
         // --- Bearing lines: acoustic detection directions ---
         if (bearingSource && obs.result) {
+          // Prefer systemLocationCache; fall back to self-contained sensorLat/sensorLon (v2.3 LOB format)
           const sensorLoc = systemLocationCache[dsInfo.systemId]
+            || (typeof obs.result.sensorLat === 'number' && typeof obs.result.sensorLon === 'number'
+              ? { lat: obs.result.sensorLat, lon: obs.result.sensorLon }
+              : null)
           if (sensorLoc) {
             const obsBearings = extractBearings(obs.result)
             for (const b of obsBearings) {
@@ -1098,7 +1154,10 @@ async function loadObservationLayers(): Promise<void> {
               feature.setStyle(getBearingLineStyle(b.energy))
               feature.set('resourceType', 'bearingLines')
               feature.set('resourceId', `${dsInfo.id}-lob-${bearingCount}`)
-              feature.set('resourceName', `Bearing ${b.azimuth.toFixed(1)}° (energy ${b.energy.toFixed(2)})`)
+              const label = b.classLabel
+                ? `${b.classLabel} ${b.azimuth.toFixed(1)}° (conf ${(b.classConfidence ?? 0).toFixed(2)})`
+                : `Bearing ${b.azimuth.toFixed(1)}° (energy ${b.energy.toFixed(2)})`
+              feature.set('resourceName', label)
               feature.set('enriched', true)
               feature.set('enrichmentSource', dsInfo.name)
               feature.set('rawData', {
@@ -1111,6 +1170,8 @@ async function loadObservationLayers(): Promise<void> {
                 elevation: b.elevation,
                 energy: b.energy,
                 sourceId: b.sourceId,
+                classLabel: b.classLabel,
+                classConfidence: b.classConfidence,
                 sensorLat: sensorLoc.lat,
                 sensorLon: sensorLoc.lon,
               })
