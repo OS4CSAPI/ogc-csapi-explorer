@@ -796,7 +796,7 @@ function browseAllSubsystems() {
            Subsystem Cluster — shown when an active system has
            subsystems, fanning out below the self-loop arc.
            ══════════════════════════════════════════════════════════ -->
-      <template v-if="subsystemItems.length > 0 && props.activeType === 'systems' && !sameTypeParent">
+      <template v-if="subsystemItems.length > 0 && props.activeType === 'systems'">
         <!-- Branching line from self-loop arc down to cluster -->
         <path
           :d="`M 300 ${200 + NODE_H/2 + 50}
