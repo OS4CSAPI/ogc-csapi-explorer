@@ -241,6 +241,24 @@ const discoveredAncestors = reactive<Record<string, ParentRef>>({})
 let fetchGeneration = 0
 
 /**
+ * Extract a resource count from a collection response.
+ * Prefers `numberMatched` when available; otherwise infers from items
+ * and the presence of a `next` pagination link (indicating more exist).
+ * Returns -1 when no useful count can be determined.
+ */
+function extractCount(data: any): number {
+  if (data?.numberMatched != null) return data.numberMatched
+  const items = data?.items ?? data?.features
+  if (Array.isArray(items)) {
+    const len = items.length
+    // If there's a "next" link, at least one more page exists
+    const hasNext = Array.isArray(data?.links) && data.links.some((l: any) => l.rel === 'next')
+    return hasNext ? Math.max(len, len + 1) : len
+  }
+  return -1
+}
+
+/**
  * Fetch counts of related/nested resources for the currently viewed resource.
  * Fetches direct relations, then transitive grandchild counts
  * (observations via datastreams, commands via controlStreams).
@@ -267,23 +285,14 @@ async function fetchCounts() {
     // Fire all direct requests in parallel
     const requests = relations.map(async (rel) => {
       try {
-        const path = getNestedListUrl(parentType, parentId, rel.relation, { limit: 0 })
+        const path = getNestedListUrl(parentType, parentId, rel.relation, { limit: 1 })
         const res = await apiFetch(path)
         if (gen !== fetchGeneration) return  // stale
         if (!res.ok) {
           counts[rel.childType] = -1
           return
         }
-        const data = res.data
-        if (data?.numberMatched != null) {
-          counts[rel.childType] = data.numberMatched
-        } else if (Array.isArray(data?.items)) {
-          counts[rel.childType] = data.items.length
-        } else if (Array.isArray(data?.features)) {
-          counts[rel.childType] = data.features.length
-        } else {
-          counts[rel.childType] = -1
-        }
+        counts[rel.childType] = extractCount(res.data)
       } catch {
         if (gen !== fetchGeneration) return
         counts[rel.childType] = -1
@@ -322,15 +331,12 @@ async function fetchCounts() {
           let total = 0
           const subRequests = ids.map(async (id: string) => {
             try {
-              const path = getNestedListUrl(job.intermediateType, id, job.grandchildRelation, { limit: 0 })
+              const path = getNestedListUrl(job.intermediateType, id, job.grandchildRelation, { limit: 1 })
               const res = await apiFetch(path)
               if (gen !== fetchGeneration) return 0
               if (!res.ok) return 0
-              const data = res.data
-              if (data?.numberMatched != null) return data.numberMatched
-              if (Array.isArray(data?.items)) return data.items.length
-              if (Array.isArray(data?.features)) return data.features.length
-              return 0
+              const c = extractCount(res.data)
+              return c > 0 ? c : 0
             } catch { return 0 }
           })
           const results = await Promise.allSettled(subRequests)
@@ -372,20 +378,11 @@ async function fetchCounts() {
 
         counts[rel.childType] = null  // loading
         try {
-          const path = getNestedListUrl(pLink.resourceType, pLink.resourceId, rel.relation, { limit: 0 })
+          const path = getNestedListUrl(pLink.resourceType, pLink.resourceId, rel.relation, { limit: 1 })
           const res = await apiFetch(path)
           if (gen !== fetchGeneration) return
           if (!res.ok) { counts[rel.childType] = -1; return }
-          const data = res.data
-          if (data?.numberMatched != null) {
-            counts[rel.childType] = data.numberMatched
-          } else if (Array.isArray(data?.items)) {
-            counts[rel.childType] = data.items.length
-          } else if (Array.isArray(data?.features)) {
-            counts[rel.childType] = data.features.length
-          } else {
-            counts[rel.childType] = -1
-          }
+          counts[rel.childType] = extractCount(res.data)
         } catch {
           if (gen !== fetchGeneration) return
           counts[rel.childType] = -1
@@ -454,20 +451,11 @@ async function fetchCounts() {
           if (counts[rel.childType] != null && counts[rel.childType]! >= 0) return
           counts[rel.childType] = null  // loading
           try {
-            const path = getNestedListUrl(gp.resourceType, gp.resourceId, rel.relation, { limit: 0 })
+            const path = getNestedListUrl(gp.resourceType, gp.resourceId, rel.relation, { limit: 1 })
             const res = await apiFetch(path)
             if (gen !== fetchGeneration) return
             if (!res.ok) { counts[rel.childType] = -1; return }
-            const data = res.data
-            if (data?.numberMatched != null) {
-              counts[rel.childType] = data.numberMatched
-            } else if (Array.isArray(data?.items)) {
-              counts[rel.childType] = data.items.length
-            } else if (Array.isArray(data?.features)) {
-              counts[rel.childType] = data.features.length
-            } else {
-              counts[rel.childType] = -1
-            }
+            counts[rel.childType] = extractCount(res.data)
           } catch {
             if (gen !== fetchGeneration) return
             counts[rel.childType] = -1
