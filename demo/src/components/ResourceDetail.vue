@@ -405,6 +405,10 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
       // /deployments/{id}/subdeployments even though subdeployments exist.
       // The server may support the collection-level `parent` query parameter
       // instead.  Try deployments?parent={id} as a fallback.
+      // CAVEAT: Some servers ignore the ?parent= value entirely and return
+      // ALL deployments that have any parent.  We detect this by checking
+      // whether the response includes the queried deployment ITSELF — a
+      // deployment cannot be its own subdeployment.
       if (resultItems.length === 0
           && props.resourceType === 'deployments'
           && link.relation === 'subdeployments') {
@@ -414,17 +418,24 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
           const fbRes = await apiFetch(fallbackPath, { headers: { Accept: fbAccept } })
           if (fbRes.ok && fbRes.data) {
             const fbParsed = parseCollectionResponse(fbRes.data)
-            // Filter out the resource itself (server may include it) and
-            // exclude stale smoke-test leftovers.
-            const fbItems = (fbParsed.items as any[]).filter((it: any) => {
+            const rawFbItems = fbParsed.items as any[]
+            // Detect broken filter: if the response includes the deployment
+            // itself, the server is ignoring the parent value — discard.
+            const selfIncluded = rawFbItems.some((it: any) => {
               const id = it?.id || it?.properties?.id
-              return id && id !== parentId
+              return id && String(id) === String(parentId)
             })
-            if (fbItems.length > 0) {
-              resultItems = fbItems
-              state.clientSideFallbackDetails.push(
-                `/subdeployments returned 0 — resolved ${fbItems.length} item(s) via deployments?parent=${parentId}`
-              )
+            if (!selfIncluded) {
+              const fbItems = rawFbItems.filter((it: any) => {
+                const id = it?.id || it?.properties?.id
+                return id && id !== parentId
+              })
+              if (fbItems.length > 0) {
+                resultItems = fbItems
+                state.clientSideFallbackDetails.push(
+                  `/subdeployments returned 0 — resolved ${fbItems.length} item(s) via deployments?parent=${parentId}`
+                )
+              }
             }
           }
         } catch { /* non-critical */ }

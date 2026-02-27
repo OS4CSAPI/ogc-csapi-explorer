@@ -417,6 +417,10 @@ async function fetchCounts() {
         // Some servers (e.g. OSH SensorHub) return 200/{items:[]} for
         // /deployments/{id}/subdeployments but track parentage only via
         // the collection-level ?parent= query parameter.
+        // CAVEAT: Some servers ignore the ?parent= value entirely and return
+        // ALL deployments that have any parent.  We detect this by checking
+        // whether the response includes the queried deployment ITSELF — a
+        // deployment cannot be its own subdeployment.
         if (count === 0 && isSelfHierarchy
             && parentType === 'deployments' && rel.relation === 'subdeployments') {
           try {
@@ -424,30 +428,38 @@ async function fetchCounts() {
             const fbRes = await apiFetch(fbPath)
             if (gen !== fetchGeneration) return
             if (fbRes.ok && fbRes.data) {
-              const fbItems = (fbRes.data?.items || fbRes.data?.features || [])
-                .filter((it: any) => {
+              const rawItems = fbRes.data?.items || fbRes.data?.features || []
+              // Detect broken filter: if the response includes the deployment
+              // itself as a "child", the server is ignoring the parent value.
+              const selfIncluded = rawItems.some((it: any) => {
+                const id = it?.id || it?.properties?.id
+                return id && String(id) === String(parentId)
+              })
+              if (!selfIncluded) {
+                const fbItems = rawItems.filter((it: any) => {
                   const id = it?.id || it?.properties?.id
                   return id && id !== parentId
                 })
-              if (fbItems.length > 0) {
-                count = fbItems.length
-                // Check if server reports more via numberMatched (minus self)
-                if (fbRes.data?.numberMatched != null) {
-                  const serverTotal = fbRes.data.numberMatched
-                  count = serverTotal > count ? serverTotal : count
-                  // Subtract self if server included it
-                  const rawLen = (fbRes.data?.items || fbRes.data?.features || []).length
-                  if (rawLen > fbItems.length) count = Math.max(0, count - (rawLen - fbItems.length))
-                }
-                // Populate self-hierarchy cluster from fallback items
-                selfChildItems.value = fbItems.map((it: any) => ({
-                  id: String(it?.id || it?.properties?.id || ''),
-                  name: it?.properties?.name || it?.name || String(it?.id || ''),
-                })).filter((it: { id: string }) => it.id)
-                selfChildTotal.value = count
-                selfChildRelation.value = rel.relation
-                if (parentId && selfChildItems.value.length > 0) {
-                  cacheParentForChildren(parentId, String(parentId), selfChildItems.value)
+                if (fbItems.length > 0) {
+                  count = fbItems.length
+                  // Check if server reports more via numberMatched (minus self)
+                  if (fbRes.data?.numberMatched != null) {
+                    const serverTotal = fbRes.data.numberMatched
+                    count = serverTotal > count ? serverTotal : count
+                    // Subtract self if server included it
+                    const rawLen = rawItems.length
+                    if (rawLen > fbItems.length) count = Math.max(0, count - (rawLen - fbItems.length))
+                  }
+                  // Populate self-hierarchy cluster from fallback items
+                  selfChildItems.value = fbItems.map((it: any) => ({
+                    id: String(it?.id || it?.properties?.id || ''),
+                    name: it?.properties?.name || it?.name || String(it?.id || ''),
+                  })).filter((it: { id: string }) => it.id)
+                  selfChildTotal.value = count
+                  selfChildRelation.value = rel.relation
+                  if (parentId && selfChildItems.value.length > 0) {
+                    cacheParentForChildren(parentId, String(parentId), selfChildItems.value)
+                  }
                 }
               }
             }
