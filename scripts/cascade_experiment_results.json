@@ -1,0 +1,86 @@
+{
+  "timestamp": "2026-02-27T19:30:10.206612+00:00",
+  "server": "http://45.55.99.236:8080/sensorhub/api",
+  "results": [
+    {
+      "test": "T1",
+      "description": "DELETE leaf system (no children, no cascade param)",
+      "http_status": 204,
+      "resource_deleted": true,
+      "expected_status": "200 or 204",
+      "pass": true
+    },
+    {
+      "test": "T2",
+      "description": "DELETE parent with child (no cascade param)",
+      "http_status": 400,
+      "parent_survived": true,
+      "child_survived": true,
+      "expected_status": "400 or 409 (rejected)",
+      "pass": true
+    },
+    {
+      "test": "T3",
+      "description": "DELETE parent with child (?cascade=false)",
+      "http_status": 400,
+      "parent_survived": true,
+      "child_survived": true,
+      "expected_status": "400 or 409 (rejected)",
+      "pass": true
+    },
+    {
+      "test": "T4",
+      "description": "DELETE parent with child (?cascade=true)",
+      "http_status": 204,
+      "parent_deleted": true,
+      "child_deleted": true,
+      "cascade_supported": true,
+      "expected_status": "200 or 204 if cascade supported; 400/409 if not",
+      "pass": true
+    },
+    {
+      "test": "T5",
+      "status": "SETUP_FAIL"
+    },
+    {
+      "test": "T6",
+      "status": "SETUP_FAIL"
+    },
+    {
+      "test": "T7",
+      "description": "Full tree: parent + child + grandchild + 2DS + obs + CS (?cascade=true)",
+      "http_status": 204,
+      "resources_after_delete": {
+        "parent": "DELETED",
+        "child": "DELETED",
+        "grandchild": "DELETED"
+      },
+      "all_deleted": true,
+      "cascade_supported": true,
+      "obs_posted_before": 0,
+      "pass": true
+    },
+    {
+      "test": "T8",
+      "description": "Parameter format variations",
+      "variants": [
+        {
+          "variant": "cascade=true (string)",
+          "http_status": 204,
+          "cascade_worked": true
+        },
+        {
+          "variant": "cascade=TRUE (uppercase)",
+          "http_status": 204,
+          "cascade_worked": true
+        },
+        {
+          "variant": "cascade=1 (numeric)",
+          "http_status": 400,
+          "cascade_worked": false
+        }
+      ]
+    }
+  ],
+  "cascade_supported": true
+}
