@@ -139,27 +139,48 @@ watch(sameTypeParent, async (p) => {
 /** Parent node position — placed above-left of the System node */
 const PARENT_NODE = { x: 130, y: 35, w: 160, h: 44 }
 
-// ─── Subsystem Cluster (shown when parent has subsystems) ─────────
+// ─── Self-Hierarchy Cluster (subsystems / subdeployments) ──────────
 
-/** First N subsystem items fetched for the cluster display */
-const subsystemItems = ref<Array<{ id: string; name: string }>>([])
-/** Total count of subsystems (may exceed displayed items) */
-const subsystemTotal = ref(0)
+/** First N self-hierarchy child items fetched for the cluster display */
+const selfChildItems = ref<Array<{ id: string; name: string }>>([])
+/** Total count of self-hierarchy children (may exceed displayed items) */
+const selfChildTotal = ref(0)
+/** The relation name for the active self-hierarchy ("subsystems" or "subdeployments") */
+const selfChildRelation = ref<string>('')
 
-/** Subsystem chip layout constants */
-const SUB_CLUSTER = {
-  /** Starting X for the column of chips */
-  x: 218,
-  /** Starting Y — below the self-loop arc */
-  startY: 290,
-  /** Chip dimensions */
-  chipW: 165,
-  chipH: 19,
-  /** Vertical gap between chips */
-  gap: 3,
-  /** Max items to display */
-  maxShow: 6,
-}
+/** The ModelNode definition for the currently active resource type */
+const activeNodeDef = computed(() => nodes.find(n => n.id === props.activeType))
+
+/** Cluster config computed from the active node's position and self-loop edge */
+const selfClusterConfig = computed(() => {
+  const node = activeNodeDef.value
+  if (!node || selfChildItems.value.length === 0) return null
+  const selfEdge = edges.find(e => e.from === e.to && e.from === props.activeType)
+  if (!selfEdge) return null
+  return {
+    x: Math.round(node.x - 165 / 2),
+    startY: node.y + NODE_H / 2 + 65,
+    chipW: 165,
+    chipH: 19,
+    gap: 3,
+    maxShow: 6,
+    color: node.color,
+    icon: node.icon,
+    nodeX: node.x,
+    nodeY: node.y,
+    relation: selfEdge.label,
+  }
+})
+
+/** Dynamic SVG viewBox height — expands to fit cluster for lower-positioned nodes */
+const svgViewBoxHeight = computed(() => {
+  const sc = selfClusterConfig.value
+  if (!sc) return 480
+  const items = Math.min(selfChildItems.value.length, sc.maxShow)
+  const hasOverflow = selfChildTotal.value > sc.maxShow
+  const clusterBottom = sc.startY + items * (sc.chipH + sc.gap) + (hasOverflow ? 22 : 0) + 10
+  return Math.max(480, clusterBottom + 20)
+})
 
 /** Find a node by id */
 function findNode(id: string): ModelNode | undefined {
@@ -326,8 +347,9 @@ async function fetchCounts() {
   // Clear previous counts
   for (const key of Object.keys(counts)) delete counts[key]
   for (const key of Object.keys(discoveredAncestors)) delete discoveredAncestors[key]
-  subsystemItems.value = []
-  subsystemTotal.value = 0
+  selfChildItems.value = []
+  selfChildTotal.value = 0
+  selfChildRelation.value = ''
 
   if (!parentId || !parentType) return
 
@@ -341,34 +363,32 @@ async function fetchCounts() {
     // Fire all direct requests in parallel
     const requests = relations.map(async (rel) => {
       try {
-        // For subsystems, fetch a small page so we can display chip names
-        const isSelfSubsystems = rel.childType === parentType && rel.relation === 'subsystems'
-        const limit = isSelfSubsystems ? SUB_CLUSTER.maxShow + 2 : 1
+        // For self-hierarchy relations (subsystems/subdeployments), fetch a page for chip display
+        const isSelfHierarchy = rel.childType === parentType && edges.some(e => e.from === e.to && e.from === parentType && e.label === rel.relation)
+        const limit = isSelfHierarchy ? 8 : 1
         const path = getNestedListUrl(parentType, parentId, rel.relation, { limit })
         const res = await apiFetch(path)
         if (gen !== fetchGeneration) return  // stale
         if (!res.ok) {
           counts[rel.childType] = -1
-          if (isSelfSubsystems) { subsystemItems.value = []; subsystemTotal.value = 0 }
+          if (isSelfHierarchy) { selfChildItems.value = []; selfChildTotal.value = 0 }
           return
         }
         counts[rel.childType] = extractCount(res.data)
 
-        // Populate subsystem cluster items
-        if (isSelfSubsystems) {
+        // Populate self-hierarchy cluster items (subsystems or subdeployments)
+        if (isSelfHierarchy) {
           const items = res.data?.items || res.data?.features || []
-          subsystemItems.value = items.map((it: any) => ({
+          selfChildItems.value = items.map((it: any) => ({
             id: String(it?.id || it?.properties?.id || ''),
             name: it?.properties?.name || it?.name || String(it?.id || ''),
           })).filter((it: { id: string }) => it.id)
-          subsystemTotal.value = extractCount(res.data)
+          selfChildTotal.value = extractCount(res.data)
+          selfChildRelation.value = rel.relation
 
           // Cache parent relationship so breadcrumbs survive navigation.
-          // Note: we don't have the current system's display name here (parentName
-          // is the DIAGRAM's parent node, not the current system). ResourceDetail's
-          // fetchRelation will overwrite with the correct name. Use ID as fallback.
-          if (parentId && subsystemItems.value.length > 0) {
-            cacheParentForChildren(parentId, String(parentId), subsystemItems.value)
+          if (parentId && selfChildItems.value.length > 0) {
+            cacheParentForChildren(parentId, String(parentId), selfChildItems.value)
           }
         }
       } catch {
@@ -640,9 +660,9 @@ function navigateToType(nodeId: string) {
   router.push({ path: `/explore/${nodeId}` })
 }
 
-/** Navigate directly to the parent system — bypasses the navigateToType guard
- *  that blocks same-type navigation (systems → systems). */
-function navigateToParentSystem() {
+/** Navigate directly to the parent resource — bypasses the navigateToType guard
+ *  that blocks same-type navigation (e.g. systems → systems, deployments → deployments). */
+function navigateToParent() {
   if (!sameTypeParent.value) return
   router.push({
     path: `/explore/${sameTypeParent.value.resourceType}`,
@@ -650,29 +670,29 @@ function navigateToParentSystem() {
   })
 }
 
-/** Navigate into a subsystem from the cluster */
-function navigateToSubsystem(subId: string) {
-  if (!props.activeId) return
+/** Navigate into a self-hierarchy child (subsystem / subdeployment) from the cluster */
+function navigateToChild(childId: string) {
+  if (!props.activeId || !selfChildRelation.value) return
   router.push({
-    path: `/explore/systems`,
+    path: `/explore/${props.activeType}`,
     query: {
-      parentType: 'systems',
+      parentType: props.activeType,
       parentId: props.activeId,
-      relation: 'subsystems',
-      resourceId: subId,
+      relation: selfChildRelation.value,
+      resourceId: childId,
     },
   })
 }
 
-/** Browse all subsystems via the nested list */
-function browseAllSubsystems() {
-  if (!props.activeId) return
+/** Browse all self-hierarchy children via the nested list */
+function browseAllChildren() {
+  if (!props.activeId || !selfChildRelation.value) return
   router.push({
-    path: `/explore/systems`,
+    path: `/explore/${props.activeType}`,
     query: {
-      parentType: 'systems',
+      parentType: props.activeType,
       parentId: props.activeId,
-      relation: 'subsystems',
+      relation: selfChildRelation.value,
     },
   })
 }
@@ -681,9 +701,10 @@ function browseAllSubsystems() {
 <template>
   <div class="diagram-container">
     <svg
-      viewBox="-5 -15 810 480"
+      :viewBox="'-5 -15 810 ' + svgViewBoxHeight"
       xmlns="http://www.w3.org/2000/svg"
       class="model-svg"
+      :style="svgViewBoxHeight > 480 ? { maxHeight: '400px' } : {}"
     >
       <defs>
         <!-- Arrowhead marker -->
@@ -733,17 +754,17 @@ function browseAllSubsystems() {
       </g>
 
       <!-- ══════════════════════════════════════════════════════════
-           Parent System Node — shown when the active resource is a
-           subsystem, making the hierarchy concrete and navigable.
+           Parent Node — shown when the active resource is a child
+           in a self-hierarchy (subsystem or subdeployment).
            ══════════════════════════════════════════════════════════ -->
-      <template v-if="sameTypeParent">
-        <!-- Hierarchical edge: parent → active system -->
+      <template v-if="sameTypeParent && activeNodeDef">
+        <!-- Hierarchical edge: parent → active node -->
         <path
           :d="`M ${PARENT_NODE.x + PARENT_NODE.w / 2} ${PARENT_NODE.y + PARENT_NODE.h / 2 + 4}
                C ${PARENT_NODE.x + PARENT_NODE.w / 2 + 40} ${PARENT_NODE.y + 80},
-                 ${300 - 60} ${200 - 80},
-                 ${300 - NODE_W/2 + 10} ${200 - 6}`"
-          stroke="#0ea5e9"
+                 ${activeNodeDef.x - 60} ${activeNodeDef.y - 80},
+                 ${activeNodeDef.x - NODE_W/2 + 10} ${activeNodeDef.y - 6}`"
+          :stroke="activeNodeDef.color"
           stroke-width="2.5"
           stroke-dasharray="6 3"
           fill="none"
@@ -751,15 +772,15 @@ function browseAllSubsystems() {
           opacity="0.8"
         />
         <text
-          :x="(PARENT_NODE.x + PARENT_NODE.w / 2 + 300) / 2 - 30"
-          :y="(PARENT_NODE.y + PARENT_NODE.h / 2 + 200) / 2 - 25"
+          :x="(PARENT_NODE.x + PARENT_NODE.w / 2 + activeNodeDef.x) / 2 - 30"
+          :y="(PARENT_NODE.y + PARENT_NODE.h / 2 + activeNodeDef.y) / 2 - 25"
           class="edge-label edge-active"
           text-anchor="middle"
           font-size="9"
-        >subsystem of</text>
+        >{{ props.activeType === 'deployments' ? 'subdeployment of' : 'subsystem of' }}</text>
 
         <!-- Parent node card -->
-        <g class="node-group node-connected parent-node-group" @click="navigateToParentSystem()">
+        <g class="node-group node-connected parent-node-group" @click="navigateToParent()">
           <title>Navigate to parent: {{ parentName || sameTypeParent!.resourceId }}</title>
           <!-- Shadow -->
           <rect
@@ -767,49 +788,49 @@ function browseAllSubsystems() {
             :width="PARENT_NODE.w" :height="PARENT_NODE.h"
             :rx="NODE_RX" fill="rgba(0,0,0,0.06)"
           />
-          <!-- Background — gradient border to distinguish from the active node -->
+          <!-- Background -->
           <rect
             :x="PARENT_NODE.x" :y="PARENT_NODE.y"
             :width="PARENT_NODE.w" :height="PARENT_NODE.h"
             :rx="NODE_RX"
-            fill="#f0f9ff"
-            stroke="#0ea5e9"
+            fill="#f8fafc"
+            :stroke="activeNodeDef.color"
             stroke-width="2"
             stroke-dasharray="4 2"
           />
           <!-- Icon -->
           <text
             :x="PARENT_NODE.x + 14" :y="PARENT_NODE.y + PARENT_NODE.h / 2"
-            class="node-icon" fill="#0ea5e9" dominant-baseline="central"
-          >⬡</text>
-          <!-- "Parent System" label -->
+            class="node-icon" :fill="activeNodeDef.color" dominant-baseline="central"
+          >{{ activeNodeDef.icon }}</text>
+          <!-- Role label -->
           <text
             :x="PARENT_NODE.x + 30" :y="PARENT_NODE.y + 14"
             class="parent-node-role" fill="#64748b" dominant-baseline="central"
-          >Parent System</text>
+          >{{ props.activeType === 'deployments' ? 'Parent Deployment' : 'Parent System' }}</text>
           <!-- Name (truncated) -->
           <text
             :x="PARENT_NODE.x + 30" :y="PARENT_NODE.y + 30"
-            class="parent-node-name" fill="#0c4a6e" dominant-baseline="central"
+            class="parent-node-name" fill="#334155" dominant-baseline="central"
           >{{ (parentName || sameTypeParent!.resourceId).substring(0, 22) }}{{ (parentName || sameTypeParent!.resourceId).length > 22 ? '…' : '' }}</text>
           <!-- Navigate arrow -->
           <text
             :x="PARENT_NODE.x + PARENT_NODE.w - 18" :y="PARENT_NODE.y + PARENT_NODE.h / 2"
-            fill="#0ea5e9" font-size="11" dominant-baseline="central"
+            :fill="activeNodeDef.color" font-size="11" dominant-baseline="central"
           >↗</text>
         </g>
       </template>
 
       <!-- ══════════════════════════════════════════════════════════
-           Subsystem Cluster — shown when an active system has
-           subsystems, fanning out below the self-loop arc.
+           Self-Hierarchy Cluster — shown when the active resource
+           has children of the same type (subsystems / subdeployments).
            ══════════════════════════════════════════════════════════ -->
-      <template v-if="subsystemItems.length > 0 && props.activeType === 'systems'">
+      <template v-if="selfClusterConfig">
         <!-- Branching line from self-loop arc down to cluster -->
         <path
-          :d="`M 300 ${200 + NODE_H/2 + 50}
-               L 300 ${SUB_CLUSTER.startY - 6}`"
-          stroke="#0ea5e9"
+          :d="`M ${selfClusterConfig.nodeX} ${selfClusterConfig.nodeY + NODE_H/2 + 50}
+               L ${selfClusterConfig.nodeX} ${selfClusterConfig.startY - 6}`"
+          :stroke="selfClusterConfig.color"
           stroke-width="1.5"
           stroke-dasharray="4 2"
           fill="none"
@@ -818,10 +839,10 @@ function browseAllSubsystems() {
 
         <!-- Cluster background card -->
         <rect
-          :x="SUB_CLUSTER.x - 6"
-          :y="SUB_CLUSTER.startY - 8"
-          :width="SUB_CLUSTER.chipW + 12"
-          :height="Math.min(subsystemItems.length, SUB_CLUSTER.maxShow) * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap) + (subsystemTotal > SUB_CLUSTER.maxShow ? 22 : 6) + 10"
+          :x="selfClusterConfig.x - 6"
+          :y="selfClusterConfig.startY - 8"
+          :width="selfClusterConfig.chipW + 12"
+          :height="Math.min(selfChildItems.length, selfClusterConfig.maxShow) * (selfClusterConfig.chipH + selfClusterConfig.gap) + (selfChildTotal > selfClusterConfig.maxShow ? 22 : 6) + 10"
           rx="8"
           fill="#f8fafc"
           stroke="#e2e8f0"
@@ -829,53 +850,53 @@ function browseAllSubsystems() {
           opacity="0.85"
         />
 
-        <!-- Subsystem chips -->
+        <!-- Child chips -->
         <g
-          v-for="(sub, idx) in subsystemItems.slice(0, SUB_CLUSTER.maxShow)"
-          :key="sub.id"
+          v-for="(child, idx) in selfChildItems.slice(0, selfClusterConfig.maxShow)"
+          :key="child.id"
           class="subsystem-chip-group"
-          @click.stop="navigateToSubsystem(sub.id)"
+          @click.stop="navigateToChild(child.id)"
         >
-          <title>{{ sub.name }} ({{ sub.id }})</title>
+          <title>{{ child.name }} ({{ child.id }})</title>
           <rect
-            :x="SUB_CLUSTER.x"
-            :y="SUB_CLUSTER.startY + idx * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap)"
-            :width="SUB_CLUSTER.chipW"
-            :height="SUB_CLUSTER.chipH"
+            :x="selfClusterConfig.x"
+            :y="selfClusterConfig.startY + idx * (selfClusterConfig.chipH + selfClusterConfig.gap)"
+            :width="selfClusterConfig.chipW"
+            :height="selfClusterConfig.chipH"
             rx="5"
             fill="#ffffff"
-            stroke="#0ea5e9"
+            :stroke="selfClusterConfig.color"
             stroke-width="1.2"
             class="subsystem-chip-bg"
           />
           <!-- Icon -->
           <text
-            :x="SUB_CLUSTER.x + 10"
-            :y="SUB_CLUSTER.startY + idx * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap) + SUB_CLUSTER.chipH / 2"
-            fill="#0ea5e9" font-size="8" dominant-baseline="central"
-          >⬡</text>
+            :x="selfClusterConfig.x + 10"
+            :y="selfClusterConfig.startY + idx * (selfClusterConfig.chipH + selfClusterConfig.gap) + selfClusterConfig.chipH / 2"
+            :fill="selfClusterConfig.color" font-size="8" dominant-baseline="central"
+          >{{ selfClusterConfig.icon }}</text>
           <!-- Name (truncated) -->
           <text
-            :x="SUB_CLUSTER.x + 22"
-            :y="SUB_CLUSTER.startY + idx * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap) + SUB_CLUSTER.chipH / 2"
+            :x="selfClusterConfig.x + 22"
+            :y="selfClusterConfig.startY + idx * (selfClusterConfig.chipH + selfClusterConfig.gap) + selfClusterConfig.chipH / 2"
             class="subsystem-chip-label" dominant-baseline="central"
-          >{{ sub.name.length > 24 ? sub.name.substring(0, 24) + '…' : sub.name }}</text>
+          >{{ child.name.length > 24 ? child.name.substring(0, 24) + '…' : child.name }}</text>
           <!-- Drill-in arrow -->
           <text
-            :x="SUB_CLUSTER.x + SUB_CLUSTER.chipW - 14"
-            :y="SUB_CLUSTER.startY + idx * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap) + SUB_CLUSTER.chipH / 2"
+            :x="selfClusterConfig.x + selfClusterConfig.chipW - 14"
+            :y="selfClusterConfig.startY + idx * (selfClusterConfig.chipH + selfClusterConfig.gap) + selfClusterConfig.chipH / 2"
             fill="#38bdf8" font-size="8" dominant-baseline="central" class="chip-arrow"
           >→</text>
         </g>
 
         <!-- "View all N →" link when there are more -->
-        <g v-if="subsystemTotal > SUB_CLUSTER.maxShow" class="subsystem-chip-group" @click.stop="browseAllSubsystems()">
+        <g v-if="selfChildTotal > selfClusterConfig.maxShow" class="subsystem-chip-group" @click.stop="browseAllChildren()">
           <text
-            :x="SUB_CLUSTER.x + SUB_CLUSTER.chipW / 2"
-            :y="SUB_CLUSTER.startY + SUB_CLUSTER.maxShow * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap) + 8"
+            :x="selfClusterConfig.x + selfClusterConfig.chipW / 2"
+            :y="selfClusterConfig.startY + selfClusterConfig.maxShow * (selfClusterConfig.chipH + selfClusterConfig.gap) + 8"
             text-anchor="middle" dominant-baseline="central"
             class="subsystem-more-link"
-          >View all {{ subsystemTotal }} subsystems →</text>
+          >View all {{ selfChildTotal }} {{ selfClusterConfig.relation }} →</text>
         </g>
       </template>
 

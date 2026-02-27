@@ -552,19 +552,30 @@ const parentLinks = computed<ParentLink[]>(() => {
   }
 
   // OGC API `links` array — look for rel="parent" (provided by servers that
-  // expose subsystem parentage via HATEOAS links in the GeoJSON Feature).
+  // expose subsystem/subdeployment parentage via HATEOAS links in GeoJSON).
   // Example: { "rel": "parent", "href": ".../systems/04ng?f=geojson" }
+  //          { "rel": "parent", "href": ".../deployments/04cg?f=geojson" }
   if (Array.isArray(raw.links)) {
     for (const link of raw.links) {
       if (link?.rel === 'parent' && typeof link.href === 'string') {
-        const m = link.href.match(/\/systems\/([^/?]+)/)
-        if (m) {
-          const parentId = m[1]
+        // Match parent system links
+        const sysMatch = link.href.match(/\/systems\/([^/?]+)/)
+        if (sysMatch) {
+          const parentId = sysMatch[1]
           if (!seen.has('systems:' + parentId) && !seen.has('systems')) {
             links.push({ label: 'Parent System', resourceType: 'systems', resourceId: parentId, icon: 'pi pi-server' })
             seen.add('systems:' + parentId)
             // Also populate the global cache so the relationship persists
             parentSystemCache[effectiveId.value] = { id: parentId, name: link.title || parentId }
+          }
+        }
+        // Match parent deployment links
+        const depMatch = link.href.match(/\/deployments\/([^/?]+)/)
+        if (depMatch) {
+          const parentId = depMatch[1]
+          if (!seen.has('deployments:' + parentId) && !seen.has('deployments')) {
+            links.push({ label: 'Parent Deployment', resourceType: 'deployments', resourceId: parentId, icon: 'pi pi-map' })
+            seen.add('deployments:' + parentId)
           }
         }
       }
