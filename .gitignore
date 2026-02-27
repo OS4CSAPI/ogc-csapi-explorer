@@ -5,6 +5,7 @@ coverage
 .idea
 .vscode
 test-output*.txt
+test-results.txt
 test-browser-output.txt
 test-node-output.txt
 browser-jest-results.json
