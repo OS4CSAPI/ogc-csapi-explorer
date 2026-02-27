@@ -285,6 +285,62 @@ async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Pro
   return []
 }
 
+/**
+ * Resolve deployed systems from inline deployment properties.
+ * Per OGC 23-001 Table 43, deployedSystems maps to properties/deployedSystems@link
+ * (a JSON Array of links), NOT to a sub-resource endpoint.
+ * Falls back to platform@link when deployedSystems@link is absent.
+ */
+async function resolveDeployedSystemsInline(): Promise<{ items: any[]; source: string }> {
+  const parentProps = detail.value?.properties || detail.value || {}
+  const acceptType = getContentType('systems')
+
+  // 1. Try deployedSystems@link — the standard-defined inline property
+  const dsLinks = parentProps['deployedSystems@link']
+  if (Array.isArray(dsLinks) && dsLinks.length > 0) {
+    const items: any[] = []
+    for (const l of dsLinks) {
+      if (!l?.href) continue
+      try {
+        let path = l.href
+        if (path.startsWith('http')) {
+          const idx = path.indexOf('/api/')
+          if (idx !== -1) path = path.substring(idx + 4)
+        }
+        const res = await apiFetch(path, { headers: { Accept: acceptType } })
+        if (res.ok && res.data && typeof res.data === 'object') items.push(res.data)
+      } catch { /* skip broken links */ }
+    }
+    if (items.length > 0) {
+      return { items, source: `Resolved ${items.length} system(s) from inline deployedSystems@link` }
+    }
+  }
+
+  // 2. Fallback: resolve platform@link
+  // platform@link identifies the platform system hosting the deployment.
+  // Not identical to deployedSystems per SOSA, but useful when the server
+  // doesn't persist deployedSystems@link.
+  const platformLink = parentProps['platform@link']
+  if (platformLink?.href) {
+    try {
+      let path = platformLink.href
+      if (path.startsWith('http')) {
+        const idx = path.indexOf('/api/')
+        if (idx !== -1) path = path.substring(idx + 4)
+      }
+      const res = await apiFetch(path, { headers: { Accept: acceptType } })
+      if (res.ok && res.data && typeof res.data === 'object') {
+        return {
+          items: [res.data],
+          source: 'Server does not provide deployedSystems@link — resolved platform system via platform@link',
+        }
+      }
+    } catch { /* skip */ }
+  }
+
+  return { items: [], source: '' }
+}
+
 /** Fetch a single related resource collection (with filters and client-side fallback) */
 async function fetchRelation(link: RelatedResourceLink, parentId: string) {
   const state = getRelState(link.relation)
@@ -301,6 +357,19 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
     if (dtParam) applyTemporalFilter(options, link.childType, dtParam)
     if (supportsStatusFilter(link.childType) && state.currentStatus) {
       ;(options as any).currentStatus = state.currentStatus
+    }
+
+    // --- OGC 23-001 Table 43: deployedSystems is an inline property ---
+    // The standard maps deployedSystems to properties/deployedSystems@link,
+    // not to a sub-resource endpoint. Resolve from inline properties first.
+    if (props.resourceType === 'deployments' && link.relation === 'systems' && detail.value) {
+      const inlineResult = await resolveDeployedSystemsInline()
+      if (inlineResult.items.length > 0) {
+        state.items = inlineResult.items
+        state.clientSideFallbackDetails.push(inlineResult.source)
+        state.loading = false
+        return
+      }
     }
 
     const path = getNestedListUrl(props.resourceType, parentId, link.relation, options)
