@@ -673,11 +673,15 @@ async function fetchDetail(id?: string) {
   if (!res.ok) {
     // If the direct fetch fails (e.g. server only serves nested resources),
     // fall back to the resource data already passed from the list
-    if (props.resource) {
-      detail.value = props.resource
-    } else if (res.status === 404) {
-      error.value = 'Resource not found (HTTP 404). This entry may have been deleted but still appears in the listing due to a stale server index.'
+    if (res.status === 404) {
+      error.value = 'This resource no longer exists on the server (HTTP 404). It appears in the listing due to a stale server index — the data shown below is cached from the list and may be outdated.'
       errorSeverity.value = 'warn'
+      // Still show whatever we have from the list
+      if (props.resource) {
+        detail.value = props.resource
+      }
+    } else if (props.resource) {
+      detail.value = props.resource
     } else {
       error.value = res.error || 'Failed to fetch resource'
     }
@@ -752,7 +756,14 @@ function docIcon(doc: any): string {
       <p>Select a resource from the List tab, or enter an ID above to view its details.</p>
     </div>
 
-    <Message v-if="error" :severity="errorSeverity" :closable="false" class="mt-3">{{ error }}</Message>
+    <div v-if="error && errorSeverity === 'warn'" class="ghost-banner">
+      <i class="pi pi-exclamation-triangle"></i>
+      <div>
+        <strong>Ghost Resource</strong>
+        <p>{{ error }}</p>
+      </div>
+    </div>
+    <Message v-else-if="error" severity="error" :closable="false" class="mt-3">{{ error }}</Message>
 
     <div v-if="loading" class="loading">
       <ProgressSpinner style="width: 30px; height: 30px" />
@@ -1199,6 +1210,12 @@ function docIcon(doc: any): string {
 .manual-fetch label { font-weight: 600; font-size: 0.9rem; }
 .w-md { width: 300px; }
 .mt-3 { margin-top: 0.75rem; }
+/* Ghost resource warning banner */
+.ghost-banner { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 1rem; background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 10px; margin-bottom: 0.5rem; }
+.ghost-banner i { font-size: 1.4rem; color: #b45309; margin-top: 0.1rem; flex-shrink: 0; }
+.ghost-banner strong { font-size: 0.95rem; color: #92400e; }
+.ghost-banner p { margin: 0.25rem 0 0; font-size: 0.82rem; color: #78350f; line-height: 1.4; }
+
 .empty-hint { display: flex; align-items: center; gap: 0.5rem; color: #94a3b8; padding: 1.5rem 0; }
 .loading { display: flex; align-items: center; gap: 0.5rem; color: #64748b; }
 
