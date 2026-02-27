@@ -1,0 +1,56 @@
+{
+  "type": "PhysicalSystem",
+  "id": "04qg",
+  "uniqueId": "urn:os4csapi:system:odas:az-ma-1:comms",
+  "definition": "sosa:Platform",
+  "label": "AZ-MA-1 COMMS",
+  "description": "Communications module for AZ-MA-1. Provides mesh-network connectivity (Wi-Fi / Ethernet) between the edge processor and the central fusion node (AZ-MA-NET). Supports JSON socket output from ODAS for SST/SSL data relay.",
+  "keywords": [
+    "ODAS",
+    "C-UAS",
+    "acoustic detection",
+    "Ft. Huachuca",
+    "communications",
+    "mesh network",
+    "telemetry"
+  ],
+  "identifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/ShortName",
+      "label": "Short Name",
+      "value": "AZ-MA-1 Comms Module"
+    }
+  ],
+  "classifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/SensorType",
+      "label": "Component Type",
+      "value": "Communications Module"
+    }
+  ],
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    ".."
+  ],
+  "contacts": [
+    {
+      "role": "http://sensorml.com/ont/swe/property/Operator",
+      "organisationName": "IntRoLab \u2014 Universit\u00e9 de Sherbrooke",
+      "contactInfo": {
+        "website": "https://introlab.3it.usherbrooke.ca",
+        "address": {
+          "city": "Sherbrooke",
+          "administrativeArea": "QC",
+          "country": "Canada"
+        }
+      }
+    }
+  ],
+  "position": {
+    "type": "Point",
+    "coordinates": [
+      -110.272897,
+      31.663006
+    ]
+  }
+}

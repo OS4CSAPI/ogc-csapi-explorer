@@ -1,0 +1,19 @@
+{
+  "type": "PhysicalSystem",
+  "id": "04p0",
+  "uniqueId": "urn:os4csapi:platform:az-ma-1:tripod",
+  "definition": "sosa:Platform",
+  "label": "AZ-MA-1 Tripod Platform",
+  "description": "Portable aluminum survey-grade tripod platform for AZ-MA-1. Provides stable, leveled mounting at 1.5m height for the microphone array and associated electronics. Weather-resistant, rated for field deployment.",
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    ".."
+  ],
+  "position": {
+    "type": "Point",
+    "coordinates": [
+      -110.272897,
+      31.663006
+    ]
+  }
+}

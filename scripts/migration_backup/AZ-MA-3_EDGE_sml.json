@@ -1,0 +1,154 @@
+{
+  "type": "PhysicalSystem",
+  "id": "0570",
+  "uniqueId": "urn:os4csapi:system:odas:az-ma-3:edge",
+  "definition": "sosa:Platform",
+  "label": "AZ-MA-3 EDGE",
+  "description": "Edge compute module for AZ-MA-3. Runs the ODAS DSP pipeline (SSL \u2192 SST \u2192 LOB) on a low-power ARM/x86 SBC. Processes 7-channel 48 kHz audio in real-time and publishes results via JSON socket output.",
+  "keywords": [
+    "ODAS",
+    "C-UAS",
+    "acoustic detection",
+    "Ft. Huachuca",
+    "edge computing",
+    "embedded",
+    "DSP",
+    "SBC"
+  ],
+  "identifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/ShortName",
+      "label": "Short Name",
+      "value": "AZ-MA-3 Edge Processor"
+    }
+  ],
+  "classifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/SensorType",
+      "label": "Component Type",
+      "value": "Edge Compute Module"
+    },
+    {
+      "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+      "label": "Intended Application",
+      "value": "Real-time Acoustic DSP Processing"
+    }
+  ],
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    ".."
+  ],
+  "characteristics": [
+    {
+      "label": "Processing Characteristics",
+      "characteristics": [
+        {
+          "type": "Text",
+          "name": "runtime",
+          "definition": "http://sensorml.com/ont/swe/property/SoftwareType",
+          "label": "DSP Runtime",
+          "value": "ODAS odaslive (C, MIT license)"
+        },
+        {
+          "type": "Text",
+          "name": "os",
+          "definition": "http://sensorml.com/ont/swe/property/SoftwareType",
+          "label": "Operating System",
+          "value": "Linux (embedded)"
+        },
+        {
+          "type": "Count",
+          "name": "frame_size",
+          "definition": "http://sensorml.com/ont/swe/property/WindowSize",
+          "label": "FFT Frame Size",
+          "value": 256
+        },
+        {
+          "type": "Count",
+          "name": "hop_size",
+          "definition": "http://sensorml.com/ont/swe/property/StepSize",
+          "label": "Hop Size",
+          "value": 128
+        },
+        {
+          "type": "Quantity",
+          "name": "internal_rate",
+          "definition": "http://qudt.org/vocab/quantitykind/Frequency",
+          "label": "Internal Sample Rate",
+          "uom": {
+            "code": "Hz"
+          },
+          "value": 16000.0
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "role": "http://sensorml.com/ont/swe/property/Operator",
+      "organisationName": "IntRoLab \u2014 Universit\u00e9 de Sherbrooke",
+      "contactInfo": {
+        "website": "https://introlab.3it.usherbrooke.ca",
+        "address": {
+          "city": "Sherbrooke",
+          "administrativeArea": "QC",
+          "country": "Canada"
+        }
+      }
+    }
+  ],
+  "documents": [
+    {
+      "role": "http://dbpedia.org/resource/Software",
+      "name": "ODAS Library",
+      "description": "Open embeddeD Audition System \u2014 C library for SSL, SST, separation, post-filtering. MIT-licensed.",
+      "link": {
+        "href": "https://github.com/introlab/odas",
+        "type": "text/html"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Scientific_publication",
+      "name": "ODAS Paper",
+      "description": "Grondin et al. 'ODAS: Open embeddeD Audition System', Frontiers in Robotics and AI, Vol. 9, 2022.",
+      "link": {
+        "href": "https://www.frontiersin.org/article/10.3389/frobt.2022.854444",
+        "type": "text/html"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Scientific_publication",
+      "name": "SSL/SST Methods Paper",
+      "description": "Grondin & Michaud 'Lightweight and Optimized Sound Source Localization and Tracking Methods', Robotics and Autonomous Systems, 2019.",
+      "link": {
+        "href": "https://arxiv.org/pdf/1812.00115",
+        "type": "application/pdf"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Web_page",
+      "name": "ODAS Wiki \u2014 Configuration",
+      "description": "Configuration reference for microphone geometry, SSL, SST, SSS, and classification parameters.",
+      "link": {
+        "href": "https://github.com/introlab/odas/wiki/Configuration",
+        "type": "text/html"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Video",
+      "name": "ODAS Demonstration Video",
+      "description": "Live demonstration of ODAS sound source localization and tracking.",
+      "link": {
+        "href": "https://youtu.be/n7y2rLAnd5I",
+        "type": "text/html"
+      }
+    }
+  ],
+  "position": {
+    "type": "Point",
+    "coordinates": [
+      -110.2725,
+      31.6622
+    ]
+  }
+}
