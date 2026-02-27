@@ -17,14 +17,17 @@ import os4csapiIcon from './assets/os4csapi-logo.svg'
           <i class="pi pi-check-circle"></i>
           {{ connection.label }}
         </span>
+        <router-link to="/smoke-test" class="nav-link">
+          <i class="pi pi-bolt"></i> Smoke Test
+        </router-link>
+        <router-link to="/demo" class="nav-link">
+          <i class="pi pi-play"></i> Demo
+        </router-link>
         <router-link to="/explore/systems" class="nav-link">
           <i class="pi pi-th-large"></i> Explorer
         </router-link>
         <router-link to="/map" class="nav-link">
           <i class="pi pi-map"></i> Map
-        </router-link>
-        <router-link to="/smoke-test" class="nav-link">
-          <i class="pi pi-bolt"></i> Smoke Test
         </router-link>
       </template>
       <router-link to="/" class="nav-link">

@@ -36,6 +36,12 @@ const loading = ref(false)
 const error = ref('')
 const detail = ref<any>(null)
 
+/** SensorML metadata fetched separately for systems (keywords, identifiers, etc.) */
+const smlMeta = ref<any>(null)
+
+/** True when viewing a system — triggers SensorML metadata fetch */
+const isSystem = computed(() => props.resourceType === 'systems')
+
 /** True when viewing a datastream — triggers schema display */
 const isDatastream = computed(() => props.resourceType === 'datastreams')
 /** True when viewing a control stream — triggers command schema display */
@@ -550,6 +556,18 @@ async function fetchDetail(id?: string) {
     detail.value = res.data
   }
 
+  // For systems, also fetch SensorML metadata (keywords, identifiers, contacts, etc.)
+  smlMeta.value = null
+  if (isSystem.value && detail.value) {
+    const smlPath = getDetailUrl(props.resourceType, String(useId)) + '?f=sml3'
+    const smlRes = await apiFetch(smlPath, {
+      headers: { 'Accept': 'application/sml+json' },
+    })
+    if (smlRes.ok && smlRes.data) {
+      smlMeta.value = smlRes.data
+    }
+  }
+
   // Auto-fetch related resources if we have a detail to show
   if (detail.value) {
     const resId = detail.value?.id || detail.value?.properties?.id
@@ -566,6 +584,17 @@ watch(
   },
   { immediate: true }
 )
+
+/** Choose an icon class for a SensorML document entry based on role/type */
+function docIcon(doc: any): string {
+  const role = doc.role || ''
+  const type = doc.link?.type || ''
+  if (type.startsWith('image/') || role.includes('Photograph')) return 'pi pi-image'
+  if (role.includes('Video')) return 'pi pi-video'
+  if (type === 'application/pdf' || role.includes('publication')) return 'pi pi-file-pdf'
+  if (role.includes('Software')) return 'pi pi-github'
+  return 'pi pi-external-link'
+}
 </script>
 
 <template>
@@ -589,6 +618,154 @@ watch(
     </div>
 
     <template v-if="detail">
+      <!-- Resource Summary Header -->
+      <div class="resource-summary" v-if="detail.properties?.name || detail.name || detail.properties?.description || detail.description">
+        <h3 class="resource-name">
+          {{ detail.properties?.name || detail.name || '' }}
+          <span v-if="detail.properties?.featureType || detail.featureType" class="feature-type-badge">
+            {{ (detail.properties?.featureType || detail.featureType || '').replace('http://www.w3.org/ns/', '').replace('sosa:', 'sosa:') }}
+          </span>
+        </h3>
+        <p v-if="detail.properties?.description || detail.description" class="resource-description">
+          {{ detail.properties?.description || detail.description }}
+        </p>
+        <div class="resource-meta">
+          <span v-if="detail.properties?.uid || detail.uid" class="meta-item" title="Unique Identifier">
+            <i class="pi pi-key"></i> {{ detail.properties?.uid || detail.uid }}
+          </span>
+          <span v-if="detail.properties?.assetType || detail.assetType" class="meta-item" title="Asset Type">
+            <i class="pi pi-tag"></i> {{ detail.properties?.assetType || detail.assetType }}
+          </span>
+          <span v-if="detail.properties?.validTime" class="meta-item" title="Valid Time">
+            <i class="pi pi-clock"></i>
+            {{ Array.isArray(detail.properties.validTime)
+              ? detail.properties.validTime[0] + ' → ' + (detail.properties.validTime[1] === '..' ? 'ongoing' : detail.properties.validTime[1])
+              : detail.properties.validTime }}
+          </span>
+          <span v-if="detail.geometry?.type" class="meta-item" title="Geometry">
+            <i class="pi pi-map-marker"></i> {{ detail.geometry.type }}
+            <template v-if="detail.geometry.coordinates">
+              ({{ detail.geometry.coordinates[1]?.toFixed?.(4) ?? '' }}°, {{ detail.geometry.coordinates[0]?.toFixed?.(4) ?? '' }}°)
+            </template>
+          </span>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           SensorML Metadata Panels (systems only, fetched via ?f=sml3)
+           ═══════════════════════════════════════════════════════════ -->
+      <div v-if="smlMeta" class="sml-meta-grid">
+
+        <!-- Keywords -->
+        <div v-if="smlMeta.keywords?.length" class="sml-card">
+          <div class="sml-card-header"><i class="pi pi-tags"></i> Keywords</div>
+          <div class="sml-card-body sml-keywords">
+            <span v-for="kw in smlMeta.keywords" :key="kw" class="sml-keyword">{{ kw }}</span>
+          </div>
+        </div>
+
+        <!-- Identifiers -->
+        <div v-if="smlMeta.identifiers?.length" class="sml-card">
+          <div class="sml-card-header"><i class="pi pi-id-card"></i> Identifiers</div>
+          <div class="sml-card-body">
+            <table class="sml-table">
+              <tbody>
+                <tr v-for="ident in smlMeta.identifiers" :key="ident.label">
+                  <td class="sml-table-label">{{ ident.label }}</td>
+                  <td>{{ ident.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Classifiers -->
+        <div v-if="smlMeta.classifiers?.length" class="sml-card">
+          <div class="sml-card-header"><i class="pi pi-sitemap"></i> Classifiers</div>
+          <div class="sml-card-body sml-classifiers">
+            <div v-for="cls in smlMeta.classifiers" :key="cls.label" class="sml-classifier">
+              <span class="sml-classifier-label">{{ cls.label }}</span>
+              <span class="sml-classifier-value">{{ cls.value }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents (including images) -->
+        <div v-if="smlMeta.documents?.length" class="sml-card sml-card-wide">
+          <div class="sml-card-header"><i class="pi pi-file"></i> Documents</div>
+          <div class="sml-card-body sml-documents">
+            <div v-for="(doc, i) in smlMeta.documents" :key="i" class="sml-doc">
+              <!-- Image preview for photographs -->
+              <div v-if="doc.link?.type?.startsWith('image/')" class="sml-doc-image">
+                <img :src="doc.link.href" :alt="doc.name || 'Photo'" loading="lazy" />
+              </div>
+              <div class="sml-doc-info">
+                <a v-if="doc.link?.href" :href="doc.link.href" target="_blank" rel="noopener" class="sml-doc-link">
+                  <i :class="docIcon(doc)"></i>
+                  {{ doc.name || doc.link.href }}
+                </a>
+                <span v-else class="sml-doc-name">{{ doc.name }}</span>
+                <span v-if="doc.description" class="sml-doc-desc">{{ doc.description }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contacts -->
+        <div v-if="smlMeta.contacts?.length" class="sml-card">
+          <div class="sml-card-header"><i class="pi pi-users"></i> Contacts</div>
+          <div class="sml-card-body">
+            <div v-for="(ct, i) in smlMeta.contacts" :key="i" class="sml-contact">
+              <div class="sml-contact-name">{{ ct.organisationName || ct.individualName || 'Contact' }}</div>
+              <div v-if="ct.role" class="sml-contact-role">{{ ct.role.split('/').pop() }}</div>
+              <a v-if="ct.contactInfo?.website" :href="ct.contactInfo.website" target="_blank" rel="noopener" class="sml-contact-web">
+                <i class="pi pi-external-link"></i> {{ ct.contactInfo.website }}
+              </a>
+              <div v-if="ct.contactInfo?.address" class="sml-contact-addr">
+                {{ [ct.contactInfo.address.city, ct.contactInfo.address.administrativeArea, ct.contactInfo.address.country].filter(Boolean).join(', ') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Characteristics -->
+        <div v-if="smlMeta.characteristics?.length" class="sml-card sml-card-wide">
+          <div class="sml-card-header"><i class="pi pi-sliders-h"></i> Characteristics</div>
+          <div class="sml-card-body">
+            <div v-for="(group, gi) in smlMeta.characteristics" :key="gi" class="sml-prop-group">
+              <div v-if="group.label" class="sml-prop-group-label">{{ group.label }}</div>
+              <table class="sml-table">
+                <tbody>
+                  <tr v-for="ch in group.characteristics" :key="ch.name">
+                    <td class="sml-table-label">{{ ch.label || ch.name }}</td>
+                    <td>{{ ch.value }}<span v-if="ch.uom?.code" class="sml-uom"> {{ ch.uom.code }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Capabilities -->
+        <div v-if="smlMeta.capabilities?.length" class="sml-card sml-card-wide">
+          <div class="sml-card-header"><i class="pi pi-chart-bar"></i> Capabilities</div>
+          <div class="sml-card-body">
+            <div v-for="(group, gi) in smlMeta.capabilities" :key="gi" class="sml-prop-group">
+              <div v-if="group.label" class="sml-prop-group-label">{{ group.label }}</div>
+              <table class="sml-table">
+                <tbody>
+                  <tr v-for="cap in group.capabilities" :key="cap.name">
+                    <td class="sml-table-label">{{ cap.label || cap.name }}</td>
+                    <td>{{ cap.value }}<span v-if="cap.uom?.code" class="sml-uom"> {{ cap.uom.code }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- Parent navigation breadcrumbs -->
       <div v-if="parentLinks.length > 0" class="parent-nav">
         <i class="pi pi-arrow-up parent-nav-icon"></i>
@@ -811,6 +988,15 @@ watch(
 <style scoped>
 .resource-detail { display: flex; flex-direction: column; gap: 0.75rem; }
 
+/* Resource Summary */
+.resource-summary { background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #86efac; border-radius: 10px; padding: 0.85rem 1rem; }
+.resource-name { margin: 0 0 0.3rem; font-size: 1.05rem; font-weight: 700; color: #14532d; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.feature-type-badge { font-size: 0.65rem; font-weight: 600; background: #166534; color: #fff; padding: 0.1rem 0.45rem; border-radius: 999px; white-space: nowrap; }
+.resource-description { margin: 0 0 0.5rem; font-size: 0.82rem; color: #374151; line-height: 1.45; }
+.resource-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.meta-item { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; color: #4b5563; background: #fff; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.15rem 0.45rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px; }
+.meta-item .pi { font-size: 0.65rem; color: #166534; }
+
 /* Related resources grid */
 .relations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.6rem; }
 .relation-card { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
@@ -892,4 +1078,53 @@ watch(
 .links-table th, .links-table td { padding: 0.35rem 0.5rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
 .links-table th { background: #f8fafc; font-weight: 600; }
 .href-cell { font-family: monospace; font-size: 0.75rem; word-break: break-all; }
+
+/* ═══ SensorML Metadata Grid ═══ */
+.sml-meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.6rem; }
+.sml-card { background: #fafbff; border: 1px solid #c7d2fe; border-radius: 8px; overflow: hidden; }
+.sml-card-wide { grid-column: 1 / -1; }
+.sml-card-header { display: flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.65rem; font-weight: 700; font-size: 0.78rem; color: #4338ca; background: #eef2ff; border-bottom: 1px solid #c7d2fe; user-select: none; }
+.sml-card-body { padding: 0.5rem 0.65rem; }
+
+/* Keywords */
+.sml-keywords { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.sml-keyword { display: inline-block; font-size: 0.7rem; font-weight: 500; background: #e0e7ff; color: #3730a3; padding: 0.12rem 0.45rem; border-radius: 999px; white-space: nowrap; }
+
+/* Classifiers */
+.sml-classifiers { display: flex; flex-direction: column; gap: 0.35rem; }
+.sml-classifier { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.sml-classifier-label { font-size: 0.7rem; font-weight: 600; color: #6366f1; white-space: nowrap; }
+.sml-classifier-value { font-size: 0.75rem; color: #1e1b4b; background: #e0e7ff; padding: 0.1rem 0.4rem; border-radius: 4px; }
+
+/* Table for identifiers, characteristics, capabilities */
+.sml-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.sml-table td { padding: 0.22rem 0.4rem; border-bottom: 1px solid #e5e7eb; }
+.sml-table tr:last-child td { border-bottom: none; }
+.sml-table-label { font-weight: 600; color: #4338ca; white-space: nowrap; width: 1%; }
+.sml-uom { font-size: 0.65rem; color: #6366f1; margin-left: 0.2rem; }
+
+/* Property group (characteristics / capabilities) */
+.sml-prop-group { margin-bottom: 0.4rem; }
+.sml-prop-group:last-child { margin-bottom: 0; }
+.sml-prop-group-label { font-size: 0.7rem; font-weight: 700; color: #4338ca; margin-bottom: 0.2rem; padding-bottom: 0.15rem; border-bottom: 1px dashed #c7d2fe; }
+
+/* Documents */
+.sml-documents { display: flex; flex-direction: column; gap: 0.5rem; }
+.sml-doc { display: flex; gap: 0.6rem; align-items: flex-start; }
+.sml-doc-image { flex-shrink: 0; width: 120px; height: 80px; border-radius: 6px; overflow: hidden; border: 1px solid #c7d2fe; }
+.sml-doc-image img { width: 100%; height: 100%; object-fit: cover; }
+.sml-doc-info { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.sml-doc-link { font-size: 0.78rem; font-weight: 600; color: #4338ca; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; }
+.sml-doc-link:hover { text-decoration: underline; color: #3730a3; }
+.sml-doc-name { font-size: 0.78rem; font-weight: 600; color: #1e1b4b; }
+.sml-doc-desc { font-size: 0.7rem; color: #6b7280; line-height: 1.35; }
+
+/* Contacts */
+.sml-contact { padding: 0.35rem 0; border-bottom: 1px solid #e5e7eb; }
+.sml-contact:last-child { border-bottom: none; }
+.sml-contact-name { font-size: 0.78rem; font-weight: 700; color: #1e1b4b; }
+.sml-contact-role { font-size: 0.68rem; color: #6366f1; font-weight: 500; }
+.sml-contact-web { font-size: 0.7rem; color: #4338ca; text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem; }
+.sml-contact-web:hover { text-decoration: underline; }
+.sml-contact-addr { font-size: 0.68rem; color: #6b7280; }
 </style>
