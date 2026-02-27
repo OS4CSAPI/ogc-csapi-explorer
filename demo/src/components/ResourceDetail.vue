@@ -31,10 +31,22 @@ const props = defineProps<{
   nestedParentId?: string | null
 }>()
 
+const emit = defineEmits<{
+  /** Notify parent when in-place navigation changes the viewed resource */
+  (e: 'selectResource', id: string): void
+}>()
+
 const manualId = ref('')
 const loading = ref(false)
 const error = ref('')
 const detail = ref<any>(null)
+
+/**
+ * When the user clicks a same-type related item (e.g. subsystem),
+ * store the current detail as the "in-place parent" so we can
+ * render a back-link to it in parentLinks.
+ */
+const inPlaceParent = ref<{ id: string; name: string; resourceType: string } | null>(null)
 
 /** SensorML metadata fetched separately for systems (keywords, identifiers, etc.) */
 const smlMeta = ref<any>(null)
@@ -415,9 +427,18 @@ function viewRelatedItem(link: RelatedResourceLink, item: any) {
   if (id === '—') return
 
   if (link.childType === props.resourceType) {
-    // Same type (e.g. subsystems) — reload detail in-place
+    // Same type (e.g. subsystems) — reload detail in-place.
+    // Save the current detail as the in-place parent so the
+    // new detail page has a back-link.
+    if (detail.value) {
+      const curId = detail.value?.id || detail.value?.properties?.id || props.resourceId
+      const curName = detail.value?.properties?.name || detail.value?.name || String(curId)
+      inPlaceParent.value = { id: String(curId), name: curName, resourceType: props.resourceType }
+    }
     manualId.value = ''
     fetchDetail(id)
+    // Let the parent panel know so selectedResourceId stays in sync
+    emit('selectResource', id)
   } else {
     // Different type — navigate directly to that item's detail view
     router.push({
@@ -460,6 +481,8 @@ interface ParentLink {
   resourceType: string
   resourceId: string
   icon: string
+  /** Friendly name of the parent (when known, e.g. from in-place navigation) */
+  name?: string
 }
 
 /** Extract navigable parent references from the raw detail JSON cross-reference fields */
@@ -516,6 +539,21 @@ const parentLinks = computed<ParentLink[]>(() => {
         resourceType: props.nestedParentType,
         resourceId: props.nestedParentId,
         icon: typeInfo.icon,
+      })
+    }
+  }
+
+  // In-place parent: when the user drilled into a same-type child (e.g.
+  // parent system → subsystem), show a back-link to the parent they came from.
+  if (inPlaceParent.value && !seen.has(inPlaceParent.value.resourceType + ':' + inPlaceParent.value.id)) {
+    const typeInfo = getResourceType(inPlaceParent.value.resourceType)
+    if (typeInfo) {
+      links.push({
+        label: `Parent ${typeInfo.label}`,
+        resourceType: inPlaceParent.value.resourceType,
+        resourceId: inPlaceParent.value.id,
+        icon: typeInfo.icon,
+        name: inPlaceParent.value.name,
       })
     }
   }
@@ -580,7 +618,11 @@ async function fetchDetail(id?: string) {
 watch(
   () => props.resourceId,
   (id) => {
-    if (id) fetchDetail(id)
+    if (id) {
+      // Clear in-place parent when the selection comes from outside (list click, etc.)
+      inPlaceParent.value = null
+      fetchDetail(id)
+    }
   },
   { immediate: true }
 )
@@ -772,12 +814,13 @@ function docIcon(doc: any): string {
         <span class="parent-nav-label">Parent:</span>
         <button
           v-for="parent in parentLinks"
-          :key="parent.resourceType"
+          :key="parent.resourceType + ':' + parent.resourceId"
           class="parent-link"
           @click="navigateToParent(parent)"
         >
           <i :class="parent.icon"></i>
           {{ parent.label }}
+          <template v-if="parent.name"> — {{ parent.name }}</template>
           <code>{{ parent.resourceId }}</code>
           <i class="pi pi-arrow-up-right parent-link-arrow"></i>
         </button>
