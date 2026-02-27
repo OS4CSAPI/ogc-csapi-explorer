@@ -106,6 +106,11 @@ const enrichedCounts = ref<Record<string, number>>({})
 // Bounding box filter state
 const bboxFilter = ref<[number, number, number, number] | null>(null)
 const drawingBbox = ref(false)
+
+// Keyword and datetime filters
+const keywordFilter = ref('')
+const dtStart = ref('')
+const dtEnd = ref('')
 let drawInteraction: Draw | null = null
 const bboxSource = new VectorSource()
 const bboxLayer = new VectorLayer({
@@ -323,6 +328,20 @@ function createOlFeature(item: any, resourceType: string): Feature | null {
   return feature
 }
 
+/** Build the common query options from all active filters */
+function buildQueryOptions(extraLimit = 200): Record<string, any> {
+  const opts: Record<string, any> = { limit: extraLimit, bbox: bboxFilter.value ?? undefined }
+  if (keywordFilter.value.trim()) opts.q = keywordFilter.value.trim()
+  if (dtStart.value || dtEnd.value) {
+    const s = dtStart.value ? new Date(dtStart.value) : undefined
+    const e = dtEnd.value ? new Date(dtEnd.value) : undefined
+    if (s && e) opts.datetime = { start: s, end: e }
+    else if (s) opts.datetime = { start: s }
+    else if (e) opts.datetime = { end: e }
+  }
+  return opts
+}
+
 async function loadResourceType(resourceType: string): Promise<number> {
   const source = vectorSources[resourceType]
   if (!source) return 0
@@ -330,7 +349,7 @@ async function loadResourceType(resourceType: string): Promise<number> {
   source.clear()
 
   try {
-    const url = getListUrl(resourceType, { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const url = getListUrl(resourceType, buildQueryOptions())
     // Request geo+json so servers return GeoJSON features with geometry
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
@@ -670,7 +689,7 @@ async function enrichSystems(): Promise<void> {
   // We need to know which systems were loaded but have no geometry on the map.
   // Re-fetch the raw items list to check which have null geometry.
   try {
-    const url = getListUrl('systems', { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const url = getListUrl('systems', buildQueryOptions())
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -715,7 +734,7 @@ async function enrichDeployments(): Promise<void> {
   if (!source) return
 
   try {
-    const url = getListUrl('deployments', { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const url = getListUrl('deployments', buildQueryOptions())
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -825,7 +844,7 @@ async function loadDatastreams(): Promise<void> {
   source.clear()
   let count = 0
   try {
-    const url = getListUrl('datastreams', { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const url = getListUrl('datastreams', buildQueryOptions())
     const res = await apiFetch(url)
     let items: any[] = (res.ok && res.data) ? (res.data.items || []) : []
 
@@ -882,7 +901,7 @@ async function loadControlStreams(): Promise<void> {
   source.clear()
   let count = 0
   try {
-    const url = getListUrl('controlStreams', { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const url = getListUrl('controlStreams', buildQueryOptions())
     const res = await apiFetch(url)
     let items: any[] = (res.ok && res.data) ? (res.data.items || []) : []
 
@@ -1302,6 +1321,17 @@ function clearBbox() {
   drawingBbox.value = false
 }
 
+function clearAllFilters() {
+  keywordFilter.value = ''
+  dtStart.value = ''
+  dtEnd.value = ''
+  clearBbox()
+}
+
+const hasAnyFilter = computed(() =>
+  !!keywordFilter.value.trim() || !!dtStart.value || !!dtEnd.value || !!bboxFilter.value
+)
+
 function toggleLayer(key: string) {
   activeLayers.value[key] = !activeLayers.value[key]
   const layer = vectorLayers[key]
@@ -1572,47 +1602,81 @@ async function createTestFeature() {
         </template>
       </div>
 
+      <!-- Filters section -->
+      <div class="filter-section">
+        <div class="filter-section-label">
+          <i class="pi pi-filter"></i> Filters
+          <button v-if="hasAnyFilter" class="clear-all-btn" @click="clearAllFilters" :disabled="loading" title="Clear all filters">
+            <i class="pi pi-times"></i> Clear all
+          </button>
+        </div>
+
+        <!-- Keyword filter -->
+        <div class="filter-item">
+          <label class="filter-label">Keyword (q)</label>
+          <input
+            v-model="keywordFilter"
+            type="text"
+            placeholder="e.g. acoustic, camera"
+            class="filter-input"
+            @keyup.enter="loadAllResources"
+          />
+        </div>
+
+        <!-- Temporal filter -->
+        <div class="filter-item">
+          <label class="filter-label">Date/time start</label>
+          <input
+            v-model="dtStart"
+            type="datetime-local"
+            class="filter-input"
+          />
+        </div>
+        <div class="filter-item">
+          <label class="filter-label">Date/time end</label>
+          <input
+            v-model="dtEnd"
+            type="datetime-local"
+            class="filter-input"
+          />
+        </div>
+
+        <!-- Bbox spatial filter -->
+        <div class="filter-item">
+          <label class="filter-label">Spatial (bbox)</label>
+          <div class="bbox-controls">
+            <button
+              :class="['bbox-draw-btn', { active: drawingBbox }]"
+              @click="drawingBbox ? clearBbox() : startDrawBbox()"
+              :disabled="loading"
+            >
+              <i :class="drawingBbox ? 'pi pi-times' : 'pi pi-stop'"></i>
+              {{ drawingBbox ? 'Cancel' : 'Draw Bbox' }}
+            </button>
+            <template v-if="bboxFilter">
+              <div class="bbox-active">
+                <i class="pi pi-check-circle" style="color: #10b981;"></i>
+                <span class="bbox-label">Bbox set</span>
+                <button class="bbox-clear" @click="clearBbox" :disabled="loading" title="Clear bbox">
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+              <div class="bbox-coords">
+                {{ bboxFilter[0].toFixed(3) }}, {{ bboxFilter[1].toFixed(3) }} &rarr;
+                {{ bboxFilter[2].toFixed(3) }}, {{ bboxFilter[3].toFixed(3) }}
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
       <!-- Primary Search button -->
       <button class="search-btn" @click="loadAllResources" :disabled="loading">
         <i :class="loading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"></i>
         {{ hasSearched ? 'Search Again' : 'Search' }}
       </button>
 
-      <!-- Bbox spatial filter -->
-      <div class="bbox-controls">
-        <button
-          :class="['bbox-draw-btn', { active: drawingBbox }]"
-          @click="drawingBbox ? clearBbox() : startDrawBbox()"
-          :disabled="loading"
-        >
-          <i :class="drawingBbox ? 'pi pi-times' : 'pi pi-stop'"></i>
-          {{ drawingBbox ? 'Cancel' : 'Draw Bbox Filter' }}
-        </button>
-        <template v-if="bboxFilter">
-          <div class="bbox-active">
-            <i class="pi pi-filter"></i>
-            <span class="bbox-label">Bbox active</span>
-            <button class="bbox-clear" @click="clearBbox" :disabled="loading" title="Clear filter">
-              <i class="pi pi-times"></i>
-            </button>
-          </div>
-          <div class="bbox-coords">
-            {{ bboxFilter[0].toFixed(3) }}, {{ bboxFilter[1].toFixed(3) }} &rarr;
-            {{ bboxFilter[2].toFixed(3) }}, {{ bboxFilter[3].toFixed(3) }}
-          </div>
-        </template>
-      </div>
-
       <!-- Empty state message -->
-      <!-- Initial state: prompt user to search -->
-      <div v-if="!loading && !hasSearched" class="empty-state initial-state">
-        <i class="pi pi-search" style="font-size: 1.5rem; color: #3b82f6;"></i>
-        <p><strong>Ready to search</strong></p>
-        <p class="empty-detail">
-          Optionally draw a <strong>Bbox Filter</strong> below to limit results to a geographic area, then press <strong>Search</strong>.
-        </p>
-      </div>
-
       <div v-if="!loading && hasSearched && totalFeatures === 0" class="empty-state">
         <i class="pi pi-map-marker" style="font-size: 1.5rem; color: #94a3b8;"></i>
         <p><strong>No features with geometry found</strong></p>
@@ -1855,10 +1919,69 @@ async function createTestFeature() {
   cursor: not-allowed;
 }
 
-.initial-state {
-  background: #eff6ff !important;
-  border-color: #bfdbfe !important;
-  color: #1e40af !important;
+.filter-section {
+  margin: 0.5rem 0.75rem;
+  padding: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.filter-section-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.clear-all-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 0.7rem;
+  color: #ef4444;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+}
+
+.clear-all-btn:hover {
+  background: #fee2e2;
+}
+
+.filter-item {
+  margin-bottom: 0.4rem;
+}
+
+.filter-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-bottom: 0.15rem;
+}
+
+.filter-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: #1e293b;
+  background: #fff;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
 }
 
 .empty-state {
