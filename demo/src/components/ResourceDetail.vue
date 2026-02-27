@@ -541,8 +541,9 @@ const parentLinks = computed<ParentLink[]>(() => {
   if (props.nestedParentType && props.nestedParentId && !seen.has(props.nestedParentType)) {
     const typeInfo = getResourceType(props.nestedParentType)
     if (typeInfo) {
+      const isSameType = props.nestedParentType === props.resourceType
       links.push({
-        label: typeInfo.label,
+        label: isSameType ? `Parent ${typeInfo.label}` : typeInfo.label,
         resourceType: props.nestedParentType,
         resourceId: props.nestedParentId,
         icon: typeInfo.icon,

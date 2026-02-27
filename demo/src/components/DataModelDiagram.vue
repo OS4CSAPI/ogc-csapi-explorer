@@ -644,9 +644,15 @@ function navigateToParentSystem() {
 
 /** Navigate into a subsystem from the cluster */
 function navigateToSubsystem(subId: string) {
+  if (!props.activeId) return
   router.push({
     path: `/explore/systems`,
-    query: { resourceId: subId },
+    query: {
+      parentType: 'systems',
+      parentId: props.activeId,
+      relation: 'subsystems',
+      resourceId: subId,
+    },
   })
 }
 
