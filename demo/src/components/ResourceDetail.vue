@@ -48,6 +48,11 @@ const detail = ref<any>(null)
  */
 const inPlaceParent = ref<{ id: string; name: string; resourceType: string } | null>(null)
 
+/** Guard: when true, the next props.resourceId watcher invocation came from
+ *  an in-place drill-down (viewRelatedItem) and should NOT clear inPlaceParent
+ *  or re-fetch (fetchDetail was already called directly). */
+let _inPlaceNavActive = false
+
 /** SensorML metadata fetched separately for systems (keywords, identifiers, etc.) */
 const smlMeta = ref<any>(null)
 
@@ -436,6 +441,8 @@ function viewRelatedItem(link: RelatedResourceLink, item: any) {
       inPlaceParent.value = { id: String(curId), name: curName, resourceType: props.resourceType }
     }
     manualId.value = ''
+    // Set guard so the watcher (triggered by the emit) doesn't clear inPlaceParent
+    _inPlaceNavActive = true
     fetchDetail(id)
     // Let the parent panel know so selectedResourceId stays in sync
     emit('selectResource', id)
@@ -619,7 +626,13 @@ watch(
   () => props.resourceId,
   (id) => {
     if (id) {
-      // Clear in-place parent when the selection comes from outside (list click, etc.)
+      if (_inPlaceNavActive) {
+        // This prop change came from an in-place drill-down (viewRelatedItem
+        // already called fetchDetail and set inPlaceParent) — skip.
+        _inPlaceNavActive = false
+        return
+      }
+      // External selection (list click, URL nav, etc.) — clear in-place parent
       inPlaceParent.value = null
       fetchDetail(id)
     }
