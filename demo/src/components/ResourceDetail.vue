@@ -406,29 +406,29 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
       // The server may support the collection-level `parent` query parameter
       // instead.  Try deployments?parent={id} as a fallback.
       // CAVEAT: Some servers ignore the ?parent= value entirely and return
-      // ALL deployments that have any parent.  We detect this by checking
-      // whether the response includes the queried deployment ITSELF — a
-      // deployment cannot be its own subdeployment.
+      // ALL deployments that have any parent.  We detect this with a probe:
+      // query ?parent=<nonsense>&limit=1 — if it returns items, the filter
+      // is a no-op and the results are unreliable.
       if (resultItems.length === 0
           && props.resourceType === 'deployments'
           && link.relation === 'subdeployments') {
         try {
-          const fallbackPath = `/deployments?parent=${encodeURIComponent(parentId)}`
-          const fbAccept = getContentType('deployments')
-          const fbRes = await apiFetch(fallbackPath, { headers: { Accept: fbAccept } })
-          if (fbRes.ok && fbRes.data) {
-            const fbParsed = parseCollectionResponse(fbRes.data)
-            const rawFbItems = fbParsed.items as any[]
-            // Detect broken filter: if the response includes the deployment
-            // itself, the server is ignoring the parent value — discard.
-            const selfIncluded = rawFbItems.some((it: any) => {
-              const id = it?.id || it?.properties?.id
-              return id && String(id) === String(parentId)
-            })
-            if (!selfIncluded) {
-              const fbItems = rawFbItems.filter((it: any) => {
+          // Probe: test if ?parent= filter actually works
+          const probeAccept = getContentType('deployments')
+          const probeRes = await apiFetch('/deployments?parent=__csapi_probe__&limit=1', { headers: { Accept: probeAccept } })
+          const probeItems = probeRes.ok
+            ? (parseCollectionResponse(probeRes.data).items as any[])
+            : []
+          if (probeItems.length === 0) {
+            // Filter appears functional — proceed with real query
+            const fallbackPath = `/deployments?parent=${encodeURIComponent(parentId)}`
+            const fbAccept = getContentType('deployments')
+            const fbRes = await apiFetch(fallbackPath, { headers: { Accept: fbAccept } })
+            if (fbRes.ok && fbRes.data) {
+              const fbParsed = parseCollectionResponse(fbRes.data)
+              const fbItems = (fbParsed.items as any[]).filter((it: any) => {
                 const id = it?.id || it?.properties?.id
-                return id && id !== parentId
+                return id && String(id) !== String(parentId)
               })
               if (fbItems.length > 0) {
                 resultItems = fbItems

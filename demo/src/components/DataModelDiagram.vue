@@ -418,39 +418,37 @@ async function fetchCounts() {
         // /deployments/{id}/subdeployments but track parentage only via
         // the collection-level ?parent= query parameter.
         // CAVEAT: Some servers ignore the ?parent= value entirely and return
-        // ALL deployments that have any parent.  We detect this by checking
-        // whether the response includes the queried deployment ITSELF — a
-        // deployment cannot be its own subdeployment.
+        // ALL deployments that have any parent.  We detect this with a probe:
+        // query ?parent=<nonsense>&limit=1 — if it returns items, the filter
+        // is a no-op and the results are unreliable.
         if (count === 0 && isSelfHierarchy
             && parentType === 'deployments' && rel.relation === 'subdeployments') {
           try {
-            const fbPath = `/deployments?parent=${encodeURIComponent(parentId)}&limit=8`
-            const fbRes = await apiFetch(fbPath)
+            // Probe: test if ?parent= filter actually works
+            const probeRes = await apiFetch('/deployments?parent=__csapi_probe__&limit=1')
             if (gen !== fetchGeneration) return
-            if (fbRes.ok && fbRes.data) {
-              const rawItems = fbRes.data?.items || fbRes.data?.features || []
-              // Detect broken filter: if the response includes the deployment
-              // itself as a "child", the server is ignoring the parent value.
-              const selfIncluded = rawItems.some((it: any) => {
-                const id = it?.id || it?.properties?.id
-                return id && String(id) === String(parentId)
-              })
-              if (!selfIncluded) {
-                const fbItems = rawItems.filter((it: any) => {
-                  const id = it?.id || it?.properties?.id
-                  return id && id !== parentId
-                })
+            const probeItems = probeRes.ok ? (probeRes.data?.items || probeRes.data?.features || []) : []
+            if (probeItems.length > 0) {
+              // Filter is broken — returns items for a nonexistent parent.
+              // Cannot trust ?parent= results; skip fallback.
+            } else {
+              const fbPath = `/deployments?parent=${encodeURIComponent(parentId)}&limit=8`
+              const fbRes = await apiFetch(fbPath)
+              if (gen !== fetchGeneration) return
+              if (fbRes.ok && fbRes.data) {
+                const fbItems = (fbRes.data?.items || fbRes.data?.features || [])
+                  .filter((it: any) => {
+                    const id = it?.id || it?.properties?.id
+                    return id && String(id) !== String(parentId)
+                  })
                 if (fbItems.length > 0) {
                   count = fbItems.length
-                  // Check if server reports more via numberMatched (minus self)
                   if (fbRes.data?.numberMatched != null) {
                     const serverTotal = fbRes.data.numberMatched
                     count = serverTotal > count ? serverTotal : count
-                    // Subtract self if server included it
-                    const rawLen = rawItems.length
+                    const rawLen = (fbRes.data?.items || fbRes.data?.features || []).length
                     if (rawLen > fbItems.length) count = Math.max(0, count - (rawLen - fbItems.length))
                   }
-                  // Populate self-hierarchy cluster from fallback items
                   selfChildItems.value = fbItems.map((it: any) => ({
                     id: String(it?.id || it?.properties?.id || ''),
                     name: it?.properties?.name || it?.name || String(it?.id || ''),
