@@ -583,8 +583,13 @@ const parentLinks = computed<ParentLink[]>(() => {
   }
 
   // Nested navigation context (e.g., sampling features under a system, procedures under a system)
-  // Add if the parent type isn't already discovered from the JSON fields above
-  if (props.nestedParentType && props.nestedParentId && !seen.has(props.nestedParentType)) {
+  // Add if the parent type isn't already discovered from the JSON fields above.
+  // Check both the bare type key (e.g. "deployments") AND the id-qualified key
+  // (e.g. "deployments:0480") to avoid duplicating a parent already found via
+  // rel="parent" HATEOAS links which use the id-qualified format.
+  if (props.nestedParentType && props.nestedParentId
+      && !seen.has(props.nestedParentType)
+      && !seen.has(props.nestedParentType + ':' + props.nestedParentId)) {
     const typeInfo = getResourceType(props.nestedParentType)
     if (typeInfo) {
       const isSameType = props.nestedParentType === props.resourceType
