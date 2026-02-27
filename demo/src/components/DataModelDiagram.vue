@@ -139,6 +139,28 @@ watch(sameTypeParent, async (p) => {
 /** Parent node position — placed above-left of the System node */
 const PARENT_NODE = { x: 130, y: 35, w: 160, h: 44 }
 
+// ─── Subsystem Cluster (shown when parent has subsystems) ─────────
+
+/** First N subsystem items fetched for the cluster display */
+const subsystemItems = ref<Array<{ id: string; name: string }>>([])
+/** Total count of subsystems (may exceed displayed items) */
+const subsystemTotal = ref(0)
+
+/** Subsystem chip layout constants */
+const SUB_CLUSTER = {
+  /** Starting X for the column of chips */
+  x: 218,
+  /** Starting Y — below the self-loop arc */
+  startY: 290,
+  /** Chip dimensions */
+  chipW: 165,
+  chipH: 19,
+  /** Vertical gap between chips */
+  gap: 3,
+  /** Max items to display */
+  maxShow: 6,
+}
+
 /** Find a node by id */
 function findNode(id: string): ModelNode | undefined {
   return nodes.find(n => n.id === id)
@@ -304,6 +326,8 @@ async function fetchCounts() {
   // Clear previous counts
   for (const key of Object.keys(counts)) delete counts[key]
   for (const key of Object.keys(discoveredAncestors)) delete discoveredAncestors[key]
+  subsystemItems.value = []
+  subsystemTotal.value = 0
 
   if (!parentId || !parentType) return
 
@@ -317,14 +341,28 @@ async function fetchCounts() {
     // Fire all direct requests in parallel
     const requests = relations.map(async (rel) => {
       try {
-        const path = getNestedListUrl(parentType, parentId, rel.relation, { limit: 1 })
+        // For subsystems, fetch a small page so we can display chip names
+        const isSelfSubsystems = rel.childType === parentType && rel.relation === 'subsystems'
+        const limit = isSelfSubsystems ? SUB_CLUSTER.maxShow + 2 : 1
+        const path = getNestedListUrl(parentType, parentId, rel.relation, { limit })
         const res = await apiFetch(path)
         if (gen !== fetchGeneration) return  // stale
         if (!res.ok) {
           counts[rel.childType] = -1
+          if (isSelfSubsystems) { subsystemItems.value = []; subsystemTotal.value = 0 }
           return
         }
         counts[rel.childType] = extractCount(res.data)
+
+        // Populate subsystem cluster items
+        if (isSelfSubsystems) {
+          const items = res.data?.items || res.data?.features || []
+          subsystemItems.value = items.map((it: any) => ({
+            id: String(it?.id || it?.properties?.id || ''),
+            name: it?.properties?.name || it?.name || String(it?.id || ''),
+          })).filter((it: { id: string }) => it.id)
+          subsystemTotal.value = extractCount(res.data)
+        }
       } catch {
         if (gen !== fetchGeneration) return
         counts[rel.childType] = -1
@@ -603,12 +641,33 @@ function navigateToParentSystem() {
     query: { resourceId: sameTypeParent.value.resourceId },
   })
 }
+
+/** Navigate into a subsystem from the cluster */
+function navigateToSubsystem(subId: string) {
+  router.push({
+    path: `/explore/systems`,
+    query: { resourceId: subId },
+  })
+}
+
+/** Browse all subsystems via the nested list */
+function browseAllSubsystems() {
+  if (!props.activeId) return
+  router.push({
+    path: `/explore/systems`,
+    query: {
+      parentType: 'systems',
+      parentId: props.activeId,
+      relation: 'subsystems',
+    },
+  })
+}
 </script>
 
 <template>
   <div class="diagram-container">
     <svg
-      viewBox="-5 -15 810 450"
+      viewBox="-5 -15 810 480"
       xmlns="http://www.w3.org/2000/svg"
       class="model-svg"
     >
@@ -724,6 +783,85 @@ function navigateToParentSystem() {
             :x="PARENT_NODE.x + PARENT_NODE.w - 18" :y="PARENT_NODE.y + PARENT_NODE.h / 2"
             fill="#0ea5e9" font-size="11" dominant-baseline="central"
           >↗</text>
+        </g>
+      </template>
+
+      <!-- ══════════════════════════════════════════════════════════
+           Subsystem Cluster — shown when an active system has
+           subsystems, fanning out below the self-loop arc.
+           ══════════════════════════════════════════════════════════ -->
+      <template v-if="subsystemItems.length > 0 && props.activeType === 'systems' && !sameTypeParent">
+        <!-- Branching line from self-loop arc down to cluster -->
+        <path
+          :d="`M 300 ${200 + NODE_H/2 + 50}
+               L 300 ${SUB_CLUSTER.startY - 6}`"
+          stroke="#0ea5e9"
+          stroke-width="1.5"
+          stroke-dasharray="4 2"
+          fill="none"
+          opacity="0.6"
+        />
+
+        <!-- Cluster background card -->
+        <rect
+          :x="SUB_CLUSTER.x - 6"
+          :y="SUB_CLUSTER.startY - 8"
+          :width="SUB_CLUSTER.chipW + 12"
+          :height="Math.min(subsystemItems.length, SUB_CLUSTER.maxShow) * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap) + (subsystemTotal > SUB_CLUSTER.maxShow ? 22 : 6) + 10"
+          rx="8"
+          fill="#f8fafc"
+          stroke="#e2e8f0"
+          stroke-width="1"
+          opacity="0.85"
+        />
+
+        <!-- Subsystem chips -->
+        <g
+          v-for="(sub, idx) in subsystemItems.slice(0, SUB_CLUSTER.maxShow)"
+          :key="sub.id"
+          class="subsystem-chip-group"
+          @click.stop="navigateToSubsystem(sub.id)"
+        >
+          <title>{{ sub.name }} ({{ sub.id }})</title>
+          <rect
+            :x="SUB_CLUSTER.x"
+            :y="SUB_CLUSTER.startY + idx * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap)"
+            :width="SUB_CLUSTER.chipW"
+            :height="SUB_CLUSTER.chipH"
+            rx="5"
+            fill="#ffffff"
+            stroke="#0ea5e9"
+            stroke-width="1.2"
+            class="subsystem-chip-bg"
+          />
+          <!-- Icon -->
+          <text
+            :x="SUB_CLUSTER.x + 10"
+            :y="SUB_CLUSTER.startY + idx * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap) + SUB_CLUSTER.chipH / 2"
+            fill="#0ea5e9" font-size="8" dominant-baseline="central"
+          >⬡</text>
+          <!-- Name (truncated) -->
+          <text
+            :x="SUB_CLUSTER.x + 22"
+            :y="SUB_CLUSTER.startY + idx * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap) + SUB_CLUSTER.chipH / 2"
+            class="subsystem-chip-label" dominant-baseline="central"
+          >{{ sub.name.length > 24 ? sub.name.substring(0, 24) + '…' : sub.name }}</text>
+          <!-- Drill-in arrow -->
+          <text
+            :x="SUB_CLUSTER.x + SUB_CLUSTER.chipW - 14"
+            :y="SUB_CLUSTER.startY + idx * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap) + SUB_CLUSTER.chipH / 2"
+            fill="#38bdf8" font-size="8" dominant-baseline="central" class="chip-arrow"
+          >→</text>
+        </g>
+
+        <!-- "View all N →" link when there are more -->
+        <g v-if="subsystemTotal > SUB_CLUSTER.maxShow" class="subsystem-chip-group" @click.stop="browseAllSubsystems()">
+          <text
+            :x="SUB_CLUSTER.x + SUB_CLUSTER.chipW / 2"
+            :y="SUB_CLUSTER.startY + SUB_CLUSTER.maxShow * (SUB_CLUSTER.chipH + SUB_CLUSTER.gap) + 8"
+            text-anchor="middle" dominant-baseline="central"
+            class="subsystem-more-link"
+          >View all {{ subsystemTotal }} subsystems →</text>
         </g>
       </template>
 
@@ -976,5 +1114,41 @@ function navigateToParentSystem() {
 }
 .parent-node-group:hover rect:nth-child(2) {
   fill: #e0f2fe;
+}
+
+/* Subsystem cluster chips */
+.subsystem-chip-group {
+  cursor: pointer;
+}
+.subsystem-chip-bg {
+  transition: fill 0.12s, stroke-width 0.12s;
+}
+.subsystem-chip-group:hover .subsystem-chip-bg {
+  fill: #e0f2fe;
+  stroke-width: 2;
+}
+.subsystem-chip-label {
+  font-size: 9px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  fill: #0c4a6e;
+}
+.chip-arrow {
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.subsystem-chip-group:hover .chip-arrow {
+  opacity: 1;
+}
+.subsystem-more-link {
+  font-size: 8.5px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  fill: #0369a1;
+  cursor: pointer;
+}
+.subsystem-more-link:hover {
+  fill: #0284c7;
+  text-decoration: underline;
 }
 </style>
