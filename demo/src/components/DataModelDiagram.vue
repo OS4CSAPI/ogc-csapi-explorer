@@ -3,7 +3,7 @@ import { computed, reactive, ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../api'
 import { getNestedListUrl, getListUrl, getDetailUrl, getContentType } from '../csapi-bridge'
-import { connection, RELATED_RESOURCES } from '../state'
+import { connection, RELATED_RESOURCES, cacheParentForChildren } from '../state'
 
 const router = useRouter()
 
@@ -362,6 +362,14 @@ async function fetchCounts() {
             name: it?.properties?.name || it?.name || String(it?.id || ''),
           })).filter((it: { id: string }) => it.id)
           subsystemTotal.value = extractCount(res.data)
+
+          // Cache parent relationship so breadcrumbs survive navigation.
+          // Note: we don't have the current system's display name here (parentName
+          // is the DIAGRAM's parent node, not the current system). ResourceDetail's
+          // fetchRelation will overwrite with the correct name. Use ID as fallback.
+          if (parentId && subsystemItems.value.length > 0) {
+            cacheParentForChildren(parentId, String(parentId), subsystemItems.value)
+          }
         }
       } catch {
         if (gen !== fetchGeneration) return

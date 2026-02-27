@@ -3,7 +3,7 @@ import { ref, watch, computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../api'
 import { getDetailUrl, getContentType, getNestedListUrl, parseCollectionResponse } from '../csapi-bridge'
-import { RELATED_RESOURCES, getResourceType } from '../state'
+import { RELATED_RESOURCES, getResourceType, parentSystemCache, cacheParentForChildren } from '../state'
 import type { RelatedResourceLink } from '../state'
 import type { QueryOptions } from '@csapi/ogc-api/csapi/model'
 import type { DateTimeParameter } from '@csapi/shared/models'
@@ -39,6 +39,7 @@ const emit = defineEmits<{
 const manualId = ref('')
 const loading = ref(false)
 const error = ref('')
+const errorSeverity = ref<'error' | 'warn'>('error')
 const detail = ref<any>(null)
 
 /**
@@ -397,6 +398,20 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
       }
 
       state.items = resultItems
+
+      // Populate the global parent cache when fetching subsystems.
+      // This allows parent breadcrumbs to survive component recreation.
+      if (link.relation === 'subsystems' && link.childType === props.resourceType && resultItems.length > 0) {
+        const curId = String(detail.value?.id || props.resourceId || '')
+        const curName = detail.value?.properties?.name || detail.value?.name || curId
+        if (curId) {
+          cacheParentForChildren(
+            curId,
+            curName,
+            resultItems.map((it: any) => ({ id: String(getItemId(it)) })).filter((it: { id: string }) => it.id && it.id !== '—'),
+          )
+        }
+      }
     } catch {
       if (Array.isArray(res.data)) state.items = res.data
     }
@@ -536,6 +551,26 @@ const parentLinks = computed<ParentLink[]>(() => {
     seen.add('deployments')
   }
 
+  // OGC API `links` array — look for rel="parent" (provided by servers that
+  // expose subsystem parentage via HATEOAS links in the GeoJSON Feature).
+  // Example: { "rel": "parent", "href": ".../systems/04ng?f=geojson" }
+  if (Array.isArray(raw.links)) {
+    for (const link of raw.links) {
+      if (link?.rel === 'parent' && typeof link.href === 'string') {
+        const m = link.href.match(/\/systems\/([^/?]+)/)
+        if (m) {
+          const parentId = m[1]
+          if (!seen.has('systems:' + parentId) && !seen.has('systems')) {
+            links.push({ label: 'Parent System', resourceType: 'systems', resourceId: parentId, icon: 'pi pi-server' })
+            seen.add('systems:' + parentId)
+            // Also populate the global cache so the relationship persists
+            parentSystemCache[effectiveId.value] = { id: parentId, name: link.title || parentId }
+          }
+        }
+      }
+    }
+  }
+
   // Nested navigation context (e.g., sampling features under a system, procedures under a system)
   // Add if the parent type isn't already discovered from the JSON fields above
   if (props.nestedParentType && props.nestedParentId && !seen.has(props.nestedParentType)) {
@@ -548,6 +583,7 @@ const parentLinks = computed<ParentLink[]>(() => {
         resourceId: props.nestedParentId,
         icon: typeInfo.icon,
       })
+      seen.add(props.nestedParentType + ':' + props.nestedParentId)
     }
   }
 
@@ -563,6 +599,26 @@ const parentLinks = computed<ParentLink[]>(() => {
         icon: typeInfo.icon,
         name: inPlaceParent.value.name,
       })
+      seen.add(inPlaceParent.value.resourceType + ':' + inPlaceParent.value.id)
+    }
+  }
+
+  // Global parent cache fallback: when viewing a system that was previously
+  // seen as a subsystem, the cache provides its parent even after component
+  // recreation (e.g. navigating back from a grandchild).
+  if (props.resourceType === 'systems' && effectiveId.value) {
+    const cached = parentSystemCache[effectiveId.value]
+    if (cached && !seen.has('systems:' + cached.id)) {
+      const typeInfo = getResourceType('systems')
+      if (typeInfo) {
+        links.push({
+          label: `Parent ${typeInfo.label}`,
+          resourceType: 'systems',
+          resourceId: cached.id,
+          icon: typeInfo.icon,
+          name: cached.name,
+        })
+      }
     }
   }
 
@@ -576,12 +632,36 @@ function navigateToParent(parent: ParentLink) {
   })
 }
 
+/**
+ * When a parent was discovered via the server's `links` array (rel="parent"),
+ * the title is generic ("Parent system"). Fetch the parent detail to get its
+ * real name and update the global cache so the breadcrumb shows a useful label.
+ */
+async function resolveParentName() {
+  const curId = effectiveId.value
+  if (!curId || props.resourceType !== 'systems') return
+  const cached = parentSystemCache[curId]
+  if (!cached) return
+  // Skip if we already have a real name (not just an ID)
+  if (cached.name && cached.name !== cached.id && cached.name !== 'Parent system') return
+  try {
+    const path = getDetailUrl('systems', cached.id)
+    const acceptType = getContentType('systems')
+    const res = await apiFetch(path, { headers: { Accept: acceptType } })
+    if (res.ok && res.data) {
+      const name = res.data?.properties?.name || res.data?.name || cached.id
+      parentSystemCache[curId] = { id: cached.id, name }
+    }
+  } catch { /* parent name stays as ID — non-critical */ }
+}
+
 async function fetchDetail(id?: string) {
   const useId = id || manualId.value || props.resourceId
   if (!useId) return
 
   loading.value = true
   error.value = ''
+  errorSeverity.value = 'error'
   detail.value = null
 
   const path = getDetailUrl(props.resourceType, useId)
@@ -595,6 +675,9 @@ async function fetchDetail(id?: string) {
     // fall back to the resource data already passed from the list
     if (props.resource) {
       detail.value = props.resource
+    } else if (res.status === 404) {
+      error.value = 'Resource not found (HTTP 404). This entry may have been deleted but still appears in the listing due to a stale server index.'
+      errorSeverity.value = 'warn'
     } else {
       error.value = res.error || 'Failed to fetch resource'
     }
@@ -618,6 +701,9 @@ async function fetchDetail(id?: string) {
   if (detail.value) {
     const resId = detail.value?.id || detail.value?.properties?.id
     if (resId && allRelations.value.length > 0) fetchAllRelations(String(resId))
+
+    // Resolve parent system name from rel=parent link (async, doesn't block)
+    resolveParentName()
   }
   loading.value = false
 }
@@ -666,7 +752,7 @@ function docIcon(doc: any): string {
       <p>Select a resource from the List tab, or enter an ID above to view its details.</p>
     </div>
 
-    <Message v-if="error" severity="error" :closable="false" class="mt-3">{{ error }}</Message>
+    <Message v-if="error" :severity="errorSeverity" :closable="false" class="mt-3">{{ error }}</Message>
 
     <div v-if="loading" class="loading">
       <ProgressSpinner style="width: 30px; height: 30px" />
