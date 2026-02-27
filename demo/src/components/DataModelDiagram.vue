@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, onMounted, watch } from 'vue'
+import { computed, reactive, ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../api'
 import { getNestedListUrl, getListUrl, getDetailUrl, getContentType } from '../csapi-bridge'
@@ -10,6 +10,8 @@ const router = useRouter()
 interface ParentRef {
   resourceType: string
   resourceId: string
+  /** Friendly name of the parent resource (when known) */
+  name?: string
 }
 
 const props = defineProps<{
@@ -106,6 +108,36 @@ const edges: ModelEdge[] = [
 const NODE_RX = 12
 const NODE_W = 130
 const NODE_H = 52
+
+// ─── Parent System Node (shown when viewing a subsystem) ──────────
+
+/** Detected same-type parent link (e.g. subsystem's parent system) */
+const sameTypeParent = computed(() => {
+  if (!props.parentLinks?.length) return null
+  return props.parentLinks.find(p => p.resourceType === props.activeType) || null
+})
+
+/** Resolved parent name — from prop or fetched */
+const parentName = ref<string | null>(null)
+
+// Fetch parent name if not provided via prop
+watch(sameTypeParent, async (p) => {
+  parentName.value = null
+  if (!p) return
+  if (p.name) { parentName.value = p.name; return }
+  // Fetch the parent detail to get its name
+  try {
+    const path = getDetailUrl(p.resourceType, p.resourceId)
+    const acceptType = getContentType(p.resourceType)
+    const res = await apiFetch(path, { headers: { Accept: acceptType } })
+    if (res.ok && res.data) {
+      parentName.value = res.data?.properties?.name || res.data?.name || p.resourceId
+    }
+  } catch { /* use null — template will show ID only */ }
+}, { immediate: true })
+
+/** Parent node position — placed above-left of the System node */
+const PARENT_NODE = { x: 130, y: 35, w: 160, h: 44 }
 
 /** Find a node by id */
 function findNode(id: string): ModelNode | undefined {
@@ -561,6 +593,16 @@ function navigateToType(nodeId: string) {
   // Fallback: top-level list
   router.push({ path: `/explore/${nodeId}` })
 }
+
+/** Navigate directly to the parent system — bypasses the navigateToType guard
+ *  that blocks same-type navigation (systems → systems). */
+function navigateToParentSystem() {
+  if (!sameTypeParent.value) return
+  router.push({
+    path: `/explore/${sameTypeParent.value.resourceType}`,
+    query: { resourceId: sameTypeParent.value.resourceId },
+  })
+}
 </script>
 
 <template>
@@ -616,6 +658,74 @@ function navigateToType(nodeId: string) {
           text-anchor="middle"
         >{{ edge.label }}</text>
       </g>
+
+      <!-- ══════════════════════════════════════════════════════════
+           Parent System Node — shown when the active resource is a
+           subsystem, making the hierarchy concrete and navigable.
+           ══════════════════════════════════════════════════════════ -->
+      <template v-if="sameTypeParent">
+        <!-- Hierarchical edge: parent → active system -->
+        <path
+          :d="`M ${PARENT_NODE.x + PARENT_NODE.w / 2} ${PARENT_NODE.y + PARENT_NODE.h / 2 + 4}
+               C ${PARENT_NODE.x + PARENT_NODE.w / 2 + 40} ${PARENT_NODE.y + 80},
+                 ${300 - 60} ${200 - 80},
+                 ${300 - NODE_W/2 + 10} ${200 - 6}`"
+          stroke="#0ea5e9"
+          stroke-width="2.5"
+          stroke-dasharray="6 3"
+          fill="none"
+          marker-end="url(#arrow-active)"
+          opacity="0.8"
+        />
+        <text
+          :x="(PARENT_NODE.x + PARENT_NODE.w / 2 + 300) / 2 - 30"
+          :y="(PARENT_NODE.y + PARENT_NODE.h / 2 + 200) / 2 - 25"
+          class="edge-label edge-active"
+          text-anchor="middle"
+          font-size="9"
+        >subsystem of</text>
+
+        <!-- Parent node card -->
+        <g class="node-group node-connected parent-node-group" @click="navigateToParentSystem()">
+          <title>Navigate to parent: {{ parentName || sameTypeParent!.resourceId }}</title>
+          <!-- Shadow -->
+          <rect
+            :x="PARENT_NODE.x + 2" :y="PARENT_NODE.y + 2"
+            :width="PARENT_NODE.w" :height="PARENT_NODE.h"
+            :rx="NODE_RX" fill="rgba(0,0,0,0.06)"
+          />
+          <!-- Background — gradient border to distinguish from the active node -->
+          <rect
+            :x="PARENT_NODE.x" :y="PARENT_NODE.y"
+            :width="PARENT_NODE.w" :height="PARENT_NODE.h"
+            :rx="NODE_RX"
+            fill="#f0f9ff"
+            stroke="#0ea5e9"
+            stroke-width="2"
+            stroke-dasharray="4 2"
+          />
+          <!-- Icon -->
+          <text
+            :x="PARENT_NODE.x + 14" :y="PARENT_NODE.y + PARENT_NODE.h / 2"
+            class="node-icon" fill="#0ea5e9" dominant-baseline="central"
+          >⬡</text>
+          <!-- "Parent System" label -->
+          <text
+            :x="PARENT_NODE.x + 30" :y="PARENT_NODE.y + 14"
+            class="parent-node-role" fill="#64748b" dominant-baseline="central"
+          >Parent System</text>
+          <!-- Name (truncated) -->
+          <text
+            :x="PARENT_NODE.x + 30" :y="PARENT_NODE.y + 30"
+            class="parent-node-name" fill="#0c4a6e" dominant-baseline="central"
+          >{{ (parentName || sameTypeParent!.resourceId).substring(0, 22) }}{{ (parentName || sameTypeParent!.resourceId).length > 22 ? '…' : '' }}</text>
+          <!-- Navigate arrow -->
+          <text
+            :x="PARENT_NODE.x + PARENT_NODE.w - 18" :y="PARENT_NODE.y + PARENT_NODE.h / 2"
+            fill="#0ea5e9" font-size="11" dominant-baseline="central"
+          >↗</text>
+        </g>
+      </template>
 
       <!-- Nodes -->
       <g
@@ -849,5 +959,22 @@ function navigateToType(nodeId: string) {
 .legend-connected {
   background: #ffffff;
   border: 2px solid #0ea5e9;
+}
+
+/* Parent node text */
+.parent-node-role {
+  font-size: 8px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.parent-node-name {
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.parent-node-group:hover rect:nth-child(2) {
+  fill: #e0f2fe;
 }
 </style>

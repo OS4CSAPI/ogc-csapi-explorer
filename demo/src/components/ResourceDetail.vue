@@ -989,7 +989,7 @@ function docIcon(doc: any): string {
         <DataModelDiagram
           :activeType="props.resourceType"
           :activeId="detail?.id || props.resourceId"
-          :parentLinks="parentLinks.map(p => ({ resourceType: p.resourceType, resourceId: p.resourceId }))"
+          :parentLinks="parentLinks.map(p => ({ resourceType: p.resourceType, resourceId: p.resourceId, name: p.name }))"
         />
       </details>
 
