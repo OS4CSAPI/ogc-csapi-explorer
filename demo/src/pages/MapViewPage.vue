@@ -42,6 +42,7 @@ const loading = ref(false)
 const error = ref('')
 const featureCounts = ref<Record<string, number>>({})
 const selectedFeature = ref<any>(null)
+const hasSearched = ref(false)
 
 // Part 1 resource types that may have geometry
 const SPATIAL_TYPES = RESOURCE_TYPES.filter(r => r.part === 1 && r.key !== 'properties')
@@ -1209,6 +1210,7 @@ async function loadObservationLayers(): Promise<void> {
 async function loadAllResources() {
   loading.value = true
   error.value = ''
+  hasSearched.value = true
   featureCounts.value = {}
   for (const key of Object.keys(enrichedCounts.value)) delete enrichedCounts.value[key]
 
@@ -1284,7 +1286,6 @@ function startDrawBbox() {
       drawInteraction = null
     }
     drawingBbox.value = false
-    loadAllResources()
   })
 
   map.addInteraction(drawInteraction)
@@ -1299,7 +1300,6 @@ function clearBbox() {
     drawInteraction = null
   }
   drawingBbox.value = false
-  loadAllResources()
 }
 
 function toggleLayer(key: string) {
@@ -1432,8 +1432,7 @@ onMounted(() => {
     }
   })
 
-  // Load data
-  loadAllResources()
+  // Map is ready — user must press Search to load data
 })
 
 onUnmounted(() => {
@@ -1573,8 +1572,10 @@ async function createTestFeature() {
         </template>
       </div>
 
-      <button class="refresh-btn" @click="loadAllResources" :disabled="loading">
-        <i class="pi pi-refresh"></i> Reload
+      <!-- Primary Search button -->
+      <button class="search-btn" @click="loadAllResources" :disabled="loading">
+        <i :class="loading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"></i>
+        {{ hasSearched ? 'Search Again' : 'Search' }}
       </button>
 
       <!-- Bbox spatial filter -->
@@ -1603,7 +1604,16 @@ async function createTestFeature() {
       </div>
 
       <!-- Empty state message -->
-      <div v-if="!loading && totalFeatures === 0" class="empty-state">
+      <!-- Initial state: prompt user to search -->
+      <div v-if="!loading && !hasSearched" class="empty-state initial-state">
+        <i class="pi pi-search" style="font-size: 1.5rem; color: #3b82f6;"></i>
+        <p><strong>Ready to search</strong></p>
+        <p class="empty-detail">
+          Optionally draw a <strong>Bbox Filter</strong> below to limit results to a geographic area, then press <strong>Search</strong>.
+        </p>
+      </div>
+
+      <div v-if="!loading && hasSearched && totalFeatures === 0" class="empty-state">
         <i class="pi pi-map-marker" style="font-size: 1.5rem; color: #94a3b8;"></i>
         <p><strong>No features with geometry found</strong></p>
         <p class="empty-detail">
@@ -1820,28 +1830,35 @@ async function createTestFeature() {
   cursor: pointer;
 }
 
-.refresh-btn {
-  margin: 0 0.75rem 0.75rem;
-  padding: 0.5rem;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+.search-btn {
+  margin: 0.5rem 0.75rem 0.75rem;
+  padding: 0.6rem 1rem;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  color: #3b82f6;
+  gap: 0.4rem;
 }
 
-.refresh-btn:hover {
-  background: #eff6ff;
+.search-btn:hover {
+  background: #2563eb;
 }
 
-.refresh-btn:disabled {
-  opacity: 0.5;
+.search-btn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
+}
+
+.initial-state {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1e40af !important;
 }
 
 .empty-state {
