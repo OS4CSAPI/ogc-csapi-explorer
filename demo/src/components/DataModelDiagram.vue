@@ -464,7 +464,8 @@ async function fetchCounts() {
         counts[rel.childType] = count
 
         // Populate self-hierarchy cluster items (subsystems or subdeployments)
-        if (isSelfHierarchy) {
+        // Skip if the fallback above already populated the cluster.
+        if (isSelfHierarchy && selfChildItems.value.length === 0) {
           const items = res.data?.items || res.data?.features || []
           selfChildItems.value = items.map((it: any) => ({
             id: String(it?.id || it?.properties?.id || ''),
