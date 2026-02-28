@@ -11,6 +11,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@csapi': path.resolve(__dirname, '../src'),
+      // The library's shared/xml-utils.ts imports @rgrove/parse-xml at runtime.
+      // Since demo only uses CSAPI (JSON-only), this is never executed, but the
+      // bundler still needs to resolve it. Point it at the root node_modules.
+      '@rgrove/parse-xml': path.resolve(__dirname, '../node_modules/@rgrove/parse-xml'),
     },
   },
   server: {
