@@ -507,6 +507,30 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
         }
       }
 
+      // Filter out the current resource and its known parents from
+      // self-hierarchy relations (subdeployments / subsystems).
+      // Some servers return the viewed resource or its ancestors in
+      // the children list.
+      if (link.childType === props.resourceType && resultItems.length > 0) {
+        const selfId = String(detail.value?.id || detail.value?.properties?.id || props.resourceId || '')
+        // Collect parent IDs from rel="parent" links in the current resource
+        const parentIds = new Set<string>()
+        if (Array.isArray(detail.value?.links)) {
+          for (const lnk of detail.value.links) {
+            if (lnk?.rel === 'parent' && typeof lnk.href === 'string') {
+              const m = lnk.href.match(/\/(systems|deployments)\/([^/?]+)/)
+              if (m) parentIds.add(m[2])
+            }
+          }
+        }
+        resultItems = resultItems.filter((it: any) => {
+          const itemId = String(it?.id || it?.properties?.id || '')
+          if (selfId && itemId === selfId) return false   // exclude self
+          if (parentIds.has(itemId)) return false          // exclude parent
+          return true
+        })
+      }
+
       state.items = resultItems
 
       // Populate the global parent cache when fetching subsystems.
@@ -555,6 +579,10 @@ function getItemName(item: any): string {
 function viewRelatedItem(link: RelatedResourceLink, item: any) {
   const id = getItemId(item)
   if (id === '—') return
+
+  // Skip if clicking the resource we're already viewing
+  const currentId = String(detail.value?.id || detail.value?.properties?.id || props.resourceId || '')
+  if (id === currentId) return
 
   if (link.childType === props.resourceType) {
     // Same type (e.g. subsystems) — reload detail in-place.
@@ -723,7 +751,10 @@ const parentLinks = computed<ParentLink[]>(() => {
 
   // In-place parent: when the user drilled into a same-type child (e.g.
   // parent system → subsystem), show a back-link to the parent they came from.
-  if (inPlaceParent.value && !seen.has(inPlaceParent.value.resourceType + ':' + inPlaceParent.value.id)) {
+  // Skip if inPlaceParent points to the current resource (self-reference guard).
+  if (inPlaceParent.value
+      && inPlaceParent.value.id !== effectiveId.value
+      && !seen.has(inPlaceParent.value.resourceType + ':' + inPlaceParent.value.id)) {
     const typeInfo = getResourceType(inPlaceParent.value.resourceType)
     if (typeInfo) {
       links.push({
