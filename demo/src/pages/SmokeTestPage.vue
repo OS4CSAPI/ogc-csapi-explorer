@@ -149,6 +149,7 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
           type: 'DataRecord',
           label: 'Smoke Test Record',
           fields: [
+            { type: 'Time', label: 'Timestamp', name: 'timestamp', definition: 'http://www.opengis.net/def/property/OGC/0/SamplingTime', uom: { href: 'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian' } },
             { type: 'Quantity', label: 'Temperature', name: 'temp', uom: { code: 'Cel' } },
             { type: 'DataRecord', label: 'Location', name: 'location', fields: [
               { type: 'Quantity', label: 'Latitude', name: 'lat', uom: { code: 'deg' } },
@@ -166,6 +167,7 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
       phenomenonTime: new Date().toISOString(),
       resultTime: new Date().toISOString(),
       result: {
+        timestamp: new Date().toISOString(),
         temp: phase === 'create' ? 22.5 : 25.0,
         location: obsCoords ? { lat: obsCoords[1], lon: obsCoords[0] } : undefined,
       },
@@ -185,6 +187,7 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
             type: 'DataRecord',
             label: 'Smoke Test Command',
             fields: [
+              { type: 'Time', label: 'Timestamp', name: 'timestamp', definition: 'http://www.opengis.net/def/property/OGC/0/SamplingTime', uom: { href: 'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian' } },
               { type: 'Boolean', label: 'Active', name: 'active' },
             ]
           }
@@ -200,7 +203,7 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
   if (type === 'commands') {
     return {
       issueTime: new Date().toISOString(),
-      parameters: { active: phase === 'create' },
+      parameters: { timestamp: new Date().toISOString(), active: phase === 'create' },
     }
   }
 
