@@ -7,48 +7,50 @@
  *
  * This replaces the Vite dev-server proxy for production deployments.
  */
+
+const CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type, Accept',
+  'Access-Control-Max-Age': '86400',
+}
+
 export const onRequest: PagesFunction = async (context) => {
-  const { params, request } = context
-
-  // Handle CORS preflight immediately — don't forward to upstream
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Authorization, Content-Type, Accept',
-        'Access-Control-Max-Age': '86400',
-      },
-    })
-  }
-
-  const pathSegments = (params.path as string[]).join('/')
-  const url = new URL(request.url)
-  const target = `http://45.55.99.236:8080/sensorhub/api/${pathSegments}${url.search}`
-
-  // Forward the original request (method, headers, body)
-  const headers = new Headers(request.headers)
-  // Remove host header so the upstream server sees its own host
-  headers.delete('host')
-
-  const fetchOptions: RequestInit = {
-    method: request.method,
-    headers,
-    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
-    // @ts-ignore — Cloudflare Workers supports duplex
-    duplex: request.method !== 'GET' && request.method !== 'HEAD' ? 'half' : undefined,
-  }
-
   try {
-    const upstream = await fetch(target, fetchOptions)
+    const { params, request } = context
 
-    // Build response, forwarding status and body
+    // Handle CORS preflight immediately
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: CORS_HEADERS })
+    }
+
+    // Build target URL — params.path may be undefined, string, or string[]
+    const raw = params.path
+    const suffix = Array.isArray(raw) ? raw.join('/') : (raw || '')
+    const qs = new URL(request.url).search
+    const target = `http://45.55.99.236:8080/sensorhub/api/${suffix}${qs}`
+
+    // Forward headers (strip host so upstream sees its own)
+    const headers = new Headers(request.headers)
+    headers.delete('host')
+
+    // Read body as ArrayBuffer for non-GET/HEAD to avoid streaming issues
+    let body: ArrayBuffer | null = null
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      body = await request.arrayBuffer()
+    }
+
+    const upstream = await fetch(target, {
+      method: request.method,
+      headers,
+      body,
+    })
+
+    // Forward response with CORS headers
     const responseHeaders = new Headers(upstream.headers)
-    // Set CORS headers for the deployed frontend
-    responseHeaders.set('Access-Control-Allow-Origin', '*')
-    responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-    responseHeaders.set('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept')
+    for (const [k, v] of Object.entries(CORS_HEADERS)) {
+      responseHeaders.set(k, v)
+    }
 
     return new Response(upstream.body, {
       status: upstream.status,
@@ -56,9 +58,9 @@ export const onRequest: PagesFunction = async (context) => {
       headers: responseHeaders,
     })
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 502,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    })
+    return new Response(
+      JSON.stringify({ error: String(err?.message || err), stack: String(err?.stack || '') }),
+      { status: 502, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+    )
   }
 }
