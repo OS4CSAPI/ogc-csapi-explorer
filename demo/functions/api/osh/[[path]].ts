@@ -5,6 +5,9 @@
  * OSH server at http://45.55.99.236:8080/sensorhub/api/*, passing
  * through auth headers, query strings, and request bodies.
  *
+ * Uses nip.io hostname because Cloudflare Workers block fetch() to raw
+ * IP addresses (Error 1003). 45.55.99.236.nip.io resolves to the same IP.
+ *
  * This replaces the Vite dev-server proxy for production deployments.
  */
 
@@ -28,13 +31,10 @@ export const onRequest: PagesFunction = async (context) => {
     const raw = params.path
     const suffix = Array.isArray(raw) ? raw.join('/') : (raw || '')
     const qs = new URL(request.url).search
-    const target = `http://45.55.99.236:8080/sensorhub/api/${suffix}${qs}`
+    const target = `http://45.55.99.236.nip.io:8080/sensorhub/api/${suffix}${qs}`
 
-    // Only forward specific headers — passing through Cloudflare-internal
-    // headers (cf-ray, cf-connecting-ip, etc.) causes Error 1003 when
-    // fetching a raw IP address from a Worker.
+    // Only forward specific safe headers
     const fwdHeaders = new Headers()
-    fwdHeaders.set('Host', '45.55.99.236:8080')
     const auth = request.headers.get('Authorization')
     if (auth) fwdHeaders.set('Authorization', auth)
     const ct = request.headers.get('Content-Type')
