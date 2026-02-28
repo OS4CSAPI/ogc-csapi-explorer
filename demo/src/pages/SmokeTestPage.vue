@@ -181,8 +181,7 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
         name,
         inputName: 'smoke-test-input',
         schema: {
-          commandFormat: 'application/swe+json',
-          parametersSchema: {
+          paramsSchema: {
             type: 'DataRecord',
             label: 'Smoke Test Command',
             fields: [
