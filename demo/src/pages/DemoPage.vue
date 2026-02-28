@@ -48,6 +48,10 @@ const SENSOR_ARRAYS = [
 
 const NETWORK = { serverId: '04n0', label: 'AZ-MA-NET — Network Fused' }
 
+// ── v2.5 doctrine systems ───────────────────────────────────────────
+const STRING_PROCESSOR = { serverId: '05f0', label: 'AZ-STRPROC-ALPHA — String Processor' }
+const MONITORING_TEAM = { serverId: '05eg', label: 'AZ-MON-TEAM-A — Monitoring Team' }
+
 // ── Datastream type classification ──────────────────────────────────
 const DS_TYPE_MAP: Record<string, string> = {
   lob: '🎯 LOB',
@@ -58,6 +62,9 @@ const DS_TYPE_MAP: Record<string, string> = {
   classification_probs: '🤖 Classification',
   health: '💚 Health',
   scene_summary: '📊 Scene',
+  track_state: '🛤️ Track State',
+  predicted_position: '🔮 Predicted Pos',
+  senrep: '📋 SENREP',
 }
 
 function classifyDatastream(name: string): string {
@@ -70,12 +77,17 @@ function classifyDatastream(name: string): string {
   if (lower.includes('classif')) return 'classification_probs'
   if (lower.includes('health')) return 'health'
   if (lower.includes('scene') || lower.includes('summary')) return 'scene_summary'
+  if (lower.includes('track_state') || lower.includes('track state')) return 'track_state'
+  if (lower.includes('predicted') || lower.includes('prediction')) return 'predicted_position'
+  if (lower.includes('senrep') || lower.includes('sensor report')) return 'senrep'
   return 'unknown'
 }
 
 // ── Reactive state ──────────────────────────────────────────────────
 const sensors = ref<SensorArray[]>([])
 const networkDatastreams = ref<DatastreamInfo[]>([])
+const stringProcDatastreams = ref<DatastreamInfo[]>([])
+const monitoringDatastreams = ref<DatastreamInfo[]>([])
 const sceneSummary = ref<SceneSummary | null>(null)
 const loading = ref(false)
 const lastRefresh = ref<string | null>(null)
@@ -227,6 +239,36 @@ async function refresh() {
         activityLevel: sceneDs.latestObs.result.activityLevel ?? 0,
       }
     }
+
+    // Fetch String Processor datastreams
+    const spDs = await fetchDatastreamsForSystem(STRING_PROCESSOR.serverId)
+    await Promise.all(
+      spDs.map(async (ds) => {
+        const result = await fetchLatestObs(ds.id)
+        if (result) {
+          ds.obsCount = result.count
+          obsTotal += result.count
+          ds.latestObs = result.obs
+          ds.latestTime = result.obs?.resultTime || result.obs?.phenomenonTime || null
+        }
+      })
+    )
+    stringProcDatastreams.value = spDs
+
+    // Fetch Monitoring Team datastreams
+    const monDs = await fetchDatastreamsForSystem(MONITORING_TEAM.serverId)
+    await Promise.all(
+      monDs.map(async (ds) => {
+        const result = await fetchLatestObs(ds.id)
+        if (result) {
+          ds.obsCount = result.count
+          obsTotal += result.count
+          ds.latestObs = result.obs
+          ds.latestTime = result.obs?.resultTime || result.obs?.phenomenonTime || null
+        }
+      })
+    )
+    monitoringDatastreams.value = monDs
 
     totalObsCount.value = obsTotal
     lastRefresh.value = new Date().toLocaleTimeString()
@@ -446,6 +488,68 @@ function activityColor(level: number): string {
       </table>
     </div>
 
+    <!-- String Processor Section (v2.5) -->
+    <div v-if="stringProcDatastreams.length" class="sensor-section">
+      <h3><i class="pi pi-cog"></i> String Processor (AZ-STRPROC-ALPHA)</h3>
+      <p class="section-desc">Derived track state and predicted positions from LOB triangulation chain</p>
+      <table class="ds-table ds-table-wide">
+        <thead>
+          <tr>
+            <th>Datastream</th>
+            <th>Type</th>
+            <th>Obs</th>
+            <th>Latest</th>
+            <th>Preview</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="ds in stringProcDatastreams" :key="ds.id">
+            <td>{{ ds.name }}</td>
+            <td><span class="ds-type-badge">{{ dsTypeLabel(ds.dsType) }}</span></td>
+            <td class="num">{{ ds.obsCount?.toLocaleString() ?? '…' }}</td>
+            <td class="time">{{ formatTime(ds.latestTime) }}</td>
+            <td class="preview">
+              <template v-if="ds.latestObs?.result">
+                <code>{{ JSON.stringify(ds.latestObs.result).substring(0, 80) }}{{ JSON.stringify(ds.latestObs.result).length > 80 ? '…' : '' }}</code>
+              </template>
+              <template v-else>—</template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Monitoring Team Section (v2.5) -->
+    <div v-if="monitoringDatastreams.length" class="sensor-section">
+      <h3><i class="pi pi-users"></i> Monitoring Team (AZ-MON-TEAM-A)</h3>
+      <p class="section-desc">Doctrine-aligned SENREP sensor reports from human monitoring operators</p>
+      <table class="ds-table ds-table-wide">
+        <thead>
+          <tr>
+            <th>Datastream</th>
+            <th>Type</th>
+            <th>Obs</th>
+            <th>Latest</th>
+            <th>Preview</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="ds in monitoringDatastreams" :key="ds.id">
+            <td>{{ ds.name }}</td>
+            <td><span class="ds-type-badge">{{ dsTypeLabel(ds.dsType) }}</span></td>
+            <td class="num">{{ ds.obsCount?.toLocaleString() ?? '…' }}</td>
+            <td class="time">{{ formatTime(ds.latestTime) }}</td>
+            <td class="preview">
+              <template v-if="ds.latestObs?.result">
+                <code>{{ JSON.stringify(ds.latestObs.result).substring(0, 80) }}{{ JSON.stringify(ds.latestObs.result).length > 80 ? '…' : '' }}</code>
+              </template>
+              <template v-else>—</template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- Loading skeleton -->
     <div v-if="loading && !sensors.length" class="loading-skeleton">
       <div class="skeleton-card" v-for="i in 3" :key="i"></div>
@@ -548,6 +652,11 @@ function activityColor(level: number): string {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+.section-desc {
+  color: #64748b;
+  font-size: 0.85rem;
+  margin: -0.5rem 0 1rem;
 }
 .sensor-grid {
   display: grid;

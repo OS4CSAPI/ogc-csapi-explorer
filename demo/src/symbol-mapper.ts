@@ -94,6 +94,15 @@ type KeywordRule = {
  * More specific rules go first.
  */
 const SYSTEM_RULES: KeywordRule[] = [
+  // Acoustic / microphone sensor (C-UAS specific)
+  { keywords: ['acoustic', 'microphone', 'odas', 'mic array', 'sound', 'audio', 'sensor array'],
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
+  // String processor / processing node
+  { keywords: ['processor', 'triangulat', 'string proc', 'strproc', 'processing'],
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR },
+  // Monitoring / observation team
+  { keywords: ['monitoring', 'mon-team', 'observer', 'senrep'],
+    identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_UNIT_RECON },
   // UAV/drone
   { keywords: ['drone', 'uav', 'unmanned', 'uas', 'quadcopter', 'cubepilot', 'fcu'],
     identity: SI_FRIEND, symbolSet: SS_AIR, entity: ENT_UAV },
