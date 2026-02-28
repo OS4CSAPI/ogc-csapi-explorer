@@ -588,6 +588,57 @@ async function preClean() {
   setTimeout(() => { preCleanMessage.value = '' }, 4000)
 }
 
+// ─── Warm Up: ping server to ensure JVM / cold-start is past ──
+
+const warmUpMessage = ref('')
+const warmUpRunning = ref(false)
+const warmUpReady = ref(false)
+
+async function warmUp() {
+  warmUpRunning.value = true
+  warmUpReady.value = false
+  warmUpMessage.value = 'Warming up server…'
+
+  const MAX_PINGS = 6
+  const READY_THRESHOLD_MS = 1500  // sub-1.5s = warm
+  let consecutiveFast = 0
+
+  for (let i = 0; i < MAX_PINGS; i++) {
+    const start = performance.now()
+    try {
+      const resp = await apiFetch('/systems?limit=1', { method: 'GET', headers: { Accept: 'application/json' } })
+      const elapsed = Math.round(performance.now() - start)
+      if (resp.ok && elapsed < READY_THRESHOLD_MS) {
+        consecutiveFast++
+        warmUpMessage.value = `Ping ${i + 1}/${MAX_PINGS}: ${elapsed}ms ✓`
+        if (consecutiveFast >= 2) {
+          warmUpMessage.value = `Server ready — ${elapsed}ms response`
+          warmUpReady.value = true
+          warmUpRunning.value = false
+          setTimeout(() => { warmUpMessage.value = '' }, 5000)
+          return
+        }
+      } else {
+        consecutiveFast = 0
+        warmUpMessage.value = resp.ok
+          ? `Ping ${i + 1}/${MAX_PINGS}: ${elapsed}ms (warming…)`
+          : `Ping ${i + 1}/${MAX_PINGS}: ${resp.status} (retrying…)`
+      }
+    } catch {
+      consecutiveFast = 0
+      warmUpMessage.value = `Ping ${i + 1}/${MAX_PINGS}: error (retrying…)`
+    }
+    // Brief pause between pings
+    await new Promise(r => setTimeout(r, 600))
+  }
+
+  // Finished all pings without consecutive fast responses
+  warmUpMessage.value = 'Warm-up complete — server may still be sluggish'
+  warmUpReady.value = true
+  warmUpRunning.value = false
+  setTimeout(() => { warmUpMessage.value = '' }, 5000)
+}
+
 // ─── Step Execution ──────────────────────────────────────
 
 async function executeCurrentStep() {
@@ -933,6 +984,8 @@ function resetTest() {
   testStarted.value = false
   running.value = false
   showReport.value = false
+  warmUpReady.value = false
+  warmUpMessage.value = ''
   for (const key of Object.keys(createdIds)) delete createdIds[key]
   for (const key of Object.keys(createdUids)) delete createdUids[key]
   clearMap()
@@ -1023,6 +1076,31 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
         </span>
       </div>
       <div class="toolbar-right">
+        <!-- Pre-clean + Warm Up (leftmost, before divider) -->
+        <div class="action-slot action-slot-cleanup">
+          <button v-if="!testStarted" class="btn btn-warning" @click="preClean" :disabled="preCleanRunning || warmUpRunning || running" title="Purge orphaned smoke-test resources from previous failed runs">
+            <i :class="preCleanRunning ? 'pi pi-spin pi-spinner' : 'pi pi-eraser'"></i> Pre-Clean
+          </button>
+          <button v-else-if="testStarted" class="btn btn-danger" @click="abortAndCleanup" :disabled="running">
+            <i class="pi pi-trash"></i> Cleanup
+          </button>
+          <span v-else class="btn-placeholder"></span>
+          <span v-if="cleanupMessage" class="cleanup-message">{{ cleanupMessage }}</span>
+          <span v-if="preCleanMessage" class="cleanup-message">{{ preCleanMessage }}</span>
+        </div>
+
+        <!-- Warm Up -->
+        <div class="action-slot action-slot-cleanup">
+          <button v-if="!testStarted" class="btn btn-warmup" @click="warmUp" :disabled="warmUpRunning || preCleanRunning || running" title="Ping the server a few times to ensure it is past cold-start">
+            <i :class="warmUpRunning ? 'pi pi-spin pi-spinner' : (warmUpReady ? 'pi pi-check-circle' : 'pi pi-sun')"></i>
+            {{ warmUpReady ? 'Ready' : 'Warm Up' }}
+          </button>
+          <span v-else class="btn-placeholder"></span>
+          <span v-if="warmUpMessage" class="cleanup-message">{{ warmUpMessage }}</span>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
         <!-- Fixed-width action slot so buttons never shift -->
         <div class="action-slot">
           <button v-if="!testStarted" class="btn btn-primary" @click="beginTest">
@@ -1045,7 +1123,7 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
 
         <!-- Run All / Skip / View Report -->
         <div class="action-slot" :class="{ 'action-slot-sm': !testComplete }">
-          <button v-if="!testStarted" class="btn btn-success" @click="runAllSteps" :disabled="running || preCleanRunning">
+          <button v-if="!testStarted" class="btn btn-success" @click="runAllSteps" :disabled="running || preCleanRunning || warmUpRunning">
             <i class="pi pi-forward"></i> Run All
           </button>
           <button v-else-if="isStepReady" class="btn btn-secondary" @click="skipCurrentStep">
@@ -1055,21 +1133,6 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
             <i class="pi pi-chart-bar"></i> View Report
           </button>
           <span v-else class="btn-placeholder"></span>
-        </div>
-
-        <div class="toolbar-divider"></div>
-
-        <!-- Pre-clean + Cleanup -->
-        <div class="action-slot action-slot-cleanup">
-          <button v-if="!testStarted" class="btn btn-warning" @click="preClean" :disabled="preCleanRunning || running" title="Purge orphaned smoke-test resources from previous failed runs">
-            <i :class="preCleanRunning ? 'pi pi-spin pi-spinner' : 'pi pi-eraser'"></i> Pre-Clean
-          </button>
-          <button v-else-if="testStarted" class="btn btn-danger" @click="abortAndCleanup" :disabled="running">
-            <i class="pi pi-trash"></i> Cleanup
-          </button>
-          <span v-else class="btn-placeholder"></span>
-          <span v-if="cleanupMessage" class="cleanup-message">{{ cleanupMessage }}</span>
-          <span v-if="preCleanMessage" class="cleanup-message">{{ preCleanMessage }}</span>
         </div>
         <button class="btn btn-secondary" @click="resetTest" :disabled="running">
           <i class="pi pi-refresh"></i> Reset
@@ -1448,6 +1511,8 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
 .btn-success:hover:not(:disabled) { background: #15803d; }
 .btn-warning { background: #d97706; color: #fff; }
 .btn-warning:hover:not(:disabled) { background: #b45309; }
+.btn-warmup { background: #f59e0b; color: #fff; }
+.btn-warmup:hover:not(:disabled) { background: #d97706; }
 
 /* ── Panels ───────────────────────── */
 .panels {
@@ -1535,7 +1600,7 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
 .op-read { background: #dbeafe; color: #1d4ed8; }
 .op-update { background: #fef3c7; color: #a16207; }
 .op-verify { background: #e0e7ff; color: #4338ca; }
-.op-delete { background: #fee2e2; color: #dc2626; }
+.op-delete { background: #f0e6ff; color: #7c3aed; }
 
 /* ── Center: Detail ───────────────── */
 .panel-detail {
