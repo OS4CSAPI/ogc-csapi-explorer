@@ -34,6 +34,11 @@ export default defineConfig({
           Authorization: 'Basic ' + Buffer.from('os4csapi:ogc134mm').toString('base64'),
         },
       },
+      '/api/osh-do': {
+        target: 'http://45.55.99.236:8080/sensorhub/api',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/osh-do/, ''),
+      },
     },
   },
 })
