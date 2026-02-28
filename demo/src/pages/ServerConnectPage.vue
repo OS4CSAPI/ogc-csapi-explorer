@@ -149,49 +149,97 @@ async function connect() {
     if (isProxied && actualExternalUrl) {
       let sslOk = false
 
+      // Detect mixed-content situation: page served over HTTPS, external URL is HTTP.
+      // Browsers block these requests entirely — probing is impossible.
+      const isMixedContent =
+        window.location.protocol === 'https:' && actualExternalUrl.startsWith('http://')
+
       // SSL check: no-cors mode still requires a valid TLS handshake.
       // If this fails, the cert is bad (expired, self-signed, etc.).
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 5000)
-        await fetch(actualExternalUrl, { mode: 'no-cors', signal: controller.signal })
-        clearTimeout(timeout)
+      if (isMixedContent) {
+        // Can't probe — browser blocks mixed content before any network request.
+        // Still allow CORS checks below by setting sslOk = true (it's irrelevant for HTTP).
         sslOk = true
-        if (actualExternalUrl.startsWith('https://')) {
-          detectedWarnings.push({
-            severity: 'success',
-            summary: 'SSL certificate valid',
-            detail: 'The server\'s HTTPS certificate was validated successfully by the browser.',
-          })
-        }
-      } catch {
-        if (actualExternalUrl.startsWith('https://')) {
-          detectedWarnings.push({
-            severity: 'warn',
-            summary: 'SSL certificate issue',
-            detail: `The server's HTTPS certificate at ${actualExternalUrl} could not be validated `
-              + 'by the browser. The app connected through a development proxy that bypasses SSL '
-              + 'validation, but a direct browser connection would fail. The certificate may be '
-              + 'expired, self-signed, or misconfigured. CORS support could not be verified '
-              + 'because the SSL handshake failed first.',
-          })
+        detectedWarnings.push({
+          severity: 'info',
+          summary: 'Mixed-content limitation',
+          detail: `The external server at ${actualExternalUrl} uses HTTP but this app is served `
+            + 'over HTTPS. Browsers block direct HTTP requests from HTTPS pages (mixed content), '
+            + 'so SSL and CORS could not be probed directly. The app connects through a proxy '
+            + 'that bypasses this limitation.',
+        })
+      } else {
+        try {
+          const controller = new AbortController()
+          const timeout = setTimeout(() => controller.abort(), 5000)
+          await fetch(actualExternalUrl, { mode: 'no-cors', signal: controller.signal })
+          clearTimeout(timeout)
+          sslOk = true
+          if (actualExternalUrl.startsWith('https://')) {
+            detectedWarnings.push({
+              severity: 'success',
+              summary: 'SSL certificate valid',
+              detail: 'The server\'s HTTPS certificate was validated successfully by the browser.',
+            })
+          }
+        } catch {
+          if (actualExternalUrl.startsWith('https://')) {
+            detectedWarnings.push({
+              severity: 'warn',
+              summary: 'SSL certificate issue',
+              detail: `The server's HTTPS certificate at ${actualExternalUrl} could not be validated `
+                + 'by the browser. The app connected through a development proxy that bypasses SSL '
+                + 'validation, but a direct browser connection would fail. The certificate may be '
+                + 'expired, self-signed, or misconfigured. CORS support could not be verified '
+                + 'because the SSL handshake failed first.',
+            })
+          }
         }
       }
 
       // CORS check: if SSL passed (or the server is HTTP), test with mode: 'cors'.
       // A no-cors success + cors failure = the server doesn't send CORS headers.
+      // For auth-required servers, a bare GET returns 401 — if the 401 lacks CORS
+      // headers the browser throws a network error indistinguishable from "no CORS".
+      // So we also try an OPTIONS preflight (which CORS filters handle without auth)
+      // and accept any readable response (even 401) as proof of CORS support.
       if (sslOk) {
+        let corsDetected = false
+        // Strategy 1: plain cors GET — works for public endpoints
         try {
           const controller = new AbortController()
           const timeout = setTimeout(() => controller.abort(), 5000)
-          await fetch(actualExternalUrl, { mode: 'cors', signal: controller.signal })
+          const resp = await fetch(actualExternalUrl, { mode: 'cors', signal: controller.signal })
           clearTimeout(timeout)
+          // Any readable response (even 401/403) means CORS headers were present
+          corsDetected = true
+          void resp
+        } catch { /* CORS or network error */ }
+
+        // Strategy 2: OPTIONS preflight — CORS filters typically respond without auth
+        if (!corsDetected) {
+          try {
+            const controller = new AbortController()
+            const timeout = setTimeout(() => controller.abort(), 5000)
+            const resp = await fetch(actualExternalUrl, {
+              method: 'OPTIONS',
+              mode: 'cors',
+              headers: { 'Access-Control-Request-Method': 'GET' },
+              signal: controller.signal,
+            })
+            clearTimeout(timeout)
+            corsDetected = true
+            void resp
+          } catch { /* CORS or network error */ }
+        }
+
+        if (corsDetected) {
           detectedWarnings.push({
             severity: 'success',
             summary: 'CORS headers present',
             detail: `The server at ${actualExternalUrl} includes CORS headers, allowing direct browser access from other origins.`,
           })
-        } catch {
+        } else {
           detectedWarnings.push({
             severity: 'warn',
             summary: 'CORS headers not provided',
