@@ -27,9 +27,16 @@ export const onRequest: PagesFunction = async (context) => {
     const qs = new URL(request.url).search
     const target = `https://csa.demo.52north.org/${suffix}${qs}`
 
-    // Forward headers (strip host so upstream sees its own)
-    const headers = new Headers(request.headers)
-    headers.delete('host')
+    // Only forward specific headers — passing through Cloudflare-internal
+    // headers causes routing issues from Workers.
+    const fwdHeaders = new Headers()
+    fwdHeaders.set('Host', 'csa.demo.52north.org')
+    const auth = request.headers.get('Authorization')
+    if (auth) fwdHeaders.set('Authorization', auth)
+    const ct = request.headers.get('Content-Type')
+    if (ct) fwdHeaders.set('Content-Type', ct)
+    const accept = request.headers.get('Accept')
+    if (accept) fwdHeaders.set('Accept', accept)
 
     // Read body as ArrayBuffer for non-GET/HEAD to avoid streaming issues
     let body: ArrayBuffer | null = null
@@ -37,9 +44,11 @@ export const onRequest: PagesFunction = async (context) => {
       body = await request.arrayBuffer()
     }
 
+    // Note: 52North's SSL cert is expired — Cloudflare Workers enforce
+    // SSL validation with no override, so this may return 526.
     const upstream = await fetch(target, {
       method: request.method,
-      headers,
+      headers: fwdHeaders,
       body,
     })
 
