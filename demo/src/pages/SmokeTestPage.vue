@@ -536,6 +536,58 @@ function prepareStepPreview(step: Step) {
   }
 }
 
+// ─── Retry Helper ────────────────────────────────────────
+
+/** Retry an apiFetch call on transient server errors (500, 502, 503, 504). */
+async function apiFetchWithRetry(
+  url: string,
+  options: RequestInit = {},
+  retries = 1,
+  delayMs = 800
+): Promise<any> {
+  const resp = await apiFetch(url, options)
+  if (!resp.ok && retries > 0 && [500, 502, 503, 504].includes(resp.status)) {
+    await new Promise(r => setTimeout(r, delayMs))
+    return apiFetchWithRetry(url, options, retries - 1, delayMs * 1.5)
+  }
+  return resp
+}
+
+// ─── Pre-Clean: purge orphaned smoke-test resources ──────
+
+const preCleanMessage = ref('')
+const preCleanRunning = ref(false)
+
+async function preClean() {
+  preCleanRunning.value = true
+  preCleanMessage.value = 'Scanning for orphaned smoke-test resources…'
+  const types = ['commands', 'controlstreams', 'observations', 'datastreams',
+                 'subsystems', 'subdeployments', 'samplingFeatures',
+                 'deployments', 'procedures', 'systems']
+  let totalDeleted = 0
+  for (const type of types) {
+    try {
+      const listUrl = `/${type === 'subsystems' ? 'systems' : (type === 'subdeployments' ? 'deployments' : type)}?q=${SMOKE_TAG}&limit=50`
+      const resp = await apiFetch(listUrl, { method: 'GET', headers: { 'Accept': 'application/json' } })
+      if (!resp.ok || !resp.data?.items) continue
+      for (const item of resp.data.items) {
+        const id = item.id || item.properties?.id
+        if (!id) continue
+        const actual = type === 'subsystems' ? 'systems' : (type === 'subdeployments' ? 'deployments' : type)
+        try {
+          await apiFetch(`/${actual}/${id}`, { method: 'DELETE' })
+          totalDeleted++
+        } catch { /* best effort */ }
+      }
+    } catch { /* best effort */ }
+  }
+  preCleanMessage.value = totalDeleted > 0
+    ? `Purged ${totalDeleted} orphaned resource(s)`
+    : 'Server is clean — no orphans found'
+  preCleanRunning.value = false
+  setTimeout(() => { preCleanMessage.value = '' }, 4000)
+}
+
 // ─── Step Execution ──────────────────────────────────────
 
 async function executeCurrentStep() {
@@ -583,7 +635,7 @@ async function executeCurrentStep() {
         }
         step.before = null
 
-        const resp = await apiFetch(url, {
+        const resp = await apiFetchWithRetry(url, {
           method: 'POST',
           headers: { 'Content-Type': contentType },
           body: bodyStr,
@@ -596,7 +648,7 @@ async function executeCurrentStep() {
           // connected driver ("Receiving system is disabled").  The JSON was parsed
           // correctly — this is a server-side limitation, not a payload error.
           const errText = resp.error || resp.statusText || ''
-          if (step.resourceType === 'commands' && /rejected|disabled/i.test(errText)) {
+          if (step.resourceType === 'commands' && /rejected|disabled|not supported|no receiver|no handler|not available/i.test(errText)) {
             markSkipped(step, 'Command parsed OK — rejected by server (no connected driver)', start)
             return
           }
@@ -632,7 +684,7 @@ async function executeCurrentStep() {
         const url = getDetailUrl(actualType, id)
         step.request = { method: 'GET', url, headers: { 'Accept': contentType } }
 
-        const resp = await apiFetch(url, { method: 'GET', headers: { 'Accept': contentType } })
+        const resp = await apiFetchWithRetry(url, { method: 'GET', headers: { 'Accept': contentType } })
         setResponse(step, resp)
 
         if (!resp.ok) {
@@ -682,7 +734,7 @@ async function executeCurrentStep() {
           body: bodyStr,
         }
 
-        const resp = await apiFetch(url, {
+        const resp = await apiFetchWithRetry(url, {
           method: 'PUT',
           headers: { 'Content-Type': contentType, 'Accept': contentType },
           body: bodyStr,
@@ -717,7 +769,7 @@ async function executeCurrentStep() {
         const url = getDetailUrl(actualType, id)
         step.request = { method: 'GET', url, headers: { 'Accept': contentType } }
 
-        const resp = await apiFetch(url, { method: 'GET', headers: { 'Accept': contentType } })
+        const resp = await apiFetchWithRetry(url, { method: 'GET', headers: { 'Accept': contentType } })
         setResponse(step, resp)
 
         if (!resp.ok) {
@@ -744,7 +796,7 @@ async function executeCurrentStep() {
         const url = getDeleteUrl(actualType, id)
         step.request = { method: 'DELETE', url, headers: {} }
 
-        const resp = await apiFetch(url, { method: 'DELETE' })
+        const resp = await apiFetchWithRetry(url, { method: 'DELETE' })
         setResponse(step, resp)
 
         if (!resp.ok) {
@@ -818,6 +870,27 @@ function skipCurrentStep() {
   step.status = 'skipped'
   step.error = 'Manually skipped'
   step.elapsed = 0
+}
+
+/** Run all remaining steps automatically without manual clicks. */
+async function runAllSteps() {
+  if (!testStarted.value) beginTest()
+  running.value = true
+  while (currentStepIndex.value < steps.value.length) {
+    const step = steps.value[currentStepIndex.value]
+    if (step.status === 'pending') step.status = 'active'
+    if (step.status === 'active') {
+      prepareStepPreview(step)
+      await executeCurrentStep()
+    }
+    // Advance to next step
+    if (currentStepIndex.value < steps.value.length - 1) {
+      currentStepIndex.value++
+    } else {
+      break
+    }
+  }
+  running.value = false
 }
 
 async function abortAndCleanup() {
@@ -970,9 +1043,12 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
           <span v-else class="btn-placeholder"></span>
         </div>
 
-        <!-- Fixed-width skip slot / View Report -->
+        <!-- Run All / Skip / View Report -->
         <div class="action-slot" :class="{ 'action-slot-sm': !testComplete }">
-          <button v-if="isStepReady" class="btn btn-secondary" @click="skipCurrentStep">
+          <button v-if="!testStarted" class="btn btn-success" @click="runAllSteps" :disabled="running || preCleanRunning">
+            <i class="pi pi-forward"></i> Run All
+          </button>
+          <button v-else-if="isStepReady" class="btn btn-secondary" @click="skipCurrentStep">
             <i class="pi pi-angle-double-right"></i> Skip
           </button>
           <button v-else-if="testComplete && !showReport" class="btn btn-primary" @click="showReport = true">
@@ -983,13 +1059,17 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
 
         <div class="toolbar-divider"></div>
 
-        <!-- Always-present utility buttons with fixed slots -->
+        <!-- Pre-clean + Cleanup -->
         <div class="action-slot action-slot-cleanup">
-          <button v-if="testStarted" class="btn btn-danger" @click="abortAndCleanup" :disabled="running">
+          <button v-if="!testStarted" class="btn btn-warning" @click="preClean" :disabled="preCleanRunning || running" title="Purge orphaned smoke-test resources from previous failed runs">
+            <i :class="preCleanRunning ? 'pi pi-spin pi-spinner' : 'pi pi-eraser'"></i> Pre-Clean
+          </button>
+          <button v-else-if="testStarted" class="btn btn-danger" @click="abortAndCleanup" :disabled="running">
             <i class="pi pi-trash"></i> Cleanup
           </button>
           <span v-else class="btn-placeholder"></span>
           <span v-if="cleanupMessage" class="cleanup-message">{{ cleanupMessage }}</span>
+          <span v-if="preCleanMessage" class="cleanup-message">{{ preCleanMessage }}</span>
         </div>
         <button class="btn btn-secondary" @click="resetTest" :disabled="running">
           <i class="pi pi-refresh"></i> Reset
@@ -1364,6 +1444,10 @@ onUnmounted(() => { map?.setTarget(undefined); map = null })
 .btn-secondary:hover:not(:disabled) { background: #cbd5e1; }
 .btn-danger { background: #dc2626; color: #fff; }
 .btn-danger:hover:not(:disabled) { background: #b91c1c; }
+.btn-success { background: #16a34a; color: #fff; }
+.btn-success:hover:not(:disabled) { background: #15803d; }
+.btn-warning { background: #d97706; color: #fff; }
+.btn-warning:hover:not(:disabled) { background: #b45309; }
 
 /* ── Panels ───────────────────────── */
 .panels {
