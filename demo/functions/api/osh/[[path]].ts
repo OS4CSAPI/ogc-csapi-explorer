@@ -6,8 +6,15 @@
  * (Oracle Cloud, Caddy reverse proxy with basic auth + auto-HTTPS),
  * passing through query strings and request bodies.
  *
+ * The client must send valid Basic auth credentials (os4csapi:ogc134mm)
+ * in the Authorization header. The proxy validates them before forwarding
+ * to the upstream Caddy server.
+ *
  * This replaces the Vite dev-server proxy for production deployments.
  */
+
+// The expected client credentials (same as Caddy basic auth)
+const EXPECTED_AUTH = 'Basic ' + btoa('os4csapi:ogc134mm')
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -25,16 +32,31 @@ export const onRequest: PagesFunction = async (context) => {
       return new Response(null, { status: 204, headers: CORS_HEADERS })
     }
 
+    // --- Validate client credentials ---
+    const clientAuth = request.headers.get('Authorization') || ''
+    if (clientAuth !== EXPECTED_AUTH) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized — invalid or missing credentials.' }),
+        {
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+            'WWW-Authenticate': 'Basic realm="OSH SensorHub"',
+            ...CORS_HEADERS,
+          },
+        },
+      )
+    }
+
     // Build target URL — params.path may be undefined, string, or string[]
     const raw = params.path
     const suffix = Array.isArray(raw) ? raw.join('/') : (raw || '')
     const qs = new URL(request.url).search
     const target = `https://os4csapi-osh.duckdns.org/sensorhub/api/${suffix}${qs}`
 
-    // Only forward specific safe headers
-    // Caddy requires os4csapi:ogc134mm basic auth; inject it server-side
+    // Forward with the real Caddy credentials (same value, validated above)
     const fwdHeaders = new Headers()
-    fwdHeaders.set('Authorization', 'Basic ' + btoa('os4csapi:ogc134mm'))
+    fwdHeaders.set('Authorization', EXPECTED_AUTH)
     const ct = request.headers.get('Content-Type')
     if (ct) fwdHeaders.set('Content-Type', ct)
     const accept = request.headers.get('Accept')
