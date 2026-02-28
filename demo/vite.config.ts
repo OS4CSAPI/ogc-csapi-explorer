@@ -26,9 +26,13 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api\/52north/, ''),
       },
       '/api/osh': {
-        target: 'http://45.55.99.236:8080/sensorhub/api',
+        target: 'https://os4csapi-osh.duckdns.org/sensorhub/api',
         changeOrigin: true,
+        secure: true,
         rewrite: (path) => path.replace(/^\/api\/osh/, ''),
+        headers: {
+          Authorization: 'Basic ' + Buffer.from('os4csapi:ogc134mm').toString('base64'),
+        },
       },
     },
   },

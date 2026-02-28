@@ -352,7 +352,7 @@ function activityColor(level: number): string {
     <!-- Not connected warning -->
     <div v-if="!isConnectedToOSH" class="alert alert-warn">
       <i class="pi pi-exclamation-triangle"></i>
-      Connect to the <strong>OSH</strong> server first (http://45.55.99.236:8080).
+      Connect to the <strong>OSH</strong> server first (os4csapi-osh.duckdns.org).
       Go to <router-link to="/">Connect</router-link> and select the OSH endpoint.
     </div>
 

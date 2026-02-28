@@ -19,7 +19,7 @@ import urllib.request
 import base64
 import time
 
-BASE = "http://45.55.99.236:8080/sensorhub/api"
+BASE = "http://129.80.248.53:8181/sensorhub/api"
 AUTH = base64.b64encode(b"ogc:ogc").decode()
 DRY_RUN = "--dry-run" in sys.argv
 
@@ -117,14 +117,20 @@ def create_nested(parent_collection, parent_id, child_collection, payload, label
     path = f"{parent_collection}/{parent_id}/{child_collection}"
     uid = payload.get("properties", {}).get("uid", "")
 
-    # Check if already exists at root level
+    # Check if already exists UNDER THIS PARENT (not at root level).
+    # Checking at root level would find flat resources and skip nesting,
+    # which was the cause of the hierarchy bug on 2026-02-27.
     if uid:
-        existing = find_resource(child_collection, uid)
-        if existing:
-            eid = existing.get("id", "?")
-            print(f"  SKIP {label} — already exists (id={eid})")
-            skipped.append(label)
-            return eid
+        nested_path = f"{parent_collection}/{parent_id}/{child_collection}"
+        status, data = api("GET", nested_path)
+        if status == 200 and isinstance(data, dict):
+            for item in data.get("items", []):
+                item_uid = item.get("properties", {}).get("uid", "")
+                if item_uid == uid:
+                    eid = item.get("id", "?")
+                    print(f"  SKIP {label} — already nested under parent (id={eid})")
+                    skipped.append(label)
+                    return eid
 
     if DRY_RUN:
         print(f"  DRY-RUN: would POST to {path}: {label}")

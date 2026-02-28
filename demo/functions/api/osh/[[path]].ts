@@ -2,11 +2,9 @@
  * Cloudflare Pages Function — reverse proxy for OSH SensorHub.
  *
  * Matches all requests to /api/osh/* and forwards them to the actual
- * OSH server at http://45.55.99.236:8080/sensorhub/api/*, passing
- * through auth headers, query strings, and request bodies.
- *
- * Uses nip.io hostname because Cloudflare Workers block fetch() to raw
- * IP addresses (Error 1003). 45.55.99.236.nip.io resolves to the same IP.
+ * OSH server at https://os4csapi-osh.duckdns.org/sensorhub/api/*
+ * (Oracle Cloud, Caddy reverse proxy with basic auth + auto-HTTPS),
+ * passing through query strings and request bodies.
  *
  * This replaces the Vite dev-server proxy for production deployments.
  */
@@ -31,12 +29,12 @@ export const onRequest: PagesFunction = async (context) => {
     const raw = params.path
     const suffix = Array.isArray(raw) ? raw.join('/') : (raw || '')
     const qs = new URL(request.url).search
-    const target = `http://45.55.99.236.nip.io:8080/sensorhub/api/${suffix}${qs}`
+    const target = `https://os4csapi-osh.duckdns.org/sensorhub/api/${suffix}${qs}`
 
     // Only forward specific safe headers
+    // Caddy requires os4csapi:ogc134mm basic auth; inject it server-side
     const fwdHeaders = new Headers()
-    const auth = request.headers.get('Authorization')
-    if (auth) fwdHeaders.set('Authorization', auth)
+    fwdHeaders.set('Authorization', 'Basic ' + btoa('os4csapi:ogc134mm'))
     const ct = request.headers.get('Content-Type')
     if (ct) fwdHeaders.set('Content-Type', ct)
     const accept = request.headers.get('Accept')

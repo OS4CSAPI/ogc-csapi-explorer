@@ -321,8 +321,8 @@ async function fetchResources(cursorUrl?: string) {
 }
 
 function extractProxyPath(absoluteUrl: string): string {
-  // The server returns absolute URLs like http://45.55.99.236:8080/sensorhub/api/systems?offset=10
-  // connection.baseUrl is like http://45.55.99.236:8080/sensorhub/api (via proxy or direct)
+  // The server returns absolute URLs like https://os4csapi-osh.duckdns.org/sensorhub/api/systems?offset=10
+  // connection.baseUrl is like https://os4csapi-osh.duckdns.org/sensorhub/api (via proxy or direct)
   // We need to strip the origin AND the base path prefix, keeping only the
   // resource path + query (e.g., /systems?offset=10) that apiFetch can use.
   try {
