@@ -1,0 +1,204 @@
+{
+  "type": "PhysicalSystem",
+  "id": "04ng",
+  "uniqueId": "urn:os4csapi:system:odas:az-ma-1",
+  "definition": "sosa:System",
+  "label": "ODAS Mic Array Node AZ-MA-1",
+  "description": "ODAS 7-microphone circular PDM MEMS array node deployed at Ft. Huachuca, AZ. Position 1 (north). Performs real-time sound source localization (SSL), sound source tracking (SST), and line-of-bearing (LOB) estimation using the ODAS (Open embeddeD Audition System) DSP pipeline. Subsystems include tripod platform, mic array, edge processor, comms module, power supply, and pan-tilt actuator.",
+  "keywords": [
+    "ODAS",
+    "C-UAS",
+    "acoustic detection",
+    "Ft. Huachuca",
+    "microphone array",
+    "beamforming",
+    "DOA estimation",
+    "sound source localization"
+  ],
+  "identifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/ShortName",
+      "label": "Short Name",
+      "value": "AZ-MA-1"
+    },
+    {
+      "definition": "http://sensorml.com/ont/swe/property/LongName",
+      "label": "Long Name",
+      "value": "ODAS Mic Array Node AZ-MA-1 (north)"
+    }
+  ],
+  "classifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/SensorType",
+      "label": "System Type",
+      "value": "Acoustic Array Sensor Node"
+    },
+    {
+      "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+      "label": "Intended Application",
+      "value": "Counter-UAS Acoustic Detection"
+    }
+  ],
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    ".."
+  ],
+  "characteristics": [
+    {
+      "label": "ODAS DSP Pipeline",
+      "characteristics": [
+        {
+          "type": "Text",
+          "name": "ssl_method",
+          "definition": "http://sensorml.com/ont/swe/property/AlgorithmType",
+          "label": "SSL Method",
+          "value": "Steered Response Power with Phase Transform (SRP-PHAT)"
+        },
+        {
+          "type": "Text",
+          "name": "sst_method",
+          "definition": "http://sensorml.com/ont/swe/property/AlgorithmType",
+          "label": "SST Method",
+          "value": "Kalman Filter (dynamic source addition)"
+        },
+        {
+          "type": "Text",
+          "name": "sss_method",
+          "definition": "http://sensorml.com/ont/swe/property/AlgorithmType",
+          "label": "SSS Method",
+          "value": "Delay-and-Sum (DDS) with post-filter"
+        },
+        {
+          "type": "Count",
+          "name": "frame_size",
+          "definition": "http://sensorml.com/ont/swe/property/WindowSize",
+          "label": "FFT Frame Size",
+          "value": 256
+        },
+        {
+          "type": "Count",
+          "name": "hop_size",
+          "definition": "http://sensorml.com/ont/swe/property/StepSize",
+          "label": "Hop Size",
+          "value": 128
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+      "label": "Acoustic Capabilities",
+      "capabilities": [
+        {
+          "type": "Count",
+          "name": "num_mics",
+          "definition": "http://sensorml.com/ont/swe/property/NumberOfElements",
+          "label": "Microphones",
+          "value": 7
+        },
+        {
+          "type": "Quantity",
+          "name": "sample_rate",
+          "definition": "http://qudt.org/vocab/quantitykind/Frequency",
+          "label": "Sample Rate",
+          "uom": {
+            "code": "Hz"
+          },
+          "value": 48000.0
+        },
+        {
+          "type": "Count",
+          "name": "max_tracked",
+          "definition": "http://sensorml.com/ont/swe/property/NumberOfOutputs",
+          "label": "Max Tracked Sources",
+          "value": 4
+        },
+        {
+          "type": "Count",
+          "name": "adc_resolution",
+          "definition": "http://sensorml.com/ont/swe/property/Resolution",
+          "label": "ADC Resolution (bits)",
+          "value": 24
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "role": "http://sensorml.com/ont/swe/property/Operator",
+      "organisationName": "IntRoLab \u2014 Universit\u00e9 de Sherbrooke",
+      "contactInfo": {
+        "website": "https://introlab.3it.usherbrooke.ca",
+        "address": {
+          "city": "Sherbrooke",
+          "administrativeArea": "QC",
+          "country": "Canada"
+        }
+      }
+    }
+  ],
+  "documents": [
+    {
+      "role": "http://dbpedia.org/resource/Software",
+      "name": "ODAS Library",
+      "description": "Open embeddeD Audition System \u2014 C library for SSL, SST, separation, post-filtering. MIT-licensed.",
+      "link": {
+        "href": "https://github.com/introlab/odas",
+        "type": "text/html"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Scientific_publication",
+      "name": "ODAS Paper",
+      "description": "Grondin et al. 'ODAS: Open embeddeD Audition System', Frontiers in Robotics and AI, Vol. 9, 2022.",
+      "link": {
+        "href": "https://www.frontiersin.org/article/10.3389/frobt.2022.854444",
+        "type": "text/html"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Scientific_publication",
+      "name": "SSL/SST Methods Paper",
+      "description": "Grondin & Michaud 'Lightweight and Optimized Sound Source Localization and Tracking Methods', Robotics and Autonomous Systems, 2019.",
+      "link": {
+        "href": "https://arxiv.org/pdf/1812.00115",
+        "type": "application/pdf"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Web_page",
+      "name": "ODAS Wiki \u2014 Configuration",
+      "description": "Configuration reference for microphone geometry, SSL, SST, SSS, and classification parameters.",
+      "link": {
+        "href": "https://github.com/introlab/odas/wiki/Configuration",
+        "type": "text/html"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Video",
+      "name": "ODAS Demonstration Video",
+      "description": "Live demonstration of ODAS sound source localization and tracking.",
+      "link": {
+        "href": "https://youtu.be/n7y2rLAnd5I",
+        "type": "text/html"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Web_page",
+      "name": "ODAS Web GUI",
+      "description": "Browser-based visualisation tool for ODAS SSL/SST output data.",
+      "link": {
+        "href": "https://github.com/introlab/odas_web",
+        "type": "text/html"
+      }
+    }
+  ],
+  "position": {
+    "type": "Point",
+    "coordinates": [
+      -110.272897,
+      31.663006
+    ]
+  }
+}

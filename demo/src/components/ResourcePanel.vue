@@ -46,6 +46,12 @@ function viewDetail(resource: any) {
   activeTab.value = 1 // switch to Detail tab
 }
 
+/** Sync selectedResourceId when ResourceDetail navigates in-place (e.g. subsystem drill-down) */
+function onSelectResource(id: string) {
+  selectedResourceId.value = id
+  selectedResource.value = null // will be fetched by ResourceDetail
+}
+
 function editResource(resource: any) {
   const id = resource?.id || resource?.properties?.id || resource?.['@id'] || ''
   selectedResourceId.value = String(id)
@@ -104,6 +110,7 @@ function onDeleted() {
             :resource="selectedResource"
             :nested-parent-type="parentType"
             :nested-parent-id="parentId"
+            @selectResource="onSelectResource"
           />
         </TabPanel>
 

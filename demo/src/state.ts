@@ -68,6 +68,26 @@ export function getResourceType(key: string): ResourceTypeInfo | undefined {
 }
 
 /**
+ * Global cache mapping systemId → parent system info.
+ * Populated whenever subsystems are fetched (ResourceDetail, DataModelDiagram).
+ * Survives component recreations so parent breadcrumbs persist across navigation.
+ */
+export const parentSystemCache = reactive<Record<string, { id: string; name: string }>>({})
+
+/** Record that each child system has the given parent. */
+export function cacheParentForChildren(
+  parentId: string,
+  parentName: string,
+  children: Array<{ id: string }>,
+) {
+  for (const child of children) {
+    if (child.id) {
+      parentSystemCache[child.id] = { id: parentId, name: parentName }
+    }
+  }
+}
+
+/**
  * Defines the nested/related resource navigation available from each parent resource type.
  * Each entry maps a parent type to the list of child relations the CSAPI spec supports.
  */

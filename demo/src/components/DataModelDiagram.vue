@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { computed, reactive, onMounted, watch } from 'vue'
+import { computed, reactive, ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../api'
 import { getNestedListUrl, getListUrl, getDetailUrl, getContentType } from '../csapi-bridge'
-import { connection, RELATED_RESOURCES } from '../state'
+import { connection, RELATED_RESOURCES, cacheParentForChildren } from '../state'
 
 const router = useRouter()
 
 interface ParentRef {
   resourceType: string
   resourceId: string
+  /** Friendly name of the parent resource (when known) */
+  name?: string
 }
 
 const props = defineProps<{
@@ -106,6 +108,79 @@ const edges: ModelEdge[] = [
 const NODE_RX = 12
 const NODE_W = 130
 const NODE_H = 52
+
+// ─── Parent System Node (shown when viewing a subsystem) ──────────
+
+/** Detected same-type parent link (e.g. subsystem's parent system) */
+const sameTypeParent = computed(() => {
+  if (!props.parentLinks?.length) return null
+  return props.parentLinks.find(p => p.resourceType === props.activeType) || null
+})
+
+/** Resolved parent name — from prop or fetched */
+const parentName = ref<string | null>(null)
+
+// Fetch parent name if not provided via prop
+watch(sameTypeParent, async (p) => {
+  parentName.value = null
+  if (!p) return
+  if (p.name) { parentName.value = p.name; return }
+  // Fetch the parent detail to get its name
+  try {
+    const path = getDetailUrl(p.resourceType, p.resourceId)
+    const acceptType = getContentType(p.resourceType)
+    const res = await apiFetch(path, { headers: { Accept: acceptType } })
+    if (res.ok && res.data) {
+      parentName.value = res.data?.properties?.name || res.data?.name || p.resourceId
+    }
+  } catch { /* use null — template will show ID only */ }
+}, { immediate: true })
+
+/** Parent node position — placed above-left of the System node */
+const PARENT_NODE = { x: 130, y: 35, w: 160, h: 44 }
+
+// ─── Self-Hierarchy Cluster (subsystems / subdeployments) ──────────
+
+/** First N self-hierarchy child items fetched for the cluster display */
+const selfChildItems = ref<Array<{ id: string; name: string }>>([])
+/** Total count of self-hierarchy children (may exceed displayed items) */
+const selfChildTotal = ref(0)
+/** The relation name for the active self-hierarchy ("subsystems" or "subdeployments") */
+const selfChildRelation = ref<string>('')
+
+/** The ModelNode definition for the currently active resource type */
+const activeNodeDef = computed(() => nodes.find(n => n.id === props.activeType))
+
+/** Cluster config computed from the active node's position and self-loop edge */
+const selfClusterConfig = computed(() => {
+  const node = activeNodeDef.value
+  if (!node || selfChildItems.value.length === 0) return null
+  const selfEdge = edges.find(e => e.from === e.to && e.from === props.activeType)
+  if (!selfEdge) return null
+  return {
+    x: Math.round(node.x - 165 / 2),
+    startY: node.y + NODE_H / 2 + 65,
+    chipW: 165,
+    chipH: 19,
+    gap: 3,
+    maxShow: 6,
+    color: node.color,
+    icon: node.icon,
+    nodeX: node.x,
+    nodeY: node.y,
+    relation: selfEdge.label,
+  }
+})
+
+/** Dynamic SVG viewBox height — expands to fit cluster for lower-positioned nodes */
+const svgViewBoxHeight = computed(() => {
+  const sc = selfClusterConfig.value
+  if (!sc) return 480
+  const items = Math.min(selfChildItems.value.length, sc.maxShow)
+  const hasOverflow = selfChildTotal.value > sc.maxShow
+  const clusterBottom = sc.startY + items * (sc.chipH + sc.gap) + (hasOverflow ? 22 : 0) + 10
+  return Math.max(480, clusterBottom + 20)
+})
 
 /** Find a node by id */
 function findNode(id: string): ModelNode | undefined {
@@ -241,6 +316,52 @@ const discoveredAncestors = reactive<Record<string, ParentRef>>({})
 let fetchGeneration = 0
 
 /**
+ * Extract a resource count from a collection response.
+ * Prefers `numberMatched` when available; otherwise infers from items
+ * and the presence of a `next` pagination link (indicating more exist).
+ * Returns -1 when no useful count can be determined.
+ */
+function extractCount(data: any): number {
+  if (data?.numberMatched != null) return data.numberMatched
+  const items = data?.items ?? data?.features
+  if (Array.isArray(items)) {
+    const len = items.length
+    // If there's a "next" link, at least one more page exists
+    const hasNext = Array.isArray(data?.links) && data.links.some((l: any) => l.rel === 'next')
+    return hasNext ? Math.max(len, len + 1) : len
+  }
+  return -1
+}
+
+/**
+ * Resolve the count of deployed systems from a deployment's inline properties.
+ * Per OGC 23-001 Table 43, deployedSystems maps to properties/deployedSystems@link
+ * (a JSON Array of links to System resources), NOT to a sub-resource endpoint.
+ * Falls back to platform@link when deployedSystems@link is absent.
+ */
+async function resolveDeployedSystemsCount(deploymentId: string): Promise<number> {
+  try {
+    const path = getDetailUrl('deployments', deploymentId)
+    const acceptType = getContentType('deployments')
+    const res = await apiFetch(path, { headers: { Accept: acceptType } })
+    if (!res.ok) return 0
+    const parentProps = res.data?.properties || res.data || {}
+
+    // 1. Try deployedSystems@link — the standard-defined inline property
+    const dsLinks = parentProps['deployedSystems@link']
+    if (Array.isArray(dsLinks) && dsLinks.length > 0) {
+      return dsLinks.filter((l: any) => l?.href).length
+    }
+
+    // 2. Fallback: platform@link — identifies the platform system hosting the deployment
+    const platformLink = parentProps['platform@link']
+    if (platformLink?.href) return 1
+
+    return 0
+  } catch { return 0 }
+}
+
+/**
  * Fetch counts of related/nested resources for the currently viewed resource.
  * Fetches direct relations, then transitive grandchild counts
  * (observations via datastreams, commands via controlStreams).
@@ -254,6 +375,9 @@ async function fetchCounts() {
   // Clear previous counts
   for (const key of Object.keys(counts)) delete counts[key]
   for (const key of Object.keys(discoveredAncestors)) delete discoveredAncestors[key]
+  selfChildItems.value = []
+  selfChildTotal.value = 0
+  selfChildRelation.value = ''
 
   if (!parentId || !parentType) return
 
@@ -267,22 +391,103 @@ async function fetchCounts() {
     // Fire all direct requests in parallel
     const requests = relations.map(async (rel) => {
       try {
-        const path = getNestedListUrl(parentType, parentId, rel.relation, { limit: 0 })
+        // For self-hierarchy relations (subsystems/subdeployments), fetch a page for chip display
+        const isSelfHierarchy = rel.childType === parentType && edges.some(e => e.from === e.to && e.from === parentType && e.label === rel.relation)
+        const limit = isSelfHierarchy ? 8 : 1
+        const path = getNestedListUrl(parentType, parentId, rel.relation, { limit })
         const res = await apiFetch(path)
         if (gen !== fetchGeneration) return  // stale
         if (!res.ok) {
+          // --- Deployed Systems fallback (OGC 23-001 Table 43) ---
+          // /deployments/{id}/systems is non-standard; deployedSystems is an
+          // inline property.  Fetch the deployment detail and resolve @link refs.
+          if (parentType === 'deployments' && rel.relation === 'systems') {
+            const inlineCount = await resolveDeployedSystemsCount(parentId)
+            if (gen !== fetchGeneration) return
+            counts[rel.childType] = inlineCount
+            return
+          }
           counts[rel.childType] = -1
+          if (isSelfHierarchy) { selfChildItems.value = []; selfChildTotal.value = 0 }
           return
         }
-        const data = res.data
-        if (data?.numberMatched != null) {
-          counts[rel.childType] = data.numberMatched
-        } else if (Array.isArray(data?.items)) {
-          counts[rel.childType] = data.items.length
-        } else if (Array.isArray(data?.features)) {
-          counts[rel.childType] = data.features.length
-        } else {
-          counts[rel.childType] = -1
+        let count = extractCount(res.data)
+
+        // --- Subdeployments fallback ---
+        // Some servers (e.g. OSH SensorHub) return 200/{items:[]} for
+        // /deployments/{id}/subdeployments but track parentage only via
+        // the collection-level ?parent= query parameter.
+        // CAVEAT: Some servers ignore the ?parent= value entirely and return
+        // ALL deployments that have any parent.  We detect this with a probe:
+        // query ?parent=<nonsense>&limit=1 — if it returns items, the filter
+        // is a no-op and the results are unreliable.
+        if (count === 0 && isSelfHierarchy
+            && parentType === 'deployments' && rel.relation === 'subdeployments') {
+          try {
+            // Probe: test if ?parent= filter actually works
+            const probeRes = await apiFetch('/deployments?parent=__csapi_probe__&limit=1')
+            if (gen !== fetchGeneration) return
+            const probeItems = probeRes.ok ? (probeRes.data?.items || probeRes.data?.features || []) : []
+            if (probeItems.length > 0) {
+              // Filter is broken — returns items for a nonexistent parent.
+              // Cannot trust ?parent= results; skip fallback.
+            } else {
+              const fbPath = `/deployments?parent=${encodeURIComponent(parentId)}&limit=8`
+              const fbRes = await apiFetch(fbPath)
+              if (gen !== fetchGeneration) return
+              if (fbRes.ok && fbRes.data) {
+                const fbItems = (fbRes.data?.items || fbRes.data?.features || [])
+                  .filter((it: any) => {
+                    const id = it?.id || it?.properties?.id
+                    return id && String(id) !== String(parentId)
+                  })
+                if (fbItems.length > 0) {
+                  count = fbItems.length
+                  if (fbRes.data?.numberMatched != null) {
+                    const serverTotal = fbRes.data.numberMatched
+                    count = serverTotal > count ? serverTotal : count
+                    const rawLen = (fbRes.data?.items || fbRes.data?.features || []).length
+                    if (rawLen > fbItems.length) count = Math.max(0, count - (rawLen - fbItems.length))
+                  }
+                  selfChildItems.value = fbItems.map((it: any) => ({
+                    id: String(it?.id || it?.properties?.id || ''),
+                    name: it?.properties?.name || it?.name || String(it?.id || ''),
+                  })).filter((it: { id: string }) => it.id)
+                  selfChildTotal.value = count
+                  selfChildRelation.value = rel.relation
+                  if (parentId && selfChildItems.value.length > 0) {
+                    cacheParentForChildren(parentId, String(parentId), selfChildItems.value)
+                  }
+                }
+              }
+            }
+          } catch { /* non-critical */ }
+        }
+
+        // --- Deployed Systems fallback (after 200 with 0 items) ---
+        if (count === 0 && parentType === 'deployments' && rel.relation === 'systems') {
+          const inlineCount = await resolveDeployedSystemsCount(parentId)
+          if (gen !== fetchGeneration) return
+          if (inlineCount > 0) count = inlineCount
+        }
+
+        counts[rel.childType] = count
+
+        // Populate self-hierarchy cluster items (subsystems or subdeployments)
+        // Skip if the fallback above already populated the cluster.
+        if (isSelfHierarchy && selfChildItems.value.length === 0) {
+          const items = res.data?.items || res.data?.features || []
+          selfChildItems.value = items.map((it: any) => ({
+            id: String(it?.id || it?.properties?.id || ''),
+            name: it?.properties?.name || it?.name || String(it?.id || ''),
+          })).filter((it: { id: string }) => it.id)
+          selfChildTotal.value = extractCount(res.data)
+          selfChildRelation.value = rel.relation
+
+          // Cache parent relationship so breadcrumbs survive navigation.
+          if (parentId && selfChildItems.value.length > 0) {
+            cacheParentForChildren(parentId, String(parentId), selfChildItems.value)
+          }
         }
       } catch {
         if (gen !== fetchGeneration) return
@@ -322,15 +527,12 @@ async function fetchCounts() {
           let total = 0
           const subRequests = ids.map(async (id: string) => {
             try {
-              const path = getNestedListUrl(job.intermediateType, id, job.grandchildRelation, { limit: 0 })
+              const path = getNestedListUrl(job.intermediateType, id, job.grandchildRelation, { limit: 1 })
               const res = await apiFetch(path)
               if (gen !== fetchGeneration) return 0
               if (!res.ok) return 0
-              const data = res.data
-              if (data?.numberMatched != null) return data.numberMatched
-              if (Array.isArray(data?.items)) return data.items.length
-              if (Array.isArray(data?.features)) return data.features.length
-              return 0
+              const c = extractCount(res.data)
+              return c > 0 ? c : 0
             } catch { return 0 }
           })
           const results = await Promise.allSettled(subRequests)
@@ -372,20 +574,11 @@ async function fetchCounts() {
 
         counts[rel.childType] = null  // loading
         try {
-          const path = getNestedListUrl(pLink.resourceType, pLink.resourceId, rel.relation, { limit: 0 })
+          const path = getNestedListUrl(pLink.resourceType, pLink.resourceId, rel.relation, { limit: 1 })
           const res = await apiFetch(path)
           if (gen !== fetchGeneration) return
           if (!res.ok) { counts[rel.childType] = -1; return }
-          const data = res.data
-          if (data?.numberMatched != null) {
-            counts[rel.childType] = data.numberMatched
-          } else if (Array.isArray(data?.items)) {
-            counts[rel.childType] = data.items.length
-          } else if (Array.isArray(data?.features)) {
-            counts[rel.childType] = data.features.length
-          } else {
-            counts[rel.childType] = -1
-          }
+          counts[rel.childType] = extractCount(res.data)
         } catch {
           if (gen !== fetchGeneration) return
           counts[rel.childType] = -1
@@ -454,20 +647,11 @@ async function fetchCounts() {
           if (counts[rel.childType] != null && counts[rel.childType]! >= 0) return
           counts[rel.childType] = null  // loading
           try {
-            const path = getNestedListUrl(gp.resourceType, gp.resourceId, rel.relation, { limit: 0 })
+            const path = getNestedListUrl(gp.resourceType, gp.resourceId, rel.relation, { limit: 1 })
             const res = await apiFetch(path)
             if (gen !== fetchGeneration) return
             if (!res.ok) { counts[rel.childType] = -1; return }
-            const data = res.data
-            if (data?.numberMatched != null) {
-              counts[rel.childType] = data.numberMatched
-            } else if (Array.isArray(data?.items)) {
-              counts[rel.childType] = data.items.length
-            } else if (Array.isArray(data?.features)) {
-              counts[rel.childType] = data.features.length
-            } else {
-              counts[rel.childType] = -1
-            }
+            counts[rel.childType] = extractCount(res.data)
           } catch {
             if (gen !== fetchGeneration) return
             counts[rel.childType] = -1
@@ -573,14 +757,52 @@ function navigateToType(nodeId: string) {
   // Fallback: top-level list
   router.push({ path: `/explore/${nodeId}` })
 }
+
+/** Navigate directly to the parent resource — bypasses the navigateToType guard
+ *  that blocks same-type navigation (e.g. systems → systems, deployments → deployments). */
+function navigateToParent() {
+  if (!sameTypeParent.value) return
+  router.push({
+    path: `/explore/${sameTypeParent.value.resourceType}`,
+    query: { resourceId: sameTypeParent.value.resourceId },
+  })
+}
+
+/** Navigate into a self-hierarchy child (subsystem / subdeployment) from the cluster */
+function navigateToChild(childId: string) {
+  if (!props.activeId || !selfChildRelation.value) return
+  router.push({
+    path: `/explore/${props.activeType}`,
+    query: {
+      parentType: props.activeType,
+      parentId: props.activeId,
+      relation: selfChildRelation.value,
+      resourceId: childId,
+    },
+  })
+}
+
+/** Browse all self-hierarchy children via the nested list */
+function browseAllChildren() {
+  if (!props.activeId || !selfChildRelation.value) return
+  router.push({
+    path: `/explore/${props.activeType}`,
+    query: {
+      parentType: props.activeType,
+      parentId: props.activeId,
+      relation: selfChildRelation.value,
+    },
+  })
+}
 </script>
 
 <template>
   <div class="diagram-container">
     <svg
-      viewBox="-5 -15 810 450"
+      :viewBox="'-5 -15 810 ' + svgViewBoxHeight"
       xmlns="http://www.w3.org/2000/svg"
       class="model-svg"
+      :style="svgViewBoxHeight > 480 ? { maxHeight: '400px' } : {}"
     >
       <defs>
         <!-- Arrowhead marker -->
@@ -628,6 +850,153 @@ function navigateToType(nodeId: string) {
           text-anchor="middle"
         >{{ edge.label }}</text>
       </g>
+
+      <!-- ══════════════════════════════════════════════════════════
+           Parent Node — shown when the active resource is a child
+           in a self-hierarchy (subsystem or subdeployment).
+           ══════════════════════════════════════════════════════════ -->
+      <template v-if="sameTypeParent && activeNodeDef">
+        <!-- Hierarchical edge: parent → active node -->
+        <path
+          :d="`M ${PARENT_NODE.x + PARENT_NODE.w / 2} ${PARENT_NODE.y + PARENT_NODE.h / 2 + 4}
+               C ${PARENT_NODE.x + PARENT_NODE.w / 2 + 40} ${PARENT_NODE.y + 80},
+                 ${activeNodeDef.x - 60} ${activeNodeDef.y - 80},
+                 ${activeNodeDef.x - NODE_W/2 + 10} ${activeNodeDef.y - 6}`"
+          :stroke="activeNodeDef.color"
+          stroke-width="2.5"
+          stroke-dasharray="6 3"
+          fill="none"
+          marker-end="url(#arrow-active)"
+          opacity="0.8"
+        />
+        <text
+          :x="(PARENT_NODE.x + PARENT_NODE.w / 2 + activeNodeDef.x) / 2 - 30"
+          :y="(PARENT_NODE.y + PARENT_NODE.h / 2 + activeNodeDef.y) / 2 - 25"
+          class="edge-label edge-active"
+          text-anchor="middle"
+          font-size="9"
+        >{{ props.activeType === 'deployments' ? 'subdeployment of' : 'subsystem of' }}</text>
+
+        <!-- Parent node card -->
+        <g class="node-group node-connected parent-node-group" @click="navigateToParent()">
+          <title>Navigate to parent: {{ parentName || sameTypeParent!.resourceId }}</title>
+          <!-- Shadow -->
+          <rect
+            :x="PARENT_NODE.x + 2" :y="PARENT_NODE.y + 2"
+            :width="PARENT_NODE.w" :height="PARENT_NODE.h"
+            :rx="NODE_RX" fill="rgba(0,0,0,0.06)"
+          />
+          <!-- Background -->
+          <rect
+            :x="PARENT_NODE.x" :y="PARENT_NODE.y"
+            :width="PARENT_NODE.w" :height="PARENT_NODE.h"
+            :rx="NODE_RX"
+            fill="#f8fafc"
+            :stroke="activeNodeDef.color"
+            stroke-width="2"
+            stroke-dasharray="4 2"
+          />
+          <!-- Icon -->
+          <text
+            :x="PARENT_NODE.x + 14" :y="PARENT_NODE.y + PARENT_NODE.h / 2"
+            class="node-icon" :fill="activeNodeDef.color" dominant-baseline="central"
+          >{{ activeNodeDef.icon }}</text>
+          <!-- Role label -->
+          <text
+            :x="PARENT_NODE.x + 30" :y="PARENT_NODE.y + 14"
+            class="parent-node-role" fill="#64748b" dominant-baseline="central"
+          >{{ props.activeType === 'deployments' ? 'Parent Deployment' : 'Parent System' }}</text>
+          <!-- Name (truncated) -->
+          <text
+            :x="PARENT_NODE.x + 30" :y="PARENT_NODE.y + 30"
+            class="parent-node-name" fill="#334155" dominant-baseline="central"
+          >{{ (parentName || sameTypeParent!.resourceId).substring(0, 22) }}{{ (parentName || sameTypeParent!.resourceId).length > 22 ? '…' : '' }}</text>
+          <!-- Navigate arrow -->
+          <text
+            :x="PARENT_NODE.x + PARENT_NODE.w - 18" :y="PARENT_NODE.y + PARENT_NODE.h / 2"
+            :fill="activeNodeDef.color" font-size="11" dominant-baseline="central"
+          >↗</text>
+        </g>
+      </template>
+
+      <!-- ══════════════════════════════════════════════════════════
+           Self-Hierarchy Cluster — shown when the active resource
+           has children of the same type (subsystems / subdeployments).
+           ══════════════════════════════════════════════════════════ -->
+      <template v-if="selfClusterConfig">
+        <!-- Branching line from self-loop arc down to cluster -->
+        <path
+          :d="`M ${selfClusterConfig.nodeX} ${selfClusterConfig.nodeY + NODE_H/2 + 50}
+               L ${selfClusterConfig.nodeX} ${selfClusterConfig.startY - 6}`"
+          :stroke="selfClusterConfig.color"
+          stroke-width="1.5"
+          stroke-dasharray="4 2"
+          fill="none"
+          opacity="0.6"
+        />
+
+        <!-- Cluster background card -->
+        <rect
+          :x="selfClusterConfig.x - 6"
+          :y="selfClusterConfig.startY - 8"
+          :width="selfClusterConfig.chipW + 12"
+          :height="Math.min(selfChildItems.length, selfClusterConfig.maxShow) * (selfClusterConfig.chipH + selfClusterConfig.gap) + (selfChildTotal > selfClusterConfig.maxShow ? 22 : 6) + 10"
+          rx="8"
+          fill="#f8fafc"
+          stroke="#e2e8f0"
+          stroke-width="1"
+          opacity="0.85"
+        />
+
+        <!-- Child chips -->
+        <g
+          v-for="(child, idx) in selfChildItems.slice(0, selfClusterConfig.maxShow)"
+          :key="child.id"
+          class="subsystem-chip-group"
+          @click.stop="navigateToChild(child.id)"
+        >
+          <title>{{ child.name }} ({{ child.id }})</title>
+          <rect
+            :x="selfClusterConfig.x"
+            :y="selfClusterConfig.startY + idx * (selfClusterConfig.chipH + selfClusterConfig.gap)"
+            :width="selfClusterConfig.chipW"
+            :height="selfClusterConfig.chipH"
+            rx="5"
+            fill="#ffffff"
+            :stroke="selfClusterConfig.color"
+            stroke-width="1.2"
+            class="subsystem-chip-bg"
+          />
+          <!-- Icon -->
+          <text
+            :x="selfClusterConfig.x + 10"
+            :y="selfClusterConfig.startY + idx * (selfClusterConfig.chipH + selfClusterConfig.gap) + selfClusterConfig.chipH / 2"
+            :fill="selfClusterConfig.color" font-size="8" dominant-baseline="central"
+          >{{ selfClusterConfig.icon }}</text>
+          <!-- Name (truncated) -->
+          <text
+            :x="selfClusterConfig.x + 22"
+            :y="selfClusterConfig.startY + idx * (selfClusterConfig.chipH + selfClusterConfig.gap) + selfClusterConfig.chipH / 2"
+            class="subsystem-chip-label" dominant-baseline="central"
+          >{{ child.name.length > 24 ? child.name.substring(0, 24) + '…' : child.name }}</text>
+          <!-- Drill-in arrow -->
+          <text
+            :x="selfClusterConfig.x + selfClusterConfig.chipW - 14"
+            :y="selfClusterConfig.startY + idx * (selfClusterConfig.chipH + selfClusterConfig.gap) + selfClusterConfig.chipH / 2"
+            fill="#38bdf8" font-size="8" dominant-baseline="central" class="chip-arrow"
+          >→</text>
+        </g>
+
+        <!-- "View all N →" link when there are more -->
+        <g v-if="selfChildTotal > selfClusterConfig.maxShow" class="subsystem-chip-group" @click.stop="browseAllChildren()">
+          <text
+            :x="selfClusterConfig.x + selfClusterConfig.chipW / 2"
+            :y="selfClusterConfig.startY + selfClusterConfig.maxShow * (selfClusterConfig.chipH + selfClusterConfig.gap) + 8"
+            text-anchor="middle" dominant-baseline="central"
+            class="subsystem-more-link"
+          >View all {{ selfChildTotal }} {{ selfClusterConfig.relation }} →</text>
+        </g>
+      </template>
 
       <!-- Nodes -->
       <g
@@ -861,5 +1230,58 @@ function navigateToType(nodeId: string) {
 .legend-connected {
   background: #ffffff;
   border: 2px solid #0ea5e9;
+}
+
+/* Parent node text */
+.parent-node-role {
+  font-size: 8px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.parent-node-name {
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.parent-node-group:hover rect:nth-child(2) {
+  fill: #e0f2fe;
+}
+
+/* Subsystem cluster chips */
+.subsystem-chip-group {
+  cursor: pointer;
+}
+.subsystem-chip-bg {
+  transition: fill 0.12s, stroke-width 0.12s;
+}
+.subsystem-chip-group:hover .subsystem-chip-bg {
+  fill: #e0f2fe;
+  stroke-width: 2;
+}
+.subsystem-chip-label {
+  font-size: 9px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  fill: #0c4a6e;
+}
+.chip-arrow {
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.subsystem-chip-group:hover .chip-arrow {
+  opacity: 1;
+}
+.subsystem-more-link {
+  font-size: 8.5px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  fill: #0369a1;
+  cursor: pointer;
+}
+.subsystem-more-link:hover {
+  fill: #0284c7;
+  text-decoration: underline;
 }
 </style>

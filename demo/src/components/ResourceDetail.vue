@@ -3,7 +3,7 @@ import { ref, watch, computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../api'
 import { getDetailUrl, getContentType, getNestedListUrl, parseCollectionResponse } from '../csapi-bridge'
-import { RELATED_RESOURCES, getResourceType } from '../state'
+import { RELATED_RESOURCES, getResourceType, parentSystemCache, cacheParentForChildren } from '../state'
 import type { RelatedResourceLink } from '../state'
 import type { QueryOptions } from '@csapi/ogc-api/csapi/model'
 import type { DateTimeParameter } from '@csapi/shared/models'
@@ -31,10 +31,34 @@ const props = defineProps<{
   nestedParentId?: string | null
 }>()
 
+const emit = defineEmits<{
+  /** Notify parent when in-place navigation changes the viewed resource */
+  (e: 'selectResource', id: string): void
+}>()
+
 const manualId = ref('')
 const loading = ref(false)
 const error = ref('')
+const errorSeverity = ref<'error' | 'warn'>('error')
 const detail = ref<any>(null)
+
+/**
+ * When the user clicks a same-type related item (e.g. subsystem),
+ * store the current detail as the "in-place parent" so we can
+ * render a back-link to it in parentLinks.
+ */
+const inPlaceParent = ref<{ id: string; name: string; resourceType: string } | null>(null)
+
+/** Guard: when true, the next props.resourceId watcher invocation came from
+ *  an in-place drill-down (viewRelatedItem) and should NOT clear inPlaceParent
+ *  or re-fetch (fetchDetail was already called directly). */
+let _inPlaceNavActive = false
+
+/** SensorML metadata fetched separately for systems (keywords, identifiers, etc.) */
+const smlMeta = ref<any>(null)
+
+/** True when viewing a system — triggers SensorML metadata fetch */
+const isSystem = computed(() => props.resourceType === 'systems')
 
 /** True when viewing a datastream — triggers schema display */
 const isDatastream = computed(() => props.resourceType === 'datastreams')
@@ -261,6 +285,62 @@ async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Pro
   return []
 }
 
+/**
+ * Resolve deployed systems from inline deployment properties.
+ * Per OGC 23-001 Table 43, deployedSystems maps to properties/deployedSystems@link
+ * (a JSON Array of links), NOT to a sub-resource endpoint.
+ * Falls back to platform@link when deployedSystems@link is absent.
+ */
+async function resolveDeployedSystemsInline(): Promise<{ items: any[]; source: string }> {
+  const parentProps = detail.value?.properties || detail.value || {}
+  const acceptType = getContentType('systems')
+
+  // 1. Try deployedSystems@link — the standard-defined inline property
+  const dsLinks = parentProps['deployedSystems@link']
+  if (Array.isArray(dsLinks) && dsLinks.length > 0) {
+    const items: any[] = []
+    for (const l of dsLinks) {
+      if (!l?.href) continue
+      try {
+        let path = l.href
+        if (path.startsWith('http')) {
+          const idx = path.indexOf('/api/')
+          if (idx !== -1) path = path.substring(idx + 4)
+        }
+        const res = await apiFetch(path, { headers: { Accept: acceptType } })
+        if (res.ok && res.data && typeof res.data === 'object') items.push(res.data)
+      } catch { /* skip broken links */ }
+    }
+    if (items.length > 0) {
+      return { items, source: `Resolved ${items.length} system(s) from inline deployedSystems@link` }
+    }
+  }
+
+  // 2. Fallback: resolve platform@link
+  // platform@link identifies the platform system hosting the deployment.
+  // Not identical to deployedSystems per SOSA, but useful when the server
+  // doesn't persist deployedSystems@link.
+  const platformLink = parentProps['platform@link']
+  if (platformLink?.href) {
+    try {
+      let path = platformLink.href
+      if (path.startsWith('http')) {
+        const idx = path.indexOf('/api/')
+        if (idx !== -1) path = path.substring(idx + 4)
+      }
+      const res = await apiFetch(path, { headers: { Accept: acceptType } })
+      if (res.ok && res.data && typeof res.data === 'object') {
+        return {
+          items: [res.data],
+          source: 'Server does not provide deployedSystems@link — resolved platform system via platform@link',
+        }
+      }
+    } catch { /* skip */ }
+  }
+
+  return { items: [], source: '' }
+}
+
 /** Fetch a single related resource collection (with filters and client-side fallback) */
 async function fetchRelation(link: RelatedResourceLink, parentId: string) {
   const state = getRelState(link.relation)
@@ -277,6 +357,19 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
     if (dtParam) applyTemporalFilter(options, link.childType, dtParam)
     if (supportsStatusFilter(link.childType) && state.currentStatus) {
       ;(options as any).currentStatus = state.currentStatus
+    }
+
+    // --- OGC 23-001 Table 43: deployedSystems is an inline property ---
+    // The standard maps deployedSystems to properties/deployedSystems@link,
+    // not to a sub-resource endpoint. Resolve from inline properties first.
+    if (props.resourceType === 'deployments' && link.relation === 'systems' && detail.value) {
+      const inlineResult = await resolveDeployedSystemsInline()
+      if (inlineResult.items.length > 0) {
+        state.items = inlineResult.items
+        state.clientSideFallbackDetails.push(inlineResult.source)
+        state.loading = false
+        return
+      }
     }
 
     const path = getNestedListUrl(props.resourceType, parentId, link.relation, options)
@@ -306,6 +399,47 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
     try {
       const parsed = parseCollectionResponse(res.data)
       let resultItems = parsed.items as any[]
+
+      // --- Subdeployments fallback ---
+      // Some servers (e.g. OSH SensorHub) return 200 with empty items for
+      // /deployments/{id}/subdeployments even though subdeployments exist.
+      // The server may support the collection-level `parent` query parameter
+      // instead.  Try deployments?parent={id} as a fallback.
+      // CAVEAT: Some servers ignore the ?parent= value entirely and return
+      // ALL deployments that have any parent.  We detect this with a probe:
+      // query ?parent=<nonsense>&limit=1 — if it returns items, the filter
+      // is a no-op and the results are unreliable.
+      if (resultItems.length === 0
+          && props.resourceType === 'deployments'
+          && link.relation === 'subdeployments') {
+        try {
+          // Probe: test if ?parent= filter actually works
+          const probeAccept = getContentType('deployments')
+          const probeRes = await apiFetch('/deployments?parent=__csapi_probe__&limit=1', { headers: { Accept: probeAccept } })
+          const probeItems = probeRes.ok
+            ? (parseCollectionResponse(probeRes.data).items as any[])
+            : []
+          if (probeItems.length === 0) {
+            // Filter appears functional — proceed with real query
+            const fallbackPath = `/deployments?parent=${encodeURIComponent(parentId)}`
+            const fbAccept = getContentType('deployments')
+            const fbRes = await apiFetch(fallbackPath, { headers: { Accept: fbAccept } })
+            if (fbRes.ok && fbRes.data) {
+              const fbParsed = parseCollectionResponse(fbRes.data)
+              const fbItems = (fbParsed.items as any[]).filter((it: any) => {
+                const id = it?.id || it?.properties?.id
+                return id && String(id) !== String(parentId)
+              })
+              if (fbItems.length > 0) {
+                resultItems = fbItems
+                state.clientSideFallbackDetails.push(
+                  `/subdeployments returned 0 — resolved ${fbItems.length} item(s) via deployments?parent=${parentId}`
+                )
+              }
+            }
+          }
+        } catch { /* non-critical */ }
+      }
 
       // --- Client-side fallback for servers that ignore query parameters ---
 
@@ -374,6 +508,20 @@ async function fetchRelation(link: RelatedResourceLink, parentId: string) {
       }
 
       state.items = resultItems
+
+      // Populate the global parent cache when fetching subsystems.
+      // This allows parent breadcrumbs to survive component recreation.
+      if (link.relation === 'subsystems' && link.childType === props.resourceType && resultItems.length > 0) {
+        const curId = String(detail.value?.id || props.resourceId || '')
+        const curName = detail.value?.properties?.name || detail.value?.name || curId
+        if (curId) {
+          cacheParentForChildren(
+            curId,
+            curName,
+            resultItems.map((it: any) => ({ id: String(getItemId(it)) })).filter((it: { id: string }) => it.id && it.id !== '—'),
+          )
+        }
+      }
     } catch {
       if (Array.isArray(res.data)) state.items = res.data
     }
@@ -409,9 +557,20 @@ function viewRelatedItem(link: RelatedResourceLink, item: any) {
   if (id === '—') return
 
   if (link.childType === props.resourceType) {
-    // Same type (e.g. subsystems) — reload detail in-place
+    // Same type (e.g. subsystems) — reload detail in-place.
+    // Save the current detail as the in-place parent so the
+    // new detail page has a back-link.
+    if (detail.value) {
+      const curId = detail.value?.id || detail.value?.properties?.id || props.resourceId
+      const curName = detail.value?.properties?.name || detail.value?.name || String(curId)
+      inPlaceParent.value = { id: String(curId), name: curName, resourceType: props.resourceType }
+    }
     manualId.value = ''
+    // Set guard so the watcher (triggered by the emit) doesn't clear inPlaceParent
+    _inPlaceNavActive = true
     fetchDetail(id)
+    // Let the parent panel know so selectedResourceId stays in sync
+    emit('selectResource', id)
   } else {
     // Different type — navigate directly to that item's detail view
     router.push({
@@ -454,6 +613,8 @@ interface ParentLink {
   resourceType: string
   resourceId: string
   icon: string
+  /** Friendly name of the parent (when known, e.g. from in-place navigation) */
+  name?: string
 }
 
 /** Extract navigable parent references from the raw detail JSON cross-reference fields */
@@ -500,17 +661,98 @@ const parentLinks = computed<ParentLink[]>(() => {
     seen.add('deployments')
   }
 
+  // OGC API `links` array — look for rel="parent" (provided by servers that
+  // expose subsystem/subdeployment parentage via HATEOAS links in GeoJSON).
+  // Example: { "rel": "parent", "href": ".../systems/04ng?f=geojson" }
+  //          { "rel": "parent", "href": ".../deployments/04cg?f=geojson" }
+  if (Array.isArray(raw.links)) {
+    for (const link of raw.links) {
+      if (link?.rel === 'parent' && typeof link.href === 'string') {
+        // Match parent system links
+        const sysMatch = link.href.match(/\/systems\/([^/?]+)/)
+        if (sysMatch) {
+          const parentId = sysMatch[1]
+          if (!seen.has('systems:' + parentId) && !seen.has('systems')) {
+            links.push({ label: 'Parent System', resourceType: 'systems', resourceId: parentId, icon: 'pi pi-server' })
+            seen.add('systems:' + parentId)
+            // Also populate the global cache so the relationship persists
+            parentSystemCache[effectiveId.value] = { id: parentId, name: link.title || parentId }
+          }
+        }
+        // Match parent deployment links
+        const depMatch = link.href.match(/\/deployments\/([^/?]+)/)
+        if (depMatch) {
+          const parentId = depMatch[1]
+          if (!seen.has('deployments:' + parentId) && !seen.has('deployments')) {
+            links.push({ label: 'Parent Deployment', resourceType: 'deployments', resourceId: parentId, icon: 'pi pi-map' })
+            seen.add('deployments:' + parentId)
+          }
+        }
+      }
+    }
+  }
+
   // Nested navigation context (e.g., sampling features under a system, procedures under a system)
-  // Add if the parent type isn't already discovered from the JSON fields above
-  if (props.nestedParentType && props.nestedParentId && !seen.has(props.nestedParentType)) {
+  // Add if the parent type isn't already discovered from the JSON fields above.
+  // Check both the bare type key (e.g. "deployments") AND the id-qualified key
+  // (e.g. "deployments:0480") to avoid duplicating a parent already found via
+  // rel="parent" HATEOAS links which use the id-qualified format.
+  //
+  // ALSO skip the nested context entirely when the resource already has
+  // structural parents from its own data (rel="parent" links, @id/@link refs).
+  // The nested context is merely *where the user navigated from* — e.g. a
+  // deployment's systems panel — it is NOT a structural parent of the resource.
+  // Showing it alongside a real parent produces a confusing double breadcrumb.
+  const hasStructuralParent = links.length > 0
+  if (props.nestedParentType && props.nestedParentId
+      && !hasStructuralParent
+      && !seen.has(props.nestedParentType)
+      && !seen.has(props.nestedParentType + ':' + props.nestedParentId)) {
     const typeInfo = getResourceType(props.nestedParentType)
     if (typeInfo) {
+      const isSameType = props.nestedParentType === props.resourceType
       links.push({
-        label: typeInfo.label,
+        label: isSameType ? `Parent ${typeInfo.label}` : typeInfo.label,
         resourceType: props.nestedParentType,
         resourceId: props.nestedParentId,
         icon: typeInfo.icon,
       })
+      seen.add(props.nestedParentType + ':' + props.nestedParentId)
+    }
+  }
+
+  // In-place parent: when the user drilled into a same-type child (e.g.
+  // parent system → subsystem), show a back-link to the parent they came from.
+  if (inPlaceParent.value && !seen.has(inPlaceParent.value.resourceType + ':' + inPlaceParent.value.id)) {
+    const typeInfo = getResourceType(inPlaceParent.value.resourceType)
+    if (typeInfo) {
+      links.push({
+        label: `Parent ${typeInfo.label}`,
+        resourceType: inPlaceParent.value.resourceType,
+        resourceId: inPlaceParent.value.id,
+        icon: typeInfo.icon,
+        name: inPlaceParent.value.name,
+      })
+      seen.add(inPlaceParent.value.resourceType + ':' + inPlaceParent.value.id)
+    }
+  }
+
+  // Global parent cache fallback: when viewing a system that was previously
+  // seen as a subsystem, the cache provides its parent even after component
+  // recreation (e.g. navigating back from a grandchild).
+  if (props.resourceType === 'systems' && effectiveId.value) {
+    const cached = parentSystemCache[effectiveId.value]
+    if (cached && !seen.has('systems:' + cached.id)) {
+      const typeInfo = getResourceType('systems')
+      if (typeInfo) {
+        links.push({
+          label: `Parent ${typeInfo.label}`,
+          resourceType: 'systems',
+          resourceId: cached.id,
+          icon: typeInfo.icon,
+          name: cached.name,
+        })
+      }
     }
   }
 
@@ -524,12 +766,36 @@ function navigateToParent(parent: ParentLink) {
   })
 }
 
+/**
+ * When a parent was discovered via the server's `links` array (rel="parent"),
+ * the title is generic ("Parent system"). Fetch the parent detail to get its
+ * real name and update the global cache so the breadcrumb shows a useful label.
+ */
+async function resolveParentName() {
+  const curId = effectiveId.value
+  if (!curId || props.resourceType !== 'systems') return
+  const cached = parentSystemCache[curId]
+  if (!cached) return
+  // Skip if we already have a real name (not just an ID)
+  if (cached.name && cached.name !== cached.id && cached.name !== 'Parent system') return
+  try {
+    const path = getDetailUrl('systems', cached.id)
+    const acceptType = getContentType('systems')
+    const res = await apiFetch(path, { headers: { Accept: acceptType } })
+    if (res.ok && res.data) {
+      const name = res.data?.properties?.name || res.data?.name || cached.id
+      parentSystemCache[curId] = { id: cached.id, name }
+    }
+  } catch { /* parent name stays as ID — non-critical */ }
+}
+
 async function fetchDetail(id?: string) {
   const useId = id || manualId.value || props.resourceId
   if (!useId) return
 
   loading.value = true
   error.value = ''
+  errorSeverity.value = 'error'
   detail.value = null
 
   const path = getDetailUrl(props.resourceType, useId)
@@ -541,7 +807,14 @@ async function fetchDetail(id?: string) {
   if (!res.ok) {
     // If the direct fetch fails (e.g. server only serves nested resources),
     // fall back to the resource data already passed from the list
-    if (props.resource) {
+    if (res.status === 404) {
+      error.value = 'This resource no longer exists on the server (HTTP 404). It appears in the listing due to a stale server index — the data shown below is cached from the list and may be outdated.'
+      errorSeverity.value = 'warn'
+      // Still show whatever we have from the list
+      if (props.resource) {
+        detail.value = props.resource
+      }
+    } else if (props.resource) {
       detail.value = props.resource
     } else {
       error.value = res.error || 'Failed to fetch resource'
@@ -550,10 +823,25 @@ async function fetchDetail(id?: string) {
     detail.value = res.data
   }
 
+  // For systems, also fetch SensorML metadata (keywords, identifiers, contacts, etc.)
+  smlMeta.value = null
+  if (isSystem.value && detail.value) {
+    const smlPath = getDetailUrl(props.resourceType, String(useId)) + '?f=sml3'
+    const smlRes = await apiFetch(smlPath, {
+      headers: { 'Accept': 'application/sml+json' },
+    })
+    if (smlRes.ok && smlRes.data) {
+      smlMeta.value = smlRes.data
+    }
+  }
+
   // Auto-fetch related resources if we have a detail to show
   if (detail.value) {
     const resId = detail.value?.id || detail.value?.properties?.id
     if (resId && allRelations.value.length > 0) fetchAllRelations(String(resId))
+
+    // Resolve parent system name from rel=parent link (async, doesn't block)
+    resolveParentName()
   }
   loading.value = false
 }
@@ -562,10 +850,31 @@ async function fetchDetail(id?: string) {
 watch(
   () => props.resourceId,
   (id) => {
-    if (id) fetchDetail(id)
+    if (id) {
+      if (_inPlaceNavActive) {
+        // This prop change came from an in-place drill-down (viewRelatedItem
+        // already called fetchDetail and set inPlaceParent) — skip.
+        _inPlaceNavActive = false
+        return
+      }
+      // External selection (list click, URL nav, etc.) — clear in-place parent
+      inPlaceParent.value = null
+      fetchDetail(id)
+    }
   },
   { immediate: true }
 )
+
+/** Choose an icon class for a SensorML document entry based on role/type */
+function docIcon(doc: any): string {
+  const role = doc.role || ''
+  const type = doc.link?.type || ''
+  if (type.startsWith('image/') || role.includes('Photograph')) return 'pi pi-image'
+  if (role.includes('Video')) return 'pi pi-video'
+  if (type === 'application/pdf' || role.includes('publication')) return 'pi pi-file-pdf'
+  if (role.includes('Software')) return 'pi pi-github'
+  return 'pi pi-external-link'
+}
 </script>
 
 <template>
@@ -581,7 +890,14 @@ watch(
       <p>Select a resource from the List tab, or enter an ID above to view its details.</p>
     </div>
 
-    <Message v-if="error" severity="error" :closable="false" class="mt-3">{{ error }}</Message>
+    <div v-if="error && errorSeverity === 'warn'" class="ghost-banner">
+      <i class="pi pi-exclamation-triangle"></i>
+      <div>
+        <strong>Ghost Resource</strong>
+        <p>{{ error }}</p>
+      </div>
+    </div>
+    <Message v-else-if="error" severity="error" :closable="false" class="mt-3">{{ error }}</Message>
 
     <div v-if="loading" class="loading">
       <ProgressSpinner style="width: 30px; height: 30px" />
@@ -589,18 +905,167 @@ watch(
     </div>
 
     <template v-if="detail">
+      <!-- Resource Summary Header -->
+      <div class="resource-summary" v-if="detail.properties?.name || detail.name || detail.properties?.description || detail.description">
+        <h3 class="resource-name">
+          {{ detail.properties?.name || detail.name || '' }}
+          <span v-if="detail.properties?.featureType || detail.featureType" class="feature-type-badge">
+            {{ (detail.properties?.featureType || detail.featureType || '').replace('http://www.w3.org/ns/', '').replace('sosa:', 'sosa:') }}
+          </span>
+        </h3>
+        <p v-if="detail.properties?.description || detail.description" class="resource-description">
+          {{ detail.properties?.description || detail.description }}
+        </p>
+        <div class="resource-meta">
+          <span v-if="detail.properties?.uid || detail.uid" class="meta-item" title="Unique Identifier">
+            <i class="pi pi-key"></i> {{ detail.properties?.uid || detail.uid }}
+          </span>
+          <span v-if="detail.properties?.assetType || detail.assetType" class="meta-item" title="Asset Type">
+            <i class="pi pi-tag"></i> {{ detail.properties?.assetType || detail.assetType }}
+          </span>
+          <span v-if="detail.properties?.validTime" class="meta-item" title="Valid Time">
+            <i class="pi pi-clock"></i>
+            {{ Array.isArray(detail.properties.validTime)
+              ? detail.properties.validTime[0] + ' → ' + (detail.properties.validTime[1] === '..' ? 'ongoing' : detail.properties.validTime[1])
+              : detail.properties.validTime }}
+          </span>
+          <span v-if="detail.geometry?.type" class="meta-item" title="Geometry">
+            <i class="pi pi-map-marker"></i> {{ detail.geometry.type }}
+            <template v-if="detail.geometry.coordinates">
+              ({{ detail.geometry.coordinates[1]?.toFixed?.(4) ?? '' }}°, {{ detail.geometry.coordinates[0]?.toFixed?.(4) ?? '' }}°)
+            </template>
+          </span>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           SensorML Metadata Panels (systems only, fetched via ?f=sml3)
+           ═══════════════════════════════════════════════════════════ -->
+      <div v-if="smlMeta" class="sml-meta-grid">
+
+        <!-- Keywords -->
+        <div v-if="smlMeta.keywords?.length" class="sml-card">
+          <div class="sml-card-header"><i class="pi pi-tags"></i> Keywords</div>
+          <div class="sml-card-body sml-keywords">
+            <span v-for="kw in smlMeta.keywords" :key="kw" class="sml-keyword">{{ kw }}</span>
+          </div>
+        </div>
+
+        <!-- Identifiers -->
+        <div v-if="smlMeta.identifiers?.length" class="sml-card">
+          <div class="sml-card-header"><i class="pi pi-id-card"></i> Identifiers</div>
+          <div class="sml-card-body">
+            <table class="sml-table">
+              <tbody>
+                <tr v-for="ident in smlMeta.identifiers" :key="ident.label">
+                  <td class="sml-table-label">{{ ident.label }}</td>
+                  <td>{{ ident.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Classifiers -->
+        <div v-if="smlMeta.classifiers?.length" class="sml-card">
+          <div class="sml-card-header"><i class="pi pi-sitemap"></i> Classifiers</div>
+          <div class="sml-card-body sml-classifiers">
+            <div v-for="cls in smlMeta.classifiers" :key="cls.label" class="sml-classifier">
+              <span class="sml-classifier-label">{{ cls.label }}</span>
+              <span class="sml-classifier-value">{{ cls.value }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents (including images) -->
+        <div v-if="smlMeta.documents?.length" class="sml-card sml-card-wide">
+          <div class="sml-card-header"><i class="pi pi-file"></i> Documents</div>
+          <div class="sml-card-body sml-documents">
+            <div v-for="(doc, i) in smlMeta.documents" :key="i" class="sml-doc">
+              <!-- Image preview for photographs -->
+              <div v-if="doc.link?.type?.startsWith('image/')" class="sml-doc-image">
+                <img :src="doc.link.href" :alt="doc.name || 'Photo'" loading="lazy" />
+              </div>
+              <div class="sml-doc-info">
+                <a v-if="doc.link?.href" :href="doc.link.href" target="_blank" rel="noopener" class="sml-doc-link">
+                  <i :class="docIcon(doc)"></i>
+                  {{ doc.name || doc.link.href }}
+                </a>
+                <span v-else class="sml-doc-name">{{ doc.name }}</span>
+                <span v-if="doc.description" class="sml-doc-desc">{{ doc.description }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contacts -->
+        <div v-if="smlMeta.contacts?.length" class="sml-card">
+          <div class="sml-card-header"><i class="pi pi-users"></i> Contacts</div>
+          <div class="sml-card-body">
+            <div v-for="(ct, i) in smlMeta.contacts" :key="i" class="sml-contact">
+              <div class="sml-contact-name">{{ ct.organisationName || ct.individualName || 'Contact' }}</div>
+              <div v-if="ct.role" class="sml-contact-role">{{ ct.role.split('/').pop() }}</div>
+              <a v-if="ct.contactInfo?.website" :href="ct.contactInfo.website" target="_blank" rel="noopener" class="sml-contact-web">
+                <i class="pi pi-external-link"></i> {{ ct.contactInfo.website }}
+              </a>
+              <div v-if="ct.contactInfo?.address" class="sml-contact-addr">
+                {{ [ct.contactInfo.address.city, ct.contactInfo.address.administrativeArea, ct.contactInfo.address.country].filter(Boolean).join(', ') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Characteristics -->
+        <div v-if="smlMeta.characteristics?.length" class="sml-card sml-card-wide">
+          <div class="sml-card-header"><i class="pi pi-sliders-h"></i> Characteristics</div>
+          <div class="sml-card-body">
+            <div v-for="(group, gi) in smlMeta.characteristics" :key="gi" class="sml-prop-group">
+              <div v-if="group.label" class="sml-prop-group-label">{{ group.label }}</div>
+              <table class="sml-table">
+                <tbody>
+                  <tr v-for="ch in group.characteristics" :key="ch.name">
+                    <td class="sml-table-label">{{ ch.label || ch.name }}</td>
+                    <td>{{ ch.value }}<span v-if="ch.uom?.code" class="sml-uom"> {{ ch.uom.code }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Capabilities -->
+        <div v-if="smlMeta.capabilities?.length" class="sml-card sml-card-wide">
+          <div class="sml-card-header"><i class="pi pi-chart-bar"></i> Capabilities</div>
+          <div class="sml-card-body">
+            <div v-for="(group, gi) in smlMeta.capabilities" :key="gi" class="sml-prop-group">
+              <div v-if="group.label" class="sml-prop-group-label">{{ group.label }}</div>
+              <table class="sml-table">
+                <tbody>
+                  <tr v-for="cap in group.capabilities" :key="cap.name">
+                    <td class="sml-table-label">{{ cap.label || cap.name }}</td>
+                    <td>{{ cap.value }}<span v-if="cap.uom?.code" class="sml-uom"> {{ cap.uom.code }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- Parent navigation breadcrumbs -->
       <div v-if="parentLinks.length > 0" class="parent-nav">
         <i class="pi pi-arrow-up parent-nav-icon"></i>
         <span class="parent-nav-label">Parent:</span>
         <button
           v-for="parent in parentLinks"
-          :key="parent.resourceType"
+          :key="parent.resourceType + ':' + parent.resourceId"
           class="parent-link"
           @click="navigateToParent(parent)"
         >
           <i :class="parent.icon"></i>
           {{ parent.label }}
+          <template v-if="parent.name"> — {{ parent.name }}</template>
           <code>{{ parent.resourceId }}</code>
           <i class="pi pi-arrow-up-right parent-link-arrow"></i>
         </button>
@@ -756,7 +1221,7 @@ watch(
         <DataModelDiagram
           :activeType="props.resourceType"
           :activeId="detail?.id || props.resourceId"
-          :parentLinks="parentLinks.map(p => ({ resourceType: p.resourceType, resourceId: p.resourceId }))"
+          :parentLinks="parentLinks.map(p => ({ resourceType: p.resourceType, resourceId: p.resourceId, name: p.name }))"
         />
       </details>
 
@@ -810,6 +1275,15 @@ watch(
 
 <style scoped>
 .resource-detail { display: flex; flex-direction: column; gap: 0.75rem; }
+
+/* Resource Summary */
+.resource-summary { background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #86efac; border-radius: 10px; padding: 0.85rem 1rem; }
+.resource-name { margin: 0 0 0.3rem; font-size: 1.05rem; font-weight: 700; color: #14532d; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.feature-type-badge { font-size: 0.65rem; font-weight: 600; background: #166534; color: #fff; padding: 0.1rem 0.45rem; border-radius: 999px; white-space: nowrap; }
+.resource-description { margin: 0 0 0.5rem; font-size: 0.82rem; color: #374151; line-height: 1.45; }
+.resource-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.meta-item { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; color: #4b5563; background: #fff; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.15rem 0.45rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px; }
+.meta-item .pi { font-size: 0.65rem; color: #166534; }
 
 /* Related resources grid */
 .relations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.6rem; }
@@ -870,6 +1344,12 @@ watch(
 .manual-fetch label { font-weight: 600; font-size: 0.9rem; }
 .w-md { width: 300px; }
 .mt-3 { margin-top: 0.75rem; }
+/* Ghost resource warning banner */
+.ghost-banner { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 1rem; background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 10px; margin-bottom: 0.5rem; }
+.ghost-banner i { font-size: 1.4rem; color: #b45309; margin-top: 0.1rem; flex-shrink: 0; }
+.ghost-banner strong { font-size: 0.95rem; color: #92400e; }
+.ghost-banner p { margin: 0.25rem 0 0; font-size: 0.82rem; color: #78350f; line-height: 1.4; }
+
 .empty-hint { display: flex; align-items: center; gap: 0.5rem; color: #94a3b8; padding: 1.5rem 0; }
 .loading { display: flex; align-items: center; gap: 0.5rem; color: #64748b; }
 
@@ -892,4 +1372,53 @@ watch(
 .links-table th, .links-table td { padding: 0.35rem 0.5rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
 .links-table th { background: #f8fafc; font-weight: 600; }
 .href-cell { font-family: monospace; font-size: 0.75rem; word-break: break-all; }
+
+/* ═══ SensorML Metadata Grid ═══ */
+.sml-meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.6rem; }
+.sml-card { background: #fafbff; border: 1px solid #c7d2fe; border-radius: 8px; overflow: hidden; }
+.sml-card-wide { grid-column: 1 / -1; }
+.sml-card-header { display: flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.65rem; font-weight: 700; font-size: 0.78rem; color: #4338ca; background: #eef2ff; border-bottom: 1px solid #c7d2fe; user-select: none; }
+.sml-card-body { padding: 0.5rem 0.65rem; }
+
+/* Keywords */
+.sml-keywords { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.sml-keyword { display: inline-block; font-size: 0.7rem; font-weight: 500; background: #e0e7ff; color: #3730a3; padding: 0.12rem 0.45rem; border-radius: 999px; white-space: nowrap; }
+
+/* Classifiers */
+.sml-classifiers { display: flex; flex-direction: column; gap: 0.35rem; }
+.sml-classifier { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.sml-classifier-label { font-size: 0.7rem; font-weight: 600; color: #6366f1; white-space: nowrap; }
+.sml-classifier-value { font-size: 0.75rem; color: #1e1b4b; background: #e0e7ff; padding: 0.1rem 0.4rem; border-radius: 4px; }
+
+/* Table for identifiers, characteristics, capabilities */
+.sml-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.sml-table td { padding: 0.22rem 0.4rem; border-bottom: 1px solid #e5e7eb; }
+.sml-table tr:last-child td { border-bottom: none; }
+.sml-table-label { font-weight: 600; color: #4338ca; white-space: nowrap; width: 1%; }
+.sml-uom { font-size: 0.65rem; color: #6366f1; margin-left: 0.2rem; }
+
+/* Property group (characteristics / capabilities) */
+.sml-prop-group { margin-bottom: 0.4rem; }
+.sml-prop-group:last-child { margin-bottom: 0; }
+.sml-prop-group-label { font-size: 0.7rem; font-weight: 700; color: #4338ca; margin-bottom: 0.2rem; padding-bottom: 0.15rem; border-bottom: 1px dashed #c7d2fe; }
+
+/* Documents */
+.sml-documents { display: flex; flex-direction: column; gap: 0.5rem; }
+.sml-doc { display: flex; gap: 0.6rem; align-items: flex-start; }
+.sml-doc-image { flex-shrink: 0; width: 120px; height: 80px; border-radius: 6px; overflow: hidden; border: 1px solid #c7d2fe; }
+.sml-doc-image img { width: 100%; height: 100%; object-fit: cover; }
+.sml-doc-info { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.sml-doc-link { font-size: 0.78rem; font-weight: 600; color: #4338ca; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; }
+.sml-doc-link:hover { text-decoration: underline; color: #3730a3; }
+.sml-doc-name { font-size: 0.78rem; font-weight: 600; color: #1e1b4b; }
+.sml-doc-desc { font-size: 0.7rem; color: #6b7280; line-height: 1.35; }
+
+/* Contacts */
+.sml-contact { padding: 0.35rem 0; border-bottom: 1px solid #e5e7eb; }
+.sml-contact:last-child { border-bottom: none; }
+.sml-contact-name { font-size: 0.78rem; font-weight: 700; color: #1e1b4b; }
+.sml-contact-role { font-size: 0.68rem; color: #6366f1; font-weight: 500; }
+.sml-contact-web { font-size: 0.7rem; color: #4338ca; text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem; }
+.sml-contact-web:hover { text-decoration: underline; }
+.sml-contact-addr { font-size: 0.68rem; color: #6b7280; }
 </style>

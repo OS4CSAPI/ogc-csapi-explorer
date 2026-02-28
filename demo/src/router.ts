@@ -3,6 +3,7 @@ import ServerConnectPage from './pages/ServerConnectPage.vue'
 import ResourceExplorerPage from './pages/ResourceExplorerPage.vue'
 import MapViewPage from './pages/MapViewPage.vue'
 import SmokeTestPage from './pages/SmokeTestPage.vue'
+import DemoPage from './pages/DemoPage.vue'
 
 const routes = [
   {
@@ -25,6 +26,11 @@ const routes = [
     path: '/smoke-test',
     name: 'smoke-test',
     component: SmokeTestPage,
+  },
+  {
+    path: '/demo',
+    name: 'demo',
+    component: DemoPage,
   },
 ]
 

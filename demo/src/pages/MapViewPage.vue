@@ -42,6 +42,7 @@ const loading = ref(false)
 const error = ref('')
 const featureCounts = ref<Record<string, number>>({})
 const selectedFeature = ref<any>(null)
+const hasSearched = ref(false)
 
 // Part 1 resource types that may have geometry
 const SPATIAL_TYPES = RESOURCE_TYPES.filter(r => r.part === 1 && r.key !== 'properties')
@@ -105,6 +106,11 @@ const enrichedCounts = ref<Record<string, number>>({})
 // Bounding box filter state
 const bboxFilter = ref<[number, number, number, number] | null>(null)
 const drawingBbox = ref(false)
+
+// Keyword and datetime filters
+const keywordFilter = ref('')
+const dtStart = ref('')
+const dtEnd = ref('')
 let drawInteraction: Draw | null = null
 const bboxSource = new VectorSource()
 const bboxLayer = new VectorLayer({
@@ -322,6 +328,20 @@ function createOlFeature(item: any, resourceType: string): Feature | null {
   return feature
 }
 
+/** Build the common query options from all active filters */
+function buildQueryOptions(extraLimit = 200): Record<string, any> {
+  const opts: Record<string, any> = { limit: extraLimit, bbox: bboxFilter.value ?? undefined }
+  if (keywordFilter.value.trim()) opts.q = keywordFilter.value.trim()
+  if (dtStart.value || dtEnd.value) {
+    const s = dtStart.value ? new Date(dtStart.value) : undefined
+    const e = dtEnd.value ? new Date(dtEnd.value) : undefined
+    if (s && e) opts.datetime = { start: s, end: e }
+    else if (s) opts.datetime = { start: s }
+    else if (e) opts.datetime = { end: e }
+  }
+  return opts
+}
+
 async function loadResourceType(resourceType: string): Promise<number> {
   const source = vectorSources[resourceType]
   if (!source) return 0
@@ -329,7 +349,7 @@ async function loadResourceType(resourceType: string): Promise<number> {
   source.clear()
 
   try {
-    const url = getListUrl(resourceType, { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const url = getListUrl(resourceType, buildQueryOptions())
     // Request geo+json so servers return GeoJSON features with geometry
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
@@ -669,7 +689,7 @@ async function enrichSystems(): Promise<void> {
   // We need to know which systems were loaded but have no geometry on the map.
   // Re-fetch the raw items list to check which have null geometry.
   try {
-    const url = getListUrl('systems', { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const url = getListUrl('systems', buildQueryOptions())
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -714,7 +734,7 @@ async function enrichDeployments(): Promise<void> {
   if (!source) return
 
   try {
-    const url = getListUrl('deployments', { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const url = getListUrl('deployments', buildQueryOptions())
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -824,7 +844,7 @@ async function loadDatastreams(): Promise<void> {
   source.clear()
   let count = 0
   try {
-    const url = getListUrl('datastreams', { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const url = getListUrl('datastreams', buildQueryOptions())
     const res = await apiFetch(url)
     let items: any[] = (res.ok && res.data) ? (res.data.items || []) : []
 
@@ -881,7 +901,7 @@ async function loadControlStreams(): Promise<void> {
   source.clear()
   let count = 0
   try {
-    const url = getListUrl('controlStreams', { limit: 200, bbox: bboxFilter.value ?? undefined })
+    const url = getListUrl('controlStreams', buildQueryOptions())
     const res = await apiFetch(url)
     let items: any[] = (res.ok && res.data) ? (res.data.items || []) : []
 
@@ -934,16 +954,24 @@ const BEARING_LINE_LENGTH_M = 1000
 
 /**
  * Extract bearing/direction information from an observation result.
- * Supports:
- *   - LOB format: bearingN objects with explicit azimuth (degrees from north)
- *   - SSL format: sourceN objects with (x,y) unit direction vectors
- *   - SST format: trackN objects with (x,y) unit direction vectors
+ * Supports both legacy (urn:x-odas:*) and v2.3 ScenarioPack formats:
+ *
+ * Legacy indexed formats:
+ *   - LOB:  numBearings + bearing0..bearingN  { azimuth, elevation, energy, sourceId }
+ *   - SSL:  numSources  + source0..sourceN    { x, y, z, energy }
+ *   - SST:  numTracks   + track0..trackN      { id, tag, x, y, z, activity }
+ *
+ * v2.3 formats:
+ *   - LOB flat:       result.bearingTrue (+ sensorLat/sensorLon)
+ *   - SSL array:      result.src[]  { x, y, z, E }
+ *   - SST array:      result.src[]  { id, tag, x, y, z, activity }
+ *   - Track update:   result.bearingTrue + result.x/y/z + result.classLabel
  */
-function extractBearings(result: any): Array<{ azimuth: number; elevation: number; energy: number; sourceId?: number }> {
-  const bearings: Array<{ azimuth: number; elevation: number; energy: number; sourceId?: number }> = []
+function extractBearings(result: any): Array<{ azimuth: number; elevation: number; energy: number; sourceId?: number; classLabel?: string; classConfidence?: number }> {
+  const bearings: Array<{ azimuth: number; elevation: number; energy: number; sourceId?: number; classLabel?: string; classConfidence?: number }> = []
   if (!result || typeof result !== 'object') return bearings
 
-  // LOB format: bearing0..bearingN with { azimuth, elevation, energy, sourceId }
+  // ── Legacy LOB: bearing0..bearingN with { azimuth, elevation, energy, sourceId } ──
   if (typeof result.numBearings === 'number') {
     for (let i = 0; i < result.numBearings; i++) {
       const b = result[`bearing${i}`]
@@ -954,8 +982,7 @@ function extractBearings(result: any): Array<{ azimuth: number; elevation: numbe
     return bearings
   }
 
-  // SSL format: source0..sourceN with { x, y, z, energy } — unit direction vectors
-  // Convention: x = East, y = North → azimuth = atan2(x, y) degrees from North
+  // ── Legacy SSL: source0..sourceN with { x, y, z, energy } ──
   if (typeof result.numSources === 'number') {
     for (let i = 0; i < result.numSources; i++) {
       const s = result[`source${i}`]
@@ -969,7 +996,7 @@ function extractBearings(result: any): Array<{ azimuth: number; elevation: numbe
     return bearings
   }
 
-  // SST format: track0..trackN with { id, tag, x, y, z, activity }
+  // ── Legacy SST: track0..trackN with { id, tag, x, y, z, activity } ──
   if (typeof result.numTracks === 'number') {
     for (let i = 0; i < result.numTracks; i++) {
       const t = result[`track${i}`]
@@ -978,6 +1005,51 @@ function extractBearings(result: any): Array<{ azimuth: number; elevation: numbe
         if (mag < 0.01) continue
         const azimuth = ((Math.atan2(t.x, t.y) * 180 / Math.PI) + 360) % 360
         bearings.push({ azimuth, elevation: 0, energy: t.activity || 0, sourceId: t.id })
+      }
+    }
+    return bearings
+  }
+
+  // ── v2.3 Track Update (flat): bearingTrue + x/y/z + classLabel ──
+  // Check this BEFORE LOB flat since track updates also have bearingTrue
+  if (typeof result.bearingTrue === 'number' && typeof result.x === 'number' && typeof result.y === 'number') {
+    bearings.push({
+      azimuth: result.bearingTrue,
+      elevation: result.elevation || 0,
+      energy: result.activity || 0,
+      sourceId: result.id,
+      classLabel: result.classLabel,
+      classConfidence: result.classConfidence,
+    })
+    return bearings
+  }
+
+  // ── v2.3 LOB flat: bearingTrue (+ sensorLat/sensorLon handled by caller) ──
+  if (typeof result.bearingTrue === 'number') {
+    bearings.push({
+      azimuth: result.bearingTrue,
+      elevation: 0,
+      energy: 1.0, // LOB has no energy field; use full opacity
+      sourceId: result.trackId,
+    })
+    return bearings
+  }
+
+  // ── v2.3 SSL array: src[] with { x, y, z, E } ──
+  // ── v2.3 SST array: src[] with { id, tag, x, y, z, activity } ──
+  if (Array.isArray(result.src)) {
+    for (const s of result.src) {
+      if (s && typeof s.x === 'number' && typeof s.y === 'number') {
+        const mag = Math.sqrt(s.x * s.x + s.y * s.y)
+        if (mag < 0.01) continue
+        // x = East, y = North → atan2(x, y) = bearing from North clockwise
+        const azimuth = ((Math.atan2(s.x, s.y) * 180 / Math.PI) + 360) % 360
+        bearings.push({
+          azimuth,
+          elevation: 0,
+          energy: s.E ?? s.activity ?? 0,
+          sourceId: s.id,
+        })
       }
     }
     return bearings
@@ -1083,7 +1155,11 @@ async function loadObservationLayers(): Promise<void> {
 
         // --- Bearing lines: acoustic detection directions ---
         if (bearingSource && obs.result) {
+          // Prefer systemLocationCache; fall back to self-contained sensorLat/sensorLon (v2.3 LOB format)
           const sensorLoc = systemLocationCache[dsInfo.systemId]
+            || (typeof obs.result.sensorLat === 'number' && typeof obs.result.sensorLon === 'number'
+              ? { lat: obs.result.sensorLat, lon: obs.result.sensorLon }
+              : null)
           if (sensorLoc) {
             const obsBearings = extractBearings(obs.result)
             for (const b of obsBearings) {
@@ -1098,7 +1174,10 @@ async function loadObservationLayers(): Promise<void> {
               feature.setStyle(getBearingLineStyle(b.energy))
               feature.set('resourceType', 'bearingLines')
               feature.set('resourceId', `${dsInfo.id}-lob-${bearingCount}`)
-              feature.set('resourceName', `Bearing ${b.azimuth.toFixed(1)}° (energy ${b.energy.toFixed(2)})`)
+              const label = b.classLabel
+                ? `${b.classLabel} ${b.azimuth.toFixed(1)}° (conf ${(b.classConfidence ?? 0).toFixed(2)})`
+                : `Bearing ${b.azimuth.toFixed(1)}° (energy ${b.energy.toFixed(2)})`
+              feature.set('resourceName', label)
               feature.set('enriched', true)
               feature.set('enrichmentSource', dsInfo.name)
               feature.set('rawData', {
@@ -1111,6 +1190,8 @@ async function loadObservationLayers(): Promise<void> {
                 elevation: b.elevation,
                 energy: b.energy,
                 sourceId: b.sourceId,
+                classLabel: b.classLabel,
+                classConfidence: b.classConfidence,
                 sensorLat: sensorLoc.lat,
                 sensorLon: sensorLoc.lon,
               })
@@ -1148,6 +1229,7 @@ async function loadObservationLayers(): Promise<void> {
 async function loadAllResources() {
   loading.value = true
   error.value = ''
+  hasSearched.value = true
   featureCounts.value = {}
   for (const key of Object.keys(enrichedCounts.value)) delete enrichedCounts.value[key]
 
@@ -1223,7 +1305,6 @@ function startDrawBbox() {
       drawInteraction = null
     }
     drawingBbox.value = false
-    loadAllResources()
   })
 
   map.addInteraction(drawInteraction)
@@ -1238,8 +1319,18 @@ function clearBbox() {
     drawInteraction = null
   }
   drawingBbox.value = false
-  loadAllResources()
 }
+
+function clearAllFilters() {
+  keywordFilter.value = ''
+  dtStart.value = ''
+  dtEnd.value = ''
+  clearBbox()
+}
+
+const hasAnyFilter = computed(() =>
+  !!keywordFilter.value.trim() || !!dtStart.value || !!dtEnd.value || !!bboxFilter.value
+)
 
 function toggleLayer(key: string) {
   activeLayers.value[key] = !activeLayers.value[key]
@@ -1371,8 +1462,7 @@ onMounted(() => {
     }
   })
 
-  // Load data
-  loadAllResources()
+  // Map is ready — user must press Search to load data
 })
 
 onUnmounted(() => {
@@ -1512,37 +1602,82 @@ async function createTestFeature() {
         </template>
       </div>
 
-      <button class="refresh-btn" @click="loadAllResources" :disabled="loading">
-        <i class="pi pi-refresh"></i> Reload
-      </button>
+      <!-- Filters section -->
+      <div class="filter-section">
+        <div class="filter-section-label">
+          <i class="pi pi-filter"></i> Filters
+          <button v-if="hasAnyFilter" class="clear-all-btn" @click="clearAllFilters" :disabled="loading" title="Clear all filters">
+            <i class="pi pi-times"></i> Clear all
+          </button>
+        </div>
 
-      <!-- Bbox spatial filter -->
-      <div class="bbox-controls">
-        <button
-          :class="['bbox-draw-btn', { active: drawingBbox }]"
-          @click="drawingBbox ? clearBbox() : startDrawBbox()"
-          :disabled="loading"
-        >
-          <i :class="drawingBbox ? 'pi pi-times' : 'pi pi-stop'"></i>
-          {{ drawingBbox ? 'Cancel' : 'Draw Bbox Filter' }}
-        </button>
-        <template v-if="bboxFilter">
-          <div class="bbox-active">
-            <i class="pi pi-filter"></i>
-            <span class="bbox-label">Bbox active</span>
-            <button class="bbox-clear" @click="clearBbox" :disabled="loading" title="Clear filter">
-              <i class="pi pi-times"></i>
+        <!-- Keyword filter -->
+        <div class="filter-item">
+          <label class="filter-label">Keyword (q)</label>
+          <input
+            v-model="keywordFilter"
+            type="text"
+            placeholder="e.g. acoustic, camera"
+            class="filter-input"
+            @keyup.enter="loadAllResources"
+          />
+        </div>
+
+        <!-- Temporal filter -->
+        <div class="filter-item">
+          <label class="filter-label">Date/time start</label>
+          <input
+            v-model="dtStart"
+            type="datetime-local"
+            class="filter-input"
+          />
+        </div>
+        <div class="filter-item">
+          <label class="filter-label">Date/time end</label>
+          <input
+            v-model="dtEnd"
+            type="datetime-local"
+            class="filter-input"
+          />
+        </div>
+
+        <!-- Bbox spatial filter -->
+        <div class="filter-item">
+          <label class="filter-label">Spatial (bbox)</label>
+          <div class="bbox-controls">
+            <button
+              :class="['bbox-draw-btn', { active: drawingBbox }]"
+              @click="drawingBbox ? clearBbox() : startDrawBbox()"
+              :disabled="loading"
+            >
+              <i :class="drawingBbox ? 'pi pi-times' : 'pi pi-stop'"></i>
+              {{ drawingBbox ? 'Cancel' : 'Draw Bbox' }}
             </button>
+            <template v-if="bboxFilter">
+              <div class="bbox-active">
+                <i class="pi pi-check-circle" style="color: #10b981;"></i>
+                <span class="bbox-label">Bbox set</span>
+                <button class="bbox-clear" @click="clearBbox" :disabled="loading" title="Clear bbox">
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+              <div class="bbox-coords">
+                {{ bboxFilter[0].toFixed(3) }}, {{ bboxFilter[1].toFixed(3) }} &rarr;
+                {{ bboxFilter[2].toFixed(3) }}, {{ bboxFilter[3].toFixed(3) }}
+              </div>
+            </template>
           </div>
-          <div class="bbox-coords">
-            {{ bboxFilter[0].toFixed(3) }}, {{ bboxFilter[1].toFixed(3) }} &rarr;
-            {{ bboxFilter[2].toFixed(3) }}, {{ bboxFilter[3].toFixed(3) }}
-          </div>
-        </template>
+        </div>
       </div>
 
+      <!-- Primary Search button -->
+      <button class="search-btn" @click="loadAllResources" :disabled="loading">
+        <i :class="loading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"></i>
+        {{ hasSearched ? 'Search Again' : 'Search' }}
+      </button>
+
       <!-- Empty state message -->
-      <div v-if="!loading && totalFeatures === 0" class="empty-state">
+      <div v-if="!loading && hasSearched && totalFeatures === 0" class="empty-state">
         <i class="pi pi-map-marker" style="font-size: 1.5rem; color: #94a3b8;"></i>
         <p><strong>No features with geometry found</strong></p>
         <p class="empty-detail">
@@ -1759,28 +1894,93 @@ async function createTestFeature() {
   cursor: pointer;
 }
 
-.refresh-btn {
-  margin: 0 0.75rem 0.75rem;
-  padding: 0.5rem;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+.search-btn {
+  margin: 0.5rem 0.75rem 0.75rem;
+  padding: 0.6rem 1rem;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  color: #3b82f6;
+  gap: 0.4rem;
 }
 
-.refresh-btn:hover {
-  background: #eff6ff;
+.search-btn:hover {
+  background: #2563eb;
 }
 
-.refresh-btn:disabled {
-  opacity: 0.5;
+.search-btn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
+}
+
+.filter-section {
+  margin: 0.5rem 0.75rem;
+  padding: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.filter-section-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.clear-all-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 0.7rem;
+  color: #ef4444;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+}
+
+.clear-all-btn:hover {
+  background: #fee2e2;
+}
+
+.filter-item {
+  margin-bottom: 0.4rem;
+}
+
+.filter-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-bottom: 0.15rem;
+}
+
+.filter-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: #1e293b;
+  background: #fff;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
 }
 
 .empty-state {

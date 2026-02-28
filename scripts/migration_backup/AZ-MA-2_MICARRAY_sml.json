@@ -1,0 +1,234 @@
+{
+  "type": "PhysicalSystem",
+  "id": "0500",
+  "uniqueId": "urn:os4csapi:system:odas:az-ma-2:micarray",
+  "definition": "sosa:Sensor",
+  "label": "AZ-MA-2 MICARRAY",
+  "description": "7-microphone circular PDM MEMS array for AZ-MA-2. 38mm diameter phased array using XMOS xCORE-200 multicore controller. Captures omnidirectional audio on all 7 channels simultaneously at 48 kHz / 24-bit. Spatial geometry enables beamforming and cross-correlation-based DOA estimation.",
+  "keywords": [
+    "ODAS",
+    "C-UAS",
+    "acoustic detection",
+    "Ft. Huachuca",
+    "microphone array",
+    "beamforming",
+    "DOA estimation",
+    "MEMS",
+    "XMOS xCore",
+    "phased array"
+  ],
+  "identifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/ShortName",
+      "label": "Short Name",
+      "value": "XMOS xCore 7-Mic Array"
+    },
+    {
+      "definition": "http://sensorml.com/ont/swe/property/Manufacturer",
+      "label": "Manufacturer",
+      "value": "XMOS Ltd."
+    },
+    {
+      "definition": "http://sensorml.com/ont/swe/property/ModelNumber",
+      "label": "Model Number",
+      "value": "xCORE-200 MC Mic Array"
+    }
+  ],
+  "classifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/SensorType",
+      "label": "Sensor Type",
+      "value": "Acoustic Microphone Array"
+    },
+    {
+      "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+      "label": "Intended Application",
+      "value": "Counter-UAS Acoustic Detection"
+    }
+  ],
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    ".."
+  ],
+  "characteristics": [
+    {
+      "label": "Physical Characteristics",
+      "characteristics": [
+        {
+          "type": "Count",
+          "name": "num_mics",
+          "definition": "http://sensorml.com/ont/swe/property/NumberOfElements",
+          "label": "Number of Microphones",
+          "value": 7
+        },
+        {
+          "type": "Quantity",
+          "name": "array_diameter",
+          "definition": "http://qudt.org/vocab/quantitykind/Diameter",
+          "label": "Array Diameter",
+          "uom": {
+            "code": "mm"
+          },
+          "value": 38.0
+        },
+        {
+          "type": "Text",
+          "name": "mic_type",
+          "definition": "http://sensorml.com/ont/swe/property/ComponentType",
+          "label": "Microphone Type",
+          "value": "MEMS PDM Omnidirectional"
+        },
+        {
+          "type": "Text",
+          "name": "mic_pattern",
+          "definition": "http://sensorml.com/ont/swe/property/GeometryType",
+          "label": "Array Geometry",
+          "value": "Circular planar (6 perimeter + 1 center)"
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+      "label": "Measurement Capabilities",
+      "capabilities": [
+        {
+          "type": "Quantity",
+          "name": "sample_rate",
+          "definition": "http://qudt.org/vocab/quantitykind/Frequency",
+          "label": "Sample Rate",
+          "uom": {
+            "code": "Hz"
+          },
+          "value": 48000.0
+        },
+        {
+          "type": "Count",
+          "name": "adc_resolution",
+          "definition": "http://sensorml.com/ont/swe/property/Resolution",
+          "label": "ADC Resolution (bits)",
+          "value": 24
+        },
+        {
+          "type": "Count",
+          "name": "num_channels",
+          "definition": "http://sensorml.com/ont/swe/property/NumberOfOutputs",
+          "label": "Audio Channels",
+          "value": 7
+        },
+        {
+          "type": "Count",
+          "name": "max_tracked",
+          "definition": "http://sensorml.com/ont/swe/property/NumberOfOutputs",
+          "label": "Max Simultaneous Tracked Sources",
+          "value": 4
+        },
+        {
+          "type": "Quantity",
+          "name": "freq_min",
+          "definition": "http://qudt.org/vocab/quantitykind/Frequency",
+          "label": "Min Frequency",
+          "uom": {
+            "code": "Hz"
+          },
+          "value": 100.0
+        },
+        {
+          "type": "Quantity",
+          "name": "freq_max",
+          "definition": "http://qudt.org/vocab/quantitykind/Frequency",
+          "label": "Max Frequency",
+          "uom": {
+            "code": "Hz"
+          },
+          "value": 8000.0
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "role": "http://sensorml.com/ont/swe/property/Manufacturer",
+      "organisationName": "XMOS Ltd.",
+      "contactInfo": {
+        "website": "https://www.xmos.com"
+      }
+    },
+    {
+      "role": "http://sensorml.com/ont/swe/property/Operator",
+      "organisationName": "IntRoLab \u2014 Universit\u00e9 de Sherbrooke",
+      "contactInfo": {
+        "website": "https://introlab.3it.usherbrooke.ca",
+        "address": {
+          "city": "Sherbrooke",
+          "administrativeArea": "QC",
+          "country": "Canada"
+        }
+      }
+    }
+  ],
+  "documents": [
+    {
+      "role": "http://dbpedia.org/resource/Photograph",
+      "name": "Microphone Array Photo",
+      "description": "XMOS xCore 7-microphone array PCB with labeled mic positions (1-7).",
+      "link": {
+        "href": "https://raw.githubusercontent.com/OS4CSAPI/ogc-csapi-explorer/refs/heads/demo/acoustic-cuas-targeting/demo/public/xmos-7mic-array.jpg",
+        "type": "image/jpeg"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Software",
+      "name": "ODAS Library",
+      "description": "Open embeddeD Audition System \u2014 C library for SSL, SST, separation, post-filtering. MIT-licensed.",
+      "link": {
+        "href": "https://github.com/introlab/odas",
+        "type": "text/html"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Scientific_publication",
+      "name": "ODAS Paper",
+      "description": "Grondin et al. 'ODAS: Open embeddeD Audition System', Frontiers in Robotics and AI, Vol. 9, 2022.",
+      "link": {
+        "href": "https://www.frontiersin.org/article/10.3389/frobt.2022.854444",
+        "type": "text/html"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Scientific_publication",
+      "name": "SSL/SST Methods Paper",
+      "description": "Grondin & Michaud 'Lightweight and Optimized Sound Source Localization and Tracking Methods', Robotics and Autonomous Systems, 2019.",
+      "link": {
+        "href": "https://arxiv.org/pdf/1812.00115",
+        "type": "application/pdf"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Web_page",
+      "name": "ODAS Wiki \u2014 Configuration",
+      "description": "Configuration reference for microphone geometry, SSL, SST, SSS, and classification parameters.",
+      "link": {
+        "href": "https://github.com/introlab/odas/wiki/Configuration",
+        "type": "text/html"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Video",
+      "name": "ODAS Demonstration Video",
+      "description": "Live demonstration of ODAS sound source localization and tracking.",
+      "link": {
+        "href": "https://youtu.be/n7y2rLAnd5I",
+        "type": "text/html"
+      }
+    }
+  ],
+  "position": {
+    "type": "Point",
+    "coordinates": [
+      -110.2732,
+      31.66251
+    ]
+  }
+}

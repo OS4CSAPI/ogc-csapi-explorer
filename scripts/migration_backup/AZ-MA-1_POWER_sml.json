@@ -1,0 +1,77 @@
+{
+  "type": "PhysicalSystem",
+  "id": "04r0",
+  "uniqueId": "urn:os4csapi:system:odas:az-ma-1:power",
+  "definition": "sosa:Platform",
+  "label": "AZ-MA-1 POWER",
+  "description": "Power supply module for AZ-MA-1. Provides regulated DC power to the microphone array, edge processor, comms module, and pan-tilt actuator. Supports both battery (LiFePO4) and solar panel input for sustained field operation.",
+  "keywords": [
+    "ODAS",
+    "C-UAS",
+    "acoustic detection",
+    "Ft. Huachuca",
+    "power supply",
+    "battery",
+    "solar"
+  ],
+  "identifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/ShortName",
+      "label": "Short Name",
+      "value": "AZ-MA-1 Power Supply"
+    }
+  ],
+  "classifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/SensorType",
+      "label": "Component Type",
+      "value": "Power Supply Module"
+    }
+  ],
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    ".."
+  ],
+  "characteristics": [
+    {
+      "label": "Power Characteristics",
+      "characteristics": [
+        {
+          "type": "Text",
+          "name": "battery_type",
+          "definition": "http://sensorml.com/ont/swe/property/ComponentType",
+          "label": "Battery Chemistry",
+          "value": "LiFePO4"
+        },
+        {
+          "type": "Text",
+          "name": "charging",
+          "definition": "http://sensorml.com/ont/swe/property/ComponentType",
+          "label": "Charging Source",
+          "value": "Solar panel + DC input"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "role": "http://sensorml.com/ont/swe/property/Operator",
+      "organisationName": "IntRoLab \u2014 Universit\u00e9 de Sherbrooke",
+      "contactInfo": {
+        "website": "https://introlab.3it.usherbrooke.ca",
+        "address": {
+          "city": "Sherbrooke",
+          "administrativeArea": "QC",
+          "country": "Canada"
+        }
+      }
+    }
+  ],
+  "position": {
+    "type": "Point",
+    "coordinates": [
+      -110.272897,
+      31.663006
+    ]
+  }
+}

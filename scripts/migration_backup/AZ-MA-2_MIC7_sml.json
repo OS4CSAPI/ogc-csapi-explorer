@@ -1,0 +1,115 @@
+{
+  "type": "PhysicalSystem",
+  "id": "055g",
+  "uniqueId": "urn:os4csapi:system:odas:az-ma-2:mic7",
+  "definition": "sosa:Sensor",
+  "label": "AZ-MA-2 MIC7",
+  "description": "MEMS PDM omnidirectional microphone element #7 (center) in the AZ-MA-2 7-channel circular array. Digital Pulse-Density Modulation output at 48 kHz / 24-bit.",
+  "keywords": [
+    "MEMS microphone",
+    "PDM",
+    "omnidirectional",
+    "acoustic sensor"
+  ],
+  "identifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/ShortName",
+      "label": "Short Name",
+      "value": "Mic 7 (center)"
+    }
+  ],
+  "classifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/SensorType",
+      "label": "Sensor Type",
+      "value": "MEMS Microphone"
+    }
+  ],
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    ".."
+  ],
+  "characteristics": [
+    {
+      "label": "Microphone Characteristics",
+      "characteristics": [
+        {
+          "type": "Text",
+          "name": "transducer_type",
+          "definition": "http://sensorml.com/ont/swe/property/ComponentType",
+          "label": "Transducer Type",
+          "value": "MEMS PDM Omnidirectional"
+        },
+        {
+          "type": "Text",
+          "name": "position_in_array",
+          "definition": "http://sensorml.com/ont/swe/property/SpatialPosition",
+          "label": "Position in Array",
+          "value": "center"
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+      "label": "Microphone Capabilities",
+      "capabilities": [
+        {
+          "type": "Quantity",
+          "name": "sample_rate",
+          "definition": "http://qudt.org/vocab/quantitykind/Frequency",
+          "label": "Sample Rate",
+          "uom": {
+            "code": "Hz"
+          },
+          "value": 48000.0
+        },
+        {
+          "type": "Count",
+          "name": "bit_depth",
+          "definition": "http://sensorml.com/ont/swe/property/Resolution",
+          "label": "Bit Depth",
+          "value": 24
+        },
+        {
+          "type": "Quantity",
+          "name": "sensitivity",
+          "definition": "http://qudt.org/vocab/quantitykind/SoundPressureLevel",
+          "label": "Typical Sensitivity",
+          "uom": {
+            "code": "dB"
+          },
+          "value": -26.0
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "role": "http://sensorml.com/ont/swe/property/Manufacturer",
+      "organisationName": "XMOS Ltd.",
+      "contactInfo": {
+        "website": "https://www.xmos.com"
+      }
+    }
+  ],
+  "documents": [
+    {
+      "role": "http://dbpedia.org/resource/Photograph",
+      "name": "Microphone Array Photo",
+      "description": "XMOS xCore 7-microphone array PCB with labeled mic positions (1-7).",
+      "link": {
+        "href": "https://raw.githubusercontent.com/OS4CSAPI/ogc-csapi-explorer/refs/heads/demo/acoustic-cuas-targeting/demo/public/xmos-7mic-array.jpg",
+        "type": "image/jpeg"
+      }
+    }
+  ],
+  "position": {
+    "type": "Point",
+    "coordinates": [
+      -110.2732,
+      31.66251
+    ]
+  }
+}

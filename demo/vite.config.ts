@@ -11,6 +11,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@csapi': path.resolve(__dirname, '../src'),
+      // The library's shared/xml-utils.ts imports @rgrove/parse-xml at runtime,
+      // but the demo only uses CSAPI (JSON-only) so XML parsing is never called.
+      // Point at a local stub so the build succeeds without the real package.
+      '@rgrove/parse-xml': path.resolve(__dirname, 'src/stubs/parse-xml.ts'),
     },
   },
   server: {
@@ -22,9 +26,13 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api\/52north/, ''),
       },
       '/api/osh': {
-        target: 'http://45.55.99.236:8080/sensorhub/api',
+        target: 'https://os4csapi-osh.duckdns.org/sensorhub/api',
         changeOrigin: true,
+        secure: true,
         rewrite: (path) => path.replace(/^\/api\/osh/, ''),
+        headers: {
+          Authorization: 'Basic ' + Buffer.from('os4csapi:ogc134mm').toString('base64'),
+        },
       },
     },
   },

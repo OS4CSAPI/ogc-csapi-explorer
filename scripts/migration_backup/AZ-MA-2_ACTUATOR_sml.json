@@ -1,0 +1,85 @@
+{
+  "type": "PhysicalSystem",
+  "id": "0520",
+  "uniqueId": "urn:os4csapi:system:odas:az-ma-2:actuator",
+  "definition": "sosa:Actuator",
+  "label": "AZ-MA-2 ACTUATOR",
+  "description": "Pan-tilt actuator for AZ-MA-2. Motorised two-axis gimbal that slews the microphone array to face the strongest tracked sound source. Receives bearing commands from the edge processor based on ODAS SST output.",
+  "keywords": [
+    "ODAS",
+    "C-UAS",
+    "acoustic detection",
+    "Ft. Huachuca",
+    "actuator",
+    "pan-tilt",
+    "gimbal",
+    "pointing"
+  ],
+  "identifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/ShortName",
+      "label": "Short Name",
+      "value": "AZ-MA-2 Pan-Tilt Actuator"
+    }
+  ],
+  "classifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/SensorType",
+      "label": "Component Type",
+      "value": "Pan-Tilt Actuator"
+    }
+  ],
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    ".."
+  ],
+  "capabilities": [
+    {
+      "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+      "label": "Actuator Capabilities",
+      "capabilities": [
+        {
+          "type": "Quantity",
+          "name": "pan_range",
+          "definition": "http://qudt.org/vocab/quantitykind/Angle",
+          "label": "Pan Range",
+          "uom": {
+            "code": "deg"
+          },
+          "value": 360.0
+        },
+        {
+          "type": "Quantity",
+          "name": "tilt_range",
+          "definition": "http://qudt.org/vocab/quantitykind/Angle",
+          "label": "Tilt Range",
+          "uom": {
+            "code": "deg"
+          },
+          "value": 90.0
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "role": "http://sensorml.com/ont/swe/property/Operator",
+      "organisationName": "IntRoLab \u2014 Universit\u00e9 de Sherbrooke",
+      "contactInfo": {
+        "website": "https://introlab.3it.usherbrooke.ca",
+        "address": {
+          "city": "Sherbrooke",
+          "administrativeArea": "QC",
+          "country": "Canada"
+        }
+      }
+    }
+  ],
+  "position": {
+    "type": "Point",
+    "coordinates": [
+      -110.2732,
+      31.66251
+    ]
+  }
+}
