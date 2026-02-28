@@ -167,7 +167,6 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
       phenomenonTime: new Date().toISOString(),
       resultTime: new Date().toISOString(),
       result: {
-        timestamp: new Date().toISOString(),
         temp: phase === 'create' ? 22.5 : 25.0,
         location: obsCoords ? { lat: obsCoords[1], lon: obsCoords[0] } : undefined,
       },
@@ -203,7 +202,7 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
   if (type === 'commands') {
     return {
       issueTime: new Date().toISOString(),
-      parameters: { timestamp: new Date().toISOString(), active: phase === 'create' },
+      parameters: { active: phase === 'create' },
     }
   }
 
