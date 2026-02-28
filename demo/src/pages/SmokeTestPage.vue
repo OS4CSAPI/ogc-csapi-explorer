@@ -201,7 +201,7 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
   if (type === 'commands') {
     return {
       issueTime: new Date().toISOString(),
-      params: { active: phase === 'create' },
+      parameters: { active: phase === 'create' },
     }
   }
 
