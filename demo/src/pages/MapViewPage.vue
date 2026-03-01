@@ -1828,7 +1828,7 @@ async function createTestFeature() {
 <style scoped>
 .map-page {
   display: flex;
-  height: calc(100vh - 53px);
+  height: 100%;
   overflow: hidden;
 }
 

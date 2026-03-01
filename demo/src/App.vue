@@ -38,7 +38,9 @@ import os4csapiIcon from './assets/os4csapi-logo.svg'
       </a>
     </div>
   </header>
-  <router-view />
+  <main class="app-main">
+    <router-view />
+  </main>
 </template>
 
 <style scoped>
@@ -89,5 +91,10 @@ import os4csapiIcon from './assets/os4csapi-logo.svg'
 }
 .nav-link:hover {
   color: #1d4ed8;
+}
+.app-main {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
 }
 </style>
