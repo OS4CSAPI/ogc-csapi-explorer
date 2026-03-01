@@ -318,6 +318,57 @@ async function fetchResources(cursorUrl?: string) {
   } finally {
     loading.value = false
   }
+
+  // --- Deployments: recursively fetch subdeployments so nested ones appear ---
+  // Only for top-level deployment lists (not already viewing a nested context).
+  if (props.resourceType === 'deployments' && !isNested.value && items.value.length > 0) {
+    await fetchNestedDeployments()
+  }
+}
+
+/**
+ * Recursively fetch subdeployments for each item in the list and append
+ * nested ones that aren't already visible.  Adds a depth/indent hint so the
+ * template can visually differentiate nesting levels.
+ */
+async function fetchNestedDeployments() {
+  const seenIds = new Set(items.value.map((it: any) => it?.id || it?.properties?.id))
+  const acceptType = getContentType('deployments')
+
+  async function fetchSubs(parentId: string, depth: number): Promise<any[]> {
+    if (depth > 5) return []
+    try {
+      const res = await apiFetch(`/deployments/${parentId}/subdeployments?limit=50`, {
+        headers: { Accept: acceptType },
+      })
+      if (!res.ok || !res.data) return []
+      const parsed = parseCollectionResponse(res.data)
+      const subs = parsed.items as any[]
+      const results: any[] = []
+      for (const sub of subs) {
+        const subId = sub?.id || sub?.properties?.id
+        if (!subId || seenIds.has(subId)) continue
+        seenIds.add(subId)
+        // Tag with nesting depth for display
+        sub._nestingDepth = depth
+        results.push(sub)
+        results.push(...await fetchSubs(subId, depth + 1))
+      }
+      return results
+    } catch { return [] }
+  }
+
+  // Fetch subdeployments for each top-level item
+  const topLevel = [...items.value]
+  const nested: any[] = []
+  for (const item of topLevel) {
+    const id = item?.id || item?.properties?.id
+    if (id) nested.push(...await fetchSubs(id, 1))
+  }
+  if (nested.length > 0) {
+    items.value = [...items.value, ...nested]
+    numberReturned.value = items.value.length
+  }
 }
 
 function extractProxyPath(absoluteUrl: string): string {
@@ -503,6 +554,7 @@ watch(
       </Column>
       <Column header="Name / Title" style="min-width: 200px">
         <template #body="{ data }">
+          <span v-if="data._nestingDepth" :style="{ paddingLeft: (data._nestingDepth * 16) + 'px', opacity: 0.5 }">└─</span>
           {{ getDisplayTitle(data) }}
         </template>
       </Column>

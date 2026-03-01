@@ -798,8 +798,11 @@ async function enrichDeployments(): Promise<void> {
     const seenIds = new Set(source.getFeatures().map(f => f.get('resourceId')))
     items.forEach(it => seenIds.add(extractId(it)))
 
+    // Map from parentId → direct children items (for geometry derivation)
+    const childrenMap: Record<string, any[]> = {}
+
     async function fetchSubdeployments(parentId: string, depth = 0): Promise<any[]> {
-      if (depth > 3) return [] // guard against infinite recursion
+      if (depth > 5) return [] // guard against infinite recursion
       try {
         const subRes = await apiFetch(`/deployments/${parentId}/subdeployments?limit=50`, {
           headers: { 'Accept': 'application/geo+json' },
@@ -811,6 +814,8 @@ async function enrichDeployments(): Promise<void> {
         } else if (Array.isArray(subRes.data.items)) {
           subs = subRes.data.items
         }
+        // Track parent→children for geometry derivation
+        if (subs.length > 0) childrenMap[parentId] = subs
         // Recurse into each subdeployment to find deeper nesting
         const deeper: any[] = []
         for (const sub of subs) {
@@ -834,6 +839,73 @@ async function enrichDeployments(): Promise<void> {
       }
     }))
 
+    // Build a lookup of all deployment items by id (top-level + nested)
+    const allItems = [...items, ...allSubs]
+    const itemById: Record<string, any> = {}
+    for (const it of allItems) {
+      const id = extractId(it)
+      if (id) itemById[id] = it
+    }
+
+    // --- Collect coordinates for each deployment (from own geometry, children,
+    //     and deployed systems) to compute derived geometry for those without. ---
+
+    /** Extract centroid / representative point(s) from a GeoJSON geometry */
+    function coordsFromGeometry(geom: { type: string; coordinates: any }): number[][] {
+      if (geom.type === 'Point') return [geom.coordinates.slice(0, 2)]
+      if (geom.type === 'LineString') return geom.coordinates.map((c: number[]) => c.slice(0, 2))
+      if (geom.type === 'Polygon') {
+        // Use centroid-ish (average of exterior ring)
+        const ring: number[][] = geom.coordinates[0] || []
+        if (ring.length === 0) return []
+        const avg = ring.reduce((acc: number[], c: number[]) => [acc[0] + c[0], acc[1] + c[1]], [0, 0])
+        return [[avg[0] / ring.length, avg[1] / ring.length]]
+      }
+      return []
+    }
+
+    /** Recursively gather all descendant coordinate points for a deployment */
+    function gatherDescendantCoords(depId: string, visited = new Set<string>()): number[][] {
+      if (visited.has(depId)) return []
+      visited.add(depId)
+      const coords: number[][] = []
+      // From direct children's geometries
+      const children = childrenMap[depId] || []
+      for (const child of children) {
+        const childGeom = extractGeometry(child)
+        if (childGeom) coords.push(...coordsFromGeometry(childGeom))
+        // Recurse into child
+        const childId = extractId(child)
+        if (childId) coords.push(...gatherDescendantCoords(childId, visited))
+      }
+      // From deployed systems
+      const item = itemById[depId]
+      if (item) {
+        const dsLinks = item.properties?.['deployedSystems@link'] || item['deployedSystems@link'] || []
+        for (const dsl of dsLinks) {
+          const sysHref = dsl.system?.href || dsl.href || ''
+          const sysId = sysHref.split('/').pop()
+          if (sysId && systemLocationCache[sysId]) {
+            coords.push([systemLocationCache[sysId].lon, systemLocationCache[sysId].lat])
+          }
+        }
+        // Fallback: deployedSystemUIDs → match by UID in the system location cache
+        const uidStr = item.properties?.['deployedSystemUIDs']
+        if (typeof uidStr === 'string' && uidStr.length > 0) {
+          const uids = uidStr.split(',').map((u: string) => u.trim()).filter(Boolean)
+          for (const uid of uids) {
+            // Search systemLocationCache for a system with matching UID
+            for (const [, loc] of Object.entries(systemLocationCache)) {
+              if ((loc as any).uid === uid) {
+                coords.push([(loc as any).lon, (loc as any).lat])
+              }
+            }
+          }
+        }
+      }
+      return coords
+    }
+
     // Add subdeployments that have their own geometry to the map
     for (const sub of allSubs) {
       const subId = extractId(sub)
@@ -846,35 +918,44 @@ async function enrichDeployments(): Promise<void> {
       }
     }
 
-    // Enrich top-level deployments without geometry using deployed system locations
-    for (const item of items) {
-      if (extractGeometry(item)) continue
+    // For each deployment (top-level AND nested) without geometry, derive it
+    for (const item of allItems) {
+      if (extractGeometry(item)) continue // already has geometry
+      const depId = extractId(item)
+      if (!depId) continue
+      // Skip if already plotted
+      if (source.getFeatures().some(f => f.get('resourceId') === depId)) continue
 
-      // Try to find a deployed system with a known location
-      const deployedSystems = item.properties?.['deployedSystems@link'] || item['deployedSystems@link'] || []
-      for (const dsl of deployedSystems) {
-        const sysHref = dsl.system?.href || dsl.href || ''
-        // Extract system ID from href (last path segment)
-        const sysId = sysHref.split('/').pop()
-        if (sysId && systemLocationCache[sysId]) {
-          const loc = systemLocationCache[sysId]
-
-          // When bbox is active, skip if enriched location falls outside
-          if (bboxFilter.value) {
-            const [minX, minY, maxX, maxY] = bboxFilter.value
-            if (loc.lon < minX || loc.lon > maxX || loc.lat < minY || loc.lat > maxY) continue
-          }
-
-          const feature = createEnrichedFeature(
-            item, 'deployments', loc.lat, loc.lon,
-            `Derived from deployed system ${sysId} (${loc.datastreamName || 'location obs'})`
-          )
-          source.addFeature(feature)
-          enriched++
-          break // one location per deployment is enough
+      // Gather coordinates from descendants and deployed systems
+      const coords = gatherDescendantCoords(depId)
+      // Deduplicate (within ~0.00001 deg)
+      const unique: number[][] = []
+      for (const c of coords) {
+        if (!unique.some(u => Math.abs(u[0] - c[0]) < 0.00001 && Math.abs(u[1] - c[1]) < 0.00001)) {
+          unique.push(c)
         }
       }
+      if (unique.length === 0) continue
+
+      // Build derived geometry
+      let olGeom
+      if (unique.length === 1) {
+        olGeom = new Point(fromLonLat(unique[0]))
+      } else {
+        olGeom = new LineString(unique.map(c => fromLonLat(c)))
+      }
+
+      const feature = new Feature({ geometry: olGeom })
+      feature.setStyle(getStyle('deployments', false, item))
+      feature.set('resourceType', 'deployments')
+      feature.set('resourceId', depId)
+      feature.set('resourceName', extractName(item))
+      feature.set('rawData', item)
+      feature.set('enrichedFrom', `Derived geometry from ${unique.length} descendant location(s)`)
+      source.addFeature(feature)
+      enriched++
     }
+
     enrichedCounts.value['deployments'] = enriched
     featureCounts.value['deployments'] = (featureCounts.value['deployments'] || 0) + enriched
   } catch { /* skip */ }
