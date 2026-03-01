@@ -190,8 +190,8 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
 
   const name = getResourceName(rawData)
 
-  // --- MIL-STD-2525 symbol rendering ---
-  if (useMilSymbols.value && rawData) {
+  // --- MIL-STD-2525 symbol rendering (systems only) ---
+  if (useMilSymbols.value && rawData && resourceType === 'systems') {
     const sz = getSymbolSizeForType(resourceType)
     const sym = getSymbolForResource(resourceType, rawData, sz)
     if (sym) {
@@ -269,8 +269,8 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
 
   const name = getResourceName(rawData)
 
-  // --- MIL-STD-2525 selected: render at larger size ---
-  if (useMilSymbols.value && rawData) {
+  // --- MIL-STD-2525 selected: render at larger size (systems only) ---
+  if (useMilSymbols.value && rawData && resourceType === 'systems') {
     const sym = getSymbolForResource(resourceType, rawData, 'normal')
     if (sym) {
       const iconStyle = new Style({
