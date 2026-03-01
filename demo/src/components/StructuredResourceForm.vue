@@ -167,6 +167,7 @@ defineExpose({ isValid })
 const mapContainer = ref<HTMLElement | null>(null)
 let miniMap: OlMap | null = null
 let markerSource: VectorSource | null = null
+let mapResizeObserver: ResizeObserver | null = null
 
 const MARKER_STYLE = new Style({
   image: new CircleStyle({
@@ -216,8 +217,12 @@ function initMiniMap() {
     controls: [],
   })
 
-  // OL needs a valid container size — force a resize after the layout settles
-  setTimeout(() => miniMap?.updateSize(), 0)
+  // Use ResizeObserver to reliably detect when the container gets real
+  // dimensions, then tell OL to recalculate its viewport.
+  mapResizeObserver = new ResizeObserver(() => {
+    miniMap?.updateSize()
+  })
+  mapResizeObserver.observe(mapContainer.value)
 
   // Place initial marker if we have coords
   if (lat.value !== null && lon.value !== null) {
@@ -242,6 +247,10 @@ function placeMarker(lng: number, latitude: number) {
 }
 
 function destroyMiniMap() {
+  if (mapResizeObserver) {
+    mapResizeObserver.disconnect()
+    mapResizeObserver = null
+  }
   if (miniMap) {
     miniMap.setTarget(undefined)
     miniMap = null
