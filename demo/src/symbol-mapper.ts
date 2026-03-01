@@ -68,6 +68,7 @@ const ENT_RETRANS_SITE = '112700'     // Retransmission site
 
 // Entity codes — Land Unit Intelligence branch (SS 10, 15xxxx)
 const ENT_MI = '151000'               // Military Intelligence (MI dagger icon)
+const ENT_SIGNAL_RADIO_RELAY = '111002' // Signal – Radio Relay (full frame)
 
 // Entity codes — SIGINT Ground (SS 52)
 const ENT_SIGINT_COMMS = '110100'     // SIGINT Communications (antenna icon)
@@ -107,9 +108,9 @@ type KeywordRule = {
  * More specific rules go first.
  */
 const SYSTEM_RULES: KeywordRule[] = [
-  // Relay / retransmission device → SIGINT Radar (dish + signal lines in SIGINT frame)
+  // Relay / retransmission device → Signal Radio Relay (Land Unit full frame)
   { keywords: ['relay', 'retrans', 'repeater', 'retransmission'],
-    identity: SI_FRIEND, symbolSet: SS_SIGINT, entity: ENT_SIGINT_RADAR },
+    identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_SIGNAL_RADIO_RELAY },
   // Monitoring site / observation → SIGINT Comms (antenna in SIGINT collector frame)
   { keywords: ['monitoring site', 'mon-site', 'observation post', 'monitoring node', 'monitoring station'],
     identity: SI_FRIEND, symbolSet: SS_SIGINT, entity: ENT_SIGINT_COMMS },
