@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { connection, type ConnectionWarning } from '../state'
 import { initializeBuilder, destroyBuilder } from '../csapi-bridge'
 import InputText from 'primevue/inputtext'
@@ -9,6 +9,7 @@ import Select from 'primevue/select'
 import Panel from 'primevue/panel'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
+import ConnectionDiagram from '../components/ConnectionDiagram.vue'
 
 const presets = [
   { label: 'OSH (OS4CSAPI)', proxyPath: '/api/osh', description: 'Oracle Cloud — HTTPS + basic auth', externalUrl: 'https://os4csapi-osh.duckdns.org/sensorhub/api', requiresAuth: true },
@@ -24,6 +25,15 @@ const password = ref('')
 const connecting = ref(false)
 const error = ref('')
 const warnings = ref<ConnectionWarning[]>([])
+
+/** Diagram state derived from connection status */
+const connectionState = computed<'idle' | 'connecting' | 'connected' | 'error'>(() => {
+  if (connecting.value) return 'connecting'
+  if (error.value) return 'error'
+  if (connection.connected) return 'connected'
+  return 'idle'
+})
+const diagramServerLabel = computed(() => selectedPreset.value?.label || customUrl.value || '')
 
 // Force a clean slate every time the user navigates to this page
 onMounted(() => {
@@ -410,6 +420,8 @@ function otherConformance(classes: string[]): string[] {
 
 <template>
   <div class="connect-page">
+    <ConnectionDiagram :state="connectionState" :serverLabel="diagramServerLabel" />
+
     <Panel header="Server Connection">
       <div class="form-grid">
         <div class="form-row">

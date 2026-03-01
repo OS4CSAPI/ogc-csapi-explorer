@@ -20,9 +20,9 @@ import os4csapiIcon from './assets/os4csapi-logo.svg'
         <router-link to="/smoke-test" class="nav-link">
           <i class="pi pi-bolt"></i> Smoke Test
         </router-link>
-        <router-link to="/demo" class="nav-link">
+        <span class="nav-link nav-link-disabled" title="Under construction">
           <i class="pi pi-play"></i> Demo
-        </router-link>
+        </span>
         <router-link to="/explore/deployments" class="nav-link">
           <i class="pi pi-th-large"></i> Explorer
         </router-link>
@@ -91,6 +91,10 @@ import os4csapiIcon from './assets/os4csapi-logo.svg'
 }
 .nav-link:hover {
   color: #1d4ed8;
+}
+.nav-link-disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 .app-main {
   flex: 1;
