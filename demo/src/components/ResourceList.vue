@@ -334,9 +334,13 @@ async function fetchResources(cursorUrl?: string) {
 async function fetchNestedDeployments() {
   const seenIds = new Set(items.value.map((it: any) => it?.id || it?.properties?.id))
   const acceptType = getContentType('deployments')
+  // Cap the total number of nested items to prevent runaway expansion on
+  // servers with very wide/deep hierarchies.
+  const MAX_NESTED = 200
+  let nestedCount = 0
 
   async function fetchSubs(parentId: string, depth: number): Promise<any[]> {
-    if (depth > 5) return []
+    if (depth > 5 || nestedCount >= MAX_NESTED) return []
     try {
       const res = await apiFetch(`/deployments/${parentId}/subdeployments?limit=50`, {
         headers: { Accept: acceptType },
@@ -346,9 +350,11 @@ async function fetchNestedDeployments() {
       const subs = parsed.items as any[]
       const results: any[] = []
       for (const sub of subs) {
+        if (nestedCount >= MAX_NESTED) break
         const subId = sub?.id || sub?.properties?.id
         if (!subId || seenIds.has(subId)) continue
         seenIds.add(subId)
+        nestedCount++
         // Tag with nesting depth for display
         sub._nestingDepth = depth
         results.push(sub)
@@ -358,16 +364,20 @@ async function fetchNestedDeployments() {
     } catch { return [] }
   }
 
-  // Fetch subdeployments for each top-level item
+  // Interleave nested items immediately after each parent so hierarchy
+  // reads top-down even when there are multiple top-level deployments.
   const topLevel = [...items.value]
-  const nested: any[] = []
+  const interleaved: any[] = []
   for (const item of topLevel) {
+    interleaved.push(item)
     const id = item?.id || item?.properties?.id
-    if (id) nested.push(...await fetchSubs(id, 1))
+    if (id) interleaved.push(...await fetchSubs(id, 1))
   }
-  if (nested.length > 0) {
-    items.value = [...items.value, ...nested]
+  if (interleaved.length > topLevel.length) {
+    items.value = interleaved
+    // Update counts to reflect the full hierarchy
     numberReturned.value = items.value.length
+    numberMatched.value = items.value.length
   }
 }
 
@@ -528,7 +538,8 @@ watch(
     <div v-if="!loading && items.length > 0" class="results-info">
       <span>Showing {{ numberReturned ?? items.length }} results</span>
       <span v-if="numberMatched != null"> of <strong>{{ numberMatched }}</strong> total</span>
-      <span v-if="paginationMode === 'offset'"> (offset: {{ offset }})</span>
+      <span v-if="items.some((it: any) => it._nestingDepth)"> (incl. subdeployments)</span>
+      <span v-else-if="paginationMode === 'offset'"> (offset: {{ offset }})</span>
     </div>
 
     <!-- Client-side fallback warning -->
