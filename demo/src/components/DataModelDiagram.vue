@@ -751,6 +751,11 @@ function navigateToType(nodeId: string) {
   const rel = relations?.find(r => r.childType === nodeId)
 
   if (rel) {
+    // Deployments → Systems: the nested /deployments/{id}/systems endpoint
+    // is not supported on many servers (returns 400).  The deployment detail
+    // page already resolves deployed systems inline, so stay put — no nav.
+    if (props.activeType === 'deployments' && nodeId === 'systems') return
+
     // Navigate to the nested list, same as the "browse all" in ResourceDetail
     router.push({
       path: `/explore/${rel.childType}`,
