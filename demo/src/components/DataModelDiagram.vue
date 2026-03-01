@@ -524,8 +524,7 @@ async function resolveSystemDeployments(systemId: string): Promise<{ count: numb
       try {
         const subRes = await apiFetch(`/deployments/${depId}/subdeployments?limit=100`, { headers: { Accept: acceptType } })
         if (!subRes.ok || !subRes.data) return []
-        const parsed = parseCollectionResponse(subRes.data)
-        const subs = parsed.items as any[]
+        const subs = (subRes.data?.items || subRes.data?.features || []) as any[]
         const nested: any[] = []
         for (const sub of subs) {
           const subId = sub?.id || sub?.properties?.id
@@ -537,8 +536,7 @@ async function resolveSystemDeployments(systemId: string): Promise<{ count: numb
 
     const res = await apiFetch('/deployments?limit=100', { headers: { Accept: acceptType } })
     if (!res.ok || !res.data) return empty
-    const parsed = parseCollectionResponse(res.data)
-    const topLevel = parsed.items as any[]
+    const topLevel = (res.data?.items || res.data?.features || []) as any[]
     const allDeps = [...topLevel]
     for (const dep of topLevel) {
       const depId = dep?.id || dep?.properties?.id
