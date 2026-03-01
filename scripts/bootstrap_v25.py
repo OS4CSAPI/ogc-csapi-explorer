@@ -213,17 +213,15 @@ print("STEP 1: Doctrine Deployment Hierarchy")
 print("  ICO → RSO → SSO → Sensor Net → Sensor Field → Sensor String")
 print("=" * 60)
 
+# Deployment location geometry is derived client-side from the hierarchy:
+#   geometry = line connecting subdeployment + deployed-system locations
+#   1 related resource → Point; 0 with parent → inherit parent centroid
+#   Only truly empty if no parent, no subdeployments, no deployed systems.
+
 # Top-level: ICO
 ico_payload = {
     "type": "Feature",
-    "geometry": {
-        "type": "Polygon",
-        "coordinates": [[
-            [-110.277897, 31.649006], [-110.253897, 31.649006],
-            [-110.253897, 31.667006], [-110.277897, 31.667006],
-            [-110.277897, 31.649006]
-        ]]
-    },
+    "geometry": None,  # derived from subdeployments at runtime
     "properties": {
         "featureType": "sosa:Deployment",
         "uid": "urn:os4csapi:deployment:ico:ft-huachuca:001",
@@ -237,14 +235,7 @@ ico_id = create_resource("deployments", ico_payload, "AZ-DEP-ICO-001")
 # RSO (child of ICO)
 rso_payload = {
     "type": "Feature",
-    "geometry": {
-        "type": "Polygon",
-        "coordinates": [[
-            [-110.277897, 31.649006], [-110.253897, 31.649006],
-            [-110.253897, 31.667006], [-110.277897, 31.667006],
-            [-110.277897, 31.649006]
-        ]]
-    },
+    "geometry": None,  # derived from subdeployments at runtime
     "properties": {
         "featureType": "sosa:Deployment",
         "uid": "urn:os4csapi:deployment:rso:ft-huachuca:001",
@@ -261,14 +252,7 @@ else:
 # SSO (child of RSO)
 sso_payload = {
     "type": "Feature",
-    "geometry": {
-        "type": "Polygon",
-        "coordinates": [[
-            [-110.277897, 31.649006], [-110.253897, 31.649006],
-            [-110.253897, 31.667006], [-110.277897, 31.667006],
-            [-110.277897, 31.649006]
-        ]]
-    },
+    "geometry": None,  # derived from subdeployments + deployed systems at runtime
     "properties": {
         "featureType": "sosa:Deployment",
         "uid": "urn:os4csapi:deployment:sso:ft-huachuca:001",
@@ -285,14 +269,7 @@ else:
 # SNET (child of SSO)
 snet_payload = {
     "type": "Feature",
-    "geometry": {
-        "type": "Polygon",
-        "coordinates": [[
-            [-110.277897, 31.649006], [-110.253897, 31.649006],
-            [-110.253897, 31.667006], [-110.277897, 31.667006],
-            [-110.277897, 31.649006]
-        ]]
-    },
+    "geometry": None,  # derived from deployed systems (MonSite + Relay) at runtime
     "properties": {
         "featureType": "sosa:Deployment",
         "uid": "urn:os4csapi:deployment:snet:ft-huachuca:001",
@@ -309,14 +286,7 @@ else:
 # FIELD (child of SNET)
 field_payload = {
     "type": "Feature",
-    "geometry": {
-        "type": "Polygon",
-        "coordinates": [[
-            [-110.273897, 31.654006], [-110.255897, 31.654006],
-            [-110.255897, 31.665006], [-110.273897, 31.665006],
-            [-110.273897, 31.654006]
-        ]]
-    },
+    "geometry": None,  # leaf: inherits parent (SNET) centroid at runtime
     "properties": {
         "featureType": "sosa:Deployment",
         "uid": "urn:os4csapi:deployment:field:ft-huachuca:001",
@@ -333,14 +303,7 @@ else:
 # STRING (child of FIELD)
 string_payload = {
     "type": "Feature",
-    "geometry": {
-        "type": "LineString",
-        "coordinates": [
-            [-110.272897, 31.663006],
-            [-110.257897, 31.655006],
-            [-110.269897, 31.650006]
-        ]
-    },
+    "geometry": None,  # leaf: inherits parent (Field → SNET) centroid at runtime
     "properties": {
         "featureType": "sosa:Deployment",
         "uid": "urn:os4csapi:deployment:string:alpha:ft-huachuca:001",
