@@ -216,6 +216,9 @@ function initMiniMap() {
     controls: [],
   })
 
+  // OL needs a valid container size — force a resize after the layout settles
+  setTimeout(() => miniMap?.updateSize(), 0)
+
   // Place initial marker if we have coords
   if (lat.value !== null && lon.value !== null) {
     placeMarker(lon.value, lat.value)
