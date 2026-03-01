@@ -236,6 +236,9 @@ function initMiniMap() {
     controls: [],
   })
 
+  // Force an immediate size update
+  miniMap.updateSize()
+
   // Keep the observer alive so OL stays in sync if the container resizes
   if (!mapResizeObserver) {
     mapResizeObserver = new ResizeObserver(() => miniMap?.updateSize())
@@ -287,7 +290,7 @@ watch([hasGeometry, () => showGeometry.value], async ([geo, show]) => {
   } else {
     destroyMiniMap()
   }
-})
+}, { immediate: true })
 
 // Sync marker when lat/lon fields are edited manually
 watch([lat, lon], ([newLat, newLon]) => {
