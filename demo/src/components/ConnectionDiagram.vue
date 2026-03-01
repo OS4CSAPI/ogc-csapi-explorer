@@ -57,9 +57,9 @@ defineProps<{
            ═══════════════════════════════════════════════════════ -->
       <line
         x1="120" y1="62" x2="218" y2="62"
-        :stroke="state === 'connected' ? '#22c55e' : state === 'error' ? '#64748b' : '#64748b'"
-        :stroke-width="state === 'connected' ? 2.5 : 2"
-        :marker-end="state === 'connected' ? 'url(#cd-arrow-green)' : 'url(#cd-arrow-grey)'"
+        stroke="#22c55e"
+        stroke-width="2.5"
+        marker-end="url(#cd-arrow-green)"
       />
 
       <!-- ═══════════════════════════════════════════════════════
