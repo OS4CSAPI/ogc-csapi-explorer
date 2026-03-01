@@ -168,6 +168,7 @@ const mapContainer = ref<HTMLElement | null>(null)
 let miniMap: OlMap | null = null
 let markerSource: VectorSource | null = null
 let mapResizeObserver: ResizeObserver | null = null
+const mapReady = ref(false)
 
 const MARKER_STYLE = new Style({
   image: new CircleStyle({
@@ -178,7 +179,25 @@ const MARKER_STYLE = new Style({
 })
 
 function initMiniMap() {
-  if (miniMap || !mapContainer.value) return
+  if (miniMap) return
+  const el = mapContainer.value
+  if (!el) return
+
+  // Ensure the container is visible and has real dimensions before creating the map
+  const rect = el.getBoundingClientRect()
+  if (rect.width === 0 || rect.height === 0) {
+    // Container isn't laid out yet — wait for ResizeObserver to fire
+    if (!mapResizeObserver) {
+      mapResizeObserver = new ResizeObserver(() => {
+        const r = el.getBoundingClientRect()
+        if (r.width > 0 && r.height > 0) {
+          initMiniMap()
+        }
+      })
+      mapResizeObserver.observe(el)
+    }
+    return
+  }
 
   markerSource = new VectorSource()
 
@@ -208,7 +227,7 @@ function initMiniMap() {
   const startZoom = (lat.value !== null && lon.value !== null) ? 17 : 3
 
   miniMap = new OlMap({
-    target: mapContainer.value,
+    target: el,
     layers: [satelliteLayer, labelsLayer, markerLayer],
     view: new OlView({
       center: fromLonLat([startLon, startLat]),
@@ -217,12 +236,11 @@ function initMiniMap() {
     controls: [],
   })
 
-  // Use ResizeObserver to reliably detect when the container gets real
-  // dimensions, then tell OL to recalculate its viewport.
-  mapResizeObserver = new ResizeObserver(() => {
-    miniMap?.updateSize()
-  })
-  mapResizeObserver.observe(mapContainer.value)
+  // Keep the observer alive so OL stays in sync if the container resizes
+  if (!mapResizeObserver) {
+    mapResizeObserver = new ResizeObserver(() => miniMap?.updateSize())
+    mapResizeObserver.observe(el)
+  }
 
   // Place initial marker if we have coords
   if (lat.value !== null && lon.value !== null) {
@@ -236,6 +254,8 @@ function initMiniMap() {
     lon.value = Math.round(newLon * 1e7) / 1e7
     placeMarker(lon.value, lat.value)
   })
+
+  mapReady.value = true
 }
 
 function placeMarker(lng: number, latitude: number) {
@@ -256,6 +276,7 @@ function destroyMiniMap() {
     miniMap = null
     markerSource = null
   }
+  mapReady.value = false
 }
 
 // Recreate map when the geometry section appears/disappears
@@ -397,5 +418,6 @@ onBeforeUnmount(() => destroyMiniMap())
 .json-editor { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.85rem; width: 100%; resize: vertical; }
 .map-picker-container { display: flex; flex-direction: column; gap: 0.25rem; }
 .map-picker-label { font-weight: 600; font-size: 0.85rem; color: #64748b; }
-.map-picker { width: 100%; height: 260px; border-radius: 8px; border: 1px solid #cbd5e1; overflow: hidden; cursor: crosshair; }
+.map-picker { width: 100%; height: 260px; border-radius: 8px; border: 1px solid #cbd5e1; position: relative; cursor: crosshair; }
+.map-picker :deep(.ol-viewport) { border-radius: 8px; }
 </style>
