@@ -585,6 +585,10 @@ async function fetchCounts() {
     for (const rel of relations) counts[rel.childType] = null
 
     // Fire all direct requests in parallel
+    // Track which cluster resolutions we need to run after the fast counts
+    let needSystemDeploymentsCluster = false
+    let needDeployedSystemsCluster = false
+
     const requests = relations.map(async (rel) => {
       try {
         // For self-hierarchy relations (subsystems/subdeployments), fetch a page for chip display
@@ -594,22 +598,16 @@ async function fetchCounts() {
         const res = await apiFetch(path)
         if (gen !== fetchGeneration) return  // stale
         if (!res.ok) {
-          // --- Deployed Systems fallback (OGC 23-001 Table 43) ---
-          // /deployments/{id}/systems is non-standard; deployedSystems is an
-          // inline property.  Fetch the deployment detail and resolve @link refs.
+          // Mark for cluster resolution after fast counts complete.
+          // Don't do the heavy lifting here inside the parallel map.
           if (parentType === 'deployments' && rel.relation === 'systems') {
-            const resolved = await resolveDeployedSystems(parentId)
-            if (gen !== fetchGeneration) return
-            counts[rel.childType] = resolved.count
-            deployedSystemItems.value = resolved.items
+            needDeployedSystemsCluster = true
+            counts[rel.childType] = null  // keep loading state
             return
           }
-          // --- System → Deployments fallback ---
           if (parentType === 'systems' && rel.relation === 'deployments') {
-            const resolved = await resolveSystemDeployments(parentId)
-            if (gen !== fetchGeneration) return
-            counts[rel.childType] = resolved.count
-            systemDeploymentItems.value = resolved.items
+            needSystemDeploymentsCluster = true
+            counts[rel.childType] = null  // keep loading state
             return
           }
           counts[rel.childType] = -1
@@ -693,27 +691,13 @@ async function fetchCounts() {
           } catch { /* non-critical */ }
         }
 
-        // --- System → Deployments: always resolve items for cluster ---
-        // The server may return 200 with items for /systems/{id}/deployments
-        // but those items may be unfiltered (all deployments).  Always run
-        // the client-side resolver so the clickable cluster gets populated.
+        // Mark for cluster resolution if the relation is systems↔deployments.
+        // The fast count is captured now; the heavy resolver runs after Promise.allSettled.
         if (parentType === 'systems' && rel.relation === 'deployments') {
-          const resolved = await resolveSystemDeployments(parentId)
-          if (gen !== fetchGeneration) return
-          if (resolved.count > 0) {
-            count = resolved.count
-            systemDeploymentItems.value = resolved.items
-          }
+          needSystemDeploymentsCluster = true
         }
-
-        // --- Deployed Systems: always resolve items for cluster ---
         if (parentType === 'deployments' && rel.relation === 'systems') {
-          const resolved = await resolveDeployedSystems(parentId)
-          if (gen !== fetchGeneration) return
-          if (resolved.count > 0) {
-            count = resolved.count
-            deployedSystemItems.value = resolved.items
-          }
+          needDeployedSystemsCluster = true
         }
 
         counts[rel.childType] = count
@@ -740,6 +724,26 @@ async function fetchCounts() {
       }
     })
     await Promise.allSettled(requests)
+    if (gen !== fetchGeneration) return
+
+    // ── Cluster resolution for systems↔deployments ───────────────
+    // These run AFTER all fast parallel requests complete, so there's no
+    // risk of the gen being staled by sibling request callbacks.
+    // Each resolver does 7+ sequential HTTP requests to walk the deployment
+    // hierarchy, so running them here (sequentially, after fast counts)
+    // ensures the gen remains stable throughout.
+    if (needSystemDeploymentsCluster) {
+      const resolved = await resolveSystemDeployments(parentId)
+      if (gen !== fetchGeneration) return
+      counts['deployments'] = resolved.count
+      systemDeploymentItems.value = resolved.items
+    }
+    if (needDeployedSystemsCluster) {
+      const resolved = await resolveDeployedSystems(parentId)
+      if (gen !== fetchGeneration) return
+      counts['systems'] = resolved.count
+      deployedSystemItems.value = resolved.items
+    }
     if (gen !== fetchGeneration) return
 
     // ── Transitive grandchild counts ──────────────────────────────
