@@ -338,6 +338,34 @@ async function resolveDeployedSystemsInline(): Promise<{ items: any[]; source: s
     } catch { /* skip */ }
   }
 
+  // 3. Fallback: resolve from deployedSystemUIDs string property
+  // When the server strips deployedSystems@link (OSH SensorHub treats it as
+  // computed/read-only), a comma-separated UID string stored as a custom
+  // property can be used to find systems by UID.
+  const uidStr = parentProps['deployedSystemUIDs']
+  if (typeof uidStr === 'string' && uidStr.length > 0) {
+    const uids = uidStr.split(',').map((u: string) => u.trim()).filter(Boolean)
+    if (uids.length > 0) {
+      const items: any[] = []
+      for (const uid of uids) {
+        try {
+          const searchPath = `/systems?uid=${encodeURIComponent(uid)}&limit=1`
+          const res = await apiFetch(searchPath, { headers: { Accept: acceptType } })
+          if (res.ok && res.data) {
+            const found = res.data?.items || res.data?.features || []
+            if (found.length > 0) items.push(found[0])
+          }
+        } catch { /* skip */ }
+      }
+      if (items.length > 0) {
+        return {
+          items,
+          source: `Resolved ${items.length} system(s) from deployedSystemUIDs property`,
+        }
+      }
+    }
+  }
+
   return { items: [], source: '' }
 }
 

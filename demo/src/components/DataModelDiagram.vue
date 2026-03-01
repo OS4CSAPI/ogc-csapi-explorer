@@ -357,6 +357,12 @@ async function resolveDeployedSystemsCount(deploymentId: string): Promise<number
     const platformLink = parentProps['platform@link']
     if (platformLink?.href) return 1
 
+    // 3. Fallback: deployedSystemUIDs — comma-separated UID string
+    const uidStr = parentProps['deployedSystemUIDs']
+    if (typeof uidStr === 'string' && uidStr.length > 0) {
+      return uidStr.split(',').filter((u: string) => u.trim()).length
+    }
+
     return 0
   } catch { return 0 }
 }
