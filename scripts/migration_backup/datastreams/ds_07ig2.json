@@ -1,0 +1,90 @@
+{
+  "id": "07ig2",
+  "name": "AZ-MA-1 Scene Summary",
+  "description": "Scene summary.",
+  "system@id": "04ng",
+  "system@link": {
+    "href": "http://45.55.99.236:8080/sensorhub/api/systems/04ng?f=json",
+    "uid": "urn:os4csapi:system:odas:az-ma-1",
+    "type": "application/geo+json"
+  },
+  "outputName": "az_ma_1_scene_summary",
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    "now"
+  ],
+  "procedure@link": {
+    "href": "/sensorhub/api/procedures/04c0",
+    "title": "AZ-MA-1-PROC-ODAS",
+    "type": "application/geo+json"
+  },
+  "deployment@link": {
+    "href": "/sensorhub/api/deployments/04dg",
+    "title": "AZ-DEP-AZ-MA-1",
+    "type": "application/geo+json"
+  },
+  "featureOfInterest@link": {
+    "href": "/sensorhub/api/deployments/04cg",
+    "title": "AOI",
+    "type": "application/geo+json"
+  },
+  "phenomenonTime": [
+    "2026-02-27T17:41:21.526Z",
+    "2026-02-27T18:16:15.254Z"
+  ],
+  "resultTime": [
+    "2026-02-27T17:41:21.526Z",
+    "2026-02-27T18:16:15.254Z"
+  ],
+  "observedProperties": [
+    {
+      "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+      "label": "Epoch seconds"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/frameIndex",
+      "label": "ODAS timeStamp/frame index"
+    },
+    {
+      "definition": "https://os4csapi.org/def/csapi/trackCount",
+      "label": "Active track count"
+    },
+    {
+      "definition": "https://os4csapi.org/def/csapi/activityLevel",
+      "label": "Activity level"
+    }
+  ],
+  "resultType": "record",
+  "formats": [
+    "application/om+json",
+    "application/swe+json",
+    "application/swe+csv",
+    "application/swe+xml",
+    "application/swe+binary"
+  ],
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/datastreams/07ig2",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This datastream resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/datastreams/07ig2?f=html",
+      "type": "text/html"
+    },
+    {
+      "rel": "system",
+      "title": "Parent system",
+      "href": "http://45.55.99.236:8080/sensorhub/api/systems/04ng?f=json",
+      "type": "application/json"
+    },
+    {
+      "rel": "observations",
+      "title": "Observations",
+      "href": "http://45.55.99.236:8080/sensorhub/api/datastreams/07ig2/observations?f=json",
+      "type": "application/json"
+    }
+  ]
+}

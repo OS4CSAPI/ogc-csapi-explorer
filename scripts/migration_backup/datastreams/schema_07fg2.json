@@ -1,0 +1,105 @@
+{
+  "obsFormat": "application/om+json",
+  "resultSchema": {
+    "type": "DataRecord",
+    "name": "az_ma_1_ssl_potential_sources",
+    "definition": "https://os4csapi.org/def/odas/ssl/potentialSourcesRecordOSH",
+    "label": "SSL potential sources",
+    "fields": [
+      {
+        "type": "Time",
+        "name": "timestamp",
+        "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+        "label": "Epoch seconds",
+        "referenceTime": "1970-01-01T00:00:00Z",
+        "uom": {
+          "code": "s"
+        }
+      },
+      {
+        "type": "Count",
+        "name": "odasTimeStamp",
+        "definition": "https://os4csapi.org/def/odas/frameIndex",
+        "label": "ODAS timeStamp/frame index"
+      },
+      {
+        "type": "DataArray",
+        "name": "src",
+        "definition": "https://os4csapi.org/def/odas/ssl/potentialSourceArray",
+        "label": "Potential sources",
+        "elementCount": {
+          "type": "Count",
+          "name": "elementCount"
+        },
+        "elementType": {
+          "type": "DataRecord",
+          "name": "element",
+          "definition": "https://os4csapi.org/def/odas/ssl/potentialSource",
+          "label": "SSL potential source",
+          "fields": [
+            {
+              "type": "Quantity",
+              "name": "x",
+              "definition": "https://os4csapi.org/def/odas/directionCosineX",
+              "label": "Direction cosine X",
+              "uom": {
+                "code": "1"
+              },
+              "constraint": {
+                "intervals": [
+                  [
+                    -1.0,
+                    1.0
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "Quantity",
+              "name": "y",
+              "definition": "https://os4csapi.org/def/odas/directionCosineY",
+              "label": "Direction cosine Y",
+              "uom": {
+                "code": "1"
+              },
+              "constraint": {
+                "intervals": [
+                  [
+                    -1.0,
+                    1.0
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "Quantity",
+              "name": "z",
+              "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+              "label": "Direction cosine Z",
+              "uom": {
+                "code": "1"
+              },
+              "constraint": {
+                "intervals": [
+                  [
+                    -1.0,
+                    1.0
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "Quantity",
+              "name": "E",
+              "definition": "https://os4csapi.org/def/odas/relativeEnergy",
+              "label": "Relative energy (ODAS)",
+              "uom": {
+                "code": "1"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

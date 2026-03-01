@@ -1,0 +1,47 @@
+{
+  "commandFormat": "application/json",
+  "parametersSchema": {
+    "type": "DataRecord",
+    "name": "snapshot",
+    "definition": "https://os4csapi.org/def/csapi/commands/requestSnapshotParams",
+    "label": "Snapshot Params",
+    "fields": [
+      {
+        "type": "Count",
+        "name": "trackId",
+        "definition": "https://os4csapi.org/def/odas/trackId",
+        "label": "Track ID"
+      },
+      {
+        "type": "Quantity",
+        "name": "durationMs",
+        "definition": "https://os4csapi.org/def/csapi/durationMs",
+        "label": "Duration",
+        "uom": {
+          "code": "ms"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              10.0,
+              60000.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Category",
+        "name": "format",
+        "definition": "https://os4csapi.org/def/csapi/format",
+        "label": "Format",
+        "constraint": {
+          "values": [
+            "wav",
+            "flac",
+            "json"
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "type": "Feature",
+  "id": "04b0",
+  "geometry": null,
+  "properties": {
+    "uid": "urn:os4csapi:procedure:odas:az-ma-1:calibration:v1",
+    "featureType": "sosa:Procedure",
+    "name": "Calibration Proc (AZ-MA-1)",
+    "validTime": [
+      "2026-01-01T00:00:00Z",
+      ".."
+    ]
+  },
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/04b0",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in SensorML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/04b0?f=sml3",
+      "type": "application/sml+json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/04b0?f=html",
+      "type": "text/html"
+    }
+  ]
+}

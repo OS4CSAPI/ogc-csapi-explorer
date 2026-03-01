@@ -1,0 +1,65 @@
+{
+  "id": "04dg",
+  "name": "AZ-MA-1 ODAS Control ControlStream",
+  "system@id": "04rg",
+  "system@link": {
+    "href": "http://45.55.99.236:8080/sensorhub/api/systems/04rg?f=json",
+    "uid": "urn:os4csapi:system:odas:az-ma-1:actuator",
+    "type": "application/geo+json"
+  },
+  "inputName": "odasControl",
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    "now"
+  ],
+  "controlledProperties": [
+    {
+      "definition": "https://os4csapi.org/def/csapi/module",
+      "label": "Module"
+    },
+    {
+      "definition": "https://os4csapi.org/def/csapi/parameter",
+      "label": "Parameter path"
+    },
+    {
+      "definition": "https://os4csapi.org/def/csapi/value",
+      "label": "Value string"
+    },
+    {
+      "definition": "https://os4csapi.org/def/csapi/applyMode",
+      "label": "Apply"
+    }
+  ],
+  "formats": [
+    "application/json",
+    "application/swe+json",
+    "application/swe+csv",
+    "application/swe+xml",
+    "application/swe+binary"
+  ],
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/controlstreams/04dg",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This controlstream resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/controlstreams/04dg?f=html",
+      "type": "text/html"
+    },
+    {
+      "rel": "system",
+      "title": "Parent system",
+      "href": "http://45.55.99.236:8080/sensorhub/api/systems/04rg?f=json",
+      "type": "application/json"
+    },
+    {
+      "rel": "commands",
+      "title": "Commands",
+      "href": "http://45.55.99.236:8080/sensorhub/api/controlstreams/04dg/commands?f=json",
+      "type": "application/json"
+    }
+  ]
+}

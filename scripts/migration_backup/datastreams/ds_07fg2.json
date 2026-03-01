@@ -1,0 +1,94 @@
+{
+  "id": "07fg2",
+  "name": "AZ-MA-1 SSL Potential Sources",
+  "description": "SSL raw.",
+  "system@id": "04ng",
+  "system@link": {
+    "href": "http://45.55.99.236:8080/sensorhub/api/systems/04ng?f=json",
+    "uid": "urn:os4csapi:system:odas:az-ma-1",
+    "type": "application/geo+json"
+  },
+  "outputName": "az_ma_1_ssl_potential_sources",
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    "now"
+  ],
+  "procedure@link": {
+    "href": "/sensorhub/api/procedures/04c0",
+    "title": "AZ-MA-1-PROC-ODAS",
+    "type": "application/geo+json"
+  },
+  "deployment@link": {
+    "href": "/sensorhub/api/deployments/04dg",
+    "title": "AZ-DEP-AZ-MA-1",
+    "type": "application/geo+json"
+  },
+  "featureOfInterest@link": {
+    "href": "/sensorhub/api/deployments/04cg",
+    "title": "AOI",
+    "type": "application/geo+json"
+  },
+  "observedProperties": [
+    {
+      "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+      "label": "Epoch seconds"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/frameIndex",
+      "label": "ODAS timeStamp/frame index"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/ssl/potentialSourceArray",
+      "label": "Potential sources"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/directionCosineX",
+      "label": "Direction cosine X"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/directionCosineY",
+      "label": "Direction cosine Y"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+      "label": "Direction cosine Z"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/relativeEnergy",
+      "label": "Relative energy (ODAS)"
+    }
+  ],
+  "resultType": "coverage",
+  "formats": [
+    "application/om+json",
+    "application/swe+json",
+    "application/swe+csv",
+    "application/swe+xml",
+    "application/swe+binary"
+  ],
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/datastreams/07fg2",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This datastream resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/datastreams/07fg2?f=html",
+      "type": "text/html"
+    },
+    {
+      "rel": "system",
+      "title": "Parent system",
+      "href": "http://45.55.99.236:8080/sensorhub/api/systems/04ng?f=json",
+      "type": "application/json"
+    },
+    {
+      "rel": "observations",
+      "title": "Observations",
+      "href": "http://45.55.99.236:8080/sensorhub/api/datastreams/07fg2/observations?f=json",
+      "type": "application/json"
+    }
+  ]
+}

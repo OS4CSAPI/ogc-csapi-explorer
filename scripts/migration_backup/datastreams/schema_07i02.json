@@ -1,0 +1,74 @@
+{
+  "obsFormat": "application/om+json",
+  "resultSchema": {
+    "type": "DataRecord",
+    "name": "az_ma_1_health",
+    "definition": "https://os4csapi.org/def/csapi/health/statusRecordOSH",
+    "label": "Health",
+    "fields": [
+      {
+        "type": "Time",
+        "name": "timestamp",
+        "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+        "label": "Epoch seconds",
+        "referenceTime": "1970-01-01T00:00:00Z",
+        "uom": {
+          "code": "s"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "cpuLoad",
+        "definition": "https://os4csapi.org/def/csapi/cpuLoad",
+        "label": "CPU load",
+        "uom": {
+          "code": "1"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "memUsedMB",
+        "definition": "https://os4csapi.org/def/csapi/memUsedMB",
+        "label": "Mem used",
+        "uom": {
+          "code": "MB"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "tempC",
+        "definition": "https://os4csapi.org/def/csapi/tempC",
+        "label": "Temp",
+        "uom": {
+          "code": "Cel"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "latencyMs",
+        "definition": "https://os4csapi.org/def/csapi/latencyMs",
+        "label": "Latency",
+        "uom": {
+          "code": "ms"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "uptimeS",
+        "definition": "https://os4csapi.org/def/csapi/uptimeS",
+        "label": "Uptime",
+        "uom": {
+          "code": "s"
+        }
+      }
+    ]
+  }
+}

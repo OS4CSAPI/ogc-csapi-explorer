@@ -1,0 +1,50 @@
+{
+  "obsFormat": "application/om+json",
+  "resultSchema": {
+    "type": "DataRecord",
+    "name": "az_ma_1_scene_summary",
+    "definition": "https://os4csapi.org/def/csapi/scene/summaryRecordOSH",
+    "label": "Scene summary",
+    "fields": [
+      {
+        "type": "Time",
+        "name": "timestamp",
+        "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+        "label": "Epoch seconds",
+        "referenceTime": "1970-01-01T00:00:00Z",
+        "uom": {
+          "code": "s"
+        }
+      },
+      {
+        "type": "Count",
+        "name": "odasTimeStamp",
+        "definition": "https://os4csapi.org/def/odas/frameIndex",
+        "label": "ODAS timeStamp/frame index"
+      },
+      {
+        "type": "Count",
+        "name": "trackCount",
+        "definition": "https://os4csapi.org/def/csapi/trackCount",
+        "label": "Active track count"
+      },
+      {
+        "type": "Quantity",
+        "name": "activityLevel",
+        "definition": "https://os4csapi.org/def/csapi/activityLevel",
+        "label": "Activity level",
+        "uom": {
+          "code": "1"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

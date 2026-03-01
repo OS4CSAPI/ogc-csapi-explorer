@@ -1,0 +1,30 @@
+{
+  "type": "Feature",
+  "id": "048g",
+  "geometry": null,
+  "properties": {
+    "uid": "urn:x-odas:procedure:srp-phat-beamforming",
+    "featureType": "http://www.w3.org/ns/sosa/Procedure",
+    "name": "SRP-PHAT Steered Response Power Beamforming",
+    "description": "Sound Source Localization via Steered Response Power with Phase Transform. For each audio frame: (1) Compute generalized cross-correlation (GCC-PHAT) for all microphone pairs. (2) Scan a virtual hemisphere of candidate directions at configurable angular resolution. (3) For each candidate direction, sum the cross-correlation values for all mic pairs at the expected time delay. (4) The direction with highest accumulated energy is the DOA estimate. Outputs up to 4 potential sources per frame as unit-sphere vectors (x,y,z) with energy E. Input: multi-channel PCM audio. Output: SSL pots {x, y, z, E}[0..3]."
+  },
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/048g",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in SensorML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/048g?f=sml3",
+      "type": "application/sml+json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/048g?f=html",
+      "type": "text/html"
+    }
+  ]
+}

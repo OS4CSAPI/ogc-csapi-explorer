@@ -1,0 +1,30 @@
+{
+  "type": "Feature",
+  "id": "0480",
+  "geometry": null,
+  "properties": {
+    "uid": "urn:x-odas:procedure:pdm-mems-audio-capture",
+    "featureType": "http://www.w3.org/ns/sosa/Procedure",
+    "name": "PDM MEMS Microphone Audio Capture",
+    "description": "Pulse Density Modulation (PDM) microphone sampling procedure. Each MEMS microphone produces a 1-bit PDM bitstream. The XMOS xCORE decimation filter converts PDM to PCM at 16000 Hz. Frame size: 256 samples, hop size: 128 samples. USB Audio Class 1.0 transport to host."
+  },
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/0480",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in SensorML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/0480?f=sml3",
+      "type": "application/sml+json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/0480?f=html",
+      "type": "text/html"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "commandFormat": "application/json",
+  "parametersSchema": {
+    "type": "DataRecord",
+    "name": "odasControl",
+    "definition": "https://os4csapi.org/def/csapi/commands/odasControlParams",
+    "label": "ODAS Control Params",
+    "fields": [
+      {
+        "type": "Category",
+        "name": "module",
+        "definition": "https://os4csapi.org/def/csapi/module",
+        "label": "Module",
+        "constraint": {
+          "values": [
+            "sne",
+            "ssl",
+            "sst",
+            "sss",
+            "classify",
+            "general"
+          ]
+        }
+      },
+      {
+        "type": "Text",
+        "name": "parameter",
+        "definition": "https://os4csapi.org/def/csapi/parameter",
+        "label": "Parameter path"
+      },
+      {
+        "type": "Text",
+        "name": "value",
+        "definition": "https://os4csapi.org/def/csapi/value",
+        "label": "Value string"
+      },
+      {
+        "type": "Category",
+        "name": "applyMode",
+        "definition": "https://os4csapi.org/def/csapi/applyMode",
+        "label": "Apply",
+        "constraint": {
+          "values": [
+            "immediate",
+            "nextFrame",
+            "nextRestart"
+          ]
+        }
+      }
+    ]
+  }
+}

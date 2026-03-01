@@ -1,0 +1,181 @@
+{
+  "obsFormat": "application/om+json",
+  "resultSchema": {
+    "type": "DataRecord",
+    "name": "az_ma_1_track_updates",
+    "definition": "https://os4csapi.org/def/odas/track/updateRecordOSH",
+    "label": "Track update",
+    "fields": [
+      {
+        "type": "Time",
+        "name": "timestamp",
+        "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+        "label": "Epoch seconds",
+        "referenceTime": "1970-01-01T00:00:00Z",
+        "uom": {
+          "code": "s"
+        }
+      },
+      {
+        "type": "Count",
+        "name": "odasTimeStamp",
+        "definition": "https://os4csapi.org/def/odas/frameIndex",
+        "label": "ODAS timeStamp/frame index"
+      },
+      {
+        "type": "Count",
+        "name": "id",
+        "definition": "https://os4csapi.org/def/odas/trackId",
+        "label": "Track ID"
+      },
+      {
+        "type": "Text",
+        "name": "tag",
+        "definition": "https://os4csapi.org/def/odas/trackTag",
+        "label": "Track tag",
+        "constraint": {
+          "values": [
+            "dynamic",
+            "static",
+            ""
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "x",
+        "definition": "https://os4csapi.org/def/odas/directionCosineX",
+        "label": "Direction cosine X",
+        "uom": {
+          "code": "1"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              -1.0,
+              1.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "y",
+        "definition": "https://os4csapi.org/def/odas/directionCosineY",
+        "label": "Direction cosine Y",
+        "uom": {
+          "code": "1"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              -1.0,
+              1.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "z",
+        "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+        "label": "Direction cosine Z",
+        "uom": {
+          "code": "1"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              -1.0,
+              1.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "activity",
+        "definition": "https://os4csapi.org/def/odas/trackActivity",
+        "label": "Activity",
+        "uom": {
+          "code": "1"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "bearingTrue",
+        "definition": "https://os4csapi.org/def/odas/bearingTrue",
+        "label": "Bearing true",
+        "uom": {
+          "code": "deg"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              0.0,
+              360.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "elevation",
+        "definition": "https://os4csapi.org/def/odas/elevation",
+        "label": "Elevation",
+        "uom": {
+          "code": "deg"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              -90.0,
+              90.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "bearingStdDev",
+        "definition": "https://os4csapi.org/def/odas/bearingStdDev",
+        "label": "Bearing std dev",
+        "uom": {
+          "code": "deg"
+        }
+      },
+      {
+        "type": "Category",
+        "name": "classLabel",
+        "definition": "https://os4csapi.org/def/odas/classLabel",
+        "label": "Class label",
+        "constraint": {
+          "values": [
+            "uas",
+            "vehicle",
+            "footsteps",
+            "impulsive",
+            "unknown"
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "classConfidence",
+        "definition": "https://os4csapi.org/def/odas/classConfidence",
+        "label": "Class confidence",
+        "uom": {
+          "code": "1"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

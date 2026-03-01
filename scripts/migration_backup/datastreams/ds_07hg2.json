@@ -1,0 +1,102 @@
+{
+  "id": "07hg2",
+  "name": "AZ-MA-1 Classification Probabilities",
+  "description": "Class probs.",
+  "system@id": "04ng",
+  "system@link": {
+    "href": "http://45.55.99.236:8080/sensorhub/api/systems/04ng?f=json",
+    "uid": "urn:os4csapi:system:odas:az-ma-1",
+    "type": "application/geo+json"
+  },
+  "outputName": "az_ma_1_classification_probabilities",
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    "now"
+  ],
+  "procedure@link": {
+    "href": "/sensorhub/api/procedures/04hg",
+    "title": "AZ-PROC-CLASSIFY",
+    "type": "application/geo+json"
+  },
+  "deployment@link": {
+    "href": "/sensorhub/api/deployments/04dg",
+    "title": "AZ-DEP-AZ-MA-1",
+    "type": "application/geo+json"
+  },
+  "featureOfInterest@link": {
+    "href": "/sensorhub/api/deployments/04cg",
+    "title": "AOI",
+    "type": "application/geo+json"
+  },
+  "phenomenonTime": [
+    "2026-02-27T17:41:21.526Z",
+    "2026-02-27T18:16:16.254Z"
+  ],
+  "resultTime": [
+    "2026-02-27T17:41:21.526Z",
+    "2026-02-27T18:16:16.254Z"
+  ],
+  "observedProperties": [
+    {
+      "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+      "label": "Epoch seconds"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/trackId",
+      "label": "Track ID"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/p_uas",
+      "label": "P(UAS)"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/p_vehicle",
+      "label": "P(vehicle)"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/p_footsteps",
+      "label": "P(footsteps)"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/p_impulsive",
+      "label": "P(impulsive)"
+    },
+    {
+      "definition": "https://os4csapi.org/def/odas/p_unknown",
+      "label": "P(unknown)"
+    }
+  ],
+  "resultType": "record",
+  "formats": [
+    "application/om+json",
+    "application/swe+json",
+    "application/swe+csv",
+    "application/swe+xml",
+    "application/swe+binary"
+  ],
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/datastreams/07hg2",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This datastream resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/datastreams/07hg2?f=html",
+      "type": "text/html"
+    },
+    {
+      "rel": "system",
+      "title": "Parent system",
+      "href": "http://45.55.99.236:8080/sensorhub/api/systems/04ng?f=json",
+      "type": "application/json"
+    },
+    {
+      "rel": "observations",
+      "title": "Observations",
+      "href": "http://45.55.99.236:8080/sensorhub/api/datastreams/07hg2/observations?f=json",
+      "type": "application/json"
+    }
+  ]
+}

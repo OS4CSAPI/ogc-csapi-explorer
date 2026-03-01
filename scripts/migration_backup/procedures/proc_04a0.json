@@ -1,0 +1,30 @@
+{
+  "type": "Feature",
+  "id": "04a0",
+  "geometry": null,
+  "properties": {
+    "uid": "urn:x-odas:procedure:odas-config-actuation",
+    "featureType": "http://www.w3.org/ns/sosa/Procedure",
+    "name": "ODAS Runtime Configuration Actuation",
+    "description": "Procedure for modifying ODAS pipeline parameters at runtime. Validates parameter values against permitted ranges, applies changes to the active processing pipeline, and confirms the new state. Supports atomic parameter updates (single parameter) and batch updates (multiple parameters in one command). Controllable parameters include: energy threshold E_T, new-source probability threshold T_new, frames-to-confirm F_new, removal threshold T_remove, particle count H, microphone gain, and frame rate."
+  },
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/04a0",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in SensorML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/04a0?f=sml3",
+      "type": "application/sml+json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/04a0?f=html",
+      "type": "text/html"
+    }
+  ]
+}

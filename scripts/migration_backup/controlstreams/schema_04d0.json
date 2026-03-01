@@ -1,0 +1,51 @@
+{
+  "commandFormat": "application/json",
+  "parametersSchema": {
+    "type": "DataRecord",
+    "name": "calibration",
+    "definition": "https://os4csapi.org/def/csapi/commands/orientationCalibrationParams",
+    "label": "Orientation Cal Params",
+    "fields": [
+      {
+        "type": "Quantity",
+        "name": "headingTrueDeg",
+        "definition": "https://os4csapi.org/def/csapi/headingTrueDeg",
+        "label": "Heading",
+        "uom": {
+          "code": "deg"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              0.0,
+              360.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "offsetCalDeg",
+        "definition": "https://os4csapi.org/def/csapi/offsetCalDeg",
+        "label": "Offset",
+        "uom": {
+          "code": "deg"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              -180.0,
+              180.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Text",
+        "name": "note",
+        "definition": "https://os4csapi.org/def/csapi/note",
+        "label": "Note"
+      }
+    ]
+  }
+}

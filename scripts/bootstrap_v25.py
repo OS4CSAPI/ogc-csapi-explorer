@@ -7,14 +7,17 @@ Registers all v2.5 resources on OSH SensorHub:
   - 2 new procedures (SENREP, Triangulate+Track Chain)
   - 3 new datastreams (Track State, Predicted Position, SENREP)
   - 2 SensorML process objects
+  - ODAS Mic Array Node AZ-MA-1 (14 systems, 9 procedures, 7 datastreams,
+    4 control streams, ~7,465 observations, deployment link)
 
 Prerequisite: v2.3 base resources already registered (AZ-MA-NET, AZ-MA-1/2/3, etc.)
 
 Usage:
-  python scripts/bootstrap_v25.py [--dry-run]
+  python scripts/bootstrap_v25.py [--dry-run] [--skip-obs] [--skip-azma1]
 """
 import json
 import sys
+import os
 import urllib.request
 import base64
 import time
@@ -22,6 +25,11 @@ import time
 BASE = "http://129.80.248.53:8181/sensorhub/api"
 AUTH = base64.b64encode(b"ogc:ogc").decode()
 DRY_RUN = "--dry-run" in sys.argv
+SKIP_OBS = "--skip-obs" in sys.argv
+SKIP_AZMA1 = "--skip-azma1" in sys.argv
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKUP_DIR = os.path.join(SCRIPT_DIR, "migration_backup")
 
 # ── Tracking ──────────────────────────────────────────────────────────
 created = []
@@ -630,6 +638,430 @@ for entry in sample_obs:
             pass
         print(f"  FAIL {entry['label']} → HTTP {e.code}: {body_text}")
         failed.append(f"{entry['label']} → HTTP {e.code}")
+
+
+# ═══════════════════════════════════════════════════════════════════════
+#  STEP 6: ODAS MIC ARRAY NODE AZ-MA-1  (from migration backups)
+# ═══════════════════════════════════════════════════════════════════════
+
+def load_backup(subdir, filename):
+    """Load a JSON backup file from migration_backup/."""
+    path = os.path.join(BACKUP_DIR, subdir, filename) if subdir else os.path.join(BACKUP_DIR, filename)
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def find_deployment_recursive(uid, path="deployments"):
+    """Recursively search the deployment tree for a deployment by UID."""
+    status, data = api("GET", path)
+    if status != 200 or not isinstance(data, dict):
+        return None
+    for item in data.get("items", []):
+        item_uid = item.get("properties", {}).get("uid", "")
+        if item_uid == uid:
+            return item
+        dep_id = item.get("id", "")
+        if dep_id:
+            found = find_deployment_recursive(uid, f"deployments/{dep_id}/subdeployments")
+            if found:
+                return found
+    return None
+
+
+def create_sml_resource(collection, payload, label, content_type="application/sml+json"):
+    """POST a SensorML resource. Skip if uniqueId already exists."""
+    uid = payload.get("uniqueId", "")
+    if uid:
+        existing = find_resource(collection, uid)
+        if existing:
+            eid = existing.get("id", "?")
+            print(f"  SKIP {label} — already exists (id={eid})")
+            skipped.append(label)
+            return eid
+
+    if DRY_RUN:
+        print(f"  DRY-RUN: would POST SensorML to {collection}: {label}")
+        return None
+
+    status, data = api("POST", collection, reorder_type_first(payload), content_type=content_type)
+    if status in (200, 201):
+        rid = data.get("id", "") if isinstance(data, dict) else ""
+        print(f"  CREATE {label} → HTTP {status} (id={rid})")
+        created.append(label)
+        return rid
+    else:
+        print(f"  FAIL {label} → HTTP {status}: {data}")
+        failed.append(f"{label} → HTTP {status}")
+        return None
+
+
+def create_sml_nested(parent_collection, parent_id, child_collection, payload, label, content_type="application/sml+json"):
+    """POST a nested SensorML resource under a parent."""
+    uid = payload.get("uniqueId", "")
+    path = f"{parent_collection}/{parent_id}/{child_collection}"
+
+    if uid:
+        status, data = api("GET", path)
+        if status == 200 and isinstance(data, dict):
+            for item in data.get("items", []):
+                item_uid = item.get("uniqueId", "") or item.get("properties", {}).get("uid", "")
+                if item_uid == uid:
+                    eid = item.get("id", "?")
+                    print(f"  SKIP {label} — already nested under parent (id={eid})")
+                    skipped.append(label)
+                    return eid
+
+    if DRY_RUN:
+        print(f"  DRY-RUN: would POST SensorML to {path}: {label}")
+        return None
+
+    status, data = api("POST", path, reorder_type_first(payload), content_type=content_type)
+    if status in (200, 201):
+        rid = data.get("id", "") if isinstance(data, dict) else ""
+        print(f"  CREATE {label} → HTTP {status} (id={rid})")
+        created.append(label)
+        return rid
+    else:
+        print(f"  FAIL {label} → HTTP {status}: {data}")
+        failed.append(f"{label} → HTTP {status}")
+        return None
+
+
+def create_controlstream_for_system(system_uid, cs_payload, label):
+    """Find system by UID, then POST control stream under it."""
+    existing = find_resource("systems", system_uid)
+    if not existing:
+        print(f"  FAIL {label} — parent system {system_uid} not found!")
+        failed.append(f"{label} — parent not found")
+        return None
+
+    sys_id = existing.get("id", "")
+    cs_name = cs_payload.get("name", "")
+    input_name = cs_payload.get("inputName", "")
+
+    # Check if already exists under the system
+    status, data = api("GET", f"systems/{sys_id}/controlstreams?limit=50")
+    if status == 200 and isinstance(data, dict):
+        for cs in data.get("items", []):
+            if cs.get("name") == cs_name or cs.get("inputName") == input_name:
+                cid = cs.get("id", "?")
+                print(f"  SKIP {label} — already exists (id={cid})")
+                skipped.append(label)
+                return cid
+
+    if DRY_RUN:
+        print(f"  DRY-RUN: would POST controlstream to systems/{sys_id}/controlstreams: {label}")
+        return None
+
+    url = f"systems/{sys_id}/controlstreams"
+    status, data = api("POST", url, reorder_type_first(cs_payload), content_type="application/json")
+    if status in (200, 201):
+        rid = data.get("id", "") if isinstance(data, dict) else ""
+        print(f"  CREATE {label} → HTTP {status} (id={rid})")
+        created.append(label)
+        return rid
+    else:
+        print(f"  FAIL {label} → HTTP {status}: {data}")
+        failed.append(f"{label} → HTTP {status}")
+        return None
+
+
+def step6_azma1():
+    """STEP 6: Register the full ODAS Mic Array Node AZ-MA-1 from migration backups."""
+    if SKIP_AZMA1:
+        print("  SKIPPED (--skip-azma1 flag)")
+        return
+
+    if not os.path.isdir(BACKUP_DIR):
+        print(f"  SKIP — migration_backup/ directory not found at {BACKUP_DIR}")
+        return
+
+    # ── 6a: Procedures (9 GeoJSON) ────────────────────────────────────
+    print("\n  --- 6a: AZ-MA-1 Procedures (9) ---")
+    procedure_files = [
+        "proc_0480.json", "proc_048g.json", "proc_0490.json", "proc_049g.json",
+        "proc_04a0.json", "proc_04b0.json", "proc_04bg.json", "proc_04c0.json",
+        "proc_04cg.json",
+    ]
+    proc_id_map = {}  # DO_id → Oracle_id
+    for fname in procedure_files:
+        proc = load_backup("procedures", fname)
+        do_id = proc.get("id", fname.replace("proc_", "").replace(".json", ""))
+        uid = proc.get("properties", {}).get("uid", "")
+        label = proc.get("properties", {}).get("name", fname)
+
+        # Strip server fields (id, links)
+        payload = {
+            "type": "Feature",
+            "geometry": proc.get("geometry"),
+            "properties": {k: v for k, v in proc.get("properties", {}).items() if k not in ("links",)}
+        }
+        rid = create_resource("procedures", payload, f"AZ-MA-1 Proc: {label}")
+        if rid:
+            proc_id_map[do_id] = rid
+
+    # ── 6b: Top-level system (SensorML) ───────────────────────────────
+    print("\n  --- 6b: AZ-MA-1 Top-Level System ---")
+    sml = load_backup(None, "AZ-MA-1_sml.json")
+    sml.pop("id", None)  # Strip server-generated id
+    azma1_id = create_sml_resource("systems", sml, "AZ-MA-1 (ODAS Mic Array Node)")
+
+    # If it already existed, look it up
+    if not azma1_id:
+        existing = find_resource("systems", "urn:os4csapi:system:odas:az-ma-1")
+        if existing:
+            azma1_id = existing.get("id")
+    if not azma1_id:
+        print("  ABORT 6b — AZ-MA-1 system not created and not found")
+        return
+
+    # ── 6c: 13 Subsystems (SensorML, nested as members) ───────────────
+    print("\n  --- 6c: AZ-MA-1 Subsystems (13) ---")
+    subsystem_files = [
+        "AZ-MA-1_Tripod_Platform_sml.json",
+        "AZ-MA-1_MICARRAY_sml.json",
+        "AZ-MA-1_EDGE_sml.json",
+        "AZ-MA-1_COMMS_sml.json",
+        "AZ-MA-1_POWER_sml.json",
+        "AZ-MA-1_ACTUATOR_sml.json",
+        "AZ-MA-1_MIC1_sml.json",
+        "AZ-MA-1_MIC2_sml.json",
+        "AZ-MA-1_MIC3_sml.json",
+        "AZ-MA-1_MIC4_sml.json",
+        "AZ-MA-1_MIC5_sml.json",
+        "AZ-MA-1_MIC6_sml.json",
+        "AZ-MA-1_MIC7_sml.json",
+    ]
+    subsys_id_map = {}  # filename → Oracle_id
+    for fname in subsystem_files:
+        sub = load_backup(None, fname)
+        sub.pop("id", None)
+        label = sub.get("label", fname)
+        rid = create_sml_nested("systems", azma1_id, "members", sub, label)
+        subsys_id_map[fname] = rid
+
+    # ── 6d: 7 Datastreams (JSON, under AZ-MA-1 top-level) ────────────
+    print("\n  --- 6d: AZ-MA-1 Datastreams (7) ---")
+    datastream_files = [
+        "ds_07fg2.json", "ds_07g02.json", "ds_07gg2.json", "ds_07h02.json",
+        "ds_07hg2.json", "ds_07i02.json", "ds_07ig2.json",
+    ]
+    ds_id_map = {}  # DO_id → Oracle_id
+    for fname in datastream_files:
+        ds = load_backup("datastreams", fname)
+        do_id = ds.get("id", "")
+        ds_name = ds.get("name", "")
+        output_name = ds.get("outputName", "")
+
+        # Load schema
+        schema_fname = f"schema_{do_id}.json"
+        try:
+            schema = load_backup("datastreams", schema_fname)
+        except FileNotFoundError:
+            schema = None
+
+        payload = {
+            "name": ds_name,
+            "outputName": output_name,
+        }
+        if ds.get("description"):
+            payload["description"] = ds["description"]
+        if ds.get("validTime"):
+            payload["validTime"] = ds["validTime"]
+        if ds.get("observedProperties"):
+            payload["observedProperties"] = ds["observedProperties"]
+
+        # Re-map procedure@link if present
+        if ds.get("procedure@link"):
+            proc_href = ds["procedure@link"].get("href", "")
+            do_proc_id = proc_href.rstrip("/").split("/")[-1]
+            oracle_proc_id = proc_id_map.get(do_proc_id)
+            if oracle_proc_id:
+                payload["procedure@link"] = {
+                    "href": f"/sensorhub/api/procedures/{oracle_proc_id}",
+                    "title": ds["procedure@link"].get("title", ""),
+                    "type": "application/geo+json"
+                }
+
+        # Link to String Alpha deployment
+        string_dep = find_deployment_recursive("urn:os4csapi:deployment:string:alpha:ft-huachuca:001")
+        if string_dep:
+            dep_id = string_dep.get("id", "")
+            payload["deployment@link"] = {
+                "href": f"/sensorhub/api/deployments/{dep_id}",
+                "title": "Sensor String Alpha",
+                "type": "application/geo+json"
+            }
+
+        if schema:
+            payload["schema"] = reorder_type_first(schema)
+
+        rid = create_datastream_for_system(
+            "urn:os4csapi:system:odas:az-ma-1", payload, f"AZ-MA-1 DS: {ds_name}"
+        )
+        if rid:
+            ds_id_map[do_id] = rid
+
+    # ── 6e: 4 Control Streams (JSON, under ACTUATOR subsystem) ────────
+    print("\n  --- 6e: AZ-MA-1 Control Streams (4) ---")
+    cs_files = ["cs_04d0.json", "cs_04dg.json", "cs_04e0.json", "cs_04eg.json"]
+    for fname in cs_files:
+        cs = load_backup("controlstreams", fname)
+        do_id = cs.get("id", "")
+        cs_name = cs.get("name", "")
+        input_name = cs.get("inputName", "")
+
+        schema_fname = f"schema_{do_id}.json"
+        try:
+            schema = load_backup("controlstreams", schema_fname)
+        except FileNotFoundError:
+            schema = None
+
+        payload = {
+            "name": cs_name,
+            "inputName": input_name,
+        }
+        if cs.get("validTime"):
+            payload["validTime"] = cs["validTime"]
+        if cs.get("controlledProperties"):
+            payload["controlledProperties"] = cs["controlledProperties"]
+        if schema:
+            payload["schema"] = reorder_type_first(schema)
+
+        create_controlstream_for_system(
+            "urn:os4csapi:system:odas:az-ma-1:actuator", payload, f"AZ-MA-1 CS: {cs_name}"
+        )
+
+    # ── 6f: ~7,465 Observations (4 datastreams) ──────────────────────
+    print("\n  --- 6f: AZ-MA-1 Observations (~7,465) ---")
+    if SKIP_OBS:
+        print("  SKIPPED (--skip-obs flag)")
+    else:
+        obs_files = ["obs_07h02.json", "obs_07hg2.json", "obs_07i02.json", "obs_07ig2.json"]
+        total_posted = 0
+        total_failed_obs = 0
+
+        for obs_fname in obs_files:
+            do_ds_id = obs_fname.replace("obs_", "").replace(".json", "")
+            oracle_ds_id = ds_id_map.get(do_ds_id)
+
+            if not oracle_ds_id:
+                # Try to find by name
+                ds_meta = load_backup("datastreams", f"ds_{do_ds_id}.json")
+                ds_name = ds_meta.get("name", "")
+                parent = find_resource("systems", "urn:os4csapi:system:odas:az-ma-1")
+                if parent:
+                    pid = parent.get("id")
+                    st, ddata = api("GET", f"systems/{pid}/datastreams?limit=50")
+                    if st == 200 and isinstance(ddata, dict):
+                        for d in ddata.get("items", []):
+                            if d.get("name") == ds_name:
+                                oracle_ds_id = d.get("id")
+                                break
+
+            if not oracle_ds_id:
+                print(f"  SKIP obs for {do_ds_id} — Oracle datastream not found")
+                continue
+
+            obs_data = load_backup("observations", obs_fname)
+            items = obs_data.get("items", [])
+            print(f"\n  Datastream {do_ds_id} → Oracle {oracle_ds_id}: {len(items)} observations")
+
+            if DRY_RUN:
+                print(f"    DRY-RUN: would POST {len(items)} observations")
+                continue
+
+            batch_ok = 0
+            batch_fail = 0
+            path = f"datastreams/{oracle_ds_id}/observations"
+
+            for i, obs in enumerate(items):
+                obs_payload = {
+                    "phenomenonTime": obs.get("phenomenonTime"),
+                    "resultTime": obs.get("resultTime"),
+                    "result": obs.get("result"),
+                }
+                if obs.get("featureOfInterest@id"):
+                    obs_payload["featureOfInterest@id"] = obs["featureOfInterest@id"]
+
+                status, data = api("POST", path, obs_payload, content_type="application/json")
+                if status in (200, 201):
+                    batch_ok += 1
+                else:
+                    batch_fail += 1
+                    if batch_fail <= 3:
+                        print(f"    FAIL obs [{i}] → HTTP {status}: {str(data)[:100]}")
+                    elif batch_fail == 4:
+                        print(f"    ... suppressing further failure messages")
+
+                if (i + 1) % 500 == 0:
+                    print(f"    Progress: {i+1}/{len(items)} (ok={batch_ok}, fail={batch_fail})")
+
+                time.sleep(0.05)
+                if (i + 1) % 200 == 0:
+                    time.sleep(2)
+
+            print(f"    Done: {batch_ok} created, {batch_fail} failed")
+            total_posted += batch_ok
+            total_failed_obs += batch_fail
+            created.append(f"AZ-MA-1 obs:{do_ds_id} ({batch_ok})")
+            if batch_fail > 0:
+                failed.append(f"AZ-MA-1 obs:{do_ds_id} ({batch_fail} failures)")
+
+        print(f"\n  AZ-MA-1 observations total: {total_posted} created, {total_failed_obs} failed")
+
+    # ── 6g: Link AZ-MA-1 to String Alpha deployment ──────────────────
+    print("\n  --- 6g: Link AZ-MA-1 → String Alpha Deployment ---")
+    string_dep = find_deployment_recursive("urn:os4csapi:deployment:string:alpha:ft-huachuca:001")
+    if not string_dep:
+        print("  SKIP — String Alpha deployment not found")
+    else:
+        dep_id = string_dep.get("id")
+        sys_resource = find_resource("systems", "urn:os4csapi:system:odas:az-ma-1")
+        if not sys_resource:
+            print("  SKIP — AZ-MA-1 system not found")
+        else:
+            sys_id = sys_resource.get("id")
+            # Check if already linked
+            status, dep_data = api("GET", f"deployments/{dep_id}")
+            if status == 200 and isinstance(dep_data, dict):
+                props = dep_data.get("properties", {})
+                if props.get("platform@link", {}).get("href", "").endswith(f"/{sys_id}"):
+                    print(f"  SKIP deployment link — already linked (platform@link → {sys_id})")
+                    skipped.append("AZ-MA-1 deployment link")
+                else:
+                    # PUT with dual-write
+                    dep_data["properties"]["platform@link"] = {
+                        "href": f"/sensorhub/api/systems/{sys_id}",
+                        "uid": "urn:os4csapi:system:odas:az-ma-1",
+                        "title": "ODAS Mic Array Node AZ-MA-1",
+                        "type": "application/geo+json"
+                    }
+                    dep_data["properties"]["deployedSystems@link"] = [{
+                        "href": f"/sensorhub/api/systems/{sys_id}",
+                        "uid": "urn:os4csapi:system:odas:az-ma-1",
+                        "title": "ODAS Mic Array Node AZ-MA-1",
+                        "type": "application/geo+json"
+                    }]
+
+                    if DRY_RUN:
+                        print(f"  DRY-RUN: would PUT deployment {dep_id} with dual-write links")
+                    else:
+                        status, data = api("PUT", f"deployments/{dep_id}", dep_data)
+                        if status in (200, 204):
+                            print(f"  UPDATE String Alpha deployment → HTTP {status} (dual-write)")
+                            created.append("AZ-MA-1 deployment link")
+                        else:
+                            print(f"  FAIL deployment link → HTTP {status}: {data}")
+                            failed.append(f"AZ-MA-1 deployment link → HTTP {status}")
+
+
+print("\n" + "=" * 60)
+print("STEP 6: ODAS Mic Array Node AZ-MA-1")
+print("  9 procedures, 14 systems (1+13 subsystems), 7 datastreams,")
+print("  4 control streams, ~7,465 observations, deployment link")
+print("=" * 60)
+step6_azma1()
 
 
 # ═══════════════════════════════════════════════════════════════════════

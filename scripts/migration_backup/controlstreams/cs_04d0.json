@@ -1,0 +1,61 @@
+{
+  "id": "04d0",
+  "name": "AZ-MA-1 Calibrate Orientation ControlStream",
+  "system@id": "04rg",
+  "system@link": {
+    "href": "http://45.55.99.236:8080/sensorhub/api/systems/04rg?f=json",
+    "uid": "urn:os4csapi:system:odas:az-ma-1:actuator",
+    "type": "application/geo+json"
+  },
+  "inputName": "calibration",
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    "now"
+  ],
+  "controlledProperties": [
+    {
+      "definition": "https://os4csapi.org/def/csapi/headingTrueDeg",
+      "label": "Heading"
+    },
+    {
+      "definition": "https://os4csapi.org/def/csapi/offsetCalDeg",
+      "label": "Offset"
+    },
+    {
+      "definition": "https://os4csapi.org/def/csapi/note",
+      "label": "Note"
+    }
+  ],
+  "formats": [
+    "application/json",
+    "application/swe+json",
+    "application/swe+csv",
+    "application/swe+xml",
+    "application/swe+binary"
+  ],
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/controlstreams/04d0",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This controlstream resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/controlstreams/04d0?f=html",
+      "type": "text/html"
+    },
+    {
+      "rel": "system",
+      "title": "Parent system",
+      "href": "http://45.55.99.236:8080/sensorhub/api/systems/04rg?f=json",
+      "type": "application/json"
+    },
+    {
+      "rel": "commands",
+      "title": "Commands",
+      "href": "http://45.55.99.236:8080/sensorhub/api/controlstreams/04d0/commands?f=json",
+      "type": "application/json"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "commandFormat": "application/json",
+  "parametersSchema": {
+    "type": "DataRecord",
+    "name": "startStop",
+    "definition": "https://os4csapi.org/def/csapi/commands/startStopParams",
+    "label": "Start/Stop Params",
+    "fields": [
+      {
+        "type": "Category",
+        "name": "action",
+        "definition": "https://os4csapi.org/def/csapi/action",
+        "label": "Action",
+        "constraint": {
+          "values": [
+            "start",
+            "stop",
+            "restart"
+          ]
+        }
+      },
+      {
+        "type": "Text",
+        "name": "modules",
+        "definition": "https://os4csapi.org/def/csapi/modules",
+        "label": "Modules CSV"
+      }
+    ]
+  }
+}

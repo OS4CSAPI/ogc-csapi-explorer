@@ -1,0 +1,33 @@
+{
+  "type": "Feature",
+  "id": "04c0",
+  "geometry": null,
+  "properties": {
+    "uid": "urn:os4csapi:procedure:odas:az-ma-1:processing-chain:v1",
+    "featureType": "sosa:ObservingProcedure",
+    "name": "ODAS Processing Chain (AZ-MA-1)",
+    "validTime": [
+      "2026-01-01T00:00:00Z",
+      ".."
+    ]
+  },
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/04c0",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in SensorML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/04c0?f=sml3",
+      "type": "application/sml+json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/04c0?f=html",
+      "type": "text/html"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "type": "Feature",
+  "id": "0490",
+  "geometry": null,
+  "properties": {
+    "uid": "urn:x-odas:procedure:particle-filter-tracking",
+    "featureType": "http://www.w3.org/ns/sosa/Procedure",
+    "name": "Particle Filter Sound Source Tracking",
+    "description": "Sound Source Tracking via sequential Monte Carlo (particle filtering). Steps: (1) Prediction via excitation-damping model with three motion states (stationary 10%, constant velocity 40%, acceleration 50%). (2) Instantaneous probability computed by comparing energy to threshold E_T. (3) Observation assignation via Bayesian hypothesis testing (H1: false detection, H2: new source, H3: existing source). (4) Instantiation: initialize H=500 particles from Gaussian distribution when P(new) > T_new for F_new consecutive frames. (5) Removal: destroy filter when P(false) < T_remove for F_remove frames. (6) Weight update using observation likelihood. (7) Resampling when effective particle count drops below threshold. Output: tracked sources with persistent ID, tag, direction (x,y,z), activity level."
+  },
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/0490",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in SensorML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/0490?f=sml3",
+      "type": "application/sml+json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/0490?f=html",
+      "type": "text/html"
+    }
+  ]
+}

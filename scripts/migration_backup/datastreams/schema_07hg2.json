@@ -1,0 +1,112 @@
+{
+  "obsFormat": "application/om+json",
+  "resultSchema": {
+    "type": "DataRecord",
+    "name": "az_ma_1_classification_probabilities",
+    "definition": "https://os4csapi.org/def/odas/class/probabilitiesRecordOSH",
+    "label": "Class probabilities",
+    "fields": [
+      {
+        "type": "Time",
+        "name": "timestamp",
+        "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+        "label": "Epoch seconds",
+        "referenceTime": "1970-01-01T00:00:00Z",
+        "uom": {
+          "code": "s"
+        }
+      },
+      {
+        "type": "Count",
+        "name": "trackId",
+        "definition": "https://os4csapi.org/def/odas/trackId",
+        "label": "Track ID"
+      },
+      {
+        "type": "Quantity",
+        "name": "p_uas",
+        "definition": "https://os4csapi.org/def/odas/p_uas",
+        "label": "P(UAS)",
+        "uom": {
+          "code": "1"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "p_vehicle",
+        "definition": "https://os4csapi.org/def/odas/p_vehicle",
+        "label": "P(vehicle)",
+        "uom": {
+          "code": "1"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "p_footsteps",
+        "definition": "https://os4csapi.org/def/odas/p_footsteps",
+        "label": "P(footsteps)",
+        "uom": {
+          "code": "1"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "p_impulsive",
+        "definition": "https://os4csapi.org/def/odas/p_impulsive",
+        "label": "P(impulsive)",
+        "uom": {
+          "code": "1"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "p_unknown",
+        "definition": "https://os4csapi.org/def/odas/p_unknown",
+        "label": "P(unknown)",
+        "uom": {
+          "code": "1"
+        },
+        "constraint": {
+          "intervals": [
+            [
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

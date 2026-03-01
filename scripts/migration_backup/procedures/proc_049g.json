@@ -1,0 +1,30 @@
+{
+  "type": "Feature",
+  "id": "049g",
+  "geometry": null,
+  "properties": {
+    "uid": "urn:x-odas:procedure:ray-to-ray-triangulation",
+    "featureType": "http://www.w3.org/ns/sosa/Procedure",
+    "name": "Multi-Array Ray-to-Ray 3D Triangulation",
+    "description": "3D source position estimation from distributed microphone array DOAs (IROS 2017, Lauzon et al.). For K arrays at known positions L_k with DOA unit vectors q_k: (1) For each pair of arrays (a,b), compute the nearest point Z_ab on the two skew DOA lines using the Ray-to-Ray shortest distance algorithm (Schneider and Eberly 2002). (2) Average all K(K-1)/2 pair intersection points to get estimated position. (3) Use this as initialization mean for the particle filter. (4) Particle filter refines position estimate over time with excitation-damping motion model. Requires NTP synchronization between arrays. Minimum 2 arrays; 3+ recommended for robust estimation."
+  },
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/049g",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in SensorML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/049g?f=sml3",
+      "type": "application/sml+json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This procedure resource in HTML format",
+      "href": "http://45.55.99.236:8080/sensorhub/api/procedures/049g?f=html",
+      "type": "text/html"
+    }
+  ]
+}
