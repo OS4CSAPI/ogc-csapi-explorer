@@ -134,6 +134,7 @@ const useMilSymbols = ref(false)
 const useSatellite = ref(false)
 let osmLayer: TileLayer | null = null
 let satLayer: TileLayer | null = null
+let satRefLayer: TileLayer | null = null
 
 function getStyle(resourceType: string, enriched = false, rawData?: any): Style {
   const color = TYPE_COLORS[resourceType] || '#6b7280'
@@ -1368,6 +1369,7 @@ function refreshAllStyles() {
 function toggleBasemap() {
   if (osmLayer) osmLayer.setVisible(!useSatellite.value)
   if (satLayer) satLayer.setVisible(useSatellite.value)
+  if (satRefLayer) satRefLayer.setVisible(useSatellite.value)
 }
 
 // --- Map Setup ---
@@ -1402,6 +1404,15 @@ onMounted(() => {
     }),
     visible: useSatellite.value,
   })
+  // Transparent overlay: borders, roads, and place names on top of satellite
+  satRefLayer = new TileLayer({
+    source: new XYZ({
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      maxZoom: 19,
+    }),
+    visible: useSatellite.value,
+    zIndex: 1,
+  })
 
   // Create map
   map = new Map({
@@ -1409,6 +1420,7 @@ onMounted(() => {
     layers: [
       osmLayer,
       satLayer,
+      satRefLayer,
       ...Object.values(vectorLayers),
       bboxLayer,
     ],
@@ -1612,7 +1624,7 @@ async function createTestFeature() {
       <div class="milsymbol-toggle">
         <label class="milsymbol-label">
           <input type="checkbox" v-model="useSatellite" @change="toggleBasemap" />
-          <span>Satellite Imagery</span>
+          <span>Satellite + Labels</span>
         </label>
       </div>
 
