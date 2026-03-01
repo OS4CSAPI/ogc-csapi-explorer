@@ -92,7 +92,6 @@ async function update() {
   } else {
     success.value = `Updated successfully! (${res.status} ${res.statusText})`
     responseData.value = res.data
-    emit('updated')
   }
 }
 </script>

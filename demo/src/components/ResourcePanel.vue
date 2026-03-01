@@ -64,7 +64,8 @@ function onCreated() {
 }
 
 function onUpdated() {
-  activeTab.value = 0
+  // stay on the Update tab so the user sees the status message
+  activeTab.value = 3
 }
 
 function onDeleted() {
