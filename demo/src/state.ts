@@ -52,8 +52,8 @@ export interface ResourceTypeInfo {
 }
 
 export const RESOURCE_TYPES: ResourceTypeInfo[] = [
-  { key: 'systems', label: 'System', plural: 'Systems', icon: 'pi pi-server', part: 1, readOnly: false },
   { key: 'deployments', label: 'Deployment', plural: 'Deployments', icon: 'pi pi-map', part: 1, readOnly: false },
+  { key: 'systems', label: 'System', plural: 'Systems', icon: 'pi pi-server', part: 1, readOnly: false },
   { key: 'procedures', label: 'Procedure', plural: 'Procedures', icon: 'pi pi-cog', part: 1, readOnly: false },
   { key: 'samplingFeatures', label: 'Sampling Feature', plural: 'Sampling Features', icon: 'pi pi-map-marker', part: 1, readOnly: false },
   { key: 'properties', label: 'Property', plural: 'Properties', icon: 'pi pi-tags', part: 1, readOnly: true },
