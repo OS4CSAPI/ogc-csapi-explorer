@@ -437,7 +437,7 @@ function otherConformance(classes: string[]): string[] {
         <div class="auth-row">
           <div class="form-row">
             <label>Username</label>
-            <InputText v-model="username" placeholder="optional" class="w-full" />
+            <InputText v-model="username" placeholder="optional" class="w-full" autocapitalize="none" />
           </div>
           <div class="form-row">
             <label>Password</label>
