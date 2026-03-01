@@ -129,7 +129,7 @@ const vectorSources: Record<string, VectorSource> = {}
 const vectorLayers: Record<string, VectorLayer> = {}
 
 // Enable/disable milsymbol rendering (toggle for A/B comparison)
-const useMilSymbols = ref(false)
+const useMilSymbols = ref(true)
 
 // Basemap toggle (OSM vs satellite)
 const useSatellite = ref(false)
