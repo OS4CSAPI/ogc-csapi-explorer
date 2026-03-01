@@ -101,6 +101,8 @@ type KeywordRule = {
   symbolSet: string
   entity: string
   echelon?: string
+  /** Override: use a legacy letter SIDC verbatim (milsymbol supports both formats) */
+  letterSidc?: string
 }
 
 /**
@@ -111,9 +113,10 @@ const SYSTEM_RULES: KeywordRule[] = [
   // Relay / retransmission device → Signal Radio Relay (Land Unit full frame)
   { keywords: ['relay', 'retrans', 'repeater', 'retransmission'],
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_SIGNAL_RADIO_RELAY },
-  // Monitoring site / intel collector → MI unit (inverted trapezoid icon)
+  // Monitoring site / intel collector → MI + Sensor (letter SIDC for correct icon rendering)
   { keywords: ['monitoring site', 'mon-site', 'observation post', 'monitoring node', 'monitoring station'],
-    identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_MI },
+    identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_MI,
+    letterSidc: 'SFGPUUMRS------' },
   // Sensor Employment Team → MI unit (MI dagger in Land Unit rectangle, team echelon)
   { keywords: ['sensor employment', 'set-', 'set team', 'infantry team', 'set-a', 'set-b'],
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_MI, echelon: ECHELON_TEAM },
@@ -206,7 +209,10 @@ export function getSymbolForResource(
     case 'systems': {
       const rule = matchKeywords(searchText, SYSTEM_RULES)
       if (rule) {
-        sidc = buildSIDC(rule.identity, rule.symbolSet, rule.entity, STATUS_PRESENT, MOD_NONE, rule.echelon)
+        // Use letter SIDC override when present (milsymbol accepts both formats)
+        sidc = rule.letterSidc
+          ? rule.letterSidc
+          : buildSIDC(rule.identity, rule.symbolSet, rule.entity, STATUS_PRESENT, MOD_NONE, rule.echelon)
       } else {
         // Default system → friendly ground sensor
         sidc = buildSIDC(SI_FRIEND, SS_LAND_EQUIPMENT, ENT_SENSOR)
