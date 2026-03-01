@@ -71,6 +71,9 @@ const COORDS: Record<string, { create: [number, number]; update: [number, number
  *  exact string to see only smoke-test leftovers. */
 const SMOKE_TAG = 'csapi-smoke-test-resource'
 
+/** Detected schema property name: 'parametersSchema' (spec / DO) or 'paramsSchema' (Oracle). */
+const detectedSchemaKey = ref<'parametersSchema' | 'paramsSchema' | null>(null)
+
 function makePayload(type: string, phase: 'create' | 'update'): any {
   const coords = COORDS[type]
   const c = coords ? coords[phase] : undefined
@@ -177,11 +180,12 @@ function makePayload(type: string, phase: 'create' | 'update'): any {
     // CREATE: include full schema; UPDATE: omit schema — OSH returns 500 on
     // PUT when the schema block is present (server bug in control stream update handler)
     if (phase === 'create') {
+      const schemaKey = detectedSchemaKey.value || 'parametersSchema'
       return {
         name,
         inputName: 'smoke-test-input',
         schema: {
-          paramsSchema: {
+          [schemaKey]: {
             type: 'DataRecord',
             label: 'Smoke Test Command',
             fields: [
@@ -695,6 +699,44 @@ async function executeCurrentStep() {
         setResponse(step, resp)
 
         if (!resp.ok) {
+          // ControlStream CREATE: servers disagree on schema property name.
+          // Try the alternate key once before giving up.
+          if (step.resourceType === 'controlStreams' && resp.status === 500 && !detectedSchemaKey.value) {
+            const altKey = 'paramsSchema'
+            const altPayload = makePayload('controlStreams', 'create')
+            // Force the alternate key
+            if (altPayload.schema) {
+              const schemaValue = altPayload.schema['parametersSchema']
+              if (schemaValue) {
+                delete altPayload.schema['parametersSchema']
+                altPayload.schema[altKey] = schemaValue
+              }
+            }
+            const altBody = JSON.stringify(altPayload, null, 2)
+            step.request = { ...step.request!, body: altBody }
+            const altResp = await apiFetchWithRetry(url, {
+              method: 'POST',
+              headers: { 'Content-Type': contentType },
+              body: altBody,
+            })
+            if (altResp.ok) {
+              detectedSchemaKey.value = altKey
+              setResponse(step, altResp)
+              const altLoc = altResp.headers['location'] || ''
+              const altId = altLoc.split('/').pop() || ''
+              if (altId) createdIds[step.resourceType] = altId
+              step.after = altResp.data || { _smokeTest: true, id: altId, location: altLoc }
+              step.status = 'success'
+              step.elapsed = Math.round(performance.now() - start)
+              return
+            }
+            setResponse(step, altResp)
+          }
+          // SamplingFeature: some servers don't support the endpoint at all (500 even on GET)
+          if (step.resourceType === 'samplingFeatures' && resp.status === 500) {
+            markSkipped(step, 'SamplingFeature endpoint returned 500 — server may not support this resource type', start)
+            return
+          }
           // Command CREATE: OSH rejects commands for API-created systems with no
           // connected driver ("Receiving system is disabled").  The JSON was parsed
           // correctly — this is a server-side limitation, not a payload error.
@@ -705,6 +747,11 @@ async function executeCurrentStep() {
           }
           markFail(step, resp.error || `${resp.status} ${resp.statusText}`, start)
           return
+        }
+
+        // ControlStream CREATE succeeded — cache the detected key
+        if (step.resourceType === 'controlStreams' && !detectedSchemaKey.value) {
+          detectedSchemaKey.value = 'parametersSchema'
         }
 
         // Extract ID from Location header
@@ -986,6 +1033,7 @@ function resetTest() {
   showReport.value = false
   warmUpReady.value = false
   warmUpMessage.value = ''
+  detectedSchemaKey.value = null
   for (const key of Object.keys(createdIds)) delete createdIds[key]
   for (const key of Object.keys(createdUids)) delete createdUids[key]
   clearMap()
