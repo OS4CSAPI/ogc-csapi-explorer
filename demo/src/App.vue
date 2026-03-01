@@ -23,7 +23,7 @@ import os4csapiIcon from './assets/os4csapi-logo.svg'
         <router-link to="/demo" class="nav-link">
           <i class="pi pi-play"></i> Demo
         </router-link>
-        <router-link to="/explore/systems" class="nav-link">
+        <router-link to="/explore/deployments" class="nav-link">
           <i class="pi pi-th-large"></i> Explorer
         </router-link>
         <router-link to="/map" class="nav-link">

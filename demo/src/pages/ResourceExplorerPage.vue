@@ -12,7 +12,7 @@ const props = defineProps<{
   resourceType?: string
 }>()
 
-const activeType = computed(() => props.resourceType || 'systems')
+const activeType = computed(() => props.resourceType || 'deployments')
 
 /** Nested context from query params (e.g., ?parentType=systems&parentId=abc&relation=subsystems) */
 const parentType = computed(() => (route.query.parentType as string) || null)
