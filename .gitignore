@@ -16,3 +16,14 @@ run-browser-tests.ps1
 scripts/replay_*.txt
 scripts/replay_out*.txt
 scripts/replay_err*.txt
+scripts/migration_*.txt
+scripts/verify_result.txt
+
+# throwaway debug/utility scripts
+scripts/_*.py
+scripts/check_platform_link*.py
+scripts/fetch_*.py
+
+# Python bytecache
+__pycache__/
+*.pyc
