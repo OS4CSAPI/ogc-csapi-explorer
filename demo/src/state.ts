@@ -81,7 +81,7 @@ export function cacheParentForChildren(
   children: Array<{ id: string }>,
 ) {
   for (const child of children) {
-    if (child.id) {
+    if (child.id && child.id !== parentId) {
       parentSystemCache[child.id] = { id: parentId, name: parentName }
     }
   }

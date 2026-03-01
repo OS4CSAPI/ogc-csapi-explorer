@@ -844,7 +844,7 @@ const parentLinks = computed<ParentLink[]>(() => {
   // recreation (e.g. navigating back from a grandchild).
   if (props.resourceType === 'systems' && effectiveId.value) {
     const cached = parentSystemCache[effectiveId.value]
-    if (cached && !seen.has('systems:' + cached.id)) {
+    if (cached && cached.id !== effectiveId.value && !seen.has('systems:' + cached.id)) {
       const typeInfo = getResourceType('systems')
       if (typeInfo) {
         links.push({
