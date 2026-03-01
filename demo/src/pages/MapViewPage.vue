@@ -386,6 +386,21 @@ function buildQueryOptions(extraLimit = 200): Record<string, any> {
   return opts
 }
 
+/** Like buildQueryOptions but WITHOUT bbox — for deployments, which derive geometry
+ *  from subdeployments/deployed-systems and must be filtered client-side. */
+function buildQueryOptionsNoBbox(extraLimit = 200): Record<string, any> {
+  const opts: Record<string, any> = { limit: extraLimit }
+  if (keywordFilter.value.trim()) opts.q = keywordFilter.value.trim()
+  if (dtStart.value || dtEnd.value) {
+    const s = dtStart.value ? new Date(dtStart.value) : undefined
+    const e = dtEnd.value ? new Date(dtEnd.value) : undefined
+    if (s && e) opts.datetime = { start: s, end: e }
+    else if (s) opts.datetime = { start: s }
+    else if (e) opts.datetime = { end: e }
+  }
+  return opts
+}
+
 async function loadResourceType(resourceType: string): Promise<number> {
   const source = vectorSources[resourceType]
   if (!source) return 0
@@ -393,7 +408,11 @@ async function loadResourceType(resourceType: string): Promise<number> {
   source.clear()
 
   try {
-    const url = getListUrl(resourceType, buildQueryOptions())
+    // Deployments derive geometry from subdeployments & deployed systems,
+    // so skip server-side bbox (server only knows about top-level deployments
+    // which typically have no geometry). Bbox is applied client-side during enrichDeployments.
+    const opts = resourceType === 'deployments' ? buildQueryOptionsNoBbox() : buildQueryOptions()
+    const url = getListUrl(resourceType, opts)
     // Request geo+json so servers return GeoJSON features with geometry
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
@@ -778,7 +797,10 @@ async function enrichDeployments(): Promise<void> {
   if (!source) return
 
   try {
-    const url = getListUrl('deployments', buildQueryOptions())
+    // Fetch WITHOUT bbox — top-level deployments often have no geometry;
+    // subdeployments and deployed-system locations are resolved below,
+    // then bbox is applied client-side.
+    const url = getListUrl('deployments', buildQueryOptionsNoBbox())
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -906,11 +928,24 @@ async function enrichDeployments(): Promise<void> {
       return coords
     }
 
+    // Helper: check if a lon/lat point falls inside the active bbox
+    const isInsideBbox = (lon: number, lat: number): boolean => {
+      if (!bboxFilter.value) return true
+      const [minX, minY, maxX, maxY] = bboxFilter.value
+      return lon >= minX && lon <= maxX && lat >= minY && lat <= maxY
+    }
+
     // Add subdeployments that have their own geometry to the map
     for (const sub of allSubs) {
       const subId = extractId(sub)
       // Skip if already on the map from the initial load
       if (source.getFeatures().some(f => f.get('resourceId') === subId)) continue
+      const geom = extractGeometry(sub)
+      // When bbox is active, skip if native geometry centroid falls outside
+      if (geom && bboxFilter.value) {
+        const pts = coordsFromGeometry(geom)
+        if (pts.length > 0 && !pts.some(([lon, lat]) => isInsideBbox(lon, lat))) continue
+      }
       const feature = createOlFeature(sub, 'deployments')
       if (feature) {
         source.addFeature(feature)
@@ -936,6 +971,9 @@ async function enrichDeployments(): Promise<void> {
         }
       }
       if (unique.length === 0) continue
+
+      // When bbox is active, skip if none of the derived coords are inside
+      if (bboxFilter.value && !unique.some(([lon, lat]) => isInsideBbox(lon, lat))) continue
 
       // Build derived geometry
       let olGeom
