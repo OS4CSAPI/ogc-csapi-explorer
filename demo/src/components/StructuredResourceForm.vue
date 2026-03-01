@@ -6,12 +6,24 @@
  * Builds a GeoJSON Feature body from individual fields.
  * Includes a "Raw JSON" toggle for advanced editing.
  */
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, nextTick } from 'vue'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Dropdown from 'primevue/dropdown'
 import InputNumber from 'primevue/inputnumber'
 import Checkbox from 'primevue/checkbox'
+
+// OpenLayers — lightweight map picker
+import OlMap from 'ol/Map'
+import OlView from 'ol/View'
+import TileLayer from 'ol/layer/Tile'
+import VectorLayer from 'ol/layer/Vector'
+import VectorSource from 'ol/source/Vector'
+import XYZ from 'ol/source/XYZ'
+import { fromLonLat, toLonLat } from 'ol/proj'
+import Feature from 'ol/Feature'
+import Point from 'ol/geom/Point'
+import { Style, Circle as CircleStyle, Fill, Stroke } from 'ol/style'
 
 const props = defineProps<{
   resourceType: string
@@ -150,6 +162,108 @@ watch(() => props.initialJson, (json) => {
 const nameError = computed(() => !name.value ? 'Name is required' : '')
 const isValid = computed(() => !!name.value)
 defineExpose({ isValid })
+
+// ─── Mini map picker ────────────────────────────────────────
+const mapContainer = ref<HTMLElement | null>(null)
+let miniMap: OlMap | null = null
+let markerSource: VectorSource | null = null
+
+const MARKER_STYLE = new Style({
+  image: new CircleStyle({
+    radius: 7,
+    fill: new Fill({ color: '#2563eb' }),
+    stroke: new Stroke({ color: '#ffffff', width: 2.5 }),
+  }),
+})
+
+function initMiniMap() {
+  if (miniMap || !mapContainer.value) return
+
+  markerSource = new VectorSource()
+
+  const satelliteLayer = new TileLayer({
+    source: new XYZ({
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      maxZoom: 19,
+      attributions: 'Tiles © Esri',
+    }),
+  })
+
+  const labelsLayer = new TileLayer({
+    source: new XYZ({
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      maxZoom: 19,
+    }),
+  })
+
+  const markerLayer = new VectorLayer({
+    source: markerSource,
+    style: MARKER_STYLE,
+  })
+
+  // Center on current coords or a world-level default
+  const startLon = lon.value ?? 0
+  const startLat = lat.value ?? 30
+  const startZoom = (lat.value !== null && lon.value !== null) ? 17 : 3
+
+  miniMap = new OlMap({
+    target: mapContainer.value,
+    layers: [satelliteLayer, labelsLayer, markerLayer],
+    view: new OlView({
+      center: fromLonLat([startLon, startLat]),
+      zoom: startZoom,
+    }),
+    controls: [],
+  })
+
+  // Place initial marker if we have coords
+  if (lat.value !== null && lon.value !== null) {
+    placeMarker(lon.value, lat.value)
+  }
+
+  // Click → pick new location
+  miniMap.on('click', (evt) => {
+    const [newLon, newLat] = toLonLat(evt.coordinate)
+    lat.value = Math.round(newLat * 1e7) / 1e7
+    lon.value = Math.round(newLon * 1e7) / 1e7
+    placeMarker(lon.value, lat.value)
+  })
+}
+
+function placeMarker(lng: number, latitude: number) {
+  if (!markerSource) return
+  markerSource.clear()
+  markerSource.addFeature(
+    new Feature({ geometry: new Point(fromLonLat([lng, latitude])) }),
+  )
+}
+
+function destroyMiniMap() {
+  if (miniMap) {
+    miniMap.setTarget(undefined)
+    miniMap = null
+    markerSource = null
+  }
+}
+
+// Recreate map when the geometry section appears/disappears
+watch([hasGeometry, () => showGeometry.value], async ([geo, show]) => {
+  if (geo && show) {
+    await nextTick()
+    initMiniMap()
+  } else {
+    destroyMiniMap()
+  }
+})
+
+// Sync marker when lat/lon fields are edited manually
+watch([lat, lon], ([newLat, newLon]) => {
+  if (miniMap && newLat !== null && newLon !== null) {
+    placeMarker(newLon, newLat)
+  }
+})
+
+onBeforeUnmount(() => destroyMiniMap())
 </script>
 
 <template>
@@ -224,6 +338,12 @@ defineExpose({ isValid })
         </div>
       </div>
 
+      <!-- Mini map picker for point geometry -->
+      <div v-if="showGeometry && hasGeometry" class="map-picker-container">
+        <label class="map-picker-label">Click the map to set location</label>
+        <div ref="mapContainer" class="map-picker"></div>
+      </div>
+
       <!-- JSON preview -->
       <details class="json-preview-section">
         <summary>JSON Preview</summary>
@@ -263,4 +383,7 @@ defineExpose({ isValid })
 .editor-container { display: flex; flex-direction: column; gap: 0.25rem; }
 .editor-container label { font-weight: 600; font-size: 0.9rem; }
 .json-editor { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.85rem; width: 100%; resize: vertical; }
+.map-picker-container { display: flex; flex-direction: column; gap: 0.25rem; }
+.map-picker-label { font-weight: 600; font-size: 0.85rem; color: #64748b; }
+.map-picker { width: 100%; height: 260px; border-radius: 8px; border: 1px solid #cbd5e1; overflow: hidden; cursor: crosshair; }
 </style>
