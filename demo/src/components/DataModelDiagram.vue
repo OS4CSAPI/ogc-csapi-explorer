@@ -963,31 +963,14 @@ function navigateToType(nodeId: string) {
   const rel = relations?.find(r => r.childType === nodeId)
 
   if (rel) {
-    // Deployments → Systems: if we have exactly 1 deployed system, navigate
-    // directly to it; otherwise the cluster handles individual navigation.
+    // Deployments → Systems: cluster handles navigation; don't link the node itself.
     if (props.activeType === 'deployments' && nodeId === 'systems') {
-      if (deployedSystemItems.value.length === 1) {
-        router.push({ path: '/explore/systems', query: { resourceId: deployedSystemItems.value[0].id } })
-        return
-      }
-      // If cluster is visible, let users click individual items there.
-      // Fall through to top-level systems list as a fallback.
-      router.push({ path: '/explore/systems' })
       return
     }
 
-    // Systems → Deployments: if we have exactly 1 deployment, navigate
-    // directly to it; otherwise the cluster handles individual navigation.
+    // Systems → Deployments: cluster handles navigation; don't link the node itself.
     if (props.activeType === 'systems' && nodeId === 'deployments') {
-      if (systemDeploymentItems.value.length === 1) {
-        router.push({ path: '/explore/deployments', query: { resourceId: systemDeploymentItems.value[0].id } })
-        return
-      }
-      if (systemDeploymentItems.value.length > 1) {
-        // Let users click individual items in the cluster
-        router.push({ path: '/explore/deployments' })
-        return
-      }
+      if (systemDeploymentItems.value.length > 0) return
     }
 
     // Navigate to the nested list, same as the "browse all" in ResourceDetail
