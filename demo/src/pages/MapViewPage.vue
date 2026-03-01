@@ -137,7 +137,26 @@ let osmLayer: TileLayer | null = null
 let satLayer: TileLayer | null = null
 let satRefLayer: TileLayer | null = null
 
-function getStyle(resourceType: string, enriched = false, rawData?: any): Style {
+function getResourceName(rawData?: any): string {
+  if (!rawData) return ''
+  return rawData?.properties?.name || rawData?.name || rawData?.label || ''
+}
+
+function makeNameLabel(name: string, offsetY: number): Style | null {
+  if (!name) return null
+  return new Style({
+    text: new OlText({
+      text: name,
+      font: 'bold 11px sans-serif',
+      fill: new Fill({ color: '#fff' }),
+      stroke: new Stroke({ color: 'rgba(0,0,0,0.7)', width: 3 }),
+      offsetY,
+      textAlign: 'center',
+    }),
+  })
+}
+
+function getStyle(resourceType: string, enriched = false, rawData?: any): Style | Style[] {
   const color = TYPE_COLORS[resourceType] || '#6b7280'
   const label = TYPE_LABELS[resourceType] || '?'
 
@@ -166,12 +185,14 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
     })
   }
 
+  const name = getResourceName(rawData)
+
   // --- MIL-STD-2525 symbol rendering ---
   if (useMilSymbols.value && rawData) {
     const sz = getSymbolSizeForType(resourceType)
     const sym = getSymbolForResource(resourceType, rawData, sz)
     if (sym) {
-      return new Style({
+      const iconStyle = new Style({
         image: new OlIcon({
           src: sym.svgDataUrl,
           anchor: [sym.anchor.x / sym.size.width, sym.anchor.y / sym.size.height],
@@ -183,6 +204,8 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
         stroke: new Stroke({ color, width: 2 }),
         fill: new Fill({ color: color + '33' }),
       })
+      const nameStyle = makeNameLabel(name, sym.size.height / 2 + 10)
+      return nameStyle ? [iconStyle, nameStyle] : iconStyle
     }
   }
 
@@ -191,7 +214,7 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
   const radius = isPart2 ? 7 : 10
   const font = isPart2 ? 'bold 8px sans-serif' : 'bold 11px sans-serif'
 
-  return new Style({
+  const circleStyle = new Style({
     image: new CircleStyle({
       radius,
       fill: new Fill({ color }),
@@ -210,9 +233,12 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
     stroke: new Stroke({ color, width: 2 }),
     fill: new Fill({ color: color + '33' }),
   })
+
+  const nameStyle = makeNameLabel(name, radius + 14)
+  return nameStyle ? [circleStyle, nameStyle] : circleStyle
 }
 
-function getSelectedStyle(resourceType: string, rawData?: any): Style {
+function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] {
   const color = TYPE_COLORS[resourceType] || '#6b7280'
   const label = TYPE_LABELS[resourceType] || '?'
 
@@ -238,11 +264,13 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style {
     })
   }
 
+  const name = getResourceName(rawData)
+
   // --- MIL-STD-2525 selected: render at larger size ---
   if (useMilSymbols.value && rawData) {
     const sym = getSymbolForResource(resourceType, rawData, 'normal')
     if (sym) {
-      return new Style({
+      const iconStyle = new Style({
         image: new OlIcon({
           src: sym.svgDataUrl,
           anchor: [sym.anchor.x / sym.size.width, sym.anchor.y / sym.size.height],
@@ -253,6 +281,8 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style {
         stroke: new Stroke({ color: '#fbbf24', width: 3 }),
         fill: new Fill({ color: color + '55' }),
       })
+      const nameStyle = makeNameLabel(name, (sym.size.height * 1.3) / 2 + 10)
+      return nameStyle ? [iconStyle, nameStyle] : iconStyle
     }
   }
 
@@ -261,7 +291,7 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style {
   const radius = isPart2 ? 10 : 14
   const font = isPart2 ? 'bold 10px sans-serif' : 'bold 13px sans-serif'
 
-  return new Style({
+  const circleStyle = new Style({
     image: new CircleStyle({
       radius,
       fill: new Fill({ color }),
@@ -276,6 +306,9 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style {
     stroke: new Stroke({ color: '#fbbf24', width: 3 }),
     fill: new Fill({ color: color + '55' }),
   })
+
+  const nameStyle = makeNameLabel(name, radius + 14)
+  return nameStyle ? [circleStyle, nameStyle] : circleStyle
 }
 
 // --- Data Loading ---
