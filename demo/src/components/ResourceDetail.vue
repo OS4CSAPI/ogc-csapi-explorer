@@ -184,6 +184,34 @@ function clearFilters(link: RelatedResourceLink) {
 }
 
 /**
+ * Normalize an @link href to an API-relative path suitable for apiFetch().
+ *
+ * OSH SensorHub may return hrefs in several forms:
+ *  - Absolute URL: "https://host/sensorhub/api/systems/0420"
+ *  - Root-relative:  "/sensorhub/api/systems/0420"
+ *  - API-relative:   "/systems/0420"
+ *
+ * apiFetch() prepends the proxy base URL (connection.baseUrl), so it expects
+ * only the API-relative portion (e.g. "/systems/0420").  This helper strips
+ * everything up to and including the "/api" segment in the path.
+ */
+function normalizeLinkHref(href: string): string {
+  if (!href) return href
+  // Absolute URL → extract pathname
+  if (href.startsWith('http')) {
+    try {
+      href = new URL(href).pathname
+    } catch { /* keep as-is */ }
+  }
+  // Strip everything up to and including "/api" (e.g. "/sensorhub/api/systems/0420" → "/systems/0420")
+  const apiIdx = href.indexOf('/api/')
+  if (apiIdx !== -1) return href.substring(apiIdx + 4)
+  // If path just starts with /api (no trailing slash), treat similarly
+  if (href.startsWith('/api')) return href.substring(4)
+  return href
+}
+
+/**
  * @link fallback: When the server doesn't implement a nested navigation endpoint
  * (e.g. /systems/{id}/procedures returns 400), try to resolve related resources
  * from @link fields embedded in the parent or by searching the collection.
@@ -202,13 +230,8 @@ async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Pro
     if (skLink?.href) {
       try {
         const acceptType = getContentType('procedures')
-        // href may be absolute URL — strip base URL to get relative path
-        let path = skLink.href
-        if (path.startsWith('http')) {
-          const idx = path.indexOf('/api/')
-          if (idx !== -1) path = path.substring(idx + 4) // strip everything before /api/
-          else path = new URL(path).pathname.replace(/^.*\/sensorhub/, '') // fallback
-        }
+        // href may be absolute URL or root-relative — normalize to API-relative
+        const path = normalizeLinkHref(skLink.href)
         const res = await apiFetch(path, { headers: { 'Accept': acceptType } })
         if (res.ok && res.data) {
           return [res.data]
@@ -280,11 +303,7 @@ async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Pro
       for (const l of dsLinks) {
         if (!l?.href) continue
         try {
-          let path = l.href
-          if (path.startsWith('http')) {
-            const idx = path.indexOf('/api/')
-            if (idx !== -1) path = path.substring(idx + 4)
-          }
+          const path = normalizeLinkHref(l.href)
           const acceptType = getContentType('systems')
           const res = await apiFetch(path, { headers: { 'Accept': acceptType } })
           if (res.ok && res.data) items.push(res.data)
@@ -332,11 +351,7 @@ async function resolveDeployedSystemsInline(): Promise<{ items: any[]; source: s
     for (const l of dsLinks) {
       if (!l?.href) continue
       try {
-        let path = l.href
-        if (path.startsWith('http')) {
-          const idx = path.indexOf('/api/')
-          if (idx !== -1) path = path.substring(idx + 4)
-        }
+        const path = normalizeLinkHref(l.href)
         const res = await apiFetch(path, { headers: { Accept: acceptType } })
         if (res.ok && res.data && typeof res.data === 'object') items.push(res.data)
       } catch { /* skip broken links */ }
@@ -353,11 +368,7 @@ async function resolveDeployedSystemsInline(): Promise<{ items: any[]; source: s
   const platformLink = parentProps['platform@link']
   if (platformLink?.href) {
     try {
-      let path = platformLink.href
-      if (path.startsWith('http')) {
-        const idx = path.indexOf('/api/')
-        if (idx !== -1) path = path.substring(idx + 4)
-      }
+      const path = normalizeLinkHref(platformLink.href)
       const res = await apiFetch(path, { headers: { Accept: acceptType } })
       if (res.ok && res.data && typeof res.data === 'object') {
         return {

@@ -402,6 +402,22 @@ function extractCount(data: any): number {
 }
 
 /**
+ * Normalize an @link href to an API-relative path suitable for apiFetch().
+ * OSH may return hrefs as absolute URLs, root-relative (e.g. /sensorhub/api/...),
+ * or API-relative (/systems/...). apiFetch expects only the API-relative portion.
+ */
+function normalizeLinkHref(href: string): string {
+  if (!href) return href
+  if (href.startsWith('http')) {
+    try { href = new URL(href).pathname } catch { /* keep as-is */ }
+  }
+  const apiIdx = href.indexOf('/api/')
+  if (apiIdx !== -1) return href.substring(apiIdx + 4)
+  if (href.startsWith('/api')) return href.substring(4)
+  return href
+}
+
+/**
  * Resolve the count of deployed systems from a deployment's inline properties.
  * Per OGC 23-001 Table 43, deployedSystems maps to properties/deployedSystems@link
  * (a JSON Array of links to System resources), NOT to a sub-resource endpoint.
@@ -456,11 +472,7 @@ async function resolveDeployedSystems(deploymentId: string): Promise<{ count: nu
     const sysAccept = getContentType('systems')
     for (const href of systemHrefs) {
       try {
-        let p = href
-        if (p.startsWith('http')) {
-          const idx = p.indexOf('/api/')
-          if (idx !== -1) p = p.substring(idx + 4)
-        }
+        const p = normalizeLinkHref(href)
         const r = await apiFetch(p, { headers: { Accept: sysAccept } })
         if (r.ok && r.data) {
           const sp = r.data?.properties || r.data || {}
