@@ -324,6 +324,11 @@ async function fetchResources(cursorUrl?: string) {
   if (props.resourceType === 'deployments' && !isNested.value && items.value.length > 0) {
     await fetchNestedDeployments()
   }
+
+  // --- Systems: recursively fetch subsystems so nested ones appear ---
+  if (props.resourceType === 'systems' && !isNested.value && items.value.length > 0) {
+    await fetchNestedSystems()
+  }
 }
 
 /**
@@ -376,6 +381,54 @@ async function fetchNestedDeployments() {
   if (interleaved.length > topLevel.length) {
     items.value = interleaved
     // Update counts to reflect the full hierarchy
+    numberReturned.value = items.value.length
+    numberMatched.value = items.value.length
+  }
+}
+
+/**
+ * Recursively fetch subsystems for each item in the list and interleave
+ * nested ones directly after their parent.  Mirrors fetchNestedDeployments.
+ */
+async function fetchNestedSystems() {
+  const seenIds = new Set(items.value.map((it: any) => it?.id || it?.properties?.id))
+  const acceptType = getContentType('systems')
+  const MAX_NESTED = 200
+  let nestedCount = 0
+
+  async function fetchSubs(parentId: string, depth: number): Promise<any[]> {
+    if (depth > 5 || nestedCount >= MAX_NESTED) return []
+    try {
+      const res = await apiFetch(`/systems/${parentId}/subsystems?limit=50`, {
+        headers: { Accept: acceptType },
+      })
+      if (!res.ok || !res.data) return []
+      const parsed = parseCollectionResponse(res.data)
+      const subs = parsed.items as any[]
+      const results: any[] = []
+      for (const sub of subs) {
+        if (nestedCount >= MAX_NESTED) break
+        const subId = sub?.id || sub?.properties?.id
+        if (!subId || seenIds.has(subId)) continue
+        seenIds.add(subId)
+        nestedCount++
+        sub._nestingDepth = depth
+        results.push(sub)
+        results.push(...await fetchSubs(subId, depth + 1))
+      }
+      return results
+    } catch { return [] }
+  }
+
+  const topLevel = [...items.value]
+  const interleaved: any[] = []
+  for (const item of topLevel) {
+    interleaved.push(item)
+    const id = item?.id || item?.properties?.id
+    if (id) interleaved.push(...await fetchSubs(id, 1))
+  }
+  if (interleaved.length > topLevel.length) {
+    items.value = interleaved
     numberReturned.value = items.value.length
     numberMatched.value = items.value.length
   }
@@ -538,7 +591,7 @@ watch(
     <div v-if="!loading && items.length > 0" class="results-info">
       <span>Showing {{ numberReturned ?? items.length }} results</span>
       <span v-if="numberMatched != null"> of <strong>{{ numberMatched }}</strong> total</span>
-      <span v-if="items.some((it: any) => it._nestingDepth)"> (incl. subdeployments)</span>
+      <span v-if="items.some((it: any) => it._nestingDepth)"> (incl. {{ props.resourceType === 'systems' ? 'subsystems' : 'subdeployments' }})</span>
       <span v-else-if="paginationMode === 'offset'"> (offset: {{ offset }})</span>
     </div>
 
