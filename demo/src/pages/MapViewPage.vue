@@ -147,9 +147,12 @@ function makeNameLabel(name: string, offsetY: number): Style | null {
   return new Style({
     text: new OlText({
       text: name,
-      font: 'bold 11px sans-serif',
+      font: 'bold 12px sans-serif',
       fill: new Fill({ color: '#fff' }),
-      stroke: new Stroke({ color: 'rgba(0,0,0,0.7)', width: 3 }),
+      stroke: new Stroke({ color: '#000', width: 4 }),
+      backgroundFill: new Fill({ color: 'rgba(0, 0, 0, 0.55)' }),
+      backgroundStroke: new Stroke({ color: 'rgba(255,255,255,0.3)', width: 1 }),
+      padding: [2, 6, 2, 6],
       offsetY,
       textAlign: 'center',
     }),
