@@ -693,8 +693,11 @@ async function fetchCounts() {
           } catch { /* non-critical */ }
         }
 
-        // --- System → Deployments fallback (after 200 with 0 items) ---
-        if (count === 0 && parentType === 'systems' && rel.relation === 'deployments') {
+        // --- System → Deployments: always resolve items for cluster ---
+        // The server may return 200 with items for /systems/{id}/deployments
+        // but those items may be unfiltered (all deployments).  Always run
+        // the client-side resolver so the clickable cluster gets populated.
+        if (parentType === 'systems' && rel.relation === 'deployments') {
           const resolved = await resolveSystemDeployments(parentId)
           if (gen !== fetchGeneration) return
           if (resolved.count > 0) {
@@ -703,8 +706,8 @@ async function fetchCounts() {
           }
         }
 
-        // --- Deployed Systems fallback (after 200 with 0 items) ---
-        if (count === 0 && parentType === 'deployments' && rel.relation === 'systems') {
+        // --- Deployed Systems: always resolve items for cluster ---
+        if (parentType === 'deployments' && rel.relation === 'systems') {
           const resolved = await resolveDeployedSystems(parentId)
           if (gen !== fetchGeneration) return
           if (resolved.count > 0) {
@@ -918,7 +921,11 @@ onMounted(() => {
   if (connection.connected && props.activeId) fetchCounts()
 })
 
-watch([() => props.activeType, () => props.activeId, () => props.parentLinks], () => {
+// NOTE: parentLinks is passed as `.map(...)` in the parent, which creates a new
+// array reference on every render.  Using JSON.stringify for deep comparison
+// prevents spurious fetchCounts re-fires that would stale long-running resolvers
+// (e.g. resolveSystemDeployments needs ~7 sequential requests).
+watch([() => props.activeType, () => props.activeId, () => JSON.stringify(props.parentLinks)], () => {
   if (connection.connected && props.activeId) fetchCounts()
 })
 
