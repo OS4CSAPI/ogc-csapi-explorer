@@ -41,6 +41,7 @@ let overlay: Overlay | null = null
 
 const loading = ref(false)
 const error = ref('')
+const mouseCoords = ref('')
 const featureCounts = ref<Record<string, number>>({})
 const selectedFeature = ref<any>(null)
 const hasSearched = ref(false)
@@ -1487,7 +1488,7 @@ onMounted(() => {
     }
   })
 
-  // Pointer cursor on features
+  // Pointer cursor on features + coordinate display
   map.on('pointermove', (evt) => {
     const pixel = map!.getEventPixel(evt.originalEvent)
     const hit = map!.hasFeatureAtPixel(pixel)
@@ -1495,6 +1496,8 @@ onMounted(() => {
     if (target) {
       ;(target as HTMLElement).style.cursor = hit ? 'pointer' : ''
     }
+    const [lon, lat] = toLonLat(evt.coordinate)
+    mouseCoords.value = `${lat.toFixed(5)}°, ${lon.toFixed(5)}°`
   })
 
   // Map is ready — user must press Search to load data
@@ -1804,6 +1807,7 @@ async function createTestFeature() {
     <!-- Map -->
     <div class="map-area">
       <div ref="mapContainer" class="map-container"></div>
+      <div v-if="mouseCoords" class="coord-display">{{ mouseCoords }}</div>
 
       <!-- Popup overlay (attached to OL overlay, positioned on map) -->
       <div ref="popupContainer" class="ol-popup">
@@ -2228,6 +2232,21 @@ async function createTestFeature() {
 .map-container {
   width: 100%;
   height: 100%;
+}
+
+.coord-display {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-family: monospace;
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 10;
+  user-select: none;
 }
 
 /* OpenLayers popup — positioned above the feature with arrow pointing down */
