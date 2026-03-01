@@ -430,7 +430,7 @@ function otherConformance(classes: string[]): string[] {
       (currently under review for contribution to the Camp-To-Camp OGC Client library
       <a href="https://github.com/camptocamp/ogc-client/pull/136" target="_blank" rel="noopener noreferrer">camptocamp/ogc-client#136</a>).
       To be added to the growing
-      <a href="https://github.com/OS4CSAPI" target="_blank" rel="noopener noreferrer">OS4CSAPI</a>,
+      <a href="https://github.com/OS4CSAPI" target="_blank" rel="noopener noreferrer">OS4CSAPI</a> community,
       please <strong>@Sam-Bolling</strong> in a comment.
       You are welcomed and encouraged to leave feedback
       <a href="https://github.com/orgs/OS4CSAPI/discussions/37" target="_blank" rel="noopener noreferrer">here</a>.
