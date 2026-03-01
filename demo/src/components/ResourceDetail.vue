@@ -580,9 +580,11 @@ function viewRelatedItem(link: RelatedResourceLink, item: any) {
   const id = getItemId(item)
   if (id === '—') return
 
-  // Skip if clicking the resource we're already viewing
+  // Skip if clicking the resource we're already viewing (same type AND same id).
+  // Different resource types can share the same server-assigned id (e.g. a system
+  // and its datastream may both be "040g"), so we must also compare the type.
   const currentId = String(detail.value?.id || detail.value?.properties?.id || props.resourceId || '')
-  if (id === currentId) return
+  if (id === currentId && link.childType === props.resourceType) return
 
   if (link.childType === props.resourceType) {
     // Same type (e.g. subsystems) — reload detail in-place.
