@@ -815,16 +815,15 @@ async function enrichDeployments(): Promise<void> {
 
     let enriched = 0
 
-    // Recursively fetch subdeployments so nested deployments (SSO, SNET, etc.)
-    // that have their own geometry appear on the map.
+    // ── 1. Recursively fetch the full deployment hierarchy ──────────
     const seenIds = new Set(source.getFeatures().map(f => f.get('resourceId')))
     items.forEach(it => seenIds.add(extractId(it)))
 
-    // Map from parentId → direct children items (for geometry derivation)
-    const childrenMap: Record<string, any[]> = {}
+    const childrenMap: Record<string, string[]> = {}   // parentId → [childId, ...]
+    const parentMap: Record<string, string> = {}       // childId → parentId
 
     async function fetchSubdeployments(parentId: string, depth = 0): Promise<any[]> {
-      if (depth > 5) return [] // guard against infinite recursion
+      if (depth > 5) return []
       try {
         const subRes = await apiFetch(`/deployments/${parentId}/subdeployments?limit=50`, {
           headers: { 'Accept': 'application/geo+json' },
@@ -836,22 +835,24 @@ async function enrichDeployments(): Promise<void> {
         } else if (Array.isArray(subRes.data.items)) {
           subs = subRes.data.items
         }
-        // Track parent→children for geometry derivation
-        if (subs.length > 0) childrenMap[parentId] = subs
-        // Recurse into each subdeployment to find deeper nesting
+        const childIds: string[] = []
         const deeper: any[] = []
         for (const sub of subs) {
           const subId = extractId(sub)
-          if (subId && !seenIds.has(subId)) {
-            seenIds.add(subId)
-            deeper.push(...await fetchSubdeployments(subId, depth + 1))
+          if (subId) {
+            childIds.push(subId)
+            parentMap[subId] = parentId
+            if (!seenIds.has(subId)) {
+              seenIds.add(subId)
+              deeper.push(...await fetchSubdeployments(subId, depth + 1))
+            }
           }
         }
+        if (childIds.length > 0) childrenMap[parentId] = childIds
         return [...subs, ...deeper]
       } catch { return [] }
     }
 
-    // Collect all subdeployments across top-level deployments
     const allSubs: any[] = []
     await Promise.all(items.map(async (item) => {
       const parentId = extractId(item)
@@ -861,7 +862,6 @@ async function enrichDeployments(): Promise<void> {
       }
     }))
 
-    // Build a lookup of all deployment items by id (top-level + nested)
     const allItems = [...items, ...allSubs]
     const itemById: Record<string, any> = {}
     for (const it of allItems) {
@@ -869,83 +869,194 @@ async function enrichDeployments(): Promise<void> {
       if (id) itemById[id] = it
     }
 
-    // --- Collect coordinates for each deployment (from own geometry, children,
-    //     and deployed systems) to compute derived geometry for those without. ---
-
-    /** Extract centroid / representative point(s) from a GeoJSON geometry */
-    function coordsFromGeometry(geom: { type: string; coordinates: any }): number[][] {
-      if (geom.type === 'Point') return [geom.coordinates.slice(0, 2)]
-      if (geom.type === 'LineString') return geom.coordinates.map((c: number[]) => c.slice(0, 2))
-      if (geom.type === 'Polygon') {
-        // Use centroid-ish (average of exterior ring)
-        const ring: number[][] = geom.coordinates[0] || []
-        if (ring.length === 0) return []
-        const avg = ring.reduce((acc: number[], c: number[]) => [acc[0] + c[0], acc[1] + c[1]], [0, 0])
-        return [[avg[0] / ring.length, avg[1] / ring.length]]
-      }
-      return []
-    }
-
-    /** Recursively gather all descendant coordinate points for a deployment */
-    function gatherDescendantCoords(depId: string, visited = new Set<string>()): number[][] {
-      if (visited.has(depId)) return []
-      visited.add(depId)
-      const coords: number[][] = []
-      // From direct children's geometries
-      const children = childrenMap[depId] || []
-      for (const child of children) {
-        const childGeom = extractGeometry(child)
-        if (childGeom) coords.push(...coordsFromGeometry(childGeom))
-        // Recurse into child
-        const childId = extractId(child)
-        if (childId) coords.push(...gatherDescendantCoords(childId, visited))
-      }
-      // From deployed systems
-      const item = itemById[depId]
-      if (item) {
-        const dsLinks = item.properties?.['deployedSystems@link'] || item['deployedSystems@link'] || []
-        for (const dsl of dsLinks) {
-          const sysHref = dsl.system?.href || dsl.href || ''
-          const sysId = sysHref.split('/').pop()
-          if (sysId && systemLocationCache[sysId]) {
-            coords.push([systemLocationCache[sysId].lon, systemLocationCache[sysId].lat])
+    // ── 2. Build system UID → location lookup ──────────────────────
+    // systemLocationCache is keyed by system ID, but deployments reference
+    // systems by UID (deployedSystemUIDs). Build a reverse map.
+    const uidToLocation: Record<string, { lon: number; lat: number }> = {}
+    // Fetch all systems to build UID map
+    try {
+      const sysRes = await apiFetch('/systems?limit=200', {
+        headers: { 'Accept': 'application/geo+json' },
+      })
+      if (sysRes.ok && sysRes.data) {
+        const sysList = sysRes.data.features || sysRes.data.items || []
+        for (const sys of sysList) {
+          const sysId = extractId(sys)
+          const uid = sys.properties?.uid || sys.uid || ''
+          const loc = systemLocationCache[sysId]
+          if (uid && loc) {
+            uidToLocation[uid] = { lon: loc.lon, lat: loc.lat }
           }
-        }
-        // Fallback: deployedSystemUIDs → match by UID in the system location cache
-        const uidStr = item.properties?.['deployedSystemUIDs']
-        if (typeof uidStr === 'string' && uidStr.length > 0) {
-          const uids = uidStr.split(',').map((u: string) => u.trim()).filter(Boolean)
-          for (const uid of uids) {
-            // Search systemLocationCache for a system with matching UID
-            for (const [, loc] of Object.entries(systemLocationCache)) {
-              if ((loc as any).uid === uid) {
-                coords.push([(loc as any).lon, (loc as any).lat])
-              }
+          // Also try system's native geometry if not in location cache
+          if (uid && !uidToLocation[uid]) {
+            const geom = extractGeometry(sys)
+            if (geom) {
+              const pts = centroidFromGeometry(geom)
+              if (pts) uidToLocation[uid] = pts
             }
           }
         }
       }
-      return coords
+    } catch { /* proceed without UID map */ }
+
+    // ── 3. Helper functions ────────────────────────────────────────
+
+    /** Extract a single [lon, lat] centroid from any GeoJSON geometry */
+    function centroidFromGeometry(geom: { type: string; coordinates: any }): { lon: number; lat: number } | null {
+      if (geom.type === 'Point') {
+        return { lon: geom.coordinates[0], lat: geom.coordinates[1] }
+      }
+      if (geom.type === 'LineString') {
+        const coords: number[][] = geom.coordinates
+        if (coords.length === 0) return null
+        const avg = coords.reduce((a, c) => [a[0] + c[0], a[1] + c[1]], [0, 0])
+        return { lon: avg[0] / coords.length, lat: avg[1] / coords.length }
+      }
+      if (geom.type === 'Polygon') {
+        const ring: number[][] = geom.coordinates[0] || []
+        if (ring.length === 0) return null
+        const avg = ring.reduce((a, c) => [a[0] + c[0], a[1] + c[1]], [0, 0])
+        return { lon: avg[0] / ring.length, lat: avg[1] / ring.length }
+      }
+      return null
     }
 
-    // Helper: check if a lon/lat point falls inside the active bbox
+    /** Get the deployed system locations for a deployment item */
+    function getDeployedSystemLocations(item: any): Array<{ lon: number; lat: number }> {
+      const locs: Array<{ lon: number; lat: number }> = []
+      const props = item.properties || item || {}
+
+      // deployedSystems@link hrefs
+      const dsLinks = props['deployedSystems@link'] || []
+      if (Array.isArray(dsLinks)) {
+        for (const dsl of dsLinks) {
+          const href = dsl.system?.href || dsl.href || ''
+          const sysId = href.replace(/\/+$/, '').split('/').pop()
+          if (sysId) {
+            const loc = systemLocationCache[sysId]
+            if (loc) locs.push({ lon: loc.lon, lat: loc.lat })
+          }
+        }
+      }
+
+      // platform@link
+      if (locs.length === 0) {
+        const plat = props['platform@link']
+        if (plat?.href) {
+          const sysId = plat.href.replace(/\/+$/, '').split('/').pop()
+          if (sysId) {
+            const loc = systemLocationCache[sysId]
+            if (loc) locs.push({ lon: loc.lon, lat: loc.lat })
+          }
+        }
+      }
+
+      // deployedSystemUIDs → use uidToLocation map
+      if (locs.length === 0) {
+        const uidStr = props['deployedSystemUIDs']
+        if (typeof uidStr === 'string' && uidStr.length > 0) {
+          for (const uid of uidStr.split(',').map(s => s.trim()).filter(Boolean)) {
+            const loc = uidToLocation[uid]
+            if (loc) locs.push(loc)
+          }
+        }
+      }
+
+      return locs
+    }
+
+    // ── 4. Bottom-up geometry resolution ───────────────────────────
+    // Each deployment's representative centroid is resolved ONCE and cached.
+    // Order: leaf deployments first, then walk up to parents.
+    //
+    // Rules:
+    //   a) Native geometry exists → centroid of that geometry
+    //   b) Has subdeployments or deployed systems → centroid of all those points
+    //   c) Is a subdeployment with no children/systems → inherits parent's centroid
+    //   d) Top-level with nothing → no geometry (user can set via update view)
+
+    const resolvedCentroid: Record<string, { lon: number; lat: number }> = {}
+
+    /** Resolve the representative centroid for a deployment (recursive, memoized) */
+    function resolveCentroid(depId: string, visited = new Set<string>()): { lon: number; lat: number } | null {
+      if (resolvedCentroid[depId]) return resolvedCentroid[depId]
+      if (visited.has(depId)) return null
+      visited.add(depId)
+
+      const item = itemById[depId]
+      if (!item) return null
+
+      // a) Native geometry → use its centroid
+      const nativeGeom = extractGeometry(item)
+      if (nativeGeom) {
+        const c = centroidFromGeometry(nativeGeom)
+        if (c) { resolvedCentroid[depId] = c; return c }
+      }
+
+      // Collect points from direct subdeployments + deployed systems
+      const points: Array<{ lon: number; lat: number }> = []
+
+      // Direct subdeployment centroids
+      const childIds = childrenMap[depId] || []
+      for (const cid of childIds) {
+        const cc = resolveCentroid(cid, new Set(visited))
+        if (cc) points.push(cc)
+      }
+
+      // Deployed system locations
+      points.push(...getDeployedSystemLocations(item))
+
+      // b) Has points → compute centroid from them
+      if (points.length > 0) {
+        const avg = points.reduce((a, p) => ({ lon: a.lon + p.lon, lat: a.lat + p.lat }), { lon: 0, lat: 0 })
+        const c = { lon: avg.lon / points.length, lat: avg.lat / points.length }
+        resolvedCentroid[depId] = c
+        return c
+      }
+
+      // c) Is a subdeployment with no children/systems → inherit parent's centroid
+      const pid = parentMap[depId]
+      if (pid) {
+        const pc = resolveCentroid(pid, new Set(visited))
+        if (pc) { resolvedCentroid[depId] = pc; return pc }
+      }
+
+      // d) No parent, no children, no systems → no geometry
+      return null
+    }
+
+    // Resolve all centroids
+    for (const item of allItems) {
+      const id = extractId(item)
+      if (id) resolveCentroid(id)
+    }
+
+    // ── 5. Build map features ──────────────────────────────────────
     const isInsideBbox = (lon: number, lat: number): boolean => {
       if (!bboxFilter.value) return true
       const [minX, minY, maxX, maxY] = bboxFilter.value
       return lon >= minX && lon <= maxX && lat >= minY && lat <= maxY
     }
 
-    // Add subdeployments that have their own geometry to the map
+    /** Deduplicate [lon,lat] points (within ~0.00001°) */
+    function dedup(pts: Array<{ lon: number; lat: number }>): Array<{ lon: number; lat: number }> {
+      const out: Array<{ lon: number; lat: number }> = []
+      for (const p of pts) {
+        if (!out.some(u => Math.abs(u.lon - p.lon) < 0.00001 && Math.abs(u.lat - p.lat) < 0.00001)) {
+          out.push(p)
+        }
+      }
+      return out
+    }
+
+    // First pass: add subdeployments with native geometry to the map
     for (const sub of allSubs) {
       const subId = extractId(sub)
-      // Skip if already on the map from the initial load
       if (source.getFeatures().some(f => f.get('resourceId') === subId)) continue
       const geom = extractGeometry(sub)
-      // When bbox is active, skip if native geometry centroid falls outside
-      if (geom && bboxFilter.value) {
-        const pts = coordsFromGeometry(geom)
-        if (pts.length > 0 && !pts.some(([lon, lat]) => isInsideBbox(lon, lat))) continue
-      }
+      if (!geom) continue
+      const c = centroidFromGeometry(geom)
+      if (c && bboxFilter.value && !isInsideBbox(c.lon, c.lat)) continue
       const feature = createOlFeature(sub, 'deployments')
       if (feature) {
         source.addFeature(feature)
@@ -953,34 +1064,44 @@ async function enrichDeployments(): Promise<void> {
       }
     }
 
-    // For each deployment (top-level AND nested) without geometry, derive it
+    // Second pass: derive geometry for all deployments that don't have native geometry
     for (const item of allItems) {
-      if (extractGeometry(item)) continue // already has geometry
+      if (extractGeometry(item)) continue
       const depId = extractId(item)
       if (!depId) continue
-      // Skip if already plotted
       if (source.getFeatures().some(f => f.get('resourceId') === depId)) continue
 
-      // Gather coordinates from descendants and deployed systems
-      const coords = gatherDescendantCoords(depId)
-      // Deduplicate (within ~0.00001 deg)
-      const unique: number[][] = []
-      for (const c of coords) {
-        if (!unique.some(u => Math.abs(u[0] - c[0]) < 0.00001 && Math.abs(u[1] - c[1]) < 0.00001)) {
-          unique.push(c)
-        }
+      // Collect the representative points for THIS deployment's geometry:
+      // its direct children centroids + its deployed system locations
+      const points: Array<{ lon: number; lat: number }> = []
+
+      // Direct subdeployment centroids (already resolved)
+      for (const cid of (childrenMap[depId] || [])) {
+        const c = resolvedCentroid[cid]
+        if (c) points.push(c)
       }
+
+      // Deployed system locations
+      points.push(...getDeployedSystemLocations(item))
+
+      // If still no points, inherit parent centroid (leaf subdeployment rule)
+      if (points.length === 0 && parentMap[depId]) {
+        const pc = resolvedCentroid[parentMap[depId]]
+        if (pc) points.push(pc)
+      }
+
+      const unique = dedup(points)
       if (unique.length === 0) continue
 
-      // When bbox is active, skip if none of the derived coords are inside
-      if (bboxFilter.value && !unique.some(([lon, lat]) => isInsideBbox(lon, lat))) continue
+      // Bbox filter
+      if (bboxFilter.value && !unique.some(p => isInsideBbox(p.lon, p.lat))) continue
 
-      // Build derived geometry
+      // Build OL geometry: Point if 1 location, LineString if multiple
       let olGeom
       if (unique.length === 1) {
-        olGeom = new Point(fromLonLat(unique[0]))
+        olGeom = new Point(fromLonLat([unique[0].lon, unique[0].lat]))
       } else {
-        olGeom = new LineString(unique.map(c => fromLonLat(c)))
+        olGeom = new LineString(unique.map(p => fromLonLat([p.lon, p.lat])))
       }
 
       const feature = new Feature({ geometry: olGeom })
@@ -989,7 +1110,10 @@ async function enrichDeployments(): Promise<void> {
       feature.set('resourceId', depId)
       feature.set('resourceName', extractName(item))
       feature.set('rawData', item)
-      feature.set('enrichedFrom', `Derived geometry from ${unique.length} descendant location(s)`)
+      const desc = unique.length === 1
+        ? 'Derived point from 1 related resource'
+        : `Derived line connecting ${unique.length} related resource locations`
+      feature.set('enrichedFrom', desc)
       source.addFeature(feature)
       enriched++
     }
