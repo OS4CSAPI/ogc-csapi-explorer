@@ -153,6 +153,11 @@ const selfChildRelation = ref<string>('')
 /** Deployed system items resolved from the current deployment */
 const deployedSystemItems = ref<Array<{ id: string; name: string }>>([])
 
+// ─── System Deployments Cluster (shown under Deployment node for systems) ────
+
+/** Deployment items that reference the current system */
+const systemDeploymentItems = ref<Array<{ id: string; name: string }>>([])
+
 /** The ModelNode definition for the currently active resource type */
 const activeNodeDef = computed(() => nodes.find(n => n.id === props.activeType))
 
@@ -195,6 +200,24 @@ const deployedSysClusterConfig = computed(() => {
   }
 })
 
+/** Cluster config for system deployments — shown under the Deployment node when viewing a system */
+const systemDepsClusterConfig = computed(() => {
+  if (props.activeType !== 'systems' || systemDeploymentItems.value.length === 0) return null
+  const depNode = nodes.find(n => n.id === 'deployments')!
+  return {
+    x: Math.round(depNode.x - 165 / 2),
+    startY: depNode.y + NODE_H / 2 + 18,
+    chipW: 165,
+    chipH: 19,
+    gap: 3,
+    maxShow: 6,
+    color: depNode.color,
+    icon: depNode.icon,
+    nodeX: depNode.x,
+    nodeY: depNode.y,
+  }
+})
+
 /** Dynamic SVG viewBox height — expands to fit cluster for lower-positioned nodes */
 const svgViewBoxHeight = computed(() => {
   let minH = 480
@@ -213,6 +236,14 @@ const svgViewBoxHeight = computed(() => {
   if (dsc) {
     const items = Math.min(deployedSystemItems.value.length, dsc.maxShow)
     const clusterBottom = dsc.startY + items * (dsc.chipH + dsc.gap) + 10
+    minH = Math.max(minH, clusterBottom + 20)
+  }
+
+  // System deployments cluster
+  const sdc = systemDepsClusterConfig.value
+  if (sdc) {
+    const items = Math.min(systemDeploymentItems.value.length, sdc.maxShow)
+    const clusterBottom = sdc.startY + items * (sdc.chipH + sdc.gap) + 10
     minH = Math.max(minH, clusterBottom + 20)
   }
 
@@ -457,6 +488,74 @@ async function resolveDeployedSystems(deploymentId: string): Promise<{ count: nu
 }
 
 /**
+ * Resolve which deployments reference a given system.
+ * Searches all deployments (including nested subdeployments) for
+ * platform@link, deployedSystems@link, or deployedSystemUIDs referencing this system.
+ */
+async function resolveSystemDeployments(systemId: string): Promise<{ count: number; items: Array<{ id: string; name: string }> }> {
+  const empty = { count: 0, items: [] }
+  try {
+    const acceptType = getContentType('deployments')
+    const systemUrl = `systems/${systemId}`
+
+    // Fetch the system to get its UID for deployedSystemUIDs matching
+    let systemUid = ''
+    try {
+      const sysRes = await apiFetch(getDetailUrl('systems', systemId), { headers: { Accept: getContentType('systems') } })
+      if (sysRes.ok && sysRes.data) {
+        systemUid = sysRes.data?.properties?.uid || sysRes.data?.uid || ''
+      }
+    } catch { /* proceed without UID */ }
+
+    const matchesSys = (dep: any): boolean => {
+      const dp = dep?.properties || dep || {}
+      const platformLink = dp['platform@link']
+      if (platformLink?.href && platformLink.href.includes(systemUrl)) return true
+      const dsLinks = dp['deployedSystems@link']
+      if (Array.isArray(dsLinks) && dsLinks.some((l: any) => l?.href && l.href.includes(systemUrl))) return true
+      const dsUIDs = dp.deployedSystemUIDs || ''
+      if (systemUid && dsUIDs.split(',').map((s: string) => s.trim()).includes(systemUid)) return true
+      return false
+    }
+
+    // Recursively fetch subdeployments
+    const fetchSubdeps = async (depId: string, depth: number): Promise<any[]> => {
+      if (depth > 5) return []
+      try {
+        const subRes = await apiFetch(`/deployments/${depId}/subdeployments?limit=100`, { headers: { Accept: acceptType } })
+        if (!subRes.ok || !subRes.data) return []
+        const parsed = parseCollectionResponse(subRes.data)
+        const subs = parsed.items as any[]
+        const nested: any[] = []
+        for (const sub of subs) {
+          const subId = sub?.id || sub?.properties?.id
+          if (subId) nested.push(...await fetchSubdeps(String(subId), depth + 1))
+        }
+        return [...subs, ...nested]
+      } catch { return [] }
+    }
+
+    const res = await apiFetch('/deployments?limit=100', { headers: { Accept: acceptType } })
+    if (!res.ok || !res.data) return empty
+    const parsed = parseCollectionResponse(res.data)
+    const topLevel = parsed.items as any[]
+    const allDeps = [...topLevel]
+    for (const dep of topLevel) {
+      const depId = dep?.id || dep?.properties?.id
+      if (depId) allDeps.push(...await fetchSubdeps(String(depId), 1))
+    }
+
+    const matched = allDeps.filter(matchesSys)
+    const items = matched.map((dep: any) => {
+      const dp = dep?.properties || dep || {}
+      return { id: String(dep?.id || dp.id || ''), name: dp.name || String(dep?.id || '') }
+    }).filter(it => it.id)
+
+    return { count: items.length, items }
+  } catch { return empty }
+}
+
+/**
  * Fetch counts of related/nested resources for the currently viewed resource.
  * Fetches direct relations, then transitive grandchild counts
  * (observations via datastreams, commands via controlStreams).
@@ -474,6 +573,7 @@ async function fetchCounts() {
   selfChildTotal.value = 0
   selfChildRelation.value = ''
   deployedSystemItems.value = []
+  systemDeploymentItems.value = []
 
   if (!parentId || !parentType) return
 
@@ -502,6 +602,14 @@ async function fetchCounts() {
             if (gen !== fetchGeneration) return
             counts[rel.childType] = resolved.count
             deployedSystemItems.value = resolved.items
+            return
+          }
+          // --- System → Deployments fallback ---
+          if (parentType === 'systems' && rel.relation === 'deployments') {
+            const resolved = await resolveSystemDeployments(parentId)
+            if (gen !== fetchGeneration) return
+            counts[rel.childType] = resolved.count
+            systemDeploymentItems.value = resolved.items
             return
           }
           counts[rel.childType] = -1
@@ -583,6 +691,16 @@ async function fetchCounts() {
               }
             }
           } catch { /* non-critical */ }
+        }
+
+        // --- System → Deployments fallback (after 200 with 0 items) ---
+        if (count === 0 && parentType === 'systems' && rel.relation === 'deployments') {
+          const resolved = await resolveSystemDeployments(parentId)
+          if (gen !== fetchGeneration) return
+          if (resolved.count > 0) {
+            count = resolved.count
+            systemDeploymentItems.value = resolved.items
+          }
         }
 
         // --- Deployed Systems fallback (after 200 with 0 items) ---
@@ -858,6 +976,20 @@ function navigateToType(nodeId: string) {
       return
     }
 
+    // Systems → Deployments: if we have exactly 1 deployment, navigate
+    // directly to it; otherwise the cluster handles individual navigation.
+    if (props.activeType === 'systems' && nodeId === 'deployments') {
+      if (systemDeploymentItems.value.length === 1) {
+        router.push({ path: '/explore/deployments', query: { resourceId: systemDeploymentItems.value[0].id } })
+        return
+      }
+      if (systemDeploymentItems.value.length > 1) {
+        // Let users click individual items in the cluster
+        router.push({ path: '/explore/deployments' })
+        return
+      }
+    }
+
     // Navigate to the nested list, same as the "browse all" in ResourceDetail
     router.push({
       path: `/explore/${rel.childType}`,
@@ -908,6 +1040,11 @@ function navigateToParent() {
 /** Navigate to a deployed system from the deployed-systems cluster */
 function navigateToDeployedSystem(systemId: string) {
   router.push({ path: '/explore/systems', query: { resourceId: systemId } })
+}
+
+/** Navigate to a deployment from the system-deployments cluster */
+function navigateToSystemDeployment(deploymentId: string) {
+  router.push({ path: '/explore/deployments', query: { resourceId: deploymentId } })
 }
 
 /** Navigate into a self-hierarchy child (subsystem / subdeployment) from the cluster */
@@ -1204,6 +1341,75 @@ function browseAllChildren() {
           <text
             :x="deployedSysClusterConfig.x + deployedSysClusterConfig.chipW - 14"
             :y="deployedSysClusterConfig.startY + idx * (deployedSysClusterConfig.chipH + deployedSysClusterConfig.gap) + deployedSysClusterConfig.chipH / 2"
+            fill="#38bdf8" font-size="8" dominant-baseline="central" class="chip-arrow"
+          >→</text>
+        </g>
+      </template>
+
+      <!-- ══════════════════════════════════════════════════════════
+           System Deployments Cluster — shown under the Deployment node
+           when viewing a system that is deployed in deployments.
+           ══════════════════════════════════════════════════════════ -->
+      <template v-if="systemDepsClusterConfig">
+        <!-- Connecting line from Deployment node down to cluster -->
+        <path
+          :d="`M ${systemDepsClusterConfig.nodeX} ${systemDepsClusterConfig.nodeY + NODE_H/2}
+               L ${systemDepsClusterConfig.nodeX} ${systemDepsClusterConfig.startY - 6}`"
+          :stroke="systemDepsClusterConfig.color"
+          stroke-width="1.5"
+          stroke-dasharray="4 2"
+          fill="none"
+          opacity="0.6"
+        />
+
+        <!-- Cluster background card -->
+        <rect
+          :x="systemDepsClusterConfig.x - 6"
+          :y="systemDepsClusterConfig.startY - 8"
+          :width="systemDepsClusterConfig.chipW + 12"
+          :height="Math.min(systemDeploymentItems.length, systemDepsClusterConfig.maxShow) * (systemDepsClusterConfig.chipH + systemDepsClusterConfig.gap) + 10"
+          rx="8"
+          fill="#f8fafc"
+          stroke="#e2e8f0"
+          stroke-width="1"
+          opacity="0.85"
+        />
+
+        <!-- Deployment chips -->
+        <g
+          v-for="(dep, idx) in systemDeploymentItems.slice(0, systemDepsClusterConfig.maxShow)"
+          :key="dep.id"
+          class="subsystem-chip-group"
+          @click.stop="navigateToSystemDeployment(dep.id)"
+        >
+          <title>{{ dep.name }} ({{ dep.id }})</title>
+          <rect
+            :x="systemDepsClusterConfig.x"
+            :y="systemDepsClusterConfig.startY + idx * (systemDepsClusterConfig.chipH + systemDepsClusterConfig.gap)"
+            :width="systemDepsClusterConfig.chipW"
+            :height="systemDepsClusterConfig.chipH"
+            rx="5"
+            fill="#ffffff"
+            :stroke="systemDepsClusterConfig.color"
+            stroke-width="1.2"
+            class="subsystem-chip-bg"
+          />
+          <!-- Icon -->
+          <text
+            :x="systemDepsClusterConfig.x + 10"
+            :y="systemDepsClusterConfig.startY + idx * (systemDepsClusterConfig.chipH + systemDepsClusterConfig.gap) + systemDepsClusterConfig.chipH / 2"
+            :fill="systemDepsClusterConfig.color" font-size="8" dominant-baseline="central"
+          >{{ systemDepsClusterConfig.icon }}</text>
+          <!-- Name (truncated) -->
+          <text
+            :x="systemDepsClusterConfig.x + 22"
+            :y="systemDepsClusterConfig.startY + idx * (systemDepsClusterConfig.chipH + systemDepsClusterConfig.gap) + systemDepsClusterConfig.chipH / 2"
+            class="subsystem-chip-label" dominant-baseline="central"
+          >{{ dep.name.length > 24 ? dep.name.substring(0, 24) + '…' : dep.name }}</text>
+          <!-- Drill-in arrow -->
+          <text
+            :x="systemDepsClusterConfig.x + systemDepsClusterConfig.chipW - 14"
+            :y="systemDepsClusterConfig.startY + idx * (systemDepsClusterConfig.chipH + systemDepsClusterConfig.gap) + systemDepsClusterConfig.chipH / 2"
             fill="#38bdf8" font-size="8" dominant-baseline="central" class="chip-arrow"
           >→</text>
         </g>
