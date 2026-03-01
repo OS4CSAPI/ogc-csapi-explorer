@@ -792,6 +792,61 @@ async function enrichDeployments(): Promise<void> {
     }
 
     let enriched = 0
+
+    // Recursively fetch subdeployments so nested deployments (SSO, SNET, etc.)
+    // that have their own geometry appear on the map.
+    const seenIds = new Set(source.getFeatures().map(f => f.get('resourceId')))
+    items.forEach(it => seenIds.add(extractId(it)))
+
+    async function fetchSubdeployments(parentId: string, depth = 0): Promise<any[]> {
+      if (depth > 3) return [] // guard against infinite recursion
+      try {
+        const subRes = await apiFetch(`/deployments/${parentId}/subdeployments?limit=50`, {
+          headers: { 'Accept': 'application/geo+json' },
+        })
+        if (!subRes.ok || !subRes.data) return []
+        let subs: any[] = []
+        if (subRes.data.type === 'FeatureCollection' && Array.isArray(subRes.data.features)) {
+          subs = subRes.data.features
+        } else if (Array.isArray(subRes.data.items)) {
+          subs = subRes.data.items
+        }
+        // Recurse into each subdeployment to find deeper nesting
+        const deeper: any[] = []
+        for (const sub of subs) {
+          const subId = extractId(sub)
+          if (subId && !seenIds.has(subId)) {
+            seenIds.add(subId)
+            deeper.push(...await fetchSubdeployments(subId, depth + 1))
+          }
+        }
+        return [...subs, ...deeper]
+      } catch { return [] }
+    }
+
+    // Collect all subdeployments across top-level deployments
+    const allSubs: any[] = []
+    await Promise.all(items.map(async (item) => {
+      const parentId = extractId(item)
+      if (parentId) {
+        const subs = await fetchSubdeployments(parentId)
+        allSubs.push(...subs)
+      }
+    }))
+
+    // Add subdeployments that have their own geometry to the map
+    for (const sub of allSubs) {
+      const subId = extractId(sub)
+      // Skip if already on the map from the initial load
+      if (source.getFeatures().some(f => f.get('resourceId') === subId)) continue
+      const feature = createOlFeature(sub, 'deployments')
+      if (feature) {
+        source.addFeature(feature)
+        featureCounts.value['deployments'] = (featureCounts.value['deployments'] || 0) + 1
+      }
+    }
+
+    // Enrich top-level deployments without geometry using deployed system locations
     for (const item of items) {
       if (extractGeometry(item)) continue
 
