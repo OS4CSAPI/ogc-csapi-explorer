@@ -420,6 +420,22 @@ function otherConformance(classes: string[]): string[] {
 
 <template>
   <div class="connect-page">
+    <p class="intro-text">
+      <strong>CSAPI Explorer</strong> is a lightweight client application designed to explore
+      <a href="https://www.ogc.org/standards/ogc-api-connected-systems/" target="_blank" rel="noopener noreferrer">OGC API - Connected Systems (OGC CSAPI)</a>
+      compliant servers. The GitHub for the CSAPI Explorer webapp is
+      <a href="https://github.com/OS4CSAPI/ogc-csapi-explorer" target="_blank" rel="noopener noreferrer">here</a>
+      and it is largely based on the OGC CSAPI Typescript Client Library
+      <a href="https://github.com/OS4CSAPI/ogc-client" target="_blank" rel="noopener noreferrer">here</a>
+      (currently under review for contribution to the Camp-To-Camp OGC Client library
+      <a href="https://github.com/camptocamp/ogc-client/pull/136" target="_blank" rel="noopener noreferrer">camptocamp/ogc-client#136</a>).
+      To be added to the growing
+      <a href="https://github.com/OS4CSAPI" target="_blank" rel="noopener noreferrer">OS4CSAPI</a>,
+      please <strong>@Sam-Bolling</strong> in a comment.
+      You are welcomed and encouraged to leave feedback
+      <a href="https://github.com/orgs/OS4CSAPI/discussions/37" target="_blank" rel="noopener noreferrer">here</a>.
+    </p>
+
     <ConnectionDiagram :state="connectionState" :serverLabel="diagramServerLabel" />
 
     <Panel header="Server Connection">
@@ -548,6 +564,19 @@ function otherConformance(classes: string[]): string[] {
   max-width: 640px;
   margin: 2rem auto;
   padding: 0 1rem;
+}
+.intro-text {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #475569;
+  margin: 0 0 0.5rem;
+}
+.intro-text a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+.intro-text a:hover {
+  text-decoration: underline;
 }
 .form-grid { display: flex; flex-direction: column; gap: 0.75rem; }
 .form-row { display: flex; flex-direction: column; gap: 0.2rem; }
