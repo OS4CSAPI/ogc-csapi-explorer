@@ -111,9 +111,9 @@ const SYSTEM_RULES: KeywordRule[] = [
   // Relay / retransmission device → Signal Radio Relay (Land Unit full frame)
   { keywords: ['relay', 'retrans', 'repeater', 'retransmission'],
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_SIGNAL_RADIO_RELAY },
-  // Monitoring site / observation → SIGINT Comms (antenna in SIGINT collector frame)
+  // Monitoring site / intel collector → MI unit (inverted trapezoid icon)
   { keywords: ['monitoring site', 'mon-site', 'observation post', 'monitoring node', 'monitoring station'],
-    identity: SI_FRIEND, symbolSet: SS_SIGINT, entity: ENT_SIGINT_COMMS },
+    identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_MI },
   // Sensor Employment Team → MI unit (MI dagger in Land Unit rectangle, team echelon)
   { keywords: ['sensor employment', 'set-', 'set team', 'infantry team', 'set-a', 'set-b'],
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_MI, echelon: ECHELON_TEAM },
