@@ -1829,6 +1829,7 @@ async function createTestFeature() {
 .map-page {
   display: flex;
   height: calc(100vh - 53px);
+  overflow: hidden;
 }
 
 .map-sidebar {
