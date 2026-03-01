@@ -217,26 +217,56 @@ async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Pro
     }
   }
 
-  // ----- System → Deployments via searching deployments for platform@link -----
+  // ----- System → Deployments via searching all deployments (incl. nested) -----
   if (props.resourceType === 'systems' && link.relation === 'deployments') {
     try {
       const acceptType = getContentType('deployments')
+      const systemUrl = `systems/${parentId}`
+      const systemUid = parentProps.uid || ''
+
+      // Helper: check if a deployment references this system
+      const matchesSys = (dep: any): boolean => {
+        const dp = dep?.properties || dep || {}
+        // platform@link.href
+        const platformLink = dp['platform@link']
+        if (platformLink?.href && platformLink.href.includes(systemUrl)) return true
+        // deployedSystems@link array
+        const dsLinks = dp['deployedSystems@link']
+        if (Array.isArray(dsLinks) && dsLinks.some((l: any) => l?.href && l.href.includes(systemUrl))) return true
+        // deployedSystemUIDs (comma-separated UID string)
+        const dsUIDs = dp.deployedSystemUIDs || ''
+        if (systemUid && dsUIDs.split(',').map((s: string) => s.trim()).includes(systemUid)) return true
+        return false
+      }
+
+      // Recursively fetch subdeployments up to depth 5
+      const fetchSubdeployments = async (depId: string, depth: number): Promise<any[]> => {
+        if (depth > 5) return []
+        try {
+          const subRes = await apiFetch(`/deployments/${depId}/subdeployments?limit=100`, { headers: { 'Accept': acceptType } })
+          if (!subRes.ok || !subRes.data) return []
+          const subParsed = parseCollectionResponse(subRes.data)
+          const subs = subParsed.items as any[]
+          const nested: any[] = []
+          for (const sub of subs) {
+            const subId = sub?.id || sub?.properties?.id
+            if (subId) nested.push(...await fetchSubdeployments(String(subId), depth + 1))
+          }
+          return [...subs, ...nested]
+        } catch { return [] }
+      }
+
+      // Fetch top-level deployments + all nested
       const res = await apiFetch('/deployments?limit=100', { headers: { 'Accept': acceptType } })
       if (res.ok && res.data) {
         const parsed = parseCollectionResponse(res.data)
-        const systemUrl = `systems/${parentId}`
-        const matched = (parsed.items as any[]).filter((dep: any) => {
-          const props = dep?.properties || dep || {}
-          // Check platform@link.href
-          const platformLink = props['platform@link']
-          if (platformLink?.href && platformLink.href.includes(systemUrl)) return true
-          // Check deployedSystems@link array
-          const dsLinks = props['deployedSystems@link']
-          if (Array.isArray(dsLinks)) {
-            return dsLinks.some((l: any) => l?.href && l.href.includes(systemUrl))
-          }
-          return false
-        })
+        const topLevel = parsed.items as any[]
+        const allDeps = [...topLevel]
+        for (const dep of topLevel) {
+          const depId = dep?.id || dep?.properties?.id
+          if (depId) allDeps.push(...await fetchSubdeployments(String(depId), 1))
+        }
+        const matched = allDeps.filter(matchesSys)
         if (matched.length > 0) return matched
       }
     } catch { /* fallback failed silently */ }
