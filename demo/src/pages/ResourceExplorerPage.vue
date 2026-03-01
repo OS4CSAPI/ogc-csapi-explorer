@@ -112,6 +112,7 @@ function selectType(key: string) {
 .explorer-layout {
   display: flex;
   height: calc(100vh - 53px); /* subtract header height */
+  height: calc(100dvh - 53px);
 }
 
 .sidebar {
