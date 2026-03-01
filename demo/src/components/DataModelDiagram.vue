@@ -430,7 +430,31 @@ async function fetchCounts() {
             const probeItems = probeRes.ok ? (probeRes.data?.items || probeRes.data?.features || []) : []
             if (probeItems.length > 0) {
               // Filter is broken — returns items for a nonexistent parent.
-              // Cannot trust ?parent= results; skip fallback.
+              // Cannot trust ?parent= results; fall back to scanning all
+              // deployments and checking partOf@link client-side.
+              const scanRes = await apiFetch('/deployments?limit=50')
+              if (gen !== fetchGeneration) return
+              if (scanRes.ok && scanRes.data) {
+                const allDeps = scanRes.data?.items || scanRes.data?.features || []
+                const children = allDeps.filter((it: any) => {
+                  const partOf = it?.properties?.['partOf@link']
+                  if (!partOf?.href) return false
+                  const href = String(partOf.href)
+                  return href.endsWith(`/${parentId}`) || href.endsWith(`/deployments/${parentId}`)
+                })
+                if (children.length > 0) {
+                  count = children.length
+                  selfChildItems.value = children.map((it: any) => ({
+                    id: String(it?.id || it?.properties?.id || ''),
+                    name: it?.properties?.name || it?.name || String(it?.id || ''),
+                  })).filter((it: { id: string }) => it.id)
+                  selfChildTotal.value = count
+                  selfChildRelation.value = rel.relation
+                  if (parentId && selfChildItems.value.length > 0) {
+                    cacheParentForChildren(parentId, String(parentId), selfChildItems.value)
+                  }
+                }
+              }
             } else {
               const fbPath = `/deployments?parent=${encodeURIComponent(parentId)}&limit=8`
               const fbRes = await apiFetch(fbPath)
