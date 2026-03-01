@@ -66,6 +66,13 @@ const ENT_INSTALLATION = '110000'     // Generic installation
 const ENT_OBSERVATION_POST = '111200' // Observation post / monitoring station
 const ENT_RETRANS_SITE = '112700'     // Retransmission site
 
+// Entity codes — Land Unit Intelligence branch (SS 10, 15xxxx)
+const ENT_MI = '151000'               // Military Intelligence (MI dagger icon)
+
+// Entity codes — SIGINT Ground (SS 52)
+const ENT_SIGINT_COMMS = '110100'     // SIGINT Communications (antenna icon)
+const ENT_SIGINT_RADAR = '110300'     // SIGINT Radar (dish + signal lines)
+
 // Entity codes — Activity (SS 40)
 const ENT_ACTIVITY = '110000'         // Generic activity/event
 
@@ -100,15 +107,15 @@ type KeywordRule = {
  * More specific rules go first.
  */
 const SYSTEM_RULES: KeywordRule[] = [
-  // Relay / retransmission device (match before generic signal/comm)
+  // Relay / retransmission device → SIGINT Radar (dish + signal lines in SIGINT frame)
   { keywords: ['relay', 'retrans', 'repeater', 'retransmission'],
-    identity: SI_FRIEND, symbolSet: SS_LAND_INSTALLATION, entity: ENT_RETRANS_SITE },
-  // Monitoring site / observation post installation
+    identity: SI_FRIEND, symbolSet: SS_SIGINT, entity: ENT_SIGINT_RADAR },
+  // Monitoring site / observation → SIGINT Comms (antenna in SIGINT collector frame)
   { keywords: ['monitoring site', 'mon-site', 'observation post', 'monitoring node', 'monitoring station'],
-    identity: SI_FRIEND, symbolSet: SS_LAND_INSTALLATION, entity: ENT_OBSERVATION_POST },
-  // Sensor Employment Team / infantry team (echelon: team)
+    identity: SI_FRIEND, symbolSet: SS_SIGINT, entity: ENT_SIGINT_COMMS },
+  // Sensor Employment Team → MI unit (MI dagger in Land Unit rectangle, team echelon)
   { keywords: ['sensor employment', 'set-', 'set team', 'infantry team', 'set-a', 'set-b'],
-    identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_UNIT_INFANTRY, echelon: ECHELON_TEAM },
+    identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_MI, echelon: ECHELON_TEAM },
   // Acoustic / microphone sensor (C-UAS specific)
   { keywords: ['acoustic', 'microphone', 'odas', 'mic array', 'sound', 'audio', 'sensor array'],
     identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
