@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { connection, type ConnectionWarning } from '../state'
 import { initializeBuilder, destroyBuilder } from '../csapi-bridge'
 import InputText from 'primevue/inputtext'
@@ -24,6 +24,11 @@ const password = ref('')
 const connecting = ref(false)
 const error = ref('')
 const warnings = ref<ConnectionWarning[]>([])
+
+// Force a clean slate every time the user navigates to this page
+onMounted(() => {
+  if (connection.connected) disconnect()
+})
 
 // Disconnect and reset when switching servers
 watch(selectedPreset, () => {

@@ -12,6 +12,7 @@ import TileLayer from 'ol/layer/Tile'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
 import OSM from 'ol/source/OSM'
+import XYZ from 'ol/source/XYZ'
 import { fromLonLat, toLonLat } from 'ol/proj'
 import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
@@ -128,6 +129,11 @@ const vectorLayers: Record<string, VectorLayer> = {}
 
 // Enable/disable milsymbol rendering (toggle for A/B comparison)
 const useMilSymbols = ref(false)
+
+// Basemap toggle (OSM vs satellite)
+const useSatellite = ref(false)
+let osmLayer: TileLayer | null = null
+let satLayer: TileLayer | null = null
 
 function getStyle(resourceType: string, enriched = false, rawData?: any): Style {
   const color = TYPE_COLORS[resourceType] || '#6b7280'
@@ -1359,6 +1365,11 @@ function refreshAllStyles() {
   }
 }
 
+function toggleBasemap() {
+  if (osmLayer) osmLayer.setVisible(!useSatellite.value)
+  if (satLayer) satLayer.setVisible(useSatellite.value)
+}
+
 // --- Map Setup ---
 
 onMounted(() => {
@@ -1381,11 +1392,23 @@ onMounted(() => {
     vectorLayers[rt.key] = layer
   }
 
+  // Create basemap layers
+  osmLayer = new TileLayer({ source: new OSM(), visible: !useSatellite.value })
+  satLayer = new TileLayer({
+    source: new XYZ({
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      attributions: 'Tiles &copy; Esri',
+      maxZoom: 19,
+    }),
+    visible: useSatellite.value,
+  })
+
   // Create map
   map = new Map({
     target: mapContainer.value,
     layers: [
-      new TileLayer({ source: new OSM() }),
+      osmLayer,
+      satLayer,
       ...Object.values(vectorLayers),
       bboxLayer,
     ],
@@ -1583,6 +1606,14 @@ async function createTestFeature() {
         <span class="enrichment-text">
           {{ Object.values(enrichedCounts).reduce((s, n) => s + n, 0) }} locations derived from observations
         </span>
+      </div>
+
+      <!-- Basemap toggle -->
+      <div class="milsymbol-toggle">
+        <label class="milsymbol-label">
+          <input type="checkbox" v-model="useSatellite" @change="toggleBasemap" />
+          <span>Satellite Imagery</span>
+        </label>
       </div>
 
       <!-- MIL-STD-2525 symbol toggle -->
