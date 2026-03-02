@@ -89,10 +89,10 @@ const TYPE_LABELS: Record<string, string> = {
 const activeLayers = ref<Record<string, boolean>>({
   systems: true,
   deployments: true,
-  procedures: true,
+  procedures: false,
   samplingFeatures: true,
-  datastreams: true,
-  controlStreams: true,
+  datastreams: false,
+  controlStreams: false,
   observationTracks: true,
   observationPoints: true,
   bearingLines: true,
@@ -203,8 +203,8 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
 
   const name = getResourceName(rawData)
 
-  // --- MIL-STD-2525 symbol rendering (deployments only) ---
-  if (useMilSymbols.value && rawData && resourceType === 'deployments') {
+  // --- MIL-STD-2525 symbol rendering (systems & deployments) ---
+  if (useMilSymbols.value && rawData && (resourceType === 'systems' || resourceType === 'deployments')) {
     const sz = getSymbolSizeForType(resourceType)
     const sym = getSymbolForResource(resourceType, rawData, sz)
     if (sym) {
@@ -282,8 +282,8 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
 
   const name = getResourceName(rawData)
 
-  // --- MIL-STD-2525 selected: render at larger size (deployments only) ---
-  if (useMilSymbols.value && rawData && resourceType === 'deployments') {
+  // --- MIL-STD-2525 selected: render at larger size (systems & deployments) ---
+  if (useMilSymbols.value && rawData && (resourceType === 'systems' || resourceType === 'deployments')) {
     const sym = getSymbolForResource(resourceType, rawData, 'normal')
     if (sym) {
       const iconStyle = new Style({
@@ -1737,6 +1737,8 @@ onMounted(() => {
       updateWhileAnimating: false,
       updateWhileInteracting: false,
     })
+    // Respect default-off layers
+    if (activeLayers.value[rt.key] === false) layer.setVisible(false)
     vectorLayers[rt.key] = layer
   }
 
