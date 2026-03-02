@@ -1,0 +1,211 @@
+{
+  "string_alpha": {
+    "type": "Feature",
+    "id": "0430",
+    "geometry": null,
+    "properties": {
+      "uid": "urn:os4csapi:deployment:string:ft-huachuca:001",
+      "featureType": "sosa:Deployment",
+      "name": "Sensor String Alpha",
+      "description": "Physical line of emplacement for sensors in Field 001.",
+      "validTime": [
+        "2026-02-27T00:00:00Z",
+        ".."
+      ]
+    },
+    "links": [
+      {
+        "rel": "canonical",
+        "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/0430",
+        "type": "application/json"
+      },
+      {
+        "rel": "alternate",
+        "title": "This deployment resource in SensorML format",
+        "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/0430?f=sml3",
+        "type": "application/sml+json"
+      },
+      {
+        "rel": "alternate",
+        "title": "This deployment resource in HTML format",
+        "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/0430?f=html",
+        "type": "text/html"
+      },
+      {
+        "rel": "parent",
+        "title": "Parent deployment",
+        "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/042g?f=geojson",
+        "type": "application/geo+json"
+      },
+      {
+        "rel": "subdeployments",
+        "title": "List of subdeployments",
+        "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/0430/subdeployments?f=geojson",
+        "type": "application/geo+json"
+      }
+    ],
+    "_status": 200
+  },
+  "nodes": {
+    "043g": {
+      "type": "Feature",
+      "id": "043g",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.2758537,
+          31.6490196
+        ]
+      },
+      "properties": {
+        "uid": "urn:os4csapi:deployment:node:ft-huachuca:alpha:001",
+        "featureType": "sosa:Deployment",
+        "name": "Node 1 \u2014 AZ-MA-1",
+        "description": "AZ-MA-1 Monitoring Array deployed as Node 1 on Sensor String Alpha, Ft Huachuca ODAS",
+        "validTime": [
+          "2026-01-15T00:00:00Z",
+          ".."
+        ],
+        "platform@link": {
+          "href": "/sensorhub/api/systems/0420",
+          "title": "ODAS Mic Array Node AZ-MA-1",
+          "uid": "urn:os4csapi:system:odas:az-ma-1",
+          "type": "application/geo+json"
+        }
+      },
+      "links": [
+        {
+          "rel": "canonical",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/043g",
+          "type": "application/json"
+        },
+        {
+          "rel": "alternate",
+          "title": "This deployment resource in SensorML format",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/043g?f=sml3",
+          "type": "application/sml+json"
+        },
+        {
+          "rel": "alternate",
+          "title": "This deployment resource in HTML format",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/043g?f=html",
+          "type": "text/html"
+        },
+        {
+          "rel": "parent",
+          "title": "Parent deployment",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/0430?f=geojson",
+          "type": "application/geo+json"
+        }
+      ],
+      "_status": 200
+    },
+    "0440": {
+      "type": "Feature",
+      "id": "0440",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.2659979,
+          31.6569236
+        ]
+      },
+      "properties": {
+        "uid": "urn:os4csapi:deployment:node:ft-huachuca:alpha:002",
+        "featureType": "sosa:Deployment",
+        "name": "Node 2 \u2014 AZ-MA-2",
+        "description": "AZ-MA-2 Monitoring Array deployed as Node 2 on Sensor String Alpha, Ft Huachuca ODAS",
+        "validTime": [
+          "2026-01-15T00:00:00Z",
+          ".."
+        ],
+        "platform@link": {
+          "href": "/sensorhub/api/systems/0490",
+          "title": "ODAS Mic Array Node AZ-MA-2",
+          "uid": "urn:os4csapi:system:odas:az-ma-2",
+          "type": "application/geo+json"
+        }
+      },
+      "links": [
+        {
+          "rel": "canonical",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/0440",
+          "type": "application/json"
+        },
+        {
+          "rel": "alternate",
+          "title": "This deployment resource in SensorML format",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/0440?f=sml3",
+          "type": "application/sml+json"
+        },
+        {
+          "rel": "alternate",
+          "title": "This deployment resource in HTML format",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/0440?f=html",
+          "type": "text/html"
+        },
+        {
+          "rel": "parent",
+          "title": "Parent deployment",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/0430?f=geojson",
+          "type": "application/geo+json"
+        }
+      ],
+      "_status": 200
+    },
+    "044g": {
+      "type": "Feature",
+      "id": "044g",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.2515496,
+          31.6637961
+        ]
+      },
+      "properties": {
+        "uid": "urn:os4csapi:deployment:node:ft-huachuca:alpha:003",
+        "featureType": "sosa:Deployment",
+        "name": "Node 3 \u2014 AZ-MA-3",
+        "description": "AZ-MA-3 Monitoring Array deployed as Node 3 on Sensor String Alpha, Ft Huachuca ODAS",
+        "validTime": [
+          "2026-01-15T00:00:00Z",
+          ".."
+        ],
+        "platform@link": {
+          "href": "/sensorhub/api/systems/049g",
+          "title": "ODAS Mic Array Node AZ-MA-3",
+          "uid": "urn:os4csapi:system:odas:az-ma-3",
+          "type": "application/geo+json"
+        }
+      },
+      "links": [
+        {
+          "rel": "canonical",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/044g",
+          "type": "application/json"
+        },
+        {
+          "rel": "alternate",
+          "title": "This deployment resource in SensorML format",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/044g?f=sml3",
+          "type": "application/sml+json"
+        },
+        {
+          "rel": "alternate",
+          "title": "This deployment resource in HTML format",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/044g?f=html",
+          "type": "text/html"
+        },
+        {
+          "rel": "parent",
+          "title": "Parent deployment",
+          "href": "http://os4csapi-osh.duckdns.org:8181/sensorhub/api/deployments/0430?f=geojson",
+          "type": "application/geo+json"
+        }
+      ],
+      "_status": 200
+    }
+  },
+  "timestamp": "2026-03-02T18:47:17Z"
+}

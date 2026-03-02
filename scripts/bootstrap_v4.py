@@ -6,8 +6,9 @@ Self-contained: ALL data is inline (no external files).
 Recreates the entire Oracle state from scratch:
   - 6 top-level systems (SET-A, Monitoring Site, Relay, AZ-MA-1/2/3)
   - 39 MA node subsystems (13 each × 3 nodes)
-  - 7-level deployment hierarchy (ICO → R&S → SSO → SNET → Field → String Alpha → Nodes 1-3)
+  - 6-level deployment hierarchy (ICO → R&S → SSO → SNET → String Alpha → Nodes 1-3)
   - 3 support emplacement nodes (SET-A under SSO, Mon Site + Relay under SNET)
+  - Field 001 leaf node under SNET
   - platform@link on all 6 leaf deployment nodes → their respective systems
   - 22 datastreams (1 SENREP on SET-A, 7 per MA node × 3)
   - 9 control streams (3 per MA node × 3)
@@ -217,7 +218,7 @@ ALL_MA_SUBSYSTEMS = {
 
 # ═════════════════════════════════════════════════════════════════════════════
 #  Deployment hierarchy
-#    ICO → R&S → SSO → SNET → Field 001 → String Alpha → Nodes 1-3
+#    ICO → R&S → SSO → SNET → String Alpha → Nodes 1-3  (Field 001 is a leaf under SNET)
 # ═════════════════════════════════════════════════════════════════════════════
 
 DEPLOYMENT_TREE = {
@@ -325,72 +326,71 @@ DEPLOYMENT_TREE = {
                                     "description": "A defined lateral boundary containing sensor capabilities.",
                                     "geometry": None,
                                     "properties": {},
+                                    "children": []
+                                },
+                                {
+                                    "uid":  "urn:os4csapi:deployment:string:ft-huachuca:001",
+                                    "name": "Sensor String Alpha (line-of-emplacement)",
+                                    "description": "Physical line of emplacement for sensors in Field 001.",
+                                    "geometry": None,
+                                    "properties": {},
                                     "children": [
                                         {
-                                            "uid":  "urn:os4csapi:deployment:string:ft-huachuca:001",
-                                            "name": "Sensor String Alpha (line-of-emplacement)",
-                                            "description": "Physical line of emplacement for sensors in Field 001.",
-                                            "geometry": None,
-                                            "properties": {},
-                                            "children": [
-                                                {
-                                                    "uid": "urn:os4csapi:deployment:node:ft-huachuca:alpha:001",
-                                                    "name": "Node 1 \u2014 AZ-MA-1",
-                                                    "description": "AZ-MA-1 Monitoring Array deployed as Node 1 on "
-                                                                   "Sensor String Alpha, Ft Huachuca ODAS",
-                                                    "geometry": {
-                                                        "type": "Point",
-                                                        "coordinates": [-110.272897, 31.663006]
-                                                    },
-                                                    "properties": {
-                                                        "platform@link": {
-                                                            "title": "ODAS Mic Array Node AZ-MA-1",
-                                                            "uid": "urn:os4csapi:system:odas:az-ma-1",
-                                                            "type": "application/geo+json"
-                                                        }
-                                                    },
-                                                    "validTime": [NODE1_VALID_START, ".."],
-                                                    "children": []
-                                                },
-                                                {
-                                                    "uid": "urn:os4csapi:deployment:node:ft-huachuca:alpha:002",
-                                                    "name": "Node 2 \u2014 AZ-MA-2",
-                                                    "description": "AZ-MA-2 Monitoring Array deployed as Node 2 on "
-                                                                   "Sensor String Alpha, Ft Huachuca ODAS",
-                                                    "geometry": {
-                                                        "type": "Point",
-                                                        "coordinates": [-110.272897, 31.662006]
-                                                    },
-                                                    "properties": {
-                                                        "platform@link": {
-                                                            "title": "ODAS Mic Array Node AZ-MA-2",
-                                                            "uid": "urn:os4csapi:system:odas:az-ma-2",
-                                                            "type": "application/geo+json"
-                                                        }
-                                                    },
-                                                    "validTime": [NODE2_VALID_START, ".."],
-                                                    "children": []
-                                                },
-                                                {
-                                                    "uid": "urn:os4csapi:deployment:node:ft-huachuca:alpha:003",
-                                                    "name": "Node 3 \u2014 AZ-MA-3",
-                                                    "description": "AZ-MA-3 Monitoring Array deployed as Node 3 on "
-                                                                   "Sensor String Alpha, Ft Huachuca ODAS",
-                                                    "geometry": {
-                                                        "type": "Point",
-                                                        "coordinates": [-110.272897, 31.661006]
-                                                    },
-                                                    "properties": {
-                                                        "platform@link": {
-                                                            "title": "ODAS Mic Array Node AZ-MA-3",
-                                                            "uid": "urn:os4csapi:system:odas:az-ma-3",
-                                                            "type": "application/geo+json"
-                                                        }
-                                                    },
-                                                    "validTime": [NODE3_VALID_START, ".."],
-                                                    "children": []
+                                            "uid": "urn:os4csapi:deployment:node:ft-huachuca:alpha:001",
+                                            "name": "Node 1 \u2014 AZ-MA-1",
+                                            "description": "AZ-MA-1 Monitoring Array deployed as Node 1 on "
+                                                           "Sensor String Alpha, Ft Huachuca ODAS",
+                                            "geometry": {
+                                                "type": "Point",
+                                                "coordinates": [-110.272897, 31.663006]
+                                            },
+                                            "properties": {
+                                                "platform@link": {
+                                                    "title": "ODAS Mic Array Node AZ-MA-1",
+                                                    "uid": "urn:os4csapi:system:odas:az-ma-1",
+                                                    "type": "application/geo+json"
                                                 }
-                                            ]
+                                            },
+                                            "validTime": [NODE1_VALID_START, ".."],
+                                            "children": []
+                                        },
+                                        {
+                                            "uid": "urn:os4csapi:deployment:node:ft-huachuca:alpha:002",
+                                            "name": "Node 2 \u2014 AZ-MA-2",
+                                            "description": "AZ-MA-2 Monitoring Array deployed as Node 2 on "
+                                                           "Sensor String Alpha, Ft Huachuca ODAS",
+                                            "geometry": {
+                                                "type": "Point",
+                                                "coordinates": [-110.272897, 31.662006]
+                                            },
+                                            "properties": {
+                                                "platform@link": {
+                                                    "title": "ODAS Mic Array Node AZ-MA-2",
+                                                    "uid": "urn:os4csapi:system:odas:az-ma-2",
+                                                    "type": "application/geo+json"
+                                                }
+                                            },
+                                            "validTime": [NODE2_VALID_START, ".."],
+                                            "children": []
+                                        },
+                                        {
+                                            "uid": "urn:os4csapi:deployment:node:ft-huachuca:alpha:003",
+                                            "name": "Node 3 \u2014 AZ-MA-3",
+                                            "description": "AZ-MA-3 Monitoring Array deployed as Node 3 on "
+                                                           "Sensor String Alpha, Ft Huachuca ODAS",
+                                            "geometry": {
+                                                "type": "Point",
+                                                "coordinates": [-110.272897, 31.661006]
+                                            },
+                                            "properties": {
+                                                "platform@link": {
+                                                    "title": "ODAS Mic Array Node AZ-MA-3",
+                                                    "uid": "urn:os4csapi:system:odas:az-ma-3",
+                                                    "type": "application/geo+json"
+                                                }
+                                            },
+                                            "validTime": [NODE3_VALID_START, ".."],
+                                            "children": []
                                         }
                                     ]
                                 }
