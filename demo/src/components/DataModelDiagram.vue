@@ -552,7 +552,7 @@ async function resolveSystemDeployments(systemId: string): Promise<{ count: numb
 
     // Recursively fetch subdeployments
     const fetchSubdeps = async (depId: string, depth: number): Promise<any[]> => {
-      if (depth > 5) return []
+      if (depth > 8) return []
       try {
         const subRes = await apiFetch(`/deployments/${depId}/subdeployments?limit=100`, { headers: { Accept: acceptType } })
         if (!subRes.ok || !subRes.data) return []

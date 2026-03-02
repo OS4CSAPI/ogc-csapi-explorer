@@ -840,7 +840,7 @@ async function enrichDeployments(): Promise<void> {
     const parentMap: Record<string, string> = {}       // childId → parentId
 
     async function fetchSubdeployments(parentId: string, depth = 0): Promise<any[]> {
-      if (depth > 5) return []
+      if (depth > 8) return []
       try {
         const subRes = await apiFetch(`/deployments/${parentId}/subdeployments?limit=50`, {
           headers: { 'Accept': 'application/geo+json' },

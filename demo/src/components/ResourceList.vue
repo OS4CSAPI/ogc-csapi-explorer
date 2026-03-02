@@ -352,7 +352,7 @@ async function fetchNestedDeployments() {
   let nestedCount = 0
 
   async function fetchSubs(parentId: string, depth: number): Promise<any[]> {
-    if (depth > 5 || nestedCount >= MAX_NESTED) return []
+    if (depth > 8 || nestedCount >= MAX_NESTED) return []
     try {
       const res = await apiFetch(`/deployments/${parentId}/subdeployments?limit=50`, {
         headers: { Accept: acceptType },

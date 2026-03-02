@@ -270,7 +270,7 @@ async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Pro
 
       // Recursively fetch subdeployments up to depth 5
       const fetchSubdeployments = async (depId: string, depth: number): Promise<any[]> => {
-        if (depth > 5) return []
+        if (depth > 8) return []
         try {
           const subRes = await apiFetch(`/deployments/${depId}/subdeployments?limit=100`, { headers: { 'Accept': acceptType } })
           if (!subRes.ok || !subRes.data) return []
