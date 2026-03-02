@@ -64,9 +64,9 @@ const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_T
 // Color map for resource types
 const TYPE_COLORS: Record<string, string> = {
   systems: '#3b82f6',           // blue
-  deployments: '#8b5cf6',       // purple
+  deployments: '#10b981',       // emerald / green
   procedures: '#f59e0b',        // amber
-  samplingFeatures: '#10b981',  // emerald
+  samplingFeatures: '#8b5cf6',  // purple
   datastreams: '#ef4444',       // red
   controlStreams: '#f97316',    // orange
   observationTracks: '#06b6d4', // cyan
@@ -755,10 +755,10 @@ function createEnrichedFeature(
 async function enrichResourcesWithLocations(): Promise<void> {
   for (const key of Object.keys(enrichedCounts.value)) delete enrichedCounts.value[key]
 
-  // --- Enrich systems ---
-  await enrichSystems()
-  // --- Enrich deployments ---
+  // --- Enrich deployments FIRST (resolves all deployment geometry + updates systemLocationCache) ---
   await enrichDeployments()
+  // --- Enrich systems (uses updated cache with deployment locations) ---
+  await enrichSystems()
   // --- Enrich sampling features ---
   await enrichSamplingFeatures()
 }
@@ -767,7 +767,20 @@ async function enrichSystems(): Promise<void> {
   const source = vectorSources['systems']
   if (!source) return
 
-  // We need to know which systems were loaded but have no geometry on the map.
+  // First: reposition any existing system features whose deployment has a newer location.
+  // This covers systems that have native geometry but are linked to a moved deployment.
+  for (const feature of source.getFeatures()) {
+    const sysId = feature.get('resourceId')
+    if (!sysId) continue
+    const cached = systemLocationCache[sysId]
+    if (!cached || cached.datastreamName !== 'deployment geometry') continue
+    // Update the feature's geometry to the deployment location
+    feature.setGeometry(new Point(fromLonLat([cached.lon, cached.lat])))
+    feature.set('enriched', true)
+    feature.set('enrichmentSource', 'Repositioned to linked deployment location')
+  }
+
+  // Then: add features for systems that have no geometry on the map yet.
   // Re-fetch the raw items list to check which have null geometry.
   try {
     const url = getListUrl('systems', buildQueryOptions())
@@ -783,12 +796,15 @@ async function enrichSystems(): Promise<void> {
       items = res.data.items
     }
 
+    // Collect IDs already on map to avoid duplicates
+    const existingIds = new Set(source.getFeatures().map(f => f.get('resourceId')))
+
     const batch: Feature[] = []
     for (const item of items) {
-      // Skip if it already has geometry (already on map)
-      if (extractGeometry(item)) continue
-
       const sysId = extractId(item)
+      // Skip if already on map (from loadResourceType or repositioned above)
+      if (existingIds.has(sysId)) continue
+
       const loc = systemLocationCache[sysId]
       if (!loc) continue
 
@@ -1143,6 +1159,25 @@ async function enrichDeployments(): Promise<void> {
 
     enrichedCounts.value['deployments'] = derivedBatch.length
     featureCounts.value['deployments'] = (featureCounts.value['deployments'] || 0) + derivedBatch.length
+
+    // ── 6. Update systemLocationCache from resolved deployment centroids ───
+    // Deployments with platform@link map to a specific system.
+    // Now that all deployment geometry is resolved, back-fill the cache
+    // so enrichSystems() places systems at their deployment's location.
+    for (const item of allItems) {
+      const depId = extractId(item)
+      const centroid = resolvedCentroid[depId]
+      if (!centroid) continue
+      const plat = (item.properties || item)['platform@link']
+      if (plat?.href) {
+        const sysId = plat.href.replace(/\/+$/, '').split('/').pop()
+        if (sysId) {
+          // Always overwrite — deployment location is authoritative for deployed systems
+          systemLocationCache[sysId] = { lat: centroid.lat, lon: centroid.lon, datastreamName: 'deployment geometry' }
+          primarySystemIds.add(sysId)
+        }
+      }
+    }
   } catch { /* skip */ }
 }
 
@@ -1748,13 +1783,14 @@ onMounted(() => {
   // Create vector sources and layers for each map type
   // Layers with text labels get declutter: true to eliminate overlapping label renders.
   // updateWhileAnimating/Interacting: false defers re-render until pan/zoom ends.
-  const labeledTypes = new Set(['systems', 'deployments', 'procedures', 'samplingFeatures', 'datastreams', 'controlStreams'])
+  const labeledTypes = new Set(['systems', 'procedures', 'samplingFeatures', 'datastreams', 'controlStreams'])
   for (const rt of MAP_TYPES) {
     const source = new VectorSource()
     vectorSources[rt.key] = source
     const layer = new VectorLayer({
       source,
       zIndex: rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : 10,
+      // Deployments: no declutter so STANAG symbols are never hidden by label overlap
       declutter: labeledTypes.has(rt.key),
       updateWhileAnimating: false,
       updateWhileInteracting: false,
