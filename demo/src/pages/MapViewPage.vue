@@ -1913,6 +1913,38 @@ async function createTestFeature() {
     creatingTest.value = false
   }
 }
+
+// ─── TAK-style mobile panel ───
+const mobilePanel = ref<'layers' | 'filters' | 'detail' | null>(null)
+
+function toggleMobilePanel(panel: 'layers' | 'filters') {
+  mobilePanel.value = mobilePanel.value === panel ? null : panel
+}
+
+function closeMobilePanel() {
+  if (mobilePanel.value === 'detail' && window.innerWidth <= 768) {
+    selectedFeature.value = null
+    if (overlay) overlay.setPosition(undefined)
+  }
+  mobilePanel.value = null
+}
+
+function mobileSearch() {
+  closeMobilePanel()
+  loadAllResources()
+}
+
+function mobileStartBbox() {
+  closeMobilePanel()
+  startDrawBbox()
+}
+
+// Auto-show detail on mobile when feature selected
+watch(selectedFeature, (feat) => {
+  if (feat && window.innerWidth <= 768) {
+    mobilePanel.value = 'detail'
+  }
+})
 </script>
 
 <template>
@@ -2155,6 +2187,154 @@ async function createTestFeature() {
           <div v-else class="popup-id">{{ selectedFeature.resourceId }}</div>
         </div>
       </div>
+
+      <!-- ═══ TAK-style mobile controls (hidden on desktop via CSS) ═══ -->
+      <div class="tak-overlay">
+        <!-- Top-left status -->
+        <div class="tak-status" v-if="loading || hasSearched">
+          <template v-if="loading">
+            <i class="pi pi-spin pi-spinner"></i> LOADING…
+          </template>
+          <template v-else>{{ totalFeatures }} FEATURES</template>
+        </div>
+
+        <!-- Right-side FABs -->
+        <div class="tak-fab-group">
+          <button class="tak-fab" :class="{ active: mobilePanel === 'layers' }"
+            @click="toggleMobilePanel('layers')" title="Layers">
+            <i class="pi pi-images"></i>
+          </button>
+          <button class="tak-fab" :class="{ active: mobilePanel === 'filters' }"
+            @click="toggleMobilePanel('filters')" title="Filters">
+            <i class="pi pi-filter"></i>
+          </button>
+          <button class="tak-fab" @click="mobileSearch" :disabled="loading" title="Search">
+            <i :class="loading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"></i>
+          </button>
+          <button class="tak-fab" @click="useSatellite = !useSatellite; toggleBasemap()" title="Basemap">
+            <i class="pi pi-globe"></i>
+          </button>
+          <button class="tak-fab" @click="useMilSymbols = !useMilSymbols; refreshAllStyles()" title="Symbols">
+            <i class="pi pi-shield"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- TAK bottom sheet -->
+      <transition name="tak-slide">
+        <div v-if="mobilePanel" class="tak-backdrop" @click.self="closeMobilePanel">
+          <div class="tak-sheet" :class="'tak-sheet--' + mobilePanel">
+            <div class="tak-sheet-handle" @click="closeMobilePanel"></div>
+            <div class="tak-sheet-header">
+              <span class="tak-sheet-title">
+                {{ mobilePanel === 'layers' ? 'LAYERS' : mobilePanel === 'filters' ? 'FILTERS' : 'DETAIL' }}
+              </span>
+              <button class="tak-sheet-close" @click="closeMobilePanel">
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+
+            <!-- Layers content -->
+            <div v-if="mobilePanel === 'layers'" class="tak-sheet-body">
+              <div class="tak-layer-grid">
+                <button v-for="rt in MAP_TYPES" :key="rt.key"
+                  :class="['tak-layer-chip', { inactive: !activeLayers[rt.key] }]"
+                  @click="toggleLayer(rt.key)">
+                  <span class="tak-layer-dot" :style="{ backgroundColor: TYPE_COLORS[rt.key] }"></span>
+                  <span class="tak-layer-name">{{ rt.label }}</span>
+                  <span class="tak-layer-count">{{ featureCounts[rt.key] ?? '—' }}</span>
+                </button>
+              </div>
+              <div v-if="Object.values(enrichedCounts).some(c => c > 0)" class="tak-enrichment">
+                {{ Object.values(enrichedCounts).reduce((s, n) => s + n, 0) }} locations from observations
+              </div>
+            </div>
+
+            <!-- Filters content -->
+            <div v-if="mobilePanel === 'filters'" class="tak-sheet-body">
+              <div class="tak-filter-row">
+                <label>Keyword</label>
+                <input v-model="keywordFilter" type="text" placeholder="e.g. acoustic" class="tak-input"
+                  @keyup.enter="mobileSearch" />
+              </div>
+              <div class="tak-filter-row tak-filter-dates">
+                <div>
+                  <label>Start</label>
+                  <input v-model="dtStart" type="datetime-local" class="tak-input" />
+                </div>
+                <div>
+                  <label>End</label>
+                  <input v-model="dtEnd" type="datetime-local" class="tak-input" />
+                </div>
+              </div>
+              <div class="tak-filter-row">
+                <label>Spatial</label>
+                <div class="tak-bbox-row">
+                  <button class="tak-bbox-btn" :class="{ active: drawingBbox }"
+                    @click="drawingBbox ? clearBbox() : mobileStartBbox()">
+                    <i :class="drawingBbox ? 'pi pi-times' : 'pi pi-stop'"></i>
+                    {{ drawingBbox ? 'Cancel' : 'Draw Bbox' }}
+                  </button>
+                  <span v-if="bboxFilter" class="tak-bbox-set">
+                    <i class="pi pi-check-circle"></i> Set
+                    <button class="tak-bbox-clear" @click="clearBbox"><i class="pi pi-times"></i></button>
+                  </span>
+                </div>
+                <div v-if="bboxFilter" class="tak-bbox-coords">
+                  {{ bboxFilter[0].toFixed(3) }},{{ bboxFilter[1].toFixed(3) }} &rarr;
+                  {{ bboxFilter[2].toFixed(3) }},{{ bboxFilter[3].toFixed(3) }}
+                </div>
+              </div>
+              <button v-if="hasAnyFilter" class="tak-clear-all" @click="clearAllFilters">
+                <i class="pi pi-times"></i> Clear All Filters
+              </button>
+              <button class="tak-search-btn" @click="mobileSearch" :disabled="loading">
+                <i :class="loading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"></i>
+                {{ hasSearched ? 'Search Again' : 'Search' }}
+              </button>
+            </div>
+
+            <!-- Detail content -->
+            <div v-if="mobilePanel === 'detail' && selectedFeature" class="tak-sheet-body">
+              <div class="tak-detail-header">
+                <span class="tak-detail-badge" :style="{ backgroundColor: TYPE_COLORS[selectedFeature.resourceType] }">
+                  {{ TYPE_LABELS[selectedFeature.resourceType] }}
+                </span>
+                <strong>{{ selectedFeature.resourceName }}</strong>
+              </div>
+              <div class="tak-detail-fields">
+                <div class="tak-detail-field">
+                  <span class="tak-field-label">Type</span>
+                  {{ MAP_TYPES.find(r => r.key === selectedFeature.resourceType)?.label }}
+                </div>
+                <div class="tak-detail-field">
+                  <span class="tak-field-label">ID</span>
+                  <code>{{ selectedFeature.resourceId }}</code>
+                </div>
+                <div v-if="selectedFeature.rawData?.phenomenonTime" class="tak-detail-field">
+                  <span class="tak-field-label">Time</span>
+                  {{ selectedFeature.rawData.phenomenonTime }}
+                </div>
+                <div v-if="selectedFeature.rawData?.lat != null" class="tak-detail-field">
+                  <span class="tak-field-label">Location</span>
+                  {{ selectedFeature.rawData.lat.toFixed(6) }}°, {{ selectedFeature.rawData.lon.toFixed(6) }}°
+                  <span v-if="selectedFeature.rawData?.alt != null"> ({{ selectedFeature.rawData.alt.toFixed(1) }}m)</span>
+                </div>
+                <div v-if="selectedFeature.rawData?.properties?.uid || selectedFeature.rawData?.uniqueId" class="tak-detail-field">
+                  <span class="tak-field-label">UID</span>
+                  <code class="tak-uid">{{ selectedFeature.rawData?.properties?.uid || selectedFeature.rawData?.uniqueId }}</code>
+                </div>
+                <div v-if="selectedFeature.enriched" class="tak-enrichment-note">
+                  <i class="pi pi-info-circle"></i> Location from observation data
+                </div>
+              </div>
+              <button class="tak-explore-btn" @click="goToDetail">
+                <i class="pi pi-external-link"></i> View in Explorer
+              </button>
+            </div>
+          </div>
+        </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -2739,7 +2919,12 @@ async function createTestFeature() {
   font-family: monospace;
 }
 
-/* ─── Mobile breakpoint ─── */
+/* ─── TAK-style mobile overlay (hidden on desktop) ─── */
+.tak-overlay,
+.tak-backdrop {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .map-page {
     flex-direction: column;
@@ -2747,19 +2932,499 @@ async function createTestFeature() {
     height: calc(100dvh - 53px);
     overflow: hidden;
   }
+
+  /* Hide desktop sidebar — replaced by TAK overlays */
   .map-sidebar {
-    width: 100%;
-    min-width: unset;
-    max-height: 35vh;
-    flex-shrink: 0;
-    border-right: none;
-    border-bottom: 1px solid #e2e8f0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    display: none !important;
   }
+
   .map-area {
     flex: 1;
     min-height: 0;
+    position: relative;
+  }
+
+  /* Hide OL popup on mobile — detail goes to bottom sheet */
+  .ol-popup {
+    display: none !important;
+  }
+
+  /* ─── Coordinate display — TAK styling ─── */
+  .coord-display {
+    background: rgba(15, 23, 42, 0.82) !important;
+    border: 1px solid rgba(100, 116, 139, 0.35);
+    color: #94d6a4 !important;
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem !important;
+    padding: 4px 10px !important;
+    border-radius: 3px !important;
+    z-index: 50 !important;
+  }
+
+  /* ─── TAK overlay container ─── */
+  .tak-overlay {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* ─── Status pill — top-left ─── */
+  .tak-status {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 5px 12px;
+    background: rgba(15, 23, 42, 0.82);
+    color: #94d6a4;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    border-radius: 3px;
+    border: 1px solid rgba(100, 116, 139, 0.35);
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ─── Floating action buttons — right edge ─── */
+  .tak-fab-group {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: auto;
+  }
+
+  .tak-fab {
+    width: 44px;
+    height: 44px;
+    border-radius: 4px;
+    border: 1px solid rgba(100, 116, 139, 0.5);
+    background: rgba(15, 23, 42, 0.85);
+    color: #e2e8f0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+    transition: background 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tak-fab:active {
+    background: rgba(30, 41, 59, 0.95);
+  }
+
+  .tak-fab.active {
+    background: rgba(16, 185, 129, 0.25);
+    border-color: #10b981;
+    color: #10b981;
+  }
+
+  .tak-fab:disabled {
+    opacity: 0.4;
+  }
+
+  /* ─── Bottom sheet backdrop ─── */
+  .tak-backdrop {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200;
+    pointer-events: auto;
+  }
+
+  /* ─── Bottom sheet panel ─── */
+  .tak-sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 55vh;
+    background: rgba(15, 23, 42, 0.94);
+    border-top: 1px solid rgba(100, 116, 139, 0.4);
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.55);
+  }
+
+  .tak-sheet--detail {
+    max-height: 42vh;
+  }
+
+  .tak-sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: rgba(148, 163, 184, 0.45);
+    border-radius: 2px;
+    margin: 8px auto 4px;
+    cursor: pointer;
+  }
+
+  .tak-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 16px 8px;
+    border-bottom: 1px solid rgba(100, 116, 139, 0.25);
+  }
+
+  .tak-sheet-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: #10b981;
+    font-family: 'Courier New', monospace;
+  }
+
+  .tak-sheet-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.05rem;
+    padding: 6px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tak-sheet-body {
+    padding: 12px 16px 24px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ─── Layers grid ─── */
+  .tak-layer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .tak-layer-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 10px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+    border-radius: 4px;
+    color: #e2e8f0;
+    font-size: 0.76rem;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s;
+  }
+
+  .tak-layer-chip.inactive {
+    opacity: 0.3;
+  }
+
+  .tak-layer-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+
+  .tak-layer-name {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tak-layer-count {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+  }
+
+  .tak-enrichment {
+    margin-top: 10px;
+    padding: 6px 10px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px dashed rgba(59, 130, 246, 0.3);
+    border-radius: 4px;
+    font-size: 0.72rem;
+    color: #93c5fd;
+    text-align: center;
+  }
+
+  /* ─── Filters ─── */
+  .tak-filter-row {
+    margin-bottom: 12px;
+  }
+
+  .tak-filter-row label {
+    display: block;
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .tak-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 10px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(100, 116, 139, 0.4);
+    border-radius: 3px;
+    color: #e2e8f0;
+    font-size: 0.82rem;
+    font-family: inherit;
+  }
+
+  .tak-input:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  }
+
+  .tak-input::placeholder {
+    color: #64748b;
+  }
+
+  /* datetime-local color-scheme for dark inputs */
+  .tak-input[type="datetime-local"] {
+    color-scheme: dark;
+  }
+
+  .tak-filter-dates {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .tak-bbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tak-bbox-btn {
+    flex: 1;
+    padding: 9px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px dashed rgba(59, 130, 246, 0.5);
+    border-radius: 3px;
+    color: #93c5fd;
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tak-bbox-btn.active {
+    background: rgba(59, 130, 246, 0.15);
+    border-style: solid;
+    color: #60a5fa;
+  }
+
+  .tak-bbox-set {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #10b981;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .tak-bbox-clear {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 2px;
+    font-size: 0.72rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tak-bbox-coords {
+    margin-top: 4px;
+    font-size: 0.66rem;
+    color: #64748b;
+    font-family: 'Courier New', monospace;
+  }
+
+  .tak-clear-all {
+    width: 100%;
+    padding: 7px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 3px;
+    color: #fca5a5;
+    font-size: 0.78rem;
+    cursor: pointer;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tak-search-btn {
+    width: 100%;
+    padding: 12px;
+    background: #10b981;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    letter-spacing: 0.04em;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tak-search-btn:active {
+    background: #059669;
+  }
+
+  .tak-search-btn:disabled {
+    opacity: 0.5;
+  }
+
+  /* ─── Detail sheet ─── */
+  .tak-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .tak-detail-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .tak-detail-header strong {
+    color: #e2e8f0;
+    font-size: 0.92rem;
+  }
+
+  .tak-detail-fields {
+    display: grid;
+    gap: 8px;
+  }
+
+  .tak-detail-field {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+  }
+
+  .tak-field-label {
+    font-weight: 700;
+    color: #64748b;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: block;
+  }
+
+  .tak-detail-field code {
+    font-size: 0.74rem;
+    background: rgba(30, 41, 59, 0.6);
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: #94d6a4;
+  }
+
+  .tak-uid {
+    word-break: break-all;
+  }
+
+  .tak-enrichment-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px dashed rgba(59, 130, 246, 0.3);
+    border-radius: 4px;
+    font-size: 0.72rem;
+    color: #93c5fd;
+  }
+
+  .tak-explore-btn {
+    margin-top: 14px;
+    width: 100%;
+    padding: 11px;
+    background: transparent;
+    border: 1px solid #10b981;
+    border-radius: 4px;
+    color: #10b981;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tak-explore-btn:active {
+    background: rgba(16, 185, 129, 0.15);
+  }
+
+  /* ─── Slide-up transition ─── */
+  .tak-slide-enter-active,
+  .tak-slide-leave-active {
+    transition: opacity 0.2s ease;
+  }
+
+  .tak-slide-enter-active .tak-sheet,
+  .tak-slide-leave-active .tak-sheet {
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .tak-slide-enter-from,
+  .tak-slide-leave-to {
+    opacity: 0;
+  }
+
+  .tak-slide-enter-from .tak-sheet,
+  .tak-slide-leave-to .tak-sheet {
+    transform: translateY(100%);
   }
 }
 </style>
