@@ -192,6 +192,13 @@ function makeNameLabel(name: string, offsetY: number): Style | null {
   })
 }
 
+/** Check if a deployment has a platform@link — only these physical emplacements get STANAG symbols.
+ *  Organizational deployments (ICO, R&S, SSO, SNET, Field, String) use plain circles. */
+function hasPlatformLink(rawData: any): boolean {
+  const props = rawData?.properties || rawData || {}
+  return !!(props['platform@link']?.href)
+}
+
 function getStyle(resourceType: string, enriched = false, rawData?: any): Style | Style[] {
   const color = TYPE_COLORS[resourceType] || '#6b7280'
   const label = TYPE_LABELS[resourceType] || '?'
@@ -207,8 +214,8 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
 
   const name = getResourceName(rawData)
 
-  // --- MIL-STD-2525 symbol rendering (deployments only) ---
-  if (useMilSymbols.value && rawData && resourceType === 'deployments') {
+  // --- MIL-STD-2525 symbol rendering (only deployments with platform@link) ---
+  if (useMilSymbols.value && rawData && resourceType === 'deployments' && hasPlatformLink(rawData)) {
     const sz = getSymbolSizeForType(resourceType)
     const sym = getSymbolForResource(resourceType, rawData, sz)
     if (sym) {
@@ -286,8 +293,8 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
 
   const name = getResourceName(rawData)
 
-  // --- MIL-STD-2525 selected: render at larger size (deployments only) ---
-  if (useMilSymbols.value && rawData && resourceType === 'deployments') {
+  // --- MIL-STD-2525 selected: render at larger size (only deployments with platform@link) ---
+  if (useMilSymbols.value && rawData && resourceType === 'deployments' && hasPlatformLink(rawData)) {
     const sym = getSymbolForResource(resourceType, rawData, 'normal')
     if (sym) {
       const iconStyle = new Style({
@@ -776,7 +783,7 @@ async function enrichSystems(): Promise<void> {
       items = res.data.items
     }
 
-    let enriched = 0
+    const batch: Feature[] = []
     for (const item of items) {
       // Skip if it already has geometry (already on map)
       if (extractGeometry(item)) continue
@@ -791,15 +798,14 @@ async function enrichSystems(): Promise<void> {
         if (loc.lon < minX || loc.lon > maxX || loc.lat < minY || loc.lat > maxY) continue
       }
 
-      const feature = createEnrichedFeature(
+      batch.push(createEnrichedFeature(
         item, 'systems', loc.lat, loc.lon,
         `Latest observation from ${loc.datastreamName || 'location datastream'} at ${loc.phenomenonTime || 'unknown time'}`
-      )
-      source.addFeature(feature)
-      enriched++
+      ))
     }
-    enrichedCounts.value['systems'] = enriched
-    featureCounts.value['systems'] = (featureCounts.value['systems'] || 0) + enriched
+    if (batch.length) source.addFeatures(batch)
+    enrichedCounts.value['systems'] = batch.length
+    featureCounts.value['systems'] = (featureCounts.value['systems'] || 0) + batch.length
   } catch { /* skip */ }
 }
 
@@ -1061,26 +1067,31 @@ async function enrichDeployments(): Promise<void> {
     }
 
     // First pass: add subdeployments with native geometry to the map
+    const existingIds = new Set(source.getFeatures().map(f => f.get('resourceId')))
+    const nativeGeoBatch: Feature[] = []
     for (const sub of allSubs) {
       const subId = extractId(sub)
-      if (source.getFeatures().some(f => f.get('resourceId') === subId)) continue
+      if (existingIds.has(subId)) continue
       const geom = extractGeometry(sub)
       if (!geom) continue
       const c = centroidFromGeometry(geom)
       if (c && bboxFilter.value && !isInsideBbox(c.lon, c.lat)) continue
       const feature = createOlFeature(sub, 'deployments')
       if (feature) {
-        source.addFeature(feature)
-        featureCounts.value['deployments'] = (featureCounts.value['deployments'] || 0) + 1
+        nativeGeoBatch.push(feature)
+        existingIds.add(subId)
       }
     }
+    if (nativeGeoBatch.length) source.addFeatures(nativeGeoBatch)
+    featureCounts.value['deployments'] = (featureCounts.value['deployments'] || 0) + nativeGeoBatch.length
 
     // Second pass: derive geometry for all deployments that don't have native geometry
+    const derivedBatch: Feature[] = []
     for (const item of allItems) {
       if (extractGeometry(item)) continue
       const depId = extractId(item)
       if (!depId) continue
-      if (source.getFeatures().some(f => f.get('resourceId') === depId)) continue
+      if (existingIds.has(depId)) continue
 
       // Collect the representative points for THIS deployment's geometry:
       // its direct children centroids + its deployed system locations
@@ -1125,12 +1136,13 @@ async function enrichDeployments(): Promise<void> {
         ? 'Derived point from 1 related resource'
         : `Derived line connecting ${unique.length} related resource locations`
       feature.set('enrichedFrom', desc)
-      source.addFeature(feature)
-      enriched++
+      derivedBatch.push(feature)
+      existingIds.add(depId)
     }
+    if (derivedBatch.length) source.addFeatures(derivedBatch)
 
-    enrichedCounts.value['deployments'] = enriched
-    featureCounts.value['deployments'] = (featureCounts.value['deployments'] || 0) + enriched
+    enrichedCounts.value['deployments'] = derivedBatch.length
+    featureCounts.value['deployments'] = (featureCounts.value['deployments'] || 0) + derivedBatch.length
   } catch { /* skip */ }
 }
 
@@ -1144,7 +1156,8 @@ async function enrichSamplingFeatures(): Promise<void> {
     source.getFeatures().filter(f => f.getGeometry()).map(f => f.get('resourceId'))
   )
 
-  let enriched = 0
+  // Collect enriched features from parallel fetches, then batch-add
+  const sfBatch: Feature[] = []
   const promises = Object.entries(systemLocationCache).map(async ([sysId, loc]) => {
     // When bbox is active, skip systems whose location is outside the bbox
     if (bboxFilter.value) {
@@ -1167,24 +1180,21 @@ async function enrichSamplingFeatures(): Promise<void> {
 
       for (const item of items) {
         const sfId = extractId(item)
-        // Skip if this feature already has geometry on the map
         if (alreadyPlottedIds.has(sfId)) continue
-        // Skip if feature has its own geometry
         if (extractGeometry(item)) continue
 
-        const feature = createEnrichedFeature(
+        sfBatch.push(createEnrichedFeature(
           item, 'samplingFeatures', loc.lat, loc.lon,
           `Derived from parent system ${sysId} (${loc.datastreamName || 'location obs'})`
-        )
-        source.addFeature(feature)
-        enriched++
+        ))
       }
     } catch { /* skip */ }
   })
 
   await Promise.all(promises)
-  enrichedCounts.value['samplingFeatures'] = enriched
-  featureCounts.value['samplingFeatures'] = (featureCounts.value['samplingFeatures'] || 0) + enriched
+  if (sfBatch.length) source.addFeatures(sfBatch)
+  enrichedCounts.value['samplingFeatures'] = sfBatch.length
+  featureCounts.value['samplingFeatures'] = (featureCounts.value['samplingFeatures'] || 0) + sfBatch.length
 }
 
 /**
@@ -1847,21 +1857,29 @@ onMounted(() => {
     }
   })
 
-  // Pointer cursor on features + coordinate display (throttled for performance)
-  let pointerMoveRafId = 0
+  // Pointer cursor on features + coordinate display
+  // Throttled to 100ms to avoid expensive hasFeatureAtPixel on every mouse move
+  let pointerMoveTimer = 0
+  let lastHitCheck = 0
   map.on('pointermove', (evt) => {
-    if (pointerMoveRafId) return          // skip if a frame is already pending
-    pointerMoveRafId = requestAnimationFrame(() => {
-      pointerMoveRafId = 0
-      if (!map) return
+    // Always update coordinates cheaply
+    const [lon, lat] = toLonLat(evt.coordinate)
+    mouseCoords.value = `${lat.toFixed(5)}°, ${lon.toFixed(5)}°`
+
+    // Throttle hit-detection to 100ms and skip while loading
+    const now = performance.now()
+    if (loading.value || now - lastHitCheck < 100) return
+    if (pointerMoveTimer) return
+    pointerMoveTimer = requestAnimationFrame(() => {
+      pointerMoveTimer = 0
+      lastHitCheck = performance.now()
+      if (!map || loading.value) return
       const pixel = map.getEventPixel(evt.originalEvent)
       const hit = map.hasFeatureAtPixel(pixel)
       const target = map.getTargetElement()
       if (target) {
         ;(target as HTMLElement).style.cursor = hit ? 'pointer' : ''
       }
-      const [lon, lat] = toLonLat(evt.coordinate)
-      mouseCoords.value = `${lat.toFixed(5)}°, ${lon.toFixed(5)}°`
     })
   })
 
