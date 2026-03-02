@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { apiFetch } from '../api'
-import { getUpdateUrl, getContentType, getNestedListUrl } from '../csapi-bridge'
+import { getUpdateUrl, getDetailUrl, getContentType, getNestedListUrl } from '../csapi-bridge'
 import { getResourceType, deploymentForSystemCache } from '../state'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -86,6 +86,18 @@ function onFormJsonUpdate(json: string) {
   jsonBody.value = json
 }
 
+// Auto-fetch resource data when we have an ID but no resource object
+async function fetchResourceById(id: string) {
+  const path = getDetailUrl(props.resourceType, id)
+  const acceptType = getContentType(props.resourceType)
+  const res = await apiFetch(path, { headers: { Accept: acceptType } })
+  if (res.ok && res.data) {
+    const json = JSON.stringify(res.data, null, 2)
+    jsonBody.value = json
+    initialFormJson.value = json
+  }
+}
+
 // When a resource is selected (from list or detail), populate the editor
 watch(
   () => props.resource,
@@ -94,6 +106,20 @@ watch(
       const json = JSON.stringify(resource, null, 2)
       jsonBody.value = json
       initialFormJson.value = json
+    }
+  },
+  { immediate: true }
+)
+
+// When resourceId changes but resource is null, auto-fetch from server
+watch(
+  [() => props.resourceId, () => props.resource],
+  ([id, resource], [oldId]) => {
+    if (id && !resource) {
+      // Fetch if we have no data yet, or if the ID changed
+      if (!jsonBody.value || id !== oldId) {
+        fetchResourceById(id)
+      }
     }
   },
   { immediate: true }
