@@ -531,16 +531,24 @@ async function resolveSystemDeployments(systemId: string): Promise<{ count: numb
       }
     } catch { /* proceed without UID */ }
 
-    const matchesSys = (dep: any): boolean => {
+    // "Strong" = platform@link or deployedSystems@link (resolvable href, 1:1).
+    // "Weak"   = deployedSystemUIDs (UID string, many-to-one, no direct link).
+    // Prefer strong matches; only fall back to weak when no strong match found.
+    const hasStrongLink = (dep: any): boolean => {
       const dp = dep?.properties || dep || {}
       const platformLink = dp['platform@link']
       if (platformLink?.href && platformLink.href.includes(systemUrl)) return true
       const dsLinks = dp['deployedSystems@link']
       if (Array.isArray(dsLinks) && dsLinks.some((l: any) => l?.href && l.href.includes(systemUrl))) return true
+      return false
+    }
+    const hasWeakLink = (dep: any): boolean => {
+      const dp = dep?.properties || dep || {}
       const dsUIDs = dp.deployedSystemUIDs || ''
       if (systemUid && dsUIDs.split(',').map((s: string) => s.trim()).includes(systemUid)) return true
       return false
     }
+    const matchesSys = (dep: any): boolean => hasStrongLink(dep) || hasWeakLink(dep)
 
     // Recursively fetch subdeployments
     const fetchSubdeps = async (depId: string, depth: number): Promise<any[]> => {
@@ -567,8 +575,10 @@ async function resolveSystemDeployments(systemId: string): Promise<{ count: numb
       if (depId) allDeps.push(...await fetchSubdeps(String(depId), 1))
     }
 
-    const matched = allDeps.filter(matchesSys)
-    const items = matched.map((dep: any) => {
+    // Prefer strong (platform@link) matches; fall back to weak (deployedSystemUIDs)
+    const strong = allDeps.filter(hasStrongLink)
+    const resultDeps = strong.length > 0 ? strong : allDeps.filter(hasWeakLink)
+    const items = resultDeps.map((dep: any) => {
       const dp = dep?.properties || dep || {}
       return { id: String(dep?.id || dp.id || ''), name: dp.name || String(dep?.id || '') }
     }).filter(it => it.id)

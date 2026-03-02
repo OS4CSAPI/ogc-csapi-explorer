@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { apiFetch } from '../api'
-import { getUpdateUrl, getContentType } from '../csapi-bridge'
-import { getResourceType } from '../state'
+import { getUpdateUrl, getContentType, getNestedListUrl } from '../csapi-bridge'
+import { getResourceType, deploymentForSystemCache } from '../state'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
@@ -33,6 +33,54 @@ const useStructuredForm = computed(() => STRUCTURED_TYPES.has(props.resourceType
 
 // Initial JSON for the structured form (from the selected resource)
 const initialFormJson = ref('')
+
+// ─── Linked deployment for deployed systems ─────────────────
+const linkedDeployment = ref<{ id: string; name: string } | null>(null)
+
+/**
+ * Query /systems/{id}/deployments to discover if this system is deployed.
+ * Caches results in deploymentForSystemCache to avoid re-querying.
+ */
+async function fetchLinkedDeployment(systemId: string) {
+  linkedDeployment.value = null
+
+  // Check cache first
+  if (deploymentForSystemCache[systemId]) {
+    linkedDeployment.value = deploymentForSystemCache[systemId]
+    return
+  }
+
+  try {
+    const path = getNestedListUrl('systems', systemId, 'deployments')
+    const res = await apiFetch(path)
+    if (res.ok && res.data) {
+      const items = res.data.items || res.data.features || res.data
+      if (Array.isArray(items) && items.length > 0) {
+        const dep = items[0]
+        const depId = dep.id || dep.properties?.id || dep['@id'] || ''
+        const depName = dep.properties?.name || dep.name || depId
+        const info = { id: String(depId), name: String(depName) }
+        deploymentForSystemCache[systemId] = info
+        linkedDeployment.value = info
+      }
+    }
+  } catch {
+    // silently fail — user can still edit geometry
+  }
+}
+
+// When system resource changes, check for linked deployment
+watch(
+  [() => props.resourceType, () => props.resourceId],
+  ([type, id]) => {
+    if (type === 'systems' && id) {
+      fetchLinkedDeployment(id)
+    } else {
+      linkedDeployment.value = null
+    }
+  },
+  { immediate: true }
+)
 
 function onFormJsonUpdate(json: string) {
   jsonBody.value = json
@@ -123,6 +171,7 @@ async function update() {
       v-if="useStructuredForm && (jsonBody || effectiveId)"
       :resourceType="props.resourceType"
       :initialJson="initialFormJson"
+      :linkedDeployment="linkedDeployment"
       @update:json="onFormJsonUpdate"
     />
 

@@ -247,20 +247,26 @@ async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Pro
       const systemUrl = `systems/${parentId}`
       const systemUid = parentProps.uid || ''
 
-      // Helper: check if a deployment references this system
-      const matchesSys = (dep: any): boolean => {
+      // Helpers: classify how a deployment references this system.
+      // "Strong" = platform@link or deployedSystems@link (resolvable href, 1:1).
+      // "Weak"   = deployedSystemUIDs (UID string, many-to-one, no direct link).
+      // If any strong matches exist we return only those, avoiding duplicates
+      // from parent deployments that also list the system via UIDs.
+      const hasStrongLink = (dep: any): boolean => {
         const dp = dep?.properties || dep || {}
-        // platform@link.href
         const platformLink = dp['platform@link']
         if (platformLink?.href && platformLink.href.includes(systemUrl)) return true
-        // deployedSystems@link array
         const dsLinks = dp['deployedSystems@link']
         if (Array.isArray(dsLinks) && dsLinks.some((l: any) => l?.href && l.href.includes(systemUrl))) return true
-        // deployedSystemUIDs (comma-separated UID string)
+        return false
+      }
+      const hasWeakLink = (dep: any): boolean => {
+        const dp = dep?.properties || dep || {}
         const dsUIDs = dp.deployedSystemUIDs || ''
         if (systemUid && dsUIDs.split(',').map((s: string) => s.trim()).includes(systemUid)) return true
         return false
       }
+      const matchesSys = (dep: any): boolean => hasStrongLink(dep) || hasWeakLink(dep)
 
       // Recursively fetch subdeployments up to depth 5
       const fetchSubdeployments = async (depId: string, depth: number): Promise<any[]> => {
@@ -289,7 +295,10 @@ async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Pro
           const depId = dep?.id || dep?.properties?.id
           if (depId) allDeps.push(...await fetchSubdeployments(String(depId), 1))
         }
-        const matched = allDeps.filter(matchesSys)
+        const strong = allDeps.filter(hasStrongLink)
+        if (strong.length > 0) return strong
+        // Fall back to weak (deployedSystemUIDs) only if no strong link exists
+        const matched = allDeps.filter(hasWeakLink)
         if (matched.length > 0) return matched
       }
     } catch { /* fallback failed silently */ }

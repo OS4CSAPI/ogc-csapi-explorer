@@ -74,6 +74,13 @@ export function getResourceType(key: string): ResourceTypeInfo | undefined {
  */
 export const parentSystemCache = reactive<Record<string, { id: string; name: string }>>({})
 
+/**
+ * Global cache mapping systemId → linked deployment info.
+ * A system is "deployed" if a deployment references it via platform@link.
+ * Populated lazily when a system's update page is opened.
+ */
+export const deploymentForSystemCache = reactive<Record<string, { id: string; name: string }>>({})
+
 /** Record that each child system has the given parent. */
 export function cacheParentForChildren(
   parentId: string,

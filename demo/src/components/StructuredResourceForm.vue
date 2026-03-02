@@ -29,6 +29,8 @@ const props = defineProps<{
   resourceType: string
   /** Pre-populate the form from existing JSON (for update mode) */
   initialJson?: string
+  /** If this system is linked to a deployment, geometry editing is locked */
+  linkedDeployment?: { id: string; name: string } | null
 }>()
 
 const emit = defineEmits<{
@@ -83,6 +85,8 @@ const showUid = computed(() => props.resourceType === 'systems')
 const showDefinition = computed(() => props.resourceType === 'procedures')
 const showValidTime = computed(() => props.resourceType === 'deployments')
 const showGeometry = computed(() => ['systems', 'samplingFeatures', 'deployments'].includes(props.resourceType))
+/** Geometry editing is locked when a system has a linked deployment */
+const geometryLocked = computed(() => props.resourceType === 'systems' && !!props.linkedDeployment)
 
 // ─── Build JSON from form fields ────────────────────────────
 const builtJson = computed(() => {
@@ -357,13 +361,39 @@ onBeforeUnmount(() => destroyMiniMap())
         <InputText v-model="validTimeEnd" placeholder="(leave empty for ongoing)" class="field-input" />
       </div>
 
-      <div v-if="showGeometry" class="form-field">
+      <div v-if="showGeometry && geometryLocked" class="geometry-locked">
+        <div class="locked-banner">
+          <i class="pi pi-lock"></i>
+          <div>
+            <strong>Location managed by deployment</strong>
+            <p>
+              This system's location is linked to the deployment
+              <strong>{{ linkedDeployment?.name }}</strong>.
+              To update the location, edit the deployment instead.
+            </p>
+            <router-link
+              :to="{ name: 'explore', params: { resourceType: 'deployments' } }"
+              class="deployment-link"
+            >
+              <i class="pi pi-external-link"></i>
+              Go to Deployments → Update
+            </router-link>
+          </div>
+        </div>
+        <!-- Show current coords read-only if present -->
+        <div v-if="hasGeometry && lat !== null && lon !== null" class="locked-coords">
+          <span class="coord-label">Current location:</span>
+          <span class="coord-value">{{ lat?.toFixed(6) }}°, {{ lon?.toFixed(6) }}°</span>
+        </div>
+      </div>
+
+      <div v-if="showGeometry && !geometryLocked" class="form-field">
         <label class="toggle-label">
           <Checkbox v-model="hasGeometry" :binary="true" />
           <span>Include Point geometry</span>
         </label>
       </div>
-      <div v-if="showGeometry && hasGeometry" class="form-row">
+      <div v-if="showGeometry && !geometryLocked && hasGeometry" class="form-row">
         <div class="form-field half">
           <label>Latitude</label>
           <InputNumber v-model="lat" :minFractionDigits="1" :maxFractionDigits="8" :min="-90" :max="90" placeholder="0.0" class="field-input" />
@@ -375,7 +405,7 @@ onBeforeUnmount(() => destroyMiniMap())
       </div>
 
       <!-- Mini map picker for point geometry -->
-      <div v-if="showGeometry && hasGeometry" class="map-picker-container">
+      <div v-if="showGeometry && !geometryLocked && hasGeometry" class="map-picker-container">
         <label class="map-picker-label">Click the map to set location</label>
         <div ref="mapContainer" class="map-picker"></div>
       </div>
@@ -423,4 +453,55 @@ onBeforeUnmount(() => destroyMiniMap())
 .map-picker-label { font-weight: 600; font-size: 0.85rem; color: #64748b; }
 .map-picker { width: 100%; height: 260px; border-radius: 8px; border: 1px solid #cbd5e1; position: relative; cursor: crosshair; }
 .map-picker :deep(.ol-viewport) { border-radius: 8px; }
+
+/* ─── Locked geometry (deployed system) ─── */
+.geometry-locked {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.locked-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #fef9c3;
+  border: 1px solid #facc15;
+  border-radius: 8px;
+  color: #713f12;
+}
+.locked-banner .pi-lock {
+  font-size: 1.2rem;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+.locked-banner p {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.deployment-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1d4ed8;
+  text-decoration: none;
+}
+.deployment-link:hover {
+  text-decoration: underline;
+}
+.locked-coords {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+.coord-label { font-weight: 600; }
+.coord-value { font-family: 'Consolas', 'Monaco', monospace; }
 </style>

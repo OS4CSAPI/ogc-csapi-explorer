@@ -88,7 +88,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 // Active layer toggles
 const activeLayers = ref<Record<string, boolean>>({
-  systems: true,
+  systems: false,
   deployments: true,
   procedures: false,
   samplingFeatures: true,
@@ -101,6 +101,8 @@ const activeLayers = ref<Record<string, boolean>>({
 
 // Cache: systemId → { lat, lon, alt?, datastreamName? }
 const systemLocationCache: Record<string, { lat: number; lon: number; alt?: number; datastreamName?: string; phenomenonTime?: string }> = {}
+// Primary (top-level) system IDs — limits per-system API calls to avoid O(N) subsystem fetches
+const primarySystemIds = new Set<string>()
 // Track location-related datastreams for observation track rendering
 let locationDatastreamList: Array<{ id: string; name: string; systemId: string }> = []
 // Track how many features were enriched from observations
@@ -186,6 +188,7 @@ function makeNameLabel(name: string, offsetY: number): Style | null {
       offsetY,
       textAlign: 'center',
     }),
+    zIndex: 100,   // labels always render above icons so STANAG symbols don't cover them
   })
 }
 
@@ -221,7 +224,7 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
         stroke: new Stroke({ color, width: 2 }),
         fill: new Fill({ color: color + '33' }),
       })
-      const nameStyle = makeNameLabel(name, sym.size.height / 2 + 10)
+      const nameStyle = makeNameLabel(name, sym.size.height - sym.anchor.y + 14)
       return nameStyle ? [iconStyle, nameStyle] : iconStyle
     }
   }
@@ -298,7 +301,7 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
         stroke: new Stroke({ color: '#fbbf24', width: 3 }),
         fill: new Fill({ color: color + '55' }),
       })
-      const nameStyle = makeNameLabel(name, (sym.size.height * 1.3) / 2 + 10)
+      const nameStyle = makeNameLabel(name, (sym.size.height - sym.anchor.y) * 1.3 + 14)
       return nameStyle ? [iconStyle, nameStyle] : iconStyle
     }
   }
@@ -443,15 +446,13 @@ async function loadResourceType(resourceType: string): Promise<number> {
       items = res.data
     }
 
-    let count = 0
+    const batch: Feature[] = []
     for (const item of items) {
       const feature = createOlFeature(item, resourceType)
-      if (feature) {
-        source.addFeature(feature)
-        count++
-      }
+      if (feature) batch.push(feature)
     }
-    return count
+    if (batch.length) source.addFeatures(batch)
+    return batch.length
   } catch {
     return 0
   }
@@ -524,6 +525,7 @@ function cacheLocationsFromLoadedFeatures(): void {
         if (!systemLocationCache[sysId]) {
           systemLocationCache[sysId] = { lat: coords[1], lon: coords[0], datastreamName: 'system geometry' }
         }
+        primarySystemIds.add(sysId)
       }
     }
   }
@@ -553,8 +555,11 @@ function cacheLocationsFromLoadedFeatures(): void {
       const platformLink = raw.properties?.['platform@link'] || raw['platform@link']
       if (platformLink?.href) {
         const sysId = platformLink.href.replace(/\/+$/, '').split('/').pop()
-        if (sysId && !systemLocationCache[sysId]) {
-          systemLocationCache[sysId] = { lat, lon, datastreamName: 'deployment geometry' }
+        if (sysId) {
+          if (!systemLocationCache[sysId]) {
+            systemLocationCache[sysId] = { lat, lon, datastreamName: 'deployment geometry' }
+          }
+          primarySystemIds.add(sysId)
         }
       }
     }
@@ -612,6 +617,7 @@ async function cacheSubsystemLocations(): Promise<void> {
 async function buildSystemLocationCache(): Promise<void> {
   // Clear old cache
   for (const key of Object.keys(systemLocationCache)) delete systemLocationCache[key]
+  primarySystemIds.clear()
   locationDatastreamList = []
 
   // --- Phase A: Static geometry from loaded features ---
@@ -629,13 +635,12 @@ async function buildSystemLocationCache(): Promise<void> {
       allDs = dsRes.data.items || dsRes.data.features || dsRes.data || []
     }
 
-    // Also fetch datastreams for each system in the location cache,
-    // since subsystem datastreams may not appear at the global endpoint
-    // (OSH nests them under the system hierarchy)
+    // Also fetch datastreams for each PRIMARY system in the location cache
+    // (skip subsystems — the global fetch + primary fetches cover them,
+    // avoiding O(N) API calls for every subsystem which causes lag)
     const seenDsIds = new Set(allDs.map((ds: any) => ds.id))
-    const cachedSystemIds = Object.keys(systemLocationCache)
     const systemDsResults = await Promise.all(
-      cachedSystemIds.map(async (sysId) => {
+      Array.from(primarySystemIds).map(async (sysId) => {
         try {
           const res = await apiFetch(`/systems/${sysId}/datastreams?limit=100`)
           if (!res.ok || !res.data) return [] as any[]
@@ -1196,11 +1201,10 @@ async function loadDatastreams(): Promise<void> {
     const res = await apiFetch(url)
     let items: any[] = (res.ok && res.data) ? (res.data.items || []) : []
 
-    // Also fetch datastreams from systems in the location cache,
-    // since subsystem datastreams may not appear at the global endpoint
+    // Also fetch datastreams from primary systems (skip subsystems to avoid O(N) lag)
     const seenIds = new Set(items.map((d: any) => d.id))
     const sysResults = await Promise.all(
-      Object.keys(systemLocationCache).map(async (sysId) => {
+      Array.from(primarySystemIds).map(async (sysId) => {
         try {
           const r = await apiFetch(`/systems/${sysId}/datastreams?limit=100`)
           return (r.ok && r.data) ? (r.data.items || r.data.features || []) as any[] : [] as any[]
@@ -1216,6 +1220,7 @@ async function loadDatastreams(): Promise<void> {
       }
     }
 
+    const dsBatch: Feature[] = []
     for (const ds of items) {
       const sysId = ds['system@id'] || ds.system?.id
       if (!sysId) continue
@@ -1228,13 +1233,13 @@ async function loadDatastreams(): Promise<void> {
         if (loc.lon < minX || loc.lon > maxX || loc.lat < minY || loc.lat > maxY) continue
       }
 
-      const feature = createEnrichedFeature(
+      dsBatch.push(createEnrichedFeature(
         ds, 'datastreams', loc.lat, loc.lon,
         `At parent system ${sysId} (${loc.datastreamName || 'location obs'})`
-      )
-      source.addFeature(feature)
-      count++
+      ))
     }
+    if (dsBatch.length) source.addFeatures(dsBatch)
+    count = dsBatch.length
   } catch { /* skip */ }
   featureCounts.value['datastreams'] = count
 }
@@ -1253,10 +1258,10 @@ async function loadControlStreams(): Promise<void> {
     const res = await apiFetch(url)
     let items: any[] = (res.ok && res.data) ? (res.data.items || []) : []
 
-    // Also fetch control streams from systems in the location cache
+    // Also fetch control streams from primary systems (skip subsystems to avoid O(N) lag)
     const seenIds = new Set(items.map((d: any) => d.id))
     const sysResults = await Promise.all(
-      Object.keys(systemLocationCache).map(async (sysId) => {
+      Array.from(primarySystemIds).map(async (sysId) => {
         try {
           const r = await apiFetch(`/systems/${sysId}/controlStreams?limit=100`)
           return (r.ok && r.data) ? (r.data.items || r.data.features || []) as any[] : [] as any[]
@@ -1272,6 +1277,7 @@ async function loadControlStreams(): Promise<void> {
       }
     }
 
+    const csBatch: Feature[] = []
     for (const cs of items) {
       const sysId = cs['system@id'] || cs.system?.id
       if (!sysId) continue
@@ -1284,13 +1290,13 @@ async function loadControlStreams(): Promise<void> {
         if (loc.lon < minX || loc.lon > maxX || loc.lat < minY || loc.lat > maxY) continue
       }
 
-      const feature = createEnrichedFeature(
+      csBatch.push(createEnrichedFeature(
         cs, 'controlStreams', loc.lat, loc.lon,
         `At parent system ${sysId} (${loc.datastreamName || 'location obs'})`
-      )
-      source.addFeature(feature)
-      count++
+      ))
     }
+    if (csBatch.length) source.addFeatures(csBatch)
+    count = csBatch.length
   } catch { /* skip */ }
   featureCounts.value['controlStreams'] = count
 }
@@ -1606,15 +1612,20 @@ async function loadAllResources() {
 
   loading.value = false
 
-  // Fit map to features if any exist
-  const allFeatures: Feature[] = []
+  // Fit map to all features (merge extents directly — no intermediate VectorSource)
+  let hasAnyFeatures = false
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
   for (const src of Object.values(vectorSources)) {
-    allFeatures.push(...src.getFeatures())
+    if (src.getFeatures().length === 0) continue
+    const ext = src.getExtent()
+    if (ext[0] < minX) minX = ext[0]
+    if (ext[1] < minY) minY = ext[1]
+    if (ext[2] > maxX) maxX = ext[2]
+    if (ext[3] > maxY) maxY = ext[3]
+    hasAnyFeatures = true
   }
-  if (allFeatures.length > 0 && map) {
-    const combinedSource = new VectorSource({ features: allFeatures })
-    const ext = combinedSource.getExtent()
-    if (ext) map.getView().fit(ext, {
+  if (hasAnyFeatures && map) {
+    map.getView().fit([minX, minY, maxX, maxY], {
       padding: [50, 50, 50, 50],
       maxZoom: 16,
       duration: 500,

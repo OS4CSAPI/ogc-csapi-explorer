@@ -7,7 +7,8 @@ Recreates the entire Oracle state from scratch:
   - 6 top-level systems (SET-A, Monitoring Site, Relay, AZ-MA-1/2/3)
   - 39 MA node subsystems (13 each × 3 nodes)
   - 7-level deployment hierarchy (ICO → R&S → SSO → SNET → Field → String Alpha → Nodes 1-3)
-  - platform@link on Nodes 1-3 → AZ-MA-1/2/3
+  - 3 support emplacement nodes (SET-A under SSO, Mon Site + Relay under SNET)
+  - platform@link on all 6 leaf deployment nodes → their respective systems
   - 22 datastreams (1 SENREP on SET-A, 7 per MA node × 3)
   - 9 control streams (3 per MA node × 3)
   - deployedSystemUIDs on SSO and SNET
@@ -47,6 +48,7 @@ AZMA1_VALID_START    = "2026-01-01T00:00:00Z"
 NODE1_VALID_START    = "2026-01-15T00:00:00Z"
 NODE2_VALID_START    = "2026-01-15T00:00:00Z"
 NODE3_VALID_START    = "2026-01-15T00:00:00Z"
+SUPPORT_DEPLOY_START = "2026-03-02T00:00:00Z"  # SET-A, Mon Site, Relay emplacements
 
 # ═════════════════════════════════════════════════════════════════════════════
 #  System definitions
@@ -249,6 +251,24 @@ DEPLOYMENT_TREE = {
                     },
                     "children": [
                         {
+                            "uid": "urn:os4csapi:deployment:set:ft-huachuca:001",
+                            "name": "SET-A Emplacement",
+                            "description": "Deployment node for the Sensor Employment Team (SET-A). "
+                                           "Represents the physical emplacement of the SET location / TOC "
+                                           "from which sensor data is received, analyzed, and SENREP reports "
+                                           "are generated.",
+                            "geometry": {"type": "Point", "coordinates": [-110.2524769, 31.6380757]},
+                            "properties": {
+                                "platform@link": {
+                                    "title": "Sensor Employment Team (SET-A)",
+                                    "uid": "urn:os4csapi:system:set:ft-huachuca:001",
+                                    "type": "application/geo+json"
+                                }
+                            },
+                            "validTime": [SUPPORT_DEPLOY_START, ".."],
+                            "children": []
+                        },
+                        {
                             "uid":  "urn:os4csapi:deployment:snet:ft-huachuca:001",
                             "name": "Sensor Network/Net Deployment",
                             "description": "Network-level grouping of sensors along communication paths.",
@@ -264,6 +284,41 @@ DEPLOYMENT_TREE = {
                                                       "urn:os4csapi:system:relay:vhf-repeater:ft-huachuca:001"
                             },
                             "children": [
+                                {
+                                    "uid": "urn:os4csapi:deployment:monsite:ft-huachuca:001",
+                                    "name": "Monitoring Site Node 1 Emplacement",
+                                    "description": "Deployment node for Monitoring Site Node 1. "
+                                                   "Represents the physical emplacement of the monitoring site's "
+                                                   "equipment and communications infrastructure enabling SET data "
+                                                   "reception and processing.",
+                                    "geometry": {"type": "Point", "coordinates": [-110.2525675, 31.6383956]},
+                                    "properties": {
+                                        "platform@link": {
+                                            "title": "Monitoring Site Node 1",
+                                            "uid": "urn:os4csapi:system:monitoring-site-node:ft-huachuca:001",
+                                            "type": "application/geo+json"
+                                        }
+                                    },
+                                    "validTime": [SUPPORT_DEPLOY_START, ".."],
+                                    "children": []
+                                },
+                                {
+                                    "uid": "urn:os4csapi:deployment:relay:ft-huachuca:001",
+                                    "name": "Relay / Repeater 001 Emplacement",
+                                    "description": "Deployment node for VHF Relay / Repeater 001. "
+                                                   "Represents the physical emplacement of the VHF radio repeater "
+                                                   "that forwards sensor transmissions to the monitoring site.",
+                                    "geometry": {"type": "Point", "coordinates": [-110.2554653, 31.6429133]},
+                                    "properties": {
+                                        "platform@link": {
+                                            "title": "Relay / Repeater 001",
+                                            "uid": "urn:os4csapi:system:relay:vhf-repeater:ft-huachuca:001",
+                                            "type": "application/geo+json"
+                                        }
+                                    },
+                                    "validTime": [SUPPORT_DEPLOY_START, ".."],
+                                    "children": []
+                                },
                                 {
                                     "uid":  "urn:os4csapi:deployment:field:ft-huachuca:001",
                                     "name": "Sensor Field 001",
