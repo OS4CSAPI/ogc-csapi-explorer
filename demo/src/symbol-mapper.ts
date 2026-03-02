@@ -206,7 +206,8 @@ export function getSymbolForResource(
   let sidc: string
 
   switch (resourceType) {
-    case 'systems': {
+    case 'deployments': {
+      // Deployments now get keyword-based STANAG classification
       const rule = matchKeywords(searchText, SYSTEM_RULES)
       if (rule) {
         // Use letter SIDC override when present (milsymbol accepts both formats)
@@ -214,14 +215,14 @@ export function getSymbolForResource(
           ? rule.letterSidc
           : buildSIDC(rule.identity, rule.symbolSet, rule.entity, STATUS_PRESENT, MOD_NONE, rule.echelon)
       } else {
-        // Default system → friendly ground sensor
-        sidc = buildSIDC(SI_FRIEND, SS_LAND_EQUIPMENT, ENT_SENSOR)
+        // Default deployment → friendly land unit
+        sidc = buildSIDC(SI_FRIEND, SS_LAND_UNIT, ENT_UNIT_GENERIC)
       }
       break
     }
-    case 'deployments': {
-      // Deployments → land unit rectangle (friendly)
-      sidc = buildSIDC(SI_FRIEND, SS_LAND_UNIT, ENT_UNIT_GENERIC)
+    case 'systems': {
+      // Systems → friendly ground sensor (generic)
+      sidc = buildSIDC(SI_FRIEND, SS_LAND_EQUIPMENT, ENT_SENSOR)
       break
     }
     case 'procedures': {

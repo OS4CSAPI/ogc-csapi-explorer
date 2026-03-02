@@ -131,6 +131,35 @@ const vectorLayers: Record<string, VectorLayer> = {}
 // Enable/disable milsymbol rendering (toggle for A/B comparison)
 const useMilSymbols = ref(true)
 
+// ── Pre-built style caches for high-volume feature types ──
+const obsPointStyle = new Style({
+  image: new CircleStyle({
+    radius: 4,
+    fill: new Fill({ color: TYPE_COLORS['observationPoints'] || '#ec4899' }),
+    stroke: new Stroke({ color: '#fff', width: 1 }),
+  }),
+})
+const obsTrackStyle = new Style({
+  stroke: new Stroke({ color: TYPE_COLORS['observationTracks'] || '#06b6d4', width: 3, lineDash: [8, 4] }),
+})
+
+// Bearing-line styles bucketed by quantized energy (10 buckets → max 10 style objects)
+const bearingStyleCache = new Map<number, Style>()
+function getCachedBearingLineStyle(energy: number): Style {
+  const bucket = Math.round(Math.min(energy, 1) * 10)      // 0–10
+  let s = bearingStyleCache.get(bucket)
+  if (s) return s
+  const hex = TYPE_COLORS['bearingLines'] || '#f43f5e'
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const opacity = 0.4 + (bucket / 10) * 0.6
+  const width = 2 + (bucket / 10) * 2
+  s = new Style({ stroke: new Stroke({ color: `rgba(${r}, ${g}, ${b}, ${opacity})`, width }) })
+  bearingStyleCache.set(bucket, s)
+  return s
+}
+
 // Basemap toggle (OSM vs satellite)
 const useSatellite = ref(false)
 let osmLayer: TileLayer | null = null
@@ -163,35 +192,19 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
   const color = TYPE_COLORS[resourceType] || '#6b7280'
   const label = TYPE_LABELS[resourceType] || '?'
 
-  // Observation tracks are LineStrings — dashed line, no point marker
-  if (resourceType === 'observationTracks') {
-    return new Style({
-      stroke: new Stroke({ color, width: 3, lineDash: [8, 4] }),
-    })
-  }
+  // Observation tracks — return cached style
+  if (resourceType === 'observationTracks') return obsTrackStyle
 
-  // Individual observation points — tiny dots to show density without clutter
-  if (resourceType === 'observationPoints') {
-    return new Style({
-      image: new CircleStyle({
-        radius: 4,
-        fill: new Fill({ color }),
-        stroke: new Stroke({ color: '#fff', width: 1 }),
-      }),
-    })
-  }
+  // Individual observation points — return cached style
+  if (resourceType === 'observationPoints') return obsPointStyle
 
-  // Bearing lines — directional lines from sensor locations
-  if (resourceType === 'bearingLines') {
-    return new Style({
-      stroke: new Stroke({ color, width: 2.5 }),
-    })
-  }
+  // Bearing lines — return cached style (energy-based version used in loadObservationLayers)
+  if (resourceType === 'bearingLines') return getCachedBearingLineStyle(0.5)
 
   const name = getResourceName(rawData)
 
-  // --- MIL-STD-2525 symbol rendering (systems only) ---
-  if (useMilSymbols.value && rawData && resourceType === 'systems') {
+  // --- MIL-STD-2525 symbol rendering (deployments only) ---
+  if (useMilSymbols.value && rawData && resourceType === 'deployments') {
     const sz = getSymbolSizeForType(resourceType)
     const sym = getSymbolForResource(resourceType, rawData, sz)
     if (sym) {
@@ -269,8 +282,8 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
 
   const name = getResourceName(rawData)
 
-  // --- MIL-STD-2525 selected: render at larger size (systems only) ---
-  if (useMilSymbols.value && rawData && resourceType === 'systems') {
+  // --- MIL-STD-2525 selected: render at larger size (deployments only) ---
+  if (useMilSymbols.value && rawData && resourceType === 'deployments') {
     const sym = getSymbolForResource(resourceType, rawData, 'normal')
     if (sym) {
       const iconStyle = new Style({
@@ -664,20 +677,12 @@ async function buildSystemLocationCache(): Promise<void> {
         systemId: ds['system@id'] || ds.system?.id,
       }))
 
-    // Also include ALL datastreams for systems with cached locations,
-    // so observation layers can render geographic observations from any DS
-    const locationDsIds = new Set(locationDatastreamList.map(d => d.id))
-    for (const ds of allDs) {
-      if (locationDsIds.has(ds.id)) continue
-      const sysId = ds['system@id'] || ds.system?.id
-      if (sysId && systemLocationCache[sysId]) {
-        locationDatastreamList.push({
-          id: ds.id,
-          name: ds.name || ds.outputName || 'Unknown',
-          systemId: sysId,
-        })
-      }
-    }
+    // NOTE: Previously this block added ALL datastreams for systems with
+    // cached locations.  That caused up to N×500 observation fetches and
+    // thousands of bearing-line features, which was the #1 source of map
+    // lag.  Now we only keep the location-related datastreams above.
+    // If you need geographic observations from non-location datastreams,
+    // add them to isLocationRelatedDatastream() instead.
 
     // Fetch latest observation from each location datastream in parallel
     const promises = Object.entries(bySystem).map(async ([sysId, ds]) => {
@@ -1513,7 +1518,7 @@ async function loadObservationLayers(): Promise<void> {
                   fromLonLat([ep.lon, ep.lat]),
                 ]),
               })
-              feature.setStyle(getBearingLineStyle(b.energy))
+              feature.setStyle(getCachedBearingLineStyle(b.energy))
               feature.set('resourceType', 'bearingLines')
               feature.set('resourceId', `${dsInfo.id}-lob-${bearingCount}`)
               const label = b.classLabel
@@ -1719,12 +1724,18 @@ onMounted(() => {
   })
 
   // Create vector sources and layers for each map type
+  // Layers with text labels get declutter: true to eliminate overlapping label renders.
+  // updateWhileAnimating/Interacting: false defers re-render until pan/zoom ends.
+  const labeledTypes = new Set(['systems', 'deployments', 'procedures', 'samplingFeatures', 'datastreams', 'controlStreams'])
   for (const rt of MAP_TYPES) {
     const source = new VectorSource()
     vectorSources[rt.key] = source
     const layer = new VectorLayer({
       source,
       zIndex: rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : 10,
+      declutter: labeledTypes.has(rt.key),
+      updateWhileAnimating: false,
+      updateWhileInteracting: false,
     })
     vectorLayers[rt.key] = layer
   }
@@ -1822,16 +1833,22 @@ onMounted(() => {
     }
   })
 
-  // Pointer cursor on features + coordinate display
+  // Pointer cursor on features + coordinate display (throttled for performance)
+  let pointerMoveRafId = 0
   map.on('pointermove', (evt) => {
-    const pixel = map!.getEventPixel(evt.originalEvent)
-    const hit = map!.hasFeatureAtPixel(pixel)
-    const target = map!.getTargetElement()
-    if (target) {
-      ;(target as HTMLElement).style.cursor = hit ? 'pointer' : ''
-    }
-    const [lon, lat] = toLonLat(evt.coordinate)
-    mouseCoords.value = `${lat.toFixed(5)}°, ${lon.toFixed(5)}°`
+    if (pointerMoveRafId) return          // skip if a frame is already pending
+    pointerMoveRafId = requestAnimationFrame(() => {
+      pointerMoveRafId = 0
+      if (!map) return
+      const pixel = map.getEventPixel(evt.originalEvent)
+      const hit = map.hasFeatureAtPixel(pixel)
+      const target = map.getTargetElement()
+      if (target) {
+        ;(target as HTMLElement).style.cursor = hit ? 'pointer' : ''
+      }
+      const [lon, lat] = toLonLat(evt.coordinate)
+      mouseCoords.value = `${lat.toFixed(5)}°, ${lon.toFixed(5)}°`
+    })
   })
 
   // Map is ready — user must press Search to load data
