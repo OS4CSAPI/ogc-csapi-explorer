@@ -182,4 +182,15 @@ function onDeleted() {
   border-radius: 4px;
   font-weight: 600;
 }
+
+/* ─── Mobile breakpoint ─── */
+@media (max-width: 768px) {
+  .panel-header h2 {
+    font-size: 1.1rem;
+  }
+  :deep(.p-tablist) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
 </style>

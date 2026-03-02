@@ -862,6 +862,18 @@ const parentLinks = computed<ParentLink[]>(() => {
 })
 
 function navigateToParent(parent: ParentLink) {
+  // When the user drilled into a same-type child in-place (URL unchanged),
+  // the URL already points to this parent.  A router.push would be a no-op
+  // because the path+query haven't changed.  Instead, reload the parent
+  // detail directly and clear the in-place state.
+  if (inPlaceParent.value
+      && inPlaceParent.value.id === parent.resourceId
+      && inPlaceParent.value.resourceType === parent.resourceType) {
+    inPlaceParent.value = null
+    manualId.value = ''
+    fetchDetail(parent.resourceId)
+    return
+  }
   router.push({
     path: `/explore/${parent.resourceType}`,
     query: { resourceId: parent.resourceId },
@@ -1324,6 +1336,7 @@ function docIcon(doc: any): string {
           :activeType="props.resourceType"
           :activeId="detail?.id || props.resourceId"
           :parentLinks="parentLinks.map(p => ({ resourceType: p.resourceType, resourceId: p.resourceId, name: p.name }))"
+          @navigateToParent="(p: any) => navigateToParent({ label: '', resourceType: p.resourceType, resourceId: p.resourceId, icon: '', name: p.name })"
         />
       </details>
 
@@ -1459,6 +1472,18 @@ function docIcon(doc: any): string {
 .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; min-height: 200px; }
 @media (max-width: 900px) {
   .side-by-side { grid-template-columns: 1fr; }
+}
+
+/* ─── Mobile breakpoint ─── */
+@media (max-width: 768px) {
+  .relations-grid { grid-template-columns: 1fr; }
+  .sml-meta-grid { grid-template-columns: 1fr; }
+  .meta-item { max-width: 100%; }
+  .resource-summary { padding: 0.65rem 0.75rem; }
+  .resource-name { font-size: 0.95rem; }
+  .parent-link { white-space: normal; }
+  .parent-link code { max-width: 100px; }
+  .w-md { width: 100%; }
 }
 .panel { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
 .panel-title { margin: 0; padding: 0.6rem 0.75rem; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; }

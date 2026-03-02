@@ -582,6 +582,10 @@ function otherConformance(classes: string[]): string[] {
 .form-row { display: flex; flex-direction: column; gap: 0.2rem; }
 .form-row label { font-weight: 600; font-size: 0.85rem; }
 .auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 768px) {
+  .auth-row { grid-template-columns: 1fr; }
+  .connect-page { margin: 1rem auto; }
+}
 .hint { color: #64748b; font-size: 0.85rem; }
 .server-link { display: inline-flex; align-items: center; gap: 0.25rem; margin-left: 0.5rem; color: #3b82f6; text-decoration: none; font-size: 0.82rem; }
 .server-link:hover { text-decoration: underline; }

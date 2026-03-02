@@ -23,3 +23,15 @@ body {
   padding: 0;
   overflow: hidden;
 }
+
+@media (max-width: 768px) {
+  body {
+    overflow: auto;
+    overflow: overlay;
+  }
+  #app {
+    overflow: auto;
+    min-height: 100dvh;
+    height: auto;
+  }
+}

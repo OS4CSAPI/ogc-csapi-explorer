@@ -23,6 +23,11 @@ const props = defineProps<{
   parentLinks?: ParentRef[]
 }>()
 
+const emit = defineEmits<{
+  /** Emitted when the user clicks the same-type parent node in the diagram */
+  (e: 'navigateToParent', parent: ParentRef): void
+}>()
+
 /* ──────────────────────────────────────────────────────────────────────
  * CSAPI / SOSA / SSN Data Model — Node & Edge Definitions
  *
@@ -394,12 +399,19 @@ function extractCount(data: any): number {
   const items = data?.items ?? data?.features
   if (Array.isArray(items)) {
     const len = items.length
-    // If there's a "next" link, at least one more page exists
+    // If there's a "next" link, at least one more page exists — flag as estimate
     const hasNext = Array.isArray(data?.links) && data.links.some((l: any) => l.rel === 'next')
-    return hasNext ? Math.max(len, len + 1) : len
+    if (hasNext) {
+      countEstimates.add(len + 1)
+      return len + 1
+    }
+    return len
   }
   return -1
 }
+
+/** Set of count values that are lower-bound estimates (server had more pages) */
+const countEstimates = reactive(new Set<number>())
 
 /**
  * Normalize an @link href to an API-relative path suitable for apiFetch().
@@ -579,6 +591,7 @@ async function fetchCounts() {
   // Clear previous counts
   for (const key of Object.keys(counts)) delete counts[key]
   for (const key of Object.keys(discoveredAncestors)) delete discoveredAncestors[key]
+  countEstimates.clear()
   selfChildItems.value = []
   selfChildTotal.value = 0
   selfChildRelation.value = ''
@@ -603,7 +616,7 @@ async function fetchCounts() {
       try {
         // For self-hierarchy relations (subsystems/subdeployments), fetch a page for chip display
         const isSelfHierarchy = rel.childType === parentType && edges.some(e => e.from === e.to && e.from === parentType && e.label === rel.relation)
-        const limit = isSelfHierarchy ? 8 : 1
+        const limit = isSelfHierarchy ? 8 : 10
         const path = getNestedListUrl(parentType, parentId, rel.relation, { limit })
         const res = await apiFetch(path)
         if (gen !== fetchGeneration) return  // stale
@@ -926,9 +939,10 @@ async function fetchCounts() {
 function formatCount(n: number | null | undefined): string {
   if (n == null) return '…'         // loading
   if (n < 0) return '—'             // unavailable
-  if (n >= 10000) return `${(n / 1000).toFixed(0)}k`
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
-  return String(n)
+  const suffix = (n != null && countEstimates.has(n)) ? '+' : ''
+  if (n >= 10000) return `${(n / 1000).toFixed(0)}k${suffix}`
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k${suffix}`
+  return `${n}${suffix}`
 }
 
 onMounted(() => {
@@ -1032,13 +1046,12 @@ function navigateToType(nodeId: string) {
 }
 
 /** Navigate directly to the parent resource — bypasses the navigateToType guard
- *  that blocks same-type navigation (e.g. systems → systems, deployments → deployments). */
+ *  that blocks same-type navigation (e.g. systems → systems, deployments → deployments).
+ *  Emits an event so the parent ResourceDetail can handle in-place parent restoration
+ *  (the URL may already point to this parent, making router.push a no-op). */
 function navigateToParent() {
   if (!sameTypeParent.value) return
-  router.push({
-    path: `/explore/${sameTypeParent.value.resourceType}`,
-    query: { resourceId: sameTypeParent.value.resourceId },
-  })
+  emit('navigateToParent', sameTypeParent.value)
 }
 
 /** Navigate to a deployed system from the deployed-systems cluster */
@@ -1704,5 +1717,22 @@ function browseAllChildren() {
 .subsystem-more-link:hover {
   fill: #0284c7;
   text-decoration: underline;
+}
+
+/* ─── Mobile breakpoint ─── */
+@media (max-width: 768px) {
+  .diagram-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.25rem;
+  }
+  .model-svg {
+    min-width: 640px;
+    max-height: none;
+  }
+  .legend {
+    gap: 0.5rem;
+    font-size: 0.65rem;
+  }
 }
 </style>

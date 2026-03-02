@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { connection, RESOURCE_TYPES, getResourceType } from '../state'
 import ResourcePanel from '../components/ResourcePanel.vue'
 import Button from 'primevue/button'
+
+const sidebarOpen = ref(false)
 
 const router = useRouter()
 const route = useRoute()
@@ -47,14 +49,23 @@ watch(
 )
 
 function selectType(key: string) {
+  sidebarOpen.value = false
   router.push(`/explore/${key}`)
 }
 </script>
 
 <template>
   <div v-if="connection.connected" class="explorer-layout">
+    <!-- Mobile sidebar toggle -->
+    <button class="sidebar-mobile-toggle" @click="sidebarOpen = !sidebarOpen">
+      <i class="pi pi-list"></i>
+      <span>{{ getResourceType(activeType)?.plural || activeType }}</span>
+      <i class="pi pi-chevron-down" style="font-size:0.65rem; margin-left:auto"></i>
+    </button>
+    <!-- Sidebar backdrop (mobile) -->
+    <div v-if="sidebarOpen" class="sidebar-backdrop" @click="sidebarOpen = false"></div>
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside :class="['sidebar', { open: sidebarOpen }]">
       <div class="sidebar-header">
         <span class="sidebar-title">Resource Types</span>
       </div>
@@ -219,5 +230,71 @@ function selectType(key: string) {
   font-size: 0.9rem;
   font-weight: 600;
   color: #1e40af;
+}
+
+/* ─── Mobile sidebar toggle button (hidden on desktop) ─── */
+.sidebar-mobile-toggle {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sidebar-mobile-toggle:hover { background: #f1f5f9; }
+
+.sidebar-backdrop {
+  display: none;
+}
+
+/* ─── Mobile breakpoint ─── */
+@media (max-width: 768px) {
+  .explorer-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    display: none;
+    position: fixed;
+    top: 53px; /* header height */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 900;
+    width: 100%;
+    min-width: unset;
+    max-height: 60vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }
+  .sidebar.open {
+    display: flex;
+  }
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 899;
+    background: rgba(0,0,0,0.2);
+  }
+  .sidebar-mobile-toggle {
+    display: flex;
+  }
+  .explorer-main {
+    padding: 0.75rem;
+    height: auto;
+    flex: 1;
+    min-height: 0;
+  }
+  .nested-breadcrumb {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
 }
 </style>

@@ -2738,4 +2738,21 @@ async function createTestFeature() {
   padding: 0.2rem 0.5rem;
   font-family: monospace;
 }
+
+/* ─── Mobile breakpoint ─── */
+@media (max-width: 768px) {
+  .map-page {
+    flex-direction: column;
+  }
+  .map-sidebar {
+    width: 100%;
+    min-width: unset;
+    max-height: 35vh;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .map-area {
+    min-height: 50vh;
+  }
+}
 </style>
