@@ -115,6 +115,12 @@ watch(
 watch(
   [() => props.resourceId, () => props.resource],
   ([id, resource], [oldId]) => {
+    // Clear stale status messages when switching resources
+    if (id !== oldId) {
+      success.value = ''
+      error.value = ''
+      responseData.value = null
+    }
     if (id && !resource) {
       // Fetch if we have no data yet, or if the ID changed
       if (!jsonBody.value || id !== oldId) {
