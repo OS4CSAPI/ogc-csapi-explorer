@@ -38,6 +38,7 @@ const mapContainer = ref<HTMLDivElement>()
 const popupContainer = ref<HTMLDivElement>()
 let map: Map | null = null
 let overlay: Overlay | null = null
+let globalEnterHandler: ((e: KeyboardEvent) => void) | null = null
 
 const loading = ref(false)
 const error = ref('')
@@ -1854,9 +1855,25 @@ onMounted(() => {
   })
 
   // Map is ready — user must press Search to load data
+
+  // Global Enter key → execute search (unless typing in a textarea)
+  function onGlobalEnter(e: KeyboardEvent) {
+    if (e.key !== 'Enter') return
+    const tag = (e.target as HTMLElement)?.tagName?.toLowerCase()
+    if (tag === 'textarea') return
+    if (loading.value) return
+    loadAllResources()
+  }
+  window.addEventListener('keydown', onGlobalEnter)
+  globalEnterHandler = onGlobalEnter
 })
 
 onUnmounted(() => {
+  if (globalEnterHandler) {
+    window.removeEventListener('keydown', globalEnterHandler)
+    globalEnterHandler = null
+  }
+
   if (map) {
     if (drawInteraction) map.removeInteraction(drawInteraction)
     map.setTarget(undefined)
