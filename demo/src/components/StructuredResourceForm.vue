@@ -81,26 +81,37 @@ const featureTypeOptions = computed(() => {
 })
 
 const showFeatureType = computed(() => ['systems', 'procedures', 'samplingFeatures'].includes(props.resourceType))
-const showUid = computed(() => props.resourceType === 'systems')
+const showUid = computed(() => STRUCTURED_TYPES.has(props.resourceType))
 const showDefinition = computed(() => props.resourceType === 'procedures')
 const showValidTime = computed(() => props.resourceType === 'deployments')
 const showGeometry = computed(() => ['systems', 'samplingFeatures', 'deployments'].includes(props.resourceType))
 /** Geometry editing is locked when a system has a linked deployment */
 const geometryLocked = computed(() => props.resourceType === 'systems' && !!props.linkedDeployment)
 
+// ─── Preserve original properties for updates ──────────────
+// Stores the parsed initial object so extra properties (platform@link,
+// featureType for deployments, etc.) survive the form round-trip.
+const originalProperties = ref<Record<string, any>>({})
+
 // ─── Build JSON from form fields ────────────────────────────
 const builtJson = computed(() => {
-  const properties: Record<string, any> = {}
+  // Start with original properties to preserve server-side fields
+  const properties: Record<string, any> = { ...originalProperties.value }
+
+  // Overwrite with form values
   if (name.value) properties.name = name.value
+  else delete properties.name
   if (description.value) properties.description = description.value
+  else delete properties.description
   if (featureType.value && showFeatureType.value) properties.featureType = featureType.value
-  if (uid.value && showUid.value) properties.uid = uid.value
+  if (uid.value) properties.uid = uid.value
   if (definition.value && showDefinition.value) properties.definition = definition.value
   if (showValidTime.value) {
-    const vt: Record<string, string> = {}
-    if (validTimeBegin.value) vt.begin = validTimeBegin.value
-    if (validTimeEnd.value) vt.end = validTimeEnd.value
-    if (Object.keys(vt).length > 0) properties.validTime = vt
+    // OSH server expects validTime as an array: ["begin", "end" | ".."]
+    if (validTimeBegin.value) {
+      const end = validTimeEnd.value || '..'
+      properties.validTime = [validTimeBegin.value, end]
+    }
   }
 
   let geometry: any = null
@@ -139,14 +150,24 @@ watch(() => props.initialJson, (json) => {
     const obj = JSON.parse(json)
     // Part 1 GeoJSON Feature
     if (obj.properties) {
+      // Preserve all original properties (platform@link, featureType, etc.)
+      originalProperties.value = { ...obj.properties }
+
       name.value = obj.properties.name || ''
       description.value = obj.properties.description || ''
       featureType.value = obj.properties.featureType || ''
       uid.value = obj.properties.uid || ''
       definition.value = obj.properties.definition || ''
-      if (obj.properties.validTime) {
-        validTimeBegin.value = obj.properties.validTime.begin || obj.properties.validTime.start || ''
-        validTimeEnd.value = obj.properties.validTime.end || ''
+      // Parse validTime — server may return array ["begin", "end"] or object {begin, end}
+      const vt = obj.properties.validTime
+      if (vt) {
+        if (Array.isArray(vt)) {
+          validTimeBegin.value = (vt[0] && vt[0] !== '..') ? vt[0] : ''
+          validTimeEnd.value = (vt[1] && vt[1] !== '..') ? vt[1] : ''
+        } else {
+          validTimeBegin.value = vt.begin || vt.start || ''
+          validTimeEnd.value = vt.end || ''
+        }
       }
     }
     if (obj.geometry && obj.geometry.type === 'Point' && obj.geometry.coordinates) {
