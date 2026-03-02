@@ -213,14 +213,21 @@ async function fetchResources(cursorUrl?: string) {
       // Provide a friendlier, more informative message for 400 errors on
       // resource types that are typically nested (commands under controlstreams, etc.)
       if (res.status === 400) {
-        const parentHint = NESTED_RESOURCE_HINTS[props.resourceType]
-        if (parentHint) {
-          error.value = `⚠️ Server limitation: ${props.resourceType} are not available as a top-level collection on this server.\n\n` +
-            `${parentHint.explanation}\n\n` +
-            `${parentHint.hint}\n\n` +
-            `(Server response: ${res.status} ${res.statusText})`
+        if (isNested.value) {
+          // Nested endpoint 400 (e.g. /deployments/{id}/systems) — likely a
+          // transient server error, not a missing capability.
+          error.value = `Server returned an error (400) for this nested request. This may be a temporary issue — try refreshing or navigating back and returning.\n\n` +
+            `(${res.statusText || 'Bad Request'})`
         } else {
-          error.value = `Server rejected the request (${res.status}). This resource type may not be supported by this server.`
+          const parentHint = NESTED_RESOURCE_HINTS[props.resourceType]
+          if (parentHint) {
+            error.value = `⚠️ Server limitation: ${props.resourceType} are not available as a top-level collection on this server.\n\n` +
+              `${parentHint.explanation}\n\n` +
+              `${parentHint.hint}\n\n` +
+              `(Server response: ${res.status} ${res.statusText})`
+          } else {
+            error.value = `Server rejected the request (${res.status}). This resource type may not be supported by this server.`
+          }
         }
       } else {
         error.value = res.error || 'Failed to fetch resources'
