@@ -207,6 +207,7 @@ function mobileNav(to: string) {
 @media (max-width: 768px) {
   .app-header {
     padding: 0.5rem 0.75rem;
+    flex-shrink: 0;
   }
   .app-header h1 {
     font-size: 1.1rem;
@@ -219,6 +220,12 @@ function mobileNav(to: string) {
   }
   .hamburger {
     display: flex;
+  }
+  .app-main {
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
   }
 }
 </style>

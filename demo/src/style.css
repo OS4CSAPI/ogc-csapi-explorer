@@ -26,12 +26,11 @@ body {
 
 @media (max-width: 768px) {
   body {
-    overflow: auto;
-    overflow: overlay;
+    overflow: hidden;
   }
   #app {
-    overflow: auto;
-    min-height: 100dvh;
-    height: auto;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
   }
 }

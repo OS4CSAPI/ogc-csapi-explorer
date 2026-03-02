@@ -2743,16 +2743,23 @@ async function createTestFeature() {
 @media (max-width: 768px) {
   .map-page {
     flex-direction: column;
+    height: calc(100vh - 53px);
+    height: calc(100dvh - 53px);
+    overflow: hidden;
   }
   .map-sidebar {
     width: 100%;
     min-width: unset;
     max-height: 35vh;
+    flex-shrink: 0;
     border-right: none;
     border-bottom: 1px solid #e2e8f0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .map-area {
-    min-height: 50vh;
+    flex: 1;
+    min-height: 0;
   }
 }
 </style>
