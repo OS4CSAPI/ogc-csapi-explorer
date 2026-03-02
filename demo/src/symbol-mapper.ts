@@ -206,22 +206,22 @@ export function getSymbolForResource(
   let sidc: string
 
   switch (resourceType) {
-    case 'systems': {
-      // Systems get keyword-based STANAG classification
+    case 'deployments': {
+      // Deployments get keyword-based STANAG classification
       const rule = matchKeywords(searchText, SYSTEM_RULES)
       if (rule) {
         sidc = rule.letterSidc
           ? rule.letterSidc
           : buildSIDC(rule.identity, rule.symbolSet, rule.entity, STATUS_PRESENT, MOD_NONE, rule.echelon)
       } else {
-        // Default system → friendly ground sensor
-        sidc = buildSIDC(SI_FRIEND, SS_LAND_EQUIPMENT, ENT_SENSOR)
+        // Default deployment → friendly land unit
+        sidc = buildSIDC(SI_FRIEND, SS_LAND_UNIT, ENT_UNIT_GENERIC)
       }
       break
     }
-    case 'deployments': {
-      // Deployments → friendly land unit (generic)
-      sidc = buildSIDC(SI_FRIEND, SS_LAND_UNIT, ENT_UNIT_GENERIC)
+    case 'systems': {
+      // Systems → friendly ground sensor (generic, but milsymbols not rendered for systems)
+      sidc = buildSIDC(SI_FRIEND, SS_LAND_EQUIPMENT, ENT_SENSOR)
       break
     }
     case 'procedures': {
