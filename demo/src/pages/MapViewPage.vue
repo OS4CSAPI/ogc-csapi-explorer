@@ -1225,11 +1225,11 @@ function buildDetectionRanges(): void {
   const deploySource = vectorSources['deployments']
   if (!deploySource) return
 
-  // Ring styles: dashed strokes, increasingly transparent fill for outer rings
+  // Ring styles: solid strokes with visible fills
   const ringStyles: Record<string, { dash: number[]; fillAlpha: number; strokeWidth: number }> = {
-    min:     { dash: [4, 4],  fillAlpha: 0.12, strokeWidth: 1.5 },
-    nominal: { dash: [8, 6],  fillAlpha: 0.07, strokeWidth: 1.5 },
-    max:     { dash: [12, 8], fillAlpha: 0.04, strokeWidth: 1 },
+    min:     { dash: [4, 4],  fillAlpha: 0.28, strokeWidth: 2 },
+    nominal: { dash: [8, 6],  fillAlpha: 0.18, strokeWidth: 1.5 },
+    max:     { dash: [12, 8], fillAlpha: 0.10, strokeWidth: 1.5 },
   }
   const ringColor = [96, 165, 250] // #60a5fa — friendly blue
 
@@ -1976,8 +1976,10 @@ onMounted(() => {
     let hit = false
     map!.forEachFeatureAtPixel(evt.pixel, (feature) => {
       if (hit) return // only handle first
-      // Skip bbox rectangle feature
-      if (!feature.get('resourceType')) return
+      // Skip bbox rectangle feature and non-interactive overlays
+      const rt = feature.get('resourceType')
+      if (!rt) return
+      if (rt === 'detectionRanges') return // static overlay — not selectable
       hit = true
 
       // Toggle: if clicking the already-selected feature, deselect it
