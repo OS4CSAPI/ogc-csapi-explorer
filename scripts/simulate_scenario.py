@@ -76,20 +76,49 @@ NODES = [
 ]
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  UAV trajectory — a gentle arc from SW to NE that passes through all 3
-#  detection envelopes.  Waypoints are interpolated at each tick.
+#  UAV trajectory — follows a river/wash channel from SW to NE, passing
+#  NORTH of all three sensor nodes through their overlapping 3 km detection
+#  envelopes.  Waypoints are interpolated at each tick.
+#
+#  Detection narrative (~2 km north of sensor line):
+#    1. SW approach      — outside all envelopes
+#    2. Enter MA-1       → brief single-node detection
+#    3. Enter MA-2       → dual triangulation  (MA-1 + MA-2)
+#    4. Enter MA-3       → TRIPLE detection    (climax)
+#    5. Exit  MA-1       → dual  (MA-2 + MA-3)
+#    6. Exit  MA-2       → single (MA-3 only)
+#    7. Exit  MA-3       → NE departure, outside all
+#
+#  Total path ≈ 10.8 km.  At --speed 12 use --duration 3600.
 # ═══════════════════════════════════════════════════════════════════════════
 
-# Waypoints: [lon, lat] — UAV flies WSW → ENE past all 3 nodes
+# Waypoints: (lon, lat) — UAV flies SW → NE along a wash/drainage channel
 UAV_WAYPOINTS = [
-    (-110.2850, 31.6450),   # start: ~1 km WSW of Node 1
-    (-110.2760, 31.6485),   # approach Node 1 from the south-west
-    (-110.2720, 31.6510),   # past Node 1, heading NE
-    (-110.2660, 31.6560),   # approaching Node 2
-    (-110.2620, 31.6590),   # past Node 2
-    (-110.2560, 31.6620),   # approaching Node 3
-    (-110.2510, 31.6645),   # past Node 3
-    (-110.2440, 31.6680),   # exit: ~1 km NE of Node 3
+    # ── Phase 1 — SW approach, outside all detection envelopes ────
+    (-110.3250, 31.6670),   # start: far SW, following wash channel
+    (-110.3120, 31.6680),   # heading NE along drainage
+    (-110.2980, 31.6695),   # nearing MA-1 outer boundary (~3.1 km)
+
+    # ── Phase 2 — Cross into MA-1, then quickly MA-2 ─────────────
+    (-110.2870, 31.6700),   # inside MA-1 (~2.6 km), approaching MA-2
+    (-110.2790, 31.6710),   # dual: MA-1 + MA-2
+
+    # ── Phase 3 — Dual detection zone (MA-1 + MA-2) ──────────────
+    (-110.2720, 31.6715),   # strong dual overlap
+    (-110.2670, 31.6710),   # river bends slightly toward sensor line
+
+    # ── Phase 4 — Triple detection: all three nodes active ────────
+    (-110.2580, 31.6700),   # enter MA-3: triple detection begins
+    (-110.2520, 31.6695),   # peak triple zone (closest to MA-3)
+
+    # ── Phase 5 — Exit MA-1, then MA-2 ───────────────────────────
+    (-110.2440, 31.6710),   # curving NE, leaving MA-1 (~3.9 km)
+    (-110.2340, 31.6740),   # leaving MA-2, MA-3 only
+
+    # ── Phase 6 — NE departure, outside all envelopes ────────────
+    (-110.2240, 31.6790),   # exiting MA-3 (~3.1 km)
+    (-110.2150, 31.6830),   # well clear of all detection
+    (-110.2050, 31.6850),   # end: far NE
 ]
 
 # ═══════════════════════════════════════════════════════════════════════════
