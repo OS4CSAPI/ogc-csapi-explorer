@@ -253,7 +253,7 @@ DEPLOYMENT_TREE = {
                     "children": [
                         {
                             "uid": "urn:os4csapi:deployment:set:ft-huachuca:001",
-                            "name": "SET-A Emplacement",
+                            "name": "SET-A",
                             "description": "Deployment node for the Sensor Employment Team (SET-A). "
                                            "Represents the physical emplacement of the SET location / TOC "
                                            "from which sensor data is received, analyzed, and SENREP reports "
@@ -271,15 +271,9 @@ DEPLOYMENT_TREE = {
                         },
                         {
                             "uid":  "urn:os4csapi:deployment:snet:ft-huachuca:001",
-                            "name": "Sensor Network/Net Deployment",
+                            "name": "Sensor Network",
                             "description": "Network-level grouping of sensors along communication paths.",
-                            "geometry": {
-                                "type": "LineString",
-                                "coordinates": [
-                                    [-110.2525675, 31.6383956],
-                                    [-110.2554653, 31.6429133]
-                                ]
-                            },
+                            "geometry": None,
                             "properties": {
                                 "deployedSystemUIDs": "urn:os4csapi:system:monitoring-site-node:ft-huachuca:001,"
                                                       "urn:os4csapi:system:relay:vhf-repeater:ft-huachuca:001"
@@ -330,7 +324,7 @@ DEPLOYMENT_TREE = {
                                 },
                                 {
                                     "uid":  "urn:os4csapi:deployment:string:ft-huachuca:001",
-                                    "name": "Sensor String Alpha (line-of-emplacement)",
+                                    "name": "Sensor String Alpha",
                                     "description": "Physical line of emplacement for sensors in Field 001.",
                                     "geometry": None,
                                     "properties": {},
@@ -342,7 +336,7 @@ DEPLOYMENT_TREE = {
                                                            "Sensor String Alpha, Ft Huachuca ODAS",
                                             "geometry": {
                                                 "type": "Point",
-                                                "coordinates": [-110.272897, 31.663006]
+                                                "coordinates": [-110.2758537, 31.6490196]
                                             },
                                             "properties": {
                                                 "platform@link": {
@@ -361,7 +355,7 @@ DEPLOYMENT_TREE = {
                                                            "Sensor String Alpha, Ft Huachuca ODAS",
                                             "geometry": {
                                                 "type": "Point",
-                                                "coordinates": [-110.272897, 31.662006]
+                                                "coordinates": [-110.2659979, 31.6569236]
                                             },
                                             "properties": {
                                                 "platform@link": {
@@ -380,7 +374,7 @@ DEPLOYMENT_TREE = {
                                                            "Sensor String Alpha, Ft Huachuca ODAS",
                                             "geometry": {
                                                 "type": "Point",
-                                                "coordinates": [-110.272897, 31.661006]
+                                                "coordinates": [-110.2515496, 31.6637961]
                                             },
                                             "properties": {
                                                 "platform@link": {
