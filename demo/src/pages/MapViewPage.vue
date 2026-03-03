@@ -102,7 +102,7 @@ const activeLayers = ref<Record<string, boolean>>({
   observationTracks: true,
   observationPoints: true,
   bearingLines: true,
-  detectionRanges: false,
+  detectionRanges: true,
 })
 
 // Cache: systemId → { lat, lon, alt?, datastreamName? }
@@ -154,9 +154,9 @@ const DETECTION_RANGE_CONFIGS: Record<string, DetectionRangeConfig> = {
   'urn:os4csapi:system:odas:az-ma-1': {
     shape: 'circular',
     rings: [
-      { label: 'min', radius_m: 20 },
-      { label: 'nominal', radius_m: 125 },
-      { label: 'max', radius_m: 250 },
+      { label: 'min', radius_m: 15 },
+      { label: 'nominal', radius_m: 40 },
+      { label: 'max', radius_m: 65 },
     ],
     altitude: { min_m: 0, max_m: null, ref: 'AGL' },
     confidence: 0.7,
@@ -166,9 +166,9 @@ const DETECTION_RANGE_CONFIGS: Record<string, DetectionRangeConfig> = {
   'urn:os4csapi:system:odas:az-ma-2': {
     shape: 'circular',
     rings: [
-      { label: 'min', radius_m: 20 },
-      { label: 'nominal', radius_m: 125 },
-      { label: 'max', radius_m: 250 },
+      { label: 'min', radius_m: 15 },
+      { label: 'nominal', radius_m: 40 },
+      { label: 'max', radius_m: 65 },
     ],
     altitude: { min_m: 0, max_m: null, ref: 'AGL' },
     confidence: 0.7,
@@ -178,9 +178,9 @@ const DETECTION_RANGE_CONFIGS: Record<string, DetectionRangeConfig> = {
   'urn:os4csapi:system:odas:az-ma-3': {
     shape: 'circular',
     rings: [
-      { label: 'min', radius_m: 20 },
-      { label: 'nominal', radius_m: 125 },
-      { label: 'max', radius_m: 250 },
+      { label: 'min', radius_m: 15 },
+      { label: 'nominal', radius_m: 40 },
+      { label: 'max', radius_m: 65 },
     ],
     altitude: { min_m: 0, max_m: null, ref: 'AGL' },
     confidence: 0.7,
