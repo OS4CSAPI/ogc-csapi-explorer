@@ -6,10 +6,7 @@ Publishes observations every INTERVAL seconds to the live Oracle server,
 simulating a UAV flying through the sensor network's detection ranges.
 
 Each tick generates:
-  • LOB observation on each AZ-MA node that can "see" the UAV
-  • Track Update observation on the same nodes
-  • Scene Summary observation (track count / activity level)
-  • Classification Probabilities per detecting node
+  • 1 LOB observation per detecting AZ-MA node (bearing from sensor to UAV)
 
 The webapp's Live Mode (5-second polling) will pick up each new observation
 and render it as bearing lines / observation points on the map.
@@ -429,7 +426,7 @@ def run_simulation(duration_s: int, interval_s: float, uav_speed_kmh: float, dry
 
     # ── Discover datastream IDs ──────────────────────────────────────
     print("Discovering datastream IDs...")
-    node_ds: dict[str, dict[str, str]] = {}  # node_uid → { outputName → ds_id }
+    node_ds: dict[str, str] = {}  # node_uid → lob_datastream_id
 
     for node in NODES:
         sys_id = find_system_id(node["uid"])
@@ -438,23 +435,16 @@ def run_simulation(duration_s: int, interval_s: float, uav_speed_kmh: float, dry
             sys.exit(1)
         print(f"  {node['name']}: system_id={sys_id}")
 
-        ds_map: dict[str, str] = {}
-        # Discover the datastreams we need
+        # Only discover the LOB datastream — 1 per sensor
         suffix = node["name"].lower().replace("-", "_")  # e.g., "az_ma_1"
-        for output_name in [
-            f"{suffix}_lob",
-            f"{suffix}_track_updates",
-            f"{suffix}_scene_summary",
-            f"{suffix}_classification_probabilities",
-        ]:
-            ds_id = find_datastream_id(sys_id, output_name)
-            if ds_id:
-                ds_map[output_name] = ds_id
-                print(f"    {output_name} → {ds_id}")
-            else:
-                print(f"    {output_name} → NOT FOUND (will skip)")
-
-        node_ds[node["uid"]] = ds_map
+        lob_name = f"{suffix}_lob"
+        ds_id = find_datastream_id(sys_id, lob_name)
+        if ds_id:
+            node_ds[node["uid"]] = ds_id
+            print(f"    {lob_name} → {ds_id}")
+        else:
+            print(f"    {lob_name} → NOT FOUND")
+            sys.exit(1)
 
     # ── Compute path metrics ─────────────────────────────────────────
     path_len = total_path_length_m(UAV_WAYPOINTS)
@@ -518,72 +508,21 @@ def run_simulation(duration_s: int, interval_s: float, uav_speed_kmh: float, dry
                       f"Detected by: {node_names}")
 
                 for node, dist in detecting_nodes:
-                    ds_map = node_ds.get(node["uid"], {})
-                    suffix = node["name"].lower().replace("-", "_")
+                    ds_id = node_ds.get(node["uid"])
+                    if not ds_id:
+                        continue
 
-                    # 1. LOB observation
-                    lob_key = f"{suffix}_lob"
-                    if lob_key in ds_map:
-                        obs = build_lob_observation(node, uav_lat, uav_lon, track_id=1)
-                        if dry_run:
-                            print(f"        [DRY] LOB → ds {ds_map[lob_key]}: "
-                                  f"bearing={obs['result']['bearingTrue']}°")
-                        else:
-                            try:
-                                api_post(f"datastreams/{ds_map[lob_key]}/observations", obs)
-                                stats["published"] += 1
-                            except Exception as e:
-                                print(f"        ERROR LOB: {e}")
-                                stats["errors"] += 1
-
-                    # 2. Track Update observation
-                    trk_key = f"{suffix}_track_updates"
-                    if trk_key in ds_map:
-                        obs = build_track_update_observation(
-                            node, uav_lat, uav_lon, track_id=1, frame_idx=tick)
-                        if dry_run:
-                            print(f"        [DRY] TRK → ds {ds_map[trk_key]}: "
-                                  f"class={obs['result']['classLabel']} "
-                                  f"conf={obs['result']['classConfidence']}")
-                        else:
-                            try:
-                                api_post(f"datastreams/{ds_map[trk_key]}/observations", obs)
-                                stats["published"] += 1
-                            except Exception as e:
-                                print(f"        ERROR TRK: {e}")
-                                stats["errors"] += 1
-
-                    # 3. Scene Summary
-                    ss_key = f"{suffix}_scene_summary"
-                    if ss_key in ds_map:
-                        activity = max(0.1, 1.0 - dist / node["detection_max_m"])
-                        obs = build_scene_summary_observation(
-                            track_count=1, activity_level=activity, frame_idx=tick)
-                        if dry_run:
-                            print(f"        [DRY] SSM → ds {ds_map[ss_key]}: "
-                                  f"activity={obs['result']['activityLevel']}")
-                        else:
-                            try:
-                                api_post(f"datastreams/{ds_map[ss_key]}/observations", obs)
-                                stats["published"] += 1
-                            except Exception as e:
-                                print(f"        ERROR SSM: {e}")
-                                stats["errors"] += 1
-
-                    # 4. Classification Probabilities
-                    cls_key = f"{suffix}_classification_probabilities"
-                    if cls_key in ds_map:
-                        obs = build_classification_observation(dist, track_id=1)
-                        if dry_run:
-                            print(f"        [DRY] CLS → ds {ds_map[cls_key]}: "
-                                  f"P(uas)={obs['result']['p_uas']}")
-                        else:
-                            try:
-                                api_post(f"datastreams/{ds_map[cls_key]}/observations", obs)
-                                stats["published"] += 1
-                            except Exception as e:
-                                print(f"        ERROR CLS: {e}")
-                                stats["errors"] += 1
+                    obs = build_lob_observation(node, uav_lat, uav_lon, track_id=1)
+                    if dry_run:
+                        print(f"        [DRY] LOB → ds {ds_id}: "
+                              f"bearing={obs['result']['bearingTrue']}°")
+                    else:
+                        try:
+                            api_post(f"datastreams/{ds_id}/observations", obs)
+                            stats["published"] += 1
+                        except Exception as e:
+                            print(f"        ERROR LOB: {e}")
+                            stats["errors"] += 1
             else:
                 print(f"  [{ts}] tick {tick:4d} | UAV at ({uav_lat:.6f}, {uav_lon:.6f}) | "
                       f"(no detection)")

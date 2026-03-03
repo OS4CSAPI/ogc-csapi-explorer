@@ -781,9 +781,15 @@ async function buildSystemLocationCache(): Promise<void> {
       }
     }
 
-    // Save location datastreams for observation track rendering
+    // Save ONLY LOB datastreams for observation/bearing rendering.
+    // Each sensor has exactly 1 LOB datastream → 1 bearing line per detection.
     locationDatastreamList = locationDs
-      .filter((ds: any) => ds['system@id'] || ds.system?.id)
+      .filter((ds: any) => {
+        const sysId = ds['system@id'] || ds.system?.id
+        if (!sysId) return false
+        const nm = (ds.name || ds.outputName || '').toLowerCase()
+        return nm.includes('lob') || nm.includes('bearing')
+      })
       .map((ds: any) => ({
         id: ds.id,
         name: ds.name || ds.outputName || 'Unknown',
