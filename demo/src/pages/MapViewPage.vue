@@ -1512,7 +1512,7 @@ async function loadControlStreams(): Promise<void> {
 // --- Bearing line helpers ---
 
 /** Length of bearing line visualization in meters */
-const BEARING_LINE_LENGTH_M = 1000
+const BEARING_LINE_LENGTH_M = 2000
 
 /**
  * Extract bearing/direction information from an observation result.
