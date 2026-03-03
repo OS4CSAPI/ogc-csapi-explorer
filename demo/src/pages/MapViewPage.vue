@@ -2547,6 +2547,9 @@ watch(selectedFeature, (feat) => {
           <button class="tak-fab" @click="useMilSymbols = !useMilSymbols; refreshAllStyles()" title="Symbols">
             <i class="pi pi-shield"></i>
           </button>
+          <button class="tak-fab" :class="{ 'tak-fab--live': liveMode }" @click="toggleLiveMode" title="Live Mode">
+            <i class="pi pi-bolt"></i>
+          </button>
         </div>
       </div>
 
@@ -2577,6 +2580,13 @@ watch(selectedFeature, (feat) => {
               </div>
               <div v-if="Object.values(enrichedCounts).some(c => c > 0)" class="tak-enrichment">
                 {{ Object.values(enrichedCounts).reduce((s, n) => s + n, 0) }} locations from observations
+              </div>
+              <div class="tak-live-row">
+                <button :class="['tak-live-btn', { active: liveMode }]" @click="toggleLiveMode">
+                  <i class="pi pi-bolt"></i>
+                  {{ liveMode ? 'LIVE' : 'Live Mode' }}
+                </button>
+                <span v-if="liveMode" class="tak-live-ts">{{ lastRefreshTime || '...' }}</span>
               </div>
             </div>
 
@@ -3497,6 +3507,49 @@ watch(selectedFeature, (feat) => {
     font-size: 0.72rem;
     color: #93c5fd;
     text-align: center;
+  }
+
+  /* ─── Live Mode (mobile) ─── */
+  .tak-live-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .tak-live-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06);
+    color: #cbd5e1;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tak-live-btn.active {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: rgba(34, 197, 94, 0.5);
+    color: #22c55e;
+    animation: tak-live-pulse 2s ease-in-out infinite;
+  }
+  .tak-live-ts {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    font-family: 'Courier New', monospace;
+  }
+  .tak-fab--live {
+    background: rgba(34, 197, 94, 0.25) !important;
+    border-color: rgba(34, 197, 94, 0.6) !important;
+    color: #22c55e !important;
+    animation: tak-live-pulse 2s ease-in-out infinite;
+  }
+  @keyframes tak-live-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+    50% { box-shadow: 0 0 8px 3px rgba(34, 197, 94, 0.2); }
   }
 
   /* ─── Filters ─── */
