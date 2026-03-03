@@ -1005,8 +1005,7 @@ async function enrichDeployments(): Promise<void> {
     // Rules:
     //   a) Native geometry exists → centroid of that geometry
     //   b) Has subdeployments or deployed systems → centroid of all those points
-    //   c) Is a subdeployment with no children/systems → inherits parent's centroid
-    //   d) Top-level with nothing → no geometry (user can set via update view)
+    //   c) No physical anchor → no geometry (organizational containers are not drawn)
 
     const resolvedCentroid: Record<string, { lon: number; lat: number }> = {}
 
@@ -1047,14 +1046,7 @@ async function enrichDeployments(): Promise<void> {
         return c
       }
 
-      // c) Is a subdeployment with no children/systems → inherit parent's centroid
-      const pid = parentMap[depId]
-      if (pid) {
-        const pc = resolveCentroid(pid, new Set(visited))
-        if (pc) { resolvedCentroid[depId] = pc; return pc }
-      }
-
-      // d) No parent, no children, no systems → no geometry
+      // c) No physical anchor → no geometry (organizational containers are not drawn)
       return null
     }
 
@@ -1069,17 +1061,6 @@ async function enrichDeployments(): Promise<void> {
       if (!bboxFilter.value) return true
       const [minX, minY, maxX, maxY] = bboxFilter.value
       return lon >= minX && lon <= maxX && lat >= minY && lat <= maxY
-    }
-
-    /** Deduplicate [lon,lat] points (within ~0.00001°) */
-    function dedup(pts: Array<{ lon: number; lat: number }>): Array<{ lon: number; lat: number }> {
-      const out: Array<{ lon: number; lat: number }> = []
-      for (const p of pts) {
-        if (!out.some(u => Math.abs(u.lon - p.lon) < 0.00001 && Math.abs(u.lat - p.lat) < 0.00001)) {
-          out.push(p)
-        }
-      }
-      return out
     }
 
     // First pass: add subdeployments with native geometry to the map
@@ -1101,7 +1082,9 @@ async function enrichDeployments(): Promise<void> {
     if (nativeGeoBatch.length) source.addFeatures(nativeGeoBatch)
     featureCounts.value['deployments'] = (featureCounts.value['deployments'] || 0) + nativeGeoBatch.length
 
-    // Second pass: derive geometry for all deployments that don't have native geometry
+    // Second pass: derive geometry for deployments that have a direct system link
+    // (platform@link, deployedSystems@link, or deployedSystemUIDs).
+    // Pure organizational containers (no native geometry, no system link) are NOT drawn.
     const derivedBatch: Feature[] = []
     for (const item of allItems) {
       if (extractGeometry(item)) continue
@@ -1109,49 +1092,28 @@ async function enrichDeployments(): Promise<void> {
       if (!depId) continue
       if (existingIds.has(depId)) continue
 
-      // Collect the representative points for THIS deployment's geometry:
-      // its direct children centroids + its deployed system locations
-      const points: Array<{ lon: number; lat: number }> = []
+      // Only draw deployments that have a direct physical anchor to a system
+      const props = item.properties || item || {}
+      const hasPlatformLink = !!props['platform@link']?.href
+      const hasDeployedSysLink = Array.isArray(props['deployedSystems@link']) && props['deployedSystems@link'].length > 0
+      const hasDeployedSysUIDs = typeof props['deployedSystemUIDs'] === 'string' && props['deployedSystemUIDs'].length > 0
+      if (!hasPlatformLink && !hasDeployedSysLink && !hasDeployedSysUIDs) continue
 
-      // Direct subdeployment centroids (already resolved)
-      for (const cid of (childrenMap[depId] || [])) {
-        const c = resolvedCentroid[cid]
-        if (c) points.push(c)
-      }
-
-      // Deployed system locations
-      points.push(...getDeployedSystemLocations(item))
-
-      // If still no points, inherit parent centroid (leaf subdeployment rule)
-      if (points.length === 0 && parentMap[depId]) {
-        const pc = resolvedCentroid[parentMap[depId]]
-        if (pc) points.push(pc)
-      }
-
-      const unique = dedup(points)
-      if (unique.length === 0) continue
+      // Use the resolved centroid (from deployed system location)
+      const centroid = resolvedCentroid[depId]
+      if (!centroid) continue
 
       // Bbox filter
-      if (bboxFilter.value && !unique.some(p => isInsideBbox(p.lon, p.lat))) continue
+      if (bboxFilter.value && !isInsideBbox(centroid.lon, centroid.lat)) continue
 
-      // Build OL geometry: Point if 1 location, LineString if multiple
-      let olGeom
-      if (unique.length === 1) {
-        olGeom = new Point(fromLonLat([unique[0].lon, unique[0].lat]))
-      } else {
-        olGeom = new LineString(unique.map(p => fromLonLat([p.lon, p.lat])))
-      }
-
+      const olGeom = new Point(fromLonLat([centroid.lon, centroid.lat]))
       const feature = new Feature({ geometry: olGeom })
       feature.setStyle(getStyle('deployments', false, item))
       feature.set('resourceType', 'deployments')
       feature.set('resourceId', depId)
       feature.set('resourceName', extractName(item))
       feature.set('rawData', item)
-      const desc = unique.length === 1
-        ? 'Derived point from 1 related resource'
-        : `Derived line connecting ${unique.length} related resource locations`
-      feature.set('enrichedFrom', desc)
+      feature.set('enrichedFrom', 'Derived point from linked system location')
       derivedBatch.push(feature)
       existingIds.add(depId)
     }
