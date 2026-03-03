@@ -138,7 +138,7 @@ const vectorSources: Record<string, VectorSource> = {}
 const vectorLayers: Record<string, VectorLayer> = {}
 
 // ── Live Mode (auto-refresh dynamic layers) ────────────────────────
-const liveMode = ref(false)
+const liveMode = ref(true)
 let liveInterval: ReturnType<typeof setInterval> | null = null
 const lastRefreshTime = ref('')
 const LIVE_REFRESH_MS = 5000
@@ -1823,10 +1823,16 @@ async function loadAllResources() {
   await Promise.all([
     loadDatastreams(),
     loadControlStreams(),
-    loadObservationLayers(),
+    loadObservationLayers(liveMode.value ? 10 : 500),
   ])
 
   loading.value = false
+
+  // Start live refresh interval if Live Mode is on by default
+  if (liveMode.value) {
+    lastRefreshTime.value = new Date().toLocaleTimeString()
+    liveInterval = setInterval(refreshLiveLayers, LIVE_REFRESH_MS)
+  }
 
   // Fit map to all features (merge extents directly — no intermediate VectorSource)
   let hasAnyFeatures = false
@@ -1956,6 +1962,8 @@ function toggleLiveMode() {
       liveInterval = null
     }
     lastRefreshTime.value = ''
+    // Reload full history when leaving live mode
+    loadObservationLayers(500)
   }
 }
 
