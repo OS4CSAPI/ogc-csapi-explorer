@@ -455,14 +455,12 @@ async function loadResourceType(resourceType: string): Promise<number> {
 
     const batch: Feature[] = []
     for (const item of items) {
-      // For deployments, only draw items with a direct physical system link.
-      // Organizational containers (no platform@link etc.) are handled by enrichDeployments.
+      // For deployments, only draw items with platform@link (physical emplacement).
+      // deployedSystemUIDs and deployedSystems@link are organizational references,
+      // not physical co-location indicators.
       if (resourceType === 'deployments') {
         const props = item.properties || item || {}
-        const hasPlatformLink = !!props['platform@link']?.href
-        const hasDeployedSysLink = Array.isArray(props['deployedSystems@link']) && props['deployedSystems@link'].length > 0
-        const hasDeployedSysUIDs = typeof props['deployedSystemUIDs'] === 'string' && props['deployedSystemUIDs'].length > 0
-        if (!hasPlatformLink && !hasDeployedSysLink && !hasDeployedSysUIDs) continue
+        if (!props['platform@link']?.href) continue
       }
       const feature = createOlFeature(item, resourceType)
       if (feature) batch.push(feature)
@@ -1080,12 +1078,10 @@ async function enrichDeployments(): Promise<void> {
       if (existingIds.has(subId)) continue
       const geom = extractGeometry(sub)
       if (!geom) continue
-      // Only draw if it has a direct physical anchor
+      // Only draw if it has platform@link (physical emplacement).
+      // deployedSystemUIDs and deployedSystems@link are organizational, not physical.
       const subProps = sub.properties || sub || {}
-      const hasPlatLink = !!subProps['platform@link']?.href
-      const hasDeploySysLink = Array.isArray(subProps['deployedSystems@link']) && subProps['deployedSystems@link'].length > 0
-      const hasDeploySysUIDs = typeof subProps['deployedSystemUIDs'] === 'string' && subProps['deployedSystemUIDs'].length > 0
-      if (!hasPlatLink && !hasDeploySysLink && !hasDeploySysUIDs) continue
+      if (!subProps['platform@link']?.href) continue
       const c = centroidFromGeometry(geom)
       if (c && bboxFilter.value && !isInsideBbox(c.lon, c.lat)) continue
       const feature = createOlFeature(sub, 'deployments')
@@ -1107,12 +1103,9 @@ async function enrichDeployments(): Promise<void> {
       if (!depId) continue
       if (existingIds.has(depId)) continue
 
-      // Only draw deployments that have a direct physical anchor to a system
+      // Only draw deployments with platform@link (physical emplacement)
       const props = item.properties || item || {}
-      const hasPlatformLink = !!props['platform@link']?.href
-      const hasDeployedSysLink = Array.isArray(props['deployedSystems@link']) && props['deployedSystems@link'].length > 0
-      const hasDeployedSysUIDs = typeof props['deployedSystemUIDs'] === 'string' && props['deployedSystemUIDs'].length > 0
-      if (!hasPlatformLink && !hasDeployedSysLink && !hasDeployedSysUIDs) continue
+      if (!props['platform@link']?.href) continue
 
       // Use the resolved centroid (from deployed system location)
       const centroid = resolvedCentroid[depId]
