@@ -410,7 +410,7 @@ def build_classification_observation(
 #  Main simulation loop
 # ═══════════════════════════════════════════════════════════════════════════
 
-def run_simulation(duration_s: int, interval_s: float, uav_speed_kmh: float, dry_run: bool):
+def run_simulation(duration_s: int, interval_s: float, uav_speed_kmh: float, dry_run: bool, start_offset_s: float = 0.0):
     """
     Discover datastream IDs, then run the simulation loop.
     """
@@ -474,6 +474,9 @@ def run_simulation(duration_s: int, interval_s: float, uav_speed_kmh: float, dry
     print("-" * 70)
     print()
 
+    if start_offset_s > 0:
+        print(f"  Start offset: {start_offset_s:.0f}s ({start_offset_s / 60:.1f} min into route)")
+
     stats = {"published": 0, "errors": 0, "detecting_ticks": 0}
     start_time = time.time()
     tick = 0
@@ -484,9 +487,9 @@ def run_simulation(duration_s: int, interval_s: float, uav_speed_kmh: float, dry
             if elapsed >= duration_s:
                 break
 
-            # ── Compute UAV position ──────────────────────────────────
-            # Distance travelled so far
-            dist_travelled = elapsed * uav_speed_ms
+            # ── Compute UAV position ────────────────────────────────────────
+            # Distance travelled so far (add offset to skip approach phase)
+            dist_travelled = (elapsed + start_offset_s) * uav_speed_ms
             # Fraction along path (modular for looping)
             fraction = (dist_travelled % path_len) / path_len
             uav_lon, uav_lat = interpolate_position(UAV_WAYPOINTS, fraction)
@@ -566,6 +569,8 @@ def main():
                         help="UAV ground speed in km/h (default: 12)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print observations instead of POSTing them")
+    parser.add_argument("--start-offset", type=float, default=0.0,
+                        help="Skip N seconds into route (skip approach phase, e.g., 800)")
     args = parser.parse_args()
 
     run_simulation(
@@ -573,6 +578,7 @@ def main():
         interval_s=args.interval,
         uav_speed_kmh=args.speed,
         dry_run=args.dry_run,
+        start_offset_s=args.start_offset,
     )
 
 
