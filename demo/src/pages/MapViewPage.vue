@@ -154,9 +154,9 @@ const DETECTION_RANGE_CONFIGS: Record<string, DetectionRangeConfig> = {
   'urn:os4csapi:system:odas:az-ma-1': {
     shape: 'circular',
     rings: [
-      { label: 'min', radius_m: 250 },
-      { label: 'nominal', radius_m: 1500 },
-      { label: 'max', radius_m: 3000 },
+      { label: 'min', radius_m: 20 },
+      { label: 'nominal', radius_m: 125 },
+      { label: 'max', radius_m: 250 },
     ],
     altitude: { min_m: 0, max_m: null, ref: 'AGL' },
     confidence: 0.7,
@@ -166,9 +166,9 @@ const DETECTION_RANGE_CONFIGS: Record<string, DetectionRangeConfig> = {
   'urn:os4csapi:system:odas:az-ma-2': {
     shape: 'circular',
     rings: [
-      { label: 'min', radius_m: 250 },
-      { label: 'nominal', radius_m: 1500 },
-      { label: 'max', radius_m: 3000 },
+      { label: 'min', radius_m: 20 },
+      { label: 'nominal', radius_m: 125 },
+      { label: 'max', radius_m: 250 },
     ],
     altitude: { min_m: 0, max_m: null, ref: 'AGL' },
     confidence: 0.7,
@@ -178,9 +178,9 @@ const DETECTION_RANGE_CONFIGS: Record<string, DetectionRangeConfig> = {
   'urn:os4csapi:system:odas:az-ma-3': {
     shape: 'circular',
     rings: [
-      { label: 'min', radius_m: 250 },
-      { label: 'nominal', radius_m: 1500 },
-      { label: 'max', radius_m: 3000 },
+      { label: 'min', radius_m: 20 },
+      { label: 'nominal', radius_m: 125 },
+      { label: 'max', radius_m: 250 },
     ],
     altitude: { min_m: 0, max_m: null, ref: 'AGL' },
     confidence: 0.7,
@@ -1979,6 +1979,12 @@ onMounted(() => {
       // Skip bbox rectangle feature
       if (!feature.get('resourceType')) return
       hit = true
+
+      // Toggle: if clicking the already-selected feature, deselect it
+      if (selectedFeature.value?._olFeature === feature) {
+        closePopup()
+        return
+      }
 
       const resourceType = feature.get('resourceType')
       const rawData = feature.get('rawData')

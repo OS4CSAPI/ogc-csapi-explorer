@@ -459,17 +459,17 @@ function otherConformance(classes: string[]): string[] {
 
         <div v-if="!selectedPreset?.proxyPath" class="form-row">
           <label>Custom URL</label>
-          <InputText v-model="customUrl" placeholder="https://example.com/api" class="w-full" />
+          <InputText v-model="customUrl" placeholder="https://example.com/api" class="w-full" @keyup.enter="connect" />
         </div>
 
         <div class="auth-row">
           <div class="form-row">
             <label>Username</label>
-            <InputText v-model="username" placeholder="optional" class="w-full" autocapitalize="none" />
+            <InputText v-model="username" placeholder="optional" class="w-full" autocapitalize="none" @keyup.enter="connect" />
           </div>
           <div class="form-row">
             <label>Password</label>
-            <Password v-model="password" :feedback="false" toggleMask placeholder="optional" class="w-full" />
+            <Password v-model="password" :feedback="false" toggleMask placeholder="optional" class="w-full" @keyup.enter="connect" />
           </div>
         </div>
 
