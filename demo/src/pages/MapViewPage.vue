@@ -1746,7 +1746,11 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         }
 
         // --- Bearing lines: acoustic detection directions ---
-        if (bearingSource && obs.result) {
+        // Only extract LOBs from LOB datastreams — Track Updates duplicate the
+        // bearings at slightly different angles, doubling the line count.
+        const dsNameLower = dsInfo.name.toLowerCase()
+        const isLobDatastream = dsNameLower.includes('lob') || dsNameLower.includes('bearing')
+        if (bearingSource && obs.result && isLobDatastream) {
           // Prefer systemLocationCache; fall back to self-contained sensorLat/sensorLon (v2.3 LOB format)
           const sensorLoc = systemLocationCache[dsInfo.systemId]
             || (typeof obs.result.sensorLat === 'number' && typeof obs.result.sensorLon === 'number'
