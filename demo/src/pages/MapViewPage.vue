@@ -227,6 +227,29 @@ function getCachedBearingLineStyle(energy: number): Style {
   return s
 }
 
+// Recency-based bearing-line styles: newest = bright & thick, oldest = faded & thin
+// Key: 100 * ageBucket + energyBucket (composite key to cache both dimensions)
+const recencyStyleCache = new Map<number, Style>()
+function getRecencyBearingStyle(energy: number, recency: number): Style {
+  // recency: 1.0 = newest, 0.0 = oldest in the batch
+  const eBucket = Math.round(Math.min(energy, 1) * 10)
+  const rBucket = Math.round(Math.min(recency, 1) * 10)
+  const key = rBucket * 100 + eBucket
+  let s = recencyStyleCache.get(key)
+  if (s) return s
+  // Newest: bright red, wide; Oldest: gray-blue, thin, transparent
+  const freshR = 244, freshG = 63,  freshB = 94   // rose #f43f5e
+  const staleR = 148, staleG = 163, staleB = 184  // gray #94a3b8
+  const r = Math.round(staleR + (freshR - staleR) * recency)
+  const g = Math.round(staleG + (freshG - staleG) * recency)
+  const b = Math.round(staleB + (freshB - staleB) * recency)
+  const opacity = 0.15 + recency * 0.75
+  const width = 1 + recency * 2.5
+  s = new Style({ stroke: new Stroke({ color: `rgba(${r}, ${g}, ${b}, ${opacity})`, width }) })
+  recencyStyleCache.set(key, s)
+  return s
+}
+
 // Basemap toggle (OSM vs satellite)
 const useSatellite = ref(false)
 let osmLayer: TileLayer | null = null
@@ -1632,7 +1655,7 @@ function getBearingLineStyle(energy: number): Style {
  * Fetches recent observations from all location datastreams once and builds
  * both layers from the same data to avoid duplicate API calls.
  */
-async function loadObservationLayers(): Promise<void> {
+async function loadObservationLayers(obsLimit = 500): Promise<void> {
   const pointSource = vectorSources['observationPoints']
   const trackSource = vectorSources['observationTracks']
   const bearingSource = vectorSources['bearingLines']
@@ -1640,13 +1663,14 @@ async function loadObservationLayers(): Promise<void> {
   if (trackSource) trackSource.clear()
   if (bearingSource) bearingSource.clear()
 
+  const isLive = liveMode.value
   let pointCount = 0
   let trackCount = 0
   let bearingCount = 0
 
   const promises = locationDatastreamList.map(async (dsInfo) => {
     try {
-      const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=500`, {
+      const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=${obsLimit}`, {
         headers: { 'Accept': 'application/om+json' },
       })
       if (!obsRes.ok || !obsRes.data) return
@@ -1654,7 +1678,8 @@ async function loadObservationLayers(): Promise<void> {
       const items = obsRes.data.items || []
       const trackCoords: [number, number][] = []
 
-      for (const obs of items) {
+      for (let obsIdx = 0; obsIdx < items.length; obsIdx++) {
+        const obs = items[obsIdx]
         // --- Observation points: results with lat/lon coordinates ---
         const loc = extractLatLonFromResult(obs.result)
         if (loc) {
@@ -1710,7 +1735,10 @@ async function loadObservationLayers(): Promise<void> {
                   fromLonLat([ep.lon, ep.lat]),
                 ]),
               })
-              feature.setStyle(getCachedBearingLineStyle(b.energy))
+              const bearingStyle = isLive
+                ? getRecencyBearingStyle(b.energy, items.length > 1 ? (obsIdx / (items.length - 1)) : 1)
+                : getCachedBearingLineStyle(b.energy)
+              feature.setStyle(bearingStyle)
               feature.set('resourceType', 'bearingLines')
               feature.set('resourceId', `${dsInfo.id}-lob-${bearingCount}`)
               const label = b.classLabel
@@ -1909,7 +1937,9 @@ function refreshAllStyles() {
 // ── Live Mode toggle ─────────────────────────────────────────────
 async function refreshLiveLayers() {
   try {
-    await loadObservationLayers()
+    // In live mode, only fetch the latest 10 observations per datastream
+    // for a tight, real-time view instead of the full 500 history
+    await loadObservationLayers(10)
     lastRefreshTime.value = new Date().toLocaleTimeString()
   } catch { /* swallow errors during background refresh */ }
 }
