@@ -574,6 +574,10 @@ function isLocationRelatedDatastream(ds: any): boolean {
   const name = (ds.name || ds.outputName || '').toLowerCase()
   // Classic GPS/location keywords
   if (name.includes('gps_data') || name.includes('location') || name.includes('position')) return true
+  // Bearing / detection datastreams (LOB, SST, SSL, Track Updates, Scene Summary, Classification)
+  if (name.includes('lob') || name.includes('track') || name.includes('ssl')
+    || name.includes('sst') || name.includes('scene') || name.includes('classification')
+    || name.includes('bearing')) return true
 
   const props: any[] = ds.observedProperties || []
   return props.some((p: any) => {
@@ -583,6 +587,8 @@ function isLocationRelatedDatastream(ds: any): boolean {
       || def.includes('geodeticlatitude') || def.includes('latitude')
       || def.includes('longitude') || def.includes('geolocation')
       || label.includes('latitude') || label.includes('longitude')
+      || def.includes('bearingtrue') || def.includes('lobrecord')
+      || def.includes('trackedso') || def.includes('trackupdate')
   })
 }
 
