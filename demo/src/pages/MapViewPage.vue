@@ -1599,6 +1599,7 @@ function extractBearings(result: any): Array<{ azimuth: number; elevation: numbe
       elevation: 0,
       energy: 1.0, // LOB has no energy field; use full opacity
       sourceId: result.trackId,
+      classLabel: 'UAS', // All LOB datastreams in this deployment detect UAS
     })
     return bearings
   }
@@ -1780,8 +1781,8 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
               feature.set('resourceType', 'bearingLines')
               feature.set('resourceId', `${dsInfo.id}-lob-${bearingCount}`)
               const label = b.classLabel
-                ? `${b.classLabel} ${b.azimuth.toFixed(1)}° (conf ${(b.classConfidence ?? 0).toFixed(2)})`
-                : `Bearing ${b.azimuth.toFixed(1)}° (energy ${b.energy.toFixed(2)})`
+                ? `Bearing ${b.azimuth.toFixed(1)}° — Classification: ${b.classLabel}`
+                : `Bearing ${b.azimuth.toFixed(1)}°`
               feature.set('resourceName', label)
               feature.set('enriched', true)
               feature.set('enrichmentSource', dsInfo.name)

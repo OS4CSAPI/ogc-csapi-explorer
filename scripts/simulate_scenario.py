@@ -30,7 +30,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  Server configuration (matches bootstrap_v4.py)
@@ -179,53 +179,75 @@ def interpolate_position(waypoints: list[tuple[float, float]], fraction: float) 
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  HTTP helpers
+#  HTTP helpers (with retry for transient DNS / network failures)
 # ═══════════════════════════════════════════════════════════════════════════
 
 _AUTH_HEADER = "Basic " + base64.b64encode(f"{AUTH_USER}:{AUTH_PASS}".encode()).decode()
+_MAX_RETRIES = 5
+_RETRY_DELAY = 3  # seconds, multiplied by attempt number
+
+
+def _with_retry(fn, label="request"):
+    """Execute *fn* with retries on transient network errors."""
+    for attempt in range(_MAX_RETRIES):
+        try:
+            return fn()
+        except HTTPError:
+            raise  # HTTP-level errors are not transient
+        except (URLError, OSError, ConnectionError, TimeoutError) as e:
+            if attempt < _MAX_RETRIES - 1:
+                wait = _RETRY_DELAY * (attempt + 1)
+                print(f"  ↻ Retry {label} in {wait}s ({type(e).__name__})")
+                time.sleep(wait)
+            else:
+                raise
 
 
 def api_get(path: str) -> dict | None:
     """GET from the SensorHub API. Returns parsed JSON or None on 404."""
-    url = f"{BASE_URL}/{path}"
-    req = Request(url, headers={
-        "Authorization": _AUTH_HEADER,
-        "Accept": "application/json",
-    })
-    try:
-        with urlopen(req, timeout=15, context=_ssl_ctx) as resp:
-            return json.loads(resp.read().decode())
-    except HTTPError as e:
-        if e.code == 404:
-            return None
-        raise
+    def fn():
+        url = f"{BASE_URL}/{path}"
+        req = Request(url, headers={
+            "Authorization": _AUTH_HEADER,
+            "Accept": "application/json",
+        })
+        try:
+            with urlopen(req, timeout=15, context=_ssl_ctx) as resp:
+                return json.loads(resp.read().decode())
+        except HTTPError as e:
+            if e.code == 404:
+                return None
+            raise
+    return _with_retry(fn, f"GET {path}")
 
 
 def api_post(path: str, body: dict, content_type: str = "application/om+json") -> dict | str | None:
     """POST to the SensorHub API. Returns parsed JSON or location header."""
-    url = f"{BASE_URL}/{path}"
-    data = json.dumps(body).encode()
-    req = Request(url, data=data, method="POST", headers={
-        "Authorization": _AUTH_HEADER,
-        "Content-Type": content_type,
-        "Accept": "application/json",
-    })
-    try:
-        with urlopen(req, timeout=15, context=_ssl_ctx) as resp:
-            location = resp.headers.get("Location", "")
-            raw = resp.read().decode()
-            if location:
-                return {"id": location.rstrip("/").split("/")[-1], "_location": location}
-            if resp.status == 204 or not raw.strip():
-                return None
-            return json.loads(raw)
-    except HTTPError as e:
-        body_text = ""
+    def fn():
+        url = f"{BASE_URL}/{path}"
+        data = json.dumps(body).encode()
+        req = Request(url, data=data, method="POST", headers={
+            "Authorization": _AUTH_HEADER,
+            "Content-Type": content_type,
+            "Accept": "application/json",
+        })
         try:
-            body_text = e.read().decode()
-        except Exception:
-            pass
-        raise RuntimeError(f"HTTP {e.code} POST {url}: {body_text[:300]}")
+            with urlopen(req, timeout=15, context=_ssl_ctx) as resp:
+                location = resp.headers.get("Location", "")
+                raw = resp.read().decode()
+                if location:
+                    return {"id": location.rstrip("/").split("/")[-1], "_location": location}
+                if resp.status == 204 or not raw.strip():
+                    return None
+                return json.loads(raw)
+        except HTTPError as e:
+            body_text = ""
+            try:
+                body_text = e.read().decode()
+            except Exception:
+                pass
+            raise RuntimeError(f"HTTP {e.code} POST {url}: {body_text[:300]}")
+    return _with_retry(fn, f"POST {path}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
