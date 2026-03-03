@@ -1670,12 +1670,40 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
 
   const promises = locationDatastreamList.map(async (dsInfo) => {
     try {
-      const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=${obsLimit}`, {
-        headers: { 'Accept': 'application/om+json' },
-      })
-      if (!obsRes.ok || !obsRes.data) return
+      let items: any[] = []
 
-      const items = obsRes.data.items || []
+      if (isLive) {
+        // Live Mode: API returns observations oldest-first and ignores sort
+        // params, so limit=N always returns the N oldest — useless for live.
+        // Fix: discover the latest timestamp, then fetch a recent time window.
+        const latestRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?resultTime=latest&limit=1`, {
+          headers: { 'Accept': 'application/om+json' },
+        })
+        if (!latestRes.ok || !latestRes.data?.items?.length) return
+        const latestTime = latestRes.data.items[0].resultTime || latestRes.data.items[0].phenomenonTime
+        if (!latestTime) return
+
+        // Fetch a 5-minute window ending just past the latest observation
+        const latestMs = new Date(latestTime).getTime()
+        const windowStart = new Date(latestMs - 5 * 60 * 1000).toISOString()
+        const windowEnd = new Date(latestMs + 1000).toISOString()
+        const timeFilter = encodeURIComponent(`${windowStart}/${windowEnd}`)
+        const obsRes = await apiFetch(
+          `/datastreams/${dsInfo.id}/observations?resultTime=${timeFilter}&limit=200`,
+          { headers: { 'Accept': 'application/om+json' } },
+        )
+        if (obsRes.ok && obsRes.data) {
+          // Slice to keep only the last N (most recent) observations
+          items = (obsRes.data.items || []).slice(-obsLimit)
+        }
+      } else {
+        const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=${obsLimit}`, {
+          headers: { 'Accept': 'application/om+json' },
+        })
+        if (!obsRes.ok || !obsRes.data) return
+        items = obsRes.data.items || []
+      }
+
       const trackCoords: [number, number][] = []
 
       for (let obsIdx = 0; obsIdx < items.length; obsIdx++) {
