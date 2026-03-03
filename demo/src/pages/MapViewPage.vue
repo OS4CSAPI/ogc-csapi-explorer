@@ -16,7 +16,7 @@ import XYZ from 'ol/source/XYZ'
 import { fromLonLat, toLonLat } from 'ol/proj'
 import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
-import Polygon from 'ol/geom/Polygon'
+import Polygon, { circular as circularPolygon } from 'ol/geom/Polygon'
 import LineString from 'ol/geom/LineString'
 import { Style, Circle as CircleStyle, Fill, Stroke, Text as OlText, Icon as OlIcon } from 'ol/style'
 import Overlay from 'ol/Overlay'
@@ -58,8 +58,11 @@ const OBS_TRACK_ENTRY = { key: 'observationTracks', label: 'Obs. Track', plural:
 const OBS_POINTS_ENTRY = { key: 'observationPoints', label: 'Observation', plural: 'Observations', icon: 'pi pi-circle', part: 2 as const, readOnly: true }
 const LOB_ENTRY = { key: 'bearingLines', label: 'Bearing', plural: 'Lines of Bearing', icon: 'pi pi-compass', part: 2 as const, readOnly: true }
 
+// Detection range layer entry (not a real API resource type)
+const DETECTION_RANGES_ENTRY = { key: 'detectionRanges', label: 'Det. Range', plural: 'Detection Ranges', icon: 'pi pi-circle', part: 2 as const, readOnly: true }
+
 // All types visible on the map
-const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY, LOB_ENTRY]
+const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY, LOB_ENTRY, DETECTION_RANGES_ENTRY]
 
 // Color map for resource types
 const TYPE_COLORS: Record<string, string> = {
@@ -72,6 +75,7 @@ const TYPE_COLORS: Record<string, string> = {
   observationTracks: '#06b6d4', // cyan
   observationPoints: '#ec4899', // pink
   bearingLines: '#f43f5e',      // rose
+  detectionRanges: '#60a5fa',    // friendly blue (2525E)
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -84,6 +88,7 @@ const TYPE_LABELS: Record<string, string> = {
   observationTracks: '~',
   observationPoints: 'O',
   bearingLines: '►',
+  detectionRanges: '◎',
 }
 
 // Active layer toggles
@@ -97,6 +102,7 @@ const activeLayers = ref<Record<string, boolean>>({
   observationTracks: true,
   observationPoints: true,
   bearingLines: true,
+  detectionRanges: false,
 })
 
 // Cache: systemId → { lat, lon, alt?, datastreamName? }
@@ -130,6 +136,58 @@ const bboxLayer = new VectorLayer({
 // Vector sources per type so we can toggle layers
 const vectorSources: Record<string, VectorSource> = {}
 const vectorLayers: Record<string, VectorLayer> = {}
+
+// ── Detection Range Configuration ──────────────────────────────────
+// Client-side config: keyed by system UID.
+// When the server supports custom properties, this can be replaced with
+// a read from the system's `detectionRange` property.
+interface DetectionRing { label: string; radius_m: number }
+interface DetectionRangeConfig {
+  shape: 'circular'
+  rings: DetectionRing[]
+  altitude?: { min_m: number; max_m: number | null; ref: string }
+  confidence?: number
+  basis?: string
+  asOf?: string
+}
+const DETECTION_RANGE_CONFIGS: Record<string, DetectionRangeConfig> = {
+  'urn:os4csapi:system:odas:az-ma-1': {
+    shape: 'circular',
+    rings: [
+      { label: 'min', radius_m: 250 },
+      { label: 'nominal', radius_m: 1500 },
+      { label: 'max', radius_m: 3000 },
+    ],
+    altitude: { min_m: 0, max_m: null, ref: 'AGL' },
+    confidence: 0.7,
+    basis: 'estimated',
+    asOf: '2026-03-02T18:00:00Z',
+  },
+  'urn:os4csapi:system:odas:az-ma-2': {
+    shape: 'circular',
+    rings: [
+      { label: 'min', radius_m: 250 },
+      { label: 'nominal', radius_m: 1500 },
+      { label: 'max', radius_m: 3000 },
+    ],
+    altitude: { min_m: 0, max_m: null, ref: 'AGL' },
+    confidence: 0.7,
+    basis: 'estimated',
+    asOf: '2026-03-02T18:00:00Z',
+  },
+  'urn:os4csapi:system:odas:az-ma-3': {
+    shape: 'circular',
+    rings: [
+      { label: 'min', radius_m: 250 },
+      { label: 'nominal', radius_m: 1500 },
+      { label: 'max', radius_m: 3000 },
+    ],
+    altitude: { min_m: 0, max_m: null, ref: 'AGL' },
+    confidence: 0.7,
+    basis: 'estimated',
+    asOf: '2026-03-02T18:00:00Z',
+  },
+}
 
 // Enable/disable milsymbol rendering (toggle for A/B comparison)
 const useMilSymbols = ref(true)
@@ -1151,6 +1209,106 @@ async function enrichDeployments(): Promise<void> {
   } catch { /* skip */ }
 }
 
+/**
+ * Build detection range ring features for deployments that link to systems
+ * with known detection range configurations.
+ *
+ * For each deployment emplacement with platform@link, resolve the linked
+ * system's UID, look up the detection range config, and draw geodesic
+ * circle polygons at the deployment's location.
+ */
+function buildDetectionRanges(): void {
+  const source = vectorSources['detectionRanges']
+  if (!source) return
+  source.clear()
+
+  const deploySource = vectorSources['deployments']
+  if (!deploySource) return
+
+  // Ring styles: dashed strokes, increasingly transparent fill for outer rings
+  const ringStyles: Record<string, { dash: number[]; fillAlpha: number; strokeWidth: number }> = {
+    min:     { dash: [4, 4],  fillAlpha: 0.12, strokeWidth: 1.5 },
+    nominal: { dash: [8, 6],  fillAlpha: 0.07, strokeWidth: 1.5 },
+    max:     { dash: [12, 8], fillAlpha: 0.04, strokeWidth: 1 },
+  }
+  const ringColor = [96, 165, 250] // #60a5fa — friendly blue
+
+  const batch: Feature[] = []
+
+  for (const depFeature of deploySource.getFeatures()) {
+    const rawData = depFeature.get('rawData')
+    if (!rawData) continue
+
+    const props = rawData.properties || rawData || {}
+    const plat = props['platform@link']
+    if (!plat?.uid) continue
+
+    const config = DETECTION_RANGE_CONFIGS[plat.uid]
+    if (!config || config.shape !== 'circular') continue
+
+    // Get deployment location in EPSG:4326
+    const geom = depFeature.getGeometry()
+    if (!geom) continue
+    const coords = (geom as Point).getCoordinates()
+    const lonLat = toLonLat(coords)
+    const lon = lonLat[0]!, lat = lonLat[1]!
+
+    // Create a feature for each ring
+    for (const ring of config.rings) {
+      // circularPolygon returns a Polygon in EPSG:4326
+      const circle4326 = circularPolygon([lon, lat], ring.radius_m, 64)
+      // Transform to map projection (EPSG:3857)
+      circle4326.transform('EPSG:4326', 'EPSG:3857')
+
+      const feature = new Feature({ geometry: circle4326 })
+      const styleDef = ringStyles[ring.label] ?? ringStyles['max']!
+      feature.setStyle(new Style({
+        stroke: new Stroke({
+          color: `rgba(${ringColor.join(',')}, 0.8)`,
+          width: styleDef.strokeWidth,
+          lineDash: styleDef.dash,
+        }),
+        fill: new Fill({
+          color: `rgba(${ringColor.join(',')}, ${styleDef.fillAlpha})`,
+        }),
+      }))
+      feature.set('resourceType', 'detectionRanges')
+      feature.set('resourceId', `${extractId(rawData)}-range-${ring.label}`)
+      feature.set('resourceName', `${extractName(rawData)} — ${ring.label} (${ring.radius_m}m)`)
+      feature.set('rawData', {
+        properties: {
+          name: `${extractName(rawData)} — ${ring.label} detection range`,
+          radius_m: ring.radius_m,
+          confidence: config.confidence,
+          basis: config.basis,
+          asOf: config.asOf,
+          systemUid: plat.uid,
+          altitude: config.altitude,
+        }
+      })
+
+      // Add range label at the top of the circle (north)
+      const labelCoord = fromLonLat([lon, lat + (ring.radius_m / 111320)]) // rough meter-to-degree
+      const labelFeature = new Feature({ geometry: new Point(labelCoord) })
+      labelFeature.setStyle(new Style({
+        text: new OlText({
+          text: `${ring.label.toUpperCase()} ${ring.radius_m}m`,
+          font: '11px sans-serif',
+          fill: new Fill({ color: `rgba(${ringColor.join(',')}, 0.9)` }),
+          stroke: new Stroke({ color: '#fff', width: 2.5 }),
+          offsetY: -6,
+        }),
+      }))
+      labelFeature.set('resourceType', 'detectionRanges')
+
+      batch.push(feature, labelFeature)
+    }
+  }
+
+  if (batch.length) source.addFeatures(batch)
+  featureCounts.value['detectionRanges'] = batch.length / 2 // each ring = polygon + label
+}
+
 async function enrichSamplingFeatures(): Promise<void> {
   const source = vectorSources['samplingFeatures']
   if (!source) return
@@ -1618,6 +1776,9 @@ async function loadAllResources() {
   // 3. Enrich Part 1 resource types that have null geometry
   await enrichResourcesWithLocations()
 
+  // 3b. Build detection range rings from deployment emplacements
+  buildDetectionRanges()
+
   // 4. Load Part 2 resources at parent system locations + observation layers
   await Promise.all([
     loadDatastreams(),
@@ -1759,7 +1920,7 @@ onMounted(() => {
     vectorSources[rt.key] = source
     const layer = new VectorLayer({
       source,
-      zIndex: rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : 10,
+      zIndex: rt.key === 'detectionRanges' ? 3 : rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : 10,
       // Deployments: no declutter so STANAG symbols are never hidden by label overlap
       declutter: labeledTypes.has(rt.key),
       updateWhileAnimating: false,
@@ -2049,6 +2210,16 @@ watch(selectedFeature, (feat) => {
           <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS[rt.key] }"></span>
           <span class="layer-label">{{ rt.plural }}</span>
           <span class="layer-count">{{ featureCounts[rt.key] ?? '—' }}</span>
+        </button>
+
+        <div class="layer-section-label" style="margin-top: 0.5rem;">Overlays</div>
+        <button
+          :class="['layer-toggle', { inactive: !activeLayers['detectionRanges'] }]"
+          @click="toggleLayer('detectionRanges')"
+        >
+          <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS['detectionRanges'] }"></span>
+          <span class="layer-label">Detection Ranges</span>
+          <span class="layer-count">{{ featureCounts['detectionRanges'] ?? '—' }}</span>
         </button>
       </div>
 
