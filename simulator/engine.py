@@ -280,5 +280,6 @@ def build_lob_observation(
             "bearingStdDev": round(std_dev, 2),
             "sensorLat": node["lat"],
             "sensorLon": node["lon"],
+            "classification": "UAS",
         },
     }

@@ -17,9 +17,10 @@ AUTH = ("os4csapi", "ogc134mm")
 # All datastream IDs on the server
 ALL_DS_IDS = [
     "044g",  # SENREP
-    "0430", "043g", "0420", "0440", "0410", "041g", "042g",  # MA-1
-    "0450", "045g", "0460", "046g", "0470", "047g", "0480",  # MA-2
-    "048g", "0490", "049g", "04a0", "04ag", "04b0", "04bg",  # MA-3
+    "0430", "043g", "04c0", "0440", "0410", "041g", "042g",  # MA-1 (04c0 = LOB, was 0420)
+    "0450", "045g", "04cg", "046g", "0470", "047g", "0480",  # MA-2 (04cg = LOB, was 0460)
+    "048g", "0490", "04d0", "04a0", "04ag", "04b0", "04bg",  # MA-3 (04d0 = LOB, was 049g)
+    "04dg", "04e0", "04eg",  # Detection capabilities (MA-1, MA-2, MA-3)
 ]
 
 
@@ -30,11 +31,23 @@ def make_session():
     s.headers.update({"Accept": "application/json"})
     adapter = requests.adapters.HTTPAdapter(
         pool_connections=1, pool_maxsize=1,
-        max_retries=urllib3.Retry(total=3, backoff_factor=1,
+        max_retries=urllib3.Retry(total=5, backoff_factor=2,
                                    status_forcelist=[502, 503, 504]),
     )
     s.mount("https://", adapter)
     return s
+
+
+def _retry(fn, label="request", max_retries=8, base_delay=3):
+    """Run fn() with retries on transient DNS / connection errors."""
+    for attempt in range(max_retries):
+        try:
+            return fn()
+        except (requests.ConnectionError, requests.Timeout, OSError) as e:
+            wait = base_delay * (attempt + 1)
+            print(f"    ↻ Retry {label} in {wait}s ({type(e).__name__})")
+            time.sleep(wait)
+    raise RuntimeError(f"Failed after {max_retries} retries: {label}")
 
 
 def clear_datastream(ds_id, session):
@@ -42,18 +55,26 @@ def clear_datastream(ds_id, session):
     total = 0
     consecutive_errors = 0
 
-    while consecutive_errors < 5:
-        # Fetch a batch
+    while consecutive_errors < 10:
+        # Fetch a batch with DNS-resilient retry
         try:
-            r = session.get(
-                f"{BASE}/datastreams/{ds_id}/observations?limit=50",
-                timeout=(5, 15),
+            r = _retry(
+                lambda: session.get(
+                    f"{BASE}/datastreams/{ds_id}/observations?limit=50",
+                    timeout=(10, 30),
+                ),
+                label=f"GET obs {ds_id}",
             )
             items = r.json().get("items", [])
         except Exception as e:
             consecutive_errors += 1
             print(f"    ⚠ Fetch error ({consecutive_errors}): {type(e).__name__}")
-            time.sleep(2)
+            try:
+                session.close()
+            except Exception:
+                pass
+            session = make_session()
+            time.sleep(3)
             continue
 
         if not items:
@@ -67,7 +88,12 @@ def clear_datastream(ds_id, session):
             if not obs_id:
                 continue
             try:
-                r = session.delete(f"{BASE}/observations/{obs_id}", timeout=(5, 10))
+                r = _retry(
+                    lambda oid=obs_id: session.delete(
+                        f"{BASE}/observations/{oid}", timeout=(10, 20)
+                    ),
+                    label=f"DEL {obs_id}",
+                )
                 if r.status_code in (200, 204):
                     batch += 1
             except Exception:
@@ -77,7 +103,7 @@ def clear_datastream(ds_id, session):
                 except Exception:
                     pass
                 session = make_session()
-                time.sleep(1)
+                time.sleep(2)
 
         total += batch
         sys.stdout.write(f"\r    Deleted {total}...")
@@ -103,9 +129,12 @@ def main():
     grand_total = 0
 
     for ds_id in ALL_DS_IDS:
-        # Get name
+        # Get name (with retry)
         try:
-            meta = session.get(f"{BASE}/datastreams/{ds_id}", timeout=(5, 10)).json()
+            meta = _retry(
+                lambda did=ds_id: session.get(f"{BASE}/datastreams/{did}", timeout=(10, 20)).json(),
+                label=f"meta {ds_id}",
+            )
             name = meta.get("name", "?")
         except Exception:
             name = "?"

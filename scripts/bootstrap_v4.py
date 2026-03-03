@@ -545,6 +545,7 @@ AZMA1_DATASTREAMS = [
                     _qty("bearingStdDev",   f"{_ODAS}/bearingStdDev",  "Bearing std dev", "deg"),
                     _qty("sensorLat",       f"{_CSAPI}/sensorLat",     "Sensor lat",      "deg", -90.0, 90.0),
                     _qty("sensorLon",       f"{_CSAPI}/sensorLon",     "Sensor lon",      "deg", -180.0, 180.0),
+                    _text("classification", f"{_ODAS}/classification", "Classification"),
                 ]
             }
         },
@@ -683,6 +684,33 @@ AZMA1_DATASTREAMS = [
                     _cat("classLabel",     f"{_ODAS}/classLabel",       "Class label",
                          ["uas", "vehicle", "footsteps", "impulsive", "unknown"]),
                     _qty("classConfidence",f"{_ODAS}/classConfidence",  "Class confidence",   "1", 0.0, 1.0),
+                ]
+            }
+        },
+    },
+    # ── Detection Capabilities (static metadata published as observation) ──
+    {
+        "system_uid": "urn:os4csapi:system:odas:az-ma-1",
+        "name": "AZ-MA-1 Detection Capabilities",
+        "description": "Static detection range characteristics for AZ-MA-1.",
+        "outputName": "az_ma_1_detection_capabilities",
+        "validTime": [AZMA1_VALID_START, "now"],
+        "schema": {
+            "obsFormat": "application/om+json",
+            "resultSchema": {
+                "type": "DataRecord",
+                "name": "detection_capabilities",
+                "definition": f"{_CSAPI}/detectionCapabilitiesRecordOSH",
+                "label": "Detection Capabilities",
+                "description": "Static detection range characteristics for this sensor node.",
+                "fields": [
+                    _time_field(),
+                    _text("shape",            f"{_CSAPI}/detectionShape",         "Detection area shape"),
+                    _qty("minRange_m",        f"{_CSAPI}/detectionMinRange",      "Minimum detection range",  "m", 0.0, 100000.0),
+                    _qty("nominalRange_m",    f"{_CSAPI}/detectionNominalRange",  "Nominal detection range",  "m", 0.0, 100000.0),
+                    _qty("maxRange_m",        f"{_CSAPI}/detectionMaxRange",      "Maximum detection range",  "m", 0.0, 100000.0),
+                    _qty("confidence",        f"{_CSAPI}/detectionConfidence",    "Detection confidence",     "1", 0.0, 1.0),
+                    _text("basis",            f"{_CSAPI}/detectionBasis",         "Basis of estimate"),
                 ]
             }
         },

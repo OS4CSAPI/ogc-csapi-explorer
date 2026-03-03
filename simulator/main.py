@@ -210,11 +210,12 @@ def simulation_worker(st: SimState):
 #  Observation clearing (reuses logic from clear_observations.py)
 # ═══════════════════════════════════════════════════════════════════════════
 
-# All 22 datastream IDs on the live server
+# All datastream IDs on the live server (25 total)
 ALL_DS_IDS = [
-    "044g", "0430", "043g", "0420", "0440", "0410", "041g", "042g",  # SENREP + MA-1
-    "0450", "045g", "0460", "046g", "0470", "047g", "0480",          # MA-2
-    "048g", "0490", "049g", "04a0", "04ag", "04b0", "04bg",          # MA-3
+    "044g", "0430", "043g", "04c0", "0440", "0410", "041g", "042g",  # SENREP + MA-1 (04c0 = LOB)
+    "0450", "045g", "04cg", "046g", "0470", "047g", "0480",          # MA-2 (04cg = LOB)
+    "048g", "0490", "04d0", "04a0", "04ag", "04b0", "04bg",          # MA-3 (04d0 = LOB)
+    "04dg", "04e0", "04eg",                                           # Detection capabilities (MA-1/2/3)
 ]
 
 

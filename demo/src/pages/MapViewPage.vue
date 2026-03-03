@@ -144,56 +144,18 @@ const lastRefreshTime = ref('')
 const LIVE_REFRESH_MS = 5000
 
 // ── Detection Range Configuration ──────────────────────────────────
-// Client-side config: keyed by system UID.
-// When the server supports custom properties, this can be replaced with
-// a read from the system's `detectionRange` property.
+// Discovered from server: each system's "detection_capabilities" datastream
+// provides min/nominal/max detection range values as observations.
+// Populated by fetchDetectionRangeConfigs() before rings are drawn.
 interface DetectionRing { label: string; radius_m: number }
 interface DetectionRangeConfig {
-  shape: 'circular'
+  shape: string
   rings: DetectionRing[]
-  altitude?: { min_m: number; max_m: number | null; ref: string }
   confidence?: number
   basis?: string
-  asOf?: string
+  phenomenonTime?: string
 }
-const DETECTION_RANGE_CONFIGS: Record<string, DetectionRangeConfig> = {
-  'urn:os4csapi:system:odas:az-ma-1': {
-    shape: 'circular',
-    rings: [
-      { label: 'min', radius_m: 667 },
-      { label: 'nominal', radius_m: 1833 },
-      { label: 'max', radius_m: 3000 },
-    ],
-    altitude: { min_m: 0, max_m: null, ref: 'AGL' },
-    confidence: 0.7,
-    basis: 'estimated',
-    asOf: '2026-03-02T18:00:00Z',
-  },
-  'urn:os4csapi:system:odas:az-ma-2': {
-    shape: 'circular',
-    rings: [
-      { label: 'min', radius_m: 667 },
-      { label: 'nominal', radius_m: 1833 },
-      { label: 'max', radius_m: 3000 },
-    ],
-    altitude: { min_m: 0, max_m: null, ref: 'AGL' },
-    confidence: 0.7,
-    basis: 'estimated',
-    asOf: '2026-03-02T18:00:00Z',
-  },
-  'urn:os4csapi:system:odas:az-ma-3': {
-    shape: 'circular',
-    rings: [
-      { label: 'min', radius_m: 667 },
-      { label: 'nominal', radius_m: 1833 },
-      { label: 'max', radius_m: 3000 },
-    ],
-    altitude: { min_m: 0, max_m: null, ref: 'AGL' },
-    confidence: 0.7,
-    basis: 'estimated',
-    asOf: '2026-03-02T18:00:00Z',
-  },
-}
+const detectionRangeConfigs: Record<string, DetectionRangeConfig> = {}
 
 // Enable/disable milsymbol rendering (toggle for A/B comparison)
 const useMilSymbols = ref(true)
@@ -1251,8 +1213,64 @@ async function enrichDeployments(): Promise<void> {
 }
 
 /**
+ * Discover detection-range datastreams from the server and populate
+ * detectionRangeConfigs keyed by system UID.
+ *
+ * For each primary system, looks for a datastream whose outputName ends with
+ * "_detection_capabilities", reads the latest observation, and extracts
+ * min/nominal/max range values. All data comes from the CSAPI API — nothing
+ * is hardcoded.
+ */
+async function fetchDetectionRangeConfigs(): Promise<void> {
+  // Clear any stale entries
+  for (const key of Object.keys(detectionRangeConfigs)) delete detectionRangeConfigs[key]
+
+  const fetches = Array.from(primarySystemIds).map(async (sysId) => {
+    try {
+      // 1. Find detection_capabilities datastream
+      const dsRes = await apiFetch(`/systems/${sysId}/datastreams?limit=50`)
+      if (!dsRes.ok || !dsRes.data) return
+      const dsList = dsRes.data.items || dsRes.data.features || []
+      const capDs = dsList.find((ds: any) =>
+        ds.outputName?.endsWith('_detection_capabilities')
+      )
+      if (!capDs) return
+
+      // 2. Read latest observation
+      const obsRes = await apiFetch(`/datastreams/${capDs.id}/observations?limit=1`)
+      if (!obsRes.ok || !obsRes.data) return
+      const items = obsRes.data.items || []
+      if (!items.length) return
+      const result = items[0].result
+      if (!result) return
+
+      // 3. Get system UID from the system feature
+      const sysRes = await apiFetch(`/systems/${sysId}`)
+      const uid = sysRes.data?.properties?.uid
+      if (!uid) return
+
+      // 4. Build config from observation data
+      const rings: DetectionRing[] = []
+      if (typeof result.minRange_m === 'number')     rings.push({ label: 'min', radius_m: result.minRange_m })
+      if (typeof result.nominalRange_m === 'number') rings.push({ label: 'nominal', radius_m: result.nominalRange_m })
+      if (typeof result.maxRange_m === 'number')     rings.push({ label: 'max', radius_m: result.maxRange_m })
+      if (!rings.length) return
+
+      detectionRangeConfigs[uid] = {
+        shape: result.shape || 'circular',
+        rings,
+        confidence: result.confidence,
+        basis: result.basis,
+        phenomenonTime: items[0].phenomenonTime,
+      }
+    } catch { /* skip systems without detection capabilities */ }
+  })
+  await Promise.all(fetches)
+}
+
+/**
  * Build detection range ring features for deployments that link to systems
- * with known detection range configurations.
+ * with detection range configurations discovered from the server.
  *
  * For each deployment emplacement with platform@link, resolve the linked
  * system's UID, look up the detection range config, and draw geodesic
@@ -1284,7 +1302,7 @@ function buildDetectionRanges(): void {
     const plat = props['platform@link']
     if (!plat?.uid) continue
 
-    const config = DETECTION_RANGE_CONFIGS[plat.uid]
+    const config = detectionRangeConfigs[plat.uid]
     if (!config || config.shape !== 'circular') continue
 
     // Get deployment location in EPSG:4326
@@ -1322,9 +1340,8 @@ function buildDetectionRanges(): void {
           radius_m: ring.radius_m,
           confidence: config.confidence,
           basis: config.basis,
-          asOf: config.asOf,
+          phenomenonTime: config.phenomenonTime,
           systemUid: plat.uid,
-          altitude: config.altitude,
         }
       })
 
@@ -1599,7 +1616,7 @@ function extractBearings(result: any): Array<{ azimuth: number; elevation: numbe
       elevation: 0,
       energy: 1.0, // LOB has no energy field; use full opacity
       sourceId: result.trackId,
-      classLabel: 'UAS', // All LOB datastreams in this deployment detect UAS
+      classLabel: result.classification, // Read from server — no fallback; sensors provide this
     })
     return bearings
   }
@@ -1855,7 +1872,8 @@ async function loadAllResources() {
   // 3. Enrich Part 1 resource types that have null geometry
   await enrichResourcesWithLocations()
 
-  // 3b. Build detection range rings from deployment emplacements
+  // 3b. Discover detection range configs from server, then build rings
+  await fetchDetectionRangeConfigs()
   buildDetectionRanges()
 
   // 4. Load Part 2 resources at parent system locations + observation layers
