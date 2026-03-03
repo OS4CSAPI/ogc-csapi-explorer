@@ -4,6 +4,7 @@ import ResourceExplorerPage from './pages/ResourceExplorerPage.vue'
 import MapViewPage from './pages/MapViewPage.vue'
 import SmokeTestPage from './pages/SmokeTestPage.vue'
 import DemoPage from './pages/DemoPage.vue'
+import SimulatorAdminPage from './pages/SimulatorAdminPage.vue'
 
 const routes = [
   {
@@ -31,6 +32,11 @@ const routes = [
     path: '/demo',
     name: 'demo',
     component: DemoPage,
+  },
+  {
+    path: '/admin/simulator',
+    name: 'admin-simulator',
+    component: SimulatorAdminPage,
   },
 ]
 
