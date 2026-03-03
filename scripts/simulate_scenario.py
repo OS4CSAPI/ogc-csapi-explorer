@@ -57,21 +57,21 @@ NODES = [
         "name": "AZ-MA-1",
         "lat": 31.6490196,
         "lon": -110.2758537,
-        "detection_max_m": 900,
+        "detection_max_m": 3000,
     },
     {
         "uid": "urn:os4csapi:system:odas:az-ma-2",
         "name": "AZ-MA-2",
         "lat": 31.6569236,
         "lon": -110.2659979,
-        "detection_max_m": 900,
+        "detection_max_m": 3000,
     },
     {
         "uid": "urn:os4csapi:system:odas:az-ma-3",
         "name": "AZ-MA-3",
         "lat": 31.6637961,
         "lon": -110.2515496,
-        "detection_max_m": 900,
+        "detection_max_m": 3000,
     },
 ]
 

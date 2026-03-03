@@ -160,9 +160,9 @@ const DETECTION_RANGE_CONFIGS: Record<string, DetectionRangeConfig> = {
   'urn:os4csapi:system:odas:az-ma-1': {
     shape: 'circular',
     rings: [
-      { label: 'min', radius_m: 200 },
-      { label: 'nominal', radius_m: 550 },
-      { label: 'max', radius_m: 900 },
+      { label: 'min', radius_m: 667 },
+      { label: 'nominal', radius_m: 1833 },
+      { label: 'max', radius_m: 3000 },
     ],
     altitude: { min_m: 0, max_m: null, ref: 'AGL' },
     confidence: 0.7,
@@ -172,9 +172,9 @@ const DETECTION_RANGE_CONFIGS: Record<string, DetectionRangeConfig> = {
   'urn:os4csapi:system:odas:az-ma-2': {
     shape: 'circular',
     rings: [
-      { label: 'min', radius_m: 200 },
-      { label: 'nominal', radius_m: 550 },
-      { label: 'max', radius_m: 900 },
+      { label: 'min', radius_m: 667 },
+      { label: 'nominal', radius_m: 1833 },
+      { label: 'max', radius_m: 3000 },
     ],
     altitude: { min_m: 0, max_m: null, ref: 'AGL' },
     confidence: 0.7,
@@ -184,9 +184,9 @@ const DETECTION_RANGE_CONFIGS: Record<string, DetectionRangeConfig> = {
   'urn:os4csapi:system:odas:az-ma-3': {
     shape: 'circular',
     rings: [
-      { label: 'min', radius_m: 200 },
-      { label: 'nominal', radius_m: 550 },
-      { label: 'max', radius_m: 900 },
+      { label: 'min', radius_m: 667 },
+      { label: 'nominal', radius_m: 1833 },
+      { label: 'max', radius_m: 3000 },
     ],
     altitude: { min_m: 0, max_m: null, ref: 'AGL' },
     confidence: 0.7,
