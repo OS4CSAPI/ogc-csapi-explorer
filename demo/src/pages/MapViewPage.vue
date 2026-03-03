@@ -455,6 +455,15 @@ async function loadResourceType(resourceType: string): Promise<number> {
 
     const batch: Feature[] = []
     for (const item of items) {
+      // For deployments, only draw items with a direct physical system link.
+      // Organizational containers (no platform@link etc.) are handled by enrichDeployments.
+      if (resourceType === 'deployments') {
+        const props = item.properties || item || {}
+        const hasPlatformLink = !!props['platform@link']?.href
+        const hasDeployedSysLink = Array.isArray(props['deployedSystems@link']) && props['deployedSystems@link'].length > 0
+        const hasDeployedSysUIDs = typeof props['deployedSystemUIDs'] === 'string' && props['deployedSystemUIDs'].length > 0
+        if (!hasPlatformLink && !hasDeployedSysLink && !hasDeployedSysUIDs) continue
+      }
       const feature = createOlFeature(item, resourceType)
       if (feature) batch.push(feature)
     }
@@ -1063,7 +1072,7 @@ async function enrichDeployments(): Promise<void> {
       return lon >= minX && lon <= maxX && lat >= minY && lat <= maxY
     }
 
-    // First pass: add subdeployments with native geometry to the map
+    // First pass: add subdeployments with native geometry AND a system link to the map
     const existingIds = new Set(source.getFeatures().map(f => f.get('resourceId')))
     const nativeGeoBatch: Feature[] = []
     for (const sub of allSubs) {
@@ -1071,6 +1080,12 @@ async function enrichDeployments(): Promise<void> {
       if (existingIds.has(subId)) continue
       const geom = extractGeometry(sub)
       if (!geom) continue
+      // Only draw if it has a direct physical anchor
+      const subProps = sub.properties || sub || {}
+      const hasPlatLink = !!subProps['platform@link']?.href
+      const hasDeploySysLink = Array.isArray(subProps['deployedSystems@link']) && subProps['deployedSystems@link'].length > 0
+      const hasDeploySysUIDs = typeof subProps['deployedSystemUIDs'] === 'string' && subProps['deployedSystemUIDs'].length > 0
+      if (!hasPlatLink && !hasDeploySysLink && !hasDeploySysUIDs) continue
       const c = centroidFromGeometry(geom)
       if (c && bboxFilter.value && !isInsideBbox(c.lon, c.lat)) continue
       const feature = createOlFeature(sub, 'deployments')
