@@ -137,6 +137,12 @@ const bboxLayer = new VectorLayer({
 const vectorSources: Record<string, VectorSource> = {}
 const vectorLayers: Record<string, VectorLayer> = {}
 
+// ── Live Mode (auto-refresh dynamic layers) ────────────────────────
+const liveMode = ref(false)
+let liveInterval: ReturnType<typeof setInterval> | null = null
+const lastRefreshTime = ref('')
+const LIVE_REFRESH_MS = 5000
+
 // ── Detection Range Configuration ──────────────────────────────────
 // Client-side config: keyed by system UID.
 // When the server supports custom properties, this can be replaced with
@@ -1894,6 +1900,29 @@ function refreshAllStyles() {
   }
 }
 
+// ── Live Mode toggle ─────────────────────────────────────────────
+async function refreshLiveLayers() {
+  try {
+    await loadObservationLayers()
+    lastRefreshTime.value = new Date().toLocaleTimeString()
+  } catch { /* swallow errors during background refresh */ }
+}
+
+function toggleLiveMode() {
+  liveMode.value = !liveMode.value
+  if (liveMode.value) {
+    // Immediately refresh, then start interval
+    refreshLiveLayers()
+    liveInterval = setInterval(refreshLiveLayers, LIVE_REFRESH_MS)
+  } else {
+    if (liveInterval) {
+      clearInterval(liveInterval)
+      liveInterval = null
+    }
+    lastRefreshTime.value = ''
+  }
+}
+
 function toggleBasemap() {
   if (osmLayer) osmLayer.setVisible(!useSatellite.value)
   if (satLayer) satLayer.setVisible(useSatellite.value)
@@ -2073,6 +2102,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (liveInterval) {
+    clearInterval(liveInterval)
+    liveInterval = null
+  }
   if (globalEnterHandler) {
     window.removeEventListener('keydown', globalEnterHandler)
     globalEnterHandler = null
@@ -2244,6 +2277,17 @@ watch(selectedFeature, (feat) => {
         <label class="milsymbol-label">
           <input type="checkbox" v-model="useSatellite" @change="toggleBasemap" />
           <span>Satellite + Labels</span>
+        </label>
+      </div>
+
+      <!-- Live Mode toggle -->
+      <div class="milsymbol-toggle">
+        <label class="milsymbol-label">
+          <input type="checkbox" :checked="liveMode" @change="toggleLiveMode" />
+          <span :style="liveMode ? { color: '#22c55e', fontWeight: 600 } : {}">Live Mode</span>
+          <span v-if="liveMode" style="margin-left: 0.4rem; font-size: 0.7rem; color: #9ca3af;">
+            {{ lastRefreshTime || '...' }}
+          </span>
         </label>
       </div>
 
