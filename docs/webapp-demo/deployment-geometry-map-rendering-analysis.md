@@ -146,23 +146,38 @@ ICO → R&S → SSO all inherited from their children the same way. Every organi
 
 ### Root Causes
 
-Two rules in the enrichment logic caused all of this:
+Three gaps in the enrichment logic caused all of this:
 
 1. **Rule (c) — parent centroid inheritance**: Empty leaf deployments inherited their parent's centroid, creating phantom dots for deployments with no physical presence.
 2. **Multi-point → LineString**: When a deployment resolved multiple child centroids, it drew a `LineString` connecting them in API response order — treating organizational groupings as geographic paths.
+3. **No system-link gate on native geometry**: Deployments with server-stored native geometry were drawn unconditionally — even organizational containers like ICO, R&S, and SSO that had coordinates set during bootstrap but no `platform@link`.
+
+### Problem 4 — Organizational Containers With Native Geometry (Follow-Up)
+
+After applying the initial fix (commit `bce90f7`), inspection revealed that ICO, R&S, and SSO still appeared on the map because they have **native GeoJSON geometry stored on the server**:
+
+| Deployment | Native Geometry | platform@link | Problem |
+|---|---|---|---|
+| ICO (040g) | Point [-110.253, 31.639] | none | Drawn in `loadResourceType` — bypassed the second-pass gate |
+| R&S (0410) | Point [-110.253, 31.639] | none | Same point as ICO, stacked on top |
+| SSO (041g) | LineString (2 points) | none | Drawn in first pass of `enrichDeployments` — arbitrary line |
+
+The initial fix only gated the **second pass** (derived geometry). The **`loadResourceType('deployments')`** function and the **first pass** in `enrichDeployments` both created features from native geometry without checking for a system link.
 
 ---
 
-## 4. Fix Applied
+## 4. Fixes Applied
+
+### Fix 1 — Remove Parent Centroid Inheritance + Second Pass Gate
 
 **Commit:** `bce90f7` on `main`
 
-### Changes to `resolveCentroid()`
+#### Changes to `resolveCentroid()`
 
 - **Removed rule (c)** entirely — no more parent centroid inheritance.
 - If a deployment has no native geometry AND no children/deployed systems with locations, `resolveCentroid` returns `null`. The deployment is simply not drawn.
 
-### Changes to Second Pass (Derived Geometry Building)
+#### Changes to Second Pass (Derived Geometry Building)
 
 - **Added a system-link gate**: Only deployments with a direct physical anchor are considered:
   - `platform@link` (href to a system)
@@ -172,22 +187,46 @@ Two rules in the enrichment logic caused all of this:
 - The geometry is always a `Point` at the resolved centroid (no more `LineString` construction from multiple child points).
 - Removed the now-unused `dedup()` helper function.
 
+### Fix 2 — Gate ALL Rendering Paths by System Link
+
+**Commit:** `deabd47` on `main`
+
+Applied the same system-link check to the two remaining rendering paths that were still unconditionally drawing organizational containers with native geometry:
+
+#### Changes to `loadResourceType('deployments')`
+
+- When `resourceType === 'deployments'`, each item is now checked for `platform@link`, `deployedSystems@link`, or `deployedSystemUIDs` before creating an OL feature.
+- Organizational containers (ICO, R&S) that happen to have server-stored coordinates are skipped.
+
+#### Changes to First Pass in `enrichDeployments()`
+
+- Subdeployments with native geometry are now also checked for a system link.
+- SSO (which had a native `LineString`) is no longer drawn.
+
+### Combined Effect — All Three Gates
+
+| Rendering Path | Gate Added | What it Blocks |
+|---|---|---|
+| `loadResourceType` | Fix 2 (`deabd47`) | Top-level organizational deployments with native geometry (ICO, R&S) |
+| First pass (native geo subs) | Fix 2 (`deabd47`) | Organizational subdeployments with native geometry (SSO) |
+| Second pass (derived geo) | Fix 1 (`bce90f7`) | Organizational containers without native geometry (SNET, Field 001, String Alpha) |
+
 ### Effect on Each Deployment
 
-| Deployment | Has geometry? | Has `platform@link`? | Drawn? | Reason |
+| Deployment | Server Geometry | Has `platform@link`? | Drawn? | Blocked By |
 |---|---|---|---|---|
-| Node 1 (0470) | no | **yes** → AZ-MA-1 | **Yes** | Physical emplacement |
-| Node 2 (047g) | no | **yes** → AZ-MA-2 | **Yes** | Physical emplacement |
-| Node 3 (0480) | no | **yes** → AZ-MA-3 | **Yes** | Physical emplacement |
-| Mon Site Emp (045g) | no | **yes** → Mon Site | **Yes** | Physical emplacement |
-| Relay Emp (0460) | no | **yes** → Relay | **Yes** | Physical emplacement |
-| SET-A Emp (0450) | no | **yes** → SET-A | **Yes** | Physical emplacement |
-| String Alpha (046g) | no | no | **No** | Organizational (nodes still drawn) |
-| Field 001 (042g) | no | no | **No** | Empty leaf, no location |
-| SNET (0420) | no | no | **No** | Organizational container |
-| SSO (041g) | no | no | **No** | Organizational container |
-| R&S (0410) | no | no | **No** | Organizational container |
-| ICO (040g) | no | no | **No** | Organizational container |
+| Node 1 (0470) | Point | **yes** → AZ-MA-1 | **Yes** | — |
+| Node 2 (047g) | Point | **yes** → AZ-MA-2 | **Yes** | — |
+| Node 3 (0480) | Point | **yes** → AZ-MA-3 | **Yes** | — |
+| Mon Site Emp (045g) | Point | **yes** → Mon Site | **Yes** | — |
+| Relay Emp (0460) | Point | **yes** → Relay | **Yes** | — |
+| SET-A Emp (0450) | Point | **yes** → SET-A | **Yes** | — |
+| String Alpha (046g) | null | no | **No** | Second pass gate |
+| Field 001 (042g) | null | no | **No** | Second pass gate |
+| SNET (0420) | null | no | **No** | Second pass gate |
+| SSO (041g) | LineString | no | **No** | First pass gate |
+| R&S (0410) | Point | no | **No** | loadResourceType gate |
+| ICO (040g) | Point | no | **No** | loadResourceType gate |
 
 ### Trade-off
 
