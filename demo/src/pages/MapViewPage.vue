@@ -1861,7 +1861,7 @@ async function loadAllResources() {
   await Promise.all([
     loadDatastreams(),
     loadControlStreams(),
-    loadObservationLayers(liveMode.value ? 10 : 500),
+    loadObservationLayers(liveMode.value ? 3 : 500),
   ])
 
   loading.value = false
@@ -1983,7 +1983,7 @@ async function refreshLiveLayers() {
   try {
     // In live mode, only fetch the latest 10 observations per datastream
     // for a tight, real-time view instead of the full 500 history
-    await loadObservationLayers(10)
+    await loadObservationLayers(3)
     lastRefreshTime.value = new Date().toLocaleTimeString()
   } catch { /* swallow errors during background refresh */ }
 }
