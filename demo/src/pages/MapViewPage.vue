@@ -2342,7 +2342,8 @@ onMounted(() => {
     })
   })
 
-  // Map is ready — user must press Search to load data
+  // Map is ready — auto-load all resources immediately (filterless query)
+  loadAllResources()
 
   // Global Enter key → execute search (unless typing in a textarea)
   function onGlobalEnter(e: KeyboardEvent) {
