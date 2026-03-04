@@ -60,6 +60,7 @@ const actionSeverity = ref<'success' | 'error' | 'info'>('info')
 const loading = ref(false)
 const locLoading = ref(false)
 const clearing = ref(false)
+const resetting = ref(false)
 
 // Config form
 const cfgDuration = ref('3600')
@@ -156,7 +157,7 @@ async function stopSim() {
 }
 
 async function clearObs() {
-  if (!confirm('Delete ALL observations from every datastream on the server?')) return
+  if (!confirm('Clear all sensor/localizer data? SENREP reports will be preserved.')) return
   clearing.value = true
   actionMessage.value = ''
   try {
@@ -168,6 +169,22 @@ async function clearObs() {
     actionSeverity.value = 'error'
   } finally {
     clearing.value = false
+  }
+}
+
+async function resetDemo() {
+  if (!confirm('Full demo reset: delete ALL sim data AND reports. Detection rings will be re-seeded on next start. Continue?')) return
+  resetting.value = true
+  actionMessage.value = ''
+  try {
+    const data = await apiFetch('/reset', { method: 'POST' })
+    actionMessage.value = data.message
+    actionSeverity.value = data.ok ? 'success' : 'error'
+  } catch (e: any) {
+    actionMessage.value = e.message
+    actionSeverity.value = 'error'
+  } finally {
+    resetting.value = false
   }
 }
 
@@ -350,12 +367,20 @@ onUnmounted(() => {
           @click="stopSim"
         />
         <Button
-          label="Clear All Observations"
+          label="Clear Sim Data"
           icon="pi pi-trash"
           severity="warn"
           :loading="clearing"
-          :disabled="!connected || (status?.running ?? false)"
+          :disabled="!connected || (status?.running ?? false) || (locStatus?.running ?? false)"
           @click="clearObs"
+        />
+        <Button
+          label="Full Demo Reset"
+          icon="pi pi-refresh"
+          severity="danger"
+          :loading="resetting"
+          :disabled="!connected || (status?.running ?? false) || (locStatus?.running ?? false)"
+          @click="resetDemo"
         />
       </div>
     </Panel>

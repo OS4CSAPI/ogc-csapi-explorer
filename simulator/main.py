@@ -482,22 +482,25 @@ def localizer_worker(st: LocalizerState):
 #  Observation clearing (reuses logic from clear_observations.py)
 # ═══════════════════════════════════════════════════════════════════════════
 
-# Detection-capabilities datastreams — NEVER cleared (static config)
+# Detection-capabilities datastreams — NEVER cleared (static config, auto-seeded)
 DETECTION_DS_IDS = ["04dg", "04e0", "04eg"]  # MA-1, MA-2, MA-3
 
-# Datastream IDs that the clear operation should wipe (22 total, excludes detection caps)
-CLEARABLE_DS_IDS = [
-    "044g", "0430", "043g", "04c0", "0440", "0410", "041g", "042g",  # SENREP + MA-1 (04c0 = LOB)
-    "0450", "045g", "04cg", "046g", "0470", "047g", "0480",          # MA-2 (04cg = LOB)
-    "048g", "0490", "04d0", "04a0", "04ag", "04b0", "04bg",          # MA-3 (04d0 = LOB)
+# SENREP datastreams — cleared only on /reset (Tier 3)
+SENREP_DS_IDS = ["044g"]
+
+# Sim/localizer datastreams — cleared on /clear (Tier 2)
+SIM_DS_IDS = [
+    "0430", "043g", "04c0", "0440", "0410", "041g", "042g",  # MA-1 (04c0 = LOB)
+    "0450", "045g", "04cg", "046g", "0470", "047g", "0480",  # MA-2 (04cg = LOB)
+    "048g", "0490", "04d0", "04a0", "04ag", "04b0", "04bg",  # MA-3 (04d0 = LOB)
 ]
 
-# Combined list (for reference only — clear uses CLEARABLE_DS_IDS)
-ALL_DS_IDS = CLEARABLE_DS_IDS + DETECTION_DS_IDS
+# Combined list (for reference)
+ALL_DS_IDS = SIM_DS_IDS + SENREP_DS_IDS + DETECTION_DS_IDS
 
 
-def clear_all_observations() -> dict[str, int]:
-    """Delete every observation from every datastream. Returns stats."""
+def clear_observations(ds_ids: list[str]) -> dict[str, int]:
+    """Delete observations from specified datastreams. Filters by datastream ownership to prevent scope leaks. Returns stats."""
     import urllib.request
     import urllib.error
     import ssl
@@ -511,8 +514,9 @@ def clear_all_observations() -> dict[str, int]:
 
     total_deleted = 0
     errors = 0
+    foreign_skipped = 0
 
-    for ds_id in CLEARABLE_DS_IDS:
+    for ds_id in ds_ids:
         page = 0
         while True:
             url = f"{BASE_URL}/datastreams/{ds_id}/observations?limit=50"
@@ -535,6 +539,11 @@ def clear_all_observations() -> dict[str, int]:
                 obs_id = obs.get("id")
                 if not obs_id:
                     continue
+                # Scope leak filter: only delete if observation belongs to this datastream
+                obs_ds = obs.get("datastream@id")
+                if obs_ds and obs_ds != ds_id:
+                    foreign_skipped += 1
+                    continue
                 del_url = f"{BASE_URL}/datastreams/{ds_id}/observations/{obs_id}"
                 del_req = urllib.request.Request(del_url, method="DELETE", headers={
                     "Authorization": auth,
@@ -550,7 +559,7 @@ def clear_all_observations() -> dict[str, int]:
             if page > 500:  # safety cap
                 break
 
-    return {"deleted": total_deleted, "errors": errors}
+    return {"deleted": total_deleted, "errors": errors, "foreign_skipped": foreign_skipped}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -644,15 +653,38 @@ def stop_simulation():
 
 
 @app.post("/clear", response_model=MessageResponse)
-def clear_observations():
+def clear_sim_data():
+    # Gate on both sim and localizer
     with state.lock:
         if state.running:
-            return MessageResponse(ok=False, message="Stop the simulation before clearing")
+            return MessageResponse(ok=False, message="Stop both simulator and localizer before clearing")
+    with loc_state.lock:
+        if loc_state.running:
+            return MessageResponse(ok=False, message="Stop both simulator and localizer before clearing")
 
-    result = clear_all_observations()
+    result = clear_observations(SIM_DS_IDS)
     return MessageResponse(
         ok=True,
-        message=f"Deleted {result['deleted']} observations ({result['errors']} errors)",
+        message=f"Cleared sim data: {result['deleted']} deleted "
+                f"({result['errors']} errors, {result['foreign_skipped']} foreign skipped)",
+    )
+
+
+@app.post("/reset", response_model=MessageResponse)
+def reset_demo():
+    """Tier 3: Full demo reset — clears sim data AND SENREP reports."""
+    with state.lock:
+        if state.running:
+            return MessageResponse(ok=False, message="Stop both simulator and localizer before resetting")
+    with loc_state.lock:
+        if loc_state.running:
+            return MessageResponse(ok=False, message="Stop both simulator and localizer before resetting")
+
+    result = clear_observations(SIM_DS_IDS + SENREP_DS_IDS)
+    return MessageResponse(
+        ok=True,
+        message=f"Full reset: deleted {result['deleted']} observations "
+                f"({result['errors']} errors, {result['foreign_skipped']} foreign skipped)",
     )
 
 
