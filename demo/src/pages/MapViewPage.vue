@@ -64,8 +64,14 @@ const DETECTION_RANGES_ENTRY = { key: 'detectionRanges', label: 'Det. Range', pl
 // Location estimate layer entry (localizer triangulation fixes)
 const LOC_ESTIMATE_ENTRY = { key: 'locationEstimates', label: 'Loc. Est.', plural: 'Location Estimates', icon: 'pi pi-map-marker', part: 2 as const, readOnly: true }
 
+// Track line layer entry (localizer fix history polyline)
+const TRACK_LINE_ENTRY = { key: 'trackLine', label: 'Track', plural: 'Track Line', icon: 'pi pi-directions', part: 2 as const, readOnly: true }
+
+// SENREP marker layer entry (human-submitted sensor reports)
+const SENREP_ENTRY = { key: 'senrepMarkers', label: 'SENREP', plural: 'SENREP Reports', icon: 'pi pi-flag', part: 2 as const, readOnly: true }
+
 // All types visible on the map
-const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY, LOB_ENTRY, DETECTION_RANGES_ENTRY, LOC_ESTIMATE_ENTRY]
+const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY, LOB_ENTRY, DETECTION_RANGES_ENTRY, TRACK_LINE_ENTRY, LOC_ESTIMATE_ENTRY, SENREP_ENTRY]
 
 // Color map for resource types
 const TYPE_COLORS: Record<string, string> = {
@@ -80,6 +86,8 @@ const TYPE_COLORS: Record<string, string> = {
   bearingLines: '#f43f5e',      // rose
   detectionRanges: '#60a5fa',    // friendly blue (2525E)
   locationEstimates: '#facc15',  // gold / yellow
+  trackLine: '#facc15',          // gold (same as location estimates)
+  senrepMarkers: '#ef4444',      // red — distinct from gold dots
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -94,6 +102,8 @@ const TYPE_LABELS: Record<string, string> = {
   bearingLines: '►',
   detectionRanges: '◎',
   locationEstimates: '⊕',
+  trackLine: '─',
+  senrepMarkers: '◆',
 }
 
 // Active layer toggles
@@ -109,6 +119,8 @@ const activeLayers = ref<Record<string, boolean>>({
   bearingLines: true,
   detectionRanges: true,
   locationEstimates: true,
+  trackLine: true,
+  senrepMarkers: true,
 })
 
 // Cache: systemId → { lat, lon, alt?, datastreamName? }
@@ -149,7 +161,120 @@ const vectorLayers: Record<string, VectorLayer> = {}
 const liveMode = ref(true)
 let liveInterval: ReturnType<typeof setInterval> | null = null
 const lastRefreshTime = ref('')
-const LIVE_REFRESH_MS = 5000
+const LIVE_REFRESH_MS = 8000                // 8s cycle (scaled for 15-20 concurrent users)
+const TRACK_HISTORY_LIMIT = 25              // Max fixes in track polyline
+const INITIAL_POLL_STAGGER_MS = 3000        // Random delay before first live poll (thundering herd prevention)
+
+// ── SENREP Click-to-Report Panel State ─────────────────────────────
+const senrepPanelOpen = ref(false)
+const senrepSubmitting = ref(false)
+const senrepSuccess = ref(false)
+let nextContactSeq = 1
+const operatorInitials = ref(localStorage.getItem('os4csapi-operator-initials') || '')
+const senrepForm = ref({
+  contactId: '',
+  classification: 'UAS',
+  reportType: 'INIT',
+  operatorNotes: '',
+  estimatedLat: 0,
+  estimatedLon: 0,
+  cep50_m: 0,
+  numContributingLobs: 0,
+  contributingSensors: '',
+  stringId: 'STRING-ALPHA',
+  sourceFixObsId: '',
+  sourceLobObsIds: '',
+})
+
+function generateContactId(): string {
+  const d = new Date()
+  const date = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+  const initials = operatorInitials.value || 'XX'
+  const seq = String(nextContactSeq++).padStart(3, '0')
+  return `C-${date}-${initials}-${seq}`
+}
+
+function openSenrepPanel(rawData: any) {
+  // Prompt for initials on first use
+  if (!operatorInitials.value) {
+    const initials = prompt('Enter your operator initials (2-3 characters):')
+    if (initials && initials.trim().length >= 1) {
+      operatorInitials.value = initials.trim().toUpperCase().slice(0, 3)
+      localStorage.setItem('os4csapi-operator-initials', operatorInitials.value)
+    } else {
+      operatorInitials.value = 'XX'
+    }
+  }
+
+  senrepForm.value = {
+    contactId: generateContactId(),
+    classification: rawData?.classification || 'UAS',
+    reportType: 'INIT',
+    operatorNotes: '',
+    estimatedLat: rawData?.estimatedLat ?? 0,
+    estimatedLon: rawData?.estimatedLon ?? 0,
+    cep50_m: rawData?.cep50_m ?? 0,
+    numContributingLobs: rawData?.numContributingLobs ?? 0,
+    contributingSensors: rawData?.contributingSensors || '',
+    stringId: 'STRING-ALPHA',
+    sourceFixObsId: rawData?.observationId || '',
+    sourceLobObsIds: '',
+  }
+  senrepSuccess.value = false
+  senrepPanelOpen.value = true
+}
+
+async function submitSenrep(): Promise<void> {
+  senrepSubmitting.value = true
+  senrepSuccess.value = false
+  try {
+    const now = new Date()
+    const obs = {
+      phenomenonTime: now.toISOString(),
+      resultTime: now.toISOString(),
+      result: {
+        timestamp: now.getTime() / 1000,
+        contactId: senrepForm.value.contactId,
+        classification: senrepForm.value.classification,
+        estimatedLat: senrepForm.value.estimatedLat,
+        estimatedLon: senrepForm.value.estimatedLon,
+        cep50_m: senrepForm.value.cep50_m,
+        numContributingLobs: senrepForm.value.numContributingLobs,
+        stringId: senrepForm.value.stringId,
+        reportType: senrepForm.value.reportType,
+        operatorNotes: senrepForm.value.operatorNotes || '',
+        sourceFixObsId: senrepForm.value.sourceFixObsId || '',
+        sourceLobObsIds: senrepForm.value.sourceLobObsIds || '',
+      },
+    }
+
+    const res = await apiFetch(`/datastreams/${SENREP_DS_ID}/observations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/om+json',
+        'Accept': 'application/om+json',
+      },
+      body: JSON.stringify(obs),
+    })
+
+    if (res.ok) {
+      senrepSuccess.value = true
+      // Refresh SENREP markers to show the new one
+      await loadSenrepMarkers()
+      // Auto-close after brief success feedback
+      setTimeout(() => {
+        senrepPanelOpen.value = false
+        senrepSuccess.value = false
+      }, 1500)
+    } else {
+      alert(`SENREP submission failed: ${res.status}`)
+    }
+  } catch (err: any) {
+    alert(`SENREP submission error: ${err.message || err}`)
+  } finally {
+    senrepSubmitting.value = false
+  }
+}
 
 // ── Detection Range Configuration ──────────────────────────────────
 // Discovered from server: each system's "detection_capabilities" datastream
@@ -1525,6 +1650,166 @@ async function loadLocationEstimates(): Promise<void> {
   } catch { /* skip — no location estimates available */ }
 }
 
+/**
+ * Fetch the last N localizer fixes and draw a gold polyline (track line)
+ * with recency-fading segments. Shows movement history.
+ */
+async function loadTrackLine(): Promise<void> {
+  const source = vectorSources['trackLine']
+  if (!source) return
+  source.clear()
+  featureCounts.value['trackLine'] = 0
+
+  if (!localizerDatastreamId) return
+
+  try {
+    const obsRes = await apiFetch(
+      `/datastreams/${localizerDatastreamId}/observations?resultTime=latest&limit=${TRACK_HISTORY_LIMIT}`,
+      { headers: { 'Accept': 'application/om+json' } },
+    )
+    if (!obsRes.ok || !obsRes.data) return
+    const items = (obsRes.data.items || [])
+      // P0: Filter out scope-leaked observations from other datastreams
+      .filter((obs: any) => !obs['datastream@id'] || obs['datastream@id'] === localizerDatastreamId)
+      // P0: Sort by stable localizer timestamp (epoch seconds), oldest first
+      .sort((a: any, b: any) => (a.result?.timestamp ?? 0) - (b.result?.timestamp ?? 0))
+    if (items.length < 2) return
+
+    // Build coordinate array (already sorted oldest → newest)
+    const coords: [number, number][] = items
+      .map((obs: any) => {
+        const r = obs.result
+        if (typeof r?.estimatedLat === 'number' && typeof r?.estimatedLon === 'number')
+          return fromLonLat([r.estimatedLon, r.estimatedLat]) as [number, number]
+        return null
+      })
+      .filter(Boolean) as [number, number][]
+
+    if (coords.length < 2) return
+
+    // Draw polyline with recency-fading segments
+    for (let i = 1; i < coords.length; i++) {
+      const alpha = 0.15 + 0.75 * (i / (coords.length - 1)) // 0.15 at tail → 0.9 at head
+      const segment = new Feature({
+        geometry: new LineString([coords[i - 1], coords[i]]),
+      })
+      segment.setStyle(new Style({
+        stroke: new Stroke({
+          color: `rgba(250, 204, 21, ${alpha.toFixed(2)})`,
+          width: 3,
+        }),
+      }))
+      segment.set('resourceType', 'trackLine')
+      source.addFeature(segment)
+    }
+
+    featureCounts.value['trackLine'] = coords.length
+  } catch { /* skip — no track data available */ }
+}
+
+// ── SENREP DS ID (Monitoring Team A sensor reports) ────────────────
+const SENREP_DS_ID = '044g'
+
+/**
+ * SENREP marker style — red diamond
+ */
+const senrepMarkerStyle = new Style({
+  image: new CircleStyle({
+    radius: 9,
+    fill: new Fill({ color: '#ef4444' }),
+    stroke: new Stroke({ color: '#ffffff', width: 2 }),
+    rotation: Math.PI / 4,
+  }),
+  text: new OlText({
+    text: '◆',
+    font: 'bold 16px sans-serif',
+    fill: new Fill({ color: '#ef4444' }),
+    stroke: new Stroke({ color: '#fff', width: 3 }),
+    offsetY: 0,
+  }),
+})
+
+/**
+ * Fetch SENREP observations from DS 044g and render red diamond markers.
+ */
+async function loadSenrepMarkers(): Promise<void> {
+  const source = vectorSources['senrepMarkers']
+  if (!source) return
+  source.clear()
+  featureCounts.value['senrepMarkers'] = 0
+
+  try {
+    const obsRes = await apiFetch(
+      `/datastreams/${SENREP_DS_ID}/observations?resultTime=latest&limit=50`,
+      { headers: { 'Accept': 'application/om+json' } },
+    )
+    if (!obsRes.ok || !obsRes.data) return
+    const items = (obsRes.data.items || [])
+      // Filter out scope-leaked observations from other datastreams
+      .filter((obs: any) => !obs['datastream@id'] || obs['datastream@id'] === SENREP_DS_ID)
+
+    if (!items.length) return
+
+    const batch: Feature[] = []
+    for (const obs of items) {
+      const result = obs.result
+      if (!result) continue
+
+      const lat = result.estimatedLat
+      const lon = result.estimatedLon
+      if (typeof lat !== 'number' || typeof lon !== 'number') continue
+
+      // Diamond marker
+      const markerFeature = new Feature({
+        geometry: new Point(fromLonLat([lon, lat])),
+      })
+      markerFeature.setStyle(senrepMarkerStyle)
+      markerFeature.set('resourceType', 'senrepMarkers')
+      markerFeature.set('resourceId', obs.id || `senrep-${result.contactId}`)
+      markerFeature.set('resourceName', `SENREP: ${result.contactId || 'unknown'}`)
+      markerFeature.set('rawData', {
+        observationId: obs.id,
+        datastreamId: SENREP_DS_ID,
+        phenomenonTime: obs.phenomenonTime,
+        contactId: result.contactId,
+        classification: result.classification,
+        reportType: result.reportType,
+        estimatedLat: lat,
+        estimatedLon: lon,
+        cep50_m: result.cep50_m,
+        numContributingLobs: result.numContributingLobs,
+        stringId: result.stringId,
+        operatorNotes: result.operatorNotes,
+        sourceFixObsId: result.sourceFixObsId,
+        sourceLobObsIds: result.sourceLobObsIds,
+      })
+      batch.push(markerFeature)
+
+      // Label below marker
+      const labelText = result.contactId
+        ? `${result.contactId} — ${result.reportType || 'INIT'}`
+        : result.reportType || 'SENREP'
+      const labelFeature = new Feature({
+        geometry: new Point(fromLonLat([lon, lat])),
+      })
+      labelFeature.setStyle(new Style({
+        text: new OlText({
+          text: labelText,
+          font: '10px sans-serif',
+          fill: new Fill({ color: '#ef4444' }),
+          stroke: new Stroke({ color: '#000', width: 3 }),
+          offsetY: 20,
+        }),
+      }))
+      labelFeature.set('resourceType', 'senrepMarkers')
+      batch.push(labelFeature)
+    }
+
+    source.addFeatures(batch)
+    featureCounts.value['senrepMarkers'] = items.length
+  } catch { /* skip — SENREP DS may not exist yet */ }
+}
+
 async function enrichSamplingFeatures(): Promise<void> {
   const source = vectorSources['samplingFeatures']
   if (!source) return
@@ -2052,15 +2337,23 @@ async function loadAllResources() {
     loadDatastreams(),
     loadControlStreams(),
     loadObservationLayers(liveMode.value ? 3 : 500),
+    loadTrackLine(),
     loadLocationEstimates(),
+    loadSenrepMarkers(),
   ])
 
   loading.value = false
 
   // Start live refresh interval if Live Mode is on by default
+  // Stagger first poll to prevent thundering herd when many users load simultaneously
   if (liveMode.value) {
-    lastRefreshTime.value = new Date().toLocaleTimeString()
-    liveInterval = setInterval(refreshLiveLayers, LIVE_REFRESH_MS)
+    const stagger = Math.random() * INITIAL_POLL_STAGGER_MS
+    setTimeout(() => {
+      if (!liveMode.value) return  // user may have toggled off during stagger
+      lastRefreshTime.value = new Date().toLocaleTimeString()
+      refreshLiveLayers()
+      liveInterval = setInterval(refreshLiveLayers, LIVE_REFRESH_MS)
+    }, stagger)
   }
 
   // Fit map to all features (merge extents directly — no intermediate VectorSource)
@@ -2176,7 +2469,9 @@ async function refreshLiveLayers() {
     // for a tight, real-time view instead of the full 500 history
     await Promise.all([
       loadObservationLayers(3),
+      loadTrackLine(),
       loadLocationEstimates(),
+      loadSenrepMarkers(),
     ])
     lastRefreshTime.value = new Date().toLocaleTimeString()
   } catch { /* swallow errors during background refresh */ }
@@ -2196,7 +2491,9 @@ function toggleLiveMode() {
     lastRefreshTime.value = ''
     // Reload full history when leaving live mode
     loadObservationLayers(500)
+    loadTrackLine()
     loadLocationEstimates()
+    loadSenrepMarkers()
   }
 }
 
@@ -2226,7 +2523,7 @@ onMounted(() => {
     vectorSources[rt.key] = source
     const layerOpts: Record<string, any> = {
       source,
-      zIndex: rt.key === 'detectionRanges' ? 3 : rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : rt.key === 'locationEstimates' ? 8 : 10,
+      zIndex: rt.key === 'detectionRanges' ? 3 : rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'trackLine' ? 7 : rt.key === 'observationPoints' ? 7 : rt.key === 'locationEstimates' ? 8 : rt.key === 'senrepMarkers' ? 9 : 10,
       // Deployments: no declutter so STANAG symbols are never hidden by label overlap
       declutter: labeledTypes.has(rt.key),
       updateWhileAnimating: false,
@@ -2296,6 +2593,7 @@ onMounted(() => {
       const rt = feature.get('resourceType')
       if (!rt) return
       if (rt === 'detectionRanges') return // static overlay — not selectable
+      if (rt === 'trackLine') return       // track line segments — not selectable
       hit = true
 
       // Toggle: if clicking the already-selected feature, deselect it
@@ -2558,6 +2856,22 @@ watch(selectedFeature, (feat) => {
           <span class="layer-label">Location Estimates</span>
           <span class="layer-count">{{ featureCounts['locationEstimates'] ?? '—' }}</span>
         </button>
+        <button
+          :class="['layer-toggle', { inactive: !activeLayers['trackLine'] }]"
+          @click="toggleLayer('trackLine')"
+        >
+          <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS['trackLine'] }"></span>
+          <span class="layer-label">Track Line</span>
+          <span class="layer-count">{{ featureCounts['trackLine'] ?? '—' }}</span>
+        </button>
+        <button
+          :class="['layer-toggle', { inactive: !activeLayers['senrepMarkers'] }]"
+          @click="toggleLayer('senrepMarkers')"
+        >
+          <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS['senrepMarkers'] }"></span>
+          <span class="layer-label">SENREP Reports</span>
+          <span class="layer-count">{{ featureCounts['senrepMarkers'] ?? '—' }}</span>
+        </button>
       </div>
 
       <!-- Enrichment info -->
@@ -2775,8 +3089,100 @@ watch(selectedFeature, (feat) => {
           <strong>{{ selectedFeature.resourceName }}</strong>
           <div v-if="selectedFeature.rawData?.phenomenonTime" class="popup-id">{{ selectedFeature.rawData.phenomenonTime }}</div>
           <div v-else class="popup-id">{{ selectedFeature.resourceId }}</div>
+          <!-- SENREP popup extra info -->
+          <template v-if="selectedFeature.resourceType === 'senrepMarkers' && selectedFeature.rawData">
+            <div class="popup-senrep-detail">
+              <div>{{ selectedFeature.rawData.classification }} — {{ selectedFeature.rawData.reportType || 'INIT' }}</div>
+              <div>{{ selectedFeature.rawData.estimatedLat?.toFixed(5) }}°N, {{ selectedFeature.rawData.estimatedLon?.toFixed(5) }}°W</div>
+              <div v-if="selectedFeature.rawData.cep50_m">CEP50: {{ selectedFeature.rawData.cep50_m?.toFixed(1) }}m</div>
+              <div v-if="selectedFeature.rawData.operatorNotes">Notes: {{ selectedFeature.rawData.operatorNotes }}</div>
+            </div>
+          </template>
+          <!-- "Submit SENREP" button on gold dot popup -->
+          <button
+            v-if="selectedFeature.resourceType === 'locationEstimates' && selectedFeature.rawData"
+            class="senrep-popup-btn"
+            @click="openSenrepPanel(selectedFeature.rawData); closePopup()"
+          >
+            <i class="pi pi-flag"></i> Submit SENREP
+          </button>
         </div>
       </div>
+
+      <!-- ═══ SENREP Slide-out Panel ═══ -->
+      <transition name="senrep-slide">
+        <div v-if="senrepPanelOpen" class="senrep-panel">
+          <div class="senrep-panel-header">
+            <span class="senrep-panel-title">
+              <i class="pi pi-flag" style="color: #ef4444;"></i> Submit SENREP
+            </span>
+            <button class="senrep-panel-close" @click="senrepPanelOpen = false">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+          <div class="senrep-panel-body">
+            <!-- Operator initials -->
+            <label class="senrep-label">Operator</label>
+            <input v-model="operatorInitials" class="senrep-input" maxlength="3" placeholder="XX"
+              @change="localStorage.setItem('os4csapi-operator-initials', operatorInitials)" />
+
+            <!-- Contact ID -->
+            <label class="senrep-label">Contact ID</label>
+            <input v-model="senrepForm.contactId" class="senrep-input" />
+
+            <!-- Classification -->
+            <label class="senrep-label">Classification</label>
+            <select v-model="senrepForm.classification" class="senrep-input">
+              <option>UAS</option>
+              <option>rotary-wing</option>
+              <option>fixed-wing</option>
+              <option>unknown</option>
+            </select>
+
+            <!-- Report type -->
+            <label class="senrep-label">Report Type</label>
+            <select v-model="senrepForm.reportType" class="senrep-input">
+              <option>INIT</option>
+              <option>UPDATE</option>
+              <option>FINAL</option>
+            </select>
+
+            <!-- Read-only fields from gold dot -->
+            <label class="senrep-label">Position (from fix)</label>
+            <div class="senrep-readonly">
+              {{ senrepForm.estimatedLat.toFixed(5) }}°N, {{ senrepForm.estimatedLon.toFixed(5) }}°W
+            </div>
+
+            <label class="senrep-label">CEP50</label>
+            <div class="senrep-readonly">{{ senrepForm.cep50_m.toFixed(1) }}m</div>
+
+            <label class="senrep-label">Contributing LOBs</label>
+            <div class="senrep-readonly">{{ senrepForm.numContributingLobs }}</div>
+
+            <!-- Operator notes -->
+            <label class="senrep-label">Operator Notes</label>
+            <textarea v-model="senrepForm.operatorNotes" class="senrep-textarea" rows="3" placeholder="Optional notes..."></textarea>
+
+            <!-- Submit button -->
+            <button class="senrep-submit-btn" :disabled="senrepSubmitting" @click="submitSenrep">
+              <i :class="senrepSubmitting ? 'pi pi-spin pi-spinner' : 'pi pi-send'"></i>
+              {{ senrepSubmitting ? 'Submitting...' : 'Submit Report' }}
+            </button>
+            <div v-if="senrepSuccess" class="senrep-success">
+              <i class="pi pi-check-circle"></i> SENREP submitted successfully!
+            </div>
+
+            <!-- Provenance (collapsed) -->
+            <details class="senrep-provenance">
+              <summary>Provenance</summary>
+              <div class="senrep-readonly" style="font-size: 0.7rem;">
+                Source Fix: {{ senrepForm.sourceFixObsId || '—' }}<br/>
+                DS: {{ SENREP_DS_ID }}
+              </div>
+            </details>
+          </div>
+        </div>
+      </transition>
 
       <!-- ═══ TAK-style mobile controls (hidden on desktop via CSS) ═══ -->
       <div class="tak-overlay">
@@ -4069,5 +4475,150 @@ watch(selectedFeature, (feat) => {
   .tak-slide-leave-to .tak-sheet {
     transform: translateY(100%);
   }
+}
+
+/* ═══ SENREP Panel Styles ═══ */
+.senrep-popup-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.senrep-popup-btn:hover { background: #dc2626; }
+
+.popup-senrep-detail {
+  font-size: 0.7rem;
+  color: #d1d5db;
+  margin-top: 0.3rem;
+  line-height: 1.4;
+}
+
+.senrep-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100%;
+  background: #1e293b;
+  border-left: 2px solid #ef4444;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+}
+.senrep-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #0f172a;
+  border-bottom: 1px solid #334155;
+}
+.senrep-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #f1f5f9;
+}
+.senrep-panel-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.senrep-panel-close:hover { color: #f1f5f9; }
+
+.senrep-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.senrep-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.4rem;
+}
+.senrep-input, .senrep-textarea {
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: inherit;
+}
+.senrep-input:focus, .senrep-textarea:focus {
+  outline: none;
+  border-color: #ef4444;
+}
+.senrep-readonly {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  background: #0f172a;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+.senrep-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.8rem;
+  padding: 0.6rem 1rem;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.senrep-submit-btn:hover:not(:disabled) { background: #dc2626; }
+.senrep-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.senrep-success {
+  text-align: center;
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+}
+.senrep-provenance {
+  margin-top: 0.8rem;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+.senrep-provenance summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Slide transition */
+.senrep-slide-enter-active,
+.senrep-slide-leave-active {
+  transition: transform 0.25s ease;
+}
+.senrep-slide-enter-from,
+.senrep-slide-leave-to {
+  transform: translateX(100%);
 }
 </style>
