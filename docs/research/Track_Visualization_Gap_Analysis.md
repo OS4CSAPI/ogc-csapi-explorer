@@ -58,29 +58,41 @@ Insert a new phase between Phase 2 (SENREP markers) and Phase 3 (click-to-report
 
 ### How It Works
 
-1. **Fetch:** Instead of `limit=1`, fetch `limit=50` (or configurable N) from the localizer datastream:
+1. **Fetch:** Instead of `limit=1`, fetch `limit=N` from the localizer datastream (N=25 for multi-user demo, tunable constant):
    ```
-   GET /datastreams/{localizerDsId}/observations?resultTime=latest&limit=50
+   GET /datastreams/{localizerDsId}/observations?resultTime=latest&limit=25
    ```
 
-2. **Build LineString:** Extract `estimatedLat`/`estimatedLon` from each observation's result, ordered by timestamp. Build an OpenLayers `LineString` geometry from the coordinate array.
+2. **Filter + sort defensively (P0 — mandatory):**
+   - **Filter:** `obs["datastream@id"] === localizerDsId` — the OSH scope leak means responses can include observations from other datastreams. With 20 concurrent users polling, even a 1% leak rate produces visible artifacts. A single foreign point creates a wild zig-zag.
+   - **Sort:** by `result.timestamp` (epoch seconds from localizer output) — this is the stable time field. `resultTime`/`phenomenonTime` are ISO strings and less reliable for ordering.
 
-3. **Style with recency gradient:** Use an OpenLayers `Stroke` with a gradient or segmented styling:
+3. **Build LineString:** Extract `estimatedLat`/`estimatedLon` from each filtered+sorted observation's result. Build an OpenLayers `LineString` geometry from the coordinate array.
+
+4. **Style with recency gradient:** Use an OpenLayers `Stroke` with segmented styling:
    - Head segment (newest): `rgba(250, 204, 21, 0.9)` — bright gold
    - Middle segments: progressively decrease alpha
    - Tail segment (oldest): `rgba(250, 204, 21, 0.15)` — barely visible
 
-4. **Layer placement:** z-index 7.5 (between bearing lines at 6 and gold dot at 8) — the track line sits behind the current gold dot but above bearing lines.
+5. **Layer placement:** z-index 7 (between bearing lines at 6 and gold dot at 8) — the track line sits behind the current gold dot but above bearing lines.
 
-5. **Live refresh:** During live mode, the track polyline refreshes alongside the gold dot. As new fixes arrive, the line grows at the head and the oldest segment fades or drops off when exceeding N points.
+6. **Live refresh:** During live mode, the track polyline refreshes alongside the gold dot. As new fixes arrive, the line grows at the head and the oldest segment fades or drops off when exceeding N points.
 
 ### Code Estimate
 
 ~80–100 lines of new code in `MapViewPage.vue`:
-- A new `loadTrackLine()` async function (~50 lines)
+- A new `loadTrackLine()` async function (~50 lines, including filter+sort)
 - Track line styling (~15 lines)
 - Integration into the live refresh cycle (~5 lines)
 - Layer setup in the same pattern as existing layers (~10–15 lines)
+
+### Multi-User Hardening (20 concurrent users)
+
+This track line will be fetched by **all 20 users** in live mode simultaneously. Three measures are required:
+
+1. **N=25 instead of 50** — reduces per-request payload. Still gives a clearly visible track tail. Named constant `TRACK_HISTORY_LIMIT = 25` so it's tunable without code changes.
+2. **`datastream@id` filter** — mandatory. 20 users amplify the scope leak surface 20×. Even occasional foreign points produce visible zig-zags.
+3. **Initial poll stagger** — random 0–3s delay before first live refresh cycle to prevent thundering herd when all 20 users load the map simultaneously (prevents 240+ requests in the first second).
 
 ### Why This Phase Placement
 
@@ -117,7 +129,7 @@ For a demo audience, this is the moment where a map full of static shapes become
 
 | File | Change |
 |---|---|
-| [demo/src/pages/MapViewPage.vue](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/demo/src/pages/MapViewPage.vue) | New `loadTrackLine()` function, track line layer setup, integration into live refresh |
+| [demo/src/pages/MapViewPage.vue](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/demo/src/pages/MapViewPage.vue) | New `loadTrackLine()` function (with filter+sort), track line layer setup, integration into live refresh, initial poll stagger |
 
 ---
 

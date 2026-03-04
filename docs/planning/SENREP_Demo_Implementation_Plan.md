@@ -2,7 +2,8 @@
 
 **Date:** 2026-03-04  
 **Status:** Ready to implement  
-**Depends on:** [Simulator Hardening Implementation Plan](Simulator_Hardening_Implementation_Plan.md) (must be completed first)
+**Depends on:** [Simulator Hardening Implementation Plan](Simulator_Hardening_Implementation_Plan.md) (must be completed first)  
+**Concurrency:** Designed for 15–20 simultaneous users, all in live mode, all potentially submitting SENREPs
 
 ---
 
@@ -141,16 +142,19 @@ async function loadTrackLine(): Promise<void> {
   if (!localizerDatastreamId) return
 
   const obsRes = await apiFetch(
-    `/datastreams/${localizerDatastreamId}/observations?resultTime=latest&limit=50`,
+    `/datastreams/${localizerDatastreamId}/observations?resultTime=latest&limit=${TRACK_HISTORY_LIMIT}`,
     { headers: { 'Accept': 'application/om+json' } },
   )
   if (!obsRes.ok || !obsRes.data) return
-  const items = obsRes.data.items || []
+  const items = (obsRes.data.items || [])
+    // P0: Filter out scope-leaked observations from other datastreams
+    .filter((obs: any) => !obs['datastream@id'] || obs['datastream@id'] === localizerDatastreamId)
+    // P0: Sort by stable localizer timestamp (epoch seconds), oldest first
+    .sort((a: any, b: any) => (a.result?.timestamp ?? 0) - (b.result?.timestamp ?? 0))
   if (items.length < 2) return
 
-  // Build coordinate array ordered oldest → newest
+  // Build coordinate array (already sorted oldest → newest)
   const coords: [number, number][] = items
-    .reverse()
     .map((obs: any) => {
       const r = obs.result
       if (typeof r?.estimatedLat === 'number' && typeof r?.estimatedLon === 'number')
@@ -196,9 +200,21 @@ await loadTrackLine()
 await loadLocationEstimates()
 ```
 
-On each refresh, the track line rebuilds: new fixes extend the head, oldest fixes drop off when exceeding 50 points.
+On each refresh, the track line rebuilds: new fixes extend the head, oldest fixes drop off when exceeding `TRACK_HISTORY_LIMIT` points.
 
-### 2.5.4 — Visual Result
+### 2.5.4 — Named Constants
+
+At the top of `MapViewPage.vue` (or in a shared constants file):
+
+```ts
+const TRACK_HISTORY_LIMIT = 25      // Max fixes in track polyline (tuned for 20 concurrent users)
+const LIVE_REFRESH_INTERVAL_MS = 8000  // 8s refresh cycle (was 5s — scaled for 20 users)
+const INITIAL_POLL_STAGGER_MS = 3000   // Random 0–3s delay before first live poll
+```
+
+`TRACK_HISTORY_LIMIT` was originally 50 in the gap analysis but reduced to 25 for multi-user load. Still produces a clearly visible track tail. `LIVE_REFRESH_INTERVAL_MS` increased from 5s to 8s to reduce aggregate server load from ~48 req/s to ~30 req/s at 20 users. `INITIAL_POLL_STAGGER_MS` prevents thundering herd: on page load, wait `Math.random() * INITIAL_POLL_STAGGER_MS` before starting the first live poll cycle.
+
+### 2.5.5 — Visual Result
 
 | Element | Color | Description |
 |---|---|---|
@@ -210,9 +226,9 @@ On each refresh, the track line rebuilds: new fixes extend the head, oldest fixe
 
 The track line shows direction, speed (spacing), and coverage duration. Combined with red diamond SENREP markers placed along the track, the audience sees the full tactical picture: historical movement + operator reports.
 
-### 2.5.5 — Effort Estimate
+### 2.5.6 — Effort Estimate
 
-~80–100 lines of new code. No new dependencies. No server changes. Pure frontend rendering of data already being fetched (just with a larger `limit`).
+~80–100 lines of new code (including filter+sort+stagger). No new dependencies. No server changes. Pure frontend rendering of data already being fetched (just with a larger `limit`).
 
 ---
 
@@ -233,7 +249,8 @@ PrimeVue `Drawer` (slide-out from right), triggered when operator clicks a gold 
 - Source fix observation ID (hidden, for provenance)
 
 **Operator fills in:**
-- Contact ID (auto-generated as `C-YYYYMMDD-NNN`, editable)
+- Operator initials (2–3 chars, prompted on first panel open, stored in `localStorage`)
+- Contact ID (auto-generated as `C-YYYYMMDD-XX-NNN` where XX = operator initials, editable)
 - Report type (dropdown: INIT / UPDATE / FINAL, default INIT)
 - Operator notes (free text)
 
@@ -249,18 +266,23 @@ Modify the existing map click handler in MapViewPage.vue to detect clicks on `lo
 2. Open the SENREP panel with pre-filled data
 3. Map stays visible behind the side panel for context
 
-### 3.3 — Contact ID Generation
+### 3.3 — Contact ID Generation (Multi-User Safe)
+
+With 15–20 users all submitting SENREPs, a simple per-session sequence counter produces collisions (`C-20260304-001` from every user). Operator initials disambiguate:
 
 ```ts
 function generateContactId(): string {
   const d = new Date()
   const date = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`
+  const initials = operatorInitials.value || 'XX'  // from localStorage or first-open prompt
   const seq = String(nextContactSeq++).padStart(3, '0')
-  return `C-${date}-${seq}`
+  return `C-${date}-${initials}-${seq}`
 }
 ```
 
-`nextContactSeq` starts at 1 on page load. On submit, increment. If the user edits the ID manually, accept as-is.
+`operatorInitials` is prompted when the SENREP panel opens for the first time (PrimeVue dialog or inline input). Stored in `localStorage` so it persists across refreshes. `nextContactSeq` starts at 1 per session. If the user edits the ID manually, accept as-is.
+
+Examples: `C-20260304-SB-001`, `C-20260304-JK-001`, `C-20260304-ML-002`
 
 ### 3.4 — Submit SENREP Observation
 
@@ -342,8 +364,8 @@ The [DemoPage.vue](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/demo
 
 Add a feed/log section at the bottom of the Demo page:
 - Shows submitted SENREPs in reverse chronological order
-- Each row: timestamp, contactId, classification, reportType, position, source
-- Builds narrative for audience: "three SENREPs in the last 10 minutes, tracking one UAS contact"
+- Each row: timestamp, contactId (includes operator initials), classification, reportType, position, source
+- Builds narrative for audience: "SB submitted INIT, JK submitted UPDATE — three operators tracking one UAS contact"
 
 ### 4.3 — Track List (from SamplingFeatures)
 
@@ -390,6 +412,39 @@ If SamplingFeature creation succeeds, show a small "Active Tracks" panel:
 | Retrieval stays datastream-scoped (scope leak protection) | [OSH_Datastream_Observation_Scope_Leak.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/OSH_Datastream_Observation_Scope_Leak.md) |
 | Three-tier reset (SENREP survives Tier 2, cleared on Tier 3) | [Demo_Reset_SENREP_Resilience.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/Demo_Reset_SENREP_Resilience.md) |
 | Track line = gold polyline of last N localizer fixes (Phase 2.5) | [Track_Visualization_Gap_Analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/Track_Visualization_Gap_Analysis.md) |
+| Operator initials in contact ID (`C-YYYYMMDD-XX-NNN`) | Multi-user review (20 concurrent users) |
+| Track history N=25, refresh 8s, initial stagger 0–3s | Multi-user review (server load at 20 users) |
+| `datastream@id` filter + `result.timestamp` sort on track line | [Track_Visualization_Weigh_In.md](c:\Users\sbolling\Downloads\Track_Visualization_Weigh_In.md) — P0 hardening |
+
+---
+
+## Multi-User Considerations (15–20 concurrent users)
+
+All users will be in live mode and potentially submitting SENREPs simultaneously.
+
+### Server Load
+
+Per user per refresh cycle (~12 API requests):
+- LOB observations: ~3 requests (one per sensor array DS)
+- Detection observations: ~3 requests
+- Bearing lines: ~3 requests
+- Location estimates: 1 request
+- Track line: 1 request (N=25)
+- SENREP markers: 1 request
+
+At 20 users / 8s interval: **~30 req/s** sustained against the OSH server. Manageable for a single Java process.
+
+### Thundering Herd Prevention
+
+When 20 users load the map page simultaneously, an initial random delay of 0–`INITIAL_POLL_STAGGER_MS` (3000ms) before the first live poll cycle prevents 240+ requests in the first second. After the stagger, users naturally desynchronize.
+
+### SENREP Marker Pileup
+
+If multiple users report on the same gold dot, multiple red diamonds stack at nearly the same lat/lon. Accepted for the demo — this is a realistic scenario (multiple SETs watching the same target). Future: cluster markers with count badge.
+
+### Admin Access
+
+Only the demo coordinator should use `/admin/simulator`. Brief audience to stay on `/map` and `/demo`.
 
 ---
 
