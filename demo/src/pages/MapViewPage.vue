@@ -1886,6 +1886,16 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         items = obsRes.data.items || []
       }
 
+      // ── OSH scope-leak workaround ─────────────────────────────────
+      // OSH has a bug where datastream-scoped observation queries return
+      // observations from sibling/unrelated datastreams (osh-core#340).
+      // Filter out any observation whose datastream@id doesn't match the
+      // DS we actually queried.
+      items = items.filter((obs: any) => {
+        const obsDs = obs['datastream@id']
+        return !obsDs || obsDs === dsInfo.id
+      })
+
       const trackCoords: [number, number][] = []
 
       for (let obsIdx = 0; obsIdx < items.length; obsIdx++) {
