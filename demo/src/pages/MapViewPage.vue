@@ -3875,8 +3875,8 @@ watch(selectedFeature, (feat) => {
 }
 
 .popup-id {
-  font-size: 0.75rem;
-  color: #64748b;
+  font-size: 0.78rem;
+  color: #475569;
 }
 
 .bbox-controls {
@@ -4524,10 +4524,10 @@ watch(selectedFeature, (feat) => {
 .senrep-popup-btn:hover { background: #dc2626; }
 
 .popup-senrep-detail {
-  font-size: 0.7rem;
-  color: #d1d5db;
+  font-size: 0.78rem;
+  color: #334155;
   margin-top: 0.3rem;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .senrep-panel {
