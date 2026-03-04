@@ -39,6 +39,19 @@ interface SceneSummary {
   activityLevel: number
 }
 
+interface SenrepEntry {
+  id: string
+  contactId: string
+  operator: string
+  classification: string
+  reportType: string
+  lat: number
+  lon: number
+  strNo: string
+  comments: string
+  time: string
+}
+
 // ── Known sensor array IDs ──────────────────────────────────────────
 const SENSOR_ARRAYS = [
   { id: 'AZ-MA-1', serverId: '04ng', label: 'AZ-MA-1 — Sensor Array 1', lat: 31.5550, lon: -110.3510 },
@@ -94,7 +107,11 @@ const lastRefresh = ref<string | null>(null)
 const autoRefresh = ref(false)
 const refreshInterval = ref<number | null>(null)
 const totalObsCount = ref(0)
+const senrepReports = ref<SenrepEntry[]>([])
+const senrepCount = ref(0)
 const error = ref<string | null>(null)
+
+const SENREP_DS_ID = '044g'
 
 const isConnectedToOSH = computed(() => {
   return connection.connected && connection.baseUrl.includes('/api/osh')
@@ -270,6 +287,31 @@ async function refresh() {
     )
     monitoringDatastreams.value = monDs
 
+    // Fetch SENREP reports from DS 044g
+    try {
+      const senrepData = await fetchJson(`/datastreams/${SENREP_DS_ID}/observations?limit=50`)
+      const senrepItems = (senrepData?.items || [])
+        .filter((obs: any) => !obs['datastream@id'] || obs['datastream@id'] === SENREP_DS_ID)
+      senrepCount.value = senrepItems.length
+      senrepReports.value = senrepItems
+        .map((obs: any) => {
+          const r = obs.result || {}
+          return {
+            id: obs.id || '',
+            contactId: r.title || '—',
+            operator: r.senderId || '—',
+            classification: r.tgtTyp || '—',
+            reportType: r.subTyp || 'INIT',
+            lat: r.etaLat ?? 0,
+            lon: r.etaLon ?? 0,
+            strNo: r.strNo || '—',
+            comments: r.comments || '',
+            time: obs.resultTime || obs.phenomenonTime || '',
+          } as SenrepEntry
+        })
+        .sort((a: SenrepEntry, b: SenrepEntry) => new Date(b.time).getTime() - new Date(a.time).getTime())
+    } catch { /* SENREP DS may not exist */ }
+
     totalObsCount.value = obsTotal
     lastRefresh.value = new Date().toLocaleTimeString()
   } catch (err: any) {
@@ -393,6 +435,13 @@ function activityColor(level: number): string {
         <div class="card-body">
           <div class="card-value">{{ sceneSummary ? (sceneSummary.activityLevel * 100).toFixed(0) + '%' : '—' }}</div>
           <div class="card-label">Activity Level</div>
+        </div>
+      </div>
+      <div class="summary-card senrep-card">
+        <div class="card-icon" style="color: #ef4444;"><i class="pi pi-flag"></i></div>
+        <div class="card-body">
+          <div class="card-value">{{ senrepCount }}</div>
+          <div class="card-label">SENREP Reports</div>
         </div>
       </div>
     </div>
@@ -548,6 +597,34 @@ function activityColor(level: number): string {
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- SENREP Report Timeline -->
+    <div v-if="senrepReports.length" class="sensor-section">
+      <h3><i class="pi pi-flag" style="color: #ef4444;"></i> SENREP Report Feed</h3>
+      <p class="section-desc">Sensor reports submitted by monitoring operators — newest first</p>
+      <div class="senrep-timeline">
+        <div v-for="report in senrepReports" :key="report.id" class="senrep-row">
+          <div class="senrep-row-icon">◆</div>
+          <div class="senrep-row-body">
+            <div class="senrep-row-header">
+              <span class="senrep-contact">{{ report.contactId }}</span>
+              <span class="senrep-type-badge" :class="'senrep-type--' + report.reportType.toLowerCase()">{{ report.reportType }}</span>
+              <span class="senrep-time">{{ formatTime(report.time) }}</span>
+            </div>
+            <div class="senrep-row-detail">
+              <span><strong>{{ report.classification }}</strong></span>
+              <span class="senrep-sep">·</span>
+              <span>{{ report.lat.toFixed(4) }}°N, {{ Math.abs(report.lon).toFixed(4) }}°W</span>
+              <span class="senrep-sep">·</span>
+              <span>Operator: <strong>{{ report.operator }}</strong></span>
+              <span class="senrep-sep">·</span>
+              <span>{{ report.strNo }}</span>
+            </div>
+            <div v-if="report.comments" class="senrep-row-comments">{{ report.comments }}</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Loading skeleton -->
@@ -746,5 +823,76 @@ function activityColor(level: number): string {
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* SENREP card highlight */
+.senrep-card { border-left: 3px solid #ef4444; }
+
+/* SENREP Timeline */
+.senrep-timeline {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.senrep-row {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: flex-start;
+}
+.senrep-row:last-child { border-bottom: none; }
+.senrep-row:hover { background: #f8fafc; }
+.senrep-row-icon {
+  color: #ef4444;
+  font-size: 1rem;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+.senrep-row-body { flex: 1; min-width: 0; }
+.senrep-row-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.senrep-contact {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+.senrep-type-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.senrep-type--init { background: #dbeafe; color: #1e40af; }
+.senrep-type--update { background: #fef3c7; color: #92400e; }
+.senrep-type--final { background: #fee2e2; color: #991b1b; }
+.senrep-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-family: monospace;
+  margin-left: auto;
+}
+.senrep-row-detail {
+  font-size: 0.8rem;
+  color: #475569;
+  margin-top: 0.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+.senrep-sep { color: #cbd5e1; }
+.senrep-row-comments {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  font-style: italic;
 }
 </style>
