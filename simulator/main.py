@@ -177,6 +177,16 @@ def simulation_worker(st: SimState):
         # ── Ensure detection ranges are present ──────────────────────
         seed_detection_ranges()
 
+        # ── Verify SENREP infrastructure ─────────────────────────────
+        try:
+            resp = api_get("datastreams/044g")
+            if resp and resp.get("id") == "044g":
+                print("[sim] SENREP infrastructure verified (DS 044g exists)")
+            else:
+                print("[sim] WARNING: SENREP DS 044g not found — report submission will fail")
+        except Exception:
+            print("[sim] WARNING: Could not verify SENREP DS 044g")
+
         # ── Discover datastream IDs ──────────────────────────────────
         with st.lock:
             st.message = "Discovering datastreams..."
