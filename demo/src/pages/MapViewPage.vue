@@ -64,14 +64,11 @@ const DETECTION_RANGES_ENTRY = { key: 'detectionRanges', label: 'Det. Range', pl
 // Location estimate layer entry (localizer triangulation fixes)
 const LOC_ESTIMATE_ENTRY = { key: 'locationEstimates', label: 'Loc. Est.', plural: 'Location Estimates', icon: 'pi pi-map-marker', part: 2 as const, readOnly: true }
 
-// Track line layer entry (localizer fix history polyline)
-const TRACK_LINE_ENTRY = { key: 'trackLine', label: 'Track', plural: 'Track Line', icon: 'pi pi-directions', part: 2 as const, readOnly: true }
-
 // SENREP marker layer entry (human-submitted sensor reports)
 const SENREP_ENTRY = { key: 'senrepMarkers', label: 'SENREP', plural: 'SENREP Reports', icon: 'pi pi-flag', part: 2 as const, readOnly: true }
 
 // All types visible on the map
-const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY, LOB_ENTRY, DETECTION_RANGES_ENTRY, TRACK_LINE_ENTRY, LOC_ESTIMATE_ENTRY, SENREP_ENTRY]
+const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY, LOB_ENTRY, DETECTION_RANGES_ENTRY, LOC_ESTIMATE_ENTRY, SENREP_ENTRY]
 
 // Color map for resource types
 const TYPE_COLORS: Record<string, string> = {
@@ -86,7 +83,6 @@ const TYPE_COLORS: Record<string, string> = {
   bearingLines: '#f43f5e',      // rose
   detectionRanges: '#60a5fa',    // friendly blue (2525E)
   locationEstimates: '#facc15',  // gold / yellow
-  trackLine: '#facc15',          // gold (same as location estimates)
   senrepMarkers: '#ef4444',      // red — distinct from gold dots
 }
 
@@ -102,7 +98,6 @@ const TYPE_LABELS: Record<string, string> = {
   bearingLines: '►',
   detectionRanges: '◎',
   locationEstimates: '⊕',
-  trackLine: '─',
   senrepMarkers: '◆',
 }
 
@@ -119,7 +114,6 @@ const activeLayers = ref<Record<string, boolean>>({
   bearingLines: true,
   detectionRanges: true,
   locationEstimates: true,
-  trackLine: true,
   senrepMarkers: true,
 })
 
@@ -162,7 +156,6 @@ const liveMode = ref(true)
 let liveInterval: ReturnType<typeof setInterval> | null = null
 const lastRefreshTime = ref('')
 const LIVE_REFRESH_MS = 8000                // 8s cycle (scaled for 15-20 concurrent users)
-const TRACK_HISTORY_LIMIT = 25              // Max fixes in track polyline
 const INITIAL_POLL_STAGGER_MS = 3000        // Random delay before first live poll (thundering herd prevention)
 
 // ── SENREP Click-to-Report Panel State ─────────────────────────────
@@ -1700,67 +1693,6 @@ async function loadLocationEstimates(): Promise<void> {
   } catch { /* skip — no location estimates available */ }
 }
 
-/**
- * Fetch the last N localizer fixes and draw a gold polyline (track line)
- * with recency-fading segments. Shows movement history.
- */
-async function loadTrackLine(): Promise<void> {
-  const source = vectorSources['trackLine']
-  if (!source) return
-  source.clear()
-  featureCounts.value['trackLine'] = 0
-
-  if (!localizerDatastreamId) return
-
-  try {
-    const obsRes = await apiFetch(
-      `/datastreams/${localizerDatastreamId}/observations?limit=${TRACK_HISTORY_LIMIT}`,
-      { headers: { 'Accept': 'application/om+json' } },
-    )
-    if (!obsRes.ok || !obsRes.data) return
-    // Identify localizer observations by their result structure (estimatedLat/estimatedLon)
-    // rather than datastream@id which OSH mislabels in per-DS queries
-    const items = (obsRes.data.items || [])
-      .filter((obs: any) => {
-        const r = obs.result
-        return r && typeof r.estimatedLat === 'number' && typeof r.estimatedLon === 'number'
-      })
-      // Sort by stable localizer timestamp (epoch seconds), oldest first
-      .sort((a: any, b: any) => (a.result?.timestamp ?? 0) - (b.result?.timestamp ?? 0))
-    if (items.length < 2) return
-
-    // Build coordinate array (already sorted oldest → newest)
-    const coords: [number, number][] = items
-      .map((obs: any) => {
-        const r = obs.result
-        if (typeof r?.estimatedLat === 'number' && typeof r?.estimatedLon === 'number')
-          return fromLonLat([r.estimatedLon, r.estimatedLat]) as [number, number]
-        return null
-      })
-      .filter(Boolean) as [number, number][]
-
-    if (coords.length < 2) return
-
-    // Draw polyline with recency-fading segments
-    for (let i = 1; i < coords.length; i++) {
-      const alpha = 0.15 + 0.75 * (i / (coords.length - 1)) // 0.15 at tail → 0.9 at head
-      const segment = new Feature({
-        geometry: new LineString([coords[i - 1], coords[i]]),
-      })
-      segment.setStyle(new Style({
-        stroke: new Stroke({
-          color: `rgba(250, 204, 21, ${alpha.toFixed(2)})`,
-          width: 3,
-        }),
-      }))
-      segment.set('resourceType', 'trackLine')
-      source.addFeature(segment)
-    }
-
-    featureCounts.value['trackLine'] = coords.length
-  } catch { /* skip — no track data available */ }
-}
-
 // ── SENREP DS ID (Monitoring Team A sensor reports) ────────────────
 const SENREP_DS_ID = '044g'
 
@@ -2393,7 +2325,6 @@ async function loadAllResources() {
     loadDatastreams(),
     loadControlStreams(),
     loadObservationLayers(liveMode.value ? 3 : 500),
-    loadTrackLine(),
     loadLocationEstimates(),
     loadSenrepMarkers(),
   ])
@@ -2525,7 +2456,6 @@ async function refreshLiveLayers() {
     // for a tight, real-time view instead of the full 500 history
     await Promise.all([
       loadObservationLayers(3),
-      loadTrackLine(),
       loadLocationEstimates(),
       loadSenrepMarkers(),
     ])
@@ -2547,7 +2477,6 @@ function toggleLiveMode() {
     lastRefreshTime.value = ''
     // Reload full history when leaving live mode
     loadObservationLayers(500)
-    loadTrackLine()
     loadLocationEstimates()
     loadSenrepMarkers()
   }
@@ -2579,7 +2508,7 @@ onMounted(() => {
     vectorSources[rt.key] = source
     const layerOpts: Record<string, any> = {
       source,
-      zIndex: rt.key === 'detectionRanges' ? 3 : rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'trackLine' ? 7 : rt.key === 'observationPoints' ? 7 : rt.key === 'locationEstimates' ? 8 : rt.key === 'senrepMarkers' ? 9 : 10,
+      zIndex: rt.key === 'detectionRanges' ? 3 : rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : rt.key === 'locationEstimates' ? 8 : rt.key === 'senrepMarkers' ? 9 : 10,
       // Deployments: no declutter so STANAG symbols are never hidden by label overlap
       declutter: labeledTypes.has(rt.key),
       updateWhileAnimating: false,
@@ -2649,7 +2578,6 @@ onMounted(() => {
       const rt = feature.get('resourceType')
       if (!rt) return
       if (rt === 'detectionRanges') return // static overlay — not selectable
-      if (rt === 'trackLine') return       // track line segments — not selectable
       hit = true
 
       // Toggle: if clicking the already-selected feature, deselect it
@@ -2911,14 +2839,6 @@ watch(selectedFeature, (feat) => {
           <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS['locationEstimates'] }"></span>
           <span class="layer-label">Location Estimates</span>
           <span class="layer-count">{{ featureCounts['locationEstimates'] ?? '—' }}</span>
-        </button>
-        <button
-          :class="['layer-toggle', { inactive: !activeLayers['trackLine'] }]"
-          @click="toggleLayer('trackLine')"
-        >
-          <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS['trackLine'] }"></span>
-          <span class="layer-label">Track Line</span>
-          <span class="layer-count">{{ featureCounts['trackLine'] ?? '—' }}</span>
         </button>
         <button
           :class="['layer-toggle', { inactive: !activeLayers['senrepMarkers'] }]"
