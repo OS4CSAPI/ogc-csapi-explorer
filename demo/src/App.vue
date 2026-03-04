@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { connection } from './state'
 import os4csapiIcon from './assets/os4csapi-logo.svg'
@@ -7,6 +7,7 @@ import os4csapiIcon from './assets/os4csapi-logo.svg'
 const router = useRouter()
 const route = useRoute()
 const mobileMenuOpen = ref(false)
+const showNav = computed(() => connection.connected || route.name === 'demo')
 
 // Close mobile menu on any route change
 watch(() => route.fullPath, () => { mobileMenuOpen.value = false })
@@ -27,7 +28,7 @@ function mobileNav(to: string) {
     </div>
     <!-- Desktop nav -->
     <div class="header-right header-desktop">
-      <template v-if="connection.connected">
+      <template v-if="showNav">
         <span class="connection-badge">
           <i class="pi pi-check-circle"></i>
           {{ connection.label }}
@@ -63,7 +64,7 @@ function mobileNav(to: string) {
     <Teleport to="body">
       <div v-if="mobileMenuOpen" class="mobile-menu-backdrop" @click="mobileMenuOpen = false"></div>
       <nav v-if="mobileMenuOpen" class="mobile-menu">
-        <template v-if="connection.connected">
+        <template v-if="showNav">
           <span class="connection-badge" style="justify-content: center">
             <i class="pi pi-check-circle"></i>
             {{ connection.label }}
