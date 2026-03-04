@@ -116,12 +116,67 @@ state = SimState()
 #  Simulation worker (runs in a background thread)
 # ═══════════════════════════════════════════════════════════════════════════
 
+# ── Detection range seeding (ensures rings survive clears) ──────────────
+
+DETECTION_RANGE = {
+    "minRange_m": 667,
+    "nominalRange_m": 1833,
+    "maxRange_m": 3000,
+    "shape": "circular",
+    "confidence": 0.7,
+    "basis": "estimated",
+}
+
+def seed_detection_ranges() -> int:
+    """Ensure each detection-capabilities datastream has a valid observation.
+
+    Checks the latest observation in each DS — if it's missing the expected
+    range fields (minRange_m etc.), posts a fresh observation.  Returns the
+    number of datastreams that were (re-)seeded.
+    """
+    seeded = 0
+    for ds_id in DETECTION_DS_IDS:
+        try:
+            resp = api_get(f"datastreams/{ds_id}/observations?resultTime=latest&limit=1")
+            items = resp.get("items", []) if resp else []
+            result = items[0].get("result", {}) if items else {}
+            if isinstance(result.get("minRange_m"), (int, float)):
+                continue  # already has valid detection range data
+        except Exception:
+            pass  # treat any error as "needs seeding"
+
+        # Post a fresh detection-range observation
+        now = time.time()
+        obs = {
+            "phenomenonTime": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
+            "resultTime":     time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
+            "result": {
+                "timestamp":      now,
+                "shape":           DETECTION_RANGE["shape"],
+                "minRange_m":     DETECTION_RANGE["minRange_m"],
+                "nominalRange_m": DETECTION_RANGE["nominalRange_m"],
+                "maxRange_m":     DETECTION_RANGE["maxRange_m"],
+                "confidence":     DETECTION_RANGE["confidence"],
+                "basis":          DETECTION_RANGE["basis"],
+            },
+        }
+        try:
+            api_post(f"datastreams/{ds_id}/observations", obs)
+            seeded += 1
+        except Exception:
+            pass  # non-fatal — rings just won't show
+    return seeded
+
+
 def simulation_worker(st: SimState):
     """
     Run the simulation loop; mirrors run_simulation() from
     simulate_scenario.py but reports telemetry via SimState.
     """
     try:
+        # ── Ensure detection ranges are present ──────────────────────
+        seed_detection_ranges()
+
         # ── Discover datastream IDs ──────────────────────────────────
         with st.lock:
             st.message = "Discovering datastreams..."
@@ -417,13 +472,18 @@ def localizer_worker(st: LocalizerState):
 #  Observation clearing (reuses logic from clear_observations.py)
 # ═══════════════════════════════════════════════════════════════════════════
 
-# All datastream IDs on the live server (25 total)
-ALL_DS_IDS = [
+# Detection-capabilities datastreams — NEVER cleared (static config)
+DETECTION_DS_IDS = ["04dg", "04e0", "04eg"]  # MA-1, MA-2, MA-3
+
+# Datastream IDs that the clear operation should wipe (22 total, excludes detection caps)
+CLEARABLE_DS_IDS = [
     "044g", "0430", "043g", "04c0", "0440", "0410", "041g", "042g",  # SENREP + MA-1 (04c0 = LOB)
     "0450", "045g", "04cg", "046g", "0470", "047g", "0480",          # MA-2 (04cg = LOB)
     "048g", "0490", "04d0", "04a0", "04ag", "04b0", "04bg",          # MA-3 (04d0 = LOB)
-    "04dg", "04e0", "04eg",                                           # Detection capabilities (MA-1/2/3)
 ]
+
+# Combined list (for reference only — clear uses CLEARABLE_DS_IDS)
+ALL_DS_IDS = CLEARABLE_DS_IDS + DETECTION_DS_IDS
 
 
 def clear_all_observations() -> dict[str, int]:
@@ -442,7 +502,7 @@ def clear_all_observations() -> dict[str, int]:
     total_deleted = 0
     errors = 0
 
-    for ds_id in ALL_DS_IDS:
+    for ds_id in CLEARABLE_DS_IDS:
         page = 0
         while True:
             url = f"{BASE_URL}/datastreams/{ds_id}/observations?limit=50"

@@ -1248,16 +1248,18 @@ async function fetchDetectionRangeConfigs(): Promise<void> {
       )
       if (!capDs) return
 
-      // 2. Read latest observation (resultTime=latest ensures we get the
-      //    newest observation, not the oldest — the server returns oldest-first
-      //    with plain limit=1, and stale LOB observations may precede the
-      //    detection_capabilities data)
-      const obsRes = await apiFetch(`/datastreams/${capDs.id}/observations?resultTime=latest&limit=1`)
+      // 2. Read observations and find the one with detection range data.
+      //    OSH has a bug where datastream-scoped queries return observations
+      //    from sibling datastreams, so we can't rely on resultTime=latest
+      //    (contaminating LOB observations may have later timestamps).
+      //    Fetch a page and pick the first observation with minRange_m.
+      const obsRes = await apiFetch(`/datastreams/${capDs.id}/observations?limit=50`)
       if (!obsRes.ok || !obsRes.data) return
       const items = obsRes.data.items || []
       if (!items.length) return
-      const result = items[0].result
-      if (!result) return
+      const rangeObs = items.find((o: any) => o.result && typeof o.result.minRange_m === 'number')
+      if (!rangeObs) return
+      const result = rangeObs.result
 
       // 3. Get system UID from the system feature
       const sysRes = await apiFetch(`/systems/${sysId}`)
