@@ -245,6 +245,9 @@ def wls_bearing_intersection(lobs: list[dict]) -> dict | None:
 
     sensors = []
     for lob in lobs:
+        # Skip LOBs missing required fields
+        if not all(isinstance(lob.get(k), (int, float)) for k in ("sensorLon", "sensorLat", "bearingTrue", "bearingStdDev")):
+            continue
         x = lob["sensorLon"] * (math.pi / 180) * R_EARTH * cos_ref
         y = lob["sensorLat"] * (math.pi / 180) * R_EARTH
         theta = math.radians(lob["bearingTrue"])
@@ -252,13 +255,17 @@ def wls_bearing_intersection(lobs: list[dict]) -> dict | None:
         w = 1.0 / (math.radians(sigma) ** 2)
         sensors.append((x, y, theta, w))
 
+    if len(sensors) < 2:
+        return None  # not enough valid LOBs
+
     # Build normal equations:  A^T W A x = A^T W b
     ata = [[0.0, 0.0], [0.0, 0.0]]
     atb = [0.0, 0.0]
 
     for x_i, y_i, theta_i, w_i in sensors:
-        a0 = math.sin(theta_i)
-        a1 = -math.cos(theta_i)
+        # Normal to bearing direction (sin θ, cos θ) is (cos θ, -sin θ)
+        a0 = math.cos(theta_i)
+        a1 = -math.sin(theta_i)
         b_i = a0 * x_i + a1 * y_i
 
         ata[0][0] += w_i * a0 * a0
@@ -279,7 +286,7 @@ def wls_bearing_intersection(lobs: list[dict]) -> dict | None:
     # Residuals (metres)
     residuals = []
     for x_i, y_i, theta_i, _w in sensors:
-        d = abs(math.sin(theta_i) * (x_hat - x_i) - math.cos(theta_i) * (y_hat - y_i))
+        d = abs(math.cos(theta_i) * (x_hat - x_i) - math.sin(theta_i) * (y_hat - y_i))
         residuals.append(d)
 
     mean_residual = sum(residuals) / len(residuals)

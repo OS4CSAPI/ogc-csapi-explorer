@@ -32,12 +32,33 @@ interface SimStatus {
   }
 }
 
+interface LocStatus {
+  running: boolean
+  cycles: number
+  lobs_consumed: number
+  fixes_published: number
+  last_fix: {
+    lat: number
+    lon: number
+    cep50_m: number
+    residual_m: number
+    n: number
+    sensors: string
+    classification: string
+  } | null
+  elapsed_s: number
+  errors: number
+  message: string
+}
+
 const status = ref<SimStatus | null>(null)
+const locStatus = ref<LocStatus | null>(null)
 const connected = ref(false)
 const pollError = ref('')
 const actionMessage = ref('')
 const actionSeverity = ref<'success' | 'error' | 'info'>('info')
 const loading = ref(false)
+const locLoading = ref(false)
 const clearing = ref(false)
 
 // Config form
@@ -69,10 +90,18 @@ async function pollStatus() {
   }
 }
 
+async function pollLocalizerStatus() {
+  try {
+    const data = await apiFetch('/localizer/status')
+    locStatus.value = data
+  } catch { /* localizer endpoints may not exist on older builds */ }
+}
+
 function startPolling() {
   stopPolling()
   pollStatus()
-  pollTimer = setInterval(pollStatus, 2000)
+  pollLocalizerStatus()
+  pollTimer = setInterval(() => { pollStatus(); pollLocalizerStatus() }, 2000)
 }
 
 function stopPolling() {
@@ -142,6 +171,37 @@ async function clearObs() {
   }
 }
 
+// ── Localizer Actions ────────────────────────────────────────────────
+async function startLocalizer() {
+  locLoading.value = true
+  actionMessage.value = ''
+  try {
+    const data = await apiFetch('/localizer/start', { method: 'POST' })
+    actionMessage.value = data.message
+    actionSeverity.value = data.ok ? 'success' : 'error'
+  } catch (e: any) {
+    actionMessage.value = e.message
+    actionSeverity.value = 'error'
+  } finally {
+    locLoading.value = false
+  }
+}
+
+async function stopLocalizer() {
+  locLoading.value = true
+  actionMessage.value = ''
+  try {
+    const data = await apiFetch('/localizer/stop', { method: 'POST' })
+    actionMessage.value = data.message
+    actionSeverity.value = data.ok ? 'success' : 'error'
+  } catch (e: any) {
+    actionMessage.value = e.message
+    actionSeverity.value = 'error'
+  } finally {
+    locLoading.value = false
+  }
+}
+
 // ── Computed ─────────────────────────────────────────────────────────
 const elapsedFormatted = computed(() => {
   if (!status.value) return '—'
@@ -154,6 +214,14 @@ const elapsedFormatted = computed(() => {
 const detectionRate = computed(() => {
   if (!status.value || !status.value.tick) return '—'
   return `${Math.round((status.value.detecting_ticks / status.value.tick) * 100)}%`
+})
+
+const locElapsedFormatted = computed(() => {
+  if (!locStatus.value) return '—'
+  const s = locStatus.value.elapsed_s
+  const m = Math.floor(s / 60)
+  const sec = Math.floor(s % 60)
+  return `${m}m ${sec}s`
 })
 
 // ── Lifecycle ────────────────────────────────────────────────────────
@@ -292,6 +360,100 @@ onUnmounted(() => {
       </div>
     </Panel>
 
+    <!-- Localizer Status -->
+    <Panel header="LOB Localizer" class="mb-4">
+      <div v-if="!connected" class="placeholder-text">
+        Not connected to simulator service
+      </div>
+      <div v-else-if="!locStatus" class="placeholder-text">
+        <ProgressSpinner style="width: 24px; height: 24px" /> Loading…
+      </div>
+      <div v-else>
+        <div class="status-grid">
+          <div class="stat-card" :class="locStatus.running ? 'stat-running' : 'stat-stopped'">
+            <div class="stat-label">State</div>
+            <div class="stat-value">
+              <span class="state-dot" :class="locStatus.running ? 'dot-gold' : 'dot-gray'"></span>
+              {{ locStatus.running ? 'RUNNING' : 'IDLE' }}
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Cycles</div>
+            <div class="stat-value">{{ locStatus.cycles }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Elapsed</div>
+            <div class="stat-value">{{ locElapsedFormatted }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">LOBs Consumed</div>
+            <div class="stat-value">{{ locStatus.lobs_consumed }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Fixes Published</div>
+            <div class="stat-value loc-fixes">{{ locStatus.fixes_published }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Errors</div>
+            <div class="stat-value" :class="locStatus.errors > 0 ? 'text-error' : ''">{{ locStatus.errors }}</div>
+          </div>
+        </div>
+
+        <!-- Last fix detail -->
+        <div v-if="locStatus.last_fix" class="loc-fix-detail mt-3">
+          <div class="stat-label" style="margin-bottom: 0.5rem">Latest Fix</div>
+          <div class="status-grid">
+            <div class="stat-card stat-wide">
+              <div class="stat-label">Position</div>
+              <div class="stat-value">{{ locStatus.last_fix.lat.toFixed(6) }}, {{ locStatus.last_fix.lon.toFixed(6) }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">CEP50</div>
+              <div class="stat-value">{{ locStatus.last_fix.cep50_m.toFixed(0) }} m</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Residual</div>
+              <div class="stat-value">{{ locStatus.last_fix.residual_m.toFixed(1) }} m</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">LOBs Used</div>
+              <div class="stat-value">{{ locStatus.last_fix.n }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Classification</div>
+              <div class="stat-value loc-class">{{ locStatus.last_fix.classification }}</div>
+            </div>
+            <div class="stat-card stat-wide">
+              <div class="stat-label">Sensors</div>
+              <div class="stat-value">
+                <span v-for="s in locStatus.last_fix.sensors.split(',')" :key="s" class="node-badge node-badge-gold">{{ s }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Localizer controls -->
+        <div class="action-row mt-3">
+          <Button
+            label="Start Localizer"
+            icon="pi pi-play"
+            severity="success"
+            :loading="locLoading"
+            :disabled="!connected || (locStatus?.running ?? false)"
+            @click="startLocalizer"
+          />
+          <Button
+            label="Stop Localizer"
+            icon="pi pi-stop"
+            severity="danger"
+            :loading="locLoading"
+            :disabled="!connected || !(locStatus?.running ?? false)"
+            @click="stopLocalizer"
+          />
+        </div>
+      </div>
+    </Panel>
+
     <!-- Help -->
     <Panel header="Deployment" toggleable :collapsed="true">
       <div class="help-text">
@@ -305,6 +467,8 @@ flyctl deploy</pre>
         <ul>
           <li>FastAPI + Uvicorn inside a Python 3.12 container</li>
           <li>Simulation runs in a background thread (not async)</li>
+          <li>LOB Localizer runs in a separate background thread</li>
+          <li>WLS bearing-intersection algorithm with CEP50 estimate</li>
           <li>Machine auto-suspends when idle (Fly.io free tier)</li>
           <li>Wakes on first HTTP request (~2s cold start)</li>
         </ul>
@@ -454,6 +618,31 @@ flyctl deploy</pre>
   font-size: 0.8rem;
   font-weight: 600;
   margin-right: 0.3rem;
+}
+
+.node-badge-gold {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Localizer specifics */
+.dot-gold {
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b80;
+}
+
+.loc-fixes {
+  color: #b45309;
+}
+
+.loc-class {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.loc-fix-detail {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.75rem;
 }
 
 /* Config form */

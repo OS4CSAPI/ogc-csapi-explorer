@@ -32,6 +32,16 @@ from engine import (
     api_get,
     api_post,
     iso_now,
+    # Localizer imports
+    wls_bearing_intersection,
+    build_location_estimate,
+    discover_lob_datastreams,
+    discover_localizer_ds,
+    POLL_INTERVAL,
+    MAX_LOB_AGE_S,
+    CORRELATION_WINDOW,
+    RESIDUAL_CAP,
+    MIN_LOBS,
 )
 
 
@@ -207,6 +217,203 @@ def simulation_worker(st: SimState):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  Localizer state + worker (runs in a background thread)
+# ═══════════════════════════════════════════════════════════════════════════
+
+class LocalizerState:
+    """Thread-safe mutable state for the localizer."""
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.running = False
+        self.stop_event = threading.Event()
+        self.thread: threading.Thread | None = None
+
+        # Telemetry
+        self.cycles: int = 0
+        self.lobs_consumed: int = 0
+        self.fixes_published: int = 0
+        self.last_fix_lat: float = 0.0
+        self.last_fix_lon: float = 0.0
+        self.last_fix_cep50: float = 0.0
+        self.last_fix_residual: float = 0.0
+        self.last_fix_n: int = 0
+        self.last_fix_sensors: str = ""
+        self.last_fix_classification: str = ""
+        self.started_at: float | None = None
+        self.message: str = ""
+        self.errors: int = 0
+
+    def snapshot(self) -> dict[str, Any]:
+        with self.lock:
+            elapsed = time.time() - self.started_at if self.started_at else 0
+            return {
+                "running": self.running,
+                "cycles": self.cycles,
+                "lobs_consumed": self.lobs_consumed,
+                "fixes_published": self.fixes_published,
+                "last_fix": {
+                    "lat": self.last_fix_lat,
+                    "lon": self.last_fix_lon,
+                    "cep50_m": self.last_fix_cep50,
+                    "residual_m": self.last_fix_residual,
+                    "n": self.last_fix_n,
+                    "sensors": self.last_fix_sensors,
+                    "classification": self.last_fix_classification,
+                } if self.fixes_published > 0 else None,
+                "elapsed_s": round(elapsed, 1),
+                "errors": self.errors,
+                "message": self.message,
+            }
+
+    def reset(self):
+        self.cycles = 0
+        self.lobs_consumed = 0
+        self.fixes_published = 0
+        self.last_fix_lat = 0.0
+        self.last_fix_lon = 0.0
+        self.last_fix_cep50 = 0.0
+        self.last_fix_residual = 0.0
+        self.last_fix_n = 0
+        self.last_fix_sensors = ""
+        self.last_fix_classification = ""
+        self.started_at = None
+        self.message = ""
+        self.errors = 0
+
+
+loc_state = LocalizerState()
+
+
+def localizer_worker(st: LocalizerState):
+    """Run the localizer poll loop in a background thread."""
+    try:
+        with st.lock:
+            st.message = "Discovering datastreams..."
+
+        # Discover LOB inputs + localizer output DS
+        try:
+            lob_datastreams = discover_lob_datastreams()
+            localizer_ds = discover_localizer_ds()
+        except Exception as e:
+            with st.lock:
+                st.message = f"Discovery failed: {e}"
+                st.running = False
+            return
+
+        with st.lock:
+            st.message = "Running"
+            st.started_at = time.time()
+
+        # Dedup state
+        last_seen: dict[str, str] = {}
+
+        while not st.stop_event.is_set():
+            with st.lock:
+                st.cycles += 1
+                cycle = st.cycles
+
+            now = time.time()
+            lobs = []
+
+            # 1. CONSUME: Read latest LOB from each MA node
+            for name, ds_id in lob_datastreams.items():
+                try:
+                    obs_resp = api_get(f"datastreams/{ds_id}/observations?resultTime=latest")
+                except Exception:
+                    with st.lock:
+                        st.errors += 1
+                    continue
+
+                if not obs_resp:
+                    continue
+
+                if "items" in obs_resp and obs_resp["items"]:
+                    obs = obs_resp["items"][0]
+                elif "result" in obs_resp:
+                    obs = obs_resp
+                else:
+                    continue
+
+                obs_id = obs.get("id", "")
+                if obs_id and last_seen.get(ds_id) == obs_id:
+                    continue
+                if obs_id:
+                    last_seen[ds_id] = obs_id
+
+                result = obs.get("result")
+                if not result:
+                    continue
+
+                obs_time = result.get("timestamp", 0)
+                if abs(now - obs_time) > MAX_LOB_AGE_S:
+                    continue
+
+                lobs.append({**result, "name": name, "obs_id": obs_id})
+                with st.lock:
+                    st.lobs_consumed += 1
+
+            if not lobs:
+                st.stop_event.wait(timeout=POLL_INTERVAL)
+                continue
+
+            # 2. CORRELATE: Group by classification
+            by_class: dict[str, list[dict]] = {}
+            for lob in lobs:
+                cls = lob.get("classification", "UNKNOWN")
+                by_class.setdefault(cls, []).append(lob)
+
+            for cls, group in by_class.items():
+                timestamps = [l["timestamp"] for l in group]
+                spread = max(timestamps) - min(timestamps)
+                if spread > CORRELATION_WINDOW:
+                    continue
+
+                if len(group) < MIN_LOBS:
+                    continue
+
+                # 3. COMPUTE: WLS triangulation
+                estimate = wls_bearing_intersection(group)
+                if estimate is None:
+                    continue
+
+                if estimate["residual_m"] > RESIDUAL_CAP:
+                    continue
+
+                sensors = [l["name"] for l in group]
+                obs_body = build_location_estimate(
+                    estimate, contributing_sensors=sensors, classification=cls,
+                )
+
+                # 4. PRODUCE: POST back to CSAPI
+                try:
+                    api_post(f"datastreams/{localizer_ds}/observations", obs_body)
+                    with st.lock:
+                        st.fixes_published += 1
+                        st.last_fix_lat = estimate["estimatedLat"]
+                        st.last_fix_lon = estimate["estimatedLon"]
+                        st.last_fix_cep50 = estimate["cep50_m"]
+                        st.last_fix_residual = estimate["residual_m"]
+                        st.last_fix_n = estimate["n"]
+                        st.last_fix_sensors = ",".join(sensors)
+                        st.last_fix_classification = cls
+                except Exception:
+                    with st.lock:
+                        st.errors += 1
+
+            st.stop_event.wait(timeout=POLL_INTERVAL)
+
+        with st.lock:
+            st.message = "Stopped"
+            st.running = False
+
+    except Exception as exc:
+        with st.lock:
+            st.message = f"ERROR: {exc}"
+            st.running = False
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  Observation clearing (reuses logic from clear_observations.py)
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -283,10 +490,13 @@ def clear_all_observations() -> dict[str, int]:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
-    # On shutdown, stop any running simulation
+    # On shutdown, stop any running simulation and localizer
     state.stop_event.set()
+    loc_state.stop_event.set()
     if state.thread and state.thread.is_alive():
         state.thread.join(timeout=5)
+    if loc_state.thread and loc_state.thread.is_alive():
+        loc_state.thread.join(timeout=5)
 
 
 app = FastAPI(
@@ -374,3 +584,38 @@ def clear_observations():
         ok=True,
         message=f"Deleted {result['deleted']} observations ({result['errors']} errors)",
     )
+
+
+# ── Localizer Endpoints ──────────────────────────────────────────────────
+
+@app.get("/localizer/status")
+def localizer_status():
+    return loc_state.snapshot()
+
+
+@app.post("/localizer/start", response_model=MessageResponse)
+def localizer_start():
+    with loc_state.lock:
+        if loc_state.running:
+            return MessageResponse(ok=False, message="Localizer already running")
+
+        loc_state.reset()
+        loc_state.running = True
+        loc_state.stop_event.clear()
+
+    t = threading.Thread(target=localizer_worker, args=(loc_state,), daemon=True)
+    loc_state.thread = t
+    t.start()
+    return MessageResponse(ok=True, message="Localizer started")
+
+
+@app.post("/localizer/stop", response_model=MessageResponse)
+def localizer_stop():
+    with loc_state.lock:
+        if not loc_state.running:
+            return MessageResponse(ok=False, message="Localizer not running")
+
+    loc_state.stop_event.set()
+    if loc_state.thread:
+        loc_state.thread.join(timeout=10)
+    return MessageResponse(ok=True, message="Localizer stopped")

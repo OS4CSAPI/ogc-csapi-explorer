@@ -283,3 +283,170 @@ def build_lob_observation(
             "classification": "UAS",
         },
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  WLS Bearing Intersection Algorithm (Localizer)
+# ═══════════════════════════════════════════════════════════════════════════
+
+R_EARTH_WLS = 6_371_000
+LAT_REF     = 31.655  # centroid of sensor network (°N)
+
+# Localizer configuration
+LOCALIZER_SYSTEM_UID  = "urn:os4csapi:system:fusion:az-string-alpha-localizer"
+LOCALIZER_OUTPUT_NAME = "az_string_alpha_location_estimate"
+LOB_OUTPUT_SUFFIX     = "_lob"
+POLL_INTERVAL         = 5      # seconds
+MAX_LOB_AGE_S         = 15     # staleness gate
+CORRELATION_WINDOW    = 10     # max spread within a fusion group
+RESIDUAL_CAP          = 500    # metres
+MIN_LOBS              = 2
+
+
+# System IDs for the 3 MA nodes (for LOB datastream discovery)
+SYSTEM_IDS = {
+    "AZ-MA-1": "0420",
+    "AZ-MA-2": "0490",
+    "AZ-MA-3": "049g",
+}
+
+
+def wls_bearing_intersection(lobs: list[dict]) -> dict | None:
+    """
+    Weighted least-squares bearing intersection.
+
+    Each lob: {sensorLat, sensorLon, bearingTrue, bearingStdDev, ...}
+    Returns: {estimatedLat, estimatedLon, cep50_m, residual_m, n} or None.
+    """
+    cos_ref = math.cos(math.radians(LAT_REF))
+
+    sensors = []
+    for lob in lobs:
+        if not all(isinstance(lob.get(k), (int, float))
+                   for k in ("sensorLon", "sensorLat", "bearingTrue", "bearingStdDev")):
+            continue
+        x = lob["sensorLon"] * (math.pi / 180) * R_EARTH_WLS * cos_ref
+        y = lob["sensorLat"] * (math.pi / 180) * R_EARTH_WLS
+        theta = math.radians(lob["bearingTrue"])
+        sigma = max(lob["bearingStdDev"], 0.5)
+        w = 1.0 / (math.radians(sigma) ** 2)
+        sensors.append((x, y, theta, w))
+
+    if len(sensors) < 2:
+        return None
+
+    ata = [[0.0, 0.0], [0.0, 0.0]]
+    atb = [0.0, 0.0]
+
+    for x_i, y_i, theta_i, w_i in sensors:
+        a0 = math.cos(theta_i)
+        a1 = -math.sin(theta_i)
+        b_i = a0 * x_i + a1 * y_i
+        ata[0][0] += w_i * a0 * a0
+        ata[0][1] += w_i * a0 * a1
+        ata[1][0] += w_i * a1 * a0
+        ata[1][1] += w_i * a1 * a1
+        atb[0]    += w_i * a0 * b_i
+        atb[1]    += w_i * a1 * b_i
+
+    det = ata[0][0] * ata[1][1] - ata[0][1] * ata[1][0]
+    if abs(det) < 1e-12:
+        return None
+
+    x_hat = (ata[1][1] * atb[0] - ata[0][1] * atb[1]) / det
+    y_hat = (ata[0][0] * atb[1] - ata[1][0] * atb[0]) / det
+
+    residuals = []
+    for x_i, y_i, theta_i, _w in sensors:
+        d = abs(math.cos(theta_i) * (x_hat - x_i) - math.sin(theta_i) * (y_hat - y_i))
+        residuals.append(d)
+
+    mean_residual = sum(residuals) / len(residuals)
+    cep50 = mean_residual * 1.2
+
+    est_lon = x_hat / (math.pi / 180 * R_EARTH_WLS * cos_ref)
+    est_lat = y_hat / (math.pi / 180 * R_EARTH_WLS)
+
+    return {
+        "estimatedLat": round(est_lat, 6),
+        "estimatedLon": round(est_lon, 6),
+        "cep50_m": round(cep50, 1),
+        "residual_m": round(mean_residual, 1),
+        "n": len(lobs),
+    }
+
+
+def build_location_estimate(
+    wls_result: dict,
+    contributing_sensors: list[str],
+    track_id: int = 1,
+    classification: str = "UAS",
+) -> dict:
+    """Build a CSAPI observation for the location estimate datastream."""
+    now = iso_now()
+    return {
+        "phenomenonTime": now,
+        "resultTime": now,
+        "result": {
+            "timestamp": epoch_seconds(),
+            "trackId": track_id,
+            "estimatedLat": wls_result["estimatedLat"],
+            "estimatedLon": wls_result["estimatedLon"],
+            "cep50_m": wls_result["cep50_m"],
+            "classification": classification,
+            "numContributingLobs": wls_result["n"],
+            "contributingSensors": ",".join(contributing_sensors),
+            "residual_m": wls_result["residual_m"],
+        },
+    }
+
+
+def discover_lob_datastreams() -> dict[str, str]:
+    """
+    Query the server for each MA system's LOB datastream ID.
+    Returns {node_name: ds_id}.
+    """
+    lob_ds = {}
+    for name, sys_id in SYSTEM_IDS.items():
+        result = api_get(f"systems/{sys_id}/datastreams")
+        if not result or "items" not in result:
+            raise RuntimeError(f"System {name} ({sys_id}): no datastreams found")
+
+        suffix = name.lower().replace("-", "_")
+        expected_output = f"{suffix}_lob"
+
+        match = None
+        for ds in result["items"]:
+            if ds.get("outputName") == expected_output:
+                match = ds
+                break
+            if not match and ds.get("outputName", "").endswith(LOB_OUTPUT_SUFFIX):
+                match = ds
+
+        if not match:
+            raise RuntimeError(f"System {name} ({sys_id}): no LOB datastream")
+        lob_ds[name] = match["id"]
+
+    return lob_ds
+
+
+def discover_localizer_ds() -> str:
+    """Find the localizer's output datastream ID."""
+    result = api_get(f"systems?uid={LOCALIZER_SYSTEM_UID}")
+    sys_id = None
+    if result and "items" in result:
+        for item in result["items"]:
+            props = item.get("properties", item)
+            if props.get("uid") == LOCALIZER_SYSTEM_UID:
+                sys_id = item.get("id", props.get("id"))
+                break
+    if not sys_id:
+        raise RuntimeError("Localizer system not found. Run bootstrap_localizer.py first.")
+
+    ds_result = api_get(f"systems/{sys_id}/datastreams")
+    if ds_result and "items" in ds_result:
+        for ds in ds_result["items"]:
+            if ds.get("outputName") == LOCALIZER_OUTPUT_NAME:
+                return ds["id"]
+
+    raise RuntimeError("Localizer datastream not found. Run bootstrap_localizer.py first.")

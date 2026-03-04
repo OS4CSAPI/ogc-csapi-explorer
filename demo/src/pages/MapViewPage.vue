@@ -190,8 +190,10 @@ function getCachedBearingLineStyle(energy: number): Style {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
-  const opacity = 0.4 + (bucket / 10) * 0.6
-  const width = 2 + (bucket / 10) * 2
+  // Minimum opacity raised from 0.4 → 0.55 so low-energy LOBs remain visible
+  // even when overlapping with detection range fills or other sensors' lines.
+  const opacity = 0.55 + (bucket / 10) * 0.45
+  const width = 2.5 + (bucket / 10) * 1.5
   s = new Style({ stroke: new Stroke({ color: `rgba(${r}, ${g}, ${b}, ${opacity})`, width }) })
   bearingStyleCache.set(bucket, s)
   return s
@@ -207,14 +209,16 @@ function getRecencyBearingStyle(energy: number, recency: number): Style {
   const key = rBucket * 100 + eBucket
   let s = recencyStyleCache.get(key)
   if (s) return s
-  // Newest: bright red, wide; Oldest: gray-blue, thin, transparent
+  // Newest: bright red, wide; Oldest: gray-blue, thin but still visible
+  // Base opacity bumped from 0.15 → 0.35 so even the oldest LOBs remain
+  // clearly visible instead of disappearing under overlapping features.
   const freshR = 244, freshG = 63,  freshB = 94   // rose #f43f5e
   const staleR = 148, staleG = 163, staleB = 184  // gray #94a3b8
   const r = Math.round(staleR + (freshR - staleR) * recency)
   const g = Math.round(staleG + (freshG - staleG) * recency)
   const b = Math.round(staleB + (freshB - staleB) * recency)
-  const opacity = 0.15 + recency * 0.75
-  const width = 1 + recency * 2.5
+  const opacity = 0.35 + recency * 0.55
+  const width = 1.5 + recency * 2
   s = new Style({ stroke: new Stroke({ color: `rgba(${r}, ${g}, ${b}, ${opacity})`, width }) })
   recencyStyleCache.set(key, s)
   return s
@@ -1293,10 +1297,13 @@ function buildDetectionRanges(): void {
   if (!deploySource) return
 
   // Ring styles: solid strokes with visible fills
+  // Stroke widths and fill alphas are deliberately high to remain visible on
+  // retina / high-DPI mobile screens (iPhone 2-3× pixel ratio can make thin
+  // strokes sub-pixel and low-alpha fills invisible).
   const ringStyles: Record<string, { dash: number[]; fillAlpha: number; strokeWidth: number }> = {
-    min:     { dash: [4, 4],  fillAlpha: 0.28, strokeWidth: 2 },
-    nominal: { dash: [8, 6],  fillAlpha: 0.18, strokeWidth: 1.5 },
-    max:     { dash: [12, 8], fillAlpha: 0.10, strokeWidth: 1.5 },
+    min:     { dash: [4, 4],  fillAlpha: 0.38, strokeWidth: 3 },
+    nominal: { dash: [8, 6],  fillAlpha: 0.25, strokeWidth: 2.5 },
+    max:     { dash: [12, 8], fillAlpha: 0.15, strokeWidth: 2 },
   }
   const ringColor = [96, 165, 250] // #60a5fa — friendly blue
 
@@ -2202,14 +2209,24 @@ onMounted(() => {
   for (const rt of MAP_TYPES) {
     const source = new VectorSource()
     vectorSources[rt.key] = source
-    const layer = new VectorLayer({
+    const layerOpts: Record<string, any> = {
       source,
       zIndex: rt.key === 'detectionRanges' ? 3 : rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : rt.key === 'locationEstimates' ? 8 : 10,
       // Deployments: no declutter so STANAG symbols are never hidden by label overlap
       declutter: labeledTypes.has(rt.key),
       updateWhileAnimating: false,
       updateWhileInteracting: false,
-    })
+    }
+    // Bearing lines: sort by azimuth so LOBs from different sensors are interleaved
+    // instead of consistently stacking one sensor on top of another.
+    if (rt.key === 'bearingLines') {
+      layerOpts.renderOrder = (a: Feature, b: Feature) => {
+        const azA = a.get('rawData')?.azimuth ?? 0
+        const azB = b.get('rawData')?.azimuth ?? 0
+        return azA - azB
+      }
+    }
+    const layer = new VectorLayer(layerOpts)
     // Respect default-off layers
     if (activeLayers.value[rt.key] === false) layer.setVisible(false)
     vectorLayers[rt.key] = layer
