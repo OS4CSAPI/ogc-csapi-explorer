@@ -579,6 +579,67 @@ def clear_observations(ds_ids: list[str], protected_ds_ids: list[str] | None = N
     return {"deleted": total_deleted, "errors": errors, "protected_skipped": protected_skipped}
 
 
+def clear_sampling_features() -> dict[str, int]:
+    """Delete all SamplingFeatures from the server.
+
+    These are track FOIs created when operators submit INIT SENREPs.
+    Called during /reset (Tier 3) to fully clean up demo state.
+    """
+    import urllib.request
+    import urllib.error
+    import ssl
+    import base64 as b64
+    import json as _json
+
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    auth = "Basic " + b64.b64encode(b"os4csapi:ogc134mm").decode()
+
+    total_deleted = 0
+    errors = 0
+
+    # Paginate through all SamplingFeatures
+    page = 0
+    while True:
+        url = f"{BASE_URL}/samplingFeatures?limit=50"
+        req = urllib.request.Request(url, headers={
+            "Authorization": auth,
+            "Accept": "application/json",
+        })
+        try:
+            with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+                data = _json.loads(resp.read().decode())
+        except Exception:
+            errors += 1
+            break
+
+        items = data.get("items", [])
+        if not items:
+            break
+
+        for sf in items:
+            sf_id = sf.get("id")
+            if not sf_id:
+                continue
+            del_url = f"{BASE_URL}/samplingFeatures/{sf_id}"
+            del_req = urllib.request.Request(del_url, method="DELETE", headers={
+                "Authorization": auth,
+            })
+            try:
+                with urllib.request.urlopen(del_req, timeout=10, context=ctx) as _r:
+                    pass
+                total_deleted += 1
+            except Exception:
+                errors += 1
+
+        page += 1
+        if page > 100:  # safety cap
+            break
+
+    return {"deleted": total_deleted, "errors": errors}
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 #  FastAPI app
 # ═══════════════════════════════════════════════════════════════════════════
@@ -697,9 +758,12 @@ def reset_demo():
             return MessageResponse(ok=False, message="Stop both simulator and localizer before resetting")
 
     result = clear_observations(SIM_DS_IDS + SENREP_DS_IDS, protected_ds_ids=DETECTION_DS_IDS)
+    sf_result = clear_sampling_features()
+    obs_msg = f"{result['deleted']} observations ({result['errors']} errors, {result['protected_skipped']} protected)"
+    sf_msg = f"{sf_result['deleted']} sampling features ({sf_result['errors']} errors)"
     return MessageResponse(
         ok=True,
-        message=f"Full reset: deleted {result['deleted']} observations ({result['errors']} errors, {result['protected_skipped']} protected)",
+        message=f"Full reset: {obs_msg}, {sf_msg}",
     )
 
 
