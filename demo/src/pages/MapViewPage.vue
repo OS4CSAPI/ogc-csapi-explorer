@@ -229,30 +229,55 @@ async function submitSenrep(): Promise<void> {
   senrepSuccess.value = false
   try {
     const now = new Date()
+    const yy = String(now.getFullYear()).slice(2)
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const dd = String(now.getDate()).padStart(2, '0')
+    const hh = String(now.getUTCHours()).padStart(2, '0')
+    const mi = String(now.getUTCMinutes()).padStart(2, '0')
+
+    // Build doctrinal comments — pack contact metadata for readback
+    const commentParts = [
+      senrepForm.value.contactId,
+      senrepForm.value.reportType || 'INIT',
+      `CEP50=${senrepForm.value.cep50_m.toFixed(1)}m`,
+      `LOBs=${senrepForm.value.numContributingLobs}`,
+      senrepForm.value.operatorNotes || '',
+      senrepForm.value.sourceFixObsId ? `fixId=${senrepForm.value.sourceFixObsId}` : '',
+    ].filter(Boolean).join(' | ')
+
+    // Map form data → doctrinal SENREP 20-field schema (matches DS 044g)
     const obs = {
       phenomenonTime: now.toISOString(),
       resultTime: now.toISOString(),
       result: {
         timestamp: now.getTime() / 1000,
-        contactId: senrepForm.value.contactId,
-        classification: senrepForm.value.classification,
-        estimatedLat: senrepForm.value.estimatedLat,
-        estimatedLon: senrepForm.value.estimatedLon,
-        cep50_m: senrepForm.value.cep50_m,
-        numContributingLobs: senrepForm.value.numContributingLobs,
-        stringId: senrepForm.value.stringId,
-        reportType: senrepForm.value.reportType,
-        operatorNotes: senrepForm.value.operatorNotes || '',
-        sourceFixObsId: senrepForm.value.sourceFixObsId || '',
-        sourceLobObsIds: senrepForm.value.sourceLobObsIds || '',
+        title: senrepForm.value.contactId,                    // contact ID as report title
+        senderId: operatorInitials.value || 'XX',             // operator initials
+        seqNo: nextContactSeq - 1,                            // sequence number
+        classification: 'U',                                  // Unclassified
+        releasably: 'REL',                                    // REL for demo
+        dor: `${yy}${mm}${dd}`,                               // YYMMDD
+        envirOpName: 'FT-HUACHUCA',                           // exercise name
+        strNo: senrepForm.value.stringId || 'AZ-STRING-ALPHA',
+        detectTimeZ: `${hh}${mi}Z`,                            // HHMMZ
+        qty: 1,
+        tgtTyp: senrepForm.value.classification || 'UAS',     // target classification
+        subTyp: senrepForm.value.reportType || 'INIT',        // report sub-type
+        spd: 0,
+        dirCardinal: 'UNK',
+        colLengthM: 0,
+        etaLat: senrepForm.value.estimatedLat,                // estimated target lat
+        etaLon: senrepForm.value.estimatedLon,                // estimated target lon
+        etaTimeZ: `${hh}${mi}Z`,
+        comments: commentParts,
       },
     }
 
     const res = await apiFetch(`/datastreams/${SENREP_DS_ID}/observations`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/om+json',
-        'Accept': 'application/om+json',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(obs),
     })
@@ -1664,7 +1689,7 @@ async function loadTrackLine(): Promise<void> {
 
   try {
     const obsRes = await apiFetch(
-      `/datastreams/${localizerDatastreamId}/observations?resultTime=latest&limit=${TRACK_HISTORY_LIMIT}`,
+      `/datastreams/${localizerDatastreamId}/observations?limit=${TRACK_HISTORY_LIMIT}`,
       { headers: { 'Accept': 'application/om+json' } },
     )
     if (!obsRes.ok || !obsRes.data) return
@@ -1755,9 +1780,15 @@ async function loadSenrepMarkers(): Promise<void> {
       const result = obs.result
       if (!result) continue
 
-      const lat = result.estimatedLat
-      const lon = result.estimatedLon
+      // Doctrinal field names: etaLat / etaLon (not estimatedLat/Lon)
+      const lat = result.etaLat
+      const lon = result.etaLon
       if (typeof lat !== 'number' || typeof lon !== 'number') continue
+
+      // Parse contact ID from title, report type from subTyp
+      const contactId = result.title || 'SENREP'
+      const reportType = result.subTyp || 'INIT'
+      const tgtType = result.tgtTyp || 'UAS'
 
       // Diamond marker
       const markerFeature = new Feature({
@@ -1765,30 +1796,27 @@ async function loadSenrepMarkers(): Promise<void> {
       })
       markerFeature.setStyle(senrepMarkerStyle)
       markerFeature.set('resourceType', 'senrepMarkers')
-      markerFeature.set('resourceId', obs.id || `senrep-${result.contactId}`)
-      markerFeature.set('resourceName', `SENREP: ${result.contactId || 'unknown'}`)
+      markerFeature.set('resourceId', obs.id || `senrep-${contactId}`)
+      markerFeature.set('resourceName', `SENREP: ${contactId}`)
       markerFeature.set('rawData', {
         observationId: obs.id,
         datastreamId: SENREP_DS_ID,
         phenomenonTime: obs.phenomenonTime,
-        contactId: result.contactId,
-        classification: result.classification,
-        reportType: result.reportType,
+        contactId,
+        classification: tgtType,
+        reportType,
         estimatedLat: lat,
         estimatedLon: lon,
-        cep50_m: result.cep50_m,
-        numContributingLobs: result.numContributingLobs,
-        stringId: result.stringId,
-        operatorNotes: result.operatorNotes,
-        sourceFixObsId: result.sourceFixObsId,
-        sourceLobObsIds: result.sourceLobObsIds,
+        senderId: result.senderId,
+        strNo: result.strNo,
+        comments: result.comments,
       })
       batch.push(markerFeature)
 
       // Label below marker
-      const labelText = result.contactId
-        ? `${result.contactId} — ${result.reportType || 'INIT'}`
-        : result.reportType || 'SENREP'
+      const labelText = contactId !== 'SENREP'
+        ? `${contactId} — ${reportType}`
+        : reportType || 'SENREP'
       const labelFeature = new Feature({
         geometry: new Point(fromLonLat([lon, lat])),
       })
@@ -3094,8 +3122,8 @@ watch(selectedFeature, (feat) => {
             <div class="popup-senrep-detail">
               <div>{{ selectedFeature.rawData.classification }} — {{ selectedFeature.rawData.reportType || 'INIT' }}</div>
               <div>{{ selectedFeature.rawData.estimatedLat?.toFixed(5) }}°N, {{ selectedFeature.rawData.estimatedLon?.toFixed(5) }}°W</div>
-              <div v-if="selectedFeature.rawData.cep50_m">CEP50: {{ selectedFeature.rawData.cep50_m?.toFixed(1) }}m</div>
-              <div v-if="selectedFeature.rawData.operatorNotes">Notes: {{ selectedFeature.rawData.operatorNotes }}</div>
+              <div v-if="selectedFeature.rawData.senderId">Operator: {{ selectedFeature.rawData.senderId }}</div>
+              <div v-if="selectedFeature.rawData.comments">{{ selectedFeature.rawData.comments }}</div>
             </div>
           </template>
           <!-- "Submit SENREP" button on gold dot popup -->
