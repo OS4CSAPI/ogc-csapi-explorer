@@ -51,6 +51,16 @@ NODE2_VALID_START    = "2026-01-15T00:00:00Z"
 NODE3_VALID_START    = "2026-01-15T00:00:00Z"
 SUPPORT_DEPLOY_START = "2026-03-02T00:00:00Z"  # SET-A, Mon Site, Relay emplacements
 
+# ── Procedure UIDs (for system→procedure typeOf linkage) ──────────────────
+# These 9 procedures already exist on the server; they describe methods,
+# not executable code.  Systems link to them via the SOSA `typeOf` property.
+PROC_AUDIO_CAPTURE     = "urn:x-odas:procedure:pdm-mems-audio-capture"
+PROC_SRP_PHAT          = "urn:x-odas:procedure:srp-phat-beamforming"
+PROC_PARTICLE_FILTER   = "urn:x-odas:procedure:particle-filter-tracking"
+PROC_TRIANGULATION     = "urn:x-odas:procedure:ray-to-ray-triangulation"
+PROC_CONFIG_ACTUATION  = "urn:x-odas:procedure:odas-config-actuation"
+PROC_PROCESSING_CHAIN  = "urn:os4csapi:procedure:odas:az-ma-1:processing-chain:v1"
+
 # ═════════════════════════════════════════════════════════════════════════════
 #  System definitions
 # ═════════════════════════════════════════════════════════════════════════════
@@ -92,6 +102,7 @@ SYSTEMS = [
         "featureType": "sosa:System",
         "geometry": {"type": "Point", "coordinates": [-110.272897, 31.663006]},
         "validTime": [AZMA1_VALID_START, ".."],
+        "typeOf": PROC_PROCESSING_CHAIN,
     },
 ]
 
@@ -117,6 +128,7 @@ for _n, _pos in [(2, "center"), (3, "south")]:
         "featureType": "sosa:System",
         "geometry": {"type": "Point", "coordinates": _MA_COORDS[_n]},
         "validTime": [AZMA1_VALID_START, ".."],
+        "typeOf": PROC_PROCESSING_CHAIN,
     })
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -130,6 +142,7 @@ AZMA1_SUBSYSTEMS = [
         "uid": "urn:os4csapi:platform:az-ma-1:tripod",
         "featureType": "sosa:Platform",
         "name": "AZ-MA-1 Tripod Platform",
+        # No typeOf — infrastructure, not an instrument
         "description": "Portable aluminum survey-grade tripod platform for AZ-MA-1. "
                        "Provides stable, leveled mounting at 1.5m height for the microphone array "
                        "and associated electronics. Weather-resistant, rated for field deployment.",
@@ -138,6 +151,7 @@ AZMA1_SUBSYSTEMS = [
         "uid": "urn:os4csapi:system:odas:az-ma-1:micarray",
         "featureType": "sosa:Sensor",
         "name": "AZ-MA-1 MICARRAY",
+        "typeOf": PROC_AUDIO_CAPTURE,
         "description": "7-microphone circular PDM MEMS array for AZ-MA-1. 38mm diameter phased "
                        "array using XMOS xCORE-200 multicore controller. Captures omnidirectional "
                        "audio on all 7 channels simultaneously at 48 kHz / 24-bit. Spatial geometry "
@@ -147,6 +161,7 @@ AZMA1_SUBSYSTEMS = [
         "uid": "urn:os4csapi:system:odas:az-ma-1:edge",
         "featureType": "sosa:Platform",
         "name": "AZ-MA-1 EDGE",
+        "typeOf": PROC_PROCESSING_CHAIN,
         "description": "Edge compute module for AZ-MA-1. Runs the ODAS DSP pipeline "
                        "(SSL -> SST -> LOB) on a low-power ARM/x86 SBC. Processes 7-channel "
                        "48 kHz audio in real-time and publishes results via JSON socket output.",
@@ -155,6 +170,7 @@ AZMA1_SUBSYSTEMS = [
         "uid": "urn:os4csapi:system:odas:az-ma-1:comms",
         "featureType": "sosa:Platform",
         "name": "AZ-MA-1 COMMS",
+        # No typeOf — infrastructure, not an instrument
         "description": "Communications module for AZ-MA-1. Provides mesh-network connectivity "
                        "(Wi-Fi / Ethernet) between the edge processor and the central fusion node "
                        "(AZ-MA-NET). Supports JSON socket output from ODAS for SST/SSL data relay.",
@@ -163,6 +179,7 @@ AZMA1_SUBSYSTEMS = [
         "uid": "urn:os4csapi:system:odas:az-ma-1:power",
         "featureType": "sosa:Platform",
         "name": "AZ-MA-1 POWER",
+        # No typeOf — infrastructure, not an instrument
         "description": "Power supply module for AZ-MA-1. Provides regulated DC power to the "
                        "microphone array, edge processor, comms module, and pan-tilt actuator. "
                        "Supports both battery (LiFePO4) and solar panel input for sustained "
@@ -172,6 +189,7 @@ AZMA1_SUBSYSTEMS = [
         "uid": "urn:os4csapi:system:odas:az-ma-1:actuator",
         "featureType": "sosa:Actuator",
         "name": "AZ-MA-1 ACTUATOR",
+        "typeOf": PROC_CONFIG_ACTUATION,
         "description": "Pan-tilt actuator for AZ-MA-1. Motorised two-axis gimbal that slews "
                        "the microphone array to face the strongest tracked sound source. Receives "
                        "bearing commands from the edge processor based on ODAS SST output.",
@@ -185,6 +203,7 @@ for i in range(1, 8):
         "uid": f"urn:os4csapi:system:odas:az-ma-1:mic{i}",
         "featureType": "sosa:Sensor",
         "name": f"AZ-MA-1 MIC{i}",
+        "typeOf": PROC_AUDIO_CAPTURE,
         "description": f"MEMS PDM omnidirectional microphone element #{i} "
                        f"(position {i} ({pos})) in the AZ-MA-1 7-channel circular array. "
                        "Digital Pulse-Density Modulation output at 48 kHz / 24-bit.",
@@ -1044,6 +1063,9 @@ class Bootstrap:
                 },
                 "geometry": sys_def["geometry"],
             }
+            # Add typeOf linkage to procedure (if defined)
+            if "typeOf" in sys_def:
+                body["properties"]["typeOf"] = sys_def["typeOf"]
 
             print(f"  CREATE system: {sys_def['name']}")
             if not self.dry_run:
@@ -1097,6 +1119,9 @@ class Bootstrap:
                     },
                     "geometry": {"type": "Point", "coordinates": coord},
                 }
+                # Add typeOf linkage to procedure (if defined)
+                if "typeOf" in sub_def:
+                    body["properties"]["typeOf"] = sub_def["typeOf"]
 
                 print(f"  CREATE subsystem: {sub_def['name']}")
                 if not self.dry_run:
