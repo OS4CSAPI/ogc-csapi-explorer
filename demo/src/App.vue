@@ -35,9 +35,9 @@ function mobileNav(to: string) {
         <router-link to="/smoke-test" class="nav-link">
           <i class="pi pi-bolt"></i> Smoke Test
         </router-link>
-        <span class="nav-link nav-link-disabled" title="Under construction">
-          <i class="pi pi-play"></i> Demo
-        </span>
+        <router-link to="/demo" class="nav-link">
+          <i class="pi pi-desktop"></i> Demo
+        </router-link>
         <router-link to="/explore/deployments" class="nav-link">
           <i class="pi pi-th-large"></i> Explorer
         </router-link>
