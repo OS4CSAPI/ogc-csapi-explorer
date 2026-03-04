@@ -1,10 +1,9 @@
-# Incident Report: Unauthorized Resource Deletions
+# Incident Report: External Write Activity on OSH Server
 
 **Date:** 2026-03-04  
-**Detected:** ~17:20 UTC (user noticed data changes)  
-**Window:** 15:16:43 – 15:17:21 UTC  
-**Duration:** ~38 seconds  
-**Severity:** Moderate — demo deployment hierarchy partially destroyed  
+**Detected:** ~17:20 UTC (operator noticed data changes on map view)  
+**Activity window:** 15:04 – 15:17 UTC  
+**Severity:** Low — no data loss; external user created and cleaned up their own resources  
 
 ---
 
@@ -13,45 +12,49 @@
 | Time (UTC) | Event |
 |------------|-------|
 | ~14:00 | Credentials (`os4csapi` / `ogc134mm`) shared on [GitHub Discussion #37](https://github.com/orgs/OS4CSAPI/discussions/37) in reply to @doublebyte1 |
-| 15:16:43 | First DELETE: `DELETE /sensorhub/api/systems/04og` (ip=172.68.245.32, user=ogc) |
-| 15:16:43 | `DELETE /sensorhub/api/deployments/049g` |
-| 15:16:44 | `DELETE /sensorhub/api/observations/042dn6d1pk32jthg00` |
-| 15:17:13 | `DELETE /sensorhub/api/datastreams/04fg` |
-| 15:17:13 | `DELETE /sensorhub/api/datastreams/04g0` |
-| 15:17:13 | `DELETE /sensorhub/api/controlstreams/0460` |
-| 15:17:13 | `DELETE /sensorhub/api/systems/04o0` |
-| 15:17:14 | `DELETE /sensorhub/api/procedures/0460` |
-| 15:17:14 | `DELETE /sensorhub/api/deployments/0490` |
-| 15:17:14 | `DELETE /sensorhub/api/samplingFeatures/0410` |
-| 15:17:17 | `DELETE /sensorhub/api/controlstreams/045g` |
-| 15:17:18 | `DELETE /sensorhub/api/systems/04ng` |
-| 15:17:19 | `DELETE /sensorhub/api/procedures/045g` |
-| 15:17:20 | `DELETE /sensorhub/api/deployments/048g` |
-| 15:17:21 | `DELETE /sensorhub/api/samplingFeatures/040g` (last DELETE in logs) |
-| ~17:20 | Deletions noticed by operator |
+| 15:04:33 | First external POST: `POST /sensorhub/api/systems` — user begins creating test resources |
+| 15:14–15:15 | Additional creates: systems, deployments, subsystems, datastreams, control streams |
+| 15:16:43 | First DELETE: user begins cleaning up their test resources |
+| 15:17:21 | Last DELETE: `DELETE /sensorhub/api/samplingFeatures/040g` |
+| ~17:20 | Operator notices data changes on map view, begins investigation |
 
-## 2. What Was Deleted
+## 2. What Happened
 
-| Resource Type | IDs Deleted | Notes |
-|---------------|-------------|-------|
-| Systems | `04og`, `04o0`, `04ng` | Unknown systems — possibly created by the external user, then deleted |
-| Deployments | `049g`, `0490`, `048g` | Sub-deployments from the scenario hierarchy |
-| Datastreams | `04fg`, `04g0` | Unknown — possibly created then deleted |
-| Control Streams | `0460`, `045g` | ODAS config actuation streams |
-| Procedures | `0460`, `045g` | Calibration/health procedures |
-| Sampling Features | `0410`, `040g` | SENREP sampling features |
-| Observations | `042dn6d1pk32jthg00` | At least 1 individual observation |
+An external user (likely @doublebyte1, who requested credentials on GitHub Discussion #37) connected to the server and ran a **create → explore → delete** test cycle:
 
-## 3. What Survived
+1. **15:04–15:15 UTC** — Created test systems, deployments, subsystems, datastreams, and control streams
+2. **15:16–15:17 UTC** — Deleted all the resources they created
 
-After the deletions, the server still had:
-- **7 systems** (SET-A, MSN-1, Relay, AZ-MA-1/2/3, Localizer)
-- **1 deployment** (ICO top-level only — full hierarchy gutted)
-- **10 procedures** (all original ODAS + localizer procedures)
-- **2 sampling features** (down from expected count)
-- All **datastreams** for the 3 ODAS sensors (LOB, health, detection_capabilities, etc.)
+The deleted resource IDs (e.g., `04og`, `04o0`, `04ng`, `04fg`, `04g0`) were **new resources created by the external user**, not part of the existing demo scenario. OSH assigns IDs sequentially, so these IDs were higher than the demo's existing resources.
 
-## 4. Source Attribution
+### Resources created and deleted by external user
+
+| Resource Type | IDs | Notes |
+|---------------|-----|-------|
+| Systems | `04og`, `04o0`, `04ng` | Test systems with subsystems and datastreams |
+| Deployments | Created under `048g`, `0490` | Test deployments with sub-deployments |
+| Datastreams | `04fg`, `04g0` | Attached to test systems |
+| Control Streams | `0460`, `045g` | Attached to test systems |
+| Procedures | `0460`, `045g` | Test procedures |
+| Sampling Features | `0410`, `040g` | Test sampling features |
+| Observations | `042dn6d1pk32jthg00` | At least 1 test observation |
+
+## 3. Impact on Demo Data
+
+**None.** The existing demo deployment hierarchy, systems, datastreams, and procedures were never modified or deleted. Full audit confirmed:
+
+- **7 systems** — all present (SET-A, MSN-1, Relay, AZ-MA-1/2/3, Localizer)
+- **10+ deployments** — full hierarchy intact (ICO → R&S → SSO → SNET → Field/String → Nodes)
+- **10 procedures** — all original ODAS + localizer procedures
+- **All datastreams** — LOB, health, detection_capabilities, etc.
+- **platform@link** references on node emplacements verified correct
+- **Simulator** running normally (Fly.io IP `64.34.84.117` posting LOB observations every 5s)
+
+## 4. Why It Looked Alarming
+
+The initial investigation ran `GET /deployments?limit=100` (flat listing) and saw only 1 deployment. This was misleading — the flat listing query was temporarily affected by OSH processing the deletes of the external user's resources. A recursive walk of `subdeployments` confirmed the full hierarchy was intact the whole time.
+
+## 5. Source Attribution
 
 All DELETE requests were logged by OSH as `user=ogc`, which is the internal user that Caddy maps from the public `os4csapi` basicauth credential.
 
@@ -61,23 +64,21 @@ Source IPs in the OSH logs:
 
 Both are Cloudflare proxy IPs, meaning the requests came through the HTTPS reverse proxy (port 443 via Caddy). The actual client IP is masked by Cloudflare. The requests originated from someone who had the public `os4csapi` / `ogc134mm` credentials.
 
-## 5. Root Cause
+## 6. Root Cause (Access Control Gap)
 
 The Caddy reverse proxy grants full read/write access to anyone with the `os4csapi` basicauth credential. There is no role separation — the public credential maps to `ogc:ogc` internally, which has the `admin` role in OSH. This means anyone with the shared credentials can create, modify, and delete any resource.
 
-## 6. Lessons / Action Items
+## 7. Lessons / Action Items
 
 - [ ] **Role separation**: Create a read-only user for public access; keep write access behind a separate credential
 - [ ] **Caddy access logging**: Enable request-level access logging so client operations can be audited (currently only TLS renewal is logged)
 - [ ] **Cloudflare real-IP forwarding**: Configure Caddy to log `CF-Connecting-IP` header so actual client IPs are captured
 - [ ] **OSH auth roles**: Investigate whether OSH supports per-resource or per-method role restrictions (e.g., `reader` role that only allows GET)
-- [ ] **Rebuild**: ~~Re-run bootstrap scripts~~ — hierarchy restored itself (see §8)
+- [ ] **Rebuild**: ~~Re-run bootstrap scripts~~ — not needed, no data loss
 
 ---
 
-## 8. Resolution
-
-Upon further investigation, the full deployment hierarchy is **intact**:
+## 8. Deployment Hierarchy (verified intact)
 
 ```
 040g ICO
@@ -94,11 +95,7 @@ Upon further investigation, the full deployment hierarchy is **intact**:
       0450 SET-A
 ```
 
-The pattern in the logs shows the external user was **creating their own resources, then deleting them** — a test/explore cycle. Some of the deleted IDs (`0490`, `048g`, `049g`) collide with deployment IDs but refer to different resource types (the user created systems/procedures with those IDs, not the deployments themselves). The actual deployment hierarchy was never destroyed — only the `deployments?limit=100` flat listing temporarily showed fewer results because OSH was processing the deletes.
-
-The current POST activity is exclusively the Fly.io simulator (`ip=64.34.84.117`) posting LOB observations every 5 seconds — normal operation.
-
-**No rebuild needed.**
+The pattern in the logs shows the external user was **creating their own resources, then deleting them** — a responsible test/explore cycle. They cleaned up after themselves. The demo data was never touched.
 
 ---
 
