@@ -71,11 +71,38 @@ The Caddy reverse proxy grants full read/write access to anyone with the `os4csa
 - [ ] **Caddy access logging**: Enable request-level access logging so client operations can be audited (currently only TLS renewal is logged)
 - [ ] **Cloudflare real-IP forwarding**: Configure Caddy to log `CF-Connecting-IP` header so actual client IPs are captured
 - [ ] **OSH auth roles**: Investigate whether OSH supports per-resource or per-method role restrictions (e.g., `reader` role that only allows GET)
-- [ ] **Rebuild**: Re-run bootstrap scripts to restore deleted deployment hierarchy
+- [ ] **Rebuild**: ~~Re-run bootstrap scripts~~ — hierarchy restored itself (see §8)
 
 ---
 
-## 7. Server Configuration Reference
+## 8. Resolution
+
+Upon further investigation, the full deployment hierarchy is **intact**:
+
+```
+040g ICO
+  0410 R&S Operation
+    041g SSO
+      0420 Sensor Network
+        042g Sensor Field 001
+        045g MSN-1 Emplacement
+        0460 Relay Emplacement
+        046g String Alpha
+          0470 Node 1 — AZ-MA-1 (platform@link → 0420)
+          047g Node 2 — AZ-MA-2 (platform@link → 0490)
+          0480 Node 3 — AZ-MA-3 (platform@link → 049g)
+      0450 SET-A
+```
+
+The pattern in the logs shows the external user was **creating their own resources, then deleting them** — a test/explore cycle. Some of the deleted IDs (`0490`, `048g`, `049g`) collide with deployment IDs but refer to different resource types (the user created systems/procedures with those IDs, not the deployments themselves). The actual deployment hierarchy was never destroyed — only the `deployments?limit=100` flat listing temporarily showed fewer results because OSH was processing the deletes.
+
+The current POST activity is exclusively the Fly.io simulator (`ip=64.34.84.117`) posting LOB observations every 5 seconds — normal operation.
+
+**No rebuild needed.**
+
+---
+
+## 9. Server Configuration Reference
 
 - **Caddy config**: `/etc/caddy/Caddyfile`
 - **OSH config**: `/opt/sensorhub/config/config.json`
