@@ -667,10 +667,11 @@ async function loadResourceType(resourceType: string): Promise<number> {
   source.clear()
 
   try {
-    // Deployments derive geometry from subdeployments & deployed systems,
-    // so skip server-side bbox (server only knows about top-level deployments
-    // which typically have no geometry). Bbox is applied client-side during enrichDeployments.
-    const opts = resourceType === 'deployments' ? buildQueryOptionsNoBbox() : buildQueryOptions()
+    // Deployments and SamplingFeatures: skip server-side bbox.
+    // - Deployments derive geometry from subdeployments & deployed systems.
+    // - SamplingFeatures: OSH returns empty when bbox is included in the query.
+    const noBboxTypes = new Set(['deployments', 'samplingFeatures'])
+    const opts = noBboxTypes.has(resourceType) ? buildQueryOptionsNoBbox() : buildQueryOptions()
     const url = getListUrl(resourceType, opts)
     // Request geo+json so servers return GeoJSON features with geometry
     const res = await apiFetch(url, {
@@ -1717,10 +1718,14 @@ async function loadTrackLine(): Promise<void> {
       { headers: { 'Accept': 'application/om+json' } },
     )
     if (!obsRes.ok || !obsRes.data) return
+    // Identify localizer observations by their result structure (estimatedLat/estimatedLon)
+    // rather than datastream@id which OSH mislabels in per-DS queries
     const items = (obsRes.data.items || [])
-      // P0: Filter out scope-leaked observations from other datastreams
-      .filter((obs: any) => !obs['datastream@id'] || obs['datastream@id'] === localizerDatastreamId)
-      // P0: Sort by stable localizer timestamp (epoch seconds), oldest first
+      .filter((obs: any) => {
+        const r = obs.result
+        return r && typeof r.estimatedLat === 'number' && typeof r.estimatedLon === 'number'
+      })
+      // Sort by stable localizer timestamp (epoch seconds), oldest first
       .sort((a: any, b: any) => (a.result?.timestamp ?? 0) - (b.result?.timestamp ?? 0))
     if (items.length < 2) return
 
@@ -1789,13 +1794,17 @@ async function loadSenrepMarkers(): Promise<void> {
 
   try {
     const obsRes = await apiFetch(
-      `/datastreams/${SENREP_DS_ID}/observations?resultTime=latest&limit=50`,
+      `/datastreams/${SENREP_DS_ID}/observations?limit=50`,
       { headers: { 'Accept': 'application/om+json' } },
     )
     if (!obsRes.ok || !obsRes.data) return
+    // Identify SENREP observations by their doctrinal fields (etaLat/etaLon/title)
+    // rather than datastream@id which OSH mislabels in per-DS queries
     const items = (obsRes.data.items || [])
-      // Filter out scope-leaked observations from other datastreams
-      .filter((obs: any) => !obs['datastream@id'] || obs['datastream@id'] === SENREP_DS_ID)
+      .filter((obs: any) => {
+        const r = obs.result
+        return r && typeof r.etaLat === 'number' && typeof r.etaLon === 'number' && r.title
+      })
 
     if (!items.length) return
 
@@ -2223,15 +2232,10 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         items = obsRes.data.items || []
       }
 
-      // ── OSH scope-leak workaround ─────────────────────────────────
-      // OSH has a bug where datastream-scoped observation queries return
-      // observations from sibling/unrelated datastreams (osh-core#340).
-      // Filter out any observation whose datastream@id doesn't match the
-      // DS we actually queried.
-      items = items.filter((obs: any) => {
-        const obsDs = obs['datastream@id']
-        return !obsDs || obsDs === dsInfo.id
-      })
+      // NOTE: OSH has a scope-leak bug where per-DS observation queries
+      // return observations from other datastreams AND mislabel datastream@id.
+      // We no longer filter by datastream@id — downstream parsing naturally
+      // rejects observations with incompatible result schemas.
 
       const trackCoords: [number, number][] = []
 
