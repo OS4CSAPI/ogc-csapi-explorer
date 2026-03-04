@@ -21,6 +21,7 @@ ALL_DS_IDS = [
     "0450", "045g", "04cg", "046g", "0470", "047g", "0480",  # MA-2 (04cg = LOB, was 0460)
     "048g", "0490", "04d0", "04a0", "04ag", "04b0", "04bg",  # MA-3 (04d0 = LOB, was 049g)
     "04dg", "04e0", "04eg",  # Detection capabilities (MA-1, MA-2, MA-3)
+    "04f0",                  # Localizer location estimates
 ]
 
 

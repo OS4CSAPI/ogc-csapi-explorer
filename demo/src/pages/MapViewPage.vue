@@ -61,8 +61,11 @@ const LOB_ENTRY = { key: 'bearingLines', label: 'Bearing', plural: 'Lines of Bea
 // Detection range layer entry (not a real API resource type)
 const DETECTION_RANGES_ENTRY = { key: 'detectionRanges', label: 'Det. Range', plural: 'Detection Ranges', icon: 'pi pi-circle', part: 2 as const, readOnly: true }
 
+// Location estimate layer entry (localizer triangulation fixes)
+const LOC_ESTIMATE_ENTRY = { key: 'locationEstimates', label: 'Loc. Est.', plural: 'Location Estimates', icon: 'pi pi-map-marker', part: 2 as const, readOnly: true }
+
 // All types visible on the map
-const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY, LOB_ENTRY, DETECTION_RANGES_ENTRY]
+const MAP_TYPES = [...SPATIAL_TYPES, ...PART2_MAP_TYPES, OBS_POINTS_ENTRY, OBS_TRACK_ENTRY, LOB_ENTRY, DETECTION_RANGES_ENTRY, LOC_ESTIMATE_ENTRY]
 
 // Color map for resource types
 const TYPE_COLORS: Record<string, string> = {
@@ -76,6 +79,7 @@ const TYPE_COLORS: Record<string, string> = {
   observationPoints: '#ec4899', // pink
   bearingLines: '#f43f5e',      // rose
   detectionRanges: '#60a5fa',    // friendly blue (2525E)
+  locationEstimates: '#facc15',  // gold / yellow
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -89,6 +93,7 @@ const TYPE_LABELS: Record<string, string> = {
   observationPoints: 'O',
   bearingLines: '►',
   detectionRanges: '◎',
+  locationEstimates: '⊕',
 }
 
 // Active layer toggles
@@ -103,6 +108,7 @@ const activeLayers = ref<Record<string, boolean>>({
   observationPoints: true,
   bearingLines: true,
   detectionRanges: true,
+  locationEstimates: true,
 })
 
 // Cache: systemId → { lat, lon, alt?, datastreamName? }
@@ -111,6 +117,8 @@ const systemLocationCache: Record<string, { lat: number; lon: number; alt?: numb
 const primarySystemIds = new Set<string>()
 // Track location-related datastreams for observation track rendering
 let locationDatastreamList: Array<{ id: string; name: string; systemId: string }> = []
+// Localizer datastream ID — discovered dynamically from server
+let localizerDatastreamId: string | null = null
 // Track how many features were enriched from observations
 const enrichedCounts = ref<Record<string, number>>({})
 
@@ -1367,6 +1375,144 @@ function buildDetectionRanges(): void {
   featureCounts.value['detectionRanges'] = batch.length / 2 // each ring = polygon + label
 }
 
+// ── Location Estimate (Localizer) Layer ────────────────────────────
+
+/**
+ * Discover the localizer datastream by searching for the fusion system's
+ * "location_estimate" output.  Fully dynamic — zero hardcoded IDs.
+ */
+async function discoverLocalizerDatastream(): Promise<void> {
+  localizerDatastreamId = null
+  try {
+    // Search all datastreams for the localizer output name
+    const dsRes = await apiFetch('/datastreams?limit=200')
+    if (!dsRes.ok || !dsRes.data) return
+    const dsList = dsRes.data.items || dsRes.data.features || []
+    const locDs = dsList.find((ds: any) => {
+      const outputName = (ds.outputName || ds.name || '').toLowerCase()
+      return outputName.includes('location_estimate')
+    })
+    if (locDs) {
+      localizerDatastreamId = locDs.id
+    }
+  } catch { /* skip — localizer may not be registered */ }
+}
+
+/**
+ * Location estimate styles
+ */
+const locEstimateMarkerStyle = new Style({
+  image: new CircleStyle({
+    radius: 8,
+    fill: new Fill({ color: '#facc15' }),
+    stroke: new Stroke({ color: '#b45309', width: 2.5 }),
+  }),
+  text: new OlText({
+    text: '⊕',
+    font: 'bold 14px sans-serif',
+    fill: new Fill({ color: '#92400e' }),
+    offsetY: 1,
+  }),
+})
+
+/**
+ * Fetch the latest location estimate from the localizer datastream and
+ * render a position marker + CEP50 uncertainty circle on the map.
+ */
+async function loadLocationEstimates(): Promise<void> {
+  const source = vectorSources['locationEstimates']
+  if (!source) return
+  source.clear()
+  featureCounts.value['locationEstimates'] = 0
+
+  if (!localizerDatastreamId) return
+
+  try {
+    // Fetch latest observation
+    const obsRes = await apiFetch(
+      `/datastreams/${localizerDatastreamId}/observations?resultTime=latest&limit=1`,
+      { headers: { 'Accept': 'application/om+json' } },
+    )
+    if (!obsRes.ok || !obsRes.data) return
+    const items = obsRes.data.items || []
+    if (!items.length) return
+
+    const obs = items[0]
+    const result = obs.result
+    if (!result) return
+
+    const lat = result.estimatedLat
+    const lon = result.estimatedLon
+    const cep50 = result.cep50_m
+    if (typeof lat !== 'number' || typeof lon !== 'number') return
+
+    // Staleness check: in live mode, skip if observation is older than 30 seconds
+    const obsTime = result.timestamp ? result.timestamp * 1000 : new Date(obs.phenomenonTime || obs.resultTime).getTime()
+    const ageS = (Date.now() - obsTime) / 1000
+    if (liveMode.value && ageS > 30) return
+
+    const batch: Feature[] = []
+
+    // 1. CEP50 uncertainty circle (draw first so marker is on top)
+    if (typeof cep50 === 'number' && cep50 > 0) {
+      const circle4326 = circularPolygon([lon, lat], cep50, 64)
+      circle4326.transform('EPSG:4326', 'EPSG:3857')
+      const circleFeature = new Feature({ geometry: circle4326 })
+      circleFeature.setStyle(new Style({
+        stroke: new Stroke({ color: 'rgba(250, 204, 21, 0.9)', width: 2, lineDash: [6, 4] }),
+        fill: new Fill({ color: 'rgba(250, 204, 21, 0.15)' }),
+      }))
+      circleFeature.set('resourceType', 'locationEstimates')
+      circleFeature.set('resourceId', `loc-est-cep50`)
+      circleFeature.set('resourceName', `CEP50: ${cep50.toFixed(1)}m`)
+      batch.push(circleFeature)
+    }
+
+    // 2. Position marker
+    const markerFeature = new Feature({
+      geometry: new Point(fromLonLat([lon, lat])),
+    })
+    markerFeature.setStyle(locEstimateMarkerStyle)
+    markerFeature.set('resourceType', 'locationEstimates')
+    markerFeature.set('resourceId', obs.id || 'loc-est-latest')
+    markerFeature.set('resourceName', `Fix: ${lat.toFixed(5)}°N, ${lon.toFixed(5)}°W`)
+    markerFeature.set('rawData', {
+      observationId: obs.id,
+      datastreamId: localizerDatastreamId,
+      phenomenonTime: obs.phenomenonTime,
+      estimatedLat: lat,
+      estimatedLon: lon,
+      cep50_m: cep50,
+      classification: result.classification,
+      numContributingLobs: result.numContributingLobs,
+      contributingSensors: result.contributingSensors,
+      residual_m: result.residual_m,
+      trackId: result.trackId,
+      ageSeconds: ageS,
+    })
+    batch.push(markerFeature)
+
+    // 3. Label below marker
+    const labelFeature = new Feature({
+      geometry: new Point(fromLonLat([lon, lat])),
+    })
+    labelFeature.setStyle(new Style({
+      text: new OlText({
+        text: `${result.classification || 'UNK'} — ${result.numContributingLobs || '?'} LOBs`,
+        font: '11px sans-serif',
+        fill: new Fill({ color: '#facc15' }),
+        stroke: new Stroke({ color: '#000', width: 3 }),
+        offsetY: 18,
+      }),
+    }))
+    labelFeature.set('resourceType', 'locationEstimates')
+    batch.push(labelFeature)
+
+    source.addFeatures(batch)
+    featureCounts.value['locationEstimates'] = 1
+  } catch { /* skip — no location estimates available */ }
+}
+
 async function enrichSamplingFeatures(): Promise<void> {
   const source = vectorSources['samplingFeatures']
   if (!source) return
@@ -1876,11 +2022,15 @@ async function loadAllResources() {
   await fetchDetectionRangeConfigs()
   buildDetectionRanges()
 
+  // 3c. Discover localizer datastream for location estimate rendering
+  await discoverLocalizerDatastream()
+
   // 4. Load Part 2 resources at parent system locations + observation layers
   await Promise.all([
     loadDatastreams(),
     loadControlStreams(),
     loadObservationLayers(liveMode.value ? 3 : 500),
+    loadLocationEstimates(),
   ])
 
   loading.value = false
@@ -2002,7 +2152,10 @@ async function refreshLiveLayers() {
   try {
     // In live mode, only fetch the latest 10 observations per datastream
     // for a tight, real-time view instead of the full 500 history
-    await loadObservationLayers(3)
+    await Promise.all([
+      loadObservationLayers(3),
+      loadLocationEstimates(),
+    ])
     lastRefreshTime.value = new Date().toLocaleTimeString()
   } catch { /* swallow errors during background refresh */ }
 }
@@ -2021,6 +2174,7 @@ function toggleLiveMode() {
     lastRefreshTime.value = ''
     // Reload full history when leaving live mode
     loadObservationLayers(500)
+    loadLocationEstimates()
   }
 }
 
@@ -2050,7 +2204,7 @@ onMounted(() => {
     vectorSources[rt.key] = source
     const layer = new VectorLayer({
       source,
-      zIndex: rt.key === 'detectionRanges' ? 3 : rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : 10,
+      zIndex: rt.key === 'detectionRanges' ? 3 : rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : rt.key === 'locationEstimates' ? 8 : 10,
       // Deployments: no declutter so STANAG symbols are never hidden by label overlap
       declutter: labeledTypes.has(rt.key),
       updateWhileAnimating: false,
