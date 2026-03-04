@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Demo page — being rebuilt
+import ArchitectureDiagram from '../components/ArchitectureDiagram.vue';
 </script>
 
 <template>
@@ -15,6 +15,7 @@
         <li>If the Location Estimation Process generates a location, select that location, create, and submit a SENREP</li>
       </ol>
       <p class="workstation-intro">The display below is your workstation and entry point into the live and historic mission data of your organization's enterprise data. The live technical architecture you are currently connected to looks like this:</p>
+      <ArchitectureDiagram />
     </div>
   </div>
 </template>
