@@ -1634,19 +1634,44 @@ async function loadLocationEstimates(): Promise<void> {
   if (!localizerDatastreamId) return
 
   try {
-    // Fetch latest observation
+    // Helper: check if an observation is a genuine localizer fix
+    const isGenuineFix = (o: any) =>
+      o?.result && typeof o.result.estimatedLat === 'number' && typeof o.result.estimatedLon === 'number'
+
+    // Step 1: Try resultTime=latest (fast path — one observation).
     const obsRes = await apiFetch(
       `/datastreams/${localizerDatastreamId}/observations?resultTime=latest&limit=1`,
       { headers: { 'Accept': 'application/om+json' } },
     )
     if (!obsRes.ok || !obsRes.data) return
-    const items = obsRes.data.items || []
-    if (!items.length) return
+    let items = obsRes.data.items || []
+    let obs = items.find(isGenuineFix)
 
-    const obs = items[0]
+    // Step 2 (scope-leak fallback): resultTime=latest returned a leaked LOB
+    // instead of a genuine localizer fix.  Use the leaked observation's
+    // resultTime to build a 2-minute time window and scan for genuine fixes.
+    if (!obs && items.length) {
+      const leaked = items[0]
+      const rt = leaked.resultTime || leaked.phenomenonTime
+      if (rt) {
+        const endMs = new Date(rt).getTime()
+        const startISO = new Date(endMs - 120_000).toISOString()
+        const endISO = new Date(endMs + 1_000).toISOString()
+        const fallbackRes = await apiFetch(
+          `/datastreams/${localizerDatastreamId}/observations?limit=100&resultTime=${startISO}/${endISO}`,
+          { headers: { 'Accept': 'application/om+json' } },
+        )
+        if (fallbackRes.ok && fallbackRes.data) {
+          const fbItems = fallbackRes.data.items || []
+          // Pick the most recent genuine fix (items are chronological)
+          obs = [...fbItems].reverse().find(isGenuineFix)
+        }
+      }
+    }
+
+    if (!obs) return
+
     const result = obs.result
-    if (!result) return
-
     const lat = result.estimatedLat
     const lon = result.estimatedLon
     const cep50 = result.cep50_m
