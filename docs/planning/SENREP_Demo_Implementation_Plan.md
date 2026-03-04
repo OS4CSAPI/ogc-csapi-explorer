@@ -120,6 +120,102 @@ When clicking a SENREP marker, show:
 
 ---
 
+## Phase 2.5: Frontend — Track Line Visualization
+
+> **Gap analysis:** [Track_Visualization_Gap_Analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/Track_Visualization_Gap_Analysis.md)
+
+The gold dot currently shows only the **latest** localizer fix (`resultTime=latest&limit=1`). There is no visible history — no polyline, no breadcrumb trail, no sense of movement. Without a track line, the map has no visual artifact that "looks like a track" despite all the data model work. This phase adds a gold polyline showing the localizer's fix history.
+
+### 2.5.1 — Fetch Location Estimate History
+
+**File:** [demo/src/pages/MapViewPage.vue](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/demo/src/pages/MapViewPage.vue)
+
+New function `loadTrackLine()`, following the same pattern as `loadLocationEstimates()` at [~L1434](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/demo/src/pages/MapViewPage.vue#L1434):
+
+```ts
+async function loadTrackLine(): Promise<void> {
+  const source = vectorSources['trackLine']
+  if (!source) return
+  source.clear()
+
+  if (!localizerDatastreamId) return
+
+  const obsRes = await apiFetch(
+    `/datastreams/${localizerDatastreamId}/observations?resultTime=latest&limit=50`,
+    { headers: { 'Accept': 'application/om+json' } },
+  )
+  if (!obsRes.ok || !obsRes.data) return
+  const items = obsRes.data.items || []
+  if (items.length < 2) return
+
+  // Build coordinate array ordered oldest → newest
+  const coords: [number, number][] = items
+    .reverse()
+    .map((obs: any) => {
+      const r = obs.result
+      if (typeof r?.estimatedLat === 'number' && typeof r?.estimatedLon === 'number')
+        return fromLonLat([r.estimatedLon, r.estimatedLat]) as [number, number]
+      return null
+    })
+    .filter(Boolean) as [number, number][]
+
+  if (coords.length < 2) return
+
+  // Draw polyline with recency-fading segments
+  for (let i = 1; i < coords.length; i++) {
+    const alpha = 0.15 + 0.75 * (i / (coords.length - 1)) // 0.15 at tail → 0.9 at head
+    const segment = new Feature({
+      geometry: new LineString([coords[i - 1], coords[i]]),
+    })
+    segment.setStyle(new Style({
+      stroke: new Stroke({
+        color: `rgba(250, 204, 21, ${alpha.toFixed(2)})`,
+        width: 3,
+      }),
+    }))
+    segment.set('resourceType', 'trackLine')
+    source.addFeature(segment)
+  }
+}
+```
+
+### 2.5.2 — Track Line Layer Setup
+
+Add a new vector layer in the layer initialization block, between bearing lines (z-index 6) and location estimates (z-index 8):
+
+- **Layer key:** `trackLine`
+- **Z-index:** 7 (between bearing lines and gold dot marker)
+- **Style:** per-feature (set on each segment in `loadTrackLine()`)
+
+### 2.5.3 — Integrate into Live Refresh
+
+Call `loadTrackLine()` in the live refresh cycle, immediately before `loadLocationEstimates()`:
+
+```ts
+await loadTrackLine()
+await loadLocationEstimates()
+```
+
+On each refresh, the track line rebuilds: new fixes extend the head, oldest fixes drop off when exceeding 50 points.
+
+### 2.5.4 — Visual Result
+
+| Element | Color | Description |
+|---|---|---|
+| Track tail | `rgba(250, 204, 21, 0.15)` | Faded gold — oldest fixes |
+| Track body | `rgba(250, 204, 21, 0.15–0.9)` | Progressive brightening |
+| Track head | `rgba(250, 204, 21, 0.9)` | Bright gold — most recent segment |
+| Gold dot (`⊕`) | `#facc15` | Existing marker, sits on top of track head |
+| CEP50 circle | `rgba(250, 204, 21, 0.15)` | Existing uncertainty ring around gold dot |
+
+The track line shows direction, speed (spacing), and coverage duration. Combined with red diamond SENREP markers placed along the track, the audience sees the full tactical picture: historical movement + operator reports.
+
+### 2.5.5 — Effort Estimate
+
+~80–100 lines of new code. No new dependencies. No server changes. Pure frontend rendering of data already being fetched (just with a larger `limit`).
+
+---
+
 ## Phase 3: Frontend — Click-to-Report Panel
 
 ### 3.1 — SENREP Side Panel Component
@@ -293,6 +389,7 @@ If SamplingFeature creation succeeds, show a small "Active Tracks" panel:
 | Provenance fields (`sourceFixObsId`, `sourceLobObsIds`) | [Demo_Reset_Hardening_Review.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/Demo_Reset_Hardening_Review.md) |
 | Retrieval stays datastream-scoped (scope leak protection) | [OSH_Datastream_Observation_Scope_Leak.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/OSH_Datastream_Observation_Scope_Leak.md) |
 | Three-tier reset (SENREP survives Tier 2, cleared on Tier 3) | [Demo_Reset_SENREP_Resilience.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/Demo_Reset_SENREP_Resilience.md) |
+| Track line = gold polyline of last N localizer fixes (Phase 2.5) | [Track_Visualization_Gap_Analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/Track_Visualization_Gap_Analysis.md) |
 
 ---
 
@@ -301,6 +398,7 @@ If SamplingFeature creation succeeds, show a small "Active Tracks" panel:
 1. **Hardening plan first** — DS list split, scope leak filter, localizer gate, `/reset` endpoint
 2. **Phase 1** — verify server resources, add `verify_senrep_infrastructure()`
 3. **Phase 2** — SENREP layer on map (markers, styles, fetcher)
-4. **Phase 3** — SenrepPanel.vue + gold dot click handler + submit flow
-5. **Phase 4** — DemoPage.vue integration (counts, timeline, track list)
-6. **Phase 5** — deploy and end-to-end test
+4. **Phase 2.5** — Track line visualization (gold polyline, recency fading) — see [Track_Visualization_Gap_Analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/Track_Visualization_Gap_Analysis.md)
+5. **Phase 3** — SenrepPanel.vue + gold dot click handler + submit flow
+6. **Phase 4** — DemoPage.vue integration (counts, timeline, track list)
+7. **Phase 5** — deploy and end-to-end test
