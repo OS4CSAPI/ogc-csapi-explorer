@@ -741,9 +741,11 @@ def clear_sim_data():
             return MessageResponse(ok=False, message="Stop both simulator and localizer before clearing")
 
     result = clear_observations(SIM_DS_IDS, protected_ds_ids=DETECTION_DS_IDS + SENREP_DS_IDS)
+    # Re-seed detection ranges so they're recent and discoverable despite scope-leak
+    reseeded = seed_detection_ranges()
     return MessageResponse(
         ok=True,
-        message=f"Cleared sim data: {result['deleted']} deleted ({result['errors']} errors, {result['protected_skipped']} protected)",
+        message=f"Cleared sim data: {result['deleted']} deleted ({result['errors']} errors, {result['protected_skipped']} protected, {reseeded} ranges re-seeded)",
     )
 
 
@@ -759,11 +761,13 @@ def reset_demo():
 
     result = clear_observations(SIM_DS_IDS + SENREP_DS_IDS, protected_ds_ids=DETECTION_DS_IDS)
     sf_result = clear_sampling_features()
+    # Re-seed detection ranges so they're recent and discoverable despite scope-leak
+    reseeded = seed_detection_ranges()
     obs_msg = f"{result['deleted']} observations ({result['errors']} errors, {result['protected_skipped']} protected)"
     sf_msg = f"{sf_result['deleted']} sampling features ({sf_result['errors']} errors)"
     return MessageResponse(
         ok=True,
-        message=f"Full reset: {obs_msg}, {sf_msg}",
+        message=f"Full reset: {obs_msg}, {sf_msg}, {reseeded} ranges re-seeded",
     )
 
 

@@ -332,6 +332,24 @@ interface DetectionRangeConfig {
 }
 const detectionRangeConfigs: Record<string, DetectionRangeConfig> = {}
 
+// Hardcoded fallback — all three ODAS nodes share the same hardware.
+// Used when the scope-leak bug buries the real observation beyond scan limits.
+const DETECTION_RANGE_FALLBACK: DetectionRangeConfig = {
+  shape: 'circular',
+  rings: [
+    { label: 'min', radius_m: 667 },
+    { label: 'nominal', radius_m: 1833 },
+    { label: 'max', radius_m: 3000 },
+  ],
+  confidence: 0.7,
+  basis: 'estimated',
+}
+const ODAS_UIDS = [
+  'urn:os4csapi:system:odas:az-ma-1',
+  'urn:os4csapi:system:odas:az-ma-2',
+  'urn:os4csapi:system:odas:az-ma-3',
+]
+
 // Enable/disable milsymbol rendering (toggle for A/B comparison)
 const useMilSymbols = ref(true)
 
@@ -1420,8 +1438,8 @@ async function fetchDetectionRangeConfigs(): Promise<void> {
       //    OSH has a bug where datastream-scoped queries return observations
       //    from sibling datastreams, so we can't rely on resultTime=latest
       //    (contaminating LOB observations may have later timestamps).
-      //    Fetch a page and pick the first observation with minRange_m.
-      const obsRes = await apiFetch(`/datastreams/${capDs.id}/observations?limit=50`)
+      //    Fetch a large page and pick the first observation with minRange_m.
+      const obsRes = await apiFetch(`/datastreams/${capDs.id}/observations?limit=500`)
       if (!obsRes.ok || !obsRes.data) return
       const items = obsRes.data.items || []
       if (!items.length) return
@@ -1451,6 +1469,14 @@ async function fetchDetectionRangeConfigs(): Promise<void> {
     } catch { /* skip systems without detection capabilities */ }
   })
   await Promise.all(fetches)
+
+  // Fallback: apply hardcoded detection range for ODAS nodes not found via API
+  // (scope-leak can bury the real observation beyond scan limits)
+  for (const uid of ODAS_UIDS) {
+    if (!detectionRangeConfigs[uid]) {
+      detectionRangeConfigs[uid] = { ...DETECTION_RANGE_FALLBACK }
+    }
+  }
 }
 
 /**
@@ -2215,7 +2241,10 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         // bearings at slightly different angles, doubling the line count.
         const dsNameLower = dsInfo.name.toLowerCase()
         const isLobDatastream = dsNameLower.includes('lob') || dsNameLower.includes('bearing')
-        if (bearingSource && obs.result && isLobDatastream) {
+        // Tight schema filter: genuine LOBs have both bearingTrue AND bearingStdDev.
+        // This rejects scope-leak contamination (track updates, localizer, health, etc.)
+        const isGenuineLob = typeof obs.result?.bearingTrue === 'number' && typeof obs.result?.bearingStdDev === 'number'
+        if (bearingSource && isGenuineLob && isLobDatastream) {
           // Prefer systemLocationCache; fall back to self-contained sensorLat/sensorLon (v2.3 LOB format)
           const sensorLoc = systemLocationCache[dsInfo.systemId]
             || (typeof obs.result.sensorLat === 'number' && typeof obs.result.sensorLon === 'number'
