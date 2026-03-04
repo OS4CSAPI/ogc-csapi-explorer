@@ -1,8 +1,8 @@
 # SENREP Demo Implementation Plan
 
 **Date:** 2026-03-04  
-**Status:** Ready to implement  
-**Depends on:** [Simulator Hardening Implementation Plan](Simulator_Hardening_Implementation_Plan.md) (must be completed first)  
+**Status:** ✅ Implemented and deployed  
+**Depends on:** [Simulator Hardening Implementation Plan](Simulator_Hardening_Implementation_Plan.md) (deferred — coordinator briefed not to clear)  
 **Concurrency:** Designed for 15–20 simultaneous users, all in live mode, all potentially submitting SENREPs
 
 ---
@@ -450,10 +450,11 @@ Only the demo coordinator should use `/admin/simulator`. Brief audience to stay 
 
 ## Implementation Order
 
-1. **Hardening plan first** — DS list split, scope leak filter, localizer gate, `/reset` endpoint
-2. **Phase 1** — verify server resources, add `verify_senrep_infrastructure()`
-3. **Phase 2** — SENREP layer on map (markers, styles, fetcher)
-4. **Phase 2.5** — Track line visualization (gold polyline, recency fading) — see [Track_Visualization_Gap_Analysis.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/Track_Visualization_Gap_Analysis.md)
-5. **Phase 3** — SenrepPanel.vue + gold dot click handler + submit flow
-6. **Phase 4** — DemoPage.vue integration (counts, timeline, track list)
-7. **Phase 5** — deploy and end-to-end test
+1. ~~**Hardening plan first**~~ — deferred; coordinator briefed not to clear
+2. ✅ **Phase 1** — server resources verified, DS `044g` working
+3. ✅ **Phase 2** — SENREP layer on map (red diamond markers, fetcher, popup) — commit `fce0a4d`
+4. ✅ **Phase 2.5** — Track line visualization (gold polyline, recency fading, fix: removed `resultTime=latest`) — commit `a726d0a`
+5. ✅ **Phase 3** — Click-to-report panel + gold dot click handler + doctrinal 20-field submit — commit `a726d0a`
+6. ✅ **Phase 3.5** — SamplingFeature creation on first SENREP (track FOI) — commit `0c6bd71`
+7. ✅ **Phase 4** — DemoPage integration: SENREP count card, report timeline, track list, Demo nav re-enabled — commits `9f07662`, `97ad98b`, `0c6bd71`
+8. ✅ **Phase 5** — deployed to Cloudflare, end-to-end tested (2 SENREPs submitted successfully)
