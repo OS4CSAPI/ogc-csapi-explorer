@@ -493,19 +493,32 @@ SIM_DS_IDS = [
     "0430", "043g", "04c0", "0440", "0410", "041g", "042g",  # MA-1 (04c0 = LOB)
     "0450", "045g", "04cg", "046g", "0470", "047g", "0480",  # MA-2 (04cg = LOB)
     "048g", "0490", "04d0", "04a0", "04ag", "04b0", "04bg",  # MA-3 (04d0 = LOB)
+    "04f0",  # UAS Location Estimate
 ]
 
 # Combined list (for reference)
 ALL_DS_IDS = SIM_DS_IDS + SENREP_DS_IDS + DETECTION_DS_IDS
 
 
-def clear_observations(ds_ids: list[str]) -> dict[str, int]:
-    """Delete observations from specified datastreams. Filters by datastream ownership to prevent scope leaks. Returns stats."""
+def clear_observations(ds_ids: list[str], protected_ds_ids: list[str] | None = None) -> dict[str, int]:
+    """Delete observations from specified datastreams.
+
+    NOTE: OSH has a scope leak bug where querying /datastreams/{id}/observations
+    returns observations from ALL datastreams, and the returned datastream@id
+    may not match the queried DS.
+
+    Strategy: use a **blocklist** (protected_ds_ids) rather than an allowlist.
+    Any observation whose claimed datastream@id is in the protected set is
+    skipped.  Everything else is deleted.  We also dedup by obs ID to avoid
+    double-deleting across DS iterations.
+    """
     import urllib.request
     import urllib.error
     import ssl
     import base64 as b64
     import json as _json
+
+    protected = set(protected_ds_ids or [])
 
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -514,7 +527,8 @@ def clear_observations(ds_ids: list[str]) -> dict[str, int]:
 
     total_deleted = 0
     errors = 0
-    foreign_skipped = 0
+    protected_skipped = 0
+    already_seen = set()  # prevent double-delete across DS iterations
 
     for ds_id in ds_ids:
         page = 0
@@ -539,10 +553,13 @@ def clear_observations(ds_ids: list[str]) -> dict[str, int]:
                 obs_id = obs.get("id")
                 if not obs_id:
                     continue
-                # Scope leak filter: only delete if observation belongs to this datastream
-                obs_ds = obs.get("datastream@id")
-                if obs_ds and obs_ds != ds_id:
-                    foreign_skipped += 1
+                if obs_id in already_seen:
+                    continue
+                already_seen.add(obs_id)
+                # Blocklist: never delete observations belonging to protected datastreams
+                obs_ds = obs.get("datastream@id", "")
+                if obs_ds in protected:
+                    protected_skipped += 1
                     continue
                 del_url = f"{BASE_URL}/datastreams/{ds_id}/observations/{obs_id}"
                 del_req = urllib.request.Request(del_url, method="DELETE", headers={
@@ -559,7 +576,7 @@ def clear_observations(ds_ids: list[str]) -> dict[str, int]:
             if page > 500:  # safety cap
                 break
 
-    return {"deleted": total_deleted, "errors": errors, "foreign_skipped": foreign_skipped}
+    return {"deleted": total_deleted, "errors": errors, "protected_skipped": protected_skipped}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -662,11 +679,10 @@ def clear_sim_data():
         if loc_state.running:
             return MessageResponse(ok=False, message="Stop both simulator and localizer before clearing")
 
-    result = clear_observations(SIM_DS_IDS)
+    result = clear_observations(SIM_DS_IDS, protected_ds_ids=DETECTION_DS_IDS + SENREP_DS_IDS)
     return MessageResponse(
         ok=True,
-        message=f"Cleared sim data: {result['deleted']} deleted "
-                f"({result['errors']} errors, {result['foreign_skipped']} foreign skipped)",
+        message=f"Cleared sim data: {result['deleted']} deleted ({result['errors']} errors, {result['protected_skipped']} protected)",
     )
 
 
@@ -680,11 +696,10 @@ def reset_demo():
         if loc_state.running:
             return MessageResponse(ok=False, message="Stop both simulator and localizer before resetting")
 
-    result = clear_observations(SIM_DS_IDS + SENREP_DS_IDS)
+    result = clear_observations(SIM_DS_IDS + SENREP_DS_IDS, protected_ds_ids=DETECTION_DS_IDS)
     return MessageResponse(
         ok=True,
-        message=f"Full reset: deleted {result['deleted']} observations "
-                f"({result['errors']} errors, {result['foreign_skipped']} foreign skipped)",
+        message=f"Full reset: deleted {result['deleted']} observations ({result['errors']} errors, {result['protected_skipped']} protected)",
     )
 
 
