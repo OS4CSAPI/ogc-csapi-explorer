@@ -2535,6 +2535,14 @@ watch(selectedFeature, (feat) => {
           <span class="layer-label">Detection Ranges</span>
           <span class="layer-count">{{ featureCounts['detectionRanges'] ?? '—' }}</span>
         </button>
+        <button
+          :class="['layer-toggle', { inactive: !activeLayers['locationEstimates'] }]"
+          @click="toggleLayer('locationEstimates')"
+        >
+          <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS['locationEstimates'] }"></span>
+          <span class="layer-label">Location Estimates</span>
+          <span class="layer-count">{{ featureCounts['locationEstimates'] ?? '—' }}</span>
+        </button>
       </div>
 
       <!-- Enrichment info -->
