@@ -52,6 +52,15 @@ interface SenrepEntry {
   time: string
 }
 
+interface TrackEntry {
+  id: string
+  uid: string
+  name: string
+  description: string
+  lon: number
+  lat: number
+}
+
 // ── Known sensor array IDs ──────────────────────────────────────────
 const SENSOR_ARRAYS = [
   { id: 'AZ-MA-1', serverId: '04ng', label: 'AZ-MA-1 — Sensor Array 1', lat: 31.5550, lon: -110.3510 },
@@ -109,6 +118,7 @@ const refreshInterval = ref<number | null>(null)
 const totalObsCount = ref(0)
 const senrepReports = ref<SenrepEntry[]>([])
 const senrepCount = ref(0)
+const activeTracks = ref<TrackEntry[]>([])
 const error = ref<string | null>(null)
 
 const SENREP_DS_ID = '044g'
@@ -311,6 +321,28 @@ async function refresh() {
         })
         .sort((a: SenrepEntry, b: SenrepEntry) => new Date(b.time).getTime() - new Date(a.time).getTime())
     } catch { /* SENREP DS may not exist */ }
+
+    // Fetch active tracks (SamplingFeatures created on first SENREP)
+    try {
+      const sfData = await fetchJson('/samplingFeatures?limit=50')
+      const sfItems = (sfData?.items || sfData?.features || [])
+        .filter((sf: any) => {
+          const uid = sf.properties?.uid || sf.uid || ''
+          return uid.startsWith('urn:os4csapi:track:C-')
+        })
+      activeTracks.value = sfItems.map((sf: any) => {
+        const props = sf.properties || {}
+        const coords = sf.geometry?.coordinates || [0, 0]
+        return {
+          id: sf.id || props.id || '',
+          uid: props.uid || '',
+          name: props.name || props.uid || '—',
+          description: props.description || '',
+          lon: coords[0] ?? 0,
+          lat: coords[1] ?? 0,
+        } as TrackEntry
+      })
+    } catch { /* SamplingFeatures may not exist */ }
 
     totalObsCount.value = obsTotal
     lastRefresh.value = new Date().toLocaleTimeString()
@@ -599,6 +631,24 @@ function activityColor(level: number): string {
       </table>
     </div>
 
+    <!-- Active Tracks (from SamplingFeatures) -->
+    <div v-if="activeTracks.length" class="sensor-section">
+      <h3><i class="pi pi-map-marker" style="color: #facc15;"></i> Active Tracks</h3>
+      <p class="section-desc">SamplingFeatures created when operators submit their first SENREP for a contact</p>
+      <div class="track-list">
+        <div v-for="track in activeTracks" :key="track.id" class="track-row">
+          <div class="track-icon">⌖</div>
+          <div class="track-body">
+            <div class="track-name">{{ track.name }}</div>
+            <div class="track-detail">
+              {{ track.lat.toFixed(4) }}°N, {{ Math.abs(track.lon).toFixed(4) }}°W
+              <span v-if="track.description" class="track-desc">— {{ track.description }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- SENREP Report Timeline -->
     <div v-if="senrepReports.length" class="sensor-section">
       <h3><i class="pi pi-flag" style="color: #ef4444;"></i> SENREP Report Feed</h3>
@@ -827,6 +877,33 @@ function activityColor(level: number): string {
 
 /* SENREP card highlight */
 .senrep-card { border-left: 3px solid #ef4444; }
+
+/* Active Tracks list */
+.track-list {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.track-row {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: center;
+}
+.track-row:last-child { border-bottom: none; }
+.track-row:hover { background: #f8fafc; }
+.track-icon {
+  color: #facc15;
+  font-size: 1.1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.track-body { flex: 1; min-width: 0; }
+.track-name { font-weight: 700; font-size: 0.9rem; color: #1e293b; }
+.track-detail { font-size: 0.8rem; color: #475569; margin-top: 0.1rem; }
+.track-desc { color: #64748b; font-style: italic; }
 
 /* SENREP Timeline */
 .senrep-timeline {

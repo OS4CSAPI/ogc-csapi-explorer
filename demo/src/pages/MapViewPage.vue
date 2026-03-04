@@ -284,6 +284,30 @@ async function submitSenrep(): Promise<void> {
 
     if (res.ok) {
       senrepSuccess.value = true
+
+      // Phase 3.5: Create a SamplingFeature (track FOI) for this contact on first SENREP
+      if (senrepForm.value.reportType === 'INIT') {
+        try {
+          await apiFetch('/samplingFeatures', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/geo+json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [senrepForm.value.estimatedLon, senrepForm.value.estimatedLat],
+              },
+              properties: {
+                featureType: 'http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint',
+                uid: `urn:os4csapi:track:${senrepForm.value.contactId}`,
+                name: `Track ${senrepForm.value.contactId}`,
+                description: `UAS contact track created on first SENREP by ${operatorInitials.value || 'XX'}`,
+              },
+            }),
+          })
+        } catch { /* non-fatal — track FOI is optional */ }
+      }
+
       // Refresh SENREP markers to show the new one
       await loadSenrepMarkers()
       // Auto-close after brief success feedback
