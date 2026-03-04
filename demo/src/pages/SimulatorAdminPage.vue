@@ -5,6 +5,32 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Panel from 'primevue/panel'
 import ProgressSpinner from 'primevue/progressspinner'
+import Password from 'primevue/password'
+
+// ── Client-side auth gate ────────────────────────────────────────────────
+const AUTH_USER = 'admin'
+const AUTH_PASS = 'admin'
+const SESSION_KEY = 'sim-admin-auth'
+
+const authenticated = ref(sessionStorage.getItem(SESSION_KEY) === 'true')
+const loginUser = ref('')
+const loginPass = ref('')
+const loginError = ref('')
+
+function attemptLogin() {
+  if (loginUser.value === AUTH_USER && loginPass.value === AUTH_PASS) {
+    authenticated.value = true
+    sessionStorage.setItem(SESSION_KEY, 'true')
+    loginError.value = ''
+  } else {
+    loginError.value = 'Invalid credentials'
+  }
+}
+
+function logout() {
+  authenticated.value = false
+  sessionStorage.removeItem(SESSION_KEY)
+}
 
 // ── Simulator service URL ────────────────────────────────────────────────
 // Default to Fly.io, allow override via input
@@ -255,6 +281,32 @@ onUnmounted(() => {
   <div class="admin-page">
     <h2><i class="pi pi-cog"></i> Simulator Admin</h2>
 
+    <!-- Auth gate -->
+    <div v-if="!authenticated" class="login-gate">
+      <Panel header="Authentication Required" class="login-panel">
+        <p class="login-desc">Enter credentials to access the simulator admin console.</p>
+        <div class="login-form">
+          <div class="login-field">
+            <label for="login-user">Username</label>
+            <InputText id="login-user" v-model="loginUser" placeholder="Username" @keyup.enter="attemptLogin" />
+          </div>
+          <div class="login-field">
+            <label for="login-pass">Password</label>
+            <Password id="login-pass" v-model="loginPass" placeholder="Password" :feedback="false" toggleMask @keyup.enter="attemptLogin" />
+          </div>
+          <Message v-if="loginError" severity="error" :closable="false" class="mt-2">{{ loginError }}</Message>
+          <Button label="Sign In" icon="pi pi-sign-in" @click="attemptLogin" class="mt-3 login-btn" />
+        </div>
+      </Panel>
+    </div>
+
+    <!-- Authenticated content -->
+    <template v-else>
+
+    <div class="admin-toolbar">
+      <Button label="Sign Out" icon="pi pi-sign-out" severity="secondary" size="small" text @click="logout" />
+    </div>
+
     <!-- Service URL -->
     <Panel header="Service Connection" class="mb-4">
       <div class="url-row">
@@ -499,6 +551,8 @@ flyctl deploy</pre>
         </ul>
       </div>
     </Panel>
+
+    </template><!-- v-else (authenticated) -->
   </div>
 </template>
 
@@ -739,5 +793,53 @@ flyctl deploy</pre>
   .action-row .p-button {
     width: 100%;
   }
+}
+
+.login-gate {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.login-panel {
+  max-width: 400px;
+  width: 100%;
+}
+
+.login-desc {
+  color: var(--text-color-secondary);
+  margin-bottom: 1rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.login-field label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.login-field .p-inputtext,
+.login-field .p-password {
+  width: 100%;
+}
+
+.login-btn {
+  width: 100%;
+}
+
+.admin-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
 }
 </style>
