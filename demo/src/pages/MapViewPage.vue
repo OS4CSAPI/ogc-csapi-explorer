@@ -1248,8 +1248,11 @@ async function fetchDetectionRangeConfigs(): Promise<void> {
       )
       if (!capDs) return
 
-      // 2. Read latest observation
-      const obsRes = await apiFetch(`/datastreams/${capDs.id}/observations?limit=1`)
+      // 2. Read latest observation (resultTime=latest ensures we get the
+      //    newest observation, not the oldest — the server returns oldest-first
+      //    with plain limit=1, and stale LOB observations may precede the
+      //    detection_capabilities data)
+      const obsRes = await apiFetch(`/datastreams/${capDs.id}/observations?resultTime=latest&limit=1`)
       if (!obsRes.ok || !obsRes.data) return
       const items = obsRes.data.items || []
       if (!items.length) return
