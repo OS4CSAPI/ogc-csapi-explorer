@@ -1,7 +1,7 @@
 # Simulator Hardening Implementation Plan
 
 **Date:** 2026-03-04  
-**Status:** Ready to implement  
+**Status:** ✅ Implemented and deployed (commit `03f47e4`)  
 **Prerequisite for:** SENREP demo tab, all future observation-producing features
 
 ---
