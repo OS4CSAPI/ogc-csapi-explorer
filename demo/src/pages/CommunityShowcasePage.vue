@@ -41,9 +41,9 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
         </p>
         <p class="interop-note">
           <i class="pi pi-check-circle"></i>
-          This validates true cross-client interoperability &mdash; an entirely independent QGIS plugin,
+          <span>This validates true cross-client interoperability &mdash; an entirely independent QGIS plugin,
           built by a different developer, successfully discovered and browsed the same OSH server
-          using only standard OGC CSAPI endpoints. No custom integration code was needed.
+          using only standard OGC CSAPI endpoints. No custom integration code was needed.</span>
         </p>
       </div>
 
@@ -113,10 +113,10 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
         </ul>
         <p class="interop-note">
           <i class="pi pi-check-circle"></i>
-          This project validates the interoperability of the OGC Connected Systems API &mdash; a third party
+          <span>This project validates the interoperability of the OGC Connected Systems API &mdash; a third party
           was able to build a complete ISR analysis pipeline with <em>zero custom integration code</em>,
           using only standard CSAPI endpoints and public credentials. The artifacts below are point-in-time
-          snapshots from a single pipeline run.
+          snapshots from a single pipeline run.</span>
         </p>
       </div>
 
