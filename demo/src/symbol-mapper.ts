@@ -118,9 +118,9 @@ type KeywordRule = {
  * More specific rules go first.
  */
 const SYSTEM_RULES: KeywordRule[] = [
-  // ISS / space station → Neutral Civilian Space Station, LEO modifier
+  // ISS / space station → Neutral satellite (green SV frame), LEO modifier
   { keywords: ['iss', 'space station', 'zarya'],
-    identity: SI_NEUTRAL, symbolSet: SS_SPACE, entity: ENT_SPACE_STATION,
+    identity: SI_NEUTRAL, symbolSet: SS_SPACE, entity: ENT_SATELLITE,
     modifiers: `${MOD1_LEO}00` },
   // Other satellite / orbital tracker → Friend military satellite
   { keywords: ['satellite', 'orbital', 'sgp4', 'norad'],
