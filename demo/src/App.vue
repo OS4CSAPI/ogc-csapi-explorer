@@ -135,24 +135,33 @@ function mobileNav(to: string) {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.header-right::-webkit-scrollbar {
+  display: none;
 }
 .connection-badge {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
   color: #16a34a;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 600;
+  flex-shrink: 0;
 }
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
   text-decoration: none;
   color: #3b82f6;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 500;
+  flex-shrink: 0;
 }
 .nav-link:hover {
   color: #1d4ed8;
