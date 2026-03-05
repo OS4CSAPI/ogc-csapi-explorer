@@ -7,7 +7,7 @@ import os4csapiIcon from './assets/os4csapi-logo.svg'
 const router = useRouter()
 const route = useRoute()
 const mobileMenuOpen = ref(false)
-const showNav = computed(() => connection.connected || route.name === 'demo')
+const showNav = computed(() => connection.connected || route.name === 'demo' || route.name === 'community')
 
 // Close mobile menu on any route change
 watch(() => route.fullPath, () => { mobileMenuOpen.value = false })
@@ -49,6 +49,9 @@ function mobileNav(to: string) {
           <i class="pi pi-cog"></i> Simulator
         </router-link>
       </template>
+      <router-link to="/community" class="nav-link">
+        <i class="pi pi-users"></i> Community
+      </router-link>
       <router-link to="/" class="nav-link">
         <i class="pi pi-link"></i> Connect
       </router-link>
@@ -82,6 +85,9 @@ function mobileNav(to: string) {
             <i class="pi pi-cog"></i> Simulator
           </button>
         </template>
+        <button class="mobile-menu-link" @click="mobileNav('/community')">
+          <i class="pi pi-users"></i> Community
+        </button>
         <button class="mobile-menu-link" @click="mobileNav('/')">
           <i class="pi pi-link"></i> Connect
         </button>

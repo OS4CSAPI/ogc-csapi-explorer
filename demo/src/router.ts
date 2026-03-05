@@ -5,6 +5,7 @@ import MapViewPage from './pages/MapViewPage.vue'
 import SmokeTestPage from './pages/SmokeTestPage.vue'
 import DemoPage from './pages/DemoPage.vue'
 import SimulatorAdminPage from './pages/SimulatorAdminPage.vue'
+import CommunityShowcasePage from './pages/CommunityShowcasePage.vue'
 
 const routes = [
   {
@@ -37,6 +38,11 @@ const routes = [
     path: '/admin/simulator',
     name: 'admin-simulator',
     component: SimulatorAdminPage,
+  },
+  {
+    path: '/community',
+    name: 'community',
+    component: CommunityShowcasePage,
   },
 ]
 
