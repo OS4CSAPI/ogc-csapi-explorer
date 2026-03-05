@@ -6,6 +6,7 @@ import SmokeTestPage from './pages/SmokeTestPage.vue'
 import DemoPage from './pages/DemoPage.vue'
 import SimulatorAdminPage from './pages/SimulatorAdminPage.vue'
 import CommunityShowcasePage from './pages/CommunityShowcasePage.vue'
+import LiveAnalyticsPage from './pages/LiveAnalyticsPage.vue'
 
 const routes = [
   {
@@ -43,6 +44,11 @@ const routes = [
     path: '/community',
     name: 'community',
     component: CommunityShowcasePage,
+  },
+  {
+    path: '/analytics',
+    name: 'analytics',
+    component: LiveAnalyticsPage,
   },
 ]
 
