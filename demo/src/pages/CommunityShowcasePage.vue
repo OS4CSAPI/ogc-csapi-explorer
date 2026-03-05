@@ -1,5 +1,35 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import Password from 'primevue/password'
+import Panel from 'primevue/panel'
+import Message from 'primevue/message'
+
+// ── Client-side auth gate (same pattern as SimulatorAdminPage) ───────────
+const AUTH_USER = 'admin'
+const AUTH_PASS = 'admin'
+const SESSION_KEY = 'community-auth'
+
+const authenticated = ref(sessionStorage.getItem(SESSION_KEY) === 'true')
+const loginUser = ref('')
+const loginPass = ref('')
+const loginError = ref('')
+
+function attemptLogin() {
+  if (loginUser.value === AUTH_USER && loginPass.value === AUTH_PASS) {
+    authenticated.value = true
+    sessionStorage.setItem(SESSION_KEY, 'true')
+    loginError.value = ''
+  } else {
+    loginError.value = 'Invalid credentials'
+  }
+}
+
+function logout() {
+  authenticated.value = false
+  sessionStorage.removeItem(SESSION_KEY)
+}
 
 const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
 </script>
@@ -10,6 +40,32 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
     <div class="showcase-header">
       <h2><i class="pi pi-users"></i> Community Showcase</h2>
       <p class="subtitle">Third-party projects built on top of the live CSAPI server</p>
+    </div>
+
+    <!-- Auth gate -->
+    <div v-if="!authenticated" class="login-gate">
+      <Panel header="Authentication Required" class="login-panel">
+        <p class="login-desc">This page is restricted while we await permission to publicly showcase community contributions. Enter admin credentials to preview.</p>
+        <div class="login-form">
+          <div class="login-field">
+            <label for="comm-user">Username</label>
+            <InputText id="comm-user" v-model="loginUser" placeholder="Username" @keyup.enter="attemptLogin" />
+          </div>
+          <div class="login-field">
+            <label for="comm-pass">Password</label>
+            <Password id="comm-pass" v-model="loginPass" placeholder="Password" :feedback="false" toggleMask @keyup.enter="attemptLogin" />
+          </div>
+          <Message v-if="loginError" severity="error" :closable="false" class="mt-2">{{ loginError }}</Message>
+          <Button label="Sign In" icon="pi pi-sign-in" @click="attemptLogin" class="mt-3 login-btn" />
+        </div>
+      </Panel>
+    </div>
+
+    <!-- Authenticated content -->
+    <template v-else>
+
+    <div class="auth-toolbar">
+      <Button label="Sign Out" icon="pi pi-sign-out" severity="secondary" size="small" text @click="logout" />
     </div>
 
     <!-- Featured Project -->
@@ -49,7 +105,8 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
           <i class="pi pi-check-circle"></i>
           This project validates the interoperability of the OGC Connected Systems API &mdash; a third party
           was able to build a complete ISR analysis pipeline with <em>zero custom integration code</em>,
-          using only standard CSAPI endpoints and public credentials.
+          using only standard CSAPI endpoints and public credentials. The artifacts below are point-in-time
+          snapshots from a single pipeline run.
         </p>
       </div>
 
@@ -59,7 +116,7 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
           :class="['tab-btn', { active: activeTab === 'map' }]"
           @click="activeTab = 'map'"
         >
-          <i class="pi pi-map"></i> Interactive Map
+          <i class="pi pi-map"></i> Sensor Map
         </button>
         <button
           :class="['tab-btn', { active: activeTab === 'dashboard' }]"
@@ -80,8 +137,8 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
         <!-- Interactive Map -->
         <div v-if="activeTab === 'map'" class="tab-panel">
           <div class="panel-header">
-            <h4>Live Sensor Network &amp; UAS Track</h4>
-            <p>Interactive Folium map showing sensor nodes (blue), UAS position history (red), LOB bearing lines (orange), and filed SENREPs. Zoom and pan to explore.</p>
+            <h4>Sensor Network &amp; UAS Track (Snapshot)</h4>
+            <p>Point-in-time Folium map captured from a single pipeline run. Shows sensor nodes (blue), UAS position history (red), LOB bearing lines (orange), and filed SENREPs. The map is pannable and zoomable, but the data is static &mdash; not polling the server.</p>
           </div>
           <div class="map-container">
             <iframe
@@ -95,8 +152,8 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
         <!-- Intelligence Dashboard -->
         <div v-if="activeTab === 'dashboard'" class="tab-panel">
           <div class="panel-header">
-            <h4>6-Panel Intelligence Dashboard</h4>
-            <p>UAS flight track with time-progression colorbar, LOB bearings from all 3 sensors over time, bearing uncertainty (std dev), latitude &amp; longitude time series, and contributing-sensors count per fix.</p>
+            <h4>6-Panel Intelligence Dashboard (Snapshot)</h4>
+            <p>Static image from a single pipeline run. Shows UAS flight track with time-progression colorbar, LOB bearings from all 3 sensors over time, bearing uncertainty (std dev), latitude &amp; longitude time series, and contributing-sensors count per fix.</p>
           </div>
           <div class="dashboard-container">
             <img
@@ -110,8 +167,8 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
         <!-- ML Analysis -->
         <div v-if="activeTab === 'ml'" class="tab-panel">
           <div class="panel-header">
-            <h4>Anomaly Detection &amp; Trajectory Prediction</h4>
-            <p>Isolation Forest anomaly detection on speed, turn rate, and sensor count features. Green dots are normal fixes; red X markers are anomalies. Purple dashed line shows predicted future trajectory.</p>
+            <h4>Anomaly Detection &amp; Trajectory Prediction (Snapshot)</h4>
+            <p>Static image from a single pipeline run. Isolation Forest anomaly detection on speed, turn rate, and sensor count features. Green dots are normal fixes; red X markers are anomalies. Purple dashed line shows predicted future trajectory.</p>
           </div>
           <div class="dashboard-container">
             <img
@@ -138,6 +195,8 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
         </div>
       </div>
     </div>
+
+    </template><!-- /v-else -->
   </div>
 </template>
 
@@ -150,6 +209,56 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
 
 .showcase-header {
   margin-bottom: 1.5rem;
+}
+
+/* Auth gate */
+.login-gate {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.login-panel {
+  max-width: 400px;
+  width: 100%;
+}
+
+.login-desc {
+  color: var(--text-color-secondary);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.login-field label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.login-field .p-inputtext,
+.login-field .p-password {
+  width: 100%;
+}
+
+.login-btn {
+  width: 100%;
+}
+
+.auth-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
 }
 
 .showcase-header h2 {
