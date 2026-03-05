@@ -2480,7 +2480,8 @@ async function loadAllResources() {
 
   // One-time position sync: snap moving systems (e.g. ISS) to their latest
   // observation so the marker aligns with the freshly-loaded orbit track.
-  updateMovingSystemPositions()
+  // Must await so the marker is correct before fitView runs.
+  await updateMovingSystemPositions()
 
   // Start live refresh interval if Live Mode is on by default
   // Stagger first poll to prevent thundering herd when many users load simultaneously
