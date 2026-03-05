@@ -100,7 +100,7 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
       <div class="project-description">
         <p>
           After the OGC 134th Member Meeting, <a href="https://github.com/nsnarayanam" target="_blank" rel="noopener noreferrer" class="person-link">Narasimha</a> discovered the public CSAPI demo server and
-          built a full ML-powered intelligence pipeline entirely in a Google Colab notebook. Using only
+          built a full Machine Learning (ML)-powered intelligence pipeline entirely in a Google Colab notebook. Using only
           standard HTTP requests against the CSAPI endpoints, the pipeline:
         </p>
         <ul class="feature-list">
