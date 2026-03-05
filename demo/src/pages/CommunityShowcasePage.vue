@@ -77,12 +77,12 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
             <p class="author">by <strong>Narasimha Sharma Narayanam</strong> &mdash; Founder, Aganitha Space</p>
           </div>
           <a
-            href="https://github.com/OS4CSAPI"
+            href="https://github.com/orgs/OS4CSAPI/discussions/37"
             target="_blank"
             rel="noopener noreferrer"
             class="github-link"
           >
-            <i class="pi pi-github"></i> View on GitHub
+            <i class="pi pi-github"></i> View Discussion
           </a>
         </div>
       </div>
