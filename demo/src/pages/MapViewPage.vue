@@ -745,6 +745,10 @@ function extractLatLonFromResult(result: any): { lat: number; lon: number; alt?:
   if (typeof result.Latitude === 'number' && typeof result.Longitude === 'number') {
     return { lat: result.Latitude, lon: result.Longitude, alt: result.Altitude }
   }
+  // Suffixed variants (e.g., ISS tracker: lat_deg, lon_deg, alt_km)
+  if (typeof result.lat_deg === 'number' && typeof result.lon_deg === 'number') {
+    return { lat: result.lat_deg, lon: result.lon_deg, alt: result.alt_km }
+  }
 
   return null
 }
@@ -941,14 +945,15 @@ async function buildSystemLocationCache(): Promise<void> {
       }
     }
 
-    // Save ONLY LOB datastreams for observation/bearing rendering.
-    // Each sensor has exactly 1 LOB datastream → 1 bearing line per detection.
+    // Save LOB + position datastreams for observation rendering.
+    // LOB datastreams → bearing lines; position datastreams → orbit markers.
     locationDatastreamList = locationDs
       .filter((ds: any) => {
         const sysId = ds['system@id'] || ds.system?.id
         if (!sysId) return false
         const nm = (ds.name || ds.outputName || '').toLowerCase()
         return nm.includes('lob') || nm.includes('bearing')
+          || nm.includes('position') || nm.includes('location')
       })
       .map((ds: any) => ({
         id: ds.id,
