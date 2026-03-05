@@ -2262,6 +2262,28 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         if (obsRes.ok && obsRes.data) {
           items = (obsRes.data.items || []).slice(-effectiveLimit)
         }
+      } else if (isPositionDs) {
+        // Position/satellite datastreams: ALWAYS use a recent time window.
+        // OSH returns oldest-first and ignores sort params, so a bare
+        // limit=N returns the N oldest observations — useless for a track
+        // that should show the current orbit arc.
+        const latestRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?resultTime=latest&limit=1`, {
+          headers: { 'Accept': 'application/om+json' },
+        })
+        if (!latestRes.ok || !latestRes.data?.items?.length) return
+        const latestTime = latestRes.data.items[0].resultTime || latestRes.data.items[0].phenomenonTime
+        if (!latestTime) return
+        const latestMs = new Date(latestTime).getTime()
+        const windowStart = new Date(latestMs - 120 * 60 * 1000).toISOString()
+        const windowEnd = new Date(latestMs + 1000).toISOString()
+        const timeFilter = encodeURIComponent(`${windowStart}/${windowEnd}`)
+        const obsRes = await apiFetch(
+          `/datastreams/${dsInfo.id}/observations?resultTime=${timeFilter}&limit=${effectiveLimit}`,
+          { headers: { 'Accept': 'application/om+json' } },
+        )
+        if (obsRes.ok && obsRes.data) {
+          items = (obsRes.data.items || []).slice(-effectiveLimit)
+        }
       } else {
         const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=${effectiveLimit}`, {
           headers: { 'Accept': 'application/om+json' },

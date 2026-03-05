@@ -279,7 +279,7 @@ export function getSymbolForResource(
   }
 
   // Determine pixel size
-  const pixelSize = symbolSize === 'tiny' ? 20 : symbolSize === 'small' ? 28 : 38
+  const pixelSize = symbolSize === 'tiny' ? 18 : symbolSize === 'small' ? 24 : 30
 
   // Check cache
   const cacheKey = `${sidc}-${pixelSize}`
