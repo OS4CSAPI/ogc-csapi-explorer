@@ -365,6 +365,23 @@ const obsTrackStyle = new Style({
   stroke: new Stroke({ color: TYPE_COLORS['observationTracks'] || '#06b6d4', width: 3, lineDash: [8, 4] }),
 })
 
+// Orbit track style — solid bright line for satellite ground tracks
+const orbitTrackStyle = new Style({
+  stroke: new Stroke({ color: '#22d3ee', width: 2.5 }),
+})
+const orbitTrackGlowStyle = new Style({
+  stroke: new Stroke({ color: 'rgba(34, 211, 238, 0.25)', width: 8 }),
+})
+
+// Satellite observation point style — distinct from generic obs points
+const satObsPointStyle = new Style({
+  image: new CircleStyle({
+    radius: 3,
+    fill: new Fill({ color: '#22d3ee' }),
+    stroke: new Stroke({ color: '#fff', width: 0.5 }),
+  }),
+})
+
 // Bearing-line styles bucketed by quantized energy (10 buckets → max 10 style objects)
 const bearingStyleCache = new Map<number, Style>()
 function getCachedBearingLineStyle(energy: number): Style {
@@ -717,6 +734,29 @@ async function loadResourceType(resourceType: string): Promise<number> {
   } catch {
     return 0
   }
+}
+
+/**
+ * Split a track coordinate array into segments at antimeridian (±180° lon)
+ * crossings.  Prevents the ugly straight line across the entire map when
+ * a satellite (or any object) crosses the date line.
+ */
+function splitTrackAtDateLine(coords: [number, number][]): [number, number][][] {
+  if (coords.length < 2) return [coords]
+  const segments: [number, number][][] = []
+  let current: [number, number][] = [coords[0]]
+  for (let i = 1; i < coords.length; i++) {
+    const prevLon = current[current.length - 1][0]
+    const curLon = coords[i][0]
+    if (Math.abs(curLon - prevLon) > 180) {
+      // Antimeridian crossing — finish segment and start a new one
+      segments.push(current)
+      current = []
+    }
+    current.push(coords[i])
+  }
+  if (current.length > 0) segments.push(current)
+  return segments
 }
 
 /**
@@ -2227,6 +2267,14 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
 
       const trackCoords: [number, number][] = []
 
+      // Detect satellite/orbit datastreams for distinct styling
+      const dsNameLower = dsInfo.name.toLowerCase()
+      const isSatDs = dsNameLower.includes('position') && (
+        dsNameLower.includes('sgp4') || dsNameLower.includes('satellite')
+        || dsNameLower.includes('iss') || dsNameLower.includes('orbital')
+        || dsNameLower.includes('tracker')
+      )
+
       for (let obsIdx = 0; obsIdx < items.length; obsIdx++) {
         const obs = items[obsIdx]
         // --- Observation points: results with lat/lon coordinates ---
@@ -2244,7 +2292,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
               const feature = new Feature({
                 geometry: new Point(fromLonLat([lon, lat])),
               })
-              feature.setStyle(getStyle('observationPoints'))
+              feature.setStyle(isSatDs ? satObsPointStyle : getStyle('observationPoints'))
               feature.set('resourceType', 'observationPoints')
               feature.set('resourceId', obs.id || `${dsInfo.id}-obs-${pointCount}`)
               feature.set('resourceName', `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
@@ -2269,7 +2317,6 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         // --- Bearing lines: acoustic detection directions ---
         // Only extract LOBs from LOB datastreams — Track Updates duplicate the
         // bearings at slightly different angles, doubling the line count.
-        const dsNameLower = dsInfo.name.toLowerCase()
         const isLobDatastream = dsNameLower.includes('lob') || dsNameLower.includes('bearing')
         // Tight schema filter: genuine LOBs have both bearingTrue AND bearingStdDev.
         // This rejects scope-leak contamination (track updates, localizer, health, etc.)
@@ -2326,19 +2373,29 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       }
 
       // Track LineString from all parsed coordinates
+      // Detect orbit/satellite tracks and apply distinct styling + date-line splitting
       if (trackSource && trackCoords.length >= 2) {
-        const lineFeature = new Feature({
-          geometry: new LineString(trackCoords.map(c => fromLonLat(c))),
-        })
-        lineFeature.setStyle(getStyle('observationTracks'))
-        lineFeature.set('resourceType', 'observationTracks')
-        lineFeature.set('resourceId', dsInfo.id)
-        lineFeature.set('resourceName', `Track: ${dsInfo.name}`)
-        lineFeature.set('enriched', true)
-        lineFeature.set('enrichmentSource', `${trackCoords.length} observations from ${dsInfo.name}`)
-        lineFeature.set('rawData', { datastreamId: dsInfo.id, datastreamName: dsInfo.name, systemId: dsInfo.systemId, pointCount: trackCoords.length })
-        trackSource.addFeature(lineFeature)
-        trackCount++
+        // Split track at antimeridian (±180° lon) crossings to avoid ugly wrapping lines
+        const segments = splitTrackAtDateLine(trackCoords)
+        for (const segment of segments) {
+          if (segment.length < 2) continue
+          const lineFeature = new Feature({
+            geometry: new LineString(segment.map(c => fromLonLat(c))),
+          })
+          if (isSatDs) {
+            lineFeature.setStyle([orbitTrackGlowStyle, orbitTrackStyle])
+          } else {
+            lineFeature.setStyle(getStyle('observationTracks'))
+          }
+          lineFeature.set('resourceType', 'observationTracks')
+          lineFeature.set('resourceId', dsInfo.id)
+          lineFeature.set('resourceName', `Track: ${dsInfo.name}`)
+          lineFeature.set('enriched', true)
+          lineFeature.set('enrichmentSource', `${trackCoords.length} observations from ${dsInfo.name}`)
+          lineFeature.set('rawData', { datastreamId: dsInfo.id, datastreamName: dsInfo.name, systemId: dsInfo.systemId, pointCount: trackCoords.length })
+          trackSource.addFeature(lineFeature)
+          trackCount++
+        }
       }
     } catch { /* skip */ }
   })

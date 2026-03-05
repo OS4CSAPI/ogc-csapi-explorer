@@ -34,6 +34,7 @@ const MOD_NONE = '0000'
 
 // Symbol Sets
 const SS_AIR = '01'
+const SS_SPACE = '05'
 const SS_LAND_UNIT = '10'
 const SS_LAND_EQUIPMENT = '15'
 const SS_LAND_INSTALLATION = '20'
@@ -53,6 +54,9 @@ const ENT_VEHICLE = '140100'          // Armored vehicle
 const ENT_UAV = '110700'              // UAV / Drone
 const ENT_FIXED_WING = '110100'       // Fixed-wing aircraft
 const ENT_ROTARY = '110200'           // Rotary wing
+
+// Entity codes — Space (SS 05)
+const ENT_SATELLITE = '110100'        // Military satellite (generic)
 
 // Entity codes — Land Unit (SS 10)
 const ENT_UNIT_GENERIC = '110000'     // Generic unit
@@ -110,6 +114,9 @@ type KeywordRule = {
  * More specific rules go first.
  */
 const SYSTEM_RULES: KeywordRule[] = [
+  // Satellite / space station / orbital tracker → Space symbol
+  { keywords: ['satellite', 'iss', 'orbital', 'sgp4', 'space station', 'zarya', 'norad'],
+    identity: SI_FRIEND, symbolSet: SS_SPACE, entity: ENT_SATELLITE },
   // Relay / retransmission device → Signal Radio Relay (Land Unit full frame)
   { keywords: ['relay', 'retrans', 'repeater', 'retransmission'],
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_SIGNAL_RADIO_RELAY },
