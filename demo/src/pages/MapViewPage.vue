@@ -2228,6 +2228,13 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
     try {
       let items: any[] = []
 
+      // Position/track datastreams need many observations to draw a meaningful
+      // ground track; LOB/bearing datastreams only need the most recent few.
+      const dsNameLower = dsInfo.name.toLowerCase()
+      const isPositionDs = dsNameLower.includes('position') || dsNameLower.includes('location')
+        || dsNameLower.includes('gps')
+      const effectiveLimit = isPositionDs ? Math.max(obsLimit, 200) : obsLimit
+
       if (isLive) {
         // Live Mode: API returns observations oldest-first and ignores sort
         // params, so limit=N always returns the N oldest — useless for live.
@@ -2239,21 +2246,22 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         const latestTime = latestRes.data.items[0].resultTime || latestRes.data.items[0].phenomenonTime
         if (!latestTime) return
 
-        // Fetch a 5-minute window ending just past the latest observation
+        // Position datastreams: fetch a 2-hour window to get a full orbit arc.
+        // LOB datastreams: 5-minute window for tight real-time view.
+        const windowMinutes = isPositionDs ? 120 : 5
         const latestMs = new Date(latestTime).getTime()
-        const windowStart = new Date(latestMs - 5 * 60 * 1000).toISOString()
+        const windowStart = new Date(latestMs - windowMinutes * 60 * 1000).toISOString()
         const windowEnd = new Date(latestMs + 1000).toISOString()
         const timeFilter = encodeURIComponent(`${windowStart}/${windowEnd}`)
         const obsRes = await apiFetch(
-          `/datastreams/${dsInfo.id}/observations?resultTime=${timeFilter}&limit=200`,
+          `/datastreams/${dsInfo.id}/observations?resultTime=${timeFilter}&limit=${effectiveLimit}`,
           { headers: { 'Accept': 'application/om+json' } },
         )
         if (obsRes.ok && obsRes.data) {
-          // Slice to keep only the last N (most recent) observations
-          items = (obsRes.data.items || []).slice(-obsLimit)
+          items = (obsRes.data.items || []).slice(-effectiveLimit)
         }
       } else {
-        const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=${obsLimit}`, {
+        const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=${effectiveLimit}`, {
           headers: { 'Accept': 'application/om+json' },
         })
         if (!obsRes.ok || !obsRes.data) return
@@ -2268,7 +2276,6 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       const trackCoords: [number, number][] = []
 
       // Detect satellite/orbit datastreams for distinct styling
-      const dsNameLower = dsInfo.name.toLowerCase()
       const isSatDs = dsNameLower.includes('position') && (
         dsNameLower.includes('sgp4') || dsNameLower.includes('satellite')
         || dsNameLower.includes('iss') || dsNameLower.includes('orbital')
