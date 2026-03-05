@@ -179,7 +179,15 @@ const SYSTEM_RULES: KeywordRule[] = [
 function matchKeywords(text: string, rules: KeywordRule[]): KeywordRule | null {
   const lower = text.toLowerCase()
   for (const rule of rules) {
-    if (rule.keywords.some(kw => lower.includes(kw))) {
+    if (rule.keywords.some(kw => {
+      // Short keywords (≤3 chars after trim) use word-boundary regex to prevent
+      // false substring matches (e.g. 'iss' matching inside 'retransmission').
+      const trimmed = kw.trim()
+      if (trimmed.length <= 3) {
+        return new RegExp(`\\b${trimmed}\\b`).test(lower)
+      }
+      return lower.includes(kw)
+    })) {
       return rule
     }
   }

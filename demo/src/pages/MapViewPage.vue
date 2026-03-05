@@ -2456,6 +2456,10 @@ async function loadAllResources() {
 
   loading.value = false
 
+  // One-time position sync: snap moving systems (e.g. ISS) to their latest
+  // observation so the marker aligns with the freshly-loaded orbit track.
+  updateMovingSystemPositions()
+
   // Start live refresh interval if Live Mode is on by default
   // Stagger first poll to prevent thundering herd when many users load simultaneously
   if (liveMode.value) {
