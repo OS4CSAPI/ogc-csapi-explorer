@@ -46,7 +46,7 @@ function mobileNav(to: string) {
           <i class="pi pi-map"></i> Map
         </router-link>
         <router-link to="/analytics" class="nav-link">
-          <i class="pi pi-chart-line"></i> UAS Demo
+          <i class="pi pi-chart-line"></i> UAS Analytics
         </router-link>
         <router-link to="/admin/simulator" class="nav-link">
           <i class="pi pi-cog"></i> Simulator
@@ -85,7 +85,7 @@ function mobileNav(to: string) {
             <i class="pi pi-map"></i> Map
           </button>
           <button class="mobile-menu-link" @click="mobileNav('/analytics')">
-            <i class="pi pi-chart-line"></i> UAS Demo
+            <i class="pi pi-chart-line"></i> UAS Analytics
           </button>
           <button class="mobile-menu-link" @click="mobileNav('/admin/simulator')">
             <i class="pi pi-cog"></i> Simulator

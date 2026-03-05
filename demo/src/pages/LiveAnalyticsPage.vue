@@ -989,7 +989,7 @@ onUnmounted(() => {
     <div class="analytics-header">
       <div class="header-top">
         <div>
-          <h2><i class="pi pi-chart-line"></i> UAS / ODAS Live Demo</h2>
+          <h2><i class="pi pi-chart-line"></i> UAS / ODAS Live Analytics</h2>
           <p class="subtitle">
             Real-time intelligence pipeline — Arizona sensor array
             <span class="attribution">Inspired by <a href="https://github.com/nsnarayanam" target="_blank">Narasimha Sharma</a>'s <a href="https://github.com/orgs/OS4CSAPI/discussions/37" target="_blank">CSAPI LiveML notebook</a></span>
