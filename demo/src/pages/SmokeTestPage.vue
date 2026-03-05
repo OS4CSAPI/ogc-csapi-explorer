@@ -565,26 +565,70 @@ const preCleanRunning = ref(false)
 async function preClean() {
   preCleanRunning.value = true
   preCleanMessage.value = 'Scanning for orphaned smoke-test resources…'
-  const types = ['commands', 'controlstreams', 'observations', 'datastreams',
-                 'subsystems', 'subdeployments', 'samplingFeatures',
-                 'deployments', 'procedures', 'systems']
+
+  // Delete leaf resources first, then containers.
+  // For systems/deployments we do TWO passes: first delete subsystems/subdeployments
+  // found via the parent's /subsystems endpoint, then delete the parents.
+  const leafTypes = ['commands', 'controlstreams', 'observations', 'datastreams',
+                     'samplingFeatures', 'procedures']
+  const containerTypes = ['deployments', 'systems'] // parents deleted last
+
   let totalDeleted = 0
-  for (const type of types) {
-    try {
-      const listUrl = `/${type === 'subsystems' ? 'systems' : (type === 'subdeployments' ? 'deployments' : type)}?q=${SMOKE_TAG}&limit=50`
-      const resp = await apiFetch(listUrl, { method: 'GET', headers: { 'Accept': 'application/json' } })
-      if (!resp.ok || !resp.data?.items) continue
-      for (const item of resp.data.items) {
-        const id = item.id || item.properties?.id
-        if (!id) continue
-        const actual = type === 'subsystems' ? 'systems' : (type === 'subdeployments' ? 'deployments' : type)
-        try {
-          await apiFetch(`/${actual}/${id}`, { method: 'DELETE' })
-          totalDeleted++
-        } catch { /* best effort */ }
-      }
-    } catch { /* best effort */ }
+
+  /** Delete all smoke-tagged items of a given API collection */
+  async function purgeCollection(collection: string) {
+    const resp = await apiFetch(`/${collection}?q=${SMOKE_TAG}&limit=50`, {
+      method: 'GET', headers: { Accept: 'application/json' },
+    })
+    if (!resp.ok || !resp.data?.items) return
+    for (const item of resp.data.items) {
+      const id = item.id || item.properties?.id
+      if (!id) continue
+      const del = await apiFetch(`/${collection}/${id}`, { method: 'DELETE' })
+      if (del.ok || del.status === 204) totalDeleted++
+    }
   }
+
+  /** For systems/deployments: recursively delete children first, then parent */
+  async function purgeContainerTree(collection: string, childEndpoint: string) {
+    const resp = await apiFetch(`/${collection}?q=${SMOKE_TAG}&limit=50`, {
+      method: 'GET', headers: { Accept: 'application/json' },
+    })
+    if (!resp.ok || !resp.data?.items) return
+    for (const item of resp.data.items) {
+      const id = item.id || item.properties?.id
+      if (!id) continue
+      // Delete children first (subsystems / subdeployments)
+      try {
+        const childResp = await apiFetch(`/${collection}/${id}/${childEndpoint}?limit=50`, {
+          method: 'GET', headers: { Accept: 'application/json' },
+        })
+        if (childResp.ok && childResp.data?.items) {
+          for (const child of childResp.data.items) {
+            const cid = child.id || child.properties?.id
+            if (!cid) continue
+            const del = await apiFetch(`/${collection}/${cid}`, { method: 'DELETE' })
+            if (del.ok || del.status === 204) totalDeleted++
+          }
+        }
+      } catch { /* best effort */ }
+      // Now delete the parent
+      const del = await apiFetch(`/${collection}/${id}`, { method: 'DELETE' })
+      if (del.ok || del.status === 204) totalDeleted++
+    }
+  }
+
+  try {
+    // Pass 1: leaf resources (observations, datastreams, etc.)
+    for (const type of leafTypes) {
+      try { await purgeCollection(type) } catch { /* best effort */ }
+    }
+    // Pass 2: deployments (delete subdeployments first)
+    try { await purgeContainerTree('deployments', 'subdeployments') } catch { /* best effort */ }
+    // Pass 3: systems (delete subsystems first)
+    try { await purgeContainerTree('systems', 'subsystems') } catch { /* best effort */ }
+  } catch { /* best effort */ }
+
   preCleanMessage.value = totalDeleted > 0
     ? `Purged ${totalDeleted} orphaned resource(s)`
     : 'Server is clean — no orphans found'
