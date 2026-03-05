@@ -2218,7 +2218,9 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
   const trackSource = vectorSources['observationTracks']
   const bearingSource = vectorSources['bearingLines']
   if (pointSource) pointSource.clear()
-  if (trackSource) trackSource.clear()
+  // In live mode, keep orbit tracks intact — they're expensive to rebuild and
+  // the satellite marker is moved by updateMovingSystemPositions instead.
+  if (trackSource && !liveMode.value) trackSource.clear()
   if (bearingSource) bearingSource.clear()
 
   const isLive = liveMode.value
@@ -2235,6 +2237,12 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       const dsNameLower = dsInfo.name.toLowerCase()
       const isPositionDs = dsNameLower.includes('position') || dsNameLower.includes('location')
         || dsNameLower.includes('gps')
+
+      // In live mode, skip satellite/position DS entirely — the orbit track
+      // from initial load stays put and updateMovingSystemPositions() handles
+      // marker movement via a single lightweight resultTime=latest query.
+      if (isLive && isPositionDs) return
+
       const effectiveLimit = isPositionDs ? Math.max(obsLimit, 200) : obsLimit
 
       if (isLive) {
@@ -2640,13 +2648,16 @@ function refreshAllStyles() {
 // ── Live Mode toggle ─────────────────────────────────────────────
 async function refreshLiveLayers() {
   try {
-    // In live mode, fetch fresh observations + update moving-system positions
+    // Refresh LOB/bearing observations + overlays (satellite DS is skipped in live mode)
     await Promise.all([
       loadObservationLayers(3),
       loadLocationEstimates(),
       loadSenrepMarkers(),
-      updateMovingSystemPositions(),
     ])
+    // AFTER observation layers settle, move satellite markers via a single
+    // lightweight resultTime=latest query per position DS. Sequential to
+    // prevent races with loadObservationLayers.
+    await updateMovingSystemPositions()
     lastRefreshTime.value = new Date().toLocaleTimeString()
   } catch { /* swallow errors during background refresh */ }
 }
