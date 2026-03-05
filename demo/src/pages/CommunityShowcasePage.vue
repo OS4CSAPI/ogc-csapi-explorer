@@ -71,7 +71,6 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
           <span class="badge">QGIS</span>
           <span class="badge">Python</span>
           <span class="badge">OGC CSAPI</span>
-          <span class="badge">SensorThings</span>
         </div>
         <div class="project-repo">
           <a href="https://github.com/byteroad/qgis-oacs-plugin" target="_blank" rel="noopener noreferrer" class="repo-link">
@@ -204,7 +203,6 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
           <span class="badge">scikit-learn</span>
           <span class="badge">Pandas</span>
           <span class="badge">OGC CSAPI</span>
-          <span class="badge">SensorThings</span>
         </div>
       </div>
     </div>
