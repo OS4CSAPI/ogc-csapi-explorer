@@ -106,6 +106,8 @@ const predictedTrajectory = reactive<PredictedPoint[]>([])
 // Leaflet refs
 const mapContainer = ref<HTMLDivElement | null>(null)
 let leafletMap: L.Map | null = null
+let tileLayer: L.TileLayer | null = null
+const darkMap = ref(true)
 let uasTrackLine: L.Polyline | null = null
 let uasMarker: L.CircleMarker | null = null
 let cepCircle: L.Circle | null = null
@@ -377,6 +379,11 @@ function computeML(): void {
 //  Leaflet map
 // ════════════════════════════════════════════════════════════════════════════
 
+const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+const TILE_LIGHT = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+const ATTR_DARK = '&copy; <a href="https://carto.com/">CARTO</a>'
+const ATTR_LIGHT = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+
 function initMap(): void {
   if (!mapContainer.value || leafletMap) return
 
@@ -386,8 +393,8 @@ function initMap(): void {
     zoomControl: true,
   })
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+  tileLayer = L.tileLayer(TILE_DARK, {
+    attribution: ATTR_DARK,
     maxZoom: 19,
   }).addTo(leafletMap)
 
@@ -412,6 +419,16 @@ function initMap(): void {
   // UAS track polyline
   uasTrackLine = L.polyline([], { color: '#ef4444', weight: 2, opacity: 0.8 }).addTo(leafletMap)
   predictionLine = L.polyline([], { color: '#a855f7', weight: 2, dashArray: '8 6', opacity: 0.7 }).addTo(leafletMap)
+}
+
+function toggleMapStyle(): void {
+  if (!leafletMap || !tileLayer) return
+  darkMap.value = !darkMap.value
+  leafletMap.removeLayer(tileLayer)
+  tileLayer = L.tileLayer(
+    darkMap.value ? TILE_DARK : TILE_LIGHT,
+    { attribution: darkMap.value ? ATTR_DARK : ATTR_LIGHT, maxZoom: 19 },
+  ).addTo(leafletMap)
 }
 
 function updateMap(): void {
@@ -1016,6 +1033,11 @@ onUnmounted(() => {
       <div v-show="activeTab === 'map'" class="tab-panel">
         <div ref="mapContainer" class="leaflet-map-container"></div>
         <div class="map-legend">
+          <button class="map-style-toggle" @click="toggleMapStyle" :title="darkMap ? 'Switch to light map' : 'Switch to dark map'">
+            <i :class="darkMap ? 'pi pi-sun' : 'pi pi-moon'"></i>
+            {{ darkMap ? 'Light' : 'Dark' }}
+          </button>
+          <span class="legend-sep"></span>
           <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Sensor Node</span>
           <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> UAS Track</span>
           <span class="legend-item"><span class="legend-line" style="border-color:#f97316"></span> LOB Bearing</span>
@@ -1257,6 +1279,32 @@ onUnmounted(() => {
   background: rgba(0, 0, 0, 0.3);
   font-size: 0.75rem;
   color: var(--text-color-secondary, #94a3b8);
+  align-items: center;
+}
+
+.map-style-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--surface-border, #334155);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-color-secondary, #94a3b8);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.map-style-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-color, #e2e8f0);
+}
+
+.legend-sep {
+  width: 1px;
+  height: 14px;
+  background: var(--surface-border, #334155);
 }
 
 .legend-item {
