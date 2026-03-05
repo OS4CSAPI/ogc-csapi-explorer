@@ -7,8 +7,8 @@ import Panel from 'primevue/panel'
 import Message from 'primevue/message'
 
 // ── Client-side auth gate (same pattern as SimulatorAdminPage) ───────────
-const AUTH_USER = 'admin'
-const AUTH_PASS = 'admin'
+const AUTH_USER = 'CSAPI'
+const AUTH_PASS = 'friends'
 const SESSION_KEY = 'community-auth'
 
 const authenticated = ref(sessionStorage.getItem(SESSION_KEY) === 'true')
@@ -45,7 +45,7 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
     <!-- Auth gate -->
     <div v-if="!authenticated" class="login-gate">
       <Panel header="Authentication Required" class="login-panel">
-        <p class="login-desc">This page is restricted while we await permission to publicly showcase community contributions. Enter admin credentials to preview.</p>
+        <p class="login-desc">This page is restricted while we await permission to publicly showcase community contributions. Enter credentials to preview.</p>
         <div class="login-form">
           <div class="login-field">
             <label for="comm-user">Username</label>
@@ -190,6 +190,69 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
           <span class="badge">Matplotlib</span>
           <span class="badge">scikit-learn</span>
           <span class="badge">Pandas</span>
+          <span class="badge">OGC CSAPI</span>
+          <span class="badge">SensorThings</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project 2: Dr. Joana Simoes — QGIS Plugin -->
+    <div class="project-card" style="margin-top: 1.5rem;">
+      <div class="project-banner">
+        <div class="project-title-row">
+          <div>
+            <h3>QGIS CSAPI Plugin — Cross-Client Validation</h3>
+            <p class="author">by <strong>Dr. Joana Simoes</strong> (<code>doublebyte1</code>)</p>
+          </div>
+          <a
+            href="https://github.com/orgs/OS4CSAPI/discussions/37"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="github-link"
+          >
+            <i class="pi pi-github"></i> View Discussion
+          </a>
+        </div>
+      </div>
+
+      <div class="project-description">
+        <p>
+          After seeing the CSAPI Explorer demo at the OGC 134th Member Meeting, Dr. Simoes
+          connected her <strong>QGIS OGC API &mdash; Connected Systems plugin</strong> directly to the
+          live OSH server. Using the same public credentials and standard CSAPI endpoints, she was
+          able to discover all systems, deployments, sampling features, procedures, and datastreams
+          &mdash; including the SENREP and Classification Probabilities streams &mdash; entirely from
+          within QGIS.
+        </p>
+        <p class="interop-note">
+          <i class="pi pi-check-circle"></i>
+          This validates true cross-client interoperability &mdash; an entirely independent QGIS plugin,
+          built by a different developer, successfully discovered and browsed the same OSH server
+          using only standard OGC CSAPI endpoints. No custom integration code was needed.
+        </p>
+      </div>
+
+      <div class="tab-content">
+        <div class="tab-panel">
+          <div class="panel-header">
+            <h4>QGIS Data Source Manager &mdash; Connected Systems</h4>
+            <p>Screenshot showing QGIS connected to the OS4CSAPI server via the OGC API &mdash; Connected Systems provider, browsing datastreams including SENREP and AZ-MA-1 Classification Probabilities.</p>
+          </div>
+          <div class="dashboard-container">
+            <img
+              src="/qgis_csapi_screenshot.png"
+              alt="QGIS OGC API - Connected Systems plugin connected to OS4CSAPI server"
+              class="dashboard-img"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="tech-stack">
+        <h4>Technology Stack</h4>
+        <div class="tech-badges">
+          <span class="badge">QGIS</span>
+          <span class="badge">Python</span>
           <span class="badge">OGC CSAPI</span>
           <span class="badge">SensorThings</span>
         </div>
