@@ -45,13 +45,13 @@ function mobileNav(to: string) {
         <router-link to="/map" class="nav-link">
           <i class="pi pi-map"></i> Map
         </router-link>
+        <router-link to="/analytics" class="nav-link">
+          <i class="pi pi-chart-line"></i> UAS Demo
+        </router-link>
         <router-link to="/admin/simulator" class="nav-link">
           <i class="pi pi-cog"></i> Simulator
         </router-link>
       </template>
-      <router-link to="/analytics" class="nav-link">
-        <i class="pi pi-chart-line"></i> Analytics
-      </router-link>
       <router-link to="/community" class="nav-link">
         <i class="pi pi-users"></i> Community
       </router-link>
@@ -84,13 +84,13 @@ function mobileNav(to: string) {
           <button class="mobile-menu-link" @click="mobileNav('/map')">
             <i class="pi pi-map"></i> Map
           </button>
+          <button class="mobile-menu-link" @click="mobileNav('/analytics')">
+            <i class="pi pi-chart-line"></i> UAS Demo
+          </button>
           <button class="mobile-menu-link" @click="mobileNav('/admin/simulator')">
             <i class="pi pi-cog"></i> Simulator
           </button>
         </template>
-        <button class="mobile-menu-link" @click="mobileNav('/analytics')">
-          <i class="pi pi-chart-line"></i> Analytics
-        </button>
         <button class="mobile-menu-link" @click="mobileNav('/community')">
           <i class="pi pi-users"></i> Community
         </button>
