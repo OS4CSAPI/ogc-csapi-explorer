@@ -37,9 +37,7 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
           After seeing the CSAPI Explorer demo at the OGC 134th Member Meeting, <a href="https://github.com/doublebyte1" target="_blank" rel="noopener noreferrer" class="person-link">Dr. Simoes</a>
           connected her <a href="https://github.com/byteroad/qgis-oacs-plugin" target="_blank" rel="noopener noreferrer" class="project-ref-link"><strong>QGIS OGC API &mdash; Connected Systems plugin</strong></a> directly to the
           live OSH server. Using the same public credentials and standard CSAPI endpoints, she was
-          able to discover all systems, deployments, sampling features, procedures, and datastreams
-          &mdash; including the SENREP and Classification Probabilities streams &mdash; entirely from
-          within QGIS.
+          able to discover and browse CSAPI resources entirely from within QGIS.
         </p>
         <p class="interop-note">
           <i class="pi pi-check-circle"></i>
