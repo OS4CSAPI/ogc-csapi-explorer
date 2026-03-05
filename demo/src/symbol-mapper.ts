@@ -57,6 +57,8 @@ const ENT_ROTARY = '110200'           // Rotary wing
 
 // Entity codes — Space (SS 05)
 const ENT_SATELLITE = '110100'        // Military satellite (generic)
+const ENT_SPACE_STATION = '120900'    // Civilian space station
+const MOD1_LEO = '01'                 // Modifier 1: Low Earth Orbit
 
 // Entity codes — Land Unit (SS 10)
 const ENT_UNIT_GENERIC = '110000'     // Generic unit
@@ -105,6 +107,8 @@ type KeywordRule = {
   symbolSet: string
   entity: string
   echelon?: string
+  /** Override modifier digits (pos 17-20), default '0000' */
+  modifiers?: string
   /** Override: use a legacy letter SIDC verbatim (milsymbol supports both formats) */
   letterSidc?: string
 }
@@ -114,8 +118,12 @@ type KeywordRule = {
  * More specific rules go first.
  */
 const SYSTEM_RULES: KeywordRule[] = [
-  // Satellite / space station / orbital tracker → Space symbol
-  { keywords: ['satellite', 'iss', 'orbital', 'sgp4', 'space station', 'zarya', 'norad'],
+  // ISS / space station → Neutral Civilian Space Station, LEO modifier
+  { keywords: ['iss', 'space station', 'zarya'],
+    identity: SI_NEUTRAL, symbolSet: SS_SPACE, entity: ENT_SPACE_STATION,
+    modifiers: `${MOD1_LEO}00` },
+  // Other satellite / orbital tracker → Friend military satellite
+  { keywords: ['satellite', 'orbital', 'sgp4', 'norad'],
     identity: SI_FRIEND, symbolSet: SS_SPACE, entity: ENT_SATELLITE },
   // Relay / retransmission device → Signal Radio Relay (Land Unit full frame)
   { keywords: ['relay', 'retrans', 'repeater', 'retransmission'],
@@ -219,7 +227,7 @@ export function getSymbolForResource(
       if (rule) {
         sidc = rule.letterSidc
           ? rule.letterSidc
-          : buildSIDC(rule.identity, rule.symbolSet, rule.entity, STATUS_PRESENT, MOD_NONE, rule.echelon)
+          : buildSIDC(rule.identity, rule.symbolSet, rule.entity, STATUS_PRESENT, rule.modifiers || MOD_NONE, rule.echelon)
       } else {
         // Default deployment → friendly land unit
         sidc = buildSIDC(SI_FRIEND, SS_LAND_UNIT, ENT_UNIT_GENERIC)
