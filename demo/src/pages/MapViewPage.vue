@@ -1008,10 +1008,12 @@ async function buildSystemLocationCache(): Promise<void> {
     // If you need geographic observations from non-location datastreams,
     // add them to isLocationRelatedDatastream() instead.
 
-    // Fetch latest observation from each location datastream in parallel
+    // Fetch latest observation from each location datastream in parallel.
+    // IMPORTANT: use resultTime=latest — OSH's default ordering is oldest-first,
+    // so limit=1 returns the FIRST observation, not the most recent.
     const promises = Object.entries(bySystem).map(async ([sysId, ds]) => {
       try {
-        const obsRes = await apiFetch(`/datastreams/${ds.id}/observations?limit=1`, {
+        const obsRes = await apiFetch(`/datastreams/${ds.id}/observations?resultTime=latest&limit=1`, {
           headers: { 'Accept': 'application/om+json' },
         })
         if (!obsRes.ok || !obsRes.data) return
@@ -2575,15 +2577,72 @@ function refreshAllStyles() {
 // ── Live Mode toggle ─────────────────────────────────────────────
 async function refreshLiveLayers() {
   try {
-    // In live mode, only fetch the latest 10 observations per datastream
-    // for a tight, real-time view instead of the full 500 history
+    // In live mode, fetch fresh observations + update moving-system positions
     await Promise.all([
       loadObservationLayers(3),
       loadLocationEstimates(),
       loadSenrepMarkers(),
+      updateMovingSystemPositions(),
     ])
     lastRefreshTime.value = new Date().toLocaleTimeString()
   } catch { /* swallow errors during background refresh */ }
+}
+
+/**
+ * Update the map positions of systems/deployments with position datastreams.
+ * Queries the latest observation from each position-type location datastream
+ * and moves the corresponding deployment + system features to match.
+ * This uses standard CSAPI observation queries (resultTime=latest).
+ */
+async function updateMovingSystemPositions(): Promise<void> {
+  const positionDs = locationDatastreamList.filter(ds => {
+    const nm = ds.name.toLowerCase()
+    return nm.includes('position') || nm.includes('location') || nm.includes('gps')
+  })
+  if (positionDs.length === 0) return
+
+  await Promise.all(positionDs.map(async (dsInfo) => {
+    try {
+      const res = await apiFetch(`/datastreams/${dsInfo.id}/observations?resultTime=latest&limit=1`, {
+        headers: { 'Accept': 'application/om+json' },
+      })
+      if (!res.ok || !res.data?.items?.length) return
+      const obs = res.data.items[0]
+      const loc = extractLatLonFromResult(obs.result)
+      if (!loc) return
+
+      // Update the system location cache
+      systemLocationCache[dsInfo.systemId] = {
+        lat: loc.lat, lon: loc.lon, alt: loc.alt,
+        datastreamName: dsInfo.name,
+        phenomenonTime: obs.phenomenonTime,
+      }
+
+      // Move deployment features that link to this system
+      const newCoord = fromLonLat([loc.lon, loc.lat])
+      const depSource = vectorSources['deployments']
+      if (depSource) {
+        for (const feature of depSource.getFeatures()) {
+          const rawData = feature.get('rawData')
+          const platHref = rawData?.properties?.['platform@link']?.href || ''
+          const linkedSysId = platHref.replace(/\/+$/, '').split('/').pop()
+          if (linkedSysId === dsInfo.systemId) {
+            feature.setGeometry(new Point(newCoord))
+          }
+        }
+      }
+
+      // Move system features for this system
+      const sysSource = vectorSources['systems']
+      if (sysSource) {
+        for (const feature of sysSource.getFeatures()) {
+          if (feature.get('resourceId') === dsInfo.systemId) {
+            feature.setGeometry(new Point(newCoord))
+          }
+        }
+      }
+    } catch { /* skip */ }
+  }))
 }
 
 function toggleLiveMode() {
