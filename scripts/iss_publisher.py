@@ -55,10 +55,6 @@ DATASTREAM_ID = "04fg"
 # CelesTrak GP query for ISS (NORAD 25544)
 CELESTRAK_URL = "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=JSON"
 
-# Orbit track: ±45 min window, 60-second resolution
-TRACK_HALF_WINDOW_MIN = 45
-TRACK_STEP_SEC        = 60
-
 _AUTH_HEADER = "Basic " + base64.b64encode(
     f"{AUTH_USER}:{AUTH_PASS}".encode()
 ).decode()
@@ -287,90 +283,9 @@ def _gmst_rad(dt: datetime) -> float:
     return gmst_rad
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-#  Orbit track (SamplingFeature LineString)
-# ═══════════════════════════════════════════════════════════════════════════
-
-_last_track_update: float = 0.0
-TRACK_UPDATE_INTERVAL = 300  # 5 minutes
-
-
-def build_orbit_track(sat: Satrec, now: datetime) -> list[list[float]]:
-    """
-    Build a LineString coordinate array for the orbit ground track.
-    Covers ±TRACK_HALF_WINDOW_MIN around `now` at TRACK_STEP_SEC resolution.
-    """
-    coords = []
-    start = now - timedelta(minutes=TRACK_HALF_WINDOW_MIN)
-    end = now + timedelta(minutes=TRACK_HALF_WINDOW_MIN)
-    t = start
-    while t <= end:
-        try:
-            lat, lon, alt = propagate_to_geodetic(sat, t)
-            coords.append([round(lon, 4), round(lat, 4)])
-        except Exception:
-            pass  # skip propagation errors near epoch boundaries
-        t += timedelta(seconds=TRACK_STEP_SEC)
-    return coords
-
-
-def update_sampling_feature(sat: Satrec, now: datetime, dry_run: bool = False):
-    """
-    Create or update the SamplingFeature with an orbit track LineString.
-    """
-    global _last_track_update
-
-    if (time.time() - _last_track_update) < TRACK_UPDATE_INTERVAL:
-        return  # not time yet
-
-    coords = build_orbit_track(sat, now)
-    if len(coords) < 2:
-        print("  [WARN] Not enough track points, skipping SF update")
-        return
-
-    sf_body = {
-        "type": "Feature",
-        "properties": {
-            "uid": "urn:os4csapi:sf:iss-orbit-track:v1",
-            "featureType": "sams:SF_SpatialSamplingFeature",
-            "name": "ISS Orbit Track",
-            "description": f"Ground track of ISS orbit (±{TRACK_HALF_WINDOW_MIN} min). Updated every {TRACK_UPDATE_INTERVAL}s.",
-            "validTime": [now.strftime("%Y-%m-%dT%H:%M:%SZ"), ".."],
-        },
-        "geometry": {
-            "type": "LineString",
-            "coordinates": coords,
-        },
-    }
-
-    if dry_run:
-        print(f"  [DRY] Would update SF with {len(coords)} track points")
-    else:
-        try:
-            # Try to find existing SF first
-            existing = None
-            try:
-                existing = api_get(f"systems/{SYSTEM_ID}/samplingFeatures")
-            except Exception:
-                pass  # server may not support this query; fall through to create
-
-            if existing and "items" in existing and len(existing["items"]) > 0:
-                sf_id = existing["items"][0]["id"]
-                api_put(f"samplingFeatures/{sf_id}", sf_body)
-                print(f"  [SF] Updated orbit track ({len(coords)} pts, id={sf_id})")
-            else:
-                # Create new
-                result = api_post(
-                    f"systems/{SYSTEM_ID}/samplingFeatures",
-                    sf_body,
-                    content_type="application/geo+json",
-                )
-                sf_id = result.get("id", "?") if result else "?"
-                print(f"  [SF] Created orbit track ({len(coords)} pts, id={sf_id})")
-        except Exception as e:
-            print(f"  [SF] ERROR: {e}")
-
-    _last_track_update = time.time()
+# NOTE: SamplingFeature orbit track removed — OSH H2 database crashes
+# (HTTP 500) when serializing LineString geometry in SamplingFeatures.
+# Orbit track is rendered client-side from observation history instead.
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -420,7 +335,7 @@ def run(*, interval: float = 30.0, dry_run: bool = False,
         print(f"  FATAL: Could not fetch TLE: {e}")
         sys.exit(1)
 
-    stats = {"published": 0, "errors": 0, "sf_updates": 0}
+    stats = {"published": 0, "errors": 0}
     tick = 0
     start_time = time.time()
 
@@ -458,15 +373,6 @@ def run(*, interval: float = 30.0, dry_run: bool = False,
                     print(f"           [ERR] POST failed: {e}")
                     stats["errors"] += 1
 
-            # Update orbit track SamplingFeature periodically
-            try:
-                sf_before = _last_track_update
-                update_sampling_feature(sat, now, dry_run=dry_run)
-                if _last_track_update != sf_before:
-                    stats["sf_updates"] += 1
-            except Exception as e:
-                print(f"           [ERR] SF update: {e}")
-
             if once:
                 break
 
@@ -485,7 +391,6 @@ def run(*, interval: float = 30.0, dry_run: bool = False,
     print("=" * 70)
     print(f"  Summary ({elapsed:.0f}s elapsed)")
     print(f"  Published:    {stats['published']} observations")
-    print(f"  SF updates:   {stats['sf_updates']}")
     print(f"  Errors:       {stats['errors']}")
     print("=" * 70)
 
