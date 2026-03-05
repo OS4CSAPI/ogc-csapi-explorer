@@ -2428,6 +2428,43 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
           trackCount++
         }
       }
+
+      // ── Snap deployment/system markers to the last track coordinate ──
+      // This guarantees the ISS marker sits at the exact tip of its orbit
+      // track with ZERO race conditions (no separate API call needed).
+      if (isSatDs && trackCoords.length > 0) {
+        const lastPt = trackCoords[trackCoords.length - 1]  // [lon, lat]
+        const snapCoord = fromLonLat(lastPt)
+
+        // Update system location cache so subsequent live refreshes start here
+        systemLocationCache[dsInfo.systemId] = {
+          lat: lastPt[1], lon: lastPt[0],
+          datastreamName: dsInfo.name,
+          phenomenonTime: items[items.length - 1]?.phenomenonTime,
+        }
+
+        // Move deployment features linked to this system
+        const depSrc = vectorSources['deployments']
+        if (depSrc) {
+          for (const f of depSrc.getFeatures()) {
+            const rd = f.get('rawData')
+            const href = rd?.properties?.['platform@link']?.href || ''
+            if (href.replace(/\/+$/, '').split('/').pop() === dsInfo.systemId) {
+              f.setGeometry(new Point(snapCoord))
+            }
+          }
+        }
+
+        // Move system features for this system
+        const sysSrc = vectorSources['systems']
+        if (sysSrc) {
+          for (const f of sysSrc.getFeatures()) {
+            if (f.get('resourceId') === dsInfo.systemId) {
+              f.setGeometry(new Point(snapCoord))
+            }
+          }
+        }
+      }
     } catch { /* skip */ }
   })
 
@@ -2478,10 +2515,9 @@ async function loadAllResources() {
 
   loading.value = false
 
-  // One-time position sync: snap moving systems (e.g. ISS) to their latest
-  // observation so the marker aligns with the freshly-loaded orbit track.
-  // Must await so the marker is correct before fitView runs.
-  await updateMovingSystemPositions()
+  // NOTE: No separate updateMovingSystemPositions() call needed here.
+  // loadObservationLayers already snaps satellite markers to the last
+  // orbit-track point (zero race condition).
 
   // Start live refresh interval if Live Mode is on by default
   // Stagger first poll to prevent thundering herd when many users load simultaneously
