@@ -1,35 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
-import Password from 'primevue/password'
-import Panel from 'primevue/panel'
-import Message from 'primevue/message'
-
-// ── Client-side auth gate (same pattern as SimulatorAdminPage) ───────────
-const AUTH_USER = 'CSAPI'
-const AUTH_PASS = 'friends'
-const SESSION_KEY = 'community-auth'
-
-const authenticated = ref(sessionStorage.getItem(SESSION_KEY) === 'true')
-const loginUser = ref('')
-const loginPass = ref('')
-const loginError = ref('')
-
-function attemptLogin() {
-  if (loginUser.value === AUTH_USER && loginPass.value === AUTH_PASS) {
-    authenticated.value = true
-    sessionStorage.setItem(SESSION_KEY, 'true')
-    loginError.value = ''
-  } else {
-    loginError.value = 'Invalid credentials'
-  }
-}
-
-function logout() {
-  authenticated.value = false
-  sessionStorage.removeItem(SESSION_KEY)
-}
 
 const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
 </script>
@@ -42,39 +13,13 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
       <p class="subtitle">Third-party projects built on top of the live CSAPI server</p>
     </div>
 
-    <!-- Auth gate -->
-    <div v-if="!authenticated" class="login-gate">
-      <Panel header="Authentication Required" class="login-panel">
-        <p class="login-desc">This page is restricted while we await permission to publicly showcase community contributions. Enter credentials to preview.</p>
-        <div class="login-form">
-          <div class="login-field">
-            <label for="comm-user">Username</label>
-            <InputText id="comm-user" v-model="loginUser" placeholder="Username" @keyup.enter="attemptLogin" />
-          </div>
-          <div class="login-field">
-            <label for="comm-pass">Password</label>
-            <Password id="comm-pass" v-model="loginPass" placeholder="Password" :feedback="false" toggleMask @keyup.enter="attemptLogin" />
-          </div>
-          <Message v-if="loginError" severity="error" :closable="false" class="mt-2">{{ loginError }}</Message>
-          <Button label="Sign In" icon="pi pi-sign-in" @click="attemptLogin" class="mt-3 login-btn" />
-        </div>
-      </Panel>
-    </div>
-
-    <!-- Authenticated content -->
-    <template v-else>
-
-    <div class="auth-toolbar">
-      <Button label="Sign Out" icon="pi pi-sign-out" severity="secondary" size="small" text @click="logout" />
-    </div>
-
-    <!-- Featured Project -->
+    <!-- Project 1: Dr. Joana Simoes — QGIS Plugin -->
     <div class="project-card">
       <div class="project-banner">
         <div class="project-title-row">
           <div>
-            <h3>CSAPI LiveML Pipeline</h3>
-            <p class="author">by <strong>Narasimha Sharma Narayanam</strong> &mdash; Founder, Aganitha Space</p>
+            <h3>QGIS CSAPI Plugin — Cross-Client Validation</h3>
+            <p class="author">by <a href="https://github.com/doublebyte1" target="_blank" rel="noopener noreferrer" class="person-link"><strong>Dr. Joana Simoes</strong></a> (<a href="https://github.com/doublebyte1" target="_blank" rel="noopener noreferrer" class="person-link">@doublebyte1</a>) &mdash; Founder, <a href="https://byteroad.net/" target="_blank" rel="noopener noreferrer" class="company-link">ByteRoad</a></p>
           </div>
           <a
             href="https://github.com/orgs/OS4CSAPI/discussions/37"
@@ -89,7 +34,75 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
 
       <div class="project-description">
         <p>
-          After the OGC 134th Member Meeting, Narasimha discovered the public CSAPI demo server and
+          After seeing the CSAPI Explorer demo at the OGC 134th Member Meeting, <a href="https://github.com/doublebyte1" target="_blank" rel="noopener noreferrer" class="person-link">Dr. Simoes</a>
+          connected her <a href="https://github.com/byteroad/qgis-oacs-plugin" target="_blank" rel="noopener noreferrer" class="project-ref-link"><strong>QGIS OGC API &mdash; Connected Systems plugin</strong></a> directly to the
+          live OSH server. Using the same public credentials and standard CSAPI endpoints, she was
+          able to discover all systems, deployments, sampling features, procedures, and datastreams
+          &mdash; including the SENREP and Classification Probabilities streams &mdash; entirely from
+          within QGIS.
+        </p>
+        <p class="interop-note">
+          <i class="pi pi-check-circle"></i>
+          This validates true cross-client interoperability &mdash; an entirely independent QGIS plugin,
+          built by a different developer, successfully discovered and browsed the same OSH server
+          using only standard OGC CSAPI endpoints. No custom integration code was needed.
+        </p>
+      </div>
+
+      <div class="tab-content">
+        <div class="tab-panel">
+          <div class="panel-header">
+            <h4>QGIS Data Source Manager &mdash; Connected Systems</h4>
+            <p>Screenshot showing QGIS connected to the OS4CSAPI server via the <a href="https://github.com/byteroad/qgis-oacs-plugin" target="_blank" rel="noopener noreferrer" class="project-ref-link">qgis-oacs-plugin</a>, browsing datastreams including SENREP and AZ-MA-1 Classification Probabilities.</p>
+          </div>
+          <div class="dashboard-container">
+            <img
+              src="/qgis_csapi_screenshot.png"
+              alt="QGIS OGC API - Connected Systems plugin connected to OS4CSAPI server"
+              class="dashboard-img"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="tech-stack">
+        <h4>Technology Stack</h4>
+        <div class="tech-badges">
+          <span class="badge">QGIS</span>
+          <span class="badge">Python</span>
+          <span class="badge">OGC CSAPI</span>
+          <span class="badge">SensorThings</span>
+        </div>
+        <div class="project-repo">
+          <a href="https://github.com/byteroad/qgis-oacs-plugin" target="_blank" rel="noopener noreferrer" class="repo-link">
+            <i class="pi pi-github"></i> byteroad/qgis-oacs-plugin
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project 2: Narasimha Sharma — LiveML Pipeline -->
+    <div class="project-card" style="margin-top: 1.5rem;">
+      <div class="project-banner">
+        <div class="project-title-row">
+          <div>
+            <h3>CSAPI LiveML Pipeline</h3>
+            <p class="author">by <a href="https://github.com/nsnarayanam" target="_blank" rel="noopener noreferrer" class="person-link"><strong>Narasimha Sharma Narayanam</strong></a> &mdash; Founder, <a href="https://www.linkedin.com/company/aganithaspace/" target="_blank" rel="noopener noreferrer" class="company-link">Aganitha Space</a></p>
+          </div>
+          <a
+            href="https://github.com/orgs/OS4CSAPI/discussions/37"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="github-link"
+          >
+            <i class="pi pi-github"></i> View Discussion
+          </a>
+        </div>
+      </div>
+
+      <div class="project-description">
+        <p>
+          After the OGC 134th Member Meeting, <a href="https://github.com/nsnarayanam" target="_blank" rel="noopener noreferrer" class="person-link">Narasimha</a> discovered the public CSAPI demo server and
           built a full ML-powered intelligence pipeline entirely in a Google Colab notebook. Using only
           standard HTTP requests against the CSAPI endpoints, the pipeline:
         </p>
@@ -196,70 +209,6 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
       </div>
     </div>
 
-    <!-- Project 2: Dr. Joana Simoes — QGIS Plugin -->
-    <div class="project-card" style="margin-top: 1.5rem;">
-      <div class="project-banner">
-        <div class="project-title-row">
-          <div>
-            <h3>QGIS CSAPI Plugin — Cross-Client Validation</h3>
-            <p class="author">by <strong>Dr. Joana Simoes</strong> (<code>doublebyte1</code>)</p>
-          </div>
-          <a
-            href="https://github.com/orgs/OS4CSAPI/discussions/37"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="github-link"
-          >
-            <i class="pi pi-github"></i> View Discussion
-          </a>
-        </div>
-      </div>
-
-      <div class="project-description">
-        <p>
-          After seeing the CSAPI Explorer demo at the OGC 134th Member Meeting, Dr. Simoes
-          connected her <strong>QGIS OGC API &mdash; Connected Systems plugin</strong> directly to the
-          live OSH server. Using the same public credentials and standard CSAPI endpoints, she was
-          able to discover all systems, deployments, sampling features, procedures, and datastreams
-          &mdash; including the SENREP and Classification Probabilities streams &mdash; entirely from
-          within QGIS.
-        </p>
-        <p class="interop-note">
-          <i class="pi pi-check-circle"></i>
-          This validates true cross-client interoperability &mdash; an entirely independent QGIS plugin,
-          built by a different developer, successfully discovered and browsed the same OSH server
-          using only standard OGC CSAPI endpoints. No custom integration code was needed.
-        </p>
-      </div>
-
-      <div class="tab-content">
-        <div class="tab-panel">
-          <div class="panel-header">
-            <h4>QGIS Data Source Manager &mdash; Connected Systems</h4>
-            <p>Screenshot showing QGIS connected to the OS4CSAPI server via the OGC API &mdash; Connected Systems provider, browsing datastreams including SENREP and AZ-MA-1 Classification Probabilities.</p>
-          </div>
-          <div class="dashboard-container">
-            <img
-              src="/qgis_csapi_screenshot.png"
-              alt="QGIS OGC API - Connected Systems plugin connected to OS4CSAPI server"
-              class="dashboard-img"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div class="tech-stack">
-        <h4>Technology Stack</h4>
-        <div class="tech-badges">
-          <span class="badge">QGIS</span>
-          <span class="badge">Python</span>
-          <span class="badge">OGC CSAPI</span>
-          <span class="badge">SensorThings</span>
-        </div>
-      </div>
-    </div>
-
-    </template><!-- /v-else -->
   </div>
 </template>
 
@@ -274,55 +223,7 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
   margin-bottom: 1.5rem;
 }
 
-/* Auth gate */
-.login-gate {
-  display: flex;
-  justify-content: center;
-  margin-top: 2rem;
-}
-
-.login-panel {
-  max-width: 400px;
-  width: 100%;
-}
-
-.login-desc {
-  color: var(--text-color-secondary);
-  margin-bottom: 1rem;
-  line-height: 1.5;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.login-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.login-field label {
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.login-field .p-inputtext,
-.login-field .p-password {
-  width: 100%;
-}
-
-.login-btn {
-  width: 100%;
-}
-
-.auth-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 0.5rem;
-}
+/* Auth gate - removed */
 
 .showcase-header h2 {
   margin: 0 0 0.25rem 0;
@@ -535,6 +436,58 @@ const activeTab = ref<'map' | 'dashboard' | 'ml'>('map')
   border-radius: 12px;
   color: #93c5fd;
   font-size: 0.8rem;
+}
+
+.person-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(148, 163, 184, 0.4);
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.person-link:hover {
+  color: var(--primary-color, #60a5fa);
+  border-bottom-color: var(--primary-color, #60a5fa);
+}
+
+.company-link {
+  color: #94a3b8;
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(148, 163, 184, 0.3);
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.company-link:hover {
+  color: var(--primary-color, #60a5fa);
+  border-bottom-color: var(--primary-color, #60a5fa);
+}
+
+.project-ref-link {
+  color: var(--primary-color, #60a5fa);
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(96, 165, 250, 0.4);
+}
+
+.project-ref-link:hover {
+  border-bottom-style: solid;
+}
+
+.project-repo {
+  margin-top: 0.5rem;
+}
+
+.repo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text-color-secondary, #94a3b8);
+  text-decoration: none;
+  font-size: 0.8rem;
+  transition: color 0.2s;
+}
+
+.repo-link:hover {
+  color: var(--primary-color, #60a5fa);
 }
 
 /* Responsive */
