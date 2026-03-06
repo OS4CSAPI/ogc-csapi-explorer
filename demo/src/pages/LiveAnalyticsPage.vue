@@ -18,6 +18,7 @@ import { ref, reactive, onMounted, onUnmounted, nextTick, watch, computed } from
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import L from 'leaflet'
+import { renderSenrepSymbol } from '../symbol-mapper'
 import { Chart, registerables } from 'chart.js'
 
 Chart.register(...registerables)
@@ -492,14 +493,21 @@ function updateMap(): void {
   if (senrepLayerGroup) {
     senrepLayerGroup.clearLayers()
     for (const s of senreps) {
-      L.marker([s.lat, s.lon], {
-        icon: L.divIcon({
-          className: 'senrep-icon',
-          html: '<div style="width:12px;height:12px;background:#dc2626;transform:rotate(45deg);border:1px solid #fff;"></div>',
-          iconSize: [12, 12],
-          iconAnchor: [6, 6],
-        }),
-      })
+      // Use NATO STANAG symbol for known target types (e.g. UAS), fall back to red diamond
+      const sym = renderSenrepSymbol(s.tgtTyp, 16)
+      const markerIcon = sym
+        ? L.icon({
+            iconUrl: sym.svgDataUrl,
+            iconSize: [sym.size.width, sym.size.height],
+            iconAnchor: [sym.anchor.x, sym.anchor.y],
+          })
+        : L.divIcon({
+            className: 'senrep-icon',
+            html: '<div style="width:12px;height:12px;background:#dc2626;transform:rotate(45deg);border:1px solid #fff;"></div>',
+            iconSize: [12, 12],
+            iconAnchor: [6, 6],
+          })
+      L.marker([s.lat, s.lon], { icon: markerIcon })
         .bindTooltip(`SENREP: ${s.title}<br>${s.tgtTyp}`, { direction: 'top' })
         .addTo(senrepLayerGroup)
     }

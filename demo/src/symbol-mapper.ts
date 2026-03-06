@@ -24,8 +24,10 @@ import ms from 'milsymbol'
 
 const VERSION = '10'                // MIL-STD-2525D
 const CONTEXT_REALITY = '0'
+const SI_UNKNOWN = '1'              // Unknown (yellow diamond frame)
 const SI_FRIEND = '3'
 const SI_NEUTRAL = '4'
+const SI_HOSTILE = '6'
 const STATUS_PRESENT = '0'
 const HQ_NONE = '0'
 const ECHELON_NONE = '00'
@@ -318,6 +320,59 @@ export function getSymbolForResource(
 export function getSymbolSizeForType(resourceType: string): SymbolSize {
   if (resourceType === 'datastreams' || resourceType === 'controlStreams') return 'small'
   return 'normal'
+}
+
+// ─── SENREP Target-Type Symbol Rendering ───────────────────────────────────────
+
+/**
+ * Map from SENREP tgtTyp values to SIDC codes.
+ * Uses "Unknown" standard identity (yellow diamond frame for Air).
+ */
+const SENREP_TGT_SIDC: Record<string, string> = {
+  UAS:    buildSIDC(SI_UNKNOWN, SS_AIR, ENT_UAV),
+  // Future: add more target type mappings here
+  // VEHICL: buildSIDC(SI_UNKNOWN, SS_LAND_EQUIPMENT, ENT_VEHICLE),
+  // PERS:   buildSIDC(SI_UNKNOWN, SS_LAND_UNIT, ENT_UNIT_INFANTRY),
+}
+
+/**
+ * Render a NATO STANAG symbol for a SENREP observation based on its target type.
+ * Returns null if no symbol mapping exists for the given tgtTyp.
+ *
+ * @param tgtTyp  The SENREP target type (e.g. 'UAS', 'VEHICL', 'PERS', 'UNKN')
+ * @param size    Pixel size for the rendered symbol (default 32)
+ * @returns       { svgDataUrl, anchor, size, sidc } or null
+ */
+export function renderSenrepSymbol(
+  tgtTyp: string,
+  size = 32,
+): MilSymbolResult | null {
+  const sidc = SENREP_TGT_SIDC[tgtTyp?.toUpperCase()]
+  if (!sidc) return null
+
+  const cacheKey = `senrep-${sidc}-${size}`
+  const cached = symbolCache.get(cacheKey)
+  if (cached) return cached
+
+  try {
+    const sym = new ms.Symbol(sidc, { size })
+    const svgString = sym.asSVG()
+    const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString)
+    const anchor = sym.getAnchor()
+    const symbolSize2 = sym.getSize()
+
+    const result: MilSymbolResult = {
+      sidc,
+      svgDataUrl,
+      anchor: { x: anchor.x, y: anchor.y },
+      size: { width: symbolSize2.width, height: symbolSize2.height },
+    }
+    symbolCache.set(cacheKey, result)
+    return result
+  } catch (e) {
+    console.warn('[symbol-mapper] Failed to render SENREP symbol for tgtTyp', tgtTyp, e)
+    return null
+  }
 }
 
 /**

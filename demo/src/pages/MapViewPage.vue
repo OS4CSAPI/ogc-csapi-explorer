@@ -20,7 +20,7 @@ import Polygon, { circular as circularPolygon } from 'ol/geom/Polygon'
 import LineString from 'ol/geom/LineString'
 import { Style, Circle as CircleStyle, Fill, Stroke, Text as OlText, Icon as OlIcon } from 'ol/style'
 import Overlay from 'ol/Overlay'
-import { getSymbolForResource, getSymbolSizeForType, type MilSymbolResult } from '../symbol-mapper'
+import { getSymbolForResource, getSymbolSizeForType, renderSenrepSymbol, type MilSymbolResult } from '../symbol-mapper'
 import type { Coordinate } from 'ol/coordinate'
 import Draw, { createBox } from 'ol/interaction/Draw'
 
@@ -1861,11 +1861,22 @@ async function loadSenrepMarkers(): Promise<void> {
       const reportType = result.subTyp || 'INIT'
       const tgtType = result.tgtTyp || 'UAS'
 
-      // Diamond marker
+      // Use NATO STANAG symbol for known target types (e.g. UAS), fall back to red diamond
+      const sym = renderSenrepSymbol(tgtType, 16)
       const markerFeature = new Feature({
         geometry: new Point(fromLonLat([lon, lat])),
       })
-      markerFeature.setStyle(senrepMarkerStyle)
+      if (sym) {
+        markerFeature.setStyle(new Style({
+          image: new OlIcon({
+            src: sym.svgDataUrl,
+            scale: 1,
+            anchor: [sym.anchor.x / sym.size.width, sym.anchor.y / sym.size.height],
+          }),
+        }))
+      } else {
+        markerFeature.setStyle(senrepMarkerStyle)
+      }
       markerFeature.set('resourceType', 'senrepMarkers')
       markerFeature.set('resourceId', obs.id || `senrep-${contactId}`)
       markerFeature.set('resourceName', `SENREP: ${contactId}`)
@@ -2255,10 +2266,14 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         || dsNameLower.includes('gps')
       const effectiveLimit = isPositionDs ? Math.max(obsLimit, 200) : obsLimit
 
-      if (isLive) {
-        // Live Mode: API returns observations oldest-first and ignores sort
-        // params, so limit=N always returns the N oldest — useless for live.
-        // Fix: discover the latest timestamp, then fetch a recent time window.
+      // OSH returns observations oldest-first and ignores sort params, so a
+      // bare limit=N always returns the N OLDEST observations.  For position/
+      // satellite datastreams this is usually a rapid-fire startup burst that
+      // clusters in <1° of lat/lon — invisible at global zoom.  Fix: always
+      // use a time-windowed query for position DS (and for all DS in live mode)
+      // to guarantee we get the RECENT, well-distributed observations.
+      const useTimeWindow = isLive || isPositionDs
+      if (useTimeWindow) {
         const latestRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?resultTime=latest&limit=1`, {
           headers: { 'Accept': 'application/om+json' },
         })
