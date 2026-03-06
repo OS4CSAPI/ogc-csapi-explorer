@@ -2651,7 +2651,14 @@ async function refreshLiveLayers() {
 async function updateMovingSystemPositions(): Promise<void> {
   const positionDs = locationDatastreamList.filter(ds => {
     const nm = ds.name.toLowerCase()
-    return nm.includes('position') || nm.includes('location') || nm.includes('gps')
+    if (!(nm.includes('position') || nm.includes('location') || nm.includes('gps'))) return false
+    // Skip satellite/orbit datastreams — their position is already handled by
+    // the snap-to-track-tip code in loadObservationLayers(). Running both in
+    // parallel causes a visible blink where the marker jumps to the wrong
+    // position from this separate API call before being corrected by the snap.
+    if (nm.includes('sgp4') || nm.includes('satellite') || nm.includes('iss')
+        || nm.includes('orbital') || nm.includes('tracker')) return false
+    return true
   })
   if (positionDs.length === 0) return
 
