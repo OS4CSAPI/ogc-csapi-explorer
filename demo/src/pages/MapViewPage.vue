@@ -2213,14 +2213,13 @@ function getBearingLineStyle(energy: number): Style {
  * Fetches recent observations from all location datastreams once and builds
  * both layers from the same data to avoid duplicate API calls.
  */
-async function loadObservationLayers(obsLimit = 500): Promise<void> {
+async function loadObservationLayers(obsLimit = 500, skipSatellite = false): Promise<void> {
   const pointSource = vectorSources['observationPoints']
   const trackSource = vectorSources['observationTracks']
   const bearingSource = vectorSources['bearingLines']
   if (pointSource) pointSource.clear()
-  // In live mode, keep orbit tracks intact — they're expensive to rebuild and
-  // the satellite marker is moved by updateMovingSystemPositions instead.
-  if (trackSource && !liveMode.value) trackSource.clear()
+  // When skipping satellite DS (live refresh), keep orbit tracks intact.
+  if (trackSource && !skipSatellite) trackSource.clear()
   if (bearingSource) bearingSource.clear()
 
   const isLive = liveMode.value
@@ -2238,10 +2237,10 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       const isPositionDs = dsNameLower.includes('position') || dsNameLower.includes('location')
         || dsNameLower.includes('gps')
 
-      // In live mode, skip satellite/position DS entirely — the orbit track
-      // from initial load stays put and updateMovingSystemPositions() handles
-      // marker movement via a single lightweight resultTime=latest query.
-      if (isLive && isPositionDs) return
+      // During live refresh (skipSatellite=true), skip position DS entirely —
+      // the orbit track from initial load stays put and
+      // updateMovingSystemPositions() handles marker movement.
+      if (skipSatellite && isPositionDs) return
 
       const effectiveLimit = isPositionDs ? Math.max(obsLimit, 200) : obsLimit
 
@@ -2650,7 +2649,7 @@ async function refreshLiveLayers() {
   try {
     // Refresh LOB/bearing observations + overlays (satellite DS is skipped in live mode)
     await Promise.all([
-      loadObservationLayers(3),
+      loadObservationLayers(3, true),
       loadLocationEstimates(),
       loadSenrepMarkers(),
     ])
