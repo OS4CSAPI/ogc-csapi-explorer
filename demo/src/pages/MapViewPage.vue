@@ -2272,6 +2272,11 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // clusters in <1° of lat/lon — invisible at global zoom.  Fix: always
       // use a time-windowed query for position DS (and for all DS in live mode)
       // to guarantee we get the RECENT, well-distributed observations.
+      //
+      // Even within a time window, OSH still returns oldest-first, so if the
+      // window contains both burst and normal-cadence observations, a small
+      // limit grabs only the burst.  Solution: fetch with a high limit and
+      // then .slice(-effectiveLimit) to keep only the LAST N (most recent).
       const useTimeWindow = isLive || isPositionDs
       if (useTimeWindow) {
         const latestRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?resultTime=latest&limit=1`, {
@@ -2288,11 +2293,14 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         const windowStart = new Date(latestMs - windowMinutes * 60 * 1000).toISOString()
         const windowEnd = new Date(latestMs + 1000).toISOString()
         const timeFilter = encodeURIComponent(`${windowStart}/${windowEnd}`)
+        // Fetch with high limit so .slice(-N) can trim burst observations
+        const fetchLimit = isPositionDs ? 5000 : effectiveLimit
         const obsRes = await apiFetch(
-          `/datastreams/${dsInfo.id}/observations?resultTime=${timeFilter}&limit=${effectiveLimit}`,
+          `/datastreams/${dsInfo.id}/observations?resultTime=${timeFilter}&limit=${fetchLimit}`,
           { headers: { 'Accept': 'application/om+json' } },
         )
         if (obsRes.ok && obsRes.data) {
+          // Take the LAST effectiveLimit items — discards oldest (burst) data
           items = (obsRes.data.items || []).slice(-effectiveLimit)
         }
       } else {
