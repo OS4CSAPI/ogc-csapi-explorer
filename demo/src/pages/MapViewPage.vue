@@ -1675,8 +1675,7 @@ const locEstimateMarkerStyle = new Style({
 async function loadLocationEstimates(): Promise<void> {
   const source = vectorSources['locationEstimates']
   if (!source) return
-  source.clear()
-  featureCounts.value['locationEstimates'] = 0
+  // Don't clear yet — wait until replacement data is ready to avoid blink
 
   if (!localizerDatastreamId) return
 
@@ -1727,7 +1726,11 @@ async function loadLocationEstimates(): Promise<void> {
     // Staleness check: in live mode, skip if observation is older than 30 seconds
     const obsTime = result.timestamp ? result.timestamp * 1000 : new Date(obs.phenomenonTime || obs.resultTime).getTime()
     const ageS = (Date.now() - obsTime) / 1000
-    if (liveMode.value && ageS > 30) return
+    if (liveMode.value && ageS > 30) {
+      source.clear()
+      featureCounts.value['locationEstimates'] = 0
+      return
+    }
 
     const batch: Feature[] = []
 
@@ -1786,9 +1789,15 @@ async function loadLocationEstimates(): Promise<void> {
     labelFeature.set('resourceType', 'locationEstimates')
     batch.push(labelFeature)
 
+    // Atomic swap: clear + add in one synchronous block
+    source.clear()
     source.addFeatures(batch)
     featureCounts.value['locationEstimates'] = 1
-  } catch { /* skip — no location estimates available */ }
+  } catch {
+    // No data available — clear stale features
+    source.clear()
+    featureCounts.value['locationEstimates'] = 0
+  }
 }
 
 // ── SENREP DS ID (Monitoring Team A sensor reports) ────────────────
@@ -1819,8 +1828,7 @@ const senrepMarkerStyle = new Style({
 async function loadSenrepMarkers(): Promise<void> {
   const source = vectorSources['senrepMarkers']
   if (!source) return
-  source.clear()
-  featureCounts.value['senrepMarkers'] = 0
+  // Don't clear yet — wait until replacement data is ready to avoid blink
 
   try {
     const obsRes = await apiFetch(
@@ -1896,9 +1904,15 @@ async function loadSenrepMarkers(): Promise<void> {
       batch.push(labelFeature)
     }
 
+    // Atomic swap: clear + add in one synchronous block
+    source.clear()
     source.addFeatures(batch)
     featureCounts.value['senrepMarkers'] = items.length
-  } catch { /* skip — SENREP DS may not exist yet */ }
+  } catch {
+    // No data available — clear stale features
+    source.clear()
+    featureCounts.value['senrepMarkers'] = 0
+  }
 }
 
 async function enrichSamplingFeatures(): Promise<void> {
@@ -2217,9 +2231,13 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
   const pointSource = vectorSources['observationPoints']
   const trackSource = vectorSources['observationTracks']
   const bearingSource = vectorSources['bearingLines']
-  if (pointSource) pointSource.clear()
-  if (trackSource) trackSource.clear()
-  if (bearingSource) bearingSource.clear()
+
+  // Collect new features into pending arrays — do NOT clear sources yet.
+  // Atomic swap (clear + add) happens after all API calls complete, which
+  // eliminates the visible "blink" where features vanish during fetch.
+  const pendingPoints: Feature[] = []
+  const pendingTracks: Feature[] = []
+  const pendingBearings: Feature[] = []
 
   const isLive = liveMode.value
   let pointCount = 0
@@ -2317,7 +2335,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
                 lat, lon, alt,
                 result: obs.result,
               })
-              pointSource.addFeature(feature)
+              pendingPoints.push(feature)
               pointCount++
             }
           }
@@ -2374,7 +2392,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
                 sensorLat: sensorLoc.lat,
                 sensorLon: sensorLoc.lon,
               })
-              bearingSource.addFeature(feature)
+              pendingBearings.push(feature)
               bearingCount++
             }
           }
@@ -2402,7 +2420,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
           lineFeature.set('enriched', true)
           lineFeature.set('enrichmentSource', `${trackCoords.length} observations from ${dsInfo.name}`)
           lineFeature.set('rawData', { datastreamId: dsInfo.id, datastreamName: dsInfo.name, systemId: dsInfo.systemId, pointCount: trackCoords.length })
-          trackSource.addFeature(lineFeature)
+          pendingTracks.push(lineFeature)
           trackCount++
         }
       }
@@ -2440,6 +2458,12 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
   })
 
   await Promise.all(promises)
+
+  // Atomic swap: clear old features and add new ones in one synchronous block.
+  // This eliminates the visual blink — sources are empty for <1ms instead of seconds.
+  if (pointSource) { pointSource.clear(); pointSource.addFeatures(pendingPoints) }
+  if (trackSource) { trackSource.clear(); trackSource.addFeatures(pendingTracks) }
+  if (bearingSource) { bearingSource.clear(); bearingSource.addFeatures(pendingBearings) }
   featureCounts.value['observationPoints'] = pointCount
   featureCounts.value['observationTracks'] = trackCount
   featureCounts.value['bearingLines'] = bearingCount

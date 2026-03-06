@@ -95,6 +95,8 @@ const cfgSpeed = ref('12')
 const cfgOffset = ref('500')
 
 let pollTimer: ReturnType<typeof setInterval> | null = null
+let consecutiveFailures = 0
+const DISCONNECT_THRESHOLD = 3  // Only show disconnected after N consecutive failures
 
 // ── Helpers ──────────────────────────────────────────────────────────
 async function apiFetch(path: string, opts?: RequestInit) {
@@ -111,9 +113,15 @@ async function pollStatus() {
     status.value = data
     connected.value = true
     pollError.value = ''
+    consecutiveFailures = 0
   } catch (e: any) {
-    connected.value = false
+    consecutiveFailures++
     pollError.value = e.message || 'Cannot reach simulator service'
+    // Only mark disconnected after several consecutive failures
+    // to avoid UI blink from a single dropped request
+    if (consecutiveFailures >= DISCONNECT_THRESHOLD) {
+      connected.value = false
+    }
   }
 }
 
