@@ -2273,10 +2273,9 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // use a time-windowed query for position DS (and for all DS in live mode)
       // to guarantee we get the RECENT, well-distributed observations.
       //
-      // Even within a time window, OSH still returns oldest-first, so if the
-      // window contains both burst and normal-cadence observations, a small
-      // limit grabs only the burst.  Solution: fetch with a high limit and
-      // then .slice(-effectiveLimit) to keep only the LAST N (most recent).
+      // After fetching, we deduplicate burst observations (gap < 10s between
+      // consecutive items) so only normal-cadence data remains.  This makes
+      // the track immune to reconnect-induced rapid-fire bursts.
       const useTimeWindow = isLive || isPositionDs
       if (useTimeWindow) {
         const latestRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?resultTime=latest&limit=1`, {
@@ -2286,22 +2285,41 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         const latestTime = latestRes.data.items[0].resultTime || latestRes.data.items[0].phenomenonTime
         if (!latestTime) return
 
-        // Position datastreams: fetch a 2-hour window to get a full orbit arc.
+        // Position datastreams: 6-hour window to capture multiple full orbits
+        // (~92 min each → 6h ≈ 3.9 orbits).
         // LOB datastreams: 5-minute window for tight real-time view.
-        const windowMinutes = isPositionDs ? 120 : 5
+        const windowMinutes = isPositionDs ? 360 : 5
         const latestMs = new Date(latestTime).getTime()
         const windowStart = new Date(latestMs - windowMinutes * 60 * 1000).toISOString()
         const windowEnd = new Date(latestMs + 1000).toISOString()
         const timeFilter = encodeURIComponent(`${windowStart}/${windowEnd}`)
-        // Fetch with high limit so .slice(-N) can trim burst observations
+        // Fetch with high limit to grab full window contents
         const fetchLimit = isPositionDs ? 5000 : effectiveLimit
         const obsRes = await apiFetch(
           `/datastreams/${dsInfo.id}/observations?resultTime=${timeFilter}&limit=${fetchLimit}`,
           { headers: { 'Accept': 'application/om+json' } },
         )
         if (obsRes.ok && obsRes.data) {
-          // Take the LAST effectiveLimit items — discards oldest (burst) data
-          items = (obsRes.data.items || []).slice(-effectiveLimit)
+          let allItems = obsRes.data.items || []
+
+          // Deduplicate: discard burst observations (gap < 10s from previous).
+          // Normal cadence is 30s; burst is ~70ms.  This cleanly removes
+          // reconnect-induced rapid-fire clumps while keeping real data.
+          if (isPositionDs && allItems.length > 1) {
+            const MIN_GAP_MS = 10_000
+            const filtered = [allItems[0]]
+            let prevMs = new Date(allItems[0].resultTime || allItems[0].phenomenonTime || 0).getTime()
+            for (let i = 1; i < allItems.length; i++) {
+              const tMs = new Date(allItems[i].resultTime || allItems[i].phenomenonTime || 0).getTime()
+              if (tMs - prevMs >= MIN_GAP_MS) {
+                filtered.push(allItems[i])
+                prevMs = tMs
+              }
+            }
+            allItems = filtered
+          }
+
+          items = allItems.slice(-effectiveLimit)
         }
       } else {
         const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=${effectiveLimit}`, {
