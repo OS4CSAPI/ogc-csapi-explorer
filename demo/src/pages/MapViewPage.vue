@@ -2264,7 +2264,9 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       const dsNameLower = dsInfo.name.toLowerCase()
       const isPositionDs = dsNameLower.includes('position') || dsNameLower.includes('location')
         || dsNameLower.includes('gps')
-      const effectiveLimit = isPositionDs ? Math.max(obsLimit, 200) : obsLimit
+      // Position/satellite DS: need 720 obs to fill the 6-hour window at 30s
+      // cadence (6h × 120 obs/h = 720).  Other DS: use caller's obsLimit.
+      const effectiveLimit = isPositionDs ? 720 : obsLimit
 
       // OSH returns observations oldest-first and ignores sort params, so a
       // bare limit=N always returns the N OLDEST observations.  For position/
