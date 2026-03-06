@@ -2213,13 +2213,12 @@ function getBearingLineStyle(energy: number): Style {
  * Fetches recent observations from all location datastreams once and builds
  * both layers from the same data to avoid duplicate API calls.
  */
-async function loadObservationLayers(obsLimit = 500, skipSatellite = false): Promise<void> {
+async function loadObservationLayers(obsLimit = 500): Promise<void> {
   const pointSource = vectorSources['observationPoints']
   const trackSource = vectorSources['observationTracks']
   const bearingSource = vectorSources['bearingLines']
   if (pointSource) pointSource.clear()
-  // When skipping satellite DS (live refresh), keep orbit tracks intact.
-  if (trackSource && !skipSatellite) trackSource.clear()
+  if (trackSource) trackSource.clear()
   if (bearingSource) bearingSource.clear()
 
   const isLive = liveMode.value
@@ -2236,12 +2235,6 @@ async function loadObservationLayers(obsLimit = 500, skipSatellite = false): Pro
       const dsNameLower = dsInfo.name.toLowerCase()
       const isPositionDs = dsNameLower.includes('position') || dsNameLower.includes('location')
         || dsNameLower.includes('gps')
-
-      // During live refresh (skipSatellite=true), skip position DS entirely —
-      // the orbit track from initial load stays put and
-      // updateMovingSystemPositions() handles marker movement.
-      if (skipSatellite && isPositionDs) return
-
       const effectiveLimit = isPositionDs ? Math.max(obsLimit, 200) : obsLimit
 
       if (isLive) {
@@ -2260,28 +2253,6 @@ async function loadObservationLayers(obsLimit = 500, skipSatellite = false): Pro
         const windowMinutes = isPositionDs ? 120 : 5
         const latestMs = new Date(latestTime).getTime()
         const windowStart = new Date(latestMs - windowMinutes * 60 * 1000).toISOString()
-        const windowEnd = new Date(latestMs + 1000).toISOString()
-        const timeFilter = encodeURIComponent(`${windowStart}/${windowEnd}`)
-        const obsRes = await apiFetch(
-          `/datastreams/${dsInfo.id}/observations?resultTime=${timeFilter}&limit=${effectiveLimit}`,
-          { headers: { 'Accept': 'application/om+json' } },
-        )
-        if (obsRes.ok && obsRes.data) {
-          items = (obsRes.data.items || []).slice(-effectiveLimit)
-        }
-      } else if (isPositionDs) {
-        // Position/satellite datastreams: ALWAYS use a recent time window.
-        // OSH returns oldest-first and ignores sort params, so a bare
-        // limit=N returns the N oldest observations — useless for a track
-        // that should show the current orbit arc.
-        const latestRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?resultTime=latest&limit=1`, {
-          headers: { 'Accept': 'application/om+json' },
-        })
-        if (!latestRes.ok || !latestRes.data?.items?.length) return
-        const latestTime = latestRes.data.items[0].resultTime || latestRes.data.items[0].phenomenonTime
-        if (!latestTime) return
-        const latestMs = new Date(latestTime).getTime()
-        const windowStart = new Date(latestMs - 120 * 60 * 1000).toISOString()
         const windowEnd = new Date(latestMs + 1000).toISOString()
         const timeFilter = encodeURIComponent(`${windowStart}/${windowEnd}`)
         const obsRes = await apiFetch(
@@ -2436,38 +2407,31 @@ async function loadObservationLayers(obsLimit = 500, skipSatellite = false): Pro
         }
       }
 
-      // ── Snap deployment/system markers to the last track coordinate ──
-      // This guarantees the ISS marker sits at the exact tip of its orbit
-      // track with ZERO race conditions (no separate API call needed).
+      // Snap ISS/satellite marker to the last track point so marker and track
+      // are guaranteed to be at the same position (same data, no extra API call).
       if (isSatDs && trackCoords.length > 0) {
-        const lastPt = trackCoords[trackCoords.length - 1]  // [lon, lat]
-        const snapCoord = fromLonLat(lastPt)
-
-        // Update system location cache so subsequent live refreshes start here
+        const tip = trackCoords[trackCoords.length - 1]
+        const tipCoord = fromLonLat(tip)
         systemLocationCache[dsInfo.systemId] = {
-          lat: lastPt[1], lon: lastPt[0],
+          lat: tip[1], lon: tip[0],
           datastreamName: dsInfo.name,
           phenomenonTime: items[items.length - 1]?.phenomenonTime,
         }
-
-        // Move deployment features linked to this system
         const depSrc = vectorSources['deployments']
         if (depSrc) {
           for (const f of depSrc.getFeatures()) {
             const rd = f.get('rawData')
             const href = rd?.properties?.['platform@link']?.href || ''
             if (href.replace(/\/+$/, '').split('/').pop() === dsInfo.systemId) {
-              f.setGeometry(new Point(snapCoord))
+              f.setGeometry(new Point(tipCoord))
             }
           }
         }
-
-        // Move system features for this system
         const sysSrc = vectorSources['systems']
         if (sysSrc) {
           for (const f of sysSrc.getFeatures()) {
             if (f.get('resourceId') === dsInfo.systemId) {
-              f.setGeometry(new Point(snapCoord))
+              f.setGeometry(new Point(tipCoord))
             }
           }
         }
@@ -2521,10 +2485,6 @@ async function loadAllResources() {
   ])
 
   loading.value = false
-
-  // NOTE: No separate updateMovingSystemPositions() call needed here.
-  // loadObservationLayers already snaps satellite markers to the last
-  // orbit-track point (zero race condition).
 
   // Start live refresh interval if Live Mode is on by default
   // Stagger first poll to prevent thundering herd when many users load simultaneously
@@ -2647,16 +2607,13 @@ function refreshAllStyles() {
 // ── Live Mode toggle ─────────────────────────────────────────────
 async function refreshLiveLayers() {
   try {
-    // Refresh LOB/bearing observations + overlays (satellite DS is skipped in live mode)
+    // In live mode, fetch fresh observations + update moving-system positions
     await Promise.all([
-      loadObservationLayers(3, true),
+      loadObservationLayers(3),
       loadLocationEstimates(),
       loadSenrepMarkers(),
+      updateMovingSystemPositions(),
     ])
-    // AFTER observation layers settle, move satellite markers via a single
-    // lightweight resultTime=latest query per position DS. Sequential to
-    // prevent races with loadObservationLayers.
-    await updateMovingSystemPositions()
     lastRefreshTime.value = new Date().toLocaleTimeString()
   } catch { /* swallow errors during background refresh */ }
 }
