@@ -2264,6 +2264,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       const dsNameLower = dsInfo.name.toLowerCase()
       const isPositionDs = dsNameLower.includes('position') || dsNameLower.includes('location')
         || dsNameLower.includes('gps')
+      const isLobDs = dsNameLower.includes('lob') || dsNameLower.includes('bearing')
       // Position/satellite DS: need 720 obs to fill the 6-hour window at 30s
       // cadence (6h × 120 obs/h = 720).  Other DS: use caller's obsLimit.
       const effectiveLimit = isPositionDs ? 720 : obsLimit
@@ -2278,6 +2279,11 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // After fetching, we deduplicate burst observations (gap < 10s between
       // consecutive items) so only normal-cadence data remains.  This makes
       // the track immune to reconnect-induced rapid-fire bursts.
+      //
+      // For LOB datastreams: OSH scope-leak contaminates some DS with 80%+
+      // non-LOB observations.  Fetch a larger batch so genuine LOBs survive
+      // after filtering, then keep only the most recent ones so bearings
+      // converge on the current target position.
       const useTimeWindow = isLive || isPositionDs
       if (useTimeWindow) {
         const latestRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?resultTime=latest&limit=1`, {
@@ -2295,8 +2301,9 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         const windowStart = new Date(latestMs - windowMinutes * 60 * 1000).toISOString()
         const windowEnd = new Date(latestMs + 1000).toISOString()
         const timeFilter = encodeURIComponent(`${windowStart}/${windowEnd}`)
-        // Fetch with high limit to grab full window contents
-        const fetchLimit = isPositionDs ? 5000 : effectiveLimit
+        // Fetch limit: satellite DS needs full window, LOB DS needs extra to
+        // overcome OSH scope-leak contamination, others use effectiveLimit.
+        const fetchLimit = isPositionDs ? 5000 : isLobDs ? 30 : effectiveLimit
         const obsRes = await apiFetch(
           `/datastreams/${dsInfo.id}/observations?resultTime=${timeFilter}&limit=${fetchLimit}`,
           { headers: { 'Accept': 'application/om+json' } },
@@ -2319,6 +2326,14 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
               }
             }
             allItems = filtered
+          }
+
+          // LOB DS: filter out scope-leaked non-LOB observations, then keep
+          // only the most recent genuine LOBs so bearings converge on the
+          // current target position instead of fanning across old positions.
+          if (isLobDs) {
+            allItems = allItems.filter((o: any) =>
+              typeof o.result?.bearingTrue === 'number' && typeof o.result?.bearingStdDev === 'number')
           }
 
           items = allItems.slice(-effectiveLimit)
