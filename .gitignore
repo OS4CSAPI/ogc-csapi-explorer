@@ -27,3 +27,6 @@ scripts/fetch_*.py
 # Python bytecache
 __pycache__/
 *.pyc
+
+# Python virtual environments
+.venv*/
