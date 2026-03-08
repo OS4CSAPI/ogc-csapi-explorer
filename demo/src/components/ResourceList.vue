@@ -125,6 +125,9 @@ const paginationMode = ref<'offset' | 'cursor'>('offset')
 // Data
 const items = ref<any[]>([])
 const loading = ref(false)
+
+/** Set of item IDs whose children are currently visible (expanded) */
+const expandedIds = ref(new Set<string>())
 const error = ref('')
 const numberMatched = ref<number | null>(null)
 const numberReturned = ref<number | null>(null)
@@ -186,6 +189,7 @@ async function fetchResources(cursorUrl?: string) {
   items.value = []
   rawResponse.value = null
   totalCount.value = null
+  expandedIds.value = new Set()
 
   try {
     let path: string
@@ -371,8 +375,9 @@ async function fetchNestedDeployments() {
         if (!subId || seenIds.has(subId)) continue
         seenIds.add(subId)
         nestedCount++
-        // Tag with nesting depth for display
+        // Tag with nesting depth and parent for display
         sub._nestingDepth = depth
+        sub._parentId = parentId
         results.push(sub)
         results.push(...await fetchSubs(subId, depth + 1))
       }
@@ -424,6 +429,7 @@ async function fetchNestedSystems() {
         seenIds.add(subId)
         nestedCount++
         sub._nestingDepth = depth
+        sub._parentId = parentId
         results.push(sub)
         results.push(...await fetchSubs(subId, depth + 1))
       }
@@ -502,6 +508,56 @@ function prevPage() {
     offset.value = Math.max(0, offset.value - limit.value)
     fetchResources()
   }
+}
+
+/** Computed: which items are visible based on expand/collapse state */
+const visibleItems = computed(() => {
+  const result: any[] = []
+  for (const item of items.value) {
+    const depth = item._nestingDepth || 0
+    if (depth === 0) {
+      // Top-level: always visible
+      result.push(item)
+    } else {
+      // Nested: visible only if every ancestor up to root is expanded
+      const parentId = item._parentId
+      if (parentId && isAncestorChainExpanded(item)) {
+        result.push(item)
+      }
+    }
+  }
+  return result
+})
+
+/** Check if the whole ancestor chain of a nested item is expanded */
+function isAncestorChainExpanded(item: any): boolean {
+  // Walk up the parent chain — all must be in expandedIds
+  let current = item
+  while (current && current._parentId) {
+    if (!expandedIds.value.has(current._parentId)) return false
+    // Find the parent item
+    current = items.value.find((it: any) => (it?.id || it?.properties?.id) === current._parentId)
+  }
+  return true
+}
+
+/** Set of IDs that have children (for showing expand/collapse arrow) */
+const parentIds = computed(() => {
+  const ids = new Set<string>()
+  for (const item of items.value) {
+    if (item._parentId) ids.add(item._parentId)
+  }
+  return ids
+})
+
+function toggleExpanded(itemId: string) {
+  const s = new Set(expandedIds.value)
+  if (s.has(itemId)) {
+    s.delete(itemId)
+  } else {
+    s.add(itemId)
+  }
+  expandedIds.value = s
 }
 
 function getDisplayId(item: any): string {
@@ -614,9 +670,8 @@ watch(
 
     <!-- Results info -->
     <div v-if="!loading && items.length > 0" class="results-info">
-      <span>Showing {{ numberReturned ?? items.length }} results</span>
-      <span v-if="numberMatched != null"> of <strong>{{ numberMatched }}</strong> total</span>
-      <span v-if="items.some((it: any) => it._nestingDepth)"> (incl. {{ props.resourceType === 'systems' ? 'subsystems' : 'subdeployments' }})</span>
+      <span>Showing {{ visibleItems.length }} of {{ items.length }} results</span>
+      <span v-if="items.some((it: any) => it._nestingDepth)"> (incl. {{ props.resourceType === 'systems' ? 'subsystems' : 'subdeployments' }}, click ▶ to expand)</span>
       <span v-else-if="paginationMode === 'offset'"> (offset: {{ offset }})</span>
     </div>
 
@@ -631,7 +686,7 @@ watch(
     <!-- Data Table -->
     <DataTable
       v-if="!loading && items.length > 0"
-      :value="items"
+      :value="visibleItems"
       stripedRows
       size="small"
       class="mt-2"
@@ -643,8 +698,18 @@ watch(
       </Column>
       <Column header="Name / Title" style="min-width: 200px">
         <template #body="{ data }">
-          <span v-if="data._nestingDepth" :style="{ paddingLeft: (data._nestingDepth * 16) + 'px', opacity: 0.5 }">└─</span>
-          {{ getDisplayTitle(data) }}
+          <span class="tree-name-cell" :style="{ paddingLeft: ((data._nestingDepth || 0) * 20) + 'px' }">
+            <button
+              v-if="parentIds.has(getDisplayId(data))"
+              class="tree-toggle"
+              @click.stop="toggleExpanded(getDisplayId(data))"
+              :title="expandedIds.has(getDisplayId(data)) ? 'Collapse' : 'Expand'"
+            >
+              <i :class="expandedIds.has(getDisplayId(data)) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+            </button>
+            <span v-else-if="data._nestingDepth" class="tree-leaf-indent">└─</span>
+            <span class="tree-name-text">{{ getDisplayTitle(data) }}</span>
+          </span>
         </template>
       </Column>
       <Column header="Type" style="min-width: 100px">
@@ -719,6 +784,11 @@ watch(
 .id-cell { background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8rem; }
 .type-cell { font-size: 0.8rem; color: #64748b; }
 .action-buttons { display: flex; gap: 0.25rem; }
+.tree-name-cell { display: inline-flex; align-items: center; gap: 0.3rem; }
+.tree-toggle { background: none; border: 1px solid #cbd5e1; border-radius: 4px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #475569; font-size: 0.7rem; padding: 0; flex-shrink: 0; transition: background 0.15s; }
+.tree-toggle:hover { background: #e2e8f0; }
+.tree-leaf-indent { color: #94a3b8; font-size: 0.8rem; flex-shrink: 0; }
+.tree-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .empty-state { text-align: center; padding: 2rem; color: #94a3b8; }
 .empty-state i { font-size: 2rem; }
 .pagination { display: flex; gap: 0.5rem; padding-top: 0.75rem; }
