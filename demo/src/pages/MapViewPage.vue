@@ -2678,7 +2678,7 @@ async function loadAllResources() {
   await Promise.all([
     loadDatastreams(),
     loadControlStreams(),
-    loadObservationLayers(liveMode.value ? 3 : 500),
+    loadObservationLayers(500),
     loadLocationEstimates(),
     loadSenrepMarkers(),
   ])
@@ -2808,7 +2808,7 @@ async function refreshLiveLayers() {
   try {
     // In live mode, fetch fresh observations + update moving-system positions.
     await Promise.all([
-      loadObservationLayers(3),
+      loadObservationLayers(500),
       loadLocationEstimates(),
       loadSenrepMarkers(),
       updateMovingSystemPositions(),
