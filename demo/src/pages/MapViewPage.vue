@@ -4533,6 +4533,11 @@ watch(selectedFeature, (feat) => {
     display: none !important;
   }
 
+  /* Hide desktop deployed-system card panel — mobile uses bottom drawer */
+  .dsc-float-panel {
+    display: none !important;
+  }
+
   .map-area {
     flex: 1;
     min-height: 0;
