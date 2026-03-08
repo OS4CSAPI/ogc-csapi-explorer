@@ -447,7 +447,8 @@ def localizer_worker(st: LocalizerState):
 
                 sensors = [l["name"] for l in group]
                 obs_body = build_location_estimate(
-                    estimate, contributing_sensors=sensors, classification=cls,
+                    estimate, contributing_sensors=sensors,
+                    contributing_lobs=group, classification=cls,
                 )
 
                 # 4. PRODUCE: POST back to CSAPI

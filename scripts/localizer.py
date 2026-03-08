@@ -320,25 +320,43 @@ def epoch_seconds() -> float:
 def build_location_estimate(
     wls_result: dict,
     contributing_sensors: list[str],
+    contributing_lobs: list[dict] | None = None,
     track_id: int = 1,
     classification: str = "UAS",
 ) -> dict:
-    """Build a CSAPI observation for the location estimate datastream."""
+    """Build a CSAPI observation for the location estimate datastream.
+    
+    When contributing_lobs is provided, the LOB data used for this fix
+    is embedded as a JSON-encoded array so consumers can render the exact
+    bearing lines that produced the estimate — zero temporal mismatch.
+    """
     now = iso_now()
+    result = {
+        "timestamp": epoch_seconds(),
+        "trackId": track_id,
+        "estimatedLat": wls_result["estimatedLat"],
+        "estimatedLon": wls_result["estimatedLon"],
+        "cep50_m": wls_result["cep50_m"],
+        "classification": classification,
+        "numContributingLobs": wls_result["n"],
+        "contributingSensors": ",".join(contributing_sensors),
+        "residual_m": wls_result["residual_m"],
+    }
+    if contributing_lobs is not None:
+        result["contributingLobsJson"] = json.dumps([
+            {
+                "sensorName": lob.get("name", ""),
+                "sensorLat": lob.get("sensorLat"),
+                "sensorLon": lob.get("sensorLon"),
+                "bearingTrue": lob.get("bearingTrue"),
+                "bearingStdDev": lob.get("bearingStdDev"),
+            }
+            for lob in contributing_lobs
+        ])
     return {
         "phenomenonTime": now,
         "resultTime": now,
-        "result": {
-            "timestamp": epoch_seconds(),
-            "trackId": track_id,
-            "estimatedLat": wls_result["estimatedLat"],
-            "estimatedLon": wls_result["estimatedLon"],
-            "cep50_m": wls_result["cep50_m"],
-            "classification": classification,
-            "numContributingLobs": wls_result["n"],
-            "contributingSensors": ",".join(contributing_sensors),
-            "residual_m": wls_result["residual_m"],
-        },
+        "result": result,
     }
 
 
@@ -455,6 +473,7 @@ def run_localizer(once: bool = False, dry_run: bool = False):
                 obs_body = build_location_estimate(
                     estimate,
                     contributing_sensors=sensors,
+                    contributing_lobs=group,
                     classification=cls,
                 )
 

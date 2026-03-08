@@ -153,6 +153,16 @@ DATASTREAM_DEF = {
                     "description": "Mean perpendicular distance from each bearing line to the estimated point",
                     "uom": {"code": "m"},
                 },
+                {
+                    "type": "Text",
+                    "name": "contributingLobsJson",
+                    "definition": f"{_FUSION}/contributingLobs",
+                    "label": "Contributing LOBs (JSON)",
+                    "description": (
+                        "JSON-encoded array of LOB records used for this fix. "
+                        "Each element: {sensorName, sensorLat, sensorLon, bearingTrue, bearingStdDev}"
+                    ),
+                },
             ],
         },
     },

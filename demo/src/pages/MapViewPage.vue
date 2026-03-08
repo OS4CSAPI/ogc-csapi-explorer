@@ -1824,10 +1824,55 @@ async function loadLocationEstimates(): Promise<void> {
     labelFeature.set('resourceType', 'locationEstimates')
     batch.push(labelFeature)
 
+    // 4. Render contributing LOBs from the localizer observation.
+    //    In live mode, these are the EXACT bearing lines used for this fix —
+    //    zero temporal mismatch.  The bearing lines source is shared with
+    //    loadObservationLayers() which skips LOBs in live mode to avoid
+    //    duplication.
+    const bearingSource = vectorSources['bearingLines']
+    const lobBatch: Feature[] = []
+    if (liveMode.value && bearingSource && result.contributingLobsJson) {
+      try {
+        const lobs: Array<{ sensorName: string; sensorLat: number; sensorLon: number; bearingTrue: number; bearingStdDev: number }> =
+          JSON.parse(result.contributingLobsJson)
+        for (const lob of lobs) {
+          if (typeof lob.sensorLat !== 'number' || typeof lob.sensorLon !== 'number' || typeof lob.bearingTrue !== 'number') continue
+          const ep = computeBearingEndpoint(lob.sensorLat, lob.sensorLon, lob.bearingTrue, BEARING_LINE_LENGTH_M)
+          const feature = new Feature({
+            geometry: new LineString([
+              fromLonLat([lob.sensorLon, lob.sensorLat]),
+              fromLonLat([ep.lon, ep.lat]),
+            ]),
+          })
+          // Full-opacity style — these are the live, authoritative LOBs
+          feature.setStyle(getCachedBearingLineStyle(1.0))
+          feature.set('resourceType', 'bearingLines')
+          feature.set('resourceId', `loc-est-lob-${lob.sensorName}`)
+          feature.set('resourceName', `${lob.sensorName} — ${lob.bearingTrue.toFixed(1)}°`)
+          feature.set('rawData', {
+            sensorName: lob.sensorName,
+            sensorLat: lob.sensorLat,
+            sensorLon: lob.sensorLon,
+            bearingTrue: lob.bearingTrue,
+            bearingStdDev: lob.bearingStdDev,
+            source: 'localizer',
+          })
+          lobBatch.push(feature)
+        }
+      } catch { /* malformed JSON — skip LOB rendering */ }
+    }
+
     // Atomic swap: clear + add in one synchronous block
     source.clear()
     source.addFeatures(batch)
     featureCounts.value['locationEstimates'] = 1
+
+    // Swap bearing lines from localizer data (live mode only)
+    if (liveMode.value && bearingSource && lobBatch.length > 0) {
+      bearingSource.clear()
+      bearingSource.addFeatures(lobBatch)
+      featureCounts.value['bearingLines'] = lobBatch.length
+    }
   } catch {
     // No data available — clear stale features
     source.clear()
@@ -2457,7 +2502,10 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         // Tight schema filter: genuine LOBs have both bearingTrue AND bearingStdDev.
         // This rejects scope-leak contamination (track updates, localizer, health, etc.)
         const isGenuineLob = typeof obs.result?.bearingTrue === 'number' && typeof obs.result?.bearingStdDev === 'number'
-        if (bearingSource && isGenuineLob && isLobDatastream) {
+        // In LIVE MODE, LOB lines are rendered from the localizer observation
+        // (loadLocationEstimates) which embeds the exact LOBs used for the fix.
+        // Skip independent LOB rendering here to avoid temporal mismatch.
+        if (bearingSource && isGenuineLob && isLobDatastream && !isLive) {
           // Prefer systemLocationCache; fall back to self-contained sensorLat/sensorLon (v2.3 LOB format)
           const sensorLoc = systemLocationCache[dsInfo.systemId]
             || (typeof obs.result.sensorLat === 'number' && typeof obs.result.sensorLon === 'number'
