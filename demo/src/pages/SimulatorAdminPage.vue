@@ -81,11 +81,7 @@ const DISCONNECT_THRESHOLD = 3  // Only show disconnected after N consecutive fa
 async function apiFetch(path: string, opts?: RequestInit) {
   const resp = await fetch(`${serviceUrl.value}${path}`, {
     ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Basic b3M0Y3NhcGk6b2djMTM0bW0=',
-      ...(opts?.headers || {}),
-    },
+    headers: { 'Content-Type': 'application/json', ...(opts?.headers || {}) },
   })
   return resp.json()
 }
