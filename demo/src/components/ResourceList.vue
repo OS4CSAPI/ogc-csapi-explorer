@@ -553,11 +553,30 @@ const parentIds = computed(() => {
 function toggleExpanded(itemId: string) {
   const s = new Set(expandedIds.value)
   if (s.has(itemId)) {
+    // Collapse: remove this ID and all descendant IDs
     s.delete(itemId)
+    for (const id of getDescendantIds(itemId)) s.delete(id)
   } else {
+    // Expand: add this ID and all descendant IDs (whole subtree)
     s.add(itemId)
+    for (const id of getDescendantIds(itemId)) s.add(id)
   }
   expandedIds.value = s
+}
+
+/** Collect all descendant IDs (recursively) under a given parent */
+function getDescendantIds(parentId: string): string[] {
+  const result: string[] = []
+  for (const item of items.value) {
+    if (item._parentId === parentId) {
+      const childId = item?.id || item?.properties?.id
+      if (childId) {
+        result.push(childId)
+        result.push(...getDescendantIds(childId))
+      }
+    }
+  }
+  return result
 }
 
 function getDisplayId(item: any): string {
