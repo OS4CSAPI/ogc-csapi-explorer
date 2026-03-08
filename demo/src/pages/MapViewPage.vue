@@ -1664,21 +1664,27 @@ async function discoverLocalizerDatastream(): Promise<void> {
 }
 
 /**
- * Location estimate styles
+ * Location estimate styles — dynamic based on fix age.
+ * Fresh fixes (< 15s) get full opacity gold; aging fixes progressively
+ * fade to indicate staleness.  Hard cutoff at 120s.
  */
-const locEstimateMarkerStyle = new Style({
-  image: new CircleStyle({
-    radius: 8,
-    fill: new Fill({ color: '#facc15' }),
-    stroke: new Stroke({ color: '#b45309', width: 2.5 }),
-  }),
-  text: new OlText({
-    text: '⊕',
-    font: 'bold 14px sans-serif',
-    fill: new Fill({ color: '#92400e' }),
-    offsetY: 1,
-  }),
-})
+function getLocEstimateMarkerStyle(ageS: number): Style {
+  // Opacity: 100% for < 15s, linear fade to 35% at 120s
+  const opacity = ageS <= 15 ? 1.0 : Math.max(0.35, 1.0 - (ageS - 15) / (120 - 15) * 0.65)
+  return new Style({
+    image: new CircleStyle({
+      radius: 8,
+      fill: new Fill({ color: `rgba(250, 204, 21, ${opacity})` }),
+      stroke: new Stroke({ color: `rgba(180, 83, 9, ${opacity})`, width: 2.5 }),
+    }),
+    text: new OlText({
+      text: '⊕',
+      font: 'bold 14px sans-serif',
+      fill: new Fill({ color: `rgba(146, 64, 14, ${opacity})` }),
+      offsetY: 1,
+    }),
+  })
+}
 
 /**
  * Fetch the latest location estimate from the localizer datastream and
@@ -1711,7 +1717,7 @@ async function loadLocationEstimates(): Promise<void> {
 
     // Step 2 (scope-leak fallback): resultTime=latest returned a leaked LOB
     // instead of a genuine localizer fix.  Use the leaked observation's
-    // resultTime to build a 2-minute time window and scan for genuine fixes.
+    // resultTime to build a 5-minute time window and scan for genuine fixes.
     if (!obs && items.length) {
       const leaked = items[0]
       const rt = leaked.resultTime || leaked.phenomenonTime
@@ -1719,7 +1725,9 @@ async function loadLocationEstimates(): Promise<void> {
         const endMs = new Date(rt).getTime()
         const fallbackUrl = getNestedListUrl('datastreams', localizerDatastreamId, 'observations', {
           limit: 100,
-          resultTime: { start: new Date(endMs - 120_000), end: new Date(endMs + 1_000) },
+          resultTime: { start: new Date(endMs - 300_000), end: new Date(endMs + 1_000) },
+          sortBy: 'resultTime',
+          sortOrder: 'desc',
         } as any)
         const fallbackRes = await apiFetch(
           fallbackUrl,
@@ -1727,8 +1735,8 @@ async function loadLocationEstimates(): Promise<void> {
         )
         if (fallbackRes.ok && fallbackRes.data) {
           const fbItems = fallbackRes.data.items || []
-          // Pick the most recent genuine fix (items are chronological)
-          obs = [...fbItems].reverse().find(isGenuineFix)
+          // Pick the most recent genuine fix (try in order — desc sort puts newest first)
+          obs = fbItems.find(isGenuineFix) || [...fbItems].reverse().find(isGenuineFix)
         }
       }
     }
@@ -1741,10 +1749,11 @@ async function loadLocationEstimates(): Promise<void> {
     const cep50 = result.cep50_m
     if (typeof lat !== 'number' || typeof lon !== 'number') return
 
-    // Staleness check: in live mode, skip if observation is older than 30 seconds
+    // Staleness check: in live mode, skip if observation is older than 120 seconds.
+    // Between 15–120s the marker progressively fades to indicate aging.
     const obsTime = result.timestamp ? result.timestamp * 1000 : new Date(obs.phenomenonTime || obs.resultTime).getTime()
     const ageS = (Date.now() - obsTime) / 1000
-    if (liveMode.value && ageS > 30) {
+    if (liveMode.value && ageS > 120) {
       source.clear()
       featureCounts.value['locationEstimates'] = 0
       return
@@ -1752,14 +1761,19 @@ async function loadLocationEstimates(): Promise<void> {
 
     const batch: Feature[] = []
 
+    // Compute age-based opacity for progressive fade
+    const fadeOpacity = liveMode.value
+      ? (ageS <= 15 ? 1.0 : Math.max(0.35, 1.0 - (ageS - 15) / (120 - 15) * 0.65))
+      : 1.0
+
     // 1. CEP50 uncertainty circle (draw first so marker is on top)
     if (typeof cep50 === 'number' && cep50 > 0) {
       const circle4326 = circularPolygon([lon, lat], cep50, 64)
       circle4326.transform('EPSG:4326', 'EPSG:3857')
       const circleFeature = new Feature({ geometry: circle4326 })
       circleFeature.setStyle(new Style({
-        stroke: new Stroke({ color: 'rgba(250, 204, 21, 0.9)', width: 2, lineDash: [6, 4] }),
-        fill: new Fill({ color: 'rgba(250, 204, 21, 0.15)' }),
+        stroke: new Stroke({ color: `rgba(250, 204, 21, ${0.9 * fadeOpacity})`, width: 2, lineDash: [6, 4] }),
+        fill: new Fill({ color: `rgba(250, 204, 21, ${0.15 * fadeOpacity})` }),
       }))
       circleFeature.set('resourceType', 'locationEstimates')
       circleFeature.set('resourceId', `loc-est-cep50`)
@@ -1767,11 +1781,11 @@ async function loadLocationEstimates(): Promise<void> {
       batch.push(circleFeature)
     }
 
-    // 2. Position marker
+    // 2. Position marker (dynamically styled based on age in live mode)
     const markerFeature = new Feature({
       geometry: new Point(fromLonLat([lon, lat])),
     })
-    markerFeature.setStyle(locEstimateMarkerStyle)
+    markerFeature.setStyle(liveMode.value ? getLocEstimateMarkerStyle(ageS) : getLocEstimateMarkerStyle(0))
     markerFeature.set('resourceType', 'locationEstimates')
     markerFeature.set('resourceId', obs.id || 'loc-est-latest')
     markerFeature.set('resourceName', `Fix: ${lat.toFixed(5)}°N, ${lon.toFixed(5)}°W`)
@@ -1791,15 +1805,18 @@ async function loadLocationEstimates(): Promise<void> {
     })
     batch.push(markerFeature)
 
-    // 3. Label below marker
+    // 3. Label below marker — includes fix age in live mode
+    const ageLabel = liveMode.value
+      ? (ageS < 10 ? '' : ` · ${Math.round(ageS)}s ago`)
+      : ''
     const labelFeature = new Feature({
       geometry: new Point(fromLonLat([lon, lat])),
     })
     labelFeature.setStyle(new Style({
       text: new OlText({
-        text: `${result.classification || 'UNK'} — ${result.numContributingLobs || '?'} LOBs`,
+        text: `${result.classification || 'UNK'} — ${result.numContributingLobs || '?'} LOBs${ageLabel}`,
         font: '11px sans-serif',
-        fill: new Fill({ color: '#facc15' }),
+        fill: new Fill({ color: `rgba(250, 204, 21, ${fadeOpacity})` }),
         stroke: new Stroke({ color: '#000', width: 3 }),
         offsetY: 18,
       }),
@@ -2329,6 +2346,8 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         const timeWindowUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
           resultTime: { start: windowStartDate, end: windowEndDate },
           limit: fetchLimit,
+          sortBy: 'resultTime',
+          sortOrder: 'asc',
         } as any)
         const obsRes = await apiFetch(
           timeWindowUrl,
@@ -2718,9 +2737,10 @@ function refreshAllStyles() {
 // ── Live Mode toggle ─────────────────────────────────────────────
 async function refreshLiveLayers() {
   try {
-    // In live mode, fetch fresh observations + update moving-system positions
+    // In live mode, fetch fresh observations + update moving-system positions.
+    // 6 LOBs per sensor improves temporal overlap with the localizer fix.
     await Promise.all([
-      loadObservationLayers(3),
+      loadObservationLayers(6),
       loadLocationEstimates(),
       loadSenrepMarkers(),
       updateMovingSystemPositions(),
