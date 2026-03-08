@@ -10,8 +10,10 @@
  *   - Operational, not verbose
  *   - No raw schema, no debug text, no ISO timestamps in the main view
  */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { DeployedSystemCardModel } from '../composables/useDeployedSystemCard'
+
+const showImageOverlay = ref(false)
 
 const props = defineProps<{
   card: DeployedSystemCardModel
@@ -97,6 +99,18 @@ const trustLine = computed(() => {
 </script>
 
 <template>
+  <!-- Image lightbox overlay -->
+  <Teleport to="body">
+    <div v-if="showImageOverlay" class="dsc-lightbox" @click="showImageOverlay = false">
+      <div class="dsc-lightbox-inner" @click.stop>
+        <img :src="card.thumbnail" alt="" class="dsc-lightbox-img" />
+        <button class="dsc-lightbox-close" @click="showImageOverlay = false" title="Close">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+    </div>
+  </Teleport>
+
   <div class="dsc" :class="{ 'dsc--loading': loading }">
     <!-- Loading spinner -->
     <div v-if="loading" class="dsc-loader">
@@ -107,8 +121,8 @@ const trustLine = computed(() => {
     <header class="dsc-hdr">
       <div class="dsc-hdr-row">
         <div class="dsc-icon-group">
-          <div class="dsc-icon">
-            <img v-if="card.thumbnail" :src="card.thumbnail" alt="" />
+          <div class="dsc-icon" :class="{ 'dsc-icon--clickable': card.thumbnail }" @click="card.thumbnail && (showImageOverlay = true)">
+            <img v-if="card.thumbnail" :src="card.thumbnail" alt="" title="Click to enlarge" />
             <i v-else class="pi pi-map"></i>
           </div>
           <img v-if="card.stanagSvg" :src="card.stanagSvg" class="dsc-stanag" alt="STANAG" title="MIL-STD-2525 Symbol" />
@@ -283,9 +297,62 @@ const trustLine = computed(() => {
   font-size: 1.15rem;
   overflow: hidden;
 }
+.dsc-icon--clickable {
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+.dsc-icon--clickable:hover {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
 .dsc-icon img {
   width: 100%; height: 100%;
   object-fit: cover;
+}
+
+/* Lightbox overlay */
+.dsc-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0,0,0,0.70);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.dsc-lightbox-inner {
+  position: relative;
+  cursor: default;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+.dsc-lightbox-img {
+  max-width: 90vw;
+  max-height: 85vh;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  object-fit: contain;
+  background: #fff;
+}
+.dsc-lightbox-close {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #334155;
+}
+.dsc-lightbox-close:hover {
+  background: #f1f5f9;
 }
 .dsc-stanag {
   width: 64px;
