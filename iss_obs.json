@@ -1,0 +1,106 @@
+{
+  "items": [
+    {
+      "id": "043rtidnpk31cu4g80",
+      "datastream@id": "04gg",
+      "phenomenonTime": "2026-03-08T21:06:06.377Z",
+      "resultTime": "2026-03-08T21:06:06.377Z",
+      "result": {
+        "timestamp": 1.773003966377706E9,
+        "lat_deg": 44.398411,
+        "lon_deg": 3.691508,
+        "alt_km": 427.159,
+        "velocity_km_s": 7.66,
+        "noradId": 25544,
+        "assetName": "ISS (ZARYA)",
+        "sourceEpoch": "2026-03-08T09:59:22.309Z",
+        "sourceAgeSec": 40004.1,
+        "posErrorM": 1694.5,
+        "method": "SGP4"
+      }
+    },
+    {
+      "id": "043tpidnpk31cu4g80",
+      "datastream@id": "04gg",
+      "phenomenonTime": "2026-03-08T21:06:36.377Z",
+      "resultTime": "2026-03-08T21:06:36.377Z",
+      "result": {
+        "timestamp": 1.773003996377696E9,
+        "lat_deg": 45.341897,
+        "lon_deg": 5.947155,
+        "alt_km": 427.194,
+        "velocity_km_s": 7.66,
+        "noradId": 25544,
+        "assetName": "ISS (ZARYA)",
+        "sourceEpoch": "2026-03-08T09:59:22.309Z",
+        "sourceAgeSec": 40034.1,
+        "posErrorM": 1695.0,
+        "method": "SGP4"
+      }
+    },
+    {
+      "id": "043vlidnpk31cu4g80",
+      "datastream@id": "04gg",
+      "phenomenonTime": "2026-03-08T21:07:06.377Z",
+      "resultTime": "2026-03-08T21:07:06.377Z",
+      "result": {
+        "timestamp": 1.773004026377702E9,
+        "lat_deg": 46.234082,
+        "lon_deg": 8.280989,
+        "alt_km": 427.217,
+        "velocity_km_s": 7.66,
+        "noradId": 25544,
+        "assetName": "ISS (ZARYA)",
+        "sourceEpoch": "2026-03-08T09:59:22.309Z",
+        "sourceAgeSec": 40064.1,
+        "posErrorM": 1695.6,
+        "method": "SGP4"
+      }
+    },
+    {
+      "id": "043philnpk31cu4g80",
+      "datastream@id": "04gg",
+      "phenomenonTime": "2026-03-08T21:07:36.377Z",
+      "resultTime": "2026-03-08T21:07:36.377Z",
+      "result": {
+        "timestamp": 1.773004056377689E9,
+        "lat_deg": 47.071659,
+        "lon_deg": 10.6933,
+        "alt_km": 427.227,
+        "velocity_km_s": 7.66,
+        "noradId": 25544,
+        "assetName": "ISS (ZARYA)",
+        "sourceEpoch": "2026-03-08T09:59:22.309Z",
+        "sourceAgeSec": 40094.1,
+        "posErrorM": 1696.1,
+        "method": "SGP4"
+      }
+    },
+    {
+      "id": "043rdilnpk31cu4g80",
+      "datastream@id": "04gg",
+      "phenomenonTime": "2026-03-08T21:08:06.377Z",
+      "resultTime": "2026-03-08T21:08:06.377Z",
+      "result": {
+        "timestamp": 1.773004086377704E9,
+        "lat_deg": 47.851278,
+        "lon_deg": 13.183547,
+        "alt_km": 427.223,
+        "velocity_km_s": 7.661,
+        "noradId": 25544,
+        "assetName": "ISS (ZARYA)",
+        "sourceEpoch": "2026-03-08T09:59:22.309Z",
+        "sourceAgeSec": 40124.1,
+        "posErrorM": 1696.6,
+        "method": "SGP4"
+      }
+    }
+  ],
+  "links": [
+    {
+      "rel": "next",
+      "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/datastreams/04gg/observations?limit=5&offset=5",
+      "type": "application/json"
+    }
+  ]
+}

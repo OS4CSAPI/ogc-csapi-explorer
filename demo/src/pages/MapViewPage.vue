@@ -509,6 +509,30 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
     }
   }
 
+  // --- SENREP track sampling features: render STANAG symbol for urn:os4csapi:track:* UIDs ---
+  if (useMilSymbols.value && rawData && resourceType === 'samplingFeatures') {
+    const uid = rawData?.properties?.uid || rawData?.uid || ''
+    if (typeof uid === 'string' && uid.startsWith('urn:os4csapi:track:')) {
+      const sym = renderSenrepSymbol('UAS', 16)
+      if (sym) {
+        const iconStyle = new Style({
+          image: new OlIcon({
+            src: sym.svgDataUrl,
+            anchor: [sym.anchor.x / sym.size.width, sym.anchor.y / sym.size.height],
+            anchorXUnits: 'fraction',
+            anchorYUnits: 'fraction',
+            scale: 1,
+            opacity: enriched ? 0.85 : 1,
+          }),
+          stroke: new Stroke({ color, width: 2 }),
+          fill: new Fill({ color: color + '33' }),
+        })
+        const nameStyle = makeNameLabel(name, sym.size.height - sym.anchor.y + 14)
+        return nameStyle ? [iconStyle, nameStyle] : iconStyle
+      }
+    }
+  }
+
   // --- Fallback: colored circle with letter ---
   const isPart2 = resourceType === 'datastreams' || resourceType === 'controlStreams'
   const radius = isPart2 ? 7 : 10
@@ -583,6 +607,29 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
       })
       const nameStyle = makeNameLabel(name, (sym.size.height - sym.anchor.y) * 1.3 + 14)
       return nameStyle ? [iconStyle, nameStyle] : iconStyle
+    }
+  }
+
+  // --- SENREP track sampling features selected: larger STANAG symbol ---
+  if (useMilSymbols.value && rawData && resourceType === 'samplingFeatures') {
+    const uid = rawData?.properties?.uid || rawData?.uid || ''
+    if (typeof uid === 'string' && uid.startsWith('urn:os4csapi:track:')) {
+      const sym = renderSenrepSymbol('UAS', 20)
+      if (sym) {
+        const iconStyle = new Style({
+          image: new OlIcon({
+            src: sym.svgDataUrl,
+            anchor: [sym.anchor.x / sym.size.width, sym.anchor.y / sym.size.height],
+            anchorXUnits: 'fraction',
+            anchorYUnits: 'fraction',
+            scale: 1.3,
+          }),
+          stroke: new Stroke({ color: '#fbbf24', width: 3 }),
+          fill: new Fill({ color: color + '55' }),
+        })
+        const nameStyle = makeNameLabel(name, (sym.size.height - sym.anchor.y) * 1.3 + 14)
+        return nameStyle ? [iconStyle, nameStyle] : iconStyle
+      }
     }
   }
 
@@ -2005,22 +2052,12 @@ async function loadSenrepMarkers(): Promise<void> {
       const reportType = result.subTyp || 'INIT'
       const tgtType = result.tgtTyp || 'UAS'
 
-      // Use NATO STANAG symbol for known target types (e.g. UAS), fall back to red diamond
-      const sym = renderSenrepSymbol(tgtType, 16)
+      // SENREP markers always use red diamond — STANAG symbol lives on the
+      // sampling feature (track FOI) created by the SENREP workflow instead.
       const markerFeature = new Feature({
         geometry: new Point(fromLonLat([lon, lat])),
       })
-      if (sym) {
-        markerFeature.setStyle(new Style({
-          image: new OlIcon({
-            src: sym.svgDataUrl,
-            scale: 1,
-            anchor: [sym.anchor.x / sym.size.width, sym.anchor.y / sym.size.height],
-          }),
-        }))
-      } else {
-        markerFeature.setStyle(senrepMarkerStyle)
-      }
+      markerFeature.setStyle(senrepMarkerStyle)
       markerFeature.set('resourceType', 'senrepMarkers')
       markerFeature.set('resourceId', obs.id || `senrep-${contactId}`)
       markerFeature.set('resourceName', `SENREP: ${contactId}`)

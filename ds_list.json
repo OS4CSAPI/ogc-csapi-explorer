@@ -1,0 +1,2002 @@
+{
+  "items": [
+    {
+      "id": "044g",
+      "name": "SENREP (Sensor Report)",
+      "description": "Doctrinal SENREP-style sensor report produced by SET.",
+      "system@id": "040g",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/040g?f=json",
+        "uid": "urn:os4csapi:system:set:ft-huachuca:001",
+        "type": "application/geo+json"
+      },
+      "outputName": "senrep",
+      "validTime": [
+        "2026-02-27T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/reportTitle",
+          "label": "Title"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/senderId",
+          "label": "Sender ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/seqNo",
+          "label": "Sequence number"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/classification",
+          "label": "Classification"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/releasably",
+          "label": "Releasability"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/dateOfReport",
+          "label": "Date of report"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/envirOpName",
+          "label": "Environment/OpName"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/strNo",
+          "label": "Sensor string number"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectTimeZ",
+          "label": "Detection time (Z)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/qty",
+          "label": "Quantity"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/tgtTyp",
+          "label": "Target type"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/subTyp",
+          "label": "Subtype"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/spd",
+          "label": "Speed"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/dirCardinal",
+          "label": "Direction (cardinal)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/colLengthM",
+          "label": "Column length"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/etaLat",
+          "label": "ETA lat"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/etaLon",
+          "label": "ETA lon"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/etaTimeZ",
+          "label": "ETA time (Z)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/comments",
+          "label": "Comments"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04i0",
+      "name": "SENREP v1.1",
+      "system@id": "040g",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/040g?f=json",
+        "uid": "urn:os4csapi:system:set:ft-huachuca:001",
+        "type": "application/geo+json"
+      },
+      "outputName": "senrep_v1_1",
+      "validTime": [
+        "2026-02-27T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "http://sensorml.com/ont/swe/property/SamplingTime",
+          "label": "Sampling Time"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/ShortName",
+          "label": "Report Title"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "Sender ID"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/SequenceNumber",
+          "label": "Sequence Number"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "Contact ID",
+          "description": "Authoritative join key for tracking/reporting"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/Classification",
+          "label": "Classification"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/Classification",
+          "label": "Releasability"
+        },
+        {
+          "label": "Date of Report",
+          "description": "DTG of report (DDMMYY format)"
+        },
+        {
+          "label": "Operation Name",
+          "description": "Named operation or exercise identifier"
+        },
+        {
+          "label": "String Number",
+          "description": "String/sensor array identifier"
+        },
+        {
+          "label": "Detection Time (Zulu)",
+          "description": "Time of initial detection in Zulu (HHMM format)"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/NumberOfElements",
+          "label": "Quantity",
+          "description": "Number of targets observed"
+        },
+        {
+          "label": "Target Type",
+          "description": "Doctrinal target type category (e.g., UAS, DISMOUNT, VEHICLE)"
+        },
+        {
+          "label": "Sub-Type",
+          "description": "Target sub-type detail"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Speed",
+          "label": "Speed"
+        },
+        {
+          "label": "Direction (Cardinal)",
+          "description": "Cardinal or inter-cardinal direction of movement"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Length",
+          "label": "Column Length",
+          "description": "Length of the detected target formation/column"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Latitude",
+          "label": "Estimated Latitude"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Longitude",
+          "label": "Estimated Longitude"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Length",
+          "label": "Position Error",
+          "description": "Estimated position error in meters"
+        },
+        {
+          "label": "ETA Time (Zulu)",
+          "description": "Estimated time of activity in Zulu"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "Source Fix Observation ID",
+          "description": "Reference to the localizer fix observation that triggered this SENREP"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "Source LOB Observation IDs",
+          "description": "Comma-separated list of contributing LOB observation IDs"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/QualityIndex",
+          "label": "Confidence",
+          "description": "Operator confidence level (0-1)"
+        },
+        {
+          "label": "Comments",
+          "description": "Free-text operator comments"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "0430",
+      "name": "AZ-MA-1 Classification Probabilities",
+      "description": "Class probs.",
+      "system@id": "0420",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0420?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-1",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_1_classification_probabilities",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.224Z"
+      ],
+      "resultTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.224Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_uas",
+          "label": "P(UAS)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_vehicle",
+          "label": "P(vehicle)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_footsteps",
+          "label": "P(footsteps)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_impulsive",
+          "label": "P(impulsive)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_unknown",
+          "label": "P(unknown)"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04dg",
+      "name": "AZ-MA-1 Detection Capabilities",
+      "description": "Static detection range characteristics for AZ-MA-1.",
+      "system@id": "0420",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0420?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-1",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_1_detection_capabilities",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.213Z"
+      ],
+      "resultTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.213Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionShape",
+          "label": "Detection area shape"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionMinRange",
+          "label": "Minimum detection range"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionNominalRange",
+          "label": "Nominal detection range"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionMaxRange",
+          "label": "Maximum detection range"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionConfidence",
+          "label": "Detection confidence"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionBasis",
+          "label": "Basis of estimate"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "043g",
+      "name": "AZ-MA-1 Health",
+      "description": "Health.",
+      "system@id": "0420",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0420?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-1",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_1_health",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "procedure@link": {
+        "href": "/sensorhub/api/procedures/043g",
+        "title": "AZ-MA-1-PROC-HEALTH",
+        "type": "application/geo+json"
+      },
+      "phenomenonTime": [
+        "2026-03-08T07:34:34Z",
+        "2026-03-08T15:30:46Z"
+      ],
+      "resultTime": [
+        "2026-03-08T07:34:34Z",
+        "2026-03-08T15:30:46Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/cpuLoad",
+          "label": "CPU load"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/memUsedMB",
+          "label": "Mem used"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/tempC",
+          "label": "Temp"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/latencyMs",
+          "label": "Latency"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/uptimeS",
+          "label": "Uptime"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04c0",
+      "name": "AZ-MA-1 LOB",
+      "description": "LOB derived with classification field.",
+      "system@id": "0420",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0420?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-1",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_1_lob",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.213Z"
+      ],
+      "resultTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.213Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingTrue",
+          "label": "Bearing true"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingStdDev",
+          "label": "Bearing std dev"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/sensorLat",
+          "label": "Sensor lat"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/sensorLon",
+          "label": "Sensor lon"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/classification",
+          "label": "Classification"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "0440",
+      "name": "AZ-MA-1 Scene Summary",
+      "description": "Scene summary.",
+      "system@id": "0420",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0420?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-1",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_1_scene_summary",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "procedure@link": {
+        "href": "/sensorhub/api/procedures/0440",
+        "title": "AZ-MA-1-PROC-ODAS",
+        "type": "application/geo+json"
+      },
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/trackCount",
+          "label": "Active track count"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/activityLevel",
+          "label": "Activity level"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "0410",
+      "name": "AZ-MA-1 SSL Potential Sources",
+      "description": "SSL raw.",
+      "system@id": "0420",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0420?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-1",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_1_ssl_potential_sources",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "procedure@link": {
+        "href": "/sensorhub/api/procedures/0440",
+        "title": "AZ-MA-1-PROC-ODAS",
+        "type": "application/geo+json"
+      },
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/ssl/potentialSourceArray",
+          "label": "Potential sources"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineX",
+          "label": "Direction cosine X"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineY",
+          "label": "Direction cosine Y"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+          "label": "Direction cosine Z"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/relativeEnergy",
+          "label": "Relative energy (ODAS)"
+        }
+      ],
+      "resultType": "coverage",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "041g",
+      "name": "AZ-MA-1 SST Tracked Sources",
+      "description": "SST raw.",
+      "system@id": "0420",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0420?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-1",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_1_sst_tracked_sources",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "procedure@link": {
+        "href": "/sensorhub/api/procedures/0440",
+        "title": "AZ-MA-1-PROC-ODAS",
+        "type": "application/geo+json"
+      },
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/sst/trackedSourceArray",
+          "label": "Tracked sources"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackTag",
+          "label": "Track tag"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineX",
+          "label": "Direction cosine X"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineY",
+          "label": "Direction cosine Y"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+          "label": "Direction cosine Z"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackActivity",
+          "label": "Activity"
+        }
+      ],
+      "resultType": "coverage",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "042g",
+      "name": "AZ-MA-1 Track Updates",
+      "description": "Per-track updates.",
+      "system@id": "0420",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0420?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-1",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_1_track_updates",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "procedure@link": {
+        "href": "/sensorhub/api/procedures/0440",
+        "title": "AZ-MA-1-PROC-ODAS",
+        "type": "application/geo+json"
+      },
+      "phenomenonTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.213Z"
+      ],
+      "resultTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.213Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackTag",
+          "label": "Track tag"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineX",
+          "label": "Direction cosine X"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineY",
+          "label": "Direction cosine Y"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+          "label": "Direction cosine Z"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackActivity",
+          "label": "Activity"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingTrue",
+          "label": "Bearing true"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/elevation",
+          "label": "Elevation"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingStdDev",
+          "label": "Bearing std dev"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/classLabel",
+          "label": "Class label"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/classConfidence",
+          "label": "Class confidence"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "0450",
+      "name": "AZ-MA-2 Classification Probabilities",
+      "description": "Class probs.",
+      "system@id": "0490",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0490?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-2",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_2_classification_probabilities",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-08T21:06:06.377Z",
+        "2026-03-08T21:06:06.377Z"
+      ],
+      "resultTime": [
+        "2026-03-08T21:06:06.377Z",
+        "2026-03-08T21:06:06.377Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_uas",
+          "label": "P(UAS)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_vehicle",
+          "label": "P(vehicle)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_footsteps",
+          "label": "P(footsteps)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_impulsive",
+          "label": "P(impulsive)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_unknown",
+          "label": "P(unknown)"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04e0",
+      "name": "AZ-MA-2 Detection Capabilities",
+      "description": "Static detection range characteristics for AZ-MA-2.",
+      "system@id": "0490",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0490?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-2",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_2_detection_capabilities",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.224Z"
+      ],
+      "resultTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.224Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionShape",
+          "label": "Detection area shape"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionMinRange",
+          "label": "Minimum detection range"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionNominalRange",
+          "label": "Nominal detection range"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionMaxRange",
+          "label": "Maximum detection range"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionConfidence",
+          "label": "Detection confidence"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionBasis",
+          "label": "Basis of estimate"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "045g",
+      "name": "AZ-MA-2 Health",
+      "description": "Health.",
+      "system@id": "0490",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0490?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-2",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_2_health",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/cpuLoad",
+          "label": "CPU load"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/memUsedMB",
+          "label": "Mem used"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/tempC",
+          "label": "Temp"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/latencyMs",
+          "label": "Latency"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/uptimeS",
+          "label": "Uptime"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04cg",
+      "name": "AZ-MA-2 LOB",
+      "description": "LOB derived with classification field.",
+      "system@id": "0490",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0490?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-2",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_2_lob",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.224Z"
+      ],
+      "resultTime": [
+        "2026-03-04T19:07:08Z",
+        "2026-03-08T21:08:51.224Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingTrue",
+          "label": "Bearing true"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingStdDev",
+          "label": "Bearing std dev"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/sensorLat",
+          "label": "Sensor lat"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/sensorLon",
+          "label": "Sensor lon"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/classification",
+          "label": "Classification"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "046g",
+      "name": "AZ-MA-2 Scene Summary",
+      "description": "Scene summary.",
+      "system@id": "0490",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0490?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-2",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_2_scene_summary",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-08T21:06:06.377Z",
+        "2026-03-08T21:08:36.377Z"
+      ],
+      "resultTime": [
+        "2026-03-08T21:06:06.377Z",
+        "2026-03-08T21:08:36.377Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/trackCount",
+          "label": "Active track count"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/activityLevel",
+          "label": "Activity level"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "0470",
+      "name": "AZ-MA-2 SSL Potential Sources",
+      "description": "SSL raw.",
+      "system@id": "0490",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0490?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-2",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_2_ssl_potential_sources",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/ssl/potentialSourceArray",
+          "label": "Potential sources"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineX",
+          "label": "Direction cosine X"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineY",
+          "label": "Direction cosine Y"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+          "label": "Direction cosine Z"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/relativeEnergy",
+          "label": "Relative energy (ODAS)"
+        }
+      ],
+      "resultType": "coverage",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "047g",
+      "name": "AZ-MA-2 SST Tracked Sources",
+      "description": "SST raw.",
+      "system@id": "0490",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0490?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-2",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_2_sst_tracked_sources",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/sst/trackedSourceArray",
+          "label": "Tracked sources"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackTag",
+          "label": "Track tag"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineX",
+          "label": "Direction cosine X"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineY",
+          "label": "Direction cosine Y"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+          "label": "Direction cosine Z"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackActivity",
+          "label": "Activity"
+        }
+      ],
+      "resultType": "coverage",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "0480",
+      "name": "AZ-MA-2 Track Updates",
+      "description": "Per-track updates.",
+      "system@id": "0490",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0490?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-2",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_2_track_updates",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-08T21:06:12.133Z",
+        "2026-03-08T21:08:53.698Z"
+      ],
+      "resultTime": [
+        "2026-03-08T21:06:12.133Z",
+        "2026-03-08T21:08:53.698Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackTag",
+          "label": "Track tag"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineX",
+          "label": "Direction cosine X"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineY",
+          "label": "Direction cosine Y"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+          "label": "Direction cosine Z"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackActivity",
+          "label": "Activity"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingTrue",
+          "label": "Bearing true"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/elevation",
+          "label": "Elevation"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingStdDev",
+          "label": "Bearing std dev"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/classLabel",
+          "label": "Class label"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/classConfidence",
+          "label": "Class confidence"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "048g",
+      "name": "AZ-MA-3 Classification Probabilities",
+      "description": "Class probs.",
+      "system@id": "049g",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/049g?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-3",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_3_classification_probabilities",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_uas",
+          "label": "P(UAS)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_vehicle",
+          "label": "P(vehicle)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_footsteps",
+          "label": "P(footsteps)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_impulsive",
+          "label": "P(impulsive)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/p_unknown",
+          "label": "P(unknown)"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04eg",
+      "name": "AZ-MA-3 Detection Capabilities",
+      "description": "Static detection range characteristics for AZ-MA-3.",
+      "system@id": "049g",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/049g?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-3",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_3_detection_capabilities",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-08T07:34:34Z",
+        "2026-03-08T15:30:46Z"
+      ],
+      "resultTime": [
+        "2026-03-08T07:34:34Z",
+        "2026-03-08T15:30:46Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionShape",
+          "label": "Detection area shape"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionMinRange",
+          "label": "Minimum detection range"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionNominalRange",
+          "label": "Nominal detection range"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionMaxRange",
+          "label": "Maximum detection range"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionConfidence",
+          "label": "Detection confidence"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectionBasis",
+          "label": "Basis of estimate"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "0490",
+      "name": "AZ-MA-3 Health",
+      "description": "Health.",
+      "system@id": "049g",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/049g?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-3",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_3_health",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/cpuLoad",
+          "label": "CPU load"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/memUsedMB",
+          "label": "Mem used"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/tempC",
+          "label": "Temp"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/latencyMs",
+          "label": "Latency"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/uptimeS",
+          "label": "Uptime"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04d0",
+      "name": "AZ-MA-3 LOB",
+      "description": "LOB derived with classification field.",
+      "system@id": "049g",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/049g?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-3",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_3_lob",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-08T07:34:34Z",
+        "2026-03-08T15:30:46Z"
+      ],
+      "resultTime": [
+        "2026-03-08T07:34:34Z",
+        "2026-03-08T15:30:46Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingTrue",
+          "label": "Bearing true"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingStdDev",
+          "label": "Bearing std dev"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/sensorLat",
+          "label": "Sensor lat"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/sensorLon",
+          "label": "Sensor lon"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/classification",
+          "label": "Classification"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04a0",
+      "name": "AZ-MA-3 Scene Summary",
+      "description": "Scene summary.",
+      "system@id": "049g",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/049g?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-3",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_3_scene_summary",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/trackCount",
+          "label": "Active track count"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/activityLevel",
+          "label": "Activity level"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04ag",
+      "name": "AZ-MA-3 SSL Potential Sources",
+      "description": "SSL raw.",
+      "system@id": "049g",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/049g?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-3",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_3_ssl_potential_sources",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/ssl/potentialSourceArray",
+          "label": "Potential sources"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineX",
+          "label": "Direction cosine X"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineY",
+          "label": "Direction cosine Y"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+          "label": "Direction cosine Z"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/relativeEnergy",
+          "label": "Relative energy (ODAS)"
+        }
+      ],
+      "resultType": "coverage",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04b0",
+      "name": "AZ-MA-3 SST Tracked Sources",
+      "description": "SST raw.",
+      "system@id": "049g",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/049g?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-3",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_3_sst_tracked_sources",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/sst/trackedSourceArray",
+          "label": "Tracked sources"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackTag",
+          "label": "Track tag"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineX",
+          "label": "Direction cosine X"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineY",
+          "label": "Direction cosine Y"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+          "label": "Direction cosine Z"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackActivity",
+          "label": "Activity"
+        }
+      ],
+      "resultType": "coverage",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04bg",
+      "name": "AZ-MA-3 Track Updates",
+      "description": "Per-track updates.",
+      "system@id": "049g",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/049g?f=json",
+        "uid": "urn:os4csapi:system:odas:az-ma-3",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_ma_3_track_updates",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackTag",
+          "label": "Track tag"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineX",
+          "label": "Direction cosine X"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineY",
+          "label": "Direction cosine Y"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+          "label": "Direction cosine Z"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackActivity",
+          "label": "Activity"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingTrue",
+          "label": "Bearing true"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/elevation",
+          "label": "Elevation"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/bearingStdDev",
+          "label": "Bearing std dev"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/classLabel",
+          "label": "Class label"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/classConfidence",
+          "label": "Class confidence"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04g0",
+      "name": "UAS Location Estimate",
+      "system@id": "04o0",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/04o0?f=json",
+        "uid": "urn:os4csapi:system:fusion:az-string-alpha-localizer",
+        "type": "application/geo+json"
+      },
+      "outputName": "az_string_alpha_location_estimate",
+      "validTime": [
+        "2026-03-08T07:17:04.473539951Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-08T21:06:12.133Z",
+        "2026-03-08T21:08:53.698Z"
+      ],
+      "resultTime": [
+        "2026-03-08T21:06:12.133Z",
+        "2026-03-08T21:08:53.698Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/fusion/estimatedLat",
+          "label": "Estimated latitude"
+        },
+        {
+          "definition": "https://os4csapi.org/def/fusion/estimatedLon",
+          "label": "Estimated longitude"
+        },
+        {
+          "definition": "https://os4csapi.org/def/fusion/cep50",
+          "label": "CEP50 (m)",
+          "description": "Circular error probable — 50% of fixes fall within this radius"
+        },
+        {
+          "definition": "https://os4csapi.org/def/odas/classification",
+          "label": "Classification"
+        },
+        {
+          "definition": "https://os4csapi.org/def/fusion/numContributingLobs",
+          "label": "Contributing LOBs"
+        },
+        {
+          "definition": "https://os4csapi.org/def/fusion/contributingSensors",
+          "label": "Contributing sensors",
+          "description": "Comma-separated list of sensor names that contributed LOBs"
+        },
+        {
+          "definition": "https://os4csapi.org/def/fusion/residual",
+          "label": "Residual (m)",
+          "description": "Mean perpendicular distance from each bearing line to the estimated point"
+        },
+        {
+          "definition": "https://os4csapi.org/def/fusion/contributingLobs",
+          "label": "Contributing LOBs (JSON)",
+          "description": "JSON-encoded array of LOB records used for this fix. Each element: {sensorName, sensorLat, sensorLon, bearingTrue, bearingStdDev}"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04hg",
+      "name": "Location Estimate",
+      "system@id": "04o0",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/04o0?f=json",
+        "uid": "urn:os4csapi:system:fusion:az-string-alpha-localizer",
+        "type": "application/geo+json"
+      },
+      "outputName": "locationEstimate",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "http://sensorml.com/ont/swe/property/SamplingTime",
+          "label": "Sampling Time"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "Track ID"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Latitude",
+          "label": "Estimated Latitude",
+          "description": "WLS-computed geodetic latitude (WGS-84)"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Longitude",
+          "label": "Estimated Longitude",
+          "description": "WLS-computed geodetic longitude (WGS-84)"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Length",
+          "label": "CEP50",
+          "description": "Circular Error Probable (50th percentile) of the location estimate"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/Classification",
+          "label": "Classification"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/NumberOfElements",
+          "label": "Number of Contributing LOBs"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/DataSource",
+          "label": "Contributing Sensors",
+          "description": "Comma-separated list of sensor IDs that contributed LOBs"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Length",
+          "label": "Residual",
+          "description": "WLS residual error metric in meters"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/DataPayload",
+          "label": "Contributing LOBs (JSON)",
+          "description": "JSON-encoded array of contributing LOB details"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04gg",
+      "name": "ISS Position (SGP4)",
+      "system@id": "04og",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/04og?f=json",
+        "uid": "urn:os4csapi:system:iss-position-publisher:v1",
+        "type": "application/geo+json"
+      },
+      "outputName": "issPosition",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-08T21:06:06.377Z",
+        "2026-03-08T21:08:36.377Z"
+      ],
+      "resultTime": [
+        "2026-03-08T21:06:06.377Z",
+        "2026-03-08T21:08:36.377Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "http://sensorml.com/ont/swe/property/SamplingTime",
+          "label": "Sampling Time"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Latitude",
+          "label": "Latitude",
+          "description": "Geodetic latitude (WGS-84)"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Longitude",
+          "label": "Longitude",
+          "description": "Geodetic longitude (WGS-84)"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Height",
+          "label": "Altitude",
+          "description": "Altitude above WGS-84 ellipsoid"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Speed",
+          "label": "Orbital Velocity",
+          "description": "ECI velocity magnitude"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "NORAD Catalog Number"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/ShortName",
+          "label": "Asset Name"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/ReferenceTime",
+          "label": "TLE Epoch",
+          "description": "ISO 8601 epoch of the source TLE element set"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Period",
+          "label": "TLE Age",
+          "description": "Seconds since TLE epoch — indicates propagation confidence"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Length",
+          "label": "Estimated Position Error",
+          "description": "Rough SGP4 position error estimate based on TLE age (~1km at epoch, growing ~1-2km/day)"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/AlgorithmType",
+          "label": "Propagation Method"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    },
+    {
+      "id": "04h0",
+      "name": "ISS Orbit Ground Track",
+      "system@id": "04p0",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/04p0?f=json",
+        "uid": "urn:os4csapi:system:iss-orbittrack-publisher:v1",
+        "type": "application/geo+json"
+      },
+      "outputName": "issOrbitTrack",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        "now"
+      ],
+      "phenomenonTime": [
+        "2026-03-08T21:06:06.377Z",
+        "2026-03-08T21:06:06.377Z"
+      ],
+      "resultTime": [
+        "2026-03-08T21:06:06.377Z",
+        "2026-03-08T21:06:06.377Z"
+      ],
+      "observedProperties": [
+        {
+          "definition": "http://sensorml.com/ont/swe/property/SamplingTime",
+          "label": "Computation Time"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "NORAD Catalog Number"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/ShortName",
+          "label": "Asset Name"
+        },
+        {
+          "definition": "http://qudt.org/vocab/quantitykind/Period",
+          "label": "Track Duration",
+          "description": "Total duration of predicted track in minutes"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/NumberOfElements",
+          "label": "Number of Track Points"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/AlgorithmType",
+          "label": "Propagation Method"
+        },
+        {
+          "definition": "http://sensorml.com/ont/swe/property/DataPayload",
+          "label": "Track Points (JSON)",
+          "description": "JSON-encoded array of {timestamp, lat_deg, lon_deg, alt_km} objects representing the predicted ground track. Encoded as Text for maximum portability across SWE implementations."
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    }
+  ]
+}
