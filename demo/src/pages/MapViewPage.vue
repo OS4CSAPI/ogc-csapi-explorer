@@ -2985,7 +2985,7 @@ onMounted(() => {
     vectorSources[rt.key] = source
     const layerOpts: Record<string, any> = {
       source,
-      zIndex: rt.key === 'detectionRanges' ? 3 : rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : rt.key === 'locationEstimates' ? 8 : rt.key === 'senrepMarkers' ? 9 : 10,
+      zIndex: rt.key === 'detectionRanges' ? 3 : rt.key === 'observationTracks' ? 5 : rt.key === 'bearingLines' ? 6 : rt.key === 'observationPoints' ? 7 : rt.key === 'locationEstimates' ? 8 : rt.key === 'senrepMarkers' ? 9 : rt.key === 'samplingFeatures' ? 11 : 10,
       // Deployments: no declutter so STANAG symbols are never hidden by label overlap
       declutter: labeledTypes.has(rt.key),
       updateWhileAnimating: false,
