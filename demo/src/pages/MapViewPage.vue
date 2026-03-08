@@ -4965,15 +4965,15 @@ watch(selectedFeature, (feat) => {
   position: absolute;
   top: 0;
   right: 0;
-  width: 370px;
+  width: 400px;
   max-width: 90vw;
   height: 100%;
-  background: #f8fafc;
+  background: #ffffff;
   border-left: 2px solid #3b82f6;
   z-index: 90;
   display: flex;
   flex-direction: column;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.18);
 }
 .dsc-float-header {
   display: flex;
@@ -5003,7 +5003,7 @@ watch(selectedFeature, (feat) => {
 .dsc-float-body {
   flex: 1;
   overflow-y: auto;
-  padding: 0.25rem;
+  padding: 0.75rem;
 }
 
 /* Slide transition for the deployed system card */

@@ -125,13 +125,21 @@ function extractSmlIdentifiers(sml: any): Record<string, string> {
   const ids = sml?.identifiers || sml?.identification
   if (!ids) return map
   const list = Array.isArray(ids) ? ids : [ids]
-  for (const group of list) {
-    const chars = group?.characteristicList || group?.identifierList || group
-    if (!Array.isArray(chars)) continue
-    for (const c of chars) {
-      const label = c.label || c.name || c.definition || ''
-      const value = c.value ?? ''
-      if (label) map[label] = String(value)
+  for (const item of list) {
+    // Flat format: item is {definition, label, value}
+    if (item.value != null && (item.label || item.name || item.definition)) {
+      const label = item.label || item.name || item.definition || ''
+      map[label] = String(item.value)
+      continue
+    }
+    // Nested format: item has identifierList/characteristicList
+    const chars = item?.characteristicList || item?.identifierList
+    if (Array.isArray(chars)) {
+      for (const c of chars) {
+        const label = c.label || c.name || c.definition || ''
+        const value = c.value ?? ''
+        if (label) map[label] = String(value)
+      }
     }
   }
   return map
@@ -142,13 +150,21 @@ function extractSmlClassifiers(sml: any): Record<string, string> {
   const cls = sml?.classifiers || sml?.classification
   if (!cls) return map
   const list = Array.isArray(cls) ? cls : [cls]
-  for (const group of list) {
-    const chars = group?.classifierList || group
-    if (!Array.isArray(chars)) continue
-    for (const c of chars) {
-      const label = c.label || c.name || c.definition || ''
-      const value = c.value ?? ''
-      if (label) map[label] = String(value)
+  for (const item of list) {
+    // Flat format: item is {definition, label, value}
+    if (item.value != null && (item.label || item.name || item.definition)) {
+      const label = item.label || item.name || item.definition || ''
+      map[label] = String(item.value)
+      continue
+    }
+    // Nested format: item has classifierList
+    const chars = item?.classifierList
+    if (Array.isArray(chars)) {
+      for (const c of chars) {
+        const label = c.label || c.name || c.definition || ''
+        const value = c.value ?? ''
+        if (label) map[label] = String(value)
+      }
     }
   }
   return map
@@ -160,16 +176,23 @@ function extractSmlCapabilities(sml: any): Record<string, string> {
   if (!caps) return map
   const list = Array.isArray(caps) ? caps : [caps]
   for (const group of list) {
-    const cList = group?.capabilityList || group
-    if (!Array.isArray(cList)) continue
-    for (const c of cList) {
-      const label = c.label || c.name || ''
-      if (c.value != null) {
-        const uom = c.uom?.code || c.uom || ''
-        map[label] = `${c.value}${uom ? ' ' + uom : ''}`
-      } else if (c.value != null) {
-        map[label] = String(c.value)
+    // OSH format: group has .capabilities array (nested items)
+    const cList = group?.capabilities || group?.capabilityList
+    if (Array.isArray(cList)) {
+      for (const c of cList) {
+        const label = c.label || c.name || ''
+        if (c.value != null) {
+          const uom = c.uom?.code || (typeof c.uom === 'string' ? c.uom : '')
+          map[label] = `${c.value}${uom ? ' ' + uom : ''}`
+        }
       }
+      continue
+    }
+    // Flat single capability item
+    if (group.value != null && (group.label || group.name)) {
+      const label = group.label || group.name || ''
+      const uom = group.uom?.code || (typeof group.uom === 'string' ? group.uom : '')
+      map[label] = `${group.value}${uom ? ' ' + uom : ''}`
     }
   }
   return map
@@ -180,15 +203,26 @@ function extractSmlContacts(sml: any): Array<{ role: string; name: string; org: 
   const cList = sml?.contacts
   if (!cList) return contacts
   const list = Array.isArray(cList) ? cList : [cList]
-  for (const group of list) {
-    const members = group?.contactList || group
-    if (!Array.isArray(members)) continue
-    for (const c of members) {
+  for (const item of list) {
+    // Flat format: item is {role, organisationName, individualName, ...}
+    if (item.role || item.organisationName || item.individualName) {
       contacts.push({
-        role: c.role || '',
-        name: c.individualName || c.name || '',
-        org: c.organisationName || c.organization || '',
+        role: item.role || '',
+        name: item.individualName || item.name || '',
+        org: item.organisationName || item.organization || '',
       })
+      continue
+    }
+    // Nested format: item has contactList
+    const members = item?.contactList
+    if (Array.isArray(members)) {
+      for (const c of members) {
+        contacts.push({
+          role: c.role || '',
+          name: c.individualName || c.name || '',
+          org: c.organisationName || c.organization || '',
+        })
+      }
     }
   }
   return contacts
@@ -199,15 +233,26 @@ function extractSmlDocuments(sml: any): DocLink[] {
   const dList = sml?.documents || sml?.documentation
   if (!dList) return docs
   const list = Array.isArray(dList) ? dList : [dList]
-  for (const group of list) {
-    const members = group?.documentList || group
-    if (!Array.isArray(members)) continue
-    for (const d of members) {
+  for (const item of list) {
+    // Flat format: item is {role, name, description, link: {href, type}}
+    if (item.name || item.label || item.link || item.url) {
       docs.push({
-        title: d.name || d.label || d.description || 'Document',
-        href: d.url || d.onlineResource?.linkage || d.linkage || '',
-        role: d.role || '',
+        title: item.name || item.label || item.description || 'Document',
+        href: item.link?.href || item.url || item.onlineResource?.linkage || item.linkage || '',
+        role: item.role || '',
       })
+      continue
+    }
+    // Nested format: item has documentList
+    const members = item?.documentList
+    if (Array.isArray(members)) {
+      for (const d of members) {
+        docs.push({
+          title: d.name || d.label || d.description || 'Document',
+          href: d.link?.href || d.url || d.onlineResource?.linkage || d.linkage || '',
+          role: d.role || '',
+        })
+      }
     }
   }
   return docs
@@ -215,22 +260,37 @@ function extractSmlDocuments(sml: any): DocLink[] {
 
 function extractSmlMedia(sml: any): MediaLink[] {
   const media: MediaLink[] = []
-  // Typically in documents with role = "photo" or image MIME
+  // Typically in documents with role = "photo" or image MIME or link.type = image/*
   const dList = sml?.documents || sml?.documentation
   if (!dList) return media
   const list = Array.isArray(dList) ? dList : [dList]
-  for (const group of list) {
-    const members = group?.documentList || group
-    if (!Array.isArray(members)) continue
-    for (const d of members) {
-      const href = d.url || d.onlineResource?.linkage || d.linkage || ''
-      const mt = d.mediaType || d.format || ''
-      if (mt.startsWith('image/') || /preview|thumbnail|photo/i.test(d.role || d.name || '')) {
-        media.push({
-          title: d.name || d.label || 'Image',
-          href,
-          type: mt,
-        })
+  for (const item of list) {
+    // Flat format: item is {role, name, link: {href, type}}
+    const href = item.link?.href || item.url || item.onlineResource?.linkage || item.linkage || ''
+    const mt = item.link?.type || item.mediaType || item.format || ''
+    const nameOrRole = (item.role || '') + ' ' + (item.name || '')
+    if (mt.startsWith('image/') || /photo|photograph|thumbnail|preview/i.test(nameOrRole)) {
+      media.push({
+        title: item.name || item.label || 'Image',
+        href,
+        type: mt,
+      })
+      continue
+    }
+    // Nested format: item has documentList
+    const members = item?.documentList
+    if (Array.isArray(members)) {
+      for (const d of members) {
+        const dHref = d.link?.href || d.url || d.onlineResource?.linkage || d.linkage || ''
+        const dMt = d.link?.type || d.mediaType || d.format || ''
+        const dNameOrRole = (d.role || '') + ' ' + (d.name || '')
+        if (dMt.startsWith('image/') || /photo|photograph|thumbnail|preview/i.test(dNameOrRole)) {
+          media.push({
+            title: d.name || d.label || 'Image',
+            href: dHref,
+            type: dMt,
+          })
+        }
       }
     }
   }
@@ -358,11 +418,11 @@ function inferRoleFromContext(
   systemKeywords: string[],
   classifiers: Record<string, string>,
 ): string {
-  // Try classifiers first
-  const roleFromClassifier = classifiers['sensorType'] ||
-    classifiers['systemType'] ||
-    classifiers['role'] ||
-    classifiers['Role'] || ''
+  // Try classifiers first (keys may be label text like "System Kind" or definition-based like "SensorType")
+  const roleFromClassifier = classifiers['System Role'] || classifiers['Role Type']
+    || classifiers['sensorType'] || classifiers['systemType']
+    || classifiers['role'] || classifiers['Role']
+    || classifiers['System Kind'] || ''
   if (roleFromClassifier) return roleFromClassifier
 
   // Try keywords
@@ -390,8 +450,9 @@ function inferKindFromContext(
   keywords: string[],
   _identifiers: Record<string, string>,
 ): string {
-  // Check classifiers
-  const kindCls = classifiers['intendedApplication'] || classifiers['systemKind'] || ''
+  // Check classifiers (keys may be label text like "System Kind" or definition-based)
+  const kindCls = classifiers['System Kind'] || classifiers['intendedApplication']
+    || classifiers['systemKind'] || classifiers['Kind'] || ''
   if (kindCls) return kindCls
 
   const kwStr = keywords.join(' ').toLowerCase()
@@ -410,19 +471,21 @@ function buildSummarySentence(
 ): string {
   if (!role && !parentName && !purpose) return ''
 
-  const roleStr = role || 'deployed system'
-  const a = /^[aeiou]/i.test(roleStr) ? 'an' : 'a'
-
-  if (parentName && purpose) {
-    return `This deployed system is ${a} ${roleStr.toLowerCase()} under ${parentName} that ${purpose.toLowerCase().replace(/\.$/, '')}.`
+  // Use the description/purpose directly if it's concise enough
+  if (purpose && purpose.length <= 180) {
+    return purpose.endsWith('.') ? purpose : purpose + '.'
   }
-  if (parentName) {
-    return `This deployed system is ${a} ${roleStr.toLowerCase()} under ${parentName}.`
-  }
+  // Truncate long purpose
   if (purpose) {
-    return `This deployed system is ${a} ${roleStr.toLowerCase()} that ${purpose.toLowerCase().replace(/\.$/, '')}.`
+    const truncated = purpose.substring(0, 175).replace(/\s\S*$/, '') + '…'
+    return truncated
   }
-  return `This deployed system is ${a} ${roleStr.toLowerCase()}.`
+
+  const roleStr = role || 'Deployed system'
+  if (parentName) {
+    return `${roleStr} under ${parentName}.`
+  }
+  return `${roleStr}.`
 }
 
 function inferPurpose(
@@ -431,24 +494,27 @@ function inferPurpose(
   desc: string,
   _role: string,
 ): string {
-  // Build from capabilities
+  // Prefer description — use first sentence only
+  if (desc) {
+    const firstSentence = desc.split(/(?<=[.!?])\s/)[0] || desc
+    const truncated =
+      firstSentence.length > 150
+        ? firstSentence.substring(0, 147).replace(/\s\S*$/, '') + '…'
+        : firstSentence
+    return truncated
+  }
+
+  // Summarise capabilities as operational text
   const capKeys = Object.keys(capabilities)
   if (capKeys.length > 0) {
     const capParts: string[] = []
     for (const key of capKeys.slice(0, 3)) {
       capParts.push(`${key}: ${capabilities[key]}`)
     }
-    return capParts.join('; ')
+    return capParts.join(' · ')
   }
 
-  // Build from description
-  if (desc) {
-    // Truncate long descriptions
-    const truncated = desc.length > 120 ? desc.substring(0, 117) + '...' : desc
-    return truncated
-  }
-
-  // Build from keywords
+  // Fall back to keywords
   if (keywords.length > 0) {
     return keywords.slice(0, 4).join(', ')
   }
@@ -662,6 +728,30 @@ export function useDeployedSystemCard() {
         .filter(Boolean)
         .slice(0, 3)
 
+      // ── Cadence note ─────────────────────────────────────────────
+      // Infer cadence from capabilities or keywords
+      let cadenceNote = ''
+      const cadenceCap = capabilities['Update Rate'] || capabilities['updateRate']
+        || capabilities['Sampling Rate'] || capabilities['samplingRate']
+        || capabilities['Reporting Rate'] || capabilities['reportingRate'] || ''
+      if (cadenceCap) {
+        cadenceNote = `Cadence: ${cadenceCap}`
+      } else if (keywords.some(k => /event[- ]?driven/i.test(k)) || smlDesc?.toLowerCase().includes('event-driven')) {
+        cadenceNote = 'Event-driven'
+      } else if (keywords.some(k => /real[- ]?time/i.test(k))) {
+        cadenceNote = 'Near-real-time'
+      }
+
+      // ── Method summary ───────────────────────────────────────────
+      let methodSummary = ''
+      if (procedures.length > 0) {
+        methodSummary = procedures[0]!.name || procedures[0]!.description || ''
+        if (methodSummary && methodSummary.length > 40) {
+          methodSummary = methodSummary.substring(0, 37) + '…'
+        }
+        if (methodSummary) methodSummary = `Method: ${methodSummary}`
+      }
+
       // ── Capabilities chips ───────────────────────────────────────
       const capChips: string[] = []
       for (const [label, val] of Object.entries(capabilities)) {
@@ -708,10 +798,10 @@ export function useDeployedSystemCard() {
         productLabels,
         latestActivityTime: latestTime || '',
         latestActivityRelative: latestTime ? relativeTime(latestTime) : 'No recent activity',
-        cadenceNote: '',
+        cadenceNote,
         controlStreamCount: controlCount,
         primaryProcedures: procedures.slice(0, 2),
-        methodSummary: procedures.length > 0 ? (procedures[0]!.description || '') : '',
+        methodSummary,
         keyAssumptions: [],
 
         // Freshness / Trust

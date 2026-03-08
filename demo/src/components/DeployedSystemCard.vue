@@ -1,19 +1,14 @@
 <script setup lang="ts">
 /**
- * DeployedSystemCard.vue
+ * DeployedSystemCard.vue — Tactical info card for deployed-system leaves.
  *
- * Rich details card for deployment resources that represent deployed-system leaves.
- * Follows the OS4CSAPI Deployed System Card Field Mapping Spec v1.
+ * Redesigned per OS4CSAPI UI Feedback Pack v1.
+ * Section order: Header → Summary → Outputs → Context → Occupant → Freshness → Links → Advanced
  *
- * Card sections:
- *   1. Header — title, subtitle, role/status/kind badges
- *   2. Summary — one-sentence operational summary
- *   3. Context — deployment path, type, geometry
- *   4. Occupant — system identity, kind, manufacturer/model, owner
- *   5. Outputs & Methods — datastreams, procedures, capabilities
- *   6. Freshness / Trust — latest activity, quality
- *   7. Media / References — docs, links
- *   8. Advanced IDs — collapsed by default
+ * Design goals:
+ *   - Understand the system in 5 seconds
+ *   - Operational, not verbose
+ *   - No raw schema, no debug text, no ISO timestamps in the main view
  */
 import { computed } from 'vue'
 import type { DeployedSystemCardModel } from '../composables/useDeployedSystemCard'
@@ -28,278 +23,212 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-// Badges to show (filter out empty ones)
+// Max 3 badges
 const badges = computed(() => {
-  const b: Array<{ label: string; color: string; icon?: string }> = []
-  if (props.card.roleBadge) {
-    b.push({ label: props.card.roleBadge, color: '#3b82f6' })
-  }
-  if (props.card.statusBadge) {
-    const statusColor = /active|healthy|online/i.test(props.card.statusBadge) ? '#22c55e'
-      : /degraded|stale/i.test(props.card.statusBadge) ? '#f59e0b'
-      : /inactive|offline/i.test(props.card.statusBadge) ? '#ef4444'
-      : '#64748b'
-    b.push({ label: props.card.statusBadge, color: statusColor })
-  }
-  if (props.card.kindBadge) {
-    b.push({ label: props.card.kindBadge, color: '#8b5cf6' })
-  }
-  return b
+  const b: Array<{ label: string; cls: string }> = []
+  if (props.card.roleBadge)
+    b.push({ label: props.card.roleBadge, cls: 'badge-role' })
+  if (props.card.statusBadge)
+    b.push({ label: props.card.statusBadge, cls: statusClass(props.card.statusBadge) })
+  if (props.card.kindBadge)
+    b.push({ label: props.card.kindBadge, cls: 'badge-kind' })
+  return b.slice(0, 3)
 })
 
-const hasContext = computed(() =>
-  props.card.deploymentPath || props.card.deploymentType || props.card.geometrySummary
-)
+function statusClass(s: string): string {
+  if (/active|healthy|online/i.test(s)) return 'badge-ok'
+  if (/degraded|stale/i.test(s)) return 'badge-warn'
+  if (/inactive|offline/i.test(s)) return 'badge-err'
+  return 'badge-neutral'
+}
+
+// Outputs section — product labels + cadence + method
+const outputLines = computed(() => {
+  const lines: string[] = []
+  const pl = props.card.productLabels
+  if (pl.length) lines.push(...pl.slice(0, 3))
+  else lines.push('No public data products')
+  if (props.card.cadenceNote) lines.push(props.card.cadenceNote)
+  if (props.card.methodSummary) lines.push(props.card.methodSummary)
+  return lines
+})
+
+const hasNoProducts = computed(() => props.card.productLabels.length === 0)
+
+// Context — compact breadcrumb
+const contextLines = computed(() => {
+  const parts: string[] = []
+  if (props.card.deploymentPath) {
+    // Split path and take the last 3 segments for compactness
+    const segs = props.card.deploymentPath.split(/\s*[›→>]\s*/).filter(Boolean)
+    parts.push(...segs.slice(-3))
+  } else if (props.card.parentDeployment) {
+    parts.push(props.card.parentDeployment)
+  }
+  if (props.card.deploymentType) parts.push(props.card.deploymentType)
+  return parts
+})
 
 const hasOccupant = computed(() =>
   props.card.occupantName && props.card.occupantName !== 'Unknown Occupant'
 )
 
-const hasOutputs = computed(() =>
-  props.card.primaryDatastreams.length > 0 ||
-  props.card.primaryProcedures.length > 0 ||
-  props.card.capabilities.length > 0
+// Links — max 3
+const visibleLinks = computed(() => props.card.docsLinks.slice(0, 3))
+
+// Freshness
+const freshLabel = computed(() => {
+  if (props.card.latestActivityRelative && props.card.latestActivityRelative !== 'No recent activity') {
+    return `Updated ${props.card.latestActivityRelative}`
+  }
+  return 'No recent activity'
+})
+
+const freshActive = computed(() =>
+  props.card.latestActivityRelative && props.card.latestActivityRelative !== 'No recent activity'
 )
 
-const hasFreshness = computed(() =>
-  props.card.latestActivityRelative || props.card.qualitySummary || props.card.healthState
-)
-
-const hasDocs = computed(() =>
-  props.card.docsLinks.length > 0 || props.card.mediaLinks.length > 0
-)
+const trustLine = computed(() => {
+  const parts: string[] = []
+  if (props.card.healthState) parts.push(props.card.healthState)
+  if (props.card.qualitySummary) parts.push(props.card.qualitySummary)
+  return parts.join(' · ') || ''
+})
 </script>
 
 <template>
   <div class="dsc" :class="{ 'dsc--loading': loading }">
-    <!-- ═══ Loading overlay ═══ -->
-    <div v-if="loading" class="dsc-loading">
-      <i class="pi pi-spin pi-spinner"></i>
-      <span>Loading system details…</span>
+    <!-- Loading spinner -->
+    <div v-if="loading" class="dsc-loader">
+      <i class="pi pi-spin pi-spinner"></i> Loading…
     </div>
 
-    <!-- ═══ 1. HEADER ═══ -->
-    <div class="dsc-header">
-      <div class="dsc-header-top">
-        <div class="dsc-icon-area">
-          <img v-if="card.thumbnail" :src="card.thumbnail" class="dsc-thumbnail" alt="" />
-          <div v-else class="dsc-icon-placeholder">
-            <i class="pi pi-map"></i>
-          </div>
+    <!-- ── 1. HEADER ── -->
+    <header class="dsc-hdr">
+      <div class="dsc-hdr-row">
+        <div class="dsc-icon">
+          <img v-if="card.thumbnail" :src="card.thumbnail" alt="" />
+          <i v-else class="pi pi-map"></i>
         </div>
-        <div class="dsc-title-area">
-          <div class="dsc-title">{{ card.title }}</div>
-          <div v-if="card.subtitle" class="dsc-subtitle">{{ card.subtitle }}</div>
+        <div class="dsc-hdr-text">
+          <h2 class="dsc-title">{{ card.title }}</h2>
+          <p v-if="card.subtitle" class="dsc-sub">{{ card.subtitle }}</p>
         </div>
+        <button class="dsc-close" @click="emit('close')" title="Close">
+          <i class="pi pi-times"></i>
+        </button>
       </div>
       <div v-if="badges.length" class="dsc-badges">
-        <span
-          v-for="(badge, i) in badges"
-          :key="i"
-          class="dsc-badge"
-          :style="{ backgroundColor: badge.color + '18', color: badge.color, borderColor: badge.color + '40' }"
-        >
-          {{ badge.label }}
+        <span v-for="(b, i) in badges" :key="i" class="dsc-badge" :class="b.cls">
+          {{ b.label }}
         </span>
       </div>
-    </div>
+    </header>
 
-    <!-- ═══ 2. SUMMARY ═══ -->
+    <!-- ── 2. SUMMARY ── -->
     <p v-if="card.summarySentence" class="dsc-summary">
       {{ card.summarySentence }}
     </p>
 
-    <!-- ═══ 3. CONTEXT ═══ -->
-    <div v-if="hasContext" class="dsc-section">
-      <div class="dsc-section-label">
-        <i class="pi pi-sitemap"></i> Context
-      </div>
-      <div v-if="card.deploymentPath" class="dsc-field">
-        <span class="dsc-field-label">Path</span>
-        <span class="dsc-path">{{ card.deploymentPath }}</span>
-      </div>
-      <div v-if="card.deploymentType" class="dsc-field">
-        <span class="dsc-field-label">Type</span>
-        <span class="dsc-chip dsc-chip--muted">{{ card.deploymentType }}</span>
-      </div>
-      <div v-if="card.geometrySummary" class="dsc-field">
-        <span class="dsc-field-label">Geometry</span>
-        {{ card.geometrySummary }}
-      </div>
-    </div>
-
-    <!-- ═══ 4. OCCUPANT ═══ -->
-    <div v-if="hasOccupant" class="dsc-section">
-      <div class="dsc-section-label">
-        <i class="pi pi-server"></i> Occupant System
-      </div>
-      <div class="dsc-field">
-        <span class="dsc-field-label">Name</span>
-        {{ card.occupantName }}
-      </div>
-      <div v-if="card.occupantKind && card.occupantKind !== 'Unknown Kind'" class="dsc-field">
-        <span class="dsc-field-label">Kind</span>
-        {{ card.occupantKind }}
-      </div>
-      <div v-if="card.manufacturerModelOrVersion" class="dsc-field">
-        <span class="dsc-field-label">Model / Version</span>
-        {{ card.manufacturerModelOrVersion }}
-      </div>
-      <div v-if="card.ownerMaintainer" class="dsc-field">
-        <span class="dsc-field-label">Owner</span>
-        {{ card.ownerMaintainer }}
-      </div>
-    </div>
-
-    <!-- ═══ 5. OUTPUTS & METHODS ═══ -->
-    <div v-if="hasOutputs || card.primaryPurpose" class="dsc-section">
-      <div class="dsc-section-label">
-        <i class="pi pi-chart-line"></i> Outputs & Methods
-      </div>
-
-      <!-- Purpose -->
-      <div v-if="card.primaryPurpose && card.primaryPurpose !== 'Purpose not documented'" class="dsc-field">
-        <span class="dsc-field-label">Purpose</span>
-        {{ card.primaryPurpose }}
-      </div>
-
-      <!-- Capabilities -->
-      <div v-if="card.capabilities.length" class="dsc-field">
-        <span class="dsc-field-label">Capabilities</span>
-        <div class="dsc-chips">
-          <span v-for="cap in card.capabilities" :key="cap" class="dsc-chip">
-            {{ cap }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Datastreams -->
-      <div v-if="card.primaryDatastreams.length" class="dsc-field">
-        <span class="dsc-field-label">Data Products</span>
-        <div class="dsc-ds-list">
-          <div v-for="ds in card.primaryDatastreams" :key="ds.id" class="dsc-ds-item">
-            <i class="pi pi-chart-line dsc-ds-icon"></i>
-            <div class="dsc-ds-info">
-              <div class="dsc-ds-name">{{ ds.name }}</div>
-              <div v-if="ds.observedProperties.length" class="dsc-ds-props">
-                {{ ds.observedProperties.slice(0, 4).join(', ') }}
-                <span v-if="ds.observedProperties.length > 4" class="dsc-muted">
-                  +{{ ds.observedProperties.length - 4 }} more
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div v-else class="dsc-empty">No public data products</div>
-
-      <!-- Procedures -->
-      <div v-if="card.primaryProcedures.length" class="dsc-field">
-        <span class="dsc-field-label">Methods</span>
-        <div v-for="proc in card.primaryProcedures" :key="proc.id" class="dsc-proc-item">
-          <i class="pi pi-cog dsc-proc-icon"></i>
-          <div>
-            <div class="dsc-proc-name">{{ proc.name }}</div>
-            <div v-if="proc.description" class="dsc-proc-desc">{{ proc.description }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Control streams -->
-      <div v-if="card.controlStreamCount > 0" class="dsc-field">
-        <span class="dsc-field-label">Control Streams</span>
-        <span class="dsc-chip dsc-chip--muted">{{ card.controlStreamCount }} available</span>
-      </div>
-    </div>
-
-    <!-- ═══ 6. FRESHNESS / TRUST ═══ -->
-    <div v-if="hasFreshness" class="dsc-section">
-      <div class="dsc-section-label">
-        <i class="pi pi-clock"></i> Freshness
-      </div>
-      <div class="dsc-freshness-row">
-        <div v-if="card.latestActivityRelative" class="dsc-field">
-          <span class="dsc-field-label">Last Activity</span>
-          <span class="dsc-freshness-value">
-            {{ card.latestActivityRelative }}
-            <span v-if="card.latestActivityTime" class="dsc-muted"> · {{ card.latestActivityTime }}</span>
-          </span>
-        </div>
-        <div v-if="card.qualitySummary" class="dsc-field">
-          <span class="dsc-field-label">Quality</span>
-          {{ card.qualitySummary }}
-        </div>
-        <div v-if="card.healthState" class="dsc-field">
-          <span class="dsc-field-label">Health</span>
-          {{ card.healthState }}
-        </div>
-        <div v-if="card.contributingSources" class="dsc-field">
-          <span class="dsc-field-label">Sources</span>
-          {{ card.contributingSources }}
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ 7. MEDIA / REFERENCES ═══ -->
-    <div v-if="hasDocs" class="dsc-section">
-      <div class="dsc-section-label">
-        <i class="pi pi-link"></i> References
-      </div>
-      <div v-for="doc in card.docsLinks" :key="doc.href" class="dsc-doc-link">
-        <a v-if="doc.href" :href="doc.href" target="_blank" rel="noopener">
-          <i class="pi pi-external-link"></i> {{ doc.title }}
-        </a>
-        <span v-else>{{ doc.title }}</span>
-        <span v-if="doc.role" class="dsc-muted"> · {{ doc.role }}</span>
-      </div>
-      <div v-if="card.mediaLinks.length" class="dsc-media-row">
-        <a
-          v-for="ml in card.mediaLinks"
-          :key="ml.href"
-          :href="ml.href"
-          target="_blank"
-          rel="noopener"
-          class="dsc-media-thumb"
+    <!-- ── 3. OUTPUTS ── -->
+    <section class="dsc-sec">
+      <h3 class="dsc-sec-hd"><i class="pi pi-chart-line"></i> Outputs</h3>
+      <ul class="dsc-output-list">
+        <li
+          v-for="(line, i) in outputLines"
+          :key="i"
+          class="dsc-output-item"
+          :class="{ 'dsc-output-empty': hasNoProducts && i === 0 }"
         >
-          <img :src="ml.href" :alt="ml.title" />
-        </a>
-      </div>
-    </div>
+          {{ line }}
+        </li>
+      </ul>
+    </section>
 
-    <!-- ═══ ACTION BUTTONS ═══ -->
-    <div class="dsc-actions">
-      <button class="dsc-btn dsc-btn--primary" @click="emit('explore')">
+    <!-- ── 4. CONTEXT ── -->
+    <section v-if="contextLines.length" class="dsc-sec">
+      <h3 class="dsc-sec-hd"><i class="pi pi-sitemap"></i> Context</h3>
+      <div class="dsc-breadcrumb">
+        <span v-for="(seg, i) in contextLines" :key="i">
+          <span v-if="i > 0" class="dsc-sep">›</span>
+          {{ seg }}
+        </span>
+      </div>
+    </section>
+
+    <!-- ── 5. OCCUPANT ── -->
+    <section v-if="hasOccupant" class="dsc-sec">
+      <h3 class="dsc-sec-hd"><i class="pi pi-server"></i> Occupant</h3>
+      <div class="dsc-kv">
+        <span class="dsc-k">Name</span>
+        <span class="dsc-v">{{ card.occupantName }}</span>
+      </div>
+      <div v-if="card.occupantKind && card.occupantKind !== 'Unknown Kind'" class="dsc-kv">
+        <span class="dsc-k">Kind</span>
+        <span class="dsc-v">{{ card.occupantKind }}</span>
+      </div>
+      <div v-if="card.manufacturerModelOrVersion" class="dsc-kv">
+        <span class="dsc-k">Model / Version</span>
+        <span class="dsc-v">{{ card.manufacturerModelOrVersion }}</span>
+      </div>
+      <div v-if="card.ownerMaintainer" class="dsc-kv">
+        <span class="dsc-k">Owner</span>
+        <span class="dsc-v">{{ card.ownerMaintainer }}</span>
+      </div>
+    </section>
+
+    <!-- ── 6. FRESHNESS ── -->
+    <section class="dsc-sec dsc-fresh">
+      <div class="dsc-fresh-row">
+        <span class="dsc-fresh-label" :class="{ 'dsc-fresh-active': freshActive }">
+          <i class="pi" :class="freshActive ? 'pi-check-circle' : 'pi-clock'"></i>
+          {{ freshLabel }}
+        </span>
+        <span v-if="trustLine" class="dsc-trust">{{ trustLine }}</span>
+      </div>
+    </section>
+
+    <!-- ── 7. LINKS ── -->
+    <section class="dsc-sec dsc-links">
+      <button class="dsc-action" @click="emit('explore')">
         <i class="pi pi-external-link"></i> View in Explorer
       </button>
-    </div>
+      <a
+        v-for="doc in visibleLinks"
+        :key="doc.href"
+        :href="doc.href"
+        target="_blank"
+        rel="noopener"
+        class="dsc-doc"
+      >
+        <i class="pi pi-file"></i> {{ doc.title }}
+      </a>
+    </section>
 
-    <!-- ═══ 8. ADVANCED IDs (collapsed) ═══ -->
-    <details class="dsc-advanced">
+    <!-- ── 8. ADVANCED IDs (collapsed) ── -->
+    <details class="dsc-adv">
       <summary>Advanced IDs</summary>
-      <div class="dsc-advanced-body">
-        <div v-if="card.advancedDeploymentId" class="dsc-adv-field">
-          <span class="dsc-adv-label">Deployment ID</span>
-          <code>{{ card.advancedDeploymentId }}</code>
+      <div class="dsc-adv-body">
+        <div v-if="card.advancedDeploymentId" class="dsc-adv-row">
+          <span>Deployment ID</span><code>{{ card.advancedDeploymentId }}</code>
         </div>
-        <div v-if="card.advancedDeploymentUid" class="dsc-adv-field">
-          <span class="dsc-adv-label">Deployment UID</span>
-          <code>{{ card.advancedDeploymentUid }}</code>
+        <div v-if="card.advancedDeploymentUid" class="dsc-adv-row">
+          <span>Deployment UID</span><code>{{ card.advancedDeploymentUid }}</code>
         </div>
-        <div v-if="card.advancedSystemId" class="dsc-adv-field">
-          <span class="dsc-adv-label">System ID</span>
-          <code>{{ card.advancedSystemId }}</code>
+        <div v-if="card.advancedSystemId" class="dsc-adv-row">
+          <span>System ID</span><code>{{ card.advancedSystemId }}</code>
         </div>
-        <div v-if="card.advancedSystemUid" class="dsc-adv-field">
-          <span class="dsc-adv-label">System UID</span>
-          <code>{{ card.advancedSystemUid }}</code>
+        <div v-if="card.advancedSystemUid" class="dsc-adv-row">
+          <span>System UID</span><code>{{ card.advancedSystemUid }}</code>
         </div>
-        <div v-if="card.advancedBootstrapOwner" class="dsc-adv-field">
-          <span class="dsc-adv-label">Bootstrap Owner</span>
-          <code>{{ card.advancedBootstrapOwner }}</code>
+        <div v-if="card.advancedBootstrapOwner" class="dsc-adv-row">
+          <span>Bootstrap Owner</span><code>{{ card.advancedBootstrapOwner }}</code>
         </div>
-        <div v-if="card.advancedSourceOfTruth" class="dsc-adv-field">
-          <span class="dsc-adv-label">Source of Truth</span>
-          <code>{{ card.advancedSourceOfTruth }}</code>
+        <div v-if="card.advancedSourceOfTruth" class="dsc-adv-row">
+          <span>Source of Truth</span><code>{{ card.advancedSourceOfTruth }}</code>
+        </div>
+        <div v-if="card.latestActivityTime" class="dsc-adv-row">
+          <span>Exact Time</span><code>{{ card.latestActivityTime }}</code>
         </div>
       </div>
     </details>
@@ -309,104 +238,99 @@ const hasDocs = computed(() =>
 <style scoped>
 /* ═══ Root ═══ */
 .dsc {
+  font-family: system-ui, -apple-system, sans-serif;
   font-size: 0.84rem;
   color: #1e293b;
   line-height: 1.45;
   position: relative;
+  padding: 0;
 }
-
-.dsc--loading {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.dsc-loading {
+.dsc--loading { opacity: 0.5; pointer-events: none; }
+.dsc-loader {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
+  gap: 0.4rem;
+  padding: 0.4rem 0;
   color: #64748b;
   font-size: 0.82rem;
 }
 
 /* ═══ Header ═══ */
-.dsc-header {
-  margin-bottom: 0.5rem;
-}
-
-.dsc-header-top {
+.dsc-hdr { margin-bottom: 0.35rem; }
+.dsc-hdr-row {
   display: flex;
-  gap: 0.6rem;
-  align-items: flex-start;
+  gap: 0.55rem;
+  align-items: center;
 }
-
-.dsc-icon-area {
+.dsc-icon {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-}
-
-.dsc-thumbnail {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  object-fit: cover;
-}
-
-.dsc-icon-placeholder {
-  width: 36px;
-  height: 36px;
+  width: 40px; height: 40px;
   background: #dbeafe;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #3b82f6;
-  font-size: 1rem;
+  font-size: 1.15rem;
+  overflow: hidden;
 }
-
-.dsc-title-area {
-  flex: 1;
-  min-width: 0;
+.dsc-icon img {
+  width: 100%; height: 100%;
+  object-fit: cover;
 }
-
+.dsc-hdr-text { flex: 1; min-width: 0; }
 .dsc-title {
+  font-size: 1.02rem;
   font-weight: 700;
-  font-size: 0.95rem;
   color: #0f172a;
   line-height: 1.2;
+  margin: 0;
 }
-
-.dsc-subtitle {
-  font-size: 0.82rem;
+.dsc-sub {
+  font-size: 0.8rem;
   color: #64748b;
-  margin-top: 1px;
+  margin: 1px 0 0;
 }
+.dsc-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  padding: 0.2rem;
+  border-radius: 4px;
+}
+.dsc-close:hover { color: #475569; background: #f1f5f9; }
 
 /* ═══ Badges ═══ */
 .dsc-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-top: 0.4rem;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
 }
-
 .dsc-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
-  padding: 0.15rem 0.45rem;
+  padding: 0.12rem 0.45rem;
   border-radius: 999px;
   border: 1px solid;
   white-space: nowrap;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
+.badge-role { background: #eff6ff; color: #2563eb; border-color: #93c5fd; }
+.badge-ok   { background: #f0fdf4; color: #16a34a; border-color: #86efac; }
+.badge-warn { background: #fffbeb; color: #d97706; border-color: #fcd34d; }
+.badge-err  { background: #fef2f2; color: #dc2626; border-color: #fca5a5; }
+.badge-neutral { background: #f8fafc; color: #64748b; border-color: #cbd5e1; }
+.badge-kind { background: #faf5ff; color: #7c3aed; border-color: #c4b5fd; }
 
 /* ═══ Summary ═══ */
 .dsc-summary {
-  margin: 0.4rem 0 0.6rem;
-  padding: 0.45rem 0.55rem;
+  margin: 0.3rem 0 0.5rem;
+  padding: 0.4rem 0.55rem;
   background: #f0f9ff;
   border-left: 3px solid #3b82f6;
   border-radius: 0 6px 6px 0;
@@ -416,277 +340,185 @@ const hasDocs = computed(() =>
 }
 
 /* ═══ Sections ═══ */
-.dsc-section {
-  margin-bottom: 0.6rem;
-  padding-bottom: 0.5rem;
+.dsc-sec {
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.4rem;
   border-bottom: 1px solid #f1f5f9;
 }
-
-.dsc-section:last-of-type {
-  border-bottom: none;
-}
-
-.dsc-section-label {
-  font-size: 0.72rem;
+.dsc-sec:last-of-type { border-bottom: none; }
+.dsc-sec-hd {
+  font-size: 0.68rem;
   font-weight: 700;
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  margin-bottom: 0.35rem;
+  margin: 0 0 0.25rem;
   display: flex;
   align-items: center;
   gap: 0.3rem;
 }
+.dsc-sec-hd i { font-size: 0.68rem; }
 
-.dsc-section-label i {
-  font-size: 0.72rem;
-}
-
-/* ═══ Fields ═══ */
-.dsc-field {
-  margin-bottom: 0.3rem;
-}
-
-.dsc-field-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  display: block;
-  margin-bottom: 0.05rem;
-}
-
-.dsc-path {
-  font-size: 0.78rem;
-  color: #475569;
-  word-break: break-word;
-}
-
-.dsc-muted {
-  color: #94a3b8;
-  font-size: 0.78rem;
-}
-
-.dsc-empty {
-  font-size: 0.8rem;
-  color: #94a3b8;
-  font-style: italic;
-  margin: 0.2rem 0;
-}
-
-/* ═══ Chips ═══ */
-.dsc-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  margin-top: 0.15rem;
-}
-
-.dsc-chip {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.72rem;
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  background: #eff6ff;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
-  white-space: nowrap;
-}
-
-.dsc-chip--muted {
-  background: #f1f5f9;
-  color: #64748b;
-  border-color: #e2e8f0;
-}
-
-/* ═══ Datastream list ═══ */
-.dsc-ds-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  margin-top: 0.2rem;
-}
-
-.dsc-ds-item {
-  display: flex;
-  gap: 0.4rem;
-  align-items: flex-start;
-  padding: 0.3rem 0.4rem;
-  background: #fafbfc;
-  border: 1px solid #f1f5f9;
-  border-radius: 6px;
-}
-
-.dsc-ds-icon {
-  color: #3b82f6;
-  font-size: 0.75rem;
-  margin-top: 0.15rem;
-  flex-shrink: 0;
-}
-
-.dsc-ds-info {
-  min-width: 0;
-}
-
-.dsc-ds-name {
-  font-weight: 600;
-  font-size: 0.8rem;
-  color: #1e293b;
-}
-
-.dsc-ds-props {
-  font-size: 0.74rem;
-  color: #64748b;
-  margin-top: 0.05rem;
-  word-break: break-word;
-}
-
-/* ═══ Procedure list ═══ */
-.dsc-proc-item {
-  display: flex;
-  gap: 0.4rem;
-  align-items: flex-start;
-  margin-bottom: 0.25rem;
-}
-
-.dsc-proc-icon {
-  color: #8b5cf6;
-  font-size: 0.75rem;
-  margin-top: 0.15rem;
-  flex-shrink: 0;
-}
-
-.dsc-proc-name {
-  font-weight: 600;
-  font-size: 0.8rem;
-  color: #1e293b;
-}
-
-.dsc-proc-desc {
-  font-size: 0.74rem;
-  color: #64748b;
-  margin-top: 0.05rem;
-}
-
-/* ═══ Freshness ═══ */
-.dsc-freshness-row {
+/* ═══ Outputs ═══ */
+.dsc-output-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
 }
-
-.dsc-freshness-value {
+.dsc-output-item {
+  font-size: 0.82rem;
+  padding: 0.22rem 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 5px;
+  color: #1e293b;
+  font-weight: 500;
+}
+.dsc-output-item:first-child {
   font-weight: 600;
-  color: #0f172a;
+  background: #eff6ff;
+  border-color: #dbeafe;
+  color: #1e40af;
+}
+.dsc-output-empty {
+  color: #94a3b8 !important;
+  font-style: italic;
+  font-weight: 400 !important;
+  background: #fafafa !important;
+  border-color: #f1f5f9 !important;
 }
 
-/* ═══ Docs / Media ═══ */
-.dsc-doc-link {
-  margin-bottom: 0.2rem;
+/* ═══ Context ═══ */
+.dsc-breadcrumb {
+  font-size: 0.8rem;
+  color: #475569;
+}
+.dsc-sep {
+  color: #cbd5e1;
+  margin: 0 0.25rem;
+}
+
+/* ═══ Occupant KV ═══ */
+.dsc-kv {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.15rem;
   font-size: 0.8rem;
 }
+.dsc-k {
+  flex-shrink: 0;
+  width: 90px;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+.dsc-v {
+  color: #1e293b;
+  min-width: 0;
+  word-break: break-word;
+}
 
-.dsc-doc-link a {
-  color: #3b82f6;
-  text-decoration: none;
-  display: inline-flex;
+/* ═══ Freshness ═══ */
+.dsc-fresh {
+  padding: 0.35rem 0;
+  border-bottom: none;
+}
+.dsc-fresh-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.dsc-fresh-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  display: flex;
   align-items: center;
   gap: 0.25rem;
 }
-
-.dsc-doc-link a:hover {
-  text-decoration: underline;
+.dsc-fresh-label i { font-size: 0.75rem; }
+.dsc-fresh-active { color: #16a34a; font-weight: 600; }
+.dsc-trust {
+  font-size: 0.75rem;
+  color: #94a3b8;
 }
 
-.dsc-media-row {
+/* ═══ Links ═══ */
+.dsc-links {
   display: flex;
+  flex-direction: column;
   gap: 0.3rem;
-  margin-top: 0.3rem;
-  flex-wrap: wrap;
+  border-bottom: none;
 }
-
-.dsc-media-thumb img {
-  width: 48px;
-  height: 48px;
-  object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid #e2e8f0;
-}
-
-/* ═══ Action buttons ═══ */
-.dsc-actions {
-  margin-top: 0.6rem;
-  display: flex;
-  gap: 0.4rem;
-}
-
-.dsc-btn {
-  flex: 1;
-  padding: 0.4rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
+.dsc-action {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
-  transition: background 0.15s, color 0.15s;
-  border: 1px solid transparent;
-}
-
-.dsc-btn--primary {
+  gap: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
   background: transparent;
   color: #3b82f6;
-  border-color: #3b82f6;
-}
-
-.dsc-btn--primary:hover {
-  background: #eff6ff;
-}
-
-/* ═══ Advanced IDs ═══ */
-.dsc-advanced {
-  margin-top: 0.5rem;
-}
-
-.dsc-advanced summary {
+  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.12s;
+}
+.dsc-action:hover { background: #eff6ff; }
+.dsc-doc {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.78rem;
+  color: #3b82f6;
+  text-decoration: none;
+  padding: 0.15rem 0;
+}
+.dsc-doc:hover { text-decoration: underline; }
+.dsc-doc i { font-size: 0.72rem; }
+
+/* ═══ Advanced ═══ */
+.dsc-adv {
+  margin-top: 0.35rem;
+}
+.dsc-adv summary {
+  cursor: pointer;
+  font-size: 0.75rem;
   color: #94a3b8;
   user-select: none;
 }
-
-.dsc-advanced summary:hover {
-  color: #64748b;
-}
-
-.dsc-advanced-body {
-  margin-top: 0.3rem;
-  padding: 0.4rem;
+.dsc-adv summary:hover { color: #64748b; }
+.dsc-adv-body {
+  margin-top: 0.25rem;
+  padding: 0.35rem 0.4rem;
   background: #f8fafc;
   border-radius: 6px;
   border: 1px solid #f1f5f9;
 }
-
-.dsc-adv-field {
-  margin-bottom: 0.2rem;
-  font-size: 0.76rem;
-}
-
-.dsc-adv-label {
-  font-weight: 600;
-  color: #94a3b8;
+.dsc-adv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.15rem;
   font-size: 0.72rem;
-  display: block;
+  gap: 0.4rem;
 }
-
-.dsc-adv-field code {
-  font-size: 0.74rem;
+.dsc-adv-row span {
+  color: #94a3b8;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.dsc-adv-row code {
+  font-size: 0.7rem;
   background: #f1f5f9;
-  padding: 0.1rem 0.25rem;
+  padding: 0.08rem 0.2rem;
   border-radius: 3px;
   word-break: break-all;
   color: #334155;
+  text-align: right;
 }
 </style>
