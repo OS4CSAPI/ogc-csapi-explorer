@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router'
 import { connection, RESOURCE_TYPES } from '../state'
 import { apiFetch } from '../api'
 import { getListUrl, getNestedListUrl } from '../csapi-bridge'
+import { useDeployedSystemCard } from '../composables/useDeployedSystemCard'
+import DeployedSystemCard from '../components/DeployedSystemCard.vue'
 
 // OpenLayers imports
 import Map from 'ol/Map'
@@ -127,6 +129,13 @@ let locationDatastreamList: Array<{ id: string; name: string; systemId: string }
 let localizerDatastreamId: string | null = null
 // Track how many features were enriched from observations
 const enrichedCounts = ref<Record<string, number>>({})
+
+// Deployed system card composable
+const { loading: dscLoading, card: dscCard, isDeployedSystemLeaf, composeCard: dscComposeCard, clearCard: dscClearCard } = useDeployedSystemCard()
+
+// Deployment hierarchy maps — populated by enrichDeployments(), consumed by card composition
+let deploymentParentMap: Record<string, string> = {}
+let deploymentItemById: Record<string, any> = {}
 
 // Bounding box filter state
 const bboxFilter = ref<[number, number, number, number] | null>(null)
@@ -1220,6 +1229,10 @@ async function enrichDeployments(): Promise<void> {
       const id = extractId(it)
       if (id) itemById[id] = it
     }
+
+    // Surface hierarchy maps for deployed-system card composition
+    deploymentParentMap = { ...parentMap }
+    deploymentItemById = { ...itemById }
 
     // ── 2. Build system UID → location lookup ──────────────────────
     // systemLocationCache is keyed by system ID, but deployments reference
@@ -3020,6 +3033,13 @@ onMounted(() => {
         _olFeature: feature,
       }
 
+      // Compose deployed-system card if this is a deployment leaf
+      if (isDeployedSystemLeaf(selectedFeature.value)) {
+        dscComposeCard(selectedFeature.value, deploymentParentMap, deploymentItemById)
+      } else {
+        dscClearCard()
+      }
+
       // Position popup
       const geom = (feature as Feature).getGeometry()
       if (geom) {
@@ -3105,6 +3125,7 @@ function closePopup() {
     selectedFeature.value._olFeature.setStyle(getStyle(prevType, prevEnriched, selectedFeature.value.rawData))
   }
   selectedFeature.value = null
+  dscClearCard()
 }
 
 function goToDetail() {
@@ -3405,7 +3426,22 @@ watch(selectedFeature, (feat) => {
       </div>
 
       <!-- Detail panel when a feature is selected -->
-      <div v-if="selectedFeature" class="detail-panel">
+      <!-- Deployed-system card for deployment leaves -->
+      <div v-if="selectedFeature && dscCard" class="detail-panel">
+        <DeployedSystemCard
+          :card="dscCard"
+          :loading="dscLoading"
+          @explore="goToDetail"
+          @close="closePopup"
+        />
+      </div>
+      <!-- Generic detail panel for non-deployment features (or while card is loading) -->
+      <div v-else-if="selectedFeature" class="detail-panel">
+        <div v-if="dscLoading && isDeployedSystemLeaf(selectedFeature)" class="dsc-inline-loading">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Loading deployed system details…</span>
+        </div>
+        <template v-else>
         <div class="detail-header">
           <span class="detail-type-badge" :style="{ backgroundColor: TYPE_COLORS[selectedFeature.resourceType] }">
             {{ TYPE_LABELS[selectedFeature.resourceType] }}
@@ -3456,6 +3492,7 @@ watch(selectedFeature, (feat) => {
           <summary>Raw JSON</summary>
           <pre>{{ JSON.stringify(selectedFeature.rawData, null, 2) }}</pre>
         </details>
+        </template>
       </div>
     </aside>
 
@@ -3686,7 +3723,20 @@ watch(selectedFeature, (feat) => {
             </div>
 
             <!-- Detail content -->
-            <div v-if="mobilePanel === 'detail' && selectedFeature" class="tak-sheet-body">
+            <div v-if="mobilePanel === 'detail' && selectedFeature && dscCard" class="tak-sheet-body">
+              <DeployedSystemCard
+                :card="dscCard"
+                :loading="dscLoading"
+                @explore="goToDetail"
+                @close="closePopup"
+              />
+            </div>
+            <div v-else-if="mobilePanel === 'detail' && selectedFeature" class="tak-sheet-body">
+              <div v-if="dscLoading && isDeployedSystemLeaf(selectedFeature)" class="dsc-inline-loading">
+                <i class="pi pi-spin pi-spinner"></i>
+                <span>Loading deployed system details…</span>
+              </div>
+              <template v-else>
               <div class="tak-detail-header">
                 <span class="tak-detail-badge" :style="{ backgroundColor: TYPE_COLORS[selectedFeature.resourceType] }">
                   {{ TYPE_LABELS[selectedFeature.resourceType] }}
@@ -3722,6 +3772,7 @@ watch(selectedFeature, (feat) => {
               <button class="tak-explore-btn" @click="goToDetail">
                 <i class="pi pi-external-link"></i> View in Explorer
               </button>
+              </template>
             </div>
           </div>
         </div>
@@ -4046,6 +4097,15 @@ watch(selectedFeature, (feat) => {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 0.85rem;
+}
+
+.dsc-inline-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  color: #64748b;
+  font-size: 0.82rem;
 }
 
 .detail-header {
