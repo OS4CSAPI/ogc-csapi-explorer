@@ -376,10 +376,16 @@ def clear_observations(ds_ids: list[str], protected_ds_ids: list[str] | None = N
 
 
 def clear_sampling_features() -> dict[str, int]:
-    """Delete all SamplingFeatures from the server.
+    """Delete SENREP track SamplingFeatures from the server.
 
-    These are track FOIs created when operators submit INIT SENREPs.
-    Called during /reset (Tier 3) to fully clean up demo state.
+    Strategy: search BOTH the top-level ``/samplingFeatures`` endpoint AND
+    every system's nested ``/systems/{id}/samplingFeatures`` endpoint.  The
+    OSH server may expose features at one level or the other depending on
+    internal state.
+
+    Safety: only features whose UID starts with ``urn:os4csapi:track:`` are
+    deleted — these are the track FOIs created when operators submit INIT
+    SENREPs.  Bootstrap data, LOBs, detection rings, etc. are never touched.
     """
     import urllib.request
     import urllib.error
@@ -392,19 +398,76 @@ def clear_sampling_features() -> dict[str, int]:
     ctx.verify_mode = ssl.CERT_NONE
     auth = "Basic " + b64.b64encode(b"os4csapi:ogc134mm").decode()
 
+    SENREP_SF_UID_PREFIX = "urn:os4csapi:track:"
+
     total_deleted = 0
     errors = 0
+    deleted_ids: set[str] = set()  # de-dup across top-level and nested scans
 
-    # Paginate through all SamplingFeatures
-    page = 0
+    def _delete_matching_sfs(list_url: str) -> None:
+        """Paginate through a samplingFeatures endpoint and delete matches."""
+        nonlocal total_deleted, errors
+        offset = 0
+        while True:
+            sep = "&" if "?" in list_url else "?"
+            url = f"{list_url}{sep}limit=50&offset={offset}"
+            req = urllib.request.Request(url, headers={
+                "Authorization": auth,
+                "Accept": "application/json",
+            })
+            try:
+                with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+                    data = _json.loads(resp.read().decode())
+            except Exception:
+                errors += 1
+                break
+
+            items = data.get("items", [])
+            if not items:
+                break
+
+            for sf in items:
+                sf_id = sf.get("id")
+                sf_uid = (
+                    sf.get("properties", {}).get("uid", "")
+                    or sf.get("uid", "")
+                )
+                if not sf_id or sf_id in deleted_ids:
+                    continue
+                # SAFETY: only delete SENREP track FOIs
+                if not sf_uid.startswith(SENREP_SF_UID_PREFIX):
+                    continue
+                del_url = f"{BASE_URL}/samplingFeatures/{sf_id}"
+                del_req = urllib.request.Request(
+                    del_url, method="DELETE",
+                    headers={"Authorization": auth},
+                )
+                try:
+                    with urllib.request.urlopen(del_req, timeout=10, context=ctx) as _r:
+                        pass
+                    total_deleted += 1
+                    deleted_ids.add(sf_id)
+                except Exception:
+                    errors += 1
+
+            offset += len(items)
+            if offset > 500:  # safety cap
+                break
+
+    # ── Pass 1: top-level endpoint ──────────────────────────────────────
+    _delete_matching_sfs(f"{BASE_URL}/samplingFeatures")
+
+    # ── Pass 2: nested under each system ────────────────────────────────
+    system_ids: list[str] = []
+    offset = 0
     while True:
-        url = f"{BASE_URL}/samplingFeatures?limit=50"
+        url = f"{BASE_URL}/systems?limit=100&offset={offset}"
         req = urllib.request.Request(url, headers={
             "Authorization": auth,
             "Accept": "application/json",
         })
         try:
-            with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+            with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
                 data = _json.loads(resp.read().decode())
         except Exception:
             errors += 1
@@ -413,25 +476,16 @@ def clear_sampling_features() -> dict[str, int]:
         items = data.get("items", [])
         if not items:
             break
-
-        for sf in items:
-            sf_id = sf.get("id")
-            if not sf_id:
-                continue
-            del_url = f"{BASE_URL}/samplingFeatures/{sf_id}"
-            del_req = urllib.request.Request(del_url, method="DELETE", headers={
-                "Authorization": auth,
-            })
-            try:
-                with urllib.request.urlopen(del_req, timeout=10, context=ctx) as _r:
-                    pass
-                total_deleted += 1
-            except Exception:
-                errors += 1
-
-        page += 1
-        if page > 100:  # safety cap
+        for sys in items:
+            sid = sys.get("id")
+            if sid:
+                system_ids.append(sid)
+        offset += len(items)
+        if offset > 2000:  # safety cap
             break
+
+    for sys_id in system_ids:
+        _delete_matching_sfs(f"{BASE_URL}/systems/{sys_id}/samplingFeatures")
 
     return {"deleted": total_deleted, "errors": errors}
 
@@ -545,8 +599,10 @@ def reset_demo():
         if state.running:
             return MessageResponse(ok=False, message="Stop simulator before resetting")
 
-    result = clear_observations(SIM_DS_IDS + SENREP_DS_IDS, protected_ds_ids=DETECTION_DS_IDS)
+    # Clear sampling features FIRST — the OSH server may cascade-delete them
+    # when observations are removed, so we must find them before obs cleanup.
     sf_result = clear_sampling_features()
+    result = clear_observations(SIM_DS_IDS + SENREP_DS_IDS, protected_ds_ids=DETECTION_DS_IDS)
     # Re-seed detection ranges so they're recent and discoverable despite scope-leak
     reseeded = seed_detection_ranges()
     obs_msg = f"{result['deleted']} observations ({result['errors']} errors, {result['protected_skipped']} protected)"
