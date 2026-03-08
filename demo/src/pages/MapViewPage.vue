@@ -174,6 +174,8 @@ const senrepSubmitting = ref(false)
 const senrepSuccess = ref(false)
 let nextContactSeq = 1
 const operatorInitials = ref(localStorage.getItem('os4csapi-operator-initials') || '')
+/** Known SENREP contact IDs (from loaded markers) that have at least one INIT — available for FUP. */
+const knownSenrepContacts = ref<string[]>([])
 const senrepForm = ref({
   contactId: '',
   classification: 'UAS',
@@ -225,6 +227,17 @@ function openSenrepPanel(rawData: any) {
   }
   senrepSuccess.value = false
   senrepPanelOpen.value = true
+}
+
+/** When the operator switches to FUP, swap the contact ID to the first known contact.
+ *  When switching back to INIT, generate a fresh contact ID. */
+function onReportTypeChange() {
+  if (senrepForm.value.reportType === 'FUP') {
+    // Pre-select the first known contact (operator can change via dropdown)
+    senrepForm.value.contactId = knownSenrepContacts.value[0] || senrepForm.value.contactId
+  } else if (senrepForm.value.reportType === 'INIT') {
+    senrepForm.value.contactId = generateContactId()
+  }
 }
 
 async function submitSenrep(): Promise<void> {
@@ -373,6 +386,11 @@ const obsPointStyle = new Style({
 })
 const obsTrackStyle = new Style({
   stroke: new Stroke({ color: TYPE_COLORS['observationTracks'] || '#06b6d4', width: 3, lineDash: [8, 4] }),
+})
+
+// SENREP track line style — red dashed line connecting consecutive SENREPs for the same contact
+const senrepTrackStyle = new Style({
+  stroke: new Stroke({ color: '#ef4444', width: 2.5, lineDash: [6, 4] }),
 })
 
 // Orbit track style — solid bright line for satellite ground tracks
@@ -2037,51 +2055,76 @@ async function loadSenrepMarkers(): Promise<void> {
 
     if (!items.length) return
 
-    const batch: Feature[] = []
+    // Parse all valid SENREP observations and group by contactId for track lines
+    interface SenrepObs { obs: any; contactId: string; reportType: string; tgtType: string; lat: number; lon: number; time: string }
+    const parsed: SenrepObs[] = []
     for (const obs of items) {
       const result = obs.result
       if (!result) continue
-
-      // Doctrinal field names: etaLat / etaLon (not estimatedLat/Lon)
       const lat = result.etaLat
       const lon = result.etaLon
       if (typeof lat !== 'number' || typeof lon !== 'number') continue
+      parsed.push({
+        obs,
+        contactId: result.title || 'SENREP',
+        reportType: result.subTyp || 'INIT',
+        tgtType: result.tgtTyp || 'UAS',
+        lat, lon,
+        time: obs.phenomenonTime || '',
+      })
+    }
 
-      // Parse contact ID from title, report type from subTyp
-      const contactId = result.title || 'SENREP'
-      const reportType = result.subTyp || 'INIT'
-      const tgtType = result.tgtTyp || 'UAS'
+    // Group by contactId and sort each group chronologically
+    const byContact = new Map<string, SenrepObs[]>()
+    for (const s of parsed) {
+      const arr = byContact.get(s.contactId)
+      if (arr) arr.push(s); else byContact.set(s.contactId, [s])
+    }
+    for (const arr of byContact.values()) {
+      arr.sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0))
+    }
 
+    // Update knownSenrepContacts — contacts that have at least one INIT (available for FUP)
+    const initContacts: string[] = []
+    for (const [cid, arr] of byContact) {
+      if (cid !== 'SENREP' && arr.some(s => s.reportType === 'INIT')) {
+        initContacts.push(cid)
+      }
+    }
+    knownSenrepContacts.value = initContacts.sort()
+
+    const batch: Feature[] = []
+    for (const s of parsed) {
       // SENREP markers always use red diamond — STANAG symbol lives on the
       // sampling feature (track FOI) created by the SENREP workflow instead.
       const markerFeature = new Feature({
-        geometry: new Point(fromLonLat([lon, lat])),
+        geometry: new Point(fromLonLat([s.lon, s.lat])),
       })
       markerFeature.setStyle(senrepMarkerStyle)
       markerFeature.set('resourceType', 'senrepMarkers')
-      markerFeature.set('resourceId', obs.id || `senrep-${contactId}`)
-      markerFeature.set('resourceName', `SENREP: ${contactId}`)
+      markerFeature.set('resourceId', s.obs.id || `senrep-${s.contactId}`)
+      markerFeature.set('resourceName', `SENREP: ${s.contactId}`)
       markerFeature.set('rawData', {
-        observationId: obs.id,
+        observationId: s.obs.id,
         datastreamId: SENREP_DS_ID,
-        phenomenonTime: obs.phenomenonTime,
-        contactId,
-        classification: tgtType,
-        reportType,
-        estimatedLat: lat,
-        estimatedLon: lon,
-        senderId: result.senderId,
-        strNo: result.strNo,
-        comments: result.comments,
+        phenomenonTime: s.time,
+        contactId: s.contactId,
+        classification: s.tgtType,
+        reportType: s.reportType,
+        estimatedLat: s.lat,
+        estimatedLon: s.lon,
+        senderId: s.obs.result?.senderId,
+        strNo: s.obs.result?.strNo,
+        comments: s.obs.result?.comments,
       })
       batch.push(markerFeature)
 
       // Label below marker
-      const labelText = contactId !== 'SENREP'
-        ? `${contactId} — ${reportType}`
-        : reportType || 'SENREP'
+      const labelText = s.contactId !== 'SENREP'
+        ? `${s.contactId} — ${s.reportType}`
+        : s.reportType || 'SENREP'
       const labelFeature = new Feature({
-        geometry: new Point(fromLonLat([lon, lat])),
+        geometry: new Point(fromLonLat([s.lon, s.lat])),
       })
       labelFeature.setStyle(new Style({
         text: new OlText({
@@ -2096,10 +2139,24 @@ async function loadSenrepMarkers(): Promise<void> {
       batch.push(labelFeature)
     }
 
+    // Draw track lines connecting consecutive SENREPs for the same contact
+    for (const [cid, arr] of byContact) {
+      if (arr.length < 2) continue
+      const coords = arr.map(s => fromLonLat([s.lon, s.lat]))
+      const lineFeature = new Feature({
+        geometry: new LineString(coords),
+      })
+      lineFeature.setStyle(senrepTrackStyle)
+      lineFeature.set('resourceType', 'senrepMarkers')
+      lineFeature.set('resourceId', `senrep-track-${cid}`)
+      lineFeature.set('resourceName', `SENREP Track: ${cid}`)
+      batch.push(lineFeature)
+    }
+
     // Atomic swap: clear + add in one synchronous block
     source.clear()
     source.addFeatures(batch)
-    featureCounts.value['senrepMarkers'] = items.length
+    featureCounts.value['senrepMarkers'] = parsed.length
   } catch {
     // No data available — clear stale features
     source.clear()
@@ -3705,11 +3762,19 @@ watch(selectedFeature, (feat) => {
 
             <!-- Report type -->
             <label class="senrep-label">Report Type</label>
-            <select v-model="senrepForm.reportType" class="senrep-input">
-              <option>INIT</option>
-              <option>UPDATE</option>
-              <option>FINAL</option>
+            <select v-model="senrepForm.reportType" class="senrep-input" @change="onReportTypeChange">
+              <option value="INIT">INIT — Initial Report</option>
+              <option value="FUP" :disabled="!knownSenrepContacts.length">FUP — Follow-Up</option>
+              <option value="FINAL" :disabled="!knownSenrepContacts.length">FINAL — Close Contact</option>
             </select>
+
+            <!-- Contact ID picker (FUP / FINAL only) -->
+            <template v-if="senrepForm.reportType === 'FUP' || senrepForm.reportType === 'FINAL'">
+              <label class="senrep-label">Follow-up Contact</label>
+              <select v-model="senrepForm.contactId" class="senrep-input">
+                <option v-for="cid in knownSenrepContacts" :key="cid" :value="cid">{{ cid }}</option>
+              </select>
+            </template>
 
             <!-- Read-only fields from gold dot -->
             <label class="senrep-label">Position (from fix)</label>
