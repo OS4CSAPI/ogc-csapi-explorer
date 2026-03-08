@@ -3425,23 +3425,9 @@ watch(selectedFeature, (feat) => {
         </p>
       </div>
 
-      <!-- Detail panel when a feature is selected -->
-      <!-- Deployed-system card for deployment leaves -->
-      <div v-if="selectedFeature && dscCard" class="detail-panel">
-        <DeployedSystemCard
-          :card="dscCard"
-          :loading="dscLoading"
-          @explore="goToDetail"
-          @close="closePopup"
-        />
-      </div>
-      <!-- Generic detail panel for non-deployment features (or while card is loading) -->
-      <div v-else-if="selectedFeature" class="detail-panel">
-        <div v-if="dscLoading && isDeployedSystemLeaf(selectedFeature)" class="dsc-inline-loading">
-          <i class="pi pi-spin pi-spinner"></i>
-          <span>Loading deployed system details…</span>
-        </div>
-        <template v-else>
+      <!-- Detail panel when a feature is selected (non-deployment features only) -->
+      <div v-if="selectedFeature && !dscCard && !isDeployedSystemLeaf(selectedFeature)" class="detail-panel">
+        <template>
         <div class="detail-header">
           <span class="detail-type-badge" :style="{ backgroundColor: TYPE_COLORS[selectedFeature.resourceType] }">
             {{ TYPE_LABELS[selectedFeature.resourceType] }}
@@ -3530,6 +3516,33 @@ watch(selectedFeature, (feat) => {
           </button>
         </div>
       </div>
+
+      <!-- ═══ Deployed System Card — floating right-side panel ═══ -->
+      <transition name="dsc-slide">
+        <div v-if="selectedFeature && (dscCard || (dscLoading && isDeployedSystemLeaf(selectedFeature)))" class="dsc-float-panel">
+          <div class="dsc-float-header">
+            <span class="dsc-float-title">
+              <i class="pi pi-id-card" style="color: #3b82f6;"></i> Deployed System
+            </span>
+            <button class="dsc-float-close" @click="closePopup" title="Close">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+          <div class="dsc-float-body">
+            <div v-if="dscLoading && !dscCard" class="dsc-inline-loading">
+              <i class="pi pi-spin pi-spinner"></i>
+              <span>Loading system details…</span>
+            </div>
+            <DeployedSystemCard
+              v-if="dscCard"
+              :card="dscCard"
+              :loading="dscLoading"
+              @explore="goToDetail"
+              @close="closePopup"
+            />
+          </div>
+        </div>
+      </transition>
 
       <!-- ═══ SENREP Slide-out Panel ═══ -->
       <transition name="senrep-slide">
@@ -4945,6 +4958,62 @@ watch(selectedFeature, (feat) => {
   color: #334155;
   margin-top: 0.3rem;
   line-height: 1.5;
+}
+
+/* ═══ Deployed System Card — floating right-side panel ═══ */
+.dsc-float-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 370px;
+  max-width: 90vw;
+  height: 100%;
+  background: #f8fafc;
+  border-left: 2px solid #3b82f6;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
+}
+.dsc-float-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #1e293b;
+  color: #f1f5f9;
+  border-bottom: 1px solid #334155;
+}
+.dsc-float-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.dsc-float-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem;
+}
+.dsc-float-close:hover { color: #f1f5f9; }
+.dsc-float-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+/* Slide transition for the deployed system card */
+.dsc-slide-enter-active,
+.dsc-slide-leave-active {
+  transition: transform 0.25s ease;
+}
+.dsc-slide-enter-from,
+.dsc-slide-leave-to {
+  transform: translateX(100%);
 }
 
 .senrep-panel {

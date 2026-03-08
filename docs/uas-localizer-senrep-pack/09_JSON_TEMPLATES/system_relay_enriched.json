@@ -4,7 +4,7 @@
     "wirePattern": "Two-step: POST geojsonStub to /systems, then PUT sensorml to /systems/{id}/details",
     "pack": "UAS/Localizer/SENREP Implementation Ready Pack v2 + Relay-Only Patch Pack",
     "auditFixes": [
-      "U4: Created relay system template — was missing from original UAS pack",
+      "U4: Created relay system template ï¿½ was missing from original UAS pack",
       "Merged with Relay-Only Patch Pack (richer metadata: purpose, ownerOrg, status, manufacturer/model/assetTag placeholders, documents, media)",
       "U1: Converted from simplified JSON to geojsonStub + SensorML PhysicalSystem",
       "U3: Placeholder URLs resolved to pack URL or marked REPLACE_IF_KNOWN"
@@ -47,7 +47,7 @@
       {
         "definition": "http://sensorml.com/ont/swe/property/LongName",
         "label": "Long Name",
-        "value": "Communications Relay — Ft Huachuca"
+        "value": "Communications Relay ï¿½ Ft Huachuca"
       },
       {
         "definition": "http://sensorml.com/ont/swe/property/Manufacturer",
@@ -79,7 +79,7 @@
       {
         "definition": "http://sensorml.com/ont/swe/property/SystemRole",
         "label": "System Role",
-        "value": "Relay / Repeater — Sensor-to-Monsite Bridge"
+        "value": "Relay / Repeater ï¿½ Sensor-to-Monsite Bridge"
       }
     ],
     "validTime": [
@@ -125,7 +125,7 @@
       {
         "role": "http://dbpedia.org/resource/Web_page",
         "name": "Relay Support Role Note",
-        "description": "Relay-Only Patch Pack — guidance on relay role, structural semantics, and enrichment within the deployed sensor architecture.",
+        "description": "Relay-Only Patch Pack ï¿½ guidance on relay role, structural semantics, and enrichment within the deployed sensor architecture.",
         "link": {
           "href": "https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/docs/uas-localizer-senrep-pack/relay-patch",
           "type": "text/html"

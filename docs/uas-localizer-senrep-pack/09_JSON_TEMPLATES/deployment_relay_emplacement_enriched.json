@@ -5,7 +5,7 @@
     "pack": "Relay-Only Patch Pack",
     "auditFixes": [
       "U1: Converted from simplified JSON to geo+json Feature format",
-      "U3: platform@link.href marked as RUNTIME_RESOLVE — bootstrap script resolves via find_by_uid()"
+      "U3: platform@link.href marked as RUNTIME_RESOLVE ï¿½ bootstrap script resolves via find_by_uid()"
     ]
   },
   "type": "Feature",
