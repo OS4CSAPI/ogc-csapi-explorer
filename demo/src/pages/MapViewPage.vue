@@ -1666,11 +1666,11 @@ async function discoverLocalizerDatastream(): Promise<void> {
 /**
  * Location estimate styles — dynamic based on fix age.
  * Fresh fixes (< 15s) get full opacity gold; aging fixes progressively
- * fade to indicate staleness.  Hard cutoff at 120s.
+ * fade to indicate staleness.  Hard cutoff at 60s.
  */
 function getLocEstimateMarkerStyle(ageS: number): Style {
-  // Opacity: 100% for < 15s, linear fade to 35% at 120s
-  const opacity = ageS <= 15 ? 1.0 : Math.max(0.35, 1.0 - (ageS - 15) / (120 - 15) * 0.65)
+  // Opacity: 100% for < 15s, linear fade to 35% at 60s
+  const opacity = ageS <= 15 ? 1.0 : Math.max(0.35, 1.0 - (ageS - 15) / (60 - 15) * 0.65)
   return new Style({
     image: new CircleStyle({
       radius: 8,
@@ -1749,11 +1749,11 @@ async function loadLocationEstimates(): Promise<void> {
     const cep50 = result.cep50_m
     if (typeof lat !== 'number' || typeof lon !== 'number') return
 
-    // Staleness check: in live mode, skip if observation is older than 120 seconds.
-    // Between 15–120s the marker progressively fades to indicate aging.
+    // Staleness check: in live mode, skip if observation is older than 60 seconds.
+    // Between 15–60s the marker progressively fades to indicate aging.
     const obsTime = result.timestamp ? result.timestamp * 1000 : new Date(obs.phenomenonTime || obs.resultTime).getTime()
     const ageS = (Date.now() - obsTime) / 1000
-    if (liveMode.value && ageS > 120) {
+    if (liveMode.value && ageS > 60) {
       source.clear()
       featureCounts.value['locationEstimates'] = 0
       return
@@ -1763,7 +1763,7 @@ async function loadLocationEstimates(): Promise<void> {
 
     // Compute age-based opacity for progressive fade
     const fadeOpacity = liveMode.value
-      ? (ageS <= 15 ? 1.0 : Math.max(0.35, 1.0 - (ageS - 15) / (120 - 15) * 0.65))
+      ? (ageS <= 15 ? 1.0 : Math.max(0.35, 1.0 - (ageS - 15) / (60 - 15) * 0.65))
       : 1.0
 
     // 1. CEP50 uncertainty circle (draw first so marker is on top)
@@ -2302,8 +2302,11 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         || dsNameLower.includes('gps')
       const isLobDs = dsNameLower.includes('lob') || dsNameLower.includes('bearing')
       // Position/satellite DS: need 720 obs to fill the 6-hour window at 30s
-      // cadence (6h × 120 obs/h = 720).  Other DS: use caller's obsLimit.
-      const effectiveLimit = isPositionDs ? 720 : obsLimit
+      // cadence (6h × 120 obs/h = 720).
+      // LOB DS in live mode: exactly 1 per sensor — cleanest visual, shows only
+      // the very latest bearing from each MA system.
+      // Other DS: use caller's obsLimit.
+      const effectiveLimit = isPositionDs ? 720 : (isLobDs && isLive) ? 1 : obsLimit
 
       // OSH returns observations oldest-first and ignores sort params, so a
       // bare limit=N always returns the N OLDEST observations.  For position/
@@ -2738,9 +2741,8 @@ function refreshAllStyles() {
 async function refreshLiveLayers() {
   try {
     // In live mode, fetch fresh observations + update moving-system positions.
-    // 6 LOBs per sensor improves temporal overlap with the localizer fix.
     await Promise.all([
-      loadObservationLayers(6),
+      loadObservationLayers(3),
       loadLocationEstimates(),
       loadSenrepMarkers(),
       updateMovingSystemPositions(),
