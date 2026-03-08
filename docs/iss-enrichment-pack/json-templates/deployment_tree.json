@@ -1,0 +1,58 @@
+{
+  "uid": "urn:os4csapi:deployment:orbital-tracking-demo:v1",
+  "name": "Orbital Tracking Demo",
+  "description": "Top-level deployment context for orbital object tracking demonstrations. Contains tracked LEO objects and associated tracking products.",
+  "geometry": null,
+  "properties": {},
+  "validTime": ["2026-01-01T00:00:00Z", ".."],
+  "children": [
+    {
+      "uid": "urn:os4csapi:deployment:leo-objects:v1",
+      "name": "LEO Objects",
+      "description": "Grouping node for Low Earth Orbit tracked objects.",
+      "geometry": null,
+      "properties": {},
+      "children": [
+        {
+          "uid": "urn:os4csapi:deployment:iss-tracking-role:v1",
+          "name": "ISS Tracking Role",
+          "description": "Operational role branch for ISS (NORAD 25544 / ZARYA) tracking products including position feeds and orbit-track predictions.",
+          "geometry": null,
+          "properties": {},
+          "children": [
+            {
+              "uid": "urn:os4csapi:deployment:iss-position-feed:v1",
+              "name": "ISS Position Feed",
+              "description": "Leaf deployment linking the ISS Position Publisher system to the tracking hierarchy.",
+              "geometry": null,
+              "properties": {
+                "platform@link": {
+                  "title": "ISS Position Publisher",
+                  "uid": "urn:os4csapi:system:iss-position-publisher:v1",
+                  "type": "application/sml+json"
+                }
+              },
+              "validTime": ["2026-01-01T00:00:00Z", ".."],
+              "children": []
+            },
+            {
+              "uid": "urn:os4csapi:deployment:iss-orbittrack-feed:v1",
+              "name": "ISS Orbit Track Feed",
+              "description": "Leaf deployment linking the ISS Orbit Track Publisher system to the tracking hierarchy.",
+              "geometry": null,
+              "properties": {
+                "platform@link": {
+                  "title": "ISS Orbit Track Publisher",
+                  "uid": "urn:os4csapi:system:iss-orbittrack-publisher:v1",
+                  "type": "application/sml+json"
+                }
+              },
+              "validTime": ["2026-01-01T00:00:00Z", ".."],
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

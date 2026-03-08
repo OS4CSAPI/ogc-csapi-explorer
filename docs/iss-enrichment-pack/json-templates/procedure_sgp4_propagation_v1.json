@@ -1,36 +1,11 @@
 {
-  "uid": "urn:os4csapi:procedure:sgp4-propagation:v1",
-  "name": "SGP4 Propagation v1",
-  "description": "Procedure for deriving ISS geodetic position from orbital elements using SGP4.",
-  "type": "Procedure",
+  "type": "Feature",
+  "geometry": null,
   "properties": {
-    "version": "v1",
-    "inputs": [
-      "orbitalElements",
-      "timestamp"
-    ],
-    "outputs": [
-      "lat_deg",
-      "lon_deg",
-      "alt_km"
-    ],
-    "assumptions": [
-      "element set valid for current epoch window",
-      "SGP4 propagation"
-    ],
-    "documents": [
-      {
-        "title": "CelesTrak GP Data Formats",
-        "href": "https://celestrak.org/NORAD/documentation/gp-data-formats.php",
-        "rel": "source",
-        "mediaType": "text/html"
-      },
-      {
-        "title": "satellite.js",
-        "href": "https://github.com/shashwatak/satellite-js",
-        "rel": "implementedBy",
-        "mediaType": "text/html"
-      }
-    ]
+    "uid": "urn:os4csapi:procedure:sgp4-propagation:v1",
+    "featureType": "sosa:ObservingProcedure",
+    "name": "SGP4 Propagation v1",
+    "description": "Derives ISS geodetic position (WGS-84) from NORAD orbital elements using the Simplified General Perturbations Model 4 (SGP4). Input: OMM/TLE element set + target UTC epoch. Output: lat_deg, lon_deg, alt_km, velocity_km_s. Uses WGS-72 gravity model with iterative geodetic conversion. TLE source: CelesTrak OMM JSON endpoint. Reference implementation: python-sgp4 (Brandon Rhodes). See: https://celestrak.org/NORAD/documentation/gp-data-formats.php",
+    "validTime": ["2026-01-01T00:00:00Z", ".."]
   }
 }

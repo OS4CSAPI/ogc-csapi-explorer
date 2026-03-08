@@ -1,30 +1,11 @@
 {
-  "uid": "urn:os4csapi:procedure:orbit-track-generation:v1",
-  "name": "Orbit Track Generation v1",
-  "description": "Procedure for generating ISS past and predicted ground-track products from sampled propagated positions.",
-  "type": "Procedure",
+  "type": "Feature",
+  "geometry": null,
   "properties": {
-    "version": "v1",
-    "inputs": [
-      "propagatedPositions",
-      "windowPastMin",
-      "windowFutureMin",
-      "samplePeriodSec"
-    ],
-    "outputs": [
-      "trackPoints"
-    ],
-    "assumptions": [
-      "ordered samples",
-      "dateline-safe rendering handled downstream or in preprocessing"
-    ],
-    "documents": [
-      {
-        "title": "Orbit Track Illustration",
-        "href": "REPLACE_WITH_TRACK_DIAGRAM_URL",
-        "rel": "describedBy",
-        "mediaType": "image/png"
-      }
-    ]
+    "uid": "urn:os4csapi:procedure:orbit-track-generation:v1",
+    "featureType": "sosa:ObservingProcedure",
+    "name": "Orbit Track Generation v1",
+    "description": "Generates a predicted ground-track product for one full orbital period (~100 minutes) by propagating SGP4 positions at 60-second intervals from the current epoch forward. Each track product is an array of {lat_deg, lon_deg, alt_km, timestamp} points. Product is regenerated every 5 minutes to incorporate any TLE updates. Reference implementation: python-sgp4 (Brandon Rhodes).",
+    "validTime": ["2026-01-01T00:00:00Z", ".."]
   }
 }

@@ -1,36 +1,13 @@
 {
-  "phenomenonTime": "2026-03-08T14:00:00Z",
-  "resultTime": "2026-03-08T14:00:05Z",
+  "phenomenonTime": "2026-03-08T12:00:00.000Z",
+  "resultTime": "2026-03-08T12:00:00.000Z",
   "result": {
-    "generatedAt": 1772978400,
+    "computedAt": 1772992800.0,
     "noradId": 25544,
     "assetName": "ISS (ZARYA)",
-    "sourceEpoch": "2026-03-08T12:34:56Z",
-    "windowPastMin": 90,
-    "windowFutureMin": 90,
-    "samplePeriodSec": 30,
-    "trackPoints": [
-      {
-        "t": 1772974800,
-        "lat_deg": -10.1,
-        "lon_deg": 20.2,
-        "alt_km": 419.9,
-        "segment": "past"
-      },
-      {
-        "t": 1772974830,
-        "lat_deg": -8.4,
-        "lon_deg": 25.7,
-        "alt_km": 420.0,
-        "segment": "past"
-      },
-      {
-        "t": 1772978400,
-        "lat_deg": 12.3,
-        "lon_deg": -98.7,
-        "alt_km": 420.1,
-        "segment": "future"
-      }
-    ]
+    "durationMin": 100.0,
+    "numPoints": 100,
+    "method": "SGP4",
+    "trackPointsJson": "[{\"timestamp\":1772992800.0,\"lat_deg\":42.36,\"lon_deg\":-71.06,\"alt_km\":415.2},{\"timestamp\":1772992860.0,\"lat_deg\":42.72,\"lon_deg\":-70.58,\"alt_km\":415.3}]"
   }
 }

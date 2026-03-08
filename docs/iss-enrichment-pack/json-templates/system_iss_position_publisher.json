@@ -1,36 +1,214 @@
 {
-  "uid": "urn:os4csapi:system:iss-position-publisher:v1",
-  "name": "ISS Position Publisher",
-  "description": "Software publisher that computes ISS geodetic position from orbital elements and emits position observations.",
-  "type": "System",
-  "properties": {
-    "assetName": "ISS (ZARYA)",
-    "noradId": 25544,
-    "sourceProvider": "CelesTrak",
-    "propagationModel": "SGP4",
-    "updateIntervalSec": 30,
-    "ownerOrg": "OS4CSAPI Demo",
-    "documents": [
-      {
-        "title": "NASA ISS Overview",
+  "type": "PhysicalSystem",
+  "uniqueId": "urn:os4csapi:system:iss-position-publisher:v1",
+  "definition": "sosa:System",
+  "label": "ISS Position Publisher",
+  "description": "Software publisher that computes ISS geodetic position from NORAD orbital elements using SGP4 propagation and emits real-time position observations (lat, lon, alt, velocity) every 30 seconds. Fetches Two-Line Element sets from CelesTrak, propagates with the SGP4 model, and publishes via CSAPI/OSH.",
+  "keywords": [
+    "ISS",
+    "Zarya",
+    "NORAD 25544",
+    "satellite",
+    "SGP4",
+    "orbital propagation",
+    "space station",
+    "LEO",
+    "position publisher",
+    "CelesTrak"
+  ],
+  "identifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/ShortName",
+      "label": "Short Name",
+      "value": "ISS Position Publisher"
+    },
+    {
+      "definition": "http://sensorml.com/ont/swe/property/LongName",
+      "label": "Long Name",
+      "value": "International Space Station SGP4 Position Feed"
+    },
+    {
+      "definition": "http://sensorml.com/ont/swe/property/ModelNumber",
+      "label": "NORAD Catalog Number",
+      "value": "25544"
+    },
+    {
+      "definition": "http://sensorml.com/ont/swe/property/SerialNumber",
+      "label": "COSPAR ID",
+      "value": "1998-067A"
+    }
+  ],
+  "classifiers": [
+    {
+      "definition": "http://sensorml.com/ont/swe/property/SensorType",
+      "label": "Platform Type",
+      "value": "Space Station"
+    },
+    {
+      "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+      "label": "Orbit Class",
+      "value": "Low Earth Orbit (LEO)"
+    },
+    {
+      "definition": "http://sensorml.com/ont/swe/property/SystemRole",
+      "label": "System Role",
+      "value": "Position Publisher"
+    }
+  ],
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    ".."
+  ],
+  "characteristics": [
+    {
+      "label": "Orbital Parameters",
+      "characteristics": [
+        {
+          "type": "Quantity",
+          "name": "orbital_period",
+          "definition": "http://qudt.org/vocab/quantitykind/Period",
+          "label": "Orbital Period",
+          "uom": { "code": "min" },
+          "value": 92.7
+        },
+        {
+          "type": "Quantity",
+          "name": "inclination",
+          "definition": "http://qudt.org/vocab/quantitykind/Angle",
+          "label": "Inclination",
+          "uom": { "code": "deg" },
+          "value": 51.6
+        },
+        {
+          "type": "Quantity",
+          "name": "altitude_min",
+          "definition": "http://qudt.org/vocab/quantitykind/Height",
+          "label": "Altitude (perigee)",
+          "uom": { "code": "km" },
+          "value": 408.0
+        },
+        {
+          "type": "Quantity",
+          "name": "altitude_max",
+          "definition": "http://qudt.org/vocab/quantitykind/Height",
+          "label": "Altitude (apogee)",
+          "uom": { "code": "km" },
+          "value": 420.0
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+      "label": "Publisher Capabilities",
+      "capabilities": [
+        {
+          "type": "Quantity",
+          "name": "update_interval",
+          "definition": "http://qudt.org/vocab/quantitykind/Period",
+          "label": "Position Update Interval",
+          "uom": { "code": "s" },
+          "value": 30.0
+        },
+        {
+          "type": "Text",
+          "name": "propagation_model",
+          "definition": "http://sensorml.com/ont/swe/property/AlgorithmType",
+          "label": "Propagation Model",
+          "value": "SGP4 (Simplified General Perturbations 4)"
+        },
+        {
+          "type": "Text",
+          "name": "tle_source",
+          "definition": "http://sensorml.com/ont/swe/property/DataSource",
+          "label": "TLE Source",
+          "value": "CelesTrak (celestrak.org)"
+        },
+        {
+          "type": "Quantity",
+          "name": "tle_refresh",
+          "definition": "http://qudt.org/vocab/quantitykind/Period",
+          "label": "TLE Refresh Interval",
+          "uom": { "code": "s" },
+          "value": 3600.0
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "role": "http://sensorml.com/ont/swe/property/Operator",
+      "organisationName": "NASA \u2014 National Aeronautics and Space Administration",
+      "contactInfo": {
+        "website": "https://www.nasa.gov/international-space-station/",
+        "address": {
+          "city": "Washington",
+          "administrativeArea": "DC",
+          "country": "United States"
+        }
+      }
+    },
+    {
+      "role": "http://sensorml.com/ont/swe/property/DataProvider",
+      "organisationName": "CelesTrak",
+      "contactInfo": {
+        "website": "https://celestrak.org"
+      }
+    },
+    {
+      "role": "http://sensorml.com/ont/swe/property/ProjectLeader",
+      "organisationName": "OS4CSAPI Project",
+      "contactInfo": {
+        "website": "https://github.com/OS4CSAPI"
+      }
+    }
+  ],
+  "documents": [
+    {
+      "role": "http://dbpedia.org/resource/Web_page",
+      "name": "NASA ISS Overview",
+      "description": "Official NASA International Space Station overview and fact sheet.",
+      "link": {
         "href": "https://www.nasa.gov/international-space-station/space-station-overview/",
-        "rel": "about",
-        "mediaType": "text/html"
-      },
-      {
-        "title": "CelesTrak GP Data Formats",
+        "type": "text/html"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Web_page",
+      "name": "CelesTrak GP Data Formats",
+      "description": "Documentation for NORAD general perturbations (GP) element set formats including OMM JSON.",
+      "link": {
         "href": "https://celestrak.org/NORAD/documentation/gp-data-formats.php",
-        "rel": "source",
-        "mediaType": "text/html"
+        "type": "text/html"
       }
-    ],
-    "media": [
-      {
-        "title": "Official ISS Image",
-        "href": "REPLACE_WITH_ISS_IMAGE_URL",
-        "rel": "preview",
-        "mediaType": "image/jpeg"
+    },
+    {
+      "role": "http://dbpedia.org/resource/Software",
+      "name": "python-sgp4",
+      "description": "Python implementation of SGP4 satellite propagation. Used by this publisher for orbital position computation.",
+      "link": {
+        "href": "https://github.com/brandon-rhodes/python-sgp4",
+        "type": "text/html"
       }
-    ]
-  }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Photograph",
+      "name": "ISS Photograph",
+      "description": "Official NASA photograph of the International Space Station in orbit.",
+      "link": {
+        "href": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/International_Space_Station_after_undocking_of_STS-132.jpg/1280px-International_Space_Station_after_undocking_of_STS-132.jpg",
+        "type": "image/jpeg"
+      }
+    },
+    {
+      "role": "http://dbpedia.org/resource/Web_page",
+      "name": "ISS \u2014 Wikipedia",
+      "description": "Wikipedia article on the International Space Station with comprehensive technical specifications.",
+      "link": {
+        "href": "https://en.wikipedia.org/wiki/International_Space_Station",
+        "type": "text/html"
+      }
+    }
+  ]
 }

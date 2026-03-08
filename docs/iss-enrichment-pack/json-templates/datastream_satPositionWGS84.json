@@ -1,74 +1,98 @@
 {
-  "uid": "urn:os4csapi:datastream:iss:position:wgs84:v1",
-  "name": "satPositionWGS84",
-  "description": "Near-real-time ISS point-position fixes in WGS84/geodetic form.",
+  "name": "ISS Position (SGP4)",
+  "outputName": "issPosition",
   "obsFormat": "application/swe+json",
-  "recordSchema": {
-    "type": "DataRecord",
-    "name": "satPositionWGS84",
-    "label": "ISS Position Fix",
-    "fields": [
-      {
-        "type": "Time",
-        "name": "timestamp",
-        "uom": {
-          "code": "s"
+  "schema": {
+    "obsFormat": "application/swe+json",
+    "recordSchema": {
+      "type": "DataRecord",
+      "label": "ISS Geodetic Position Fix",
+      "description": "Real-time ISS position derived from SGP4 propagation of NORAD TLE elements.",
+      "fields": [
+        {
+          "type": "Time",
+          "name": "timestamp",
+          "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime",
+          "referenceFrame": "http://www.opengis.net/def/trs/BIPM/0/UTC",
+          "label": "Sampling Time",
+          "uom": {
+            "href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+          }
+        },
+        {
+          "type": "Quantity",
+          "name": "lat_deg",
+          "definition": "http://qudt.org/vocab/quantitykind/Latitude",
+          "label": "Latitude",
+          "description": "Geodetic latitude (WGS-84)",
+          "uom": { "code": "deg" }
+        },
+        {
+          "type": "Quantity",
+          "name": "lon_deg",
+          "definition": "http://qudt.org/vocab/quantitykind/Longitude",
+          "label": "Longitude",
+          "description": "Geodetic longitude (WGS-84)",
+          "uom": { "code": "deg" }
+        },
+        {
+          "type": "Quantity",
+          "name": "alt_km",
+          "definition": "http://qudt.org/vocab/quantitykind/Height",
+          "label": "Altitude",
+          "description": "Altitude above WGS-84 ellipsoid",
+          "uom": { "code": "km" }
+        },
+        {
+          "type": "Quantity",
+          "name": "velocity_km_s",
+          "definition": "http://qudt.org/vocab/quantitykind/Speed",
+          "label": "Orbital Velocity",
+          "description": "ECI velocity magnitude",
+          "uom": { "code": "km/s" }
+        },
+        {
+          "type": "Count",
+          "name": "noradId",
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "NORAD Catalog Number"
+        },
+        {
+          "type": "Text",
+          "name": "assetName",
+          "definition": "http://sensorml.com/ont/swe/property/ShortName",
+          "label": "Asset Name"
+        },
+        {
+          "type": "Text",
+          "name": "sourceEpoch",
+          "definition": "http://sensorml.com/ont/swe/property/ReferenceTime",
+          "label": "TLE Epoch",
+          "description": "ISO 8601 epoch of the source TLE element set"
+        },
+        {
+          "type": "Quantity",
+          "name": "sourceAgeSec",
+          "definition": "http://qudt.org/vocab/quantitykind/Period",
+          "label": "TLE Age",
+          "description": "Seconds since TLE epoch — indicates propagation confidence",
+          "uom": { "code": "s" }
+        },
+        {
+          "type": "Quantity",
+          "name": "posErrorM",
+          "definition": "http://qudt.org/vocab/quantitykind/Length",
+          "label": "Estimated Position Error",
+          "description": "Rough SGP4 position error estimate based on TLE age (~1km at epoch, growing ~1-2km/day)",
+          "uom": { "code": "m" }
+        },
+        {
+          "type": "Text",
+          "name": "method",
+          "definition": "http://sensorml.com/ont/swe/property/AlgorithmType",
+          "label": "Propagation Method"
         }
-      },
-      {
-        "type": "Quantity",
-        "name": "lat_deg",
-        "uom": {
-          "code": "deg"
-        }
-      },
-      {
-        "type": "Quantity",
-        "name": "lon_deg",
-        "uom": {
-          "code": "deg"
-        }
-      },
-      {
-        "type": "Quantity",
-        "name": "alt_km",
-        "uom": {
-          "code": "km"
-        }
-      },
-      {
-        "type": "Count",
-        "name": "noradId"
-      },
-      {
-        "type": "Text",
-        "name": "assetName"
-      },
-      {
-        "type": "Text",
-        "name": "sourceEpoch"
-      },
-      {
-        "type": "Count",
-        "name": "sourceAgeSec"
-      },
-      {
-        "type": "Quantity",
-        "name": "posErrorM",
-        "uom": {
-          "code": "m"
-        }
-      },
-      {
-        "type": "Text",
-        "name": "method"
-      }
-    ]
-  },
-  "properties": {
-    "productType": "position-fix",
-    "coordinateFrame": "WGS84 geodetic",
-    "cadenceSec": 30,
-    "qualityNote": "Derived ephemeris product from orbital elements and SGP4."
+      ]
+    }
   }
 }

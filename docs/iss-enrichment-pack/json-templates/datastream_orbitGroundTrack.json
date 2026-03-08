@@ -1,90 +1,64 @@
 {
-  "uid": "urn:os4csapi:datastream:iss:orbit-ground-track:v1",
-  "name": "orbitGroundTrack",
-  "description": "Past and predicted ISS orbit-track product for map rendering.",
+  "name": "ISS Orbit Ground Track",
+  "outputName": "issOrbitTrack",
   "obsFormat": "application/swe+json",
-  "recordSchema": {
-    "type": "DataRecord",
-    "name": "orbitGroundTrack",
-    "label": "ISS Orbit Ground Track",
-    "fields": [
-      {
-        "type": "Time",
-        "name": "generatedAt",
-        "uom": {
-          "code": "s"
+  "schema": {
+    "obsFormat": "application/swe+json",
+    "recordSchema": {
+      "type": "DataRecord",
+      "label": "ISS Predicted Orbit Ground Track",
+      "description": "Predicted ground track for one full orbital period (~100 min) computed via SGP4 propagation at 60s intervals.",
+      "fields": [
+        {
+          "type": "Time",
+          "name": "computedAt",
+          "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime",
+          "referenceFrame": "http://www.opengis.net/def/trs/BIPM/0/UTC",
+          "label": "Computation Time",
+          "uom": {
+            "href": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+          }
+        },
+        {
+          "type": "Count",
+          "name": "noradId",
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "NORAD Catalog Number"
+        },
+        {
+          "type": "Text",
+          "name": "assetName",
+          "definition": "http://sensorml.com/ont/swe/property/ShortName",
+          "label": "Asset Name"
+        },
+        {
+          "type": "Quantity",
+          "name": "durationMin",
+          "definition": "http://qudt.org/vocab/quantitykind/Period",
+          "label": "Track Duration",
+          "description": "Total duration of predicted track in minutes",
+          "uom": { "code": "min" }
+        },
+        {
+          "type": "Count",
+          "name": "numPoints",
+          "definition": "http://sensorml.com/ont/swe/property/NumberOfElements",
+          "label": "Number of Track Points"
+        },
+        {
+          "type": "Text",
+          "name": "method",
+          "definition": "http://sensorml.com/ont/swe/property/AlgorithmType",
+          "label": "Propagation Method"
+        },
+        {
+          "type": "Text",
+          "name": "trackPointsJson",
+          "definition": "http://sensorml.com/ont/swe/property/DataPayload",
+          "label": "Track Points (JSON)",
+          "description": "JSON-encoded array of {timestamp, lat_deg, lon_deg, alt_km} objects representing the predicted ground track. Encoded as Text for maximum portability across SWE implementations."
         }
-      },
-      {
-        "type": "Count",
-        "name": "noradId"
-      },
-      {
-        "type": "Text",
-        "name": "assetName"
-      },
-      {
-        "type": "Text",
-        "name": "sourceEpoch"
-      },
-      {
-        "type": "Count",
-        "name": "windowPastMin"
-      },
-      {
-        "type": "Count",
-        "name": "windowFutureMin"
-      },
-      {
-        "type": "Count",
-        "name": "samplePeriodSec"
-      },
-      {
-        "type": "DataArray",
-        "name": "trackPoints",
-        "elementType": {
-          "type": "DataRecord",
-          "fields": [
-            {
-              "type": "Time",
-              "name": "t",
-              "uom": {
-                "code": "s"
-              }
-            },
-            {
-              "type": "Quantity",
-              "name": "lat_deg",
-              "uom": {
-                "code": "deg"
-              }
-            },
-            {
-              "type": "Quantity",
-              "name": "lon_deg",
-              "uom": {
-                "code": "deg"
-              }
-            },
-            {
-              "type": "Quantity",
-              "name": "alt_km",
-              "uom": {
-                "code": "km"
-              }
-            },
-            {
-              "type": "Category",
-              "name": "segment"
-            }
-          ]
-        }
-      }
-    ]
-  },
-  "properties": {
-    "productType": "orbit-track",
-    "cadenceSec": 300,
-    "qualityNote": "Derived visualization product sampled from propagated positions."
+      ]
+    }
   }
 }
