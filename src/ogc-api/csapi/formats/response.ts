@@ -86,9 +86,9 @@ export interface CollectionResponse<T> {
  * @see https://docs.ogc.org/is/23-002/23-002.html — Part 2 ItemCollection
  * @see https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/36 — Finding F3
  */
-export function parseCollectionResponse<T>(
+export function parseCollectionResponse<T = unknown>(
   body: unknown,
-  parseItem: (item: unknown, index: number) => T
+  parseItem: (item: unknown, index: number) => T = ((item: unknown) => item) as any
 ): CollectionResponse<T> {
   if (typeof body !== 'object' || body === null) {
     throw new Error('Invalid collection response: expected an object');
