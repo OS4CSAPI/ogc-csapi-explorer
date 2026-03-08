@@ -106,9 +106,12 @@ const trustLine = computed(() => {
     <!-- ── 1. HEADER ── -->
     <header class="dsc-hdr">
       <div class="dsc-hdr-row">
-        <div class="dsc-icon">
-          <img v-if="card.thumbnail" :src="card.thumbnail" alt="" />
-          <i v-else class="pi pi-map"></i>
+        <div class="dsc-icon-group">
+          <div class="dsc-icon">
+            <img v-if="card.thumbnail" :src="card.thumbnail" alt="" />
+            <i v-else class="pi pi-map"></i>
+          </div>
+          <img v-if="card.stanagSvg" :src="card.stanagSvg" class="dsc-stanag" alt="STANAG" title="MIL-STD-2525 Symbol" />
         </div>
         <div class="dsc-hdr-text">
           <h2 class="dsc-title">{{ card.title }}</h2>
@@ -262,6 +265,12 @@ const trustLine = computed(() => {
   gap: 0.55rem;
   align-items: center;
 }
+.dsc-icon-group {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
 .dsc-icon {
   flex-shrink: 0;
   width: 40px; height: 40px;
@@ -277,6 +286,12 @@ const trustLine = computed(() => {
 .dsc-icon img {
   width: 100%; height: 100%;
   object-fit: cover;
+}
+.dsc-stanag {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 .dsc-hdr-text { flex: 1; min-width: 0; }
 .dsc-title {

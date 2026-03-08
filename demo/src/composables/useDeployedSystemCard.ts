@@ -12,6 +12,7 @@
  */
 import { ref, type Ref } from 'vue'
 import { apiFetch } from '../api'
+import { getSymbolForResource } from '../symbol-mapper'
 
 // ─── Card model ────────────────────────────────────────────────────────────
 
@@ -25,6 +26,7 @@ export interface DeployedSystemCardModel {
   statusBadge: string
   kindBadge: string
   thumbnail: string // URL or empty
+  stanagSvg: string // data:image/svg+xml URL for STANAG symbol, or empty
 
   // Summary
   summarySentence: string
@@ -752,6 +754,10 @@ export function useDeployedSystemCard() {
         if (methodSummary) methodSummary = `Method: ${methodSummary}`
       }
 
+      // ── STANAG symbol ──────────────────────────────────────────────
+      const stanagResult = getSymbolForResource('deployments', rawData, 'normal')
+      const stanagSvg = stanagResult?.svgDataUrl || ''
+
       // ── Capabilities chips ───────────────────────────────────────
       const capChips: string[] = []
       for (const [label, val] of Object.entries(capabilities)) {
@@ -769,6 +775,7 @@ export function useDeployedSystemCard() {
         statusBadge: normalizeLabel(status, {}) || 'Unknown Status',
         kindBadge: normalizeLabel(inferredKind, KIND_LABELS) || '',
         thumbnail: smlMedia.length > 0 ? smlMedia[0]!.href : '',
+        stanagSvg,
 
         // Summary
         summarySentence: buildSummarySentence(

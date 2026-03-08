@@ -47,6 +47,7 @@ const error = ref('')
 const mouseCoords = ref('')
 const featureCounts = ref<Record<string, number>>({})
 const selectedFeature = ref<any>(null)
+const stackedFeatures = ref<any[]>([])  // multiple features at same pixel
 const hasSearched = ref(false)
 
 // Part 1 resource types that may have geometry
@@ -2993,70 +2994,36 @@ onMounted(() => {
     // Suppress feature clicks while drawing a bbox
     if (drawingBbox.value) return
 
-    let hit = false
+    // Collect ALL interactive features at this pixel
+    const hits: any[] = []
     map!.forEachFeatureAtPixel(evt.pixel, (feature) => {
-      if (hit) return // only handle first
-      // Skip bbox rectangle feature and non-interactive overlays
       const rt = feature.get('resourceType')
       if (!rt) return
       if (rt === 'detectionRanges') return // static overlay — not selectable
-      hit = true
-
-      // Toggle: if clicking the already-selected feature, deselect it
-      if (selectedFeature.value?._olFeature === feature) {
-        closePopup()
-        return
-      }
-
-      const resourceType = feature.get('resourceType')
-      const rawData = feature.get('rawData')
-      const isEnriched = feature.get('enriched') || false
-      const enrichmentSource = feature.get('enrichmentSource') || ''
-
-      // Reset previous selection style
-      if (selectedFeature.value?._olFeature) {
-        const prevType = selectedFeature.value.resourceType
-        const prevEnriched = selectedFeature.value.enriched || false
-        selectedFeature.value._olFeature.setStyle(getStyle(prevType, prevEnriched, selectedFeature.value.rawData))
-      }
-
-      // Highlight new selection
-      ;(feature as Feature).setStyle(getSelectedStyle(resourceType, rawData))
-
-      selectedFeature.value = {
-        resourceType,
-        resourceId: feature.get('resourceId'),
-        resourceName: feature.get('resourceName'),
-        rawData,
-        enriched: isEnriched,
-        enrichmentSource,
-        _olFeature: feature,
-      }
-
-      // Compose deployed-system card if this is a deployment leaf
-      if (isDeployedSystemLeaf(selectedFeature.value)) {
-        dscComposeCard(selectedFeature.value, deploymentParentMap, deploymentItemById)
-      } else {
-        dscClearCard()
-      }
-
-      // Position popup
-      const geom = (feature as Feature).getGeometry()
-      if (geom) {
-        let coord: Coordinate
-        if (geom.getType() === 'Point') {
-          coord = (geom as Point).getCoordinates()
-        } else {
-          coord = (geom as any).getInteriorPoint?.()?.getCoordinates?.() || (geom as any).getFirstCoordinate()
-        }
-        overlay?.setPosition(coord)
-      }
+      hits.push(feature)
     })
 
-    if (!hit) {
-      // Clicked empty space — close popup and deselect
+    if (hits.length === 0) {
       closePopup()
+      return
     }
+
+    // Toggle: if clicking the already-selected feature (and only 1 hit), deselect
+    if (hits.length === 1 && selectedFeature.value?._olFeature === hits[0]) {
+      closePopup()
+      return
+    }
+
+    // Build stacked-feature metadata for the picker UI
+    stackedFeatures.value = hits.map((f: any) => ({
+      resourceType: f.get('resourceType'),
+      resourceId: f.get('resourceId'),
+      resourceName: f.get('resourceName'),
+      _olFeature: f,
+    }))
+
+    // Always select the first feature immediately
+    selectOlFeature(hits[0])
   })
 
   // Pointer cursor on features + coordinate display
@@ -3125,7 +3092,65 @@ function closePopup() {
     selectedFeature.value._olFeature.setStyle(getStyle(prevType, prevEnriched, selectedFeature.value.rawData))
   }
   selectedFeature.value = null
+  stackedFeatures.value = []
   dscClearCard()
+}
+
+/**
+ * Select a specific OL feature (from click or from stacked-feature picker).
+ */
+function selectOlFeature(feature: any) {
+  const resourceType = feature.get('resourceType')
+  const rawData = feature.get('rawData')
+  const isEnriched = feature.get('enriched') || false
+  const enrichmentSource = feature.get('enrichmentSource') || ''
+
+  // Reset previous selection style
+  if (selectedFeature.value?._olFeature) {
+    const prevType = selectedFeature.value.resourceType
+    const prevEnriched = selectedFeature.value.enriched || false
+    selectedFeature.value._olFeature.setStyle(getStyle(prevType, prevEnriched, selectedFeature.value.rawData))
+  }
+
+  // Highlight new selection
+  ;(feature as Feature).setStyle(getSelectedStyle(resourceType, rawData))
+
+  selectedFeature.value = {
+    resourceType,
+    resourceId: feature.get('resourceId'),
+    resourceName: feature.get('resourceName'),
+    rawData,
+    enriched: isEnriched,
+    enrichmentSource,
+    _olFeature: feature,
+  }
+
+  // Compose deployed-system card if this is a deployment leaf
+  if (isDeployedSystemLeaf(selectedFeature.value)) {
+    dscComposeCard(selectedFeature.value, deploymentParentMap, deploymentItemById)
+  } else {
+    dscClearCard()
+  }
+
+  // Position popup
+  const geom = (feature as Feature).getGeometry()
+  if (geom) {
+    let coord: Coordinate
+    if (geom.getType() === 'Point') {
+      coord = (geom as Point).getCoordinates()
+    } else {
+      coord = (geom as any).getInteriorPoint?.()?.getCoordinates?.() || (geom as any).getFirstCoordinate()
+    }
+    overlay?.setPosition(coord)
+  }
+}
+
+/**
+ * Pick a stacked feature by index (from the UI picker).
+ */
+function pickStackedFeature(idx: number) {
+  const feat = stackedFeatures.value[idx]
+  if (feat) selectOlFeature(feat._olFeature)
 }
 
 function goToDetail() {
@@ -3497,6 +3522,19 @@ watch(selectedFeature, (feat) => {
           <strong>{{ selectedFeature.resourceName }}</strong>
           <div v-if="selectedFeature.rawData?.phenomenonTime" class="popup-id">{{ selectedFeature.rawData.phenomenonTime }}</div>
           <div v-else class="popup-id">{{ selectedFeature.resourceId }}</div>
+          <!-- Stacked-feature picker — shown when multiple features share the same pixel -->
+          <div v-if="stackedFeatures.length > 1" class="stacked-picker">
+            <div class="stacked-label">{{ stackedFeatures.length }} features here:</div>
+            <button
+              v-for="(sf, i) in stackedFeatures"
+              :key="sf.resourceId"
+              class="stacked-btn"
+              :class="{ 'stacked-btn--active': selectedFeature?.resourceId === sf.resourceId }"
+              @click.stop="pickStackedFeature(i)"
+            >
+              {{ sf.resourceName || sf.resourceId }}
+            </button>
+          </div>
           <!-- SENREP popup extra info -->
           <template v-if="selectedFeature.resourceType === 'senrepMarkers' && selectedFeature.rawData">
             <div class="popup-senrep-detail">
@@ -4307,6 +4345,45 @@ watch(selectedFeature, (feat) => {
 .popup-id {
   font-size: 0.78rem;
   color: #475569;
+}
+
+/* Stacked-feature picker */
+.stacked-picker {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #e2e8f0;
+}
+.stacked-label {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-bottom: 0.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.stacked-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 0.25rem 0.4rem;
+  margin-bottom: 0.15rem;
+  font-size: 0.78rem;
+  color: #1e293b;
+  cursor: pointer;
+  transition: background 0.1s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stacked-btn:hover { background: #eff6ff; border-color: #93c5fd; }
+.stacked-btn--active {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e40af;
+  font-weight: 600;
 }
 
 .bbox-controls {
