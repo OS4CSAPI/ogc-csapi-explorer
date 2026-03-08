@@ -1656,6 +1656,13 @@ function buildDetectionRanges(): void {
 
 // ── Location Estimate (Localizer) Layer ────────────────────────────
 
+/** Persisted fix markers that stay on the map across poll cycles */
+const persistedFixMarkers: Feature[] = []
+/** Track observation IDs already rendered to avoid duplicates */
+const seenFixObsIds = new Set<string>()
+/** Max number of persisted fix markers to keep on the map */
+const MAX_PERSISTED_FIXES = 50
+
 /**
  * Discover the localizer datastream by searching for the fusion system's
  * "location_estimate" output.  Fully dynamic — zero hardcoded IDs.
@@ -1768,8 +1775,8 @@ async function loadLocationEstimates(): Promise<void> {
     const obsTime = result.timestamp ? result.timestamp * 1000 : new Date(obs.phenomenonTime || obs.resultTime).getTime()
     const ageS = (Date.now() - obsTime) / 1000
     if (liveMode.value && ageS > 60) {
-      source.clear()
-      featureCounts.value['locationEstimates'] = 0
+      // Stale — clear ephemeral features but keep persisted markers
+      clearEphemeralLocFeatures(source)
       return
     }
 
@@ -1796,13 +1803,16 @@ async function loadLocationEstimates(): Promise<void> {
     }
 
     // 2. Position marker (dynamically styled based on age in live mode)
+    const obsId = obs.id || `loc-est-${obsTime}`
+    const isNewFix = !seenFixObsIds.has(obsId)
     const markerFeature = new Feature({
       geometry: new Point(fromLonLat([lon, lat])),
     })
     markerFeature.setStyle(liveMode.value ? getLocEstimateMarkerStyle(ageS) : getLocEstimateMarkerStyle(0))
     markerFeature.set('resourceType', 'locationEstimates')
-    markerFeature.set('resourceId', obs.id || 'loc-est-latest')
+    markerFeature.set('resourceId', obsId)
     markerFeature.set('resourceName', `Fix: ${lat.toFixed(5)}°N, ${lon.toFixed(5)}°W`)
+    markerFeature.set('isPersistedFix', true)
     markerFeature.set('rawData', {
       observationId: obs.id,
       datastreamId: localizerDatastreamId,
@@ -1876,10 +1886,33 @@ async function loadLocationEstimates(): Promise<void> {
       } catch { /* malformed JSON — skip LOB rendering */ }
     }
 
-    // Atomic swap: clear + add in one synchronous block
-    source.clear()
+    // ── Persist fix markers in live mode ──
+    // In live mode, accumulate position markers across poll cycles.
+    // Ephemeral features (CEP circle, label) are replaced each cycle;
+    // persisted fix markers stay on the map until cap is reached.
+    if (liveMode.value && isNewFix) {
+      seenFixObsIds.add(obsId)
+      // Dim all existing persisted markers to 35% opacity
+      for (const oldMarker of persistedFixMarkers) {
+        oldMarker.setStyle(getLocEstimateMarkerStyle(999)) // max age → 35% opacity
+      }
+      // Add new marker to persisted set
+      persistedFixMarkers.push(markerFeature)
+      // Cap: drop oldest if over limit
+      while (persistedFixMarkers.length > MAX_PERSISTED_FIXES) {
+        const evicted = persistedFixMarkers.shift()!
+        source.removeFeature(evicted)
+        const evictedId = evicted.get('resourceId')
+        if (evictedId) seenFixObsIds.delete(evictedId)
+      }
+    }
+
+    // Clear ephemeral features (CEP, label) but keep persisted markers
+    clearEphemeralLocFeatures(source)
+
+    // Add ephemeral features + current marker
     source.addFeatures(batch)
-    featureCounts.value['locationEstimates'] = 1
+    featureCounts.value['locationEstimates'] = persistedFixMarkers.length || 1
 
     // Swap bearing lines from localizer data (live mode only)
     if (liveMode.value && bearingSource && lobBatch.length > 0) {
@@ -1888,10 +1921,26 @@ async function loadLocationEstimates(): Promise<void> {
       featureCounts.value['bearingLines'] = lobBatch.length
     }
   } catch {
-    // No data available — clear stale features
+    // No data available — clear ephemeral features, keep persisted markers
+    clearEphemeralLocFeatures(source)
+  }
+}
+
+/**
+ * Remove ephemeral location-estimate features (CEP circle, label) from the
+ * source while preserving persisted fix markers.  In non-live mode or when
+ * there are no persisted markers, falls back to a full clear.
+ */
+function clearEphemeralLocFeatures(source: VectorSource | undefined) {
+  if (!source) return
+  if (!liveMode.value || persistedFixMarkers.length === 0) {
     source.clear()
     featureCounts.value['locationEstimates'] = 0
+    return
   }
+  // Remove only features that are NOT persisted fix markers
+  const toRemove = source.getFeatures().filter(f => !f.get('isPersistedFix'))
+  for (const f of toRemove) source.removeFeature(f)
 }
 
 // ── SENREP DS ID (Monitoring Team A sensor reports) ────────────────
@@ -2898,6 +2947,11 @@ function toggleLiveMode() {
       liveInterval = null
     }
     lastRefreshTime.value = ''
+    // Clear persisted fix markers when leaving live mode
+    persistedFixMarkers.length = 0
+    seenFixObsIds.clear()
+    const locSource = vectorSources['locationEstimates']
+    if (locSource) locSource.clear()
     // Reload full history when leaving live mode
     loadObservationLayers(500)
     loadLocationEstimates()
