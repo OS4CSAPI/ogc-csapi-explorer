@@ -182,8 +182,8 @@ async function discoverLocalizerDs(): Promise<void> {
 async function fetchUasFixes(): Promise<void> {
   if (!localizerDsId) return
 
-  // Fetch larger window for track history
-  const data = await apiFetch(`/datastreams/${localizerDsId}/observations?limit=200`)
+  // Fetch larger window for track history (server-side sort when supported)
+  const data = await apiFetch(`/datastreams/${localizerDsId}/observations?limit=200&sortBy=resultTime&sortOrder=asc`)
   const items = (data.items || []).filter((o: any) =>
     o?.result && typeof o.result.estimatedLat === 'number' && typeof o.result.estimatedLon === 'number'
   )
@@ -212,7 +212,7 @@ async function fetchUasFixes(): Promise<void> {
 async function fetchLobs(): Promise<void> {
   for (let i = 0; i < LOB_DS_IDS.length; i++) {
     try {
-      const data = await apiFetch(`/datastreams/${LOB_DS_IDS[i]}/observations?limit=200`)
+      const data = await apiFetch(`/datastreams/${LOB_DS_IDS[i]}/observations?limit=200&sortBy=resultTime&sortOrder=asc`)
       const items = (data.items || []).filter((o: any) =>
         o?.result && typeof o.result.bearingTrue === 'number'
       )
@@ -243,7 +243,7 @@ async function fetchLobs(): Promise<void> {
 
 async function fetchSenreps(): Promise<void> {
   try {
-    const data = await apiFetch(`/datastreams/${SENREP_DS}/observations?limit=50`)
+    const data = await apiFetch(`/datastreams/${SENREP_DS}/observations?limit=50&sortBy=resultTime&sortOrder=desc`)
     const items = (data.items || []).filter((o: any) =>
       o?.result && typeof o.result.etaLat === 'number' && typeof o.result.etaLon === 'number' && o.result.title
     )

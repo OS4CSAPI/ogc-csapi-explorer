@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { connection, RESOURCE_TYPES } from '../state'
 import { apiFetch } from '../api'
-import { getListUrl } from '../csapi-bridge'
+import { getListUrl, getNestedListUrl } from '../csapi-bridge'
 
 // OpenLayers imports
 import Map from 'ol/Map'
@@ -806,7 +806,8 @@ function isLocationRelatedDatastream(ds: any): boolean {
     || name.includes('sst') || name.includes('scene') || name.includes('classification')
     || name.includes('bearing')) return true
 
-  const props: any[] = ds.observedProperties || []
+  const rawProps = ds.observedProperties
+  const props: any[] = Array.isArray(rawProps) ? rawProps : rawProps ? [rawProps] : []
   return props.some((p: any) => {
     const def = (p.definition || '').toLowerCase()
     const label = (p.label || '').toLowerCase()
@@ -1009,11 +1010,16 @@ async function buildSystemLocationCache(): Promise<void> {
     // add them to isLocationRelatedDatastream() instead.
 
     // Fetch latest observation from each location datastream in parallel.
-    // IMPORTANT: use resultTime=latest — OSH's default ordering is oldest-first,
-    // so limit=1 returns the FIRST observation, not the most recent.
+    // Uses resultTime='latest' via the builder — OSH's default ordering is
+    // oldest-first, so a bare limit=1 returns the FIRST observation, not the
+    // most recent.  The builder ensures spec-compliant query serialization.
     const promises = Object.entries(bySystem).map(async ([sysId, ds]) => {
       try {
-        const obsRes = await apiFetch(`/datastreams/${ds.id}/observations?resultTime=latest&limit=1`, {
+        const obsUrl = getNestedListUrl('datastreams', ds.id, 'observations', {
+          resultTime: 'latest',
+          limit: 1,
+        } as any)
+        const obsRes = await apiFetch(obsUrl, {
           headers: { 'Accept': 'application/om+json' },
         })
         if (!obsRes.ok || !obsRes.data) return
@@ -1473,7 +1479,8 @@ async function fetchDetectionRangeConfigs(): Promise<void> {
   const fetches = Array.from(primarySystemIds).map(async (sysId) => {
     try {
       // 1. Find detection_capabilities datastream
-      const dsRes = await apiFetch(`/systems/${sysId}/datastreams?limit=50`)
+      const dsUrl = getNestedListUrl('systems', sysId, 'datastreams', { limit: 50 })
+      const dsRes = await apiFetch(dsUrl)
       if (!dsRes.ok || !dsRes.data) return
       const dsList = dsRes.data.items || dsRes.data.features || []
       const capDs = dsList.find((ds: any) =>
@@ -1482,11 +1489,16 @@ async function fetchDetectionRangeConfigs(): Promise<void> {
       if (!capDs) return
 
       // 2. Read observations and find the one with detection range data.
-      //    OSH has a bug where datastream-scoped queries return observations
-      //    from sibling datastreams, so we can't rely on resultTime=latest
-      //    (contaminating LOB observations may have later timestamps).
-      //    Fetch a large page and pick the first observation with minRange_m.
-      const obsRes = await apiFetch(`/datastreams/${capDs.id}/observations?limit=500`)
+      //    OSH has a scope-leak bug where datastream-scoped queries return
+      //    observations from sibling datastreams. Use sortBy=resultTime desc
+      //    so the most recent observations (including the genuine detection
+      //    capabilities obs) come first, allowing a much smaller limit.
+      const obsUrl = getNestedListUrl('datastreams', capDs.id, 'observations', {
+        sortBy: 'resultTime',
+        sortOrder: 'desc',
+        limit: 50,
+      } as any)
+      const obsRes = await apiFetch(obsUrl)
       if (!obsRes.ok || !obsRes.data) return
       const items = obsRes.data.items || []
       if (!items.length) return
@@ -1685,8 +1697,12 @@ async function loadLocationEstimates(): Promise<void> {
       o?.result && typeof o.result.estimatedLat === 'number' && typeof o.result.estimatedLon === 'number'
 
     // Step 1: Try resultTime=latest (fast path — one observation).
+    const latestUrl = getNestedListUrl('datastreams', localizerDatastreamId, 'observations', {
+      resultTime: 'latest',
+      limit: 1,
+    } as any)
     const obsRes = await apiFetch(
-      `/datastreams/${localizerDatastreamId}/observations?resultTime=latest&limit=1`,
+      latestUrl,
       { headers: { 'Accept': 'application/om+json' } },
     )
     if (!obsRes.ok || !obsRes.data) return
@@ -1701,10 +1717,12 @@ async function loadLocationEstimates(): Promise<void> {
       const rt = leaked.resultTime || leaked.phenomenonTime
       if (rt) {
         const endMs = new Date(rt).getTime()
-        const startISO = new Date(endMs - 120_000).toISOString()
-        const endISO = new Date(endMs + 1_000).toISOString()
+        const fallbackUrl = getNestedListUrl('datastreams', localizerDatastreamId, 'observations', {
+          limit: 100,
+          resultTime: { start: new Date(endMs - 120_000), end: new Date(endMs + 1_000) },
+        } as any)
         const fallbackRes = await apiFetch(
-          `/datastreams/${localizerDatastreamId}/observations?limit=100&resultTime=${startISO}/${endISO}`,
+          fallbackUrl,
           { headers: { 'Accept': 'application/om+json' } },
         )
         if (fallbackRes.ok && fallbackRes.data) {
@@ -1831,8 +1849,9 @@ async function loadSenrepMarkers(): Promise<void> {
   // Don't clear yet — wait until replacement data is ready to avoid blink
 
   try {
+    const senrepUrl = getNestedListUrl('datastreams', SENREP_DS_ID, 'observations', { limit: 50 } as any)
     const obsRes = await apiFetch(
-      `/datastreams/${SENREP_DS_ID}/observations?limit=50`,
+      senrepUrl,
       { headers: { 'Accept': 'application/om+json' } },
     )
     if (!obsRes.ok || !obsRes.data) return
@@ -2286,7 +2305,11 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // converge on the current target position.
       const useTimeWindow = isLive || isPositionDs
       if (useTimeWindow) {
-        const latestRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?resultTime=latest&limit=1`, {
+        const latestUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
+          resultTime: 'latest',
+          limit: 1,
+        } as any)
+        const latestRes = await apiFetch(latestUrl, {
           headers: { 'Accept': 'application/om+json' },
         })
         if (!latestRes.ok || !latestRes.data?.items?.length) return
@@ -2298,14 +2321,17 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         // LOB datastreams: 5-minute window for tight real-time view.
         const windowMinutes = isPositionDs ? 360 : 5
         const latestMs = new Date(latestTime).getTime()
-        const windowStart = new Date(latestMs - windowMinutes * 60 * 1000).toISOString()
-        const windowEnd = new Date(latestMs + 1000).toISOString()
-        const timeFilter = encodeURIComponent(`${windowStart}/${windowEnd}`)
         // Fetch limit: satellite DS needs full window, LOB DS needs extra to
         // overcome OSH scope-leak contamination, others use effectiveLimit.
         const fetchLimit = isPositionDs ? 5000 : isLobDs ? 30 : effectiveLimit
+        const windowStartDate = new Date(latestMs - windowMinutes * 60 * 1000)
+        const windowEndDate = new Date(latestMs + 1000)
+        const timeWindowUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
+          resultTime: { start: windowStartDate, end: windowEndDate },
+          limit: fetchLimit,
+        } as any)
         const obsRes = await apiFetch(
-          `/datastreams/${dsInfo.id}/observations?resultTime=${timeFilter}&limit=${fetchLimit}`,
+          timeWindowUrl,
           { headers: { 'Accept': 'application/om+json' } },
         )
         if (obsRes.ok && obsRes.data) {
@@ -2339,7 +2365,10 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
           items = allItems.slice(-effectiveLimit)
         }
       } else {
-        const obsRes = await apiFetch(`/datastreams/${dsInfo.id}/observations?limit=${effectiveLimit}`, {
+        const plainUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
+          limit: effectiveLimit,
+        } as any)
+        const obsRes = await apiFetch(plainUrl, {
           headers: { 'Accept': 'application/om+json' },
         })
         if (!obsRes.ok || !obsRes.data) return
@@ -2722,7 +2751,11 @@ async function updateMovingSystemPositions(): Promise<void> {
 
   await Promise.all(positionDs.map(async (dsInfo) => {
     try {
-      const res = await apiFetch(`/datastreams/${dsInfo.id}/observations?resultTime=latest&limit=1`, {
+      const posUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
+        resultTime: 'latest',
+        limit: 1,
+      } as any)
+      const res = await apiFetch(posUrl, {
         headers: { 'Accept': 'application/om+json' },
       })
       if (!res.ok || !res.data?.items?.length) return

@@ -57,6 +57,8 @@ function buildListUrl(options: QueryOptions): string {
 const limit = ref(10)
 const offset = ref(0)
 const q = ref('')
+const sortBy = ref('')
+const sortOrder = ref<'asc' | 'desc' | ''>('')
 const dtStart = ref<Date | null>(null)
 const dtEnd = ref<Date | null>(null)
 
@@ -196,6 +198,8 @@ async function fetchResources(cursorUrl?: string) {
       if (limit.value) options.limit = limit.value
       if (paginationMode.value === 'offset' && offset.value > 0) options.offset = offset.value
       if (q.value) options.q = q.value
+      if (sortBy.value) options.sortBy = sortBy.value
+      if (sortOrder.value) options.sortOrder = sortOrder.value
       if (datetimeParam.value) applyTemporalFilter(options, props.resourceType, datetimeParam.value)
 
       // Use CSAPIQueryBuilder via bridge to construct the URL
@@ -537,6 +541,20 @@ watch(
         <div class="filter-item">
           <label>Search (q)</label>
           <InputText v-model="q" placeholder="free text search" class="w-md" />
+        </div>
+        <div class="filter-item">
+          <label>Sort by</label>
+          <InputText v-model="sortBy" placeholder="e.g. resultTime" class="w-md" />
+        </div>
+        <div class="filter-item">
+          <label>Order</label>
+          <Button
+            :label="sortOrder || 'default'"
+            size="small"
+            severity="secondary"
+            @click="sortOrder = sortOrder === 'asc' ? 'desc' : sortOrder === 'desc' ? '' : 'asc'"
+            style="min-width: 70px"
+          />
         </div>
         <div class="filter-item">
           <label>Start date/time</label>
