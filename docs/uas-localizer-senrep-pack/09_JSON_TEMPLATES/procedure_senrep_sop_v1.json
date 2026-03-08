@@ -1,0 +1,31 @@
+{
+  "uid": "urn:os4csapi:procedure:senrep:sop:v1",
+  "name": "SENREP SOP v1",
+  "description": "Reporting procedure used by the SET to transform reviewed sensor-derived activity into a formal sensor report (SENREP).",
+  "type": "Procedure",
+  "properties": {
+    "version": "v1",
+    "inputs": [
+      "operator-reviewed fix",
+      "supporting LOBs",
+      "classification/context",
+      "contactId assignment"
+    ],
+    "outputs": [
+      "SENREP observation",
+      "track SamplingFeature creation or update"
+    ],
+    "assumptions": [
+      "identity is committed at the reporting tier",
+      "contactId is the authoritative join key"
+    ],
+    "documents": [
+      {
+        "title": "SENREP Workflow Diagram",
+        "href": "../14_DIAGRAMS/senrep_workflow.svg",
+        "rel": "preview",
+        "mediaType": "image/svg+xml"
+      }
+    ]
+  }
+}

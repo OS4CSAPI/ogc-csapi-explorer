@@ -1,0 +1,15 @@
+{
+  "uid": "urn:os4csapi:track:REPLACE_CONTACT_ID",
+  "name": "Track REPLACE_CONTACT_ID",
+  "description": "Track Feature of Interest committed at the SET reporting tier.",
+  "type": "Feature",
+  "geometry": null,
+  "properties": {
+    "featureType": "sosa:Sample",
+    "contactId": "REPLACE_CONTACT_ID",
+    "trackState": "active",
+    "createdBy": "SET-A",
+    "createdFrom": "SENREP submission",
+    "identityAuthority": "SET reporting tier"
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "uid": "urn:os4csapi:datastream:seta:senrep:v1.1",
+  "name": "senrep",
+  "description": "Formal sensor report datastream owned by SET-A. Supports doctrinal reporting fields plus identity/provenance enrichments.",
+  "obsFormat": "application/swe+json",
+  "recordSchema": {
+    "type": "DataRecord",
+    "name": "SENREP",
+    "label": "Sensor Report",
+    "fields": [
+      {
+        "type": "Time",
+        "name": "timestamp",
+        "uom": {
+          "code": "s"
+        }
+      },
+      {
+        "type": "Text",
+        "name": "title"
+      },
+      {
+        "type": "Text",
+        "name": "senderId"
+      },
+      {
+        "type": "Count",
+        "name": "seqNo"
+      },
+      {
+        "type": "Text",
+        "name": "contactId"
+      },
+      {
+        "type": "Text",
+        "name": "classification"
+      },
+      {
+        "type": "Text",
+        "name": "releasably"
+      },
+      {
+        "type": "Text",
+        "name": "dor"
+      },
+      {
+        "type": "Text",
+        "name": "envirOpName"
+      },
+      {
+        "type": "Text",
+        "name": "strNo"
+      },
+      {
+        "type": "Text",
+        "name": "detectTimeZ"
+      },
+      {
+        "type": "Count",
+        "name": "qty"
+      },
+      {
+        "type": "Category",
+        "name": "tgtTyp"
+      },
+      {
+        "type": "Text",
+        "name": "subTyp"
+      },
+      {
+        "type": "Quantity",
+        "name": "spd",
+        "uom": {
+          "code": "km/h"
+        }
+      },
+      {
+        "type": "Category",
+        "name": "dirCardinal"
+      },
+      {
+        "type": "Quantity",
+        "name": "colLengthM",
+        "uom": {
+          "code": "m"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "etaLat",
+        "uom": {
+          "code": "deg"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "etaLon",
+        "uom": {
+          "code": "deg"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "posErrorM",
+        "uom": {
+          "code": "m"
+        }
+      },
+      {
+        "type": "Text",
+        "name": "etaTimeZ"
+      },
+      {
+        "type": "Text",
+        "name": "sourceFixObsId"
+      },
+      {
+        "type": "Text",
+        "name": "sourceLobObsIds"
+      },
+      {
+        "type": "Quantity",
+        "name": "confidence",
+        "uom": {
+          "code": "1"
+        }
+      },
+      {
+        "type": "Text",
+        "name": "comments"
+      }
+    ]
+  },
+  "properties": {
+    "productType": "formal-sensor-report",
+    "identityCommitmentTier": "SET",
+    "joinKey": "contactId",
+    "qualityNote": "Formal reporting product; provenance fields preserve operator traceability."
+  }
+}

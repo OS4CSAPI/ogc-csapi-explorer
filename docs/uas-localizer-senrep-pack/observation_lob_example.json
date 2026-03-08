@@ -1,0 +1,13 @@
+{
+  "phenomenonTime": "2026-03-08T18:00:00Z",
+  "resultTime": "2026-03-08T18:00:01Z",
+  "result": {
+    "timestamp": 1772992800,
+    "trackId": 101,
+    "bearingTrue": 37.5,
+    "bearingStdDev": 4.2,
+    "sensorLat": 31.665,
+    "sensorLon": -110.328,
+    "classification": "UAS"
+  }
+}

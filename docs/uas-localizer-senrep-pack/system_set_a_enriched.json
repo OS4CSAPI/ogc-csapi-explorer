@@ -1,0 +1,30 @@
+{
+  "uid": "urn:os4csapi:system:set:ft-huachuca:001",
+  "name": "SET-A",
+  "description": "Sensor Employment Team A. Reporting-tier system responsible for reviewing detections/fixes and issuing formal sensor reports (SENREPs).",
+  "type": "System",
+  "properties": {
+    "systemKind": "human-team",
+    "roleType": "reporting-team",
+    "ownerOrg": "OS4CSAPI Demo",
+    "authoritativeFor": [
+      "senrep"
+    ],
+    "documents": [
+      {
+        "title": "SENREP Workflow Note",
+        "href": "REPLACE_WITH_INTERNAL_DOC_OR_REPO_URL",
+        "rel": "describedBy",
+        "mediaType": "text/markdown"
+      }
+    ],
+    "media": [
+      {
+        "title": "SENREP Workflow Diagram",
+        "href": "../14_DIAGRAMS/senrep_workflow.svg",
+        "rel": "preview",
+        "mediaType": "image/svg+xml"
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "uid": "urn:os4csapi:procedure:lob-wls-triangulation:v1",
+  "name": "WLS LOB Triangulation v1",
+  "description": "Weighted least-squares procedure for intersecting two or more acoustic line-of-bearing observations into a location estimate.",
+  "type": "Procedure",
+  "properties": {
+    "version": "v1",
+    "inputs": [
+      "lob observations",
+      "sensor geometry",
+      "correlation window"
+    ],
+    "outputs": [
+      "location estimate",
+      "residual",
+      "contributing sensor set"
+    ],
+    "assumptions": [
+      "At least two valid LOBs are required",
+      "LOBs must pass staleness and correlation gates",
+      "Result quality depends on geometry and bearing uncertainty"
+    ],
+    "documents": [
+      {
+        "title": "WLS Localizer Flow",
+        "href": "../14_DIAGRAMS/localizer_wls_flow.svg",
+        "rel": "preview",
+        "mediaType": "image/svg+xml"
+      }
+    ]
+  }
+}

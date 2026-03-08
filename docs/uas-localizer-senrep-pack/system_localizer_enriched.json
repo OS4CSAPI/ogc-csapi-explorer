@@ -1,0 +1,24 @@
+{
+  "uid": "urn:os4csapi:system:fusion:az-string-alpha-localizer",
+  "name": "AZ String Alpha Localizer",
+  "description": "Software fusion agent that consumes recent LOB observations from String Alpha nodes and produces weighted least-squares location estimates.",
+  "type": "System",
+  "properties": {
+    "systemKind": "software-fusion-agent",
+    "roleType": "string-level-localizer",
+    "ownerOrg": "OS4CSAPI Demo",
+    "sourceProvider": "AZ-MA node LOB streams",
+    "procedureUid": "urn:os4csapi:procedure:lob-wls-triangulation:v1",
+    "stalenessLimitSec": 15,
+    "correlationWindowSec": 10,
+    "minContributingLobs": 2,
+    "documents": [
+      {
+        "title": "Localizer Architecture Diagram",
+        "href": "../14_DIAGRAMS/localizer_wls_flow.svg",
+        "rel": "preview",
+        "mediaType": "image/svg+xml"
+      }
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "uid": "urn:os4csapi:system:monsite:ft-huachuca:001",
+  "name": "Monitoring Site 001",
+  "description": "Monitoring site responsible for receiving sensor activations, supporting analysis, and facilitating rapid sensor-derived reporting.",
+  "type": "System",
+  "properties": {
+    "systemKind": "monitoring-site",
+    "roleType": "monitoring-and-dissemination",
+    "documents": [
+      {
+        "title": "Monitoring Site Responsibilities",
+        "href": "REPLACE_WITH_INTERNAL_DOC_OR_SUMMARY",
+        "rel": "describedBy",
+        "mediaType": "text/markdown"
+      }
+    ]
+  }
+}

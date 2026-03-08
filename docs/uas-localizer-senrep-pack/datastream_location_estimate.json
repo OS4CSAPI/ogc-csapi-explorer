@@ -1,0 +1,77 @@
+{
+  "uid": "urn:os4csapi:datastream:string-alpha:location-estimate:v1",
+  "name": "az_string_alpha_location_estimate",
+  "description": "String-level localizer output representing weighted least-squares position estimates from contributing LOBs.",
+  "obsFormat": "application/swe+json",
+  "recordSchema": {
+    "type": "DataRecord",
+    "name": "locationEstimate",
+    "label": "Location Estimate",
+    "fields": [
+      {
+        "type": "Time",
+        "name": "timestamp",
+        "uom": {
+          "code": "s"
+        }
+      },
+      {
+        "type": "Count",
+        "name": "trackId"
+      },
+      {
+        "type": "Quantity",
+        "name": "estimatedLat",
+        "uom": {
+          "code": "deg"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "estimatedLon",
+        "uom": {
+          "code": "deg"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "cep50_m",
+        "uom": {
+          "code": "m"
+        }
+      },
+      {
+        "type": "Text",
+        "name": "classification"
+      },
+      {
+        "type": "Count",
+        "name": "numContributingLobs"
+      },
+      {
+        "type": "Text",
+        "name": "contributingSensors"
+      },
+      {
+        "type": "Quantity",
+        "name": "residual_m",
+        "uom": {
+          "code": "m"
+        }
+      },
+      {
+        "type": "Text",
+        "name": "contributingLobsJson"
+      }
+    ]
+  },
+  "properties": {
+    "productType": "derived-fix",
+    "cadence": "event-driven",
+    "qualityFields": [
+      "cep50_m",
+      "residual_m",
+      "numContributingLobs"
+    ]
+  }
+}

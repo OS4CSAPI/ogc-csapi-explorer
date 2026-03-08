@@ -1,0 +1,31 @@
+{
+  "phenomenonTime": "2026-03-08T18:00:05Z",
+  "resultTime": "2026-03-08T18:00:06Z",
+  "result": {
+    "timestamp": 1772992806,
+    "title": "SENREP",
+    "senderId": "SET-A",
+    "seqNo": 17,
+    "contactId": "C-20260308-001",
+    "classification": "U",
+    "releasably": "REL TO DEMO",
+    "dor": "260308",
+    "envirOpName": "STRING-ALPHA-DEMO",
+    "strNo": "MM101A",
+    "detectTimeZ": "1800Z",
+    "qty": 1,
+    "tgtTyp": "UAS",
+    "subTyp": "UNKN",
+    "spd": 42.0,
+    "dirCardinal": "NE",
+    "colLengthM": 0,
+    "etaLat": 31.6691,
+    "etaLon": -110.3212,
+    "posErrorM": 42.0,
+    "etaTimeZ": "1800Z",
+    "sourceFixObsId": "obs-localizer-123",
+    "sourceLobObsIds": "lob-1,lob-2,lob-3",
+    "confidence": 0.88,
+    "comments": "Operator-reviewed probable UAS contact."
+  }
+}

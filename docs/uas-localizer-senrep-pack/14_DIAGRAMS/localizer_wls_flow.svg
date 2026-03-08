@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="520" viewBox="0 0 1100 520">
+<style>
+  .box { fill:#f8fafc; stroke:#334155; stroke-width:2; rx:8; ry:8; }
+  .accent { fill:#fff7ed; stroke:#c2410c; stroke-width:2; rx:8; ry:8; }
+  .good { fill:#ecfdf5; stroke:#15803d; stroke-width:2; rx:8; ry:8; }
+  .text { font-family:Arial, sans-serif; font-size:20px; fill:#111827; }
+  .small { font-family:Arial, sans-serif; font-size:15px; fill:#374151; }
+  .arrow { stroke:#475569; stroke-width:3; marker-end:url(#arrow); fill:none; }
+</style>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#475569"/></marker></defs>
+
+<rect x="30" y="180" width="210" height="80" class="box"/><text x="135" y="212" text-anchor="middle" class="text">AZ-MA-1 LOB</text><text x="135" y="235" text-anchor="middle" class="small">bearing + uncertainty</text>
+<rect x="30" y="290" width="210" height="80" class="box"/><text x="135" y="322" text-anchor="middle" class="text">AZ-MA-2 LOB</text><text x="135" y="345" text-anchor="middle" class="small">bearing + uncertainty</text>
+<rect x="30" y="400" width="210" height="80" class="box"/><text x="135" y="432" text-anchor="middle" class="text">AZ-MA-3 LOB</text><text x="135" y="455" text-anchor="middle" class="small">bearing + uncertainty</text>
+
+<rect x="360" y="130" width="310" height="140" class="accent"/>
+<text x="515" y="165" text-anchor="middle" class="text">AZ String Alpha Localizer</text>
+<text x="515" y="195" text-anchor="middle" class="small">staleness gate</text>
+<text x="515" y="220" text-anchor="middle" class="small">correlation window</text>
+<text x="515" y="245" text-anchor="middle" class="small">WLS triangulation</text>
+
+<rect x="770" y="180" width="280" height="110" class="good"/>
+<text x="910" y="215" text-anchor="middle" class="text">Location Estimate</text>
+<text x="910" y="240" text-anchor="middle" class="small">estimatedLat / estimatedLon</text>
+<text x="910" y="262" text-anchor="middle" class="small">cep50 / residual / contributing LOBs</text>
+
+<path d="M240 220 C300 220, 310 200, 360 200" class="arrow"/>
+<path d="M240 330 C300 330, 310 220, 360 220" class="arrow"/>
+<path d="M240 440 C300 440, 310 240, 360 240" class="arrow"/>
+<path d="M670 220 C720 220, 730 220, 770 220" class="arrow"/>
+</svg>

@@ -1,0 +1,15 @@
+{
+  "uid": "urn:os4csapi:deployment:localizer:ft-huachuca:alpha:001",
+  "name": "String Alpha Localizer Feed",
+  "description": "Leaf deployment representing the string-level localizer fusion capability for String Alpha.",
+  "type": "Deployment",
+  "platform@link": {
+    "href": "REPLACE_WITH_SYSTEM_URL_OR_ID",
+    "title": "AZ String Alpha Localizer"
+  },
+  "properties": {
+    "deploymentType": "feed-leaf",
+    "roleType": "fusion-producer",
+    "purpose": "Produce string-level location estimates from two or more contributing LOB observations."
+  }
+}

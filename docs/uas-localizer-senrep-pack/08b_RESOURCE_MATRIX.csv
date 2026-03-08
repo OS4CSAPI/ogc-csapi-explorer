@@ -1,0 +1,9 @@
+resource,category,keep_or_add,required_enrichments,recommended_media
+String Alpha,deployment,keep,uid; name; purpose; role,string diagram
+SET-A,system,keep/enrich,team role; reporting authority; docs,senrep workflow diagram
+Monitoring Site,system,keep/enrich,monitoring role; dissemination role,monitoring-site diagram
+Relay,system,keep/enrich,support role; relay purpose,relay diagram
+AZ String Alpha Localizer,system,keep/enrich,fusion role; method refs; quality semantics,WLS/localizer diagram
+senrep,datastream,upgrade,contactId; provenance; confidence; posErrorM,field-mapping guide
+az_string_alpha_location_estimate,datastream,keep/enrich,units; cep/residual semantics,gold-dot explainer
+Track SamplingFeature,sampling feature,add/template,contactId; lifecycle; authority,optional track icon

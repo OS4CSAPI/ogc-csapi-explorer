@@ -1,0 +1,16 @@
+{
+  "phenomenonTime": "2026-03-08T18:00:02Z",
+  "resultTime": "2026-03-08T18:00:02Z",
+  "result": {
+    "timestamp": 1772992802,
+    "trackId": 101,
+    "estimatedLat": 31.6691,
+    "estimatedLon": -110.3212,
+    "cep50_m": 42.0,
+    "classification": "UAS",
+    "numContributingLobs": 3,
+    "contributingSensors": "AZ-MA-1,AZ-MA-2,AZ-MA-3",
+    "residual_m": 21.7,
+    "contributingLobsJson": "[{\"sensor\":\"AZ-MA-1\"},{\"sensor\":\"AZ-MA-2\"},{\"sensor\":\"AZ-MA-3\"}]"
+  }
+}
