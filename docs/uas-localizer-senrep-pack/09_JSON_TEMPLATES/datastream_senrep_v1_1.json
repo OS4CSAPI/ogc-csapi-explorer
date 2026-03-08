@@ -1,135 +1,205 @@
 {
-  "uid": "urn:os4csapi:datastream:seta:senrep:v1.1",
-  "name": "senrep",
-  "description": "Formal sensor report datastream owned by SET-A. Supports doctrinal reporting fields plus identity/provenance enrichments.",
-  "obsFormat": "application/swe+json",
-  "recordSchema": {
-    "type": "DataRecord",
-    "name": "SENREP",
-    "label": "Sensor Report",
-    "fields": [
-      {
-        "type": "Time",
-        "name": "timestamp",
-        "uom": {
-          "code": "s"
+  "_templateMeta": {
+    "uid": "urn:os4csapi:datastream:seta:senrep:v1.1",
+    "description": "Server-ready datastream template for SENREP formal sensor reports",
+    "wirePattern": "POST to /systems/{setASystemId}/datastreams",
+    "auditFixes": [
+      "U2: Added definition + referenceTime to timestamp field",
+      "Enhanced all fields with SWE definitions and labels"
+    ],
+    "migrationNote": "This is a 25-field expanded schema (v1.1). Create as NEW datastream alongside existing SENREP; do not modify existing schema in-place."
+  },
+  "name": "SENREP v1.1",
+  "outputName": "senrep_v1_1",
+  "schema": {
+    "obsFormat": "application/om+json",
+    "resultSchema": {
+      "type": "DataRecord",
+      "name": "SENREP",
+      "label": "Sensor Report",
+      "description": "Formal sensor report datastream owned by SET-A. Supports doctrinal reporting fields plus identity/provenance enrichments.",
+      "fields": [
+        {
+          "type": "Time",
+          "name": "timestamp",
+          "definition": "http://sensorml.com/ont/swe/property/SamplingTime",
+          "label": "Sampling Time",
+          "referenceTime": "1970-01-01T00:00:00Z",
+          "uom": {
+            "code": "s"
+          }
+        },
+        {
+          "type": "Text",
+          "name": "title",
+          "definition": "http://sensorml.com/ont/swe/property/ShortName",
+          "label": "Report Title"
+        },
+        {
+          "type": "Text",
+          "name": "senderId",
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "Sender ID"
+        },
+        {
+          "type": "Count",
+          "name": "seqNo",
+          "definition": "http://sensorml.com/ont/swe/property/SequenceNumber",
+          "label": "Sequence Number"
+        },
+        {
+          "type": "Text",
+          "name": "contactId",
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "Contact ID",
+          "description": "Authoritative join key for tracking/reporting"
+        },
+        {
+          "type": "Text",
+          "name": "classification",
+          "definition": "http://sensorml.com/ont/swe/property/Classification",
+          "label": "Classification"
+        },
+        {
+          "type": "Text",
+          "name": "releasably",
+          "definition": "http://sensorml.com/ont/swe/property/Classification",
+          "label": "Releasability"
+        },
+        {
+          "type": "Text",
+          "name": "dor",
+          "label": "Date of Report",
+          "description": "DTG of report (DDMMYY format)"
+        },
+        {
+          "type": "Text",
+          "name": "envirOpName",
+          "label": "Operation Name",
+          "description": "Named operation or exercise identifier"
+        },
+        {
+          "type": "Text",
+          "name": "strNo",
+          "label": "String Number",
+          "description": "String/sensor array identifier"
+        },
+        {
+          "type": "Text",
+          "name": "detectTimeZ",
+          "label": "Detection Time (Zulu)",
+          "description": "Time of initial detection in Zulu (HHMM format)"
+        },
+        {
+          "type": "Count",
+          "name": "qty",
+          "definition": "http://sensorml.com/ont/swe/property/NumberOfElements",
+          "label": "Quantity",
+          "description": "Number of targets observed"
+        },
+        {
+          "type": "Category",
+          "name": "tgtTyp",
+          "label": "Target Type",
+          "description": "Doctrinal target type category (e.g., UAS, DISMOUNT, VEHICLE)"
+        },
+        {
+          "type": "Text",
+          "name": "subTyp",
+          "label": "Sub-Type",
+          "description": "Target sub-type detail"
+        },
+        {
+          "type": "Quantity",
+          "name": "spd",
+          "definition": "http://qudt.org/vocab/quantitykind/Speed",
+          "label": "Speed",
+          "uom": {
+            "code": "km/h"
+          }
+        },
+        {
+          "type": "Category",
+          "name": "dirCardinal",
+          "label": "Direction (Cardinal)",
+          "description": "Cardinal or inter-cardinal direction of movement"
+        },
+        {
+          "type": "Quantity",
+          "name": "colLengthM",
+          "definition": "http://qudt.org/vocab/quantitykind/Length",
+          "label": "Column Length",
+          "description": "Length of the detected target formation/column",
+          "uom": {
+            "code": "m"
+          }
+        },
+        {
+          "type": "Quantity",
+          "name": "etaLat",
+          "definition": "http://qudt.org/vocab/quantitykind/Latitude",
+          "label": "Estimated Latitude",
+          "uom": {
+            "code": "deg"
+          }
+        },
+        {
+          "type": "Quantity",
+          "name": "etaLon",
+          "definition": "http://qudt.org/vocab/quantitykind/Longitude",
+          "label": "Estimated Longitude",
+          "uom": {
+            "code": "deg"
+          }
+        },
+        {
+          "type": "Quantity",
+          "name": "posErrorM",
+          "definition": "http://qudt.org/vocab/quantitykind/Length",
+          "label": "Position Error",
+          "description": "Estimated position error in meters",
+          "uom": {
+            "code": "m"
+          }
+        },
+        {
+          "type": "Text",
+          "name": "etaTimeZ",
+          "label": "ETA Time (Zulu)",
+          "description": "Estimated time of activity in Zulu"
+        },
+        {
+          "type": "Text",
+          "name": "sourceFixObsId",
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "Source Fix Observation ID",
+          "description": "Reference to the localizer fix observation that triggered this SENREP"
+        },
+        {
+          "type": "Text",
+          "name": "sourceLobObsIds",
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "Source LOB Observation IDs",
+          "description": "Comma-separated list of contributing LOB observation IDs"
+        },
+        {
+          "type": "Quantity",
+          "name": "confidence",
+          "definition": "http://sensorml.com/ont/swe/property/QualityIndex",
+          "label": "Confidence",
+          "description": "Operator confidence level (0-1)",
+          "uom": {
+            "code": "1"
+          }
+        },
+        {
+          "type": "Text",
+          "name": "comments",
+          "label": "Comments",
+          "description": "Free-text operator comments"
         }
-      },
-      {
-        "type": "Text",
-        "name": "title"
-      },
-      {
-        "type": "Text",
-        "name": "senderId"
-      },
-      {
-        "type": "Count",
-        "name": "seqNo"
-      },
-      {
-        "type": "Text",
-        "name": "contactId"
-      },
-      {
-        "type": "Text",
-        "name": "classification"
-      },
-      {
-        "type": "Text",
-        "name": "releasably"
-      },
-      {
-        "type": "Text",
-        "name": "dor"
-      },
-      {
-        "type": "Text",
-        "name": "envirOpName"
-      },
-      {
-        "type": "Text",
-        "name": "strNo"
-      },
-      {
-        "type": "Text",
-        "name": "detectTimeZ"
-      },
-      {
-        "type": "Count",
-        "name": "qty"
-      },
-      {
-        "type": "Category",
-        "name": "tgtTyp"
-      },
-      {
-        "type": "Text",
-        "name": "subTyp"
-      },
-      {
-        "type": "Quantity",
-        "name": "spd",
-        "uom": {
-          "code": "km/h"
-        }
-      },
-      {
-        "type": "Category",
-        "name": "dirCardinal"
-      },
-      {
-        "type": "Quantity",
-        "name": "colLengthM",
-        "uom": {
-          "code": "m"
-        }
-      },
-      {
-        "type": "Quantity",
-        "name": "etaLat",
-        "uom": {
-          "code": "deg"
-        }
-      },
-      {
-        "type": "Quantity",
-        "name": "etaLon",
-        "uom": {
-          "code": "deg"
-        }
-      },
-      {
-        "type": "Quantity",
-        "name": "posErrorM",
-        "uom": {
-          "code": "m"
-        }
-      },
-      {
-        "type": "Text",
-        "name": "etaTimeZ"
-      },
-      {
-        "type": "Text",
-        "name": "sourceFixObsId"
-      },
-      {
-        "type": "Text",
-        "name": "sourceLobObsIds"
-      },
-      {
-        "type": "Quantity",
-        "name": "confidence",
-        "uom": {
-          "code": "1"
-        }
-      },
-      {
-        "type": "Text",
-        "name": "comments"
-      }
-    ]
+      ]
+    }
   },
   "properties": {
     "productType": "formal-sensor-report",

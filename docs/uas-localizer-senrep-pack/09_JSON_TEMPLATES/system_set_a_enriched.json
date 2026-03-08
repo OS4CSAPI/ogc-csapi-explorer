@@ -1,29 +1,121 @@
 {
-  "uid": "urn:os4csapi:system:set:ft-huachuca:001",
-  "name": "SET-A",
-  "description": "Sensor Employment Team A. Reporting-tier system responsible for reviewing detections/fixes and issuing formal sensor reports (SENREPs).",
-  "type": "System",
-  "properties": {
-    "systemKind": "human-team",
-    "roleType": "reporting-team",
-    "ownerOrg": "OS4CSAPI Demo",
-    "authoritativeFor": [
-      "senrep"
+  "_templateMeta": {
+    "description": "Server-ready template for SET-A (Sensor Employment Team A)",
+    "wirePattern": "Two-step: POST geojsonStub to /systems, then PUT sensorml to /systems/{id}/details",
+    "pack": "UAS/Localizer/SENREP Implementation Ready Pack v2",
+    "auditFixes": [
+      "U1: Converted from simplified JSON to geojson stub + SensorML PhysicalSystem",
+      "U3: Replaced REPLACE_WITH_INTERNAL_DOC_OR_REPO_URL with actual pack URL",
+      "U6: SVG relative path replaced with absolute GitHub raw URL"
+    ]
+  },
+  "geojsonStub": {
+    "type": "Feature",
+    "geometry": null,
+    "properties": {
+      "uid": "urn:os4csapi:system:set:ft-huachuca:001",
+      "name": "SET-A",
+      "description": "Sensor Employment Team A. Reporting-tier system responsible for reviewing detections/fixes and issuing formal sensor reports (SENREPs).",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        ".."
+      ]
+    }
+  },
+  "sensorml": {
+    "type": "PhysicalSystem",
+    "uniqueId": "urn:os4csapi:system:set:ft-huachuca:001",
+    "definition": "sosa:System",
+    "label": "SET-A",
+    "description": "Sensor Employment Team A. Reporting-tier system responsible for reviewing detections/fixes and issuing formal sensor reports (SENREPs).",
+    "keywords": [
+      "SET",
+      "Sensor Employment Team",
+      "SENREP",
+      "reporting",
+      "identity commitment",
+      "human-team",
+      "Ft Huachuca"
+    ],
+    "identifiers": [
+      {
+        "definition": "http://sensorml.com/ont/swe/property/ShortName",
+        "label": "Short Name",
+        "value": "SET-A"
+      },
+      {
+        "definition": "http://sensorml.com/ont/swe/property/LongName",
+        "label": "Long Name",
+        "value": "Sensor Employment Team A — Ft Huachuca"
+      }
+    ],
+    "classifiers": [
+      {
+        "definition": "http://sensorml.com/ont/swe/property/SensorType",
+        "label": "System Kind",
+        "value": "Human Team"
+      },
+      {
+        "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+        "label": "Role Type",
+        "value": "Reporting Team"
+      },
+      {
+        "definition": "http://sensorml.com/ont/swe/property/SystemRole",
+        "label": "System Role",
+        "value": "Identity Authority — SENREP Issuer"
+      }
+    ],
+    "validTime": [
+      "2026-01-01T00:00:00Z",
+      ".."
+    ],
+    "capabilities": [
+      {
+        "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+        "label": "Reporting Capabilities",
+        "capabilities": [
+          {
+            "type": "Text",
+            "name": "authoritative_for",
+            "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+            "label": "Authoritative For",
+            "value": "senrep"
+          }
+        ]
+      }
+    ],
+    "contacts": [
+      {
+        "role": "http://sensorml.com/ont/swe/property/Operator",
+        "organisationName": "OS4CSAPI Demo"
+      },
+      {
+        "role": "http://sensorml.com/ont/swe/property/ProjectLeader",
+        "organisationName": "OS4CSAPI Project",
+        "contactInfo": {
+          "website": "https://github.com/OS4CSAPI"
+        }
+      }
     ],
     "documents": [
       {
-        "title": "SENREP Workflow Note",
-        "href": "REPLACE_WITH_INTERNAL_DOC_OR_REPO_URL",
-        "rel": "describedBy",
-        "mediaType": "text/markdown"
-      }
-    ],
-    "media": [
+        "role": "http://dbpedia.org/resource/Web_page",
+        "name": "SENREP Workflow Note",
+        "description": "UAS/Localizer/SENREP Implementation Ready Pack — includes SENREP workflow documentation, doctrine crosswalk, and implementation guidance.",
+        "link": {
+          "href": "https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/docs/uas-localizer-senrep-pack",
+          "type": "text/html"
+        }
+      },
       {
-        "title": "SENREP Workflow Diagram",
-        "href": "../14_DIAGRAMS/senrep_workflow.svg",
-        "rel": "preview",
-        "mediaType": "image/svg+xml"
+        "role": "http://dbpedia.org/resource/Diagram",
+        "name": "SENREP Workflow Diagram",
+        "description": "Diagram showing the SENREP creation workflow from detection through formal report issuance.",
+        "link": {
+          "href": "https://raw.githubusercontent.com/OS4CSAPI/ogc-csapi-explorer/main/docs/uas-localizer-senrep-pack/14_DIAGRAMS/senrep_workflow.svg",
+          "type": "image/svg+xml"
+        }
       }
     ]
   }

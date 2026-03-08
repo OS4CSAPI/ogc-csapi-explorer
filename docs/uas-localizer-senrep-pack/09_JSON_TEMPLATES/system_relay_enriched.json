@@ -1,0 +1,80 @@
+{
+  "_templateMeta": {
+    "description": "Server-ready template for VHF Relay/Repeater (NEW — audit finding U4)",
+    "wirePattern": "Two-step: POST geojsonStub to /systems, then PUT sensorml to /systems/{id}/details",
+    "pack": "UAS/Localizer/SENREP Implementation Ready Pack v2",
+    "auditFixes": [
+      "U4: Created relay system template — was missing from original pack"
+    ]
+  },
+  "geojsonStub": {
+    "type": "Feature",
+    "geometry": null,
+    "properties": {
+      "uid": "urn:os4csapi:system:relay:vhf-repeater:ft-huachuca:001",
+      "name": "VHF Relay/Repeater 001",
+      "description": "VHF radio relay/repeater providing communications link between remote sensor nodes and the monitoring site. Extends sensor-to-monsite radio coverage.",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        ".."
+      ]
+    }
+  },
+  "sensorml": {
+    "type": "PhysicalSystem",
+    "uniqueId": "urn:os4csapi:system:relay:vhf-repeater:ft-huachuca:001",
+    "definition": "sosa:System",
+    "label": "VHF Relay/Repeater 001",
+    "description": "VHF radio relay/repeater providing communications link between remote sensor nodes and the monitoring site. Extends sensor-to-monsite radio coverage.",
+    "keywords": [
+      "relay",
+      "repeater",
+      "VHF",
+      "communications",
+      "radio link",
+      "support infrastructure"
+    ],
+    "identifiers": [
+      {
+        "definition": "http://sensorml.com/ont/swe/property/ShortName",
+        "label": "Short Name",
+        "value": "VHF Relay/Repeater 001"
+      },
+      {
+        "definition": "http://sensorml.com/ont/swe/property/LongName",
+        "label": "Long Name",
+        "value": "VHF Relay/Repeater 001 — Ft Huachuca"
+      }
+    ],
+    "classifiers": [
+      {
+        "definition": "http://sensorml.com/ont/swe/property/SensorType",
+        "label": "System Kind",
+        "value": "Communications Relay"
+      },
+      {
+        "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+        "label": "Role Type",
+        "value": "Support Infrastructure"
+      },
+      {
+        "definition": "http://sensorml.com/ont/swe/property/SystemRole",
+        "label": "System Role",
+        "value": "VHF Repeater — Sensor-to-Monsite Link"
+      }
+    ],
+    "validTime": [
+      "2026-01-01T00:00:00Z",
+      ".."
+    ],
+    "contacts": [
+      {
+        "role": "http://sensorml.com/ont/swe/property/ProjectLeader",
+        "organisationName": "OS4CSAPI Project",
+        "contactInfo": {
+          "website": "https://github.com/OS4CSAPI"
+        }
+      }
+    ]
+  }
+}

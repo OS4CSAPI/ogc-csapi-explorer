@@ -1,69 +1,107 @@
 {
-  "uid": "urn:os4csapi:datastream:string-alpha:location-estimate:v1",
-  "name": "az_string_alpha_location_estimate",
-  "description": "String-level localizer output representing weighted least-squares position estimates from contributing LOBs.",
-  "obsFormat": "application/swe+json",
-  "recordSchema": {
-    "type": "DataRecord",
-    "name": "locationEstimate",
-    "label": "Location Estimate",
-    "fields": [
-      {
-        "type": "Time",
-        "name": "timestamp",
-        "uom": {
-          "code": "s"
-        }
-      },
-      {
-        "type": "Count",
-        "name": "trackId"
-      },
-      {
-        "type": "Quantity",
-        "name": "estimatedLat",
-        "uom": {
-          "code": "deg"
-        }
-      },
-      {
-        "type": "Quantity",
-        "name": "estimatedLon",
-        "uom": {
-          "code": "deg"
-        }
-      },
-      {
-        "type": "Quantity",
-        "name": "cep50_m",
-        "uom": {
-          "code": "m"
-        }
-      },
-      {
-        "type": "Text",
-        "name": "classification"
-      },
-      {
-        "type": "Count",
-        "name": "numContributingLobs"
-      },
-      {
-        "type": "Text",
-        "name": "contributingSensors"
-      },
-      {
-        "type": "Quantity",
-        "name": "residual_m",
-        "uom": {
-          "code": "m"
-        }
-      },
-      {
-        "type": "Text",
-        "name": "contributingLobsJson"
-      }
+  "_templateMeta": {
+    "uid": "urn:os4csapi:datastream:string-alpha:location-estimate:v1",
+    "description": "Server-ready datastream template for localizer location estimates",
+    "wirePattern": "POST to /systems/{localizerSystemId}/datastreams",
+    "auditFixes": [
+      "U2: Added definition + referenceTime to timestamp field",
+      "Enhanced all fields with SWE definitions and labels"
     ]
+  },
+  "name": "Location Estimate",
+  "outputName": "locationEstimate",
+  "schema": {
+    "obsFormat": "application/om+json",
+    "resultSchema": {
+      "type": "DataRecord",
+      "name": "locationEstimate",
+      "label": "Location Estimate",
+      "description": "String-level localizer output representing weighted least-squares position estimates from contributing LOBs.",
+      "fields": [
+        {
+          "type": "Time",
+          "name": "timestamp",
+          "definition": "http://sensorml.com/ont/swe/property/SamplingTime",
+          "label": "Sampling Time",
+          "referenceTime": "1970-01-01T00:00:00Z",
+          "uom": {
+            "code": "s"
+          }
+        },
+        {
+          "type": "Count",
+          "name": "trackId",
+          "definition": "http://sensorml.com/ont/swe/property/Identifier",
+          "label": "Track ID"
+        },
+        {
+          "type": "Quantity",
+          "name": "estimatedLat",
+          "definition": "http://qudt.org/vocab/quantitykind/Latitude",
+          "label": "Estimated Latitude",
+          "description": "WLS-computed geodetic latitude (WGS-84)",
+          "uom": {
+            "code": "deg"
+          }
+        },
+        {
+          "type": "Quantity",
+          "name": "estimatedLon",
+          "definition": "http://qudt.org/vocab/quantitykind/Longitude",
+          "label": "Estimated Longitude",
+          "description": "WLS-computed geodetic longitude (WGS-84)",
+          "uom": {
+            "code": "deg"
+          }
+        },
+        {
+          "type": "Quantity",
+          "name": "cep50_m",
+          "definition": "http://qudt.org/vocab/quantitykind/Length",
+          "label": "CEP50",
+          "description": "Circular Error Probable (50th percentile) of the location estimate",
+          "uom": {
+            "code": "m"
+          }
+        },
+        {
+          "type": "Text",
+          "name": "classification",
+          "definition": "http://sensorml.com/ont/swe/property/Classification",
+          "label": "Classification"
+        },
+        {
+          "type": "Count",
+          "name": "numContributingLobs",
+          "definition": "http://sensorml.com/ont/swe/property/NumberOfElements",
+          "label": "Number of Contributing LOBs"
+        },
+        {
+          "type": "Text",
+          "name": "contributingSensors",
+          "definition": "http://sensorml.com/ont/swe/property/DataSource",
+          "label": "Contributing Sensors",
+          "description": "Comma-separated list of sensor IDs that contributed LOBs"
+        },
+        {
+          "type": "Quantity",
+          "name": "residual_m",
+          "definition": "http://qudt.org/vocab/quantitykind/Length",
+          "label": "Residual",
+          "description": "WLS residual error metric in meters",
+          "uom": {
+            "code": "m"
+          }
+        },
+        {
+          "type": "Text",
+          "name": "contributingLobsJson",
+          "definition": "http://sensorml.com/ont/swe/property/DataPayload",
+          "label": "Contributing LOBs (JSON)",
+          "description": "JSON-encoded array of contributing LOB details"
+        }
+      ]
+    }
   },
   "properties": {
     "productType": "derived-fix",

@@ -1,15 +1,30 @@
 {
-  "uid": "urn:os4csapi:deployment:localizer:ft-huachuca:alpha:001",
-  "name": "String Alpha Localizer Feed",
-  "description": "Leaf deployment representing the string-level localizer fusion capability for String Alpha.",
-  "type": "Deployment",
-  "platform@link": {
-    "href": "REPLACE_WITH_SYSTEM_URL_OR_ID",
-    "title": "AZ String Alpha Localizer"
+  "_templateMeta": {
+    "description": "Server-ready deployment leaf template for localizer feed",
+    "wirePattern": "POST as geo+json Feature to parent deployment's /subdeployments endpoint",
+    "auditFixes": [
+      "U1: Converted from simplified JSON to geo+json Feature format",
+      "U3: platform@link.href remains as RUNTIME_RESOLVE — bootstrap script resolves via find_by_uid()"
+    ]
   },
+  "type": "Feature",
+  "geometry": null,
   "properties": {
-    "deploymentType": "feed-leaf",
-    "roleType": "fusion-producer",
-    "purpose": "Produce string-level location estimates from two or more contributing LOB observations."
+    "uid": "urn:os4csapi:deployment:localizer:ft-huachuca:alpha:001",
+    "name": "String Alpha Localizer Feed",
+    "description": "Leaf deployment representing the string-level localizer fusion capability for String Alpha.",
+    "validTime": [
+      "2026-01-01T00:00:00Z",
+      ".."
+    ],
+    "platform@link": {
+      "href": "RUNTIME_RESOLVE:urn:os4csapi:system:fusion:az-string-alpha-localizer",
+      "title": "AZ String Alpha Localizer"
+    },
+    "_originalMetadata": {
+      "deploymentType": "feed-leaf",
+      "roleType": "fusion-producer",
+      "purpose": "Produce string-level location estimates from two or more contributing LOB observations."
+    }
   }
 }

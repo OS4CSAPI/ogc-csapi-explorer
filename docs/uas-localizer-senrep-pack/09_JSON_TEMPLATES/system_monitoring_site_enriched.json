@@ -1,17 +1,85 @@
 {
-  "uid": "urn:os4csapi:system:monsite:ft-huachuca:001",
-  "name": "Monitoring Site 001",
-  "description": "Monitoring site responsible for receiving sensor activations, supporting analysis, and facilitating rapid sensor-derived reporting.",
-  "type": "System",
-  "properties": {
-    "systemKind": "monitoring-site",
-    "roleType": "monitoring-and-dissemination",
+  "_templateMeta": {
+    "description": "Server-ready template for Monitoring Site 001",
+    "wirePattern": "Two-step: POST geojsonStub to /systems, then PUT sensorml to /systems/{id}/details",
+    "pack": "UAS/Localizer/SENREP Implementation Ready Pack v2",
+    "auditFixes": [
+      "U1: Converted from simplified JSON to geojson stub + SensorML PhysicalSystem",
+      "U3: Replaced REPLACE_WITH_INTERNAL_DOC_OR_SUMMARY with actual pack URL"
+    ]
+  },
+  "geojsonStub": {
+    "type": "Feature",
+    "geometry": null,
+    "properties": {
+      "uid": "urn:os4csapi:system:monsite:ft-huachuca:001",
+      "name": "Monitoring Site 001",
+      "description": "Monitoring site responsible for receiving sensor activations, supporting analysis, and facilitating rapid sensor-derived reporting.",
+      "validTime": [
+        "2026-01-01T00:00:00Z",
+        ".."
+      ]
+    }
+  },
+  "sensorml": {
+    "type": "PhysicalSystem",
+    "uniqueId": "urn:os4csapi:system:monsite:ft-huachuca:001",
+    "definition": "sosa:System",
+    "label": "Monitoring Site 001",
+    "description": "Monitoring site responsible for receiving sensor activations, supporting analysis, and facilitating rapid sensor-derived reporting.",
+    "keywords": [
+      "monitoring site",
+      "dissemination",
+      "sensor management",
+      "analysis support",
+      "Ft Huachuca"
+    ],
+    "identifiers": [
+      {
+        "definition": "http://sensorml.com/ont/swe/property/ShortName",
+        "label": "Short Name",
+        "value": "Monitoring Site 001"
+      },
+      {
+        "definition": "http://sensorml.com/ont/swe/property/LongName",
+        "label": "Long Name",
+        "value": "Monitoring Site 001 — Ft Huachuca"
+      }
+    ],
+    "classifiers": [
+      {
+        "definition": "http://sensorml.com/ont/swe/property/SensorType",
+        "label": "System Kind",
+        "value": "Monitoring Site"
+      },
+      {
+        "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+        "label": "Role Type",
+        "value": "Monitoring and Dissemination"
+      }
+    ],
+    "validTime": [
+      "2026-01-01T00:00:00Z",
+      ".."
+    ],
+    "contacts": [
+      {
+        "role": "http://sensorml.com/ont/swe/property/ProjectLeader",
+        "organisationName": "OS4CSAPI Project",
+        "contactInfo": {
+          "website": "https://github.com/OS4CSAPI"
+        }
+      }
+    ],
     "documents": [
       {
-        "title": "Monitoring Site Responsibilities",
-        "href": "REPLACE_WITH_INTERNAL_DOC_OR_SUMMARY",
-        "rel": "describedBy",
-        "mediaType": "text/markdown"
+        "role": "http://dbpedia.org/resource/Web_page",
+        "name": "Monitoring Site Responsibilities",
+        "description": "UAS/Localizer/SENREP Implementation Ready Pack — includes monitoring site role documentation and responsibilities.",
+        "link": {
+          "href": "https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/docs/uas-localizer-senrep-pack",
+          "type": "text/html"
+        }
       }
     ]
   }
