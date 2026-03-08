@@ -118,7 +118,7 @@ Documents were checked for internal contradictions (e.g., error class philosophy
 
 - Section 4.1: `checkServerAvailability()` gating with `console.warn('OSH server unavailable - skipping live tests')`
 - Section 6.4: Separate jest projects for `*.offline.spec.ts` and `*.live.spec.ts`, with `npm run test:live` nightly scripts
-- Lines 546-548: Hardcoded credentials (`username: 'ogc', password: 'ogc'`)
+- Lines 546-548: Hardcoded credentials (redacted — see env vars)
 - Lines 744-755: Nightly CI/CD YAML for live server testing
 - 5+ instances of AP5 (graceful skipping): `console.warn('OSH unavailable - skipping tests'); return;`, `console.warn('No datastreams for system - skipping'); return;`, etc.
 

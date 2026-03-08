@@ -1067,7 +1067,7 @@
      it('should connect and authenticate', async () => {
        const client = new CSAPIClient(LIVE_SERVER, {
          type: 'basic',
-         credentials: { username: 'ogc', password: 'ogc' },
+         credentials: { username: '<REDACTED>', password: '<REDACTED>' },
        });
        const conformance = await client.getConformance();
        expect(conformance.conformsTo).toContain(
@@ -1618,7 +1618,7 @@ describe('Systems Client', () => {
 | ---------------- | ----------------------------- | -------------------------------------- |
 | **URL**          | https://csa.demo.52north.org/ | http://45.55.99.236:8080/sensorhub/api |
 | **SSL**          | ⚠️ Invalid cert               | ✅ HTTP (no SSL issues)                |
-| **Auth**         | None                          | HTTP Basic (ogc:ogc)                   |
+| **Auth**         | None                          | HTTP Basic (credentials via env vars)  |
 | **Conformance**  | 1 class                       | 33 classes                             |
 | **Systems**      | 3                             | 6                                      |
 | **Deployments**  | 1                             | 0 (not demonstrated)                   |

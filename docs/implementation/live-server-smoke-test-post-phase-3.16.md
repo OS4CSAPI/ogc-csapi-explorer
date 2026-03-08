@@ -14,7 +14,7 @@
 | Property      | Value                                              |
 | ------------- | -------------------------------------------------- |
 | Base URL      | `http://45.55.99.236:8080/sensorhub/api`           |
-| Auth          | Basic (ogc:ogc)                                    |
+| Auth          | Basic (credentials via env vars)                    |
 | Root response | 200 OK — "Connected Systems API Service", 10 links |
 | API Title     | Connected Systems API Service                      |
 

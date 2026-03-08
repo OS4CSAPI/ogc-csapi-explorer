@@ -373,7 +373,7 @@ Authorization: Basic <base64-encoded-credentials>
 ```typescript
 // All resource classes should be available
 const client = new CSAPIClient('http://45.55.99.236:8080/sensorhub/api', {
-  auth: { type: 'basic', username: 'ogc', password: 'ogc' },
+  auth: { type: 'basic', username: '<REDACTED>', password: '<REDACTED>' },
 });
 
 await client.initialize();
@@ -598,8 +598,8 @@ if (client.capabilities.hasWebSocketStreaming) {
 const client = new CSAPIClient('http://45.55.99.236:8080/sensorhub/api', {
   auth: {
     type: 'basic',
-    username: process.env.OSH_USERNAME || 'ogc',
-    password: process.env.OSH_PASSWORD || 'ogc',
+    username: process.env.OSH_USERNAME || '<REDACTED>',
+    password: process.env.OSH_PASSWORD || '<REDACTED>',
   },
 });
 ```
@@ -786,7 +786,7 @@ describe('Live Server Integration Tests', () => {
 
   it('should list live systems', async () => {
     const client = new CSAPIClient('http://45.55.99.236:8080/sensorhub/api', {
-      auth: { type: 'basic', username: 'ogc', password: 'ogc' },
+      auth: { type: 'basic', username: '<REDACTED>', password: '<REDACTED>' },
     });
 
     const systems = await client.systems.list({ limit: 10 });
@@ -958,7 +958,7 @@ describe('Conformance Detection', () => {
   describe('Full Conformance (OpenSensorHub)', () => {
     it('detects all 33 conformance classes', async () => {
       const client = new CSAPIClient('http://45.55.99.236:8080/sensorhub/api', {
-        auth: { type: 'basic', username: 'ogc', password: 'ogc' },
+        auth: { type: 'basic', username: '<REDACTED>', password: '<REDACTED>' },
       });
 
       await client.initialize();
@@ -1124,7 +1124,7 @@ describe('OpenSensorHub Full Conformance', () => {
     }
 
     client = new CSAPIClient('http://45.55.99.236:8080/sensorhub/api', {
-      auth: { type: 'basic', username: 'ogc', password: 'ogc' },
+      auth: { type: 'basic', username: '<REDACTED>', password: '<REDACTED>' },
     });
     await client.initialize();
   });
@@ -1709,7 +1709,7 @@ describe('Graceful Degradation', () => {
 
 ## 6. Test Infrastructure Design
 
-> **⚠️ REVIEW NOTICE (Phase 2E — C1, AP2):** This entire section designs infrastructure for live server testing: `ServerConfig` with hardcoded URLs and credentials (`username: 'ogc', password: 'ogc'`), `checkServerAvailability()` with console.warn skipping, fixture recording utilities that connect to live servers, and dual jest projects (`*.offline.spec.ts` / `*.live.spec.ts`). **Do not implement any of this.** The upstream test infrastructure is simple: `globalThis.fetch` mock in `beforeEach`, fixture files as static JSON, single jest configuration. No server configs, no availability checkers, no recording utilities needed.
+> **⚠️ REVIEW NOTICE (Phase 2E — C1, AP2):** This entire section designs infrastructure for live server testing: `ServerConfig` with hardcoded URLs and credentials (`username: '<REDACTED>', password: '<REDACTED>'`), `checkServerAvailability()` with console.warn skipping, fixture recording utilities that connect to live servers, and dual jest projects (`*.offline.spec.ts` / `*.live.spec.ts`). **Do not implement any of this.** The upstream test infrastructure is simple: `globalThis.fetch` mock in `beforeEach`, fixture files as static JSON, single jest configuration. No server configs, no availability checkers, no recording utilities needed.
 
 ### 6.1 Server Configuration
 
@@ -1739,8 +1739,8 @@ export const TEST_SERVERS: ServerConfig[] = [
     profile: 'full',
     auth: {
       type: 'basic',
-      username: process.env.OSH_USERNAME || 'ogc',
-      password: process.env.OSH_PASSWORD || 'ogc',
+      username: process.env.OSH_USERNAME || '<REDACTED>',
+      password: process.env.OSH_PASSWORD || '<REDACTED>',
     },
     quirks: ['base32-ids', 'async-servlet', 'websocket-streaming'],
   },
@@ -2136,7 +2136,7 @@ const deployments = await throttler.execute(() => client.deployments.list());
 - Repository: https://github.com/opensensorhub/osh-core
 - Documentation: https://github.com/opensensorhub/osh-core/wiki
 - Live Server: http://45.55.99.236:8080/sensorhub/api
-- Authentication: HTTP Basic Auth (username: ogc, password: ogc)
+- Authentication: HTTP Basic Auth (credentials via env vars)
 
 **52°North:**
 

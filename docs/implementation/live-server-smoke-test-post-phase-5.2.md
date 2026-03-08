@@ -77,7 +77,7 @@ All 5 commits are parser additions — no modifications to existing code. Regres
 | Check          | Result                                              |
 | -------------- | --------------------------------------------------- |
 | Root endpoint  | ✅ 200 OK, `title: "Connected Systems API Service"` |
-| Authentication | ✅ Basic auth `ogc:ogc` accepted                    |
+| Authentication | ✅ Basic auth accepted (credentials via env vars)   |
 
 | Resource          | Count | ST#20 Count | Delta    |
 | ----------------- | ----- | ----------- | -------- |

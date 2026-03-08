@@ -154,8 +154,9 @@ export function parseControlStreamSchemaResponse(
 
   const obj = json as Record<string, unknown>;
 
-  // parametersSchema: delegate to parseSWEComponent() if present and non-null object
-  // Accept both "parametersSchema" (newer OSH / OGC spec) and "paramsSchema" (older OSH builds)
+  // parametersSchema: accept both "parametersSchema" (OGC spec / newer OSH) and
+  // "paramsSchema" (older OSH builds where the property was not yet renamed).
+  // See https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/140
   const rawParametersSchema = obj.parametersSchema ?? obj.paramsSchema;
   const parametersSchema =
     typeof rawParametersSchema === 'object' && rawParametersSchema !== null

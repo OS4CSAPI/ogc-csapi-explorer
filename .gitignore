@@ -11,6 +11,8 @@ test-node-output.txt
 browser-jest-results.json
 full-browser-output.txt
 run-browser-tests.ps1
+jest-output.txt
+csapi-test-results.txt
 
 # temp replay/migration output
 scripts/replay_*.txt

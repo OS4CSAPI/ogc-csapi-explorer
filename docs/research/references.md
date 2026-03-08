@@ -2,7 +2,7 @@
 
 **Purpose:** Annotated bibliography of key resources for implementing OGC Connected Systems API (CSAPI) support in the Camptocamp OGC Client Library.
 
-**Last Updated:** February 2, 2026
+**Last Updated:** March 6, 2026
 
 ---
 
@@ -17,6 +17,15 @@
 7. [Supporting Specifications](#supporting-specifications)
 8. [Requirements Research](#requirements-research)
 9. [Upstream Research](#upstream-research)
+10. [Design Research](#design-research)
+11. [Testing Research](#testing-research)
+12. [Planning Documents](#planning-documents)
+13. [Governance Documents](#governance-documents)
+14. [Implementation Records](#implementation-records)
+15. [Testing Documentation](#testing-documentation)
+16. [Upstream PR Preparation](#upstream-pr-preparation)
+17. [Demo Application](#demo-application)
+18. [Live Infrastructure](#live-infrastructure)
 
 ---
 
@@ -968,6 +977,860 @@ Documents URL building patterns and practices used in ogc-client. Covers base UR
 
 ---
 
+## Design Research
+
+### Component Design Sequence
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/design/design-sequence.md  
+**Type:** Internal research document
+
+Defines the order in which CSAPI components should be designed and implemented. Establishes dependency chains between format handlers, query builder, and integration layer.
+
+**Key Relevance:**
+
+- Implementation ordering to avoid circular dependencies
+- Component dependency chain documentation
+- Risk mitigation through sequenced design
+
+---
+
+### Design Strategy Research
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/strategy/design-strategy-research.md  
+**Type:** Internal research document
+
+High-level design strategy for the CSAPI implementation, covering architectural trade-offs, integration approach, and format abstraction layer design.
+
+**Key Relevance:**
+
+- Strategic design decisions for the overall CSAPI module
+- Format abstraction layer architecture
+- Integration approach with upstream library
+
+---
+
+### CSAPIQueryBuilder Architecture Decisions
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/tree/main/docs/research/design/csapiquerybuilder/architecture-decision/  
+**Type:** Internal research document series (22 research plans + findings + results)
+
+Comprehensive architecture decision series for CSAPIQueryBuilder design. Includes analysis of PR #114 EDR pattern, QueryBuilder pattern, architecture patterns, OWS patterns, OSHConnect detailed analysis, and scope analysis for Part 1 and Part 2. Produced decision records for validation approach and multi-class architecture lessons learned.
+
+**Key Documents:**
+
+- `01-pr114-edr-pattern.md` — EDR implementation blueprint analysis
+- `02-querybuilder-pattern.md` — QueryBuilder pattern deep dive
+- `03-csapi-architecture-decisions.md` — Core architecture choices
+- `04-architecture-patterns.md` — Pattern comparison analysis
+- `05-owslib-pattern.md` — OWSLib reference implementation study
+- `06-oshconnect-detailed.md` — OSHConnect-Python detailed analysis
+- `07-oshconnect-summary.md` — OSHConnect condensed findings
+- `08-oscar-viewer.md` through `22-part2-openapi.md` — Extended research series
+- `findings/` — Research findings for each plan
+- `results/DECISION-part3-validation.md` — Validation architecture decision
+- `results/LESSONS-LEARNED-multi-class-failure.md` — Multi-class architecture failure analysis
+
+**Key Relevance:**
+
+- Definitive architecture decisions for CSAPIQueryBuilder
+- Pattern evaluation and selection rationale
+- Scope boundaries for Part 1 and Part 2
+- Lessons learned from abandoned multi-class approach
+
+---
+
+### Collections Reader Research
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/tree/main/docs/research/design/collections-reader/  
+**Type:** Internal research documents
+
+Research into how the upstream library's collections reader works and how CSAPI resources integrate with the existing collection discovery infrastructure.
+
+**Key Documents:**
+
+- `collections-reader-research-plan.md` — Research plan
+- `collections-reader-analysis.md` — Analysis findings
+
+**Key Relevance:**
+
+- Understanding collection discovery for CSAPI resource types
+- Integration with existing OgcApiEndpoint collection metadata
+
+---
+
+### OGCAPIEndpoint Integration Research
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/tree/main/docs/research/design/ogcapiendpoint-integration/  
+**Type:** Internal research documents
+
+Research into how the CSAPI module integrates with the existing OgcApiEndpoint class, covering factory method patterns, conformance detection, and capability discovery.
+
+**Key Documents:**
+
+- `ogcapiendpoint-integration-research-plan.md` — Research plan
+- `ogcapiendpoint-integration-analysis.md` — Analysis findings
+
+**Key Relevance:**
+
+- Factory method integration pattern
+- Conformance detection for `hasConnectedSystems`
+- Minimal-touch integration with upstream endpoint class
+
+---
+
+## Testing Research
+
+### Testing Strategy Research
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/testing/testing-strategy-research.md  
+**Type:** Internal research document
+
+Comprehensive testing strategy for the CSAPI implementation covering unit tests, integration tests, fixture sourcing, and coverage targets. Supersedes earlier testing research versions.
+
+**Key Relevance:**
+
+- Overall testing approach and quality gates
+- Fixture strategy for 9 resource types
+- Coverage targets and metrics
+- Test organization and naming conventions
+
+---
+
+### Testing Research Plans (20 Plans)
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/tree/main/docs/research/testing/research-plans/  
+**Type:** Internal research document series
+
+Systematic 20-plan research series covering all testing dimensions for the CSAPI implementation.
+
+**Key Documents:**
+
+- `01-pr114-blueprint-analysis.md` — EDR test blueprint as reference
+- `02-upstream-test-consistency.md` — Maintaining upstream test patterns
+- `03-typescript-testing-standards.md` — TypeScript-specific testing requirements
+- `04-implementation-guide-testing-requirements.md` — Testing requirements from implementation guide
+- `05-roadmap-testing-integration.md` — Roadmap-aligned testing milestones
+- `06-meaningful-vs-trivial-definition.md` — Defining meaningful test coverage
+- `07-end-to-end-testing-scope.md` — E2E testing boundaries
+- `08-csapi-specification-test-requirements.md` — Spec-driven test requirements
+- `09-sensorml-testing-requirements.md` — SensorML parser testing
+- `10-swe-common-testing-requirements.md` — SWE Common parser testing
+- `11-geojson-csapi-testing-requirements.md` — GeoJSON CSAPI extension testing
+- `12-querybuilder-testing-strategy.md` — QueryBuilder method testing
+- `13-resource-method-testing-patterns.md` — Resource method test patterns
+- `14-integration-test-workflow-design.md` — Integration test workflows
+- `15-fixture-sourcing-organization.md` — Fixture sourcing and organization
+- `16-worker-extensions-testing.md` — Web Worker extension testing
+- `17-coverage-targets-metrics.md` — Coverage targets and metrics
+- `18-error-condition-testing.md` — Error condition coverage
+- `19-test-organization-file-structure.md` — Test file structure
+- `20-test-to-code-ratio-validation.md` — Test-to-code ratio validation
+
+**Key Relevance:**
+
+- Comprehensive testing framework for all CSAPI components
+- Spec-driven test requirement extraction
+- Coverage target definitions and validation criteria
+
+---
+
+### Testing Research Findings
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/tree/main/docs/research/testing/findings/  
+**Type:** Internal research document series
+
+Findings documents produced from executing the 20 testing research plans. Each findings document summarizes discoveries and actionable recommendations.
+
+**Key Documents:**
+
+- `01-edr-test-blueprint.md` through `09-sensorml-testing-requirements.md`
+- Corresponding to research plans 01-09
+
+**Key Relevance:**
+
+- Actionable test requirements extracted from research
+- Pattern documentation for test implementation
+
+---
+
+### Testing Strategy Review Phases
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/tree/main/docs/research/testing/review/  
+**Type:** Internal research document series
+
+Multi-phase review of testing strategy covering foundation validation, fixtures, testing patterns, standards quality, CSAPI-specific testing, advanced scenarios, and integration workflows.
+
+**Key Documents:**
+
+- `phase-0-lessons-from-failed-attempt.md` — Lessons from failed testing approach
+- `phase-1-foundation-validation.md` — Foundation validation review
+- `phase-2a-fixtures-category.md` — Fixture review
+- `phase-2b-testing-patterns-category.md` — Testing patterns review
+- `phase-2c-standards-quality-category.md` — Standards quality review
+- `phase-2d-csapi-specific-testing-category.md` — CSAPI-specific testing review
+- `phase-2e-advanced-scenarios-category.md` — Advanced scenarios review
+- `phase-2f-integration-workflow-category.md` — Integration workflow review
+- `notes-parser-testing-vs-spec-validation.md` — Parser testing vs spec validation analysis
+- `notes-why-models-default-to-server-validation.md` — Server validation default rationale
+
+**Key Relevance:**
+
+- Quality gates for testing strategy completeness
+- Lessons from iterative strategy refinement
+- Parser testing philosophy decisions
+
+---
+
+## Planning Documents
+
+### CSAPI Implementation Roadmap (Top-Level)
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/ROADMAP.md  
+**Type:** Internal planning document
+
+Master roadmap for the entire CSAPI implementation spanning all phases. Defines phase progression from initial architecture through upstream contribution.
+
+**Key Relevance:**
+
+- Overall project timeline and phase definitions
+- Phase dependency chain
+- Milestone tracking across all phases
+
+---
+
+### CSAPI Implementation Guide (Top-Level)
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/csapi-implementation-guide.md  
+**Type:** Internal planning document
+
+Comprehensive implementation guide for CSAPI support in the Camptocamp OGC Client Library. Covers architecture, component design, format handlers, testing requirements, and integration approach.
+
+**Key Relevance:**
+
+- Definitive architecture reference for the CSAPI module
+- Component specifications and interfaces
+- Format handler design requirements
+- Integration requirements with upstream library
+
+---
+
+### Contribution Goal and Definition (Top-Level)
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/contribution-goal-and-definition.md  
+**Type:** Internal planning document
+
+Defines what constitutes a complete, contribution-ready CSAPI implementation. Establishes acceptance criteria for the upstream PR.
+
+**Key Relevance:**
+
+- PR acceptance criteria definition
+- Contribution completeness requirements
+- Quality bar for upstream submission
+
+---
+
+### Phase 5: Parser Completion — Roadmap
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/phase-5/P5-ROADMAP.md  
+**Type:** Internal planning document
+
+Phase 5 roadmap for completing all remaining parser implementations including parseProperty, parseDatastream, parseObservation, parseControlStream, parseCommand, and schema response parsers.
+
+**Key Relevance:**
+
+- Parser completion task sequencing
+- Sub-phase definitions (5.1 through 5.4)
+- Phase 5 completion criteria
+
+---
+
+### Phase 5: Parser Completion — Implementation Guide
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/phase-5/P5-parser-completion-implementation-guide.md  
+**Type:** Internal planning document
+
+Detailed implementation guide for Phase 5 parser completion. Specifies parser signatures, field mappings, test requirements, and integration wiring for all remaining parsers.
+
+**Key Relevance:**
+
+- Parser function signatures and contracts
+- Field mapping specifications from server response to parsed types
+- Test fixture requirements per parser
+- Integration wiring into CSAPIQueryBuilder
+
+---
+
+### Phase 5: Parser Completion — Contribution Goal and Definition
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/phase-5/P5-contribution-goal-and-definition.md  
+**Type:** Internal planning document
+
+Phase 5 specific contribution definition establishing what "parser completion" means and the quality requirements for each parser.
+
+**Key Relevance:**
+
+- Parser completeness definition
+- Per-parser acceptance criteria
+- Coverage requirements for Phase 5
+
+---
+
+### Phase 5: Parser Completion — Task Package
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/phase-5/parser-completion-task-package.md  
+**Type:** Internal planning document
+
+Consolidated task package for Phase 5 parser completion work. Bundles all parser tasks with dependencies, estimates, and verification criteria.
+
+**Key Relevance:**
+
+- Task-level breakdown of parser work
+- Dependency ordering between parsers
+- Verification checklist per task
+
+---
+
+### Phase 6: Upstream Acceptance Refactoring — Roadmap
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/phase-6/P6-ROADMAP.md  
+**Type:** Internal planning document
+
+Phase 6 roadmap for refactoring the implementation to meet upstream acceptance requirements. Covers architectural decoupling, code quality normalization, and PR preparation.
+
+**Key Relevance:**
+
+- Upstream acceptance requirements mapped to refactoring tasks
+- Architectural decoupling specifications
+- Code quality normalization checklist
+- PR submission timeline
+
+---
+
+### Phase 6: Upstream Acceptance Refactoring — Implementation Guide
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/phase-6/P6-implementation-guide.md  
+**Type:** Internal planning document
+
+Detailed implementation guide for Phase 6 refactoring. Specifies the exact changes required to satisfy jahow's architectural requirements: CSAPI removal from root index.ts, isolation enforcement, sub-path exports, and code quality alignment.
+
+**Key Relevance:**
+
+- Exact refactoring specifications for upstream acceptance
+- jahow's architectural requirements mapped to code changes
+- Sub-path export configuration
+- Prettier/ESLint/TypeScript normalization scope
+
+---
+
+### Phase 6: Upstream Acceptance Refactoring — Contribution Goal and Definition
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/phase-6/P6-contribution-goal-and-definition.md  
+**Type:** Internal planning document
+
+Phase 6 specific contribution definition establishing what "upstream acceptance ready" means and the quality requirements for the final PR.
+
+**Key Relevance:**
+
+- PR acceptance readiness definition
+- jahow's requirements traceability
+- Final quality gate criteria
+
+---
+
+### Phase 6: Work Assessment and Strategy
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/planning/phase-6/work-assessment-and-strategy.md  
+**Type:** Internal planning document
+
+Initial assessment of Phase 6 work scope and strategic approach. Evaluates the remaining effort to achieve upstream acceptance.
+
+**Key Relevance:**
+
+- Effort estimation for Phase 6
+- Risk assessment for upstream acceptance
+- Strategic approach to refactoring
+
+---
+
+## Governance Documents
+
+### AI Collaboration Agreement
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_Collaboration_Agreement.md  
+**Type:** Internal governance document
+
+Establishes the terms and expectations for AI-assisted development in this project. Defines roles, responsibilities, quality standards, and collaboration protocols.
+
+**Key Relevance:**
+
+- Foundational governance for AI-assisted development
+- Quality standards and review requirements
+- Collaboration workflow definitions
+- Accountability framework
+
+---
+
+### AI Operational Constraints
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/AI_OPERATIONAL_CONSTRAINTS.md  
+**Type:** Internal governance document
+
+Defines operational boundaries and constraints for AI agents working on this project. Specifies prohibited actions, required verifications, and safety rails.
+
+**Key Relevance:**
+
+- Operational safety boundaries for AI agents
+- Required verification steps before destructive actions
+- Prohibited modification scopes
+- Mandatory confirmation requirements
+
+---
+
+### Known Server Quirks, Bugs, and Limitations
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/known-server-quirks.md  
+**Type:** Internal governance document
+
+Catalog of known server-side issues, non-compliant behaviors, and workarounds for CSAPI test servers (OpenSensorHub, 52°North). Documents how the client library handles server quirks.
+
+**Key Relevance:**
+
+- Server compatibility workarounds
+- Known non-compliant server behaviors
+- Adaptive client behavior documentation
+- Test fixture accuracy notes
+
+---
+
+### Phase 2 Implementation Lessons Learned
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/phase-2-lessons-learned.md  
+**Type:** Internal governance document
+
+Lessons learned from Phase 2 implementation covering testing strategy effectiveness, code review findings, iterative development patterns, and fixture management.
+
+**Key Relevance:**
+
+- Testing strategy refinement insights
+- Code review process improvements
+- Implementation velocity lessons
+- Fixture management best practices
+
+---
+
+### Phase 3 Implementation Lessons Learned
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/phase-3-lessons-learned.md  
+**Type:** Internal governance document
+
+Lessons learned from Phase 3 implementation covering complex format handler development, SWE Common encoding challenges, and smoke test methodology refinements.
+
+**Key Relevance:**
+
+- Format handler development insights
+- SWE Common complexity management
+- Live server smoke test methodology
+- Iterative quality assurance patterns
+
+---
+
+### Code Review Prompt Templates
+
+**URLs:**
+
+- **Base:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/code-review-prompt-template.md
+- **Phase 3:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/code-review-prompt-template-phase-3.md
+- **Phase 5:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/code-review-prompt-template-phase-5.md
+- **Phase 6:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/code-review-prompt-template-phase-6.md
+
+**Type:** Internal governance templates
+
+Prompt templates for conducting systematic code reviews at each implementation phase. Each template specifies review scope, quality criteria, and acceptance gates appropriate to the phase's objectives.
+
+**Key Relevance:**
+
+- Reproducible code review process
+- Phase-specific quality criteria
+- Systematic defect detection methodology
+- Quality gate enforcement
+
+---
+
+### Smoke Test Prompt Templates
+
+**URLs:**
+
+- **Base:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/smoke-test-prompt-template.md
+- **Phase 3:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/smoke-test-prompt-template-phase-3.md
+- **Phase 4:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/smoke-test-prompt-template-phase-4.md
+- **Phase 5:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/smoke-test-prompt-template-phase-5.md
+- **Phase 6:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/smoke-test-prompt-template-phase-6.md
+
+**Type:** Internal governance templates
+
+Prompt templates for conducting live server smoke tests against OpenSensorHub and 52°North CSAPI servers. Phase 6 template covers architecture verification testing rather than live server testing.
+
+**Key Relevance:**
+
+- Live server validation methodology
+- Reproducible smoke test process
+- Phase-specific test scope definitions
+- Architecture verification (Phase 6)
+
+---
+
+### Issue Creation Prompt Templates
+
+**URLs:**
+
+- **Base:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/issue-creation-prompt-template.md
+- **Phase 4:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/issue-creation-prompt-template-phase-4.md
+- **Phase 5:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/issue-creation-prompt-template-phase-5.md
+- **Phase 6:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/issue-creation-prompt-template-phase-6.md
+- **Code Review:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/governance/issue-creation-prompt-template-code-review.md
+
+**Type:** Internal governance templates
+
+Prompt templates for creating well-structured GitHub issues from findings at each phase. The code review template (Template C) adds ownership verification for distinguishing CSAPI-owned vs upstream-owned findings.
+
+**Key Relevance:**
+
+- Consistent issue creation process
+- Ownership verification workflow
+- Phase-specific categorization and labeling
+- Severity assessment framework (P1-P4)
+
+---
+
+## Implementation Records
+
+### Phase Assessments and Overviews
+
+**URLs:**
+
+- `docs/implementation/phase-0-baseline-assessment.md` — Phase 0 baseline assessment
+- `docs/implementation/phase-1-overview.md` — Phase 1 implementation overview
+- `docs/implementation/phase-1-completion-assessment.md` — Phase 1 completion assessment
+- `docs/implementation/phase-1-fix-report.md` — Phase 1 fix report
+- `docs/implementation/phase-2-overview.md` — Phase 2 implementation overview
+- `docs/implementation/phase-2.1-overview.md` — Phase 2.1 implementation overview
+- `docs/implementation/phase-2.2-overview.md` — Phase 2.2 implementation overview
+- `docs/implementation/phase-2.3-overview.md` — Phase 2.3 implementation overview
+
+**Type:** Internal implementation records
+
+Phase-level assessment and overview documents tracking implementation progress, completion criteria, and quality metrics at each milestone.
+
+**Key Relevance:**
+
+- Implementation progress tracking
+- Phase completion verification
+- Quality metrics and defect tracking
+- Decision rationale documentation
+
+---
+
+### Code Review Reports
+
+**URLs:**
+
+- `docs/implementation/phase-1-code-review.md` — Phase 1
+- `docs/implementation/phase-2.2-code-review.md` — Phase 2.2
+- `docs/implementation/phase-2.3-code-review.md` — Phase 2.3
+- `docs/implementation/phase-2.4-code-review.md` — Phase 2.4
+- `docs/implementation/phase-2.5-code-review.md` — Phase 2.5
+- `docs/implementation/phase-2.6-code-review.md` — Phase 2.6
+- `docs/implementation/phase-2.7-code-review.md` — Phase 2.7
+- `docs/implementation/phase-2.8-code-review.md` — Phase 2.8
+- `docs/implementation/phase-2.9-code-review.md` — Phase 2.9
+- `docs/implementation/phase-3.1-code-review.md` through `phase-3.17-code-review.md` — Phase 3 (17 sub-phases)
+- `docs/implementation/phase-3.8-code-review.md` — Phase 3.8
+- `docs/implementation/phase-3.9-code-review.md` — Phase 3.9
+- `docs/implementation/phase-5.1-code-review.md` — Phase 5.1
+- `docs/implementation/phase-5.2-code-review.md` — Phase 5.2
+- `docs/implementation/phase-5.3-code-review.md` — Phase 5.3
+- `docs/implementation/phase-5.4-code-review.md` — Phase 5.4
+
+**Type:** Internal implementation records (40+ reports)
+
+Systematic code review reports for each implementation sub-phase. Each report documents findings, defects, fixes applied, and quality assessment.
+
+**Key Relevance:**
+
+- Cumulative defect history and resolution
+- Quality trend tracking across phases
+- Code review methodology evolution
+- Finding categorization (critical, major, minor, cosmetic)
+
+---
+
+### Live Server Smoke Test Reports
+
+**URLs:**
+
+- `docs/implementation/live-server-smoke-test-52north.md` — 52°North initial test
+- `docs/implementation/live-server-smoke-test-post-phase-2.1.md` through `post-phase-2.9.md` — Phase 2 series (9 reports)
+- `docs/implementation/live-server-smoke-test-post-phase-3.1.md` through `post-phase-3.16.md` — Phase 3 series (10 reports)
+- `docs/implementation/live-server-smoke-test-post-phase-4.1.md` — Phase 4 report
+- `docs/implementation/live-server-smoke-test-post-phase-5.1.md` through `post-phase-5.5.md` — Phase 5 series (4 reports)
+- `docs/implementation/live-server-smoke-test-post-phase-6.1.md` — Phase 6 report
+- `docs/implementation/live-server-retest-post-issues-34-35.md` — Post-fix retest
+
+**Type:** Internal implementation records (25+ reports)
+
+Live server validation reports against OpenSensorHub (http://45.55.99.236:8080/sensorhub/api) and 52°North (https://csa.demo.52north.org/) CSAPI servers. Documents real-world interoperability testing results.
+
+**Key Relevance:**
+
+- Real-world server compatibility validation
+- Format parsing verification against live data
+- Server quirk discovery and documentation
+- Regression detection across implementation phases
+
+---
+
+### Findings Analyses and Design Notes
+
+**URLs:**
+
+- `docs/implementation/p5-findings-coverage-analysis.md` — Phase 5 findings coverage analysis
+- `docs/implementation/p4-findings-code-vs-docs-reassessment.md` — Phase 4 findings reassessment
+- `docs/implementation/p4-crud-findings-scope-assessment.md` — Phase 4 CRUD findings scope
+- `docs/implementation/outstanding-findings-status-report.md` — Outstanding findings status
+- `docs/implementation/deferred-findings-final-disposition.md` — Deferred findings final disposition
+- `docs/implementation/cross-server-interoperability-analysis.md` — Cross-server interoperability
+- `docs/implementation/d1-d3-d4-fix-recommendations.md` — Design finding fix recommendations
+- `docs/implementation/f70-design-findings-investigation.md` — F70 design findings investigation
+- `docs/implementation/f57-content-negotiation-correction.md` — F57 content negotiation correction
+- `docs/implementation/design-notes-validation-extraction-decoupling.md` — Validation/extraction decoupling
+- `docs/implementation/note-crud-smoke-test-readiness.md` — CRUD smoke test readiness
+- `docs/implementation/note-F71-osh-accept-header-noncompliance.md` — OSH Accept header noncompliance
+- `docs/implementation/phase-3-smoke-test-rationale.md` — Phase 3 smoke test rationale
+
+**Type:** Internal implementation records
+
+Targeted analyses of specific findings, design decisions, and issue investigations produced during implementation.
+
+**Key Relevance:**
+
+- Finding triage and disposition decisions
+- Design trade-off documentation
+- Server noncompliance workarounds
+- Scope boundary decisions for deferred work
+
+---
+
+### Final Project Code Review
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/implementation/final-project-code-review.md  
+**Type:** Internal implementation record
+
+End-to-end code review of the complete CSAPI implementation prior to upstream submission. Covers all components, test coverage, documentation completeness, and PR readiness.
+
+**Key Relevance:**
+
+- Final quality assessment before upstream submission
+- Comprehensive component review
+- PR readiness verification
+- Outstanding issue identification
+
+---
+
+## Testing Documentation
+
+### Test Fixtures Guide
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/testing/fixtures-guide.md  
+**Type:** Internal testing document
+
+Guide for CSAPI test fixture sourcing, organization, and maintenance. Covers fixture naming conventions, directory structure, live server fixture capture process, and fixture validation.
+
+**Key Relevance:**
+
+- Test fixture creation and management process
+- Fixture naming and organization conventions
+- Live server data capture methodology
+- Fixture validation requirements
+
+---
+
+### Demo App Findings (Issues #5–#110)
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/tree/main/docs/testing/demo-app-findings/  
+**Type:** Internal testing document series (25+ findings)
+
+Findings discovered during CSAPI Explorer demo app development and live server integration testing. Each document maps to a GitHub issue and documents the problem, impact, and recommended fix.
+
+**Key Documents:**
+
+- `issue-5-nested-create-methods.md` — Nested create method design
+- `issue-6-content-type-helper.md` — Content type helper utility
+- `issue-11-generic-crud-methods.md` — Generic CRUD method design
+- `issue-12-constructor-parameter-narrowing.md` — Constructor parameter types
+- `issue-13-type-guard-functions-for-union-narrowing.md` — Type guard utilities
+- `issue-14-resource-discovery-non-standard-links.md` — Non-standard link handling
+- `issue-15-parse-location-header.md` — Location header parsing
+- `issue-100-assert-resource-available.md` through `issue-110-link-resolution-utilities.md` — Phase 4/5 findings
+
+**Key Relevance:**
+
+- Real-world integration testing findings
+- API design improvement recommendations
+- Type safety gap identification
+- Live server compatibility issues
+
+---
+
+## Upstream PR Preparation
+
+### PR Strategy Discussion
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/upstream-pr-preparation/01-strategy-discussion.md  
+**Type:** Internal planning document
+
+Strategy discussion for preparing the upstream PR to camptocamp/ogc-client. Covers PR presentation, commit history approach, review facilitation, and maintainer communication.
+
+**Key Relevance:**
+
+- PR presentation strategy
+- Commit history clean-up approach
+- Maintainer communication plan
+- Review facilitation techniques
+
+---
+
+### Rebase Plan — Clean PR
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/upstream-pr-preparation/02-rebase-plan.md  
+**Type:** Internal planning document
+
+Detailed plan for rebasing the development history into a clean, reviewable commit sequence for the upstream PR. Defines the 16-commit structure ultimately used in PR #136.
+
+**Key Relevance:**
+
+- Commit sequence design for PR reviewability
+- Interactive rebase strategy
+- Commit message standards
+- History clean-up methodology
+
+---
+
+### Lessons Learned: CI Formatting Check Failure
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/upstream-pr-preparation/03-lessons-learned-ci-formatting.md  
+**Type:** Internal governance document
+
+Documents the CI formatting check failure encountered on PR #136 and the resolution. Prettier formatting differences between local and CI environments.
+
+**Key Relevance:**
+
+- CI pipeline compatibility requirements
+- Prettier formatting alignment with upstream
+- Pre-push validation checklist
+
+---
+
+### Upstream PR #136
+
+**URL:** https://github.com/camptocamp/ogc-client/pull/136  
+**Type:** External upstream PR
+
+The actual pull request submitted to camptocamp/ogc-client adding Connected Systems API (CSAPI) support. 86 files changed, ~32,000 lines added, 16 commits, currently in draft status.
+
+**Key Relevance:**
+
+- The upstream contribution this entire project produces
+- jahow's review feedback (architectural decoupling requirements)
+- CI verification on Ubuntu
+- Commit history and PR description as delivered
+
+---
+
+## Demo Application
+
+### CSAPI Demo Webapp — Assessment & Recommendations
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/webapp-demo/demo-app-assessment.md  
+**Type:** Internal documentation
+
+Assessment of the CSAPI Explorer Vue.js demo application in the `app/` directory. Evaluates the demo app's coverage of CSAPI features, API surface exercise, and suitability for integration testing.
+
+**Key Relevance:**
+
+- Demo app capability assessment
+- CSAPI feature coverage evaluation
+- Integration testing utility analysis
+
+---
+
+### CSAPI Explorer — Session Handoff & Context Briefing
+
+**URL:** https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/webapp-demo/session-handoff.md  
+**Type:** Internal documentation
+
+Session handoff document for continuing CSAPI Explorer demo app development. Provides context briefing on app architecture, current state, and next steps.
+
+**Key Relevance:**
+
+- Demo app architecture documentation
+- Development continuation context
+- Current state and remaining work
+
+---
+
+## Live Infrastructure
+
+### OpenSensorHub Demo Server
+
+**URL:** http://45.55.99.236:8080/sensorhub/api  
+**Status:** Active (as of March 2026)  
+**Operator:** OpenSensorHub project
+
+Production-ready Java-based CSAPI server with full Part 1 + Part 2 + Part 3 support. Hosts 6 active systems, 28 datastreams, thousands of observations with real-time streaming capabilities.
+
+**Key Relevance:**
+
+- Primary test server for live validation
+- Complete conformance implementation
+- Real-time streaming test target
+- Rich format support (GeoJSON, SensorML, SWE Common JSON/Text/Binary)
+- Test fixture source for all resource types
+
+---
+
+### 52°North Demo Server
+
+**URL:** https://csa.demo.52north.org/  
+**Status:** Degraded — SSL certificate expired, Part 2 non-functional (as of March 2026)  
+**Operator:** 52°North GmbH
+
+Python/pygeoapi-based CSAPI server with Part 1 support. Part 2 in active development but not yet functional on the public demo instance.
+
+**Key Relevance:**
+
+- Multi-server compatibility testing (different implementation stack)
+- Partial conformance testing (Part 1 only)
+- Server quirk documentation (pagination differences, format variations)
+- Validates adaptive client behavior when server capabilities vary
+
+---
+
+### OS4CSAPI Fork (Clean PR Source)
+
+**URL:** https://github.com/OS4CSAPI/ogc-client  
+**Branch:** `clean-pr` (tip: `6e759a6`)  
+**Status:** Active — GitHub Actions CI verified passing (Run #22428856030)
+
+Fork of camptocamp/ogc-client used as the source for PR #136. Contains the clean 16-commit history ready for upstream review.
+
+**Key Relevance:**
+
+- Source repository for upstream PR #136
+- CI verification on Ubuntu (GitHub Actions)
+- Clean commit history for review
+
+---
+
 ## Notes
 
 ### Document Maintenance
@@ -977,12 +1840,13 @@ Documents URL building patterns and practices used in ogc-client. Covers base UR
 - Note specification version changes (CSAPI may evolve to 1.1, 2.0, etc.)
 - Track implementation-specific resources (blog posts, tutorials, tools)
 
-### Missing References
+### Potential Future References
 
-Resources we may need to add:
+Resources to consider adding as they become relevant:
 
-- Specific CSAPI server implementations as they become available
-- TypeScript libraries for SWE Common/SensorML parsing (if any exist)
+- TypeScript libraries for SWE Common/SensorML parsing (if any emerge)
 - Performance benchmarks for observation streaming
 - Security considerations (OAuth2, API keys) for CSAPI endpoints
 - Real-world CSAPI deployment case studies
+- Additional CSAPI server implementations beyond OpenSensorHub and 52°North
+- OGC Testbed reports involving Connected Systems API
