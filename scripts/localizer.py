@@ -21,7 +21,6 @@ import argparse
 import base64
 import json
 import math
-import socket
 import ssl as _ssl
 import sys
 import time
@@ -36,7 +35,6 @@ from urllib.request import Request, urlopen
 BASE_URL  = "https://os4csapi-osh.duckdns.org/sensorhub/api"
 AUTH_USER = "os4csapi"
 AUTH_PASS = "ogc134mm"
-ORACLE_IP = "129.80.248.53"
 
 # ── System IDs for the 3 MA nodes ────────────────────────────────────────
 # These are the only hardcoded IDs.  Datastream IDs are discovered at
@@ -72,13 +70,6 @@ LAT_REF = 31.655           # centroid of sensor network (°N)
 # ═══════════════════════════════════════════════════════════════════════════
 #  Networking
 # ═══════════════════════════════════════════════════════════════════════════
-
-_real_getaddrinfo = socket.getaddrinfo
-def _patched_getaddrinfo(host, port, *args, **kwargs):
-    if host == "os4csapi-osh.duckdns.org":
-        return _real_getaddrinfo(ORACLE_IP, port, *args, **kwargs)
-    return _real_getaddrinfo(host, port, *args, **kwargs)
-socket.getaddrinfo = _patched_getaddrinfo
 
 _ssl_ctx = _ssl.create_default_context()
 _ssl_ctx.check_hostname = False

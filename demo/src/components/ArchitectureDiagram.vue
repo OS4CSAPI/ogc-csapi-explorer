@@ -72,7 +72,7 @@
       </g>
 
       <!-- ═══════════════════════════════════════════════════════════
-           NODE: Data Simulator (Fly.io) — separate top box
+           NODE: Data Simulator (Oracle VM) — separate top box
            ═══════════════════════════════════════════════════════════ -->
       <g class="ad-node">
         <rect x="240" y="38" width="180" height="80" rx="10"
@@ -87,8 +87,7 @@
           <line x1="17" y1="10" x2="20" y2="10" stroke="#f59e0b" stroke-width="2" />
         </g>
         <text x="330" y="68" text-anchor="middle" class="ad-node-title" fill="#fbbf24">Data Simulator</text>
-        <text x="330" y="84" text-anchor="middle" class="ad-node-sub" fill="#94a3b8">Fly.io Container</text>
-        <text x="330" y="100" text-anchor="middle" class="ad-node-sub-detail" fill="#94a3b8">LOB · SSL · SST · Health · Scene</text>
+        <text x="330" y="84" text-anchor="middle" class="ad-node-sub" fill="#94a3b8">Oracle VM (systemd)</text>
       </g>
 
       <!-- ═══════════════════════════════════════════════════════════
@@ -106,7 +105,7 @@
           <line x1="15" y1="10" x2="19" y2="10" stroke="#22d3ee" stroke-width="1.3" />
         </g>
         <text x="330" y="178" text-anchor="middle" class="ad-node-title" fill="#22d3ee">LOB Localizer</text>
-        <text x="330" y="194" text-anchor="middle" class="ad-node-sub" fill="#94a3b8">Fly.io Container</text>
+        <text x="330" y="194" text-anchor="middle" class="ad-node-sub" fill="#94a3b8">Oracle VM (systemd)</text>
         <text x="330" y="210" text-anchor="middle" class="ad-node-sub-detail" fill="#94a3b8">WLS Bearing Triangulation</text>
       </g>
 
