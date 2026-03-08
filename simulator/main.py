@@ -282,7 +282,7 @@ def simulation_worker(st: SimState):
 DETECTION_DS_IDS = ["04dg", "04e0", "04eg"]  # MA-1, MA-2, MA-3
 
 # SENREP datastreams — cleared only on /reset (Tier 3)
-SENREP_DS_IDS = ["044g"]
+SENREP_DS_IDS = ["044g", "04i0"]  # original + v1.1
 
 # Sim/localizer datastreams — cleared on /clear (Tier 2)
 SIM_DS_IDS = [
@@ -290,6 +290,7 @@ SIM_DS_IDS = [
     "0450", "045g", "04cg", "046g", "0470", "047g", "0480",  # MA-2 (04cg = LOB)
     "048g", "0490", "04d0", "04a0", "04ag", "04b0", "04bg",  # MA-3 (04d0 = LOB)
     "04g0",  # UAS Location Estimate (compound localizer)
+    "04hg",  # Location Estimate (localizer v2)
 ]
 
 # Combined list (for reference)
@@ -303,9 +304,14 @@ def clear_observations(ds_ids: list[str], protected_ds_ids: list[str] | None = N
     returns observations from ALL datastreams, and the returned datastream@id
     may not match the queried DS.
 
-    Strategy: use a **blocklist** (protected_ds_ids) rather than an allowlist.
-    Any observation whose claimed datastream@id is in the protected set is
-    skipped.  Everything else is deleted.  We also dedup by obs ID to avoid
+    Strategy: use an **allowlist** — only delete observations whose claimed
+    ``datastream@id`` is in the target ``ds_ids`` set.  Anything not explicitly
+    targeted is left untouched, so ISS feeds, bootstrap data, and any future
+    datastreams are safe by default.
+
+    The ``protected_ds_ids`` list is kept as a **second safety net**: even if
+    an observation's ``datastream@id`` happens to match a target, it won't be
+    deleted if it's in the protected set.  We also dedup by obs ID to avoid
     double-deleting across DS iterations.
     """
     import urllib.request
@@ -314,6 +320,7 @@ def clear_observations(ds_ids: list[str], protected_ds_ids: list[str] | None = N
     import base64 as b64
     import json as _json
 
+    allowed = set(ds_ids)
     protected = set(protected_ds_ids or [])
 
     ctx = ssl.create_default_context()
@@ -352,11 +359,21 @@ def clear_observations(ds_ids: list[str], protected_ds_ids: list[str] | None = N
                 if obs_id in already_seen:
                     continue
                 already_seen.add(obs_id)
-                # Blocklist: never delete observations belonging to protected datastreams
+
                 obs_ds = obs.get("datastream@id", "")
+
+                # Safety net: never delete observations in protected set
                 if obs_ds in protected:
                     protected_skipped += 1
                     continue
+
+                # ALLOWLIST: ONLY delete if the observation's own datastream
+                # is one we were asked to clear.  Due to the scope leak, many
+                # observations from unrelated DSs will appear here — skip them.
+                if obs_ds not in allowed:
+                    protected_skipped += 1
+                    continue
+
                 del_url = f"{BASE_URL}/datastreams/{ds_id}/observations/{obs_id}"
                 del_req = urllib.request.Request(del_url, method="DELETE", headers={
                     "Authorization": auth,
