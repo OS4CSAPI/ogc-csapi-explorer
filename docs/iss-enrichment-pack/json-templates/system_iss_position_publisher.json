@@ -1,0 +1,36 @@
+{
+  "uid": "urn:os4csapi:system:iss-position-publisher:v1",
+  "name": "ISS Position Publisher",
+  "description": "Software publisher that computes ISS geodetic position from orbital elements and emits position observations.",
+  "type": "System",
+  "properties": {
+    "assetName": "ISS (ZARYA)",
+    "noradId": 25544,
+    "sourceProvider": "CelesTrak",
+    "propagationModel": "SGP4",
+    "updateIntervalSec": 30,
+    "ownerOrg": "OS4CSAPI Demo",
+    "documents": [
+      {
+        "title": "NASA ISS Overview",
+        "href": "https://www.nasa.gov/international-space-station/space-station-overview/",
+        "rel": "about",
+        "mediaType": "text/html"
+      },
+      {
+        "title": "CelesTrak GP Data Formats",
+        "href": "https://celestrak.org/NORAD/documentation/gp-data-formats.php",
+        "rel": "source",
+        "mediaType": "text/html"
+      }
+    ],
+    "media": [
+      {
+        "title": "Official ISS Image",
+        "href": "REPLACE_WITH_ISS_IMAGE_URL",
+        "rel": "preview",
+        "mediaType": "image/jpeg"
+      }
+    ]
+  }
+}

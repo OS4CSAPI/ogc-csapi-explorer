@@ -1,0 +1,14 @@
+{
+  "uid": "urn:os4csapi:deployment:iss-position-feed:v1",
+  "name": "ISS Tracking \u2014 Position Feed",
+  "description": "Leaf deployed system representing the ISS point-position publishing capability.",
+  "type": "Deployment",
+  "platform@link": {
+    "href": "REPLACE_WITH_SYSTEM_URL_OR_ID",
+    "title": "iss-position-publisher"
+  },
+  "properties": {
+    "deploymentType": "feed-leaf",
+    "purpose": "Publish near-real-time ISS geodetic position fixes."
+  }
+}

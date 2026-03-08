@@ -1,0 +1,90 @@
+{
+  "uid": "urn:os4csapi:datastream:iss:orbit-ground-track:v1",
+  "name": "orbitGroundTrack",
+  "description": "Past and predicted ISS orbit-track product for map rendering.",
+  "obsFormat": "application/swe+json",
+  "recordSchema": {
+    "type": "DataRecord",
+    "name": "orbitGroundTrack",
+    "label": "ISS Orbit Ground Track",
+    "fields": [
+      {
+        "type": "Time",
+        "name": "generatedAt",
+        "uom": {
+          "code": "s"
+        }
+      },
+      {
+        "type": "Count",
+        "name": "noradId"
+      },
+      {
+        "type": "Text",
+        "name": "assetName"
+      },
+      {
+        "type": "Text",
+        "name": "sourceEpoch"
+      },
+      {
+        "type": "Count",
+        "name": "windowPastMin"
+      },
+      {
+        "type": "Count",
+        "name": "windowFutureMin"
+      },
+      {
+        "type": "Count",
+        "name": "samplePeriodSec"
+      },
+      {
+        "type": "DataArray",
+        "name": "trackPoints",
+        "elementType": {
+          "type": "DataRecord",
+          "fields": [
+            {
+              "type": "Time",
+              "name": "t",
+              "uom": {
+                "code": "s"
+              }
+            },
+            {
+              "type": "Quantity",
+              "name": "lat_deg",
+              "uom": {
+                "code": "deg"
+              }
+            },
+            {
+              "type": "Quantity",
+              "name": "lon_deg",
+              "uom": {
+                "code": "deg"
+              }
+            },
+            {
+              "type": "Quantity",
+              "name": "alt_km",
+              "uom": {
+                "code": "km"
+              }
+            },
+            {
+              "type": "Category",
+              "name": "segment"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "properties": {
+    "productType": "orbit-track",
+    "cadenceSec": 300,
+    "qualityNote": "Derived visualization product sampled from propagated positions."
+  }
+}

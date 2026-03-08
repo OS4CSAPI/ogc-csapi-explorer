@@ -1,0 +1,29 @@
+{
+  "uid": "urn:os4csapi:system:iss-orbittrack-publisher:v1",
+  "name": "ISS Orbit Track Publisher",
+  "description": "Software publisher that generates ISS past and predicted orbit-track products from propagated positions.",
+  "type": "System",
+  "properties": {
+    "assetName": "ISS (ZARYA)",
+    "noradId": 25544,
+    "sourceProvider": "CelesTrak",
+    "propagationModel": "SGP4",
+    "updateIntervalSec": 300,
+    "documents": [
+      {
+        "title": "satellite.js",
+        "href": "https://github.com/shashwatak/satellite-js",
+        "rel": "implementedBy",
+        "mediaType": "text/html"
+      }
+    ],
+    "media": [
+      {
+        "title": "Orbit Track Illustration",
+        "href": "REPLACE_WITH_TRACK_IMAGE_URL",
+        "rel": "preview",
+        "mediaType": "image/png"
+      }
+    ]
+  }
+}

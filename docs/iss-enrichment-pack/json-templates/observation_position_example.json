@@ -1,0 +1,16 @@
+{
+  "phenomenonTime": "2026-03-08T14:00:00Z",
+  "resultTime": "2026-03-08T14:00:02Z",
+  "result": {
+    "timestamp": 1772978400,
+    "lat_deg": 12.3456,
+    "lon_deg": -98.7654,
+    "alt_km": 420.1,
+    "noradId": 25544,
+    "assetName": "ISS (ZARYA)",
+    "sourceEpoch": "2026-03-08T12:34:56Z",
+    "sourceAgeSec": 5106,
+    "posErrorM": 1500,
+    "method": "SGP4"
+  }
+}

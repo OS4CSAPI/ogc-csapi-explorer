@@ -1,0 +1,10 @@
+{
+  "uid": "urn:os4csapi:deployment:leo-objects:v1",
+  "name": "LEO Objects",
+  "description": "Grouping subdeployment for low Earth orbit tracked objects.",
+  "type": "Deployment",
+  "properties": {
+    "roleType": "grouping",
+    "purpose": "Organize LEO tracked-object role branches."
+  }
+}

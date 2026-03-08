@@ -1,0 +1,74 @@
+{
+  "uid": "urn:os4csapi:datastream:iss:position:wgs84:v1",
+  "name": "satPositionWGS84",
+  "description": "Near-real-time ISS point-position fixes in WGS84/geodetic form.",
+  "obsFormat": "application/swe+json",
+  "recordSchema": {
+    "type": "DataRecord",
+    "name": "satPositionWGS84",
+    "label": "ISS Position Fix",
+    "fields": [
+      {
+        "type": "Time",
+        "name": "timestamp",
+        "uom": {
+          "code": "s"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "lat_deg",
+        "uom": {
+          "code": "deg"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "lon_deg",
+        "uom": {
+          "code": "deg"
+        }
+      },
+      {
+        "type": "Quantity",
+        "name": "alt_km",
+        "uom": {
+          "code": "km"
+        }
+      },
+      {
+        "type": "Count",
+        "name": "noradId"
+      },
+      {
+        "type": "Text",
+        "name": "assetName"
+      },
+      {
+        "type": "Text",
+        "name": "sourceEpoch"
+      },
+      {
+        "type": "Count",
+        "name": "sourceAgeSec"
+      },
+      {
+        "type": "Quantity",
+        "name": "posErrorM",
+        "uom": {
+          "code": "m"
+        }
+      },
+      {
+        "type": "Text",
+        "name": "method"
+      }
+    ]
+  },
+  "properties": {
+    "productType": "position-fix",
+    "coordinateFrame": "WGS84 geodetic",
+    "cadenceSec": 30,
+    "qualityNote": "Derived ephemeris product from orbital elements and SGP4."
+  }
+}

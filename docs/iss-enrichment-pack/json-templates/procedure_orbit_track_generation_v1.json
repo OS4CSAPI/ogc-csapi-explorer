@@ -1,0 +1,30 @@
+{
+  "uid": "urn:os4csapi:procedure:orbit-track-generation:v1",
+  "name": "Orbit Track Generation v1",
+  "description": "Procedure for generating ISS past and predicted ground-track products from sampled propagated positions.",
+  "type": "Procedure",
+  "properties": {
+    "version": "v1",
+    "inputs": [
+      "propagatedPositions",
+      "windowPastMin",
+      "windowFutureMin",
+      "samplePeriodSec"
+    ],
+    "outputs": [
+      "trackPoints"
+    ],
+    "assumptions": [
+      "ordered samples",
+      "dateline-safe rendering handled downstream or in preprocessing"
+    ],
+    "documents": [
+      {
+        "title": "Orbit Track Illustration",
+        "href": "REPLACE_WITH_TRACK_DIAGRAM_URL",
+        "rel": "describedBy",
+        "mediaType": "image/png"
+      }
+    ]
+  }
+}

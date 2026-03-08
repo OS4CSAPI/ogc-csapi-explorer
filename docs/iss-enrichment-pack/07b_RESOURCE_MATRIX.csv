@@ -1,0 +1,12 @@
+resource,category,required_enrichments,recommended_media
+Orbital Tracking Demo,deployment,uid; name; description; purpose; status,architecture diagram; overview doc
+LEO Objects,deployment,uid; name; description; grouping purpose,optional branch image
+ISS Tracking Role,deployment,uid; name; roleType; purpose,role/context image
+ISS Tracking — Position Feed,deployment,uid; name; deploymentType; purpose,point-fix explainer
+ISS Tracking — Orbit Track Feed,deployment,uid; name; deploymentType; purpose,track explainer
+iss-position-publisher,system,uid; name; sourceProvider; propagationModel; cadence,ISS image; NASA page; architecture diagram
+iss-orbittrack-publisher,system,uid; name; sourceProvider; propagationModel,track illustration; architecture diagram
+sgp4-propagation:v1,procedure,uid; version; inputs; outputs; assumptions,CelesTrak docs; method diagram
+orbit-track-generation:v1,procedure,uid; version; inputs; outputs; sampling semantics,track generation diagram
+satPositionWGS84,datastream,uid; units; cadence; quality semantics,schema explainer
+orbitGroundTrack,datastream,uid; cadence; window semantics,track thumbnail

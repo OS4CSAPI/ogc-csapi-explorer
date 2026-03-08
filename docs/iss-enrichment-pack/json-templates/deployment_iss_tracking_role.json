@@ -1,0 +1,12 @@
+{
+  "uid": "urn:os4csapi:deployment:iss-tracking-role:v1",
+  "name": "ISS Tracking Role",
+  "description": "Operational role branch for ISS tracking products.",
+  "type": "Deployment",
+  "properties": {
+    "roleType": "tracking-role",
+    "purpose": "Group the producer leaves responsible for ISS point and track products.",
+    "assetName": "ISS (ZARYA)",
+    "noradId": 25544
+  }
+}
