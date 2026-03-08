@@ -75,15 +75,16 @@ for f in ["procedure_lob_wls_triangulation_v1.json", "procedure_senrep_sop_v1.js
     check("assumptions preserved", len(om.get("assumptions", [])) > 0)
     check("documents preserved", len(om.get("documents", [])) > 0)
 
-# U1: Deployment template
-print(f"\n--- deployment_localizer_feed_leaf.json ---")
-data = json.load(open(os.path.join(d, "deployment_localizer_feed_leaf.json")))
-check("type == Feature", data.get("type") == "Feature")
-check("has uid", "uid" in data.get("properties", {}))
-check("has platform@link", "platform@link" in data.get("properties", {}))
-href = data["properties"]["platform@link"]["href"]
-check("platform@link has RUNTIME_RESOLVE prefix", href.startswith("RUNTIME_RESOLVE:"))
-check("_originalMetadata preserved", "_originalMetadata" in data.get("properties", {}))
+# U1: Deployment templates
+for f in ["deployment_localizer_feed_leaf.json", "deployment_relay_emplacement_enriched.json"]:
+    print(f"\n--- {f} ---")
+    data = json.load(open(os.path.join(d, f)))
+    check("type == Feature", data.get("type") == "Feature")
+    check("has uid", "uid" in data.get("properties", {}))
+    check("has platform@link", "platform@link" in data.get("properties", {}))
+    href = data["properties"]["platform@link"]["href"]
+    check("platform@link has RUNTIME_RESOLVE prefix", href.startswith("RUNTIME_RESOLVE:"))
+    check("_originalMetadata preserved", "_originalMetadata" in data.get("properties", {}))
 
 # U6: SVG paths
 print(f"\n--- SVG URL check (U6) ---")
@@ -101,15 +102,28 @@ for f in ["procedure_lob_wls_triangulation_v1.json", "procedure_senrep_sop_v1.js
     check(f"{f}: no relative SVG paths", not has_relative)
     check(f"{f}: has absolute GitHub URL", has_absolute)
 
-# U4: Relay template exists
-print(f"\n--- U4: Relay system template ---")
-relay_path = os.path.join(d, "system_relay_enriched.json")
-check("system_relay_enriched.json exists", os.path.exists(relay_path))
+# U4: Relay templates exist
+print(f"\n--- U4: Relay templates ---")
+relay_sys = os.path.join(d, "system_relay_enriched.json")
+relay_dep = os.path.join(d, "deployment_relay_emplacement_enriched.json")
+check("system_relay_enriched.json exists", os.path.exists(relay_sys))
+check("deployment_relay_emplacement_enriched.json exists", os.path.exists(relay_dep))
+# Verify relay system uses correct UID from Relay Patch Pack
+data = json.load(open(relay_sys))
+check("relay UID = urn:os4csapi:system:relay:ft-huachuca:001",
+      data["sensorml"]["uniqueId"] == "urn:os4csapi:system:relay:ft-huachuca:001")
+# Verify relay has capabilities (from patch pack)
+check("relay sensorml has capabilities", len(data["sensorml"].get("capabilities", [])) > 0)
+# Verify relay has manufacturer/model/assetTag identifiers
+ids = [i["label"] for i in data["sensorml"].get("identifiers", [])]
+check("relay has Manufacturer identifier", "Manufacturer" in ids)
+check("relay has Model identifier", "Model" in ids)
+check("relay has Asset Tag identifier", "Asset Tag" in ids)
 
 # File count
 print(f"\n--- File inventory ---")
 files = sorted(os.listdir(d))
-print(f"  Total: {len(files)} files (was 12, now 13 with relay)")
+print(f"  Total: {len(files)} files (was 12, now 15 with relay system + relay deployment)")
 for f in files:
     sz = os.path.getsize(os.path.join(d, f))
     print(f"  {f:50s} {sz:6d} bytes")

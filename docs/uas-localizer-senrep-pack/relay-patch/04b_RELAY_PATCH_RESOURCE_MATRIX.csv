@@ -1,0 +1,3 @@
+resource,category,keep_or_add,required_enrichments,recommended_media
+Relay Emplacement,deployment,keep/enrich,uid; name; description; deploymentType; roleType; purpose; status; occupantSummary,topology diagram; relay concept image
+Relay,system,keep/enrich,uid; name; description; systemKind; roleType; purpose; owner/maintainer,vendor page; hardware photo; support-role note

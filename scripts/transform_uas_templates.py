@@ -460,59 +460,87 @@ SYSTEM_MONITORING_SITE = {
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  SYSTEM 4 — VHF Relay/Repeater (NEW — U4 fix)
+#  SYSTEM 4 — Relay (U4 fix + Relay-Only Patch Pack merge)
 #
-#  No original template existed. Created from scratch based on pack's
-#  enrichment matrix reference and the monitoring site pattern.
+#  Originally created from scratch for U4 fix. Now merged with the
+#  Relay-Only Patch Pack which provides richer metadata:
+#    uid, name, description, systemKind, roleType, purpose, ownerOrg,
+#    status, manufacturer, model, assetTag, documents, media
 # ═══════════════════════════════════════════════════════════════════════════
+
+RELAY_PATCH_URL = (
+    "https://github.com/OS4CSAPI/ogc-csapi-explorer"
+    "/tree/main/docs/uas-localizer-senrep-pack/relay-patch"
+)
 
 SYSTEM_RELAY = {
     "_templateMeta": {
-        "description": "Server-ready template for VHF Relay/Repeater (NEW — audit finding U4)",
+        "description": "Server-ready template for Relay communications support system",
         "wirePattern": "Two-step: POST geojsonStub to /systems, then PUT sensorml to /systems/{id}/details",
-        "pack": "UAS/Localizer/SENREP Implementation Ready Pack v2",
+        "pack": "UAS/Localizer/SENREP Implementation Ready Pack v2 + Relay-Only Patch Pack",
         "auditFixes": [
-            "U4: Created relay system template — was missing from original pack",
+            "U4: Created relay system template — was missing from original UAS pack",
+            "Merged with Relay-Only Patch Pack (richer metadata: purpose, ownerOrg, status, manufacturer/model/assetTag placeholders, documents, media)",
+            "U1: Converted from simplified JSON to geojsonStub + SensorML PhysicalSystem",
+            "U3: Placeholder URLs resolved to pack URL or marked REPLACE_IF_KNOWN",
         ],
     },
     "geojsonStub": {
         "type": "Feature",
         "geometry": None,
         "properties": {
-            "uid": "urn:os4csapi:system:relay:vhf-repeater:ft-huachuca:001",
-            "name": "VHF Relay/Repeater 001",
+            "uid": "urn:os4csapi:system:relay:ft-huachuca:001",
+            "name": "Relay",
             "description": (
-                "VHF radio relay/repeater providing communications link between "
-                "remote sensor nodes and the monitoring site. Extends sensor-to-"
-                "monsite radio coverage."
+                "Communications relay / repeater support system used to bridge "
+                "or extend connectivity between remote sensing elements and "
+                "monitoring/reporting elements."
             ),
             "validTime": [VALID_TIME_START, ".."],
         },
     },
     "sensorml": {
         "type": "PhysicalSystem",
-        "uniqueId": "urn:os4csapi:system:relay:vhf-repeater:ft-huachuca:001",
+        "uniqueId": "urn:os4csapi:system:relay:ft-huachuca:001",
         "definition": "sosa:System",
-        "label": "VHF Relay/Repeater 001",
+        "label": "Relay",
         "description": (
-            "VHF radio relay/repeater providing communications link between "
-            "remote sensor nodes and the monitoring site. Extends sensor-to-"
-            "monsite radio coverage."
+            "Communications relay / repeater support system used to bridge "
+            "or extend connectivity between remote sensing elements and "
+            "monitoring/reporting elements."
         ),
         "keywords": [
-            "relay", "repeater", "VHF", "communications",
-            "radio link", "support infrastructure",
+            "relay", "repeater", "communications", "bridge",
+            "support infrastructure", "sensor network", "Ft Huachuca",
         ],
         "identifiers": [
             {
                 "definition": "http://sensorml.com/ont/swe/property/ShortName",
                 "label": "Short Name",
-                "value": "VHF Relay/Repeater 001",
+                "value": "Relay",
             },
             {
                 "definition": "http://sensorml.com/ont/swe/property/LongName",
                 "label": "Long Name",
-                "value": "VHF Relay/Repeater 001 — Ft Huachuca",
+                "value": "Communications Relay — Ft Huachuca",
+            },
+            {
+                "definition": "http://sensorml.com/ont/swe/property/Manufacturer",
+                "label": "Manufacturer",
+                "value": "REPLACE_IF_KNOWN",
+                # ← original: properties.manufacturer
+            },
+            {
+                "definition": "http://sensorml.com/ont/swe/property/ModelNumber",
+                "label": "Model",
+                "value": "REPLACE_IF_KNOWN",
+                # ← original: properties.model
+            },
+            {
+                "definition": "http://sensorml.com/ont/swe/property/SerialNumber",
+                "label": "Asset Tag",
+                "value": "REPLACE_IF_KNOWN",
+                # ← original: properties.assetTag
             },
         ],
         "classifiers": [
@@ -520,24 +548,74 @@ SYSTEM_RELAY = {
                 "definition": "http://sensorml.com/ont/swe/property/SensorType",
                 "label": "System Kind",
                 "value": "Communications Relay",
+                # ← original: properties.systemKind = "communications-relay"
             },
             {
                 "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
                 "label": "Role Type",
-                "value": "Support Infrastructure",
+                "value": "Relay Support",
+                # ← original: properties.roleType = "relay-support"
             },
             {
                 "definition": "http://sensorml.com/ont/swe/property/SystemRole",
                 "label": "System Role",
-                "value": "VHF Repeater — Sensor-to-Monsite Link",
+                "value": "Relay / Repeater — Sensor-to-Monsite Bridge",
             },
         ],
         "validTime": [VALID_TIME_START, ".."],
+        "capabilities": [
+            {
+                "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+                "label": "Relay Capabilities",
+                "capabilities": [
+                    {
+                        "type": "Text",
+                        "name": "purpose",
+                        "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+                        "label": "Purpose",
+                        "value": (
+                            "Provide relay/repeater communications support within "
+                            "the deployed remote sensor network architecture."
+                        ),
+                        # ← original: properties.purpose
+                    },
+                    {
+                        "type": "Text",
+                        "name": "status",
+                        "definition": "http://sensorml.com/ont/swe/property/OperationalStatus",
+                        "label": "Operational Status",
+                        "value": "active-demo",
+                        # ← original: properties.status
+                    },
+                ],
+            }
+        ],
         "contacts": [
+            {
+                "role": "http://sensorml.com/ont/swe/property/Operator",
+                "organisationName": "OS4CSAPI Demo",
+                # ← original: properties.ownerOrg = "OS4CSAPI Demo"
+            },
             {
                 "role": "http://sensorml.com/ont/swe/property/ProjectLeader",
                 "organisationName": "OS4CSAPI Project",
                 "contactInfo": {"website": "https://github.com/OS4CSAPI"},
+            },
+        ],
+        "documents": [
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "Relay Support Role Note",
+                "description": (
+                    "Relay-Only Patch Pack — guidance on relay role, structural "
+                    "semantics, and enrichment within the deployed sensor architecture."
+                ),
+                "link": {
+                    "href": RELAY_PATCH_URL,
+                    "type": "text/html",
+                    # ← original: documents[0].href = "REPLACE_WITH_INTERNAL_DOC_OR_REPO_URL"
+                    # U3 fix: resolved to actual relay patch URL
+                },
             },
         ],
     },
@@ -1000,6 +1078,53 @@ DATASTREAM_SENREP = {
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  DEPLOYMENT — Relay Emplacement Leaf (NEW — from Relay-Only Patch Pack)
+#
+#  Original metadata preserved from Relay-Only Patch Pack:
+#    uid, name, description, type, platform@link, properties
+#    (deploymentType, roleType, purpose, status, occupantSummary)
+# ═══════════════════════════════════════════════════════════════════════════
+
+DEPLOYMENT_RELAY_LEAF = {
+    "_templateMeta": {
+        "description": "Server-ready deployment leaf template for relay emplacement",
+        "wirePattern": "POST as geo+json Feature to parent deployment's /subdeployments endpoint",
+        "pack": "Relay-Only Patch Pack",
+        "auditFixes": [
+            "U1: Converted from simplified JSON to geo+json Feature format",
+            "U3: platform@link.href marked as RUNTIME_RESOLVE — bootstrap script resolves via find_by_uid()",
+        ],
+    },
+    "type": "Feature",
+    "geometry": None,
+    "properties": {
+        "uid": "urn:os4csapi:deployment:relay:ft-huachuca:001",
+        "name": "Relay Emplacement",
+        "description": (
+            "Leaf deployment representing the emplacement of the communications "
+            "relay/repeater support system within the deployed sensor architecture."
+        ),
+        "validTime": [VALID_TIME_START, ".."],
+        "platform@link": {
+            "href": "RUNTIME_RESOLVE:urn:os4csapi:system:relay:ft-huachuca:001",
+            "title": "Relay",
+            # Bootstrap script resolves: find_by_uid("systems", uid) → actual URL
+        },
+        "_originalMetadata": {
+            "deploymentType": "support-leaf",
+            "roleType": "communications-support",
+            "purpose": (
+                "Maintain or extend communications reach between remote sensor "
+                "assets and the monitoring/reporting chain."
+            ),
+            "status": "active-demo",
+            "occupantSummary": "Relay communications-support system",
+        },
+    },
+}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  DEPLOYMENT — Localizer Feed Leaf
 #
 #  Original metadata preserved:
@@ -1116,9 +1241,10 @@ def main():
     write("datastream_senrep_v1_1.json", DATASTREAM_SENREP)
     print()
 
-    # Deployment (U1 fix: simplified JSON → geo+json Feature)
-    print("Deployment:")
+    # Deployments (U1 fix: simplified JSON → geo+json Feature)
+    print("Deployments:")
     write("deployment_localizer_feed_leaf.json", DEPLOYMENT_LOCALIZER_LEAF)
+    write("deployment_relay_emplacement_enriched.json", DEPLOYMENT_RELAY_LEAF)  # Relay Patch Pack
     print()
 
     # Sampling Feature (minor structure enhancement)
@@ -1131,7 +1257,7 @@ def main():
     print()
 
     print("=" * 60)
-    print("DONE — 10 files written, 3 observation files unchanged")
+    print("DONE — 12 files written, 3 observation files unchanged")
     print()
     print("Audit findings addressed:")
     print("  U1 ✓  System/Procedure/Deployment → proper SensorML/geo+json")

@@ -1,19 +1,22 @@
 {
   "_templateMeta": {
-    "description": "Server-ready template for VHF Relay/Repeater (NEW — audit finding U4)",
+    "description": "Server-ready template for Relay communications support system",
     "wirePattern": "Two-step: POST geojsonStub to /systems, then PUT sensorml to /systems/{id}/details",
-    "pack": "UAS/Localizer/SENREP Implementation Ready Pack v2",
+    "pack": "UAS/Localizer/SENREP Implementation Ready Pack v2 + Relay-Only Patch Pack",
     "auditFixes": [
-      "U4: Created relay system template — was missing from original pack"
+      "U4: Created relay system template — was missing from original UAS pack",
+      "Merged with Relay-Only Patch Pack (richer metadata: purpose, ownerOrg, status, manufacturer/model/assetTag placeholders, documents, media)",
+      "U1: Converted from simplified JSON to geojsonStub + SensorML PhysicalSystem",
+      "U3: Placeholder URLs resolved to pack URL or marked REPLACE_IF_KNOWN"
     ]
   },
   "geojsonStub": {
     "type": "Feature",
     "geometry": null,
     "properties": {
-      "uid": "urn:os4csapi:system:relay:vhf-repeater:ft-huachuca:001",
-      "name": "VHF Relay/Repeater 001",
-      "description": "VHF radio relay/repeater providing communications link between remote sensor nodes and the monitoring site. Extends sensor-to-monsite radio coverage.",
+      "uid": "urn:os4csapi:system:relay:ft-huachuca:001",
+      "name": "Relay",
+      "description": "Communications relay / repeater support system used to bridge or extend connectivity between remote sensing elements and monitoring/reporting elements.",
       "validTime": [
         "2026-01-01T00:00:00Z",
         ".."
@@ -22,28 +25,44 @@
   },
   "sensorml": {
     "type": "PhysicalSystem",
-    "uniqueId": "urn:os4csapi:system:relay:vhf-repeater:ft-huachuca:001",
+    "uniqueId": "urn:os4csapi:system:relay:ft-huachuca:001",
     "definition": "sosa:System",
-    "label": "VHF Relay/Repeater 001",
-    "description": "VHF radio relay/repeater providing communications link between remote sensor nodes and the monitoring site. Extends sensor-to-monsite radio coverage.",
+    "label": "Relay",
+    "description": "Communications relay / repeater support system used to bridge or extend connectivity between remote sensing elements and monitoring/reporting elements.",
     "keywords": [
       "relay",
       "repeater",
-      "VHF",
       "communications",
-      "radio link",
-      "support infrastructure"
+      "bridge",
+      "support infrastructure",
+      "sensor network",
+      "Ft Huachuca"
     ],
     "identifiers": [
       {
         "definition": "http://sensorml.com/ont/swe/property/ShortName",
         "label": "Short Name",
-        "value": "VHF Relay/Repeater 001"
+        "value": "Relay"
       },
       {
         "definition": "http://sensorml.com/ont/swe/property/LongName",
         "label": "Long Name",
-        "value": "VHF Relay/Repeater 001 — Ft Huachuca"
+        "value": "Communications Relay — Ft Huachuca"
+      },
+      {
+        "definition": "http://sensorml.com/ont/swe/property/Manufacturer",
+        "label": "Manufacturer",
+        "value": "REPLACE_IF_KNOWN"
+      },
+      {
+        "definition": "http://sensorml.com/ont/swe/property/ModelNumber",
+        "label": "Model",
+        "value": "REPLACE_IF_KNOWN"
+      },
+      {
+        "definition": "http://sensorml.com/ont/swe/property/SerialNumber",
+        "label": "Asset Tag",
+        "value": "REPLACE_IF_KNOWN"
       }
     ],
     "classifiers": [
@@ -55,24 +74,61 @@
       {
         "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
         "label": "Role Type",
-        "value": "Support Infrastructure"
+        "value": "Relay Support"
       },
       {
         "definition": "http://sensorml.com/ont/swe/property/SystemRole",
         "label": "System Role",
-        "value": "VHF Repeater — Sensor-to-Monsite Link"
+        "value": "Relay / Repeater — Sensor-to-Monsite Bridge"
       }
     ],
     "validTime": [
       "2026-01-01T00:00:00Z",
       ".."
     ],
+    "capabilities": [
+      {
+        "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+        "label": "Relay Capabilities",
+        "capabilities": [
+          {
+            "type": "Text",
+            "name": "purpose",
+            "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+            "label": "Purpose",
+            "value": "Provide relay/repeater communications support within the deployed remote sensor network architecture."
+          },
+          {
+            "type": "Text",
+            "name": "status",
+            "definition": "http://sensorml.com/ont/swe/property/OperationalStatus",
+            "label": "Operational Status",
+            "value": "active-demo"
+          }
+        ]
+      }
+    ],
     "contacts": [
+      {
+        "role": "http://sensorml.com/ont/swe/property/Operator",
+        "organisationName": "OS4CSAPI Demo"
+      },
       {
         "role": "http://sensorml.com/ont/swe/property/ProjectLeader",
         "organisationName": "OS4CSAPI Project",
         "contactInfo": {
           "website": "https://github.com/OS4CSAPI"
+        }
+      }
+    ],
+    "documents": [
+      {
+        "role": "http://dbpedia.org/resource/Web_page",
+        "name": "Relay Support Role Note",
+        "description": "Relay-Only Patch Pack — guidance on relay role, structural semantics, and enrichment within the deployed sensor architecture.",
+        "link": {
+          "href": "https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/docs/uas-localizer-senrep-pack/relay-patch",
+          "type": "text/html"
         }
       }
     ]

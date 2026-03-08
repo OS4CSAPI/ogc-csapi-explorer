@@ -1,0 +1,33 @@
+{
+  "_templateMeta": {
+    "description": "Server-ready deployment leaf template for relay emplacement",
+    "wirePattern": "POST as geo+json Feature to parent deployment's /subdeployments endpoint",
+    "pack": "Relay-Only Patch Pack",
+    "auditFixes": [
+      "U1: Converted from simplified JSON to geo+json Feature format",
+      "U3: platform@link.href marked as RUNTIME_RESOLVE — bootstrap script resolves via find_by_uid()"
+    ]
+  },
+  "type": "Feature",
+  "geometry": null,
+  "properties": {
+    "uid": "urn:os4csapi:deployment:relay:ft-huachuca:001",
+    "name": "Relay Emplacement",
+    "description": "Leaf deployment representing the emplacement of the communications relay/repeater support system within the deployed sensor architecture.",
+    "validTime": [
+      "2026-01-01T00:00:00Z",
+      ".."
+    ],
+    "platform@link": {
+      "href": "RUNTIME_RESOLVE:urn:os4csapi:system:relay:ft-huachuca:001",
+      "title": "Relay"
+    },
+    "_originalMetadata": {
+      "deploymentType": "support-leaf",
+      "roleType": "communications-support",
+      "purpose": "Maintain or extend communications reach between remote sensor assets and the monitoring/reporting chain.",
+      "status": "active-demo",
+      "occupantSummary": "Relay communications-support system"
+    }
+  }
+}
