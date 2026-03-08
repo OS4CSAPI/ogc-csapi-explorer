@@ -1844,8 +1844,8 @@ async function loadLocationEstimates(): Promise<void> {
               fromLonLat([ep.lon, ep.lat]),
             ]),
           })
-          // Full-opacity style — these are the live, authoritative LOBs
-          feature.setStyle(getCachedBearingLineStyle(1.0))
+          // Style with same fade as the location estimate marker
+          feature.setStyle(getCachedBearingLineStyle(fadeOpacity))
           feature.set('resourceType', 'bearingLines')
           feature.set('resourceId', `loc-est-lob-${lob.sensorName}`)
           feature.set('resourceName', `${lob.sensorName} — ${lob.bearingTrue.toFixed(1)}°`)
@@ -2620,10 +2620,15 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
   // This eliminates the visual blink — sources are empty for <1ms instead of seconds.
   if (pointSource) { pointSource.clear(); pointSource.addFeatures(pendingPoints) }
   if (trackSource) { trackSource.clear(); trackSource.addFeatures(pendingTracks) }
-  if (bearingSource) { bearingSource.clear(); bearingSource.addFeatures(pendingBearings) }
+  // In live mode, LOB lines are rendered by loadLocationEstimates() from the
+  // compound localizer observation — do NOT clear bearingSource here or those
+  // lines will disappear every poll cycle.
+  if (bearingSource && !isLive) {
+    bearingSource.clear(); bearingSource.addFeatures(pendingBearings)
+    featureCounts.value['bearingLines'] = bearingCount
+  }
   featureCounts.value['observationPoints'] = pointCount
   featureCounts.value['observationTracks'] = trackCount
-  featureCounts.value['bearingLines'] = bearingCount
 }
 
 async function loadAllResources() {
