@@ -117,3 +117,102 @@ All other files (60 of 62) auto-merge cleanly.
 ### Verdict
 
 The merge provides **meaningful bug fixes** (#162, #143, property parsing) that affect real data the explorer displays, **one new feature** (`sortBy`/`sortOrder`) we could leverage to improve observation fetching, and **security hardening**. The refactors improve maintainability without introducing risk. The 2 conflicts are trivially resolvable. **Recommended to merge.**
+
+---
+
+## Merge Execution
+
+**Merge commit:** `36699fd` (pushed to `origin/main`)
+**Merge command:** `git merge --no-ff upstream/phase-7`
+
+### Conflict Resolution
+
+| File | Resolution Detail |
+|---|---|
+| `.gitignore` | Kept both sides: explorer-specific entries (`scripts/`, `.venv*`, `__pycache__/`) + upstream entries (`jest-output.txt`, `csapi-test-results.txt`) |
+| `src/ogc-api/csapi/formats/schema-response.ts` | Took upstream's comment which includes the `#140` issue link for traceability. Generated code was identical on both sides. |
+
+### Post-Merge Test Results
+
+| Suite | Result |
+|---|---|
+| **CSAPI tests** (30 suites) | **1,350 tests passed** — all green |
+| WFS/WMS/WMTS/endpoint/http-utils (5 suites) | Pre-existing timeout failures (unrelated to merge) |
+
+---
+
+## Post-Merge Webapp Improvements
+
+**Commit:** `c4a52eb` — `feat(demo): leverage upstream phase-7 library improvements`
+**Files changed:** 3 (+78/−27 lines)
+
+After merging the upstream library changes, we audited the demo webapp for concrete opportunities to leverage the new capabilities. Five improvements were implemented:
+
+### 1. `sortBy`/`sortOrder` Controls in ResourceList (High Priority)
+
+**File:** `demo/src/components/ResourceList.vue`
+
+Added a `Sort by` text field and `Order` toggle button (asc → desc → default) to the filters panel. Values pass through to `QueryOptions` and get serialized by the builder's `buildQueryString()`. This lets users request server-side sorting — previously the only controls were limit/offset/search/datetime.
+
+**Benefit:** Users can now sort observations, systems, deployments, etc. by any field the server supports (e.g., `resultTime`, `name`). Especially important because OSH returns oldest-first by default.
+
+### 2. Raw URL Migration to Builder (High Priority)
+
+**File:** `demo/src/pages/MapViewPage.vue`
+
+Replaced **9 raw observation URL strings** (e.g., `` `/datastreams/${id}/observations?resultTime=latest&limit=1` ``) with `getNestedListUrl()` builder calls. This includes:
+
+- System location caching fetches (`resultTime: 'latest'`, `limit: 1`)
+- Localizer position estimate fetch + scope-leak fallback (Date interval)
+- SENREP marker fetch (`limit: 50`)
+- Observation layer time-windowed fetch (6-hour ISS orbit window, 5-minute LOB window)
+- Non-time-windowed fallback fetch
+- Moving system position update fetch
+
+**Benefit:** The demo's stated purpose is to "validate that the library's CRUD URL building works end-to-end" — but 12+ observation fetches were bypassing the builder entirely with hardcoded strings. Now 9 of those go through `getNestedListUrl()`, which validates the builder, ensures spec-compliant query serialization, and picks up new features like `sortBy`/`sortOrder` automatically.
+
+### 3. Detection Range Fetch Optimization (Medium Priority)
+
+**File:** `demo/src/pages/MapViewPage.vue`
+
+Reduced the detection-capabilities observation fetch from `limit=500` to **`limit=50` + `sortBy: 'resultTime', sortOrder: 'desc'`**.
+
+**Before:** The `limit=500` was a brute-force workaround because OSH returns oldest-first and the detection capabilities observation was buried among scope-leaked contamination from sibling datastreams.
+
+**After:** With `sortBy: 'resultTime', sortOrder: 'desc'`, the most recent observations (including the genuine detection capabilities obs) come first, so a much smaller page suffices.
+
+**Benefit:** ~10x bandwidth and parsing reduction for the detection-range initialization flow.
+
+### 4. `observedProperties` Defensive Guard (Medium Priority)
+
+**File:** `demo/src/pages/MapViewPage.vue`
+
+Wrapped the `ds.observedProperties` access in `isLocationRelatedDatastream()` with `Array.isArray()`:
+
+```typescript
+// Before
+const props: any[] = ds.observedProperties || []
+
+// After
+const rawProps = ds.observedProperties
+const props: any[] = Array.isArray(rawProps) ? rawProps : rawProps ? [rawProps] : []
+```
+
+**Benefit:** Even though the upstream fix normalizes single-property responses to arrays, this 1-line defensive check protects against cached data, non-OSH servers, or any other source that might still send the bare-object format.
+
+### 5. Server-Side Sort in LiveAnalyticsPage (Low Priority)
+
+**File:** `demo/src/pages/LiveAnalyticsPage.vue`
+
+Added `sortBy=resultTime&sortOrder=asc` to UAS fix and LOB fetch URLs, and `sortOrder=desc` for SENREPs (most recent first). Client-side `.sort()` calls remain as defensive fallback.
+
+**Benefit:** Offloads sorting to the server when it supports `sortBy`. If the server ignores the parameter (as OSH may initially), the existing client-side sort ensures correct ordering.
+
+### Changes NOT Made (By Design)
+
+| Category | Rationale |
+|---|---|
+| `..` interval parsing | Already works — `ParsedResourceView.vue` has `if (!d) return '(ongoing / now)'` which handles the upstream fix output correctly |
+| Null `properties` guard | Already handled — the webapp uses `?.` optional chaining consistently |
+| URL scheme validation | Already handled — automatically applied through `scanCsapiLinks()` with no webapp changes needed |
+| Remaining ~6 raw `/systems/*/...` URLs | Lower priority — these are system/datastream/controlstream list fetches that don't benefit from `sortBy`. Candidates for a future consistency pass. |
