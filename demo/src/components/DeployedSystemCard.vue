@@ -273,7 +273,7 @@ const trustLine = computed(() => {
 }
 .dsc-icon {
   flex-shrink: 0;
-  width: 40px; height: 40px;
+  width: 72px; height: 72px;
   background: #dbeafe;
   border-radius: 8px;
   display: flex;
@@ -288,8 +288,8 @@ const trustLine = computed(() => {
   object-fit: cover;
 }
 .dsc-stanag {
-  width: 36px;
-  height: 36px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
   flex-shrink: 0;
 }
