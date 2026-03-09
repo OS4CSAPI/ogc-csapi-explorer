@@ -394,7 +394,12 @@ async function submitSenrep(): Promise<void> {
       }
 
       // Refresh SENREP markers to show the new one
+      // Brief delay allows server to index the new observation before query
+      await new Promise(resolve => setTimeout(resolve, 500))
       await loadSenrepMarkers()
+      // Also reload sampling features so the new track FOI appears
+      const sfCount = await loadResourceType('samplingFeatures')
+      featureCounts.value['samplingFeatures'] = sfCount
       // Auto-close after brief success feedback
       setTimeout(() => {
         senrepPanelOpen.value = false
@@ -2144,18 +2149,19 @@ async function loadSenrepMarkers(): Promise<void> {
     }
 
     // Group by contactId and sort each group chronologically
-    const byContact = new Map<string, SenrepObs[]>()
+    // Uses plain object instead of Map for broad runtime compatibility
+    const byContact: Record<string, SenrepObs[]> = {}
     for (const s of parsed) {
-      const arr = byContact.get(s.contactId)
-      if (arr) arr.push(s); else byContact.set(s.contactId, [s])
+      if (byContact[s.contactId]) byContact[s.contactId].push(s)
+      else byContact[s.contactId] = [s]
     }
-    for (const arr of byContact.values()) {
+    for (const arr of Object.values(byContact)) {
       arr.sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0))
     }
 
     // Update knownSenrepContacts — contacts that have at least one INIT (available for FUP)
     const initContacts: string[] = []
-    for (const [cid, arr] of byContact) {
+    for (const [cid, arr] of Object.entries(byContact)) {
       if (cid !== 'SENREP' && arr.some(s => s.reportType === 'INIT')) {
         initContacts.push(cid)
       }
@@ -2209,7 +2215,7 @@ async function loadSenrepMarkers(): Promise<void> {
     }
 
     // Draw track lines connecting consecutive SENREPs for the same contact
-    for (const [cid, arr] of byContact) {
+    for (const [cid, arr] of Object.entries(byContact)) {
       if (arr.length < 2) continue
       const coords = arr.map(s => fromLonLat([s.lon, s.lat]))
       const lineFeature = new Feature({
