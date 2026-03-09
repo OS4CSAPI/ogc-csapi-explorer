@@ -4092,6 +4092,9 @@ watch(selectedFeature, (feat) => {
           <button class="tak-fab" :class="{ 'tak-fab--live': liveMode }" @click="toggleLiveMode" title="Live Mode">
             <i class="pi pi-bolt"></i>
           </button>
+          <button class="tak-fab tak-fab--senrep" :class="{ active: senrepPanelOpen }" @click="openSenrepPanel(null); closeMobilePanel()" title="SENREP">
+            <i class="pi pi-flag"></i>
+          </button>
         </div>
       </div>
 
@@ -4223,6 +4226,13 @@ watch(selectedFeature, (feat) => {
                   <i class="pi pi-info-circle"></i> Location from observation data
                 </div>
               </div>
+              <button
+                v-if="selectedFeature.resourceType === 'locationEstimates' && selectedFeature.rawData"
+                class="tak-explore-btn tak-senrep-btn"
+                @click="openSenrepPanel(selectedFeature.rawData); closeMobilePanel()"
+              >
+                <i class="pi pi-flag"></i> Submit SENREP
+              </button>
               <button class="tak-explore-btn" @click="goToDetail">
                 <i class="pi pi-external-link"></i> View in Explorer
               </button>
@@ -5172,6 +5182,21 @@ watch(selectedFeature, (feat) => {
     border-color: rgba(239, 68, 68, 0.6) !important;
     color: #ef4444 !important;
   }
+  .tak-fab--senrep {
+    background: rgba(239, 68, 68, 0.25) !important;
+    border-color: rgba(239, 68, 68, 0.6) !important;
+    color: #ef4444 !important;
+  }
+  .tak-fab--senrep.active {
+    background: rgba(239, 68, 68, 0.45) !important;
+    border-color: rgba(239, 68, 68, 0.9) !important;
+    color: #fff !important;
+  }
+  .tak-senrep-btn {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border: 1px solid rgba(239, 68, 68, 0.5) !important;
+    color: #ef4444 !important;
+  }
   .tak-fab--sim-running {
     background: rgba(34, 197, 94, 0.15) !important;
     border-color: rgba(34, 197, 94, 0.4) !important;
@@ -5533,6 +5558,21 @@ watch(selectedFeature, (feat) => {
   display: flex;
   flex-direction: column;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+}
+@media (max-width: 768px) {
+  .senrep-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 60vh;
+    border-left: none;
+    border-top: 2px solid #ef4444;
+    border-radius: 16px 16px 0 0;
+    z-index: 1100;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  }
 }
 .senrep-panel-header {
   display: flex;
