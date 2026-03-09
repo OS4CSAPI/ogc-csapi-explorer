@@ -4035,17 +4035,9 @@ watch(selectedFeature, (feat) => {
           <i :class="simStarting ? 'pi pi-spin pi-spinner' : 'pi pi-play'"></i>
           {{ simStarting ? 'Starting…' : 'Start Simulator' }}
         </button>
+        <span v-else class="sim-msg">Simulation started</span>
         <button
-          v-else
-          class="sim-btn sim-btn--stop"
-          :disabled="simStopping"
-          @click="stopSimulator"
-          title="Stop data simulator"
-        >
-          <i :class="simStopping ? 'pi pi-spin pi-spinner' : 'pi pi-stop-circle'"></i>
-          {{ simStopping ? 'Stopping…' : 'Stop Simulator' }}
-        </button>
-        <button
+          v-if="!simRunning"
           class="sim-btn sim-btn--reset"
           :disabled="demoResetting"
           @click="fullDemoReset"
