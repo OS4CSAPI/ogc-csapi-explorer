@@ -2692,12 +2692,12 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       const isPositionDs = dsNameLower.includes('position') || dsNameLower.includes('location')
         || dsNameLower.includes('gps')
       const isLobDs = dsNameLower.includes('lob') || dsNameLower.includes('bearing')
-      // Position/satellite DS: need 720 obs to fill the 6-hour window at 30s
-      // cadence (6h × 120 obs/h = 720).
+      // Position/satellite DS: cap at obsLimit (default 500) to keep total
+      // observation count manageable.
       // LOB DS in live mode: exactly 1 per sensor — cleanest visual, shows only
       // the very latest bearing from each MA system.
       // Other DS: use caller's obsLimit.
-      const effectiveLimit = isPositionDs ? 720 : (isLobDs && isLive) ? 1 : obsLimit
+      const effectiveLimit = (isLobDs && isLive) ? 1 : obsLimit
 
       // OSH returns observations oldest-first and ignores sort params, so a
       // bare limit=N always returns the N OLDEST observations.  For position/
@@ -2727,14 +2727,15 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         const latestTime = latestRes.data.items[0].resultTime || latestRes.data.items[0].phenomenonTime
         if (!latestTime) return
 
-        // Position datastreams: 6-hour window to capture multiple full orbits
-        // (~92 min each → 6h ≈ 3.9 orbits).
+        // Position datastreams: 4-hour window to capture multiple full orbits
+        // (~92 min each → 4h ≈ 2.6 orbits).
         // LOB datastreams: 5-minute window for tight real-time view.
-        const windowMinutes = isPositionDs ? 360 : 5
+        const windowMinutes = isPositionDs ? 240 : 5
         const latestMs = new Date(latestTime).getTime()
-        // Fetch limit: satellite DS needs full window, LOB DS needs extra to
-        // overcome OSH scope-leak contamination, others use effectiveLimit.
-        const fetchLimit = isPositionDs ? 5000 : isLobDs ? 30 : effectiveLimit
+        // Fetch limit: position DS gets 2× effective to allow burst dedup
+        // headroom, LOB DS needs extra to overcome OSH scope-leak contamination,
+        // others use effectiveLimit.
+        const fetchLimit = isPositionDs ? effectiveLimit * 2 : isLobDs ? 30 : effectiveLimit
         const windowStartDate = new Date(latestMs - windowMinutes * 60 * 1000)
         const windowEndDate = new Date(latestMs + 1000)
         const timeWindowUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
