@@ -2157,6 +2157,17 @@ async function loadLocationEstimates(): Promise<void> {
     source.addFeatures(batch)
     featureCounts.value['locationEstimates'] = persistedFixMarkers.length || 1
 
+    // ── Auto-update SENREP FUP panel with latest fix position ──
+    // When the panel is open in FUP mode, silently push the newest fix
+    // coordinates so the operator can just click Submit without extra steps.
+    if (senrepPanelOpen.value && (senrepForm.value.reportType === 'FUP' || senrepForm.value.reportType === 'FINAL')) {
+      senrepForm.value.estimatedLat = lat
+      senrepForm.value.estimatedLon = lon
+      if (typeof cep50 === 'number') senrepForm.value.cep50_m = cep50
+      if (typeof result.numContributingLobs === 'number') senrepForm.value.numContributingLobs = result.numContributingLobs
+      senrepForm.value.sourceFixObsId = obs.id || senrepForm.value.sourceFixObsId
+    }
+
     // Swap bearing lines from localizer data (live mode only)
     if (liveMode.value && bearingSource && lobBatch.length > 0) {
       bearingSource.clear()
