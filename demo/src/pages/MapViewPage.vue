@@ -5622,13 +5622,14 @@ watch(selectedFeature, (feat) => {
 .sim-control-bar {
   position: absolute;
   bottom: 18px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  z-index: 200;
-  pointer-events: auto;
+  z-index: 1000;
+  pointer-events: none;
 }
 .sim-btn {
   display: inline-flex;
@@ -5643,6 +5644,7 @@ watch(selectedFeature, (feat) => {
   transition: background 0.2s, opacity 0.2s, box-shadow 0.2s;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
   color: #fff;
+  pointer-events: auto;
 }
 .sim-btn:disabled {
   opacity: 0.45;
