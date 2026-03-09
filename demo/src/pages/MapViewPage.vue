@@ -168,6 +168,75 @@ const lastRefreshTime = ref('')
 const LIVE_REFRESH_MS = 8000                // 8s cycle (scaled for 15-20 concurrent users)
 const INITIAL_POLL_STAGGER_MS = 3000        // Random delay before first live poll (thundering herd prevention)
 
+// ── Simulator / Reset Controls ────────────────────────────────
+const SIM_API = 'https://os4csapi-osh.duckdns.org/simulator'
+const simRunning = ref(false)
+const simStarting = ref(false)
+const demoResetting = ref(false)
+const simMessage = ref('')
+let simPollTimer: ReturnType<typeof setInterval> | null = null
+
+async function simApiFetch(path: string, opts?: RequestInit) {
+  const resp = await fetch(`${SIM_API}${path}`, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(opts?.headers || {}) },
+  })
+  return resp.json()
+}
+
+async function pollSimStatus() {
+  try {
+    const data = await simApiFetch('/status')
+    simRunning.value = !!data.running
+  } catch { /* ignore */ }
+}
+
+function startSimPolling() {
+  pollSimStatus()
+  if (!simPollTimer) simPollTimer = setInterval(pollSimStatus, 4000)
+}
+
+function stopSimPolling() {
+  if (simPollTimer) { clearInterval(simPollTimer); simPollTimer = null }
+}
+
+async function startSimulator() {
+  if (simRunning.value || simStarting.value) return
+  simStarting.value = true
+  simMessage.value = ''
+  try {
+    const data = await simApiFetch('/start', {
+      method: 'POST',
+      body: JSON.stringify({ duration_s: 3600, interval_s: 5, speed_kmh: 12, start_offset_s: 500 }),
+    })
+    simMessage.value = data.message || ''
+    if (data.ok) simRunning.value = true
+  } catch (e: any) {
+    simMessage.value = e.message || 'Failed to start simulator'
+  } finally {
+    simStarting.value = false
+  }
+}
+
+async function fullDemoReset() {
+  if (simRunning.value || demoResetting.value) return
+  if (!confirm('Full demo reset: delete ALL sim data, SENREPs, and sampling features. Continue?')) return
+  demoResetting.value = true
+  simMessage.value = ''
+  try {
+    const data = await simApiFetch('/reset', { method: 'POST' })
+    simMessage.value = data.message || ''
+    if (data.ok) {
+      // Refresh the map to show cleared state
+      await loadAllResources()
+    }
+  } catch (e: any) {
+    simMessage.value = e.message || 'Failed to reset demo'
+  } finally {
+    demoResetting.value = false
+  }
+}
+
 // ── SENREP Click-to-Report Panel State ─────────────────────────────
 const senrepPanelOpen = ref(false)
 const senrepSubmitting = ref(false)
@@ -3064,6 +3133,9 @@ function toggleBasemap() {
 onMounted(() => {
   if (!mapContainer.value || !popupContainer.value) return
 
+  // Start polling simulator status so buttons reflect current state
+  startSimPolling()
+
   // Create overlay for popup
   overlay = new Overlay({
     element: popupContainer.value,
@@ -3216,6 +3288,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  stopSimPolling()
   if (liveInterval) {
     clearInterval(liveInterval)
     liveInterval = null
@@ -3812,6 +3885,29 @@ watch(selectedFeature, (feat) => {
           </div>
         </div>
       </transition>
+
+      <!-- ═══ Simulator / Reset floating controls ═══ -->
+      <div class="sim-control-bar">
+        <button
+          class="sim-btn sim-btn--start"
+          :disabled="simRunning || simStarting"
+          @click="startSimulator"
+          :title="simRunning ? 'Simulation is running' : 'Start data simulator'"
+        >
+          <i :class="simStarting ? 'pi pi-spin pi-spinner' : 'pi pi-play'"></i>
+          {{ simStarting ? 'Starting…' : simRunning ? 'Sim Running' : 'Start Simulator' }}
+        </button>
+        <button
+          class="sim-btn sim-btn--reset"
+          :disabled="simRunning || demoResetting"
+          @click="fullDemoReset"
+          :title="simRunning ? 'Stop simulator before resetting' : 'Full demo reset'"
+        >
+          <i :class="demoResetting ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
+          {{ demoResetting ? 'Resetting…' : 'Full Reset' }}
+        </button>
+        <span v-if="simMessage" class="sim-msg">{{ simMessage }}</span>
+      </div>
 
       <!-- ═══ TAK-style mobile controls (hidden on desktop via CSS) ═══ -->
       <div class="tak-overlay">
@@ -5372,5 +5468,74 @@ watch(selectedFeature, (feat) => {
 .senrep-slide-enter-from,
 .senrep-slide-leave-to {
   transform: translateX(100%);
+}
+
+/* ── Simulator / Reset Control Bar ────────────────────────────────────── */
+.sim-control-bar {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 200;
+  pointer-events: auto;
+}
+.sim-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  color: #fff;
+}
+.sim-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.sim-btn--start {
+  background: #16a34a;
+}
+.sim-btn--start:not(:disabled):hover {
+  background: #15803d;
+  box-shadow: 0 2px 12px rgba(22,163,74,0.4);
+}
+.sim-btn--reset {
+  background: #dc2626;
+}
+.sim-btn--reset:not(:disabled):hover {
+  background: #b91c1c;
+  box-shadow: 0 2px 12px rgba(220,38,38,0.4);
+}
+.sim-msg {
+  font-size: 0.75rem;
+  color: #f1f5f9;
+  background: rgba(0,0,0,0.5);
+  padding: 4px 10px;
+  border-radius: 6px;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobile: stack buttons vertically, slightly smaller */
+@media (max-width: 768px) {
+  .sim-control-bar {
+    bottom: 80px;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sim-btn {
+    font-size: 0.8rem;
+    padding: 7px 14px;
+  }
 }
 </style>
