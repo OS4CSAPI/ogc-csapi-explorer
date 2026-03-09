@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { connection, RESOURCE_TYPES } from '../state'
 import { apiFetch } from '../api'
-import { getListUrl, getNestedListUrl } from '../csapi-bridge'
+import { getListUrl, getNestedListUrl, getUpdateUrl } from '../csapi-bridge'
 import { useDeployedSystemCard } from '../composables/useDeployedSystemCard'
 import DeployedSystemCard from '../components/DeployedSystemCard.vue'
 
@@ -268,6 +268,12 @@ let nextContactSeq = 1
 const operatorInitials = ref(localStorage.getItem('os4csapi-operator-initials') || '')
 /** Known SENREP contact IDs (from loaded markers) that have at least one INIT — available for FUP. */
 const knownSenrepContacts = ref<string[]>([])
+/** Map contactId → senderId (operator initials) who created the INIT, for multi-user filtering. */
+const senrepContactOwners = ref<Record<string, string>>({})
+/** Contacts owned by the current operator — the only ones shown in the FUP dropdown. */
+const myContacts = computed(() =>
+  knownSenrepContacts.value.filter(cid => senrepContactOwners.value[cid] === operatorInitials.value)
+)
 const senrepForm = ref({
   contactId: '',
   classification: 'UAS',
@@ -303,10 +309,32 @@ function openSenrepPanel(rawData: any) {
     }
   }
 
+  // If the panel is already open in FUP/FINAL mode, just update the position
+  // fields — the operator clicked a new gold dot to supply the next location.
+  if (senrepPanelOpen.value && (senrepForm.value.reportType === 'FUP' || senrepForm.value.reportType === 'FINAL')) {
+    senrepForm.value.estimatedLat = rawData?.estimatedLat ?? senrepForm.value.estimatedLat
+    senrepForm.value.estimatedLon = rawData?.estimatedLon ?? senrepForm.value.estimatedLon
+    senrepForm.value.cep50_m = rawData?.cep50_m ?? senrepForm.value.cep50_m
+    senrepForm.value.numContributingLobs = rawData?.numContributingLobs ?? senrepForm.value.numContributingLobs
+    senrepForm.value.sourceFixObsId = rawData?.observationId || senrepForm.value.sourceFixObsId
+    senrepSuccess.value = false
+    return
+  }
+
+  // If the operator already has contacts, default to FUP for the most recent one
+  // (reduces clicks for the common case of successive follow-ups)
+  const hasOwnContacts = myContacts.value.length > 0
+  const defaultType = hasOwnContacts ? 'FUP' : 'INIT'
+  const defaultContact = hasOwnContacts
+    ? (senrepForm.value.contactId && myContacts.value.includes(senrepForm.value.contactId)
+        ? senrepForm.value.contactId  // keep current selection if still valid
+        : myContacts.value[myContacts.value.length - 1] ?? '')  // most recent
+    : generateContactId()
+
   senrepForm.value = {
-    contactId: generateContactId(),
+    contactId: defaultContact,
     classification: rawData?.classification || 'UAS',
-    reportType: 'INIT',
+    reportType: defaultType,
     operatorNotes: '',
     estimatedLat: rawData?.estimatedLat ?? 0,
     estimatedLon: rawData?.estimatedLon ?? 0,
@@ -321,12 +349,13 @@ function openSenrepPanel(rawData: any) {
   senrepPanelOpen.value = true
 }
 
-/** When the operator switches to FUP, swap the contact ID to the first known contact.
+/** When the operator switches to FUP, swap the contact ID to their most recent contact.
  *  When switching back to INIT, generate a fresh contact ID. */
 function onReportTypeChange() {
-  if (senrepForm.value.reportType === 'FUP') {
-    // Pre-select the first known contact (operator can change via dropdown)
-    senrepForm.value.contactId = knownSenrepContacts.value[0] || senrepForm.value.contactId
+  if (senrepForm.value.reportType === 'FUP' || senrepForm.value.reportType === 'FINAL') {
+    // Pre-select the operator's most recent contact (last in sorted list)
+    const mine = myContacts.value
+    senrepForm.value.contactId = mine.length ? mine[mine.length - 1] ?? senrepForm.value.contactId : senrepForm.value.contactId
   } else if (senrepForm.value.reportType === 'INIT') {
     senrepForm.value.contactId = generateContactId()
   }
@@ -393,7 +422,7 @@ async function submitSenrep(): Promise<void> {
     if (res.ok) {
       senrepSuccess.value = true
 
-      // Phase 3.5: Create a SamplingFeature (track FOI) for this contact on first SENREP
+      // Phase 3.5: Create or update a SamplingFeature (track FOI) for this contact
       if (senrepForm.value.reportType === 'INIT') {
         try {
           await apiFetch('/samplingFeatures', {
@@ -414,6 +443,48 @@ async function submitSenrep(): Promise<void> {
             }),
           })
         } catch { /* non-fatal — track FOI is optional */ }
+      } else if (senrepForm.value.reportType === 'FUP' || senrepForm.value.reportType === 'FINAL') {
+        // Update the existing sampling feature's location to the latest estimate
+        try {
+          const trackUid = `urn:os4csapi:track:${senrepForm.value.contactId}`
+          // Find the sampling feature by UID — list with a limit and scan for match
+          const sfListUrl = getListUrl('samplingFeatures', { limit: 200 })
+          const sfListRes = await apiFetch(sfListUrl, {
+            headers: { 'Accept': 'application/geo+json' },
+          })
+          if (sfListRes.ok && sfListRes.data) {
+            const sfItems = sfListRes.data.type === 'FeatureCollection'
+              ? (sfListRes.data.features || [])
+              : (sfListRes.data.items || [])
+            const match = sfItems.find((sf: any) => {
+              const props = sf.properties || sf
+              return props.uid === trackUid
+            })
+            if (match) {
+              const sfId = match.id || match.properties?.id || match['@id']
+              if (sfId) {
+                const updateUrl = getUpdateUrl('samplingFeatures', sfId)
+                await apiFetch(updateUrl, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/geo+json', 'Accept': 'application/json' },
+                  body: JSON.stringify({
+                    type: 'Feature',
+                    geometry: {
+                      type: 'Point',
+                      coordinates: [senrepForm.value.estimatedLon, senrepForm.value.estimatedLat],
+                    },
+                    properties: {
+                      featureType: 'http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint',
+                      uid: trackUid,
+                      name: `Track ${senrepForm.value.contactId}`,
+                      description: `Location updated by ${senrepForm.value.reportType} SENREP from ${operatorInitials.value || 'XX'}`,
+                    },
+                  }),
+                })
+              }
+            }
+          }
+        } catch { /* non-fatal — location update is best-effort */ }
       }
 
       // Refresh SENREP markers to show the new one
@@ -423,11 +494,21 @@ async function submitSenrep(): Promise<void> {
       // Also reload sampling features so the new track FOI appears
       const sfCount = await loadResourceType('samplingFeatures')
       featureCounts.value['samplingFeatures'] = sfCount
-      // Auto-close after brief success feedback
+
+      // After INIT: switch to FUP mode for this contact (stay open for quick follow-ups)
+      // After FUP/FINAL: stay in current mode with same contact (just clear success after delay)
+      const submittedContact = senrepForm.value.contactId
+      const submittedType = senrepForm.value.reportType
+      if (submittedType === 'INIT') {
+        // Transition to FUP mode — operator's next click will be a follow-up
+        senrepForm.value.reportType = 'FUP'
+        senrepForm.value.contactId = submittedContact
+      }
+      // Don't close the panel — let the operator click the next gold dot directly.
+      // Just show success briefly, then clear the badge.
       setTimeout(() => {
-        senrepPanelOpen.value = false
         senrepSuccess.value = false
-      }, 1500)
+      }, 2000)
     } else {
       alert(`SENREP submission failed: ${res.status}`)
     }
@@ -2150,7 +2231,12 @@ async function loadSenrepMarkers(): Promise<void> {
         return r && typeof r.etaLat === 'number' && typeof r.etaLon === 'number' && r.title
       })
 
-    if (!items.length) return
+    if (!items.length) {
+      source.clear()
+      featureCounts.value['senrepMarkers'] = 0
+      knownSenrepContacts.value = []
+      return
+    }
 
     // Parse all valid SENREP observations and group by contactId for track lines
     interface SenrepObs { obs: any; contactId: string; reportType: string; tgtType: string; lat: number; lon: number; time: string }
@@ -2183,13 +2269,18 @@ async function loadSenrepMarkers(): Promise<void> {
     }
 
     // Update knownSenrepContacts — contacts that have at least one INIT (available for FUP)
+    // Also build senrepContactOwners map: contactId → senderId of the INIT obs
     const initContacts: string[] = []
+    const owners: Record<string, string> = {}
     for (const [cid, arr] of Object.entries(byContact)) {
-      if (cid !== 'SENREP' && arr.some(s => s.reportType === 'INIT')) {
+      const initObs = arr.find(s => s.reportType === 'INIT')
+      if (cid !== 'SENREP' && initObs) {
         initContacts.push(cid)
+        owners[cid] = initObs.obs.result?.senderId || ''
       }
     }
     knownSenrepContacts.value = initContacts.sort()
+    senrepContactOwners.value = owners
 
     const batch: Feature[] = []
     for (const s of parsed) {
@@ -3866,15 +3957,15 @@ watch(selectedFeature, (feat) => {
             <label class="senrep-label">Report Type</label>
             <select v-model="senrepForm.reportType" class="senrep-input" @change="onReportTypeChange">
               <option value="INIT">INIT — Initial Report</option>
-              <option value="FUP" :disabled="!knownSenrepContacts.length">FUP — Follow-Up</option>
-              <option value="FINAL" :disabled="!knownSenrepContacts.length">FINAL — Close Contact</option>
+              <option value="FUP" :disabled="!myContacts.length">FUP — Follow-Up</option>
+              <option value="FINAL" :disabled="!myContacts.length">FINAL — Close Contact</option>
             </select>
 
-            <!-- Contact ID picker (FUP / FINAL only) -->
+            <!-- Contact ID picker (FUP / FINAL only — filtered to this operator's contacts) -->
             <template v-if="senrepForm.reportType === 'FUP' || senrepForm.reportType === 'FINAL'">
               <label class="senrep-label">Follow-up Contact</label>
               <select v-model="senrepForm.contactId" class="senrep-input">
-                <option v-for="cid in knownSenrepContacts" :key="cid" :value="cid">{{ cid }}</option>
+                <option v-for="cid in myContacts" :key="cid" :value="cid">{{ cid }}</option>
               </select>
             </template>
 
