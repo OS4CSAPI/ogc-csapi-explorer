@@ -13,8 +13,13 @@
  * This replaces the Vite dev-server proxy for production deployments.
  */
 
-// The expected client credentials (same as Caddy basic auth)
-const EXPECTED_AUTH = 'Basic ' + btoa('os4csapi:ogc134mm')
+// Accepted client credentials — any of these will be allowed through the proxy.
+// The proxy always forwards UPSTREAM_AUTH to Caddy regardless of which credential the client used.
+const VALID_CREDENTIALS: string[] = [
+  'Basic ' + btoa('os4csapi:ogc134mm'),
+  'Basic ' + btoa('wstp:vienna'),
+]
+const UPSTREAM_AUTH = 'Basic ' + btoa('os4csapi:ogc134mm')
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -34,7 +39,7 @@ export const onRequest: PagesFunction = async (context) => {
 
     // --- Validate client credentials ---
     const clientAuth = request.headers.get('Authorization') || ''
-    if (clientAuth !== EXPECTED_AUTH) {
+    if (!VALID_CREDENTIALS.includes(clientAuth)) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized — invalid or missing credentials.' }),
         {
@@ -54,9 +59,9 @@ export const onRequest: PagesFunction = async (context) => {
     const qs = new URL(request.url).search
     const target = `https://os4csapi-osh.duckdns.org/sensorhub/api/${suffix}${qs}`
 
-    // Forward with the real Caddy credentials (same value, validated above)
+    // Forward with the real Caddy credentials (always use upstream auth)
     const fwdHeaders = new Headers()
-    fwdHeaders.set('Authorization', EXPECTED_AUTH)
+    fwdHeaders.set('Authorization', UPSTREAM_AUTH)
     const ct = request.headers.get('Content-Type')
     if (ct) fwdHeaders.set('Content-Type', ct)
     const accept = request.headers.get('Accept')
