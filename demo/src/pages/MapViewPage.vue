@@ -172,6 +172,7 @@ const INITIAL_POLL_STAGGER_MS = 3000        // Random delay before first live po
 const SIM_API = 'https://os4csapi-osh.duckdns.org/simulator'
 const simRunning = ref(false)
 const simStarting = ref(false)
+const simStopping = ref(false)
 const demoResetting = ref(false)
 const simMessage = ref('')
 let simPollTimer: ReturnType<typeof setInterval> | null = null
@@ -218,12 +219,34 @@ async function startSimulator() {
   }
 }
 
+async function stopSimulator() {
+  if (!simRunning.value || simStopping.value) return
+  simStopping.value = true
+  simMessage.value = ''
+  try {
+    const data = await simApiFetch('/stop', { method: 'POST' })
+    simMessage.value = data.message || 'Stopped'
+    if (data.ok) simRunning.value = false
+  } catch (e: any) {
+    simMessage.value = e.message || 'Failed to stop simulator'
+  } finally {
+    simStopping.value = false
+  }
+}
+
 async function fullDemoReset() {
-  if (simRunning.value || demoResetting.value) return
+  if (demoResetting.value) return
   if (!confirm('Full demo reset: delete ALL sim data, SENREPs, and sampling features. Continue?')) return
   demoResetting.value = true
   simMessage.value = ''
   try {
+    // Stop the simulator first if it's running
+    if (simRunning.value) {
+      const stopData = await simApiFetch('/stop', { method: 'POST' })
+      if (stopData.ok) simRunning.value = false
+      // Brief pause for server to finish stopping
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
     const data = await simApiFetch('/reset', { method: 'POST' })
     simMessage.value = data.message || ''
     if (data.ok) {
@@ -3895,19 +3918,30 @@ watch(selectedFeature, (feat) => {
       <!-- ═══ Simulator / Reset floating controls ═══ -->
       <div class="sim-control-bar">
         <button
+          v-if="!simRunning"
           class="sim-btn sim-btn--start"
-          :disabled="simRunning || simStarting"
+          :disabled="simStarting"
           @click="startSimulator"
-          :title="simRunning ? 'Simulation is running' : 'Start data simulator'"
+          title="Start data simulator"
         >
           <i :class="simStarting ? 'pi pi-spin pi-spinner' : 'pi pi-play'"></i>
-          {{ simStarting ? 'Starting…' : simRunning ? 'Sim Running' : 'Start Simulator' }}
+          {{ simStarting ? 'Starting…' : 'Start Simulator' }}
+        </button>
+        <button
+          v-else
+          class="sim-btn sim-btn--stop"
+          :disabled="simStopping"
+          @click="stopSimulator"
+          title="Stop data simulator"
+        >
+          <i :class="simStopping ? 'pi pi-spin pi-spinner' : 'pi pi-stop-circle'"></i>
+          {{ simStopping ? 'Stopping…' : 'Stop Simulator' }}
         </button>
         <button
           class="sim-btn sim-btn--reset"
-          :disabled="simRunning || demoResetting"
+          :disabled="demoResetting"
           @click="fullDemoReset"
-          :title="simRunning ? 'Stop simulator before resetting' : 'Full demo reset'"
+          title="Full demo reset"
         >
           <i :class="demoResetting ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
           {{ demoResetting ? 'Resetting…' : 'Full Reset' }}
@@ -5512,6 +5546,13 @@ watch(selectedFeature, (feat) => {
 .sim-btn--start:not(:disabled):hover {
   background: #15803d;
   box-shadow: 0 2px 12px rgba(22,163,74,0.4);
+}
+.sim-btn--stop {
+  background: #d97706;
+}
+.sim-btn--stop:not(:disabled):hover {
+  background: #b45309;
+  box-shadow: 0 2px 12px rgba(217,119,6,0.4);
 }
 .sim-btn--reset {
   background: #dc2626;
