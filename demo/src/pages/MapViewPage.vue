@@ -4061,6 +4061,16 @@ watch(selectedFeature, (feat) => {
 
         <!-- Right-side FABs -->
         <div class="tak-fab-group">
+          <!-- Sim controls (mobile only) -->
+          <button v-if="!simRunning" class="tak-fab tak-fab--sim-start"
+            :disabled="simStarting" @click="startSimulator" title="Start Simulator">
+            <i :class="simStarting ? 'pi pi-spin pi-spinner' : 'pi pi-play'"></i>
+          </button>
+          <button v-if="!simRunning" class="tak-fab tak-fab--reset"
+            :disabled="demoResetting" @click="fullDemoReset" title="Full Reset">
+            <i :class="demoResetting ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
+          </button>
+          <span v-if="simRunning" class="tak-fab tak-fab--sim-running" title="Simulation Running">SIM</span>
           <button class="tak-fab" :class="{ active: mobilePanel === 'layers' }"
             @click="toggleMobilePanel('layers')" title="Layers">
             <i class="pi pi-images"></i>
@@ -5150,6 +5160,26 @@ watch(selectedFeature, (feat) => {
     50% { box-shadow: 0 0 8px 3px rgba(34, 197, 94, 0.2); }
   }
 
+  /* ─── Sim FABs (mobile) ─── */
+  .tak-fab--sim-start {
+    background: rgba(34, 197, 94, 0.25) !important;
+    border-color: rgba(34, 197, 94, 0.6) !important;
+    color: #22c55e !important;
+  }
+  .tak-fab--reset {
+    background: rgba(239, 68, 68, 0.25) !important;
+    border-color: rgba(239, 68, 68, 0.6) !important;
+    color: #ef4444 !important;
+  }
+  .tak-fab--sim-running {
+    background: rgba(34, 197, 94, 0.15) !important;
+    border-color: rgba(34, 197, 94, 0.4) !important;
+    color: #22c55e !important;
+    font-size: 0.55rem;
+    pointer-events: none;
+    animation: tak-live-pulse 2s ease-in-out infinite;
+  }
+
   /* ─── Filters ─── */
   .tak-filter-row {
     margin-bottom: 12px;
@@ -5675,12 +5705,10 @@ watch(selectedFeature, (feat) => {
   text-overflow: ellipsis;
 }
 
-/* Mobile: stack buttons vertically, slightly smaller */
+/* Mobile: hide desktop sim bar — controls are in TAK FAB group */
 @media (max-width: 768px) {
   .sim-control-bar {
-    bottom: 80px;
-    flex-direction: column;
-    gap: 6px;
+    display: none !important;
   }
   .sim-btn {
     font-size: 0.8rem;
