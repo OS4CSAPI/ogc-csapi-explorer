@@ -36,8 +36,8 @@ const routes = [
     component: DemoPage,
   },
   {
-    path: '/admin/simulator',
-    name: 'admin-simulator',
+    path: '/admin',
+    name: 'admin',
     component: SimulatorAdminPage,
   },
   {

@@ -228,6 +228,38 @@ const hcGrouped = computed(() => {
   return groups
 })
 
+// ── Smoke Test Console (terminal-style output) ──────────────────────
+const consoleOutput = computed(() => {
+  if (!hcChecks.value.length) return ''
+  const lines: string[] = []
+  lines.push('=' .repeat(60))
+  lines.push('  OS4CSAPI Production Smoke Test')
+  if (hcTimestamp.value) {
+    lines.push(`  ${hcTimestamp.value}`)
+  }
+  lines.push('=' .repeat(60))
+  lines.push('')
+  for (const [groupName, checks] of Object.entries(hcGrouped.value)) {
+    lines.push(`  ── ${groupName} ──`)
+    for (const c of checks) {
+      const icon = c.status === 'pass' ? '✅' : c.status === 'fail' ? '❌' : '⏭️'
+      const detail = c.detail ? `  —  ${c.detail}` : ''
+      lines.push(`  ${icon}  ${c.name}${detail}`)
+    }
+    lines.push('')
+  }
+  lines.push('-'.repeat(60))
+  const s = hcSummary.value
+  if (s.failed > 0) {
+    lines.push('  ❌  SMOKE TEST FAILED')
+  } else {
+    lines.push('  ✅  SMOKE TEST PASSED')
+  }
+  lines.push(`  ${s.passed} passed, ${s.failed} failed, ${s.skipped} skipped  (${s.total} total, ${hcElapsed.value}ms)`)
+  lines.push('-'.repeat(60))
+  return lines.join('\n')
+})
+
 // ── Lifecycle ────────────────────────────────────────────────────────
 onMounted(() => {
   startPolling()
@@ -240,12 +272,12 @@ onUnmounted(() => {
 
 <template>
   <div class="admin-page">
-    <h2><i class="pi pi-cog"></i> Simulator Admin</h2>
+    <h2><i class="pi pi-cog"></i> Admin</h2>
 
     <!-- Auth gate -->
     <div v-if="!authenticated" class="login-gate">
       <Panel header="Authentication Required" class="login-panel">
-        <p class="login-desc">Enter credentials to access the simulator admin console.</p>
+        <p class="login-desc">Enter credentials to access the admin console.</p>
         <div class="login-form">
           <div class="login-field">
             <label for="login-user">Username</label>
@@ -398,12 +430,12 @@ onUnmounted(() => {
       </div>
     </Panel>
 
-    <!-- Health Check -->
-    <Panel header="Production Health Check" class="mb-4">
+    <!-- Smoke Test Console -->
+    <Panel header="Smoke Test Console" class="mb-4">
       <div class="hc-toolbar">
         <Button
-          label="Run Health Check"
-          icon="pi pi-heart"
+          label="Run Smoke Test"
+          icon="pi pi-play"
           severity="info"
           :loading="hcRunning"
           @click="hcRunAll"
@@ -429,28 +461,14 @@ onUnmounted(() => {
         <ProgressSpinner style="width: 20px; height: 20px" /> Running checks…
       </div>
 
-      <!-- Grouped results -->
-      <div v-if="hcChecks.length" class="hc-results mt-2">
-        <div v-for="(groupChecks, groupName) in hcGrouped" :key="groupName" class="hc-group">
-          <div class="hc-group-header">{{ groupName }}</div>
-          <div class="hc-check-list">
-            <div
-              v-for="c in groupChecks"
-              :key="c.name"
-              class="hc-check"
-              :class="'hc-check-' + c.status"
-            >
-              <span class="hc-icon">
-                <i v-if="c.status === 'pass'" class="pi pi-check" style="color: #16a34a"></i>
-                <i v-else-if="c.status === 'fail'" class="pi pi-times" style="color: #dc2626"></i>
-                <i v-else-if="c.status === 'running'" class="pi pi-spin pi-spinner" style="color: #2563eb"></i>
-                <i v-else class="pi pi-minus" style="color: #94a3b8"></i>
-              </span>
-              <span class="hc-name">{{ c.name }}</span>
-              <span class="hc-detail">{{ c.detail }}</span>
-            </div>
-          </div>
-        </div>
+      <!-- Console output (terminal-style) -->
+      <div v-if="consoleOutput" class="console-terminal mt-2">
+        <pre class="console-pre">{{ consoleOutput }}</pre>
+      </div>
+
+      <!-- Placeholder when no results yet -->
+      <div v-if="!hcChecks.length && !hcRunning" class="placeholder-text mt-2">
+        Click "Run Smoke Test" to check all {{ Object.keys(hcGrouped).length || '' }} server resources.
       </div>
     </Panel>
 
@@ -790,63 +808,23 @@ ssh ubuntu@129.80.248.53 "sudo systemctl restart simulator"</pre>
   font-size: 0.85rem;
 }
 
-.hc-results {
-  max-height: 420px;
-  overflow-y: auto;
+/* ── Console Terminal ──────────────────────────────────────── */
+.console-terminal {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  overflow: auto;
+  max-height: 520px;
 }
 
-.hc-group {
-  margin-bottom: 0.75rem;
-}
-
-.hc-group-header {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #64748b;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-  padding-left: 0.2rem;
-}
-
-.hc-check-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.hc-check {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0.4rem;
-  border-radius: 4px;
+.console-pre {
+  color: #c9d1d9;
+  font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
   font-size: 0.82rem;
-  transition: background 0.15s;
-}
-
-.hc-check:hover {
-  background: #f1f5f9;
-}
-
-.hc-check-fail {
-  background: #fef2f2;
-}
-
-.hc-icon {
-  flex-shrink: 0;
-  width: 18px;
-  text-align: center;
-}
-
-.hc-name {
-  font-weight: 600;
-  min-width: 180px;
-}
-
-.hc-detail {
-  color: #64748b;
-  font-family: monospace;
-  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: 1rem 1.25rem;
+  margin: 0;
+  white-space: pre;
+  overflow-x: auto;
 }
 </style>

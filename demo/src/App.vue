@@ -48,8 +48,8 @@ function mobileNav(to: string) {
         <router-link to="/analytics" class="nav-link">
           <i class="pi pi-chart-line"></i> UAS Analytics
         </router-link>
-        <router-link to="/admin/simulator" class="nav-link">
-          <i class="pi pi-cog"></i> Simulator
+        <router-link to="/admin" class="nav-link">
+          <i class="pi pi-cog"></i> Admin
         </router-link>
       </template>
       <router-link to="/community" class="nav-link">
@@ -87,8 +87,8 @@ function mobileNav(to: string) {
           <button class="mobile-menu-link" @click="mobileNav('/analytics')">
             <i class="pi pi-chart-line"></i> UAS Analytics
           </button>
-          <button class="mobile-menu-link" @click="mobileNav('/admin/simulator')">
-            <i class="pi pi-cog"></i> Simulator
+          <button class="mobile-menu-link" @click="mobileNav('/admin')">
+            <i class="pi pi-cog"></i> Admin
           </button>
         </template>
         <button class="mobile-menu-link" @click="mobileNav('/community')">
