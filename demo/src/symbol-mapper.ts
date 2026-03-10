@@ -160,12 +160,12 @@ const SYSTEM_RULES: KeywordRule[] = [
   // Fixed wing aircraft
   { keywords: ['aircraft', 'airplane', 'fixed-wing', 'plane'],
     identity: SI_FRIEND, symbolSet: SS_AIR, entity: ENT_FIXED_WING },
-  // Weather / METOC / meteorological sensor → EW Station (letter SIDC)
+  // Weather / METOC / meteorological sensor → EW Radar/Sensor (letter SIDC)
   // Doctrinal SIDC: 10034500001111010000 (METOC SS unsupported by milsymbol)
-  // Renders: blue Friend circle + antenna/station icon
+  // Renders: blue Friend circle + antenna + measurement lines
   { keywords: ['weather', 'metoc', 'meteorolog', 'asos', 'nws', 'metar'],
     identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
-    letterSidc: 'SFGPEWS--------' },
+    letterSidc: 'SFGPEWRH-------' },
   // Radar / lidar → keep as land equipment
   { keywords: ['radar', 'lidar'],
     identity: SI_NEUTRAL, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_RADAR },
@@ -181,11 +181,11 @@ const SYSTEM_RULES: KeywordRule[] = [
   // Reconnaissance / surveillance
   { keywords: ['recon', 'surveillance', 'monitor'],
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_UNIT_RECON },
-  // NDBC Weather Buoy → Neutral Sensor Emplaced (green diamond + sensor star + wavy line)
+  // NDBC Weather Buoy → Friend Sensor Emplaced (blue circle + sensor star + wavy line)
+  // NOAA is a national org → Friend (blue), not Neutral (green)
   // Doctrinal SIDC: 10034500001211040000 (METOC SS unsupported by milsymbol)
-  // Renders: green Neutral diamond + 4-point sensor + wavy emplaced marker
   { keywords: ['buoy', 'ndbc'],
-    identity: SI_NEUTRAL, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
   // Sea / marine / vessel (generic)
   { keywords: ['marine', 'ocean', 'sea', 'ship', 'vessel', 'boat'],
     identity: SI_NEUTRAL, symbolSet: SS_SEA_SURFACE, entity: ENT_SEA_SURFACE },
