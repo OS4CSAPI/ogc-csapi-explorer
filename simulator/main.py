@@ -32,6 +32,11 @@ from engine import (
     api_get,
     api_post,
     iso_now,
+    # Localizer functions
+    wls_bearing_intersection,
+    build_location_estimate,
+    discover_lob_datastreams,
+    discover_localizer_ds,
 )
 
 
@@ -270,6 +275,111 @@ def simulation_worker(st: SimState):
             st.message = f"ERROR: {exc}"
             st.running = False
 
+def localizer_worker(st: SimState):
+    """
+    Run the localizer loop alongside the simulator.
+    Polls LOB observations from MA nodes, computes WLS fixes,
+    and publishes location estimates with embedded contributingLobsJson.
+    """
+    try:
+        print("[localizer] Starting discovery...")
+        lob_datastreams = discover_lob_datastreams()
+        localizer_ds = discover_localizer_ds()
+        print(f"[localizer] LOB inputs: {lob_datastreams}")
+        print(f"[localizer] Output DS: {localizer_ds}")
+
+        last_seen: dict[str, str] = {}
+        cycles = 0
+        fixes_published = 0
+
+        while not st.stop_event.is_set():
+            cycles += 1
+            now = time.time()
+
+            # ── 1. CONSUME: Read latest LOB from each MA node ────────
+            lobs = []
+            for name, ds_id in lob_datastreams.items():
+                try:
+                    obs_resp = api_get(f"datastreams/{ds_id}/observations?resultTime=latest")
+                except Exception:
+                    continue
+
+                if not obs_resp:
+                    continue
+
+                if "items" in obs_resp and obs_resp["items"]:
+                    obs = obs_resp["items"][0]
+                elif "result" in obs_resp:
+                    obs = obs_resp
+                else:
+                    continue
+
+                obs_id = obs.get("id", "")
+                if obs_id and last_seen.get(ds_id) == obs_id:
+                    continue  # already processed
+                if obs_id:
+                    last_seen[ds_id] = obs_id
+
+                result = obs.get("result")
+                if not result:
+                    continue
+
+                obs_time = result.get("timestamp", 0)
+                if abs(now - obs_time) > LOCALIZER_MAX_LOB_AGE_S:
+                    continue  # stale
+
+                lobs.append({**result, "name": name, "obs_id": obs_id})
+
+            if not lobs:
+                st.stop_event.wait(timeout=LOCALIZER_POLL_INTERVAL)
+                continue
+
+            # ── 2. CORRELATE: Group by classification ────────────────
+            by_class: dict[str, list[dict]] = {}
+            for lob in lobs:
+                cls = lob.get("classification", "UNKNOWN")
+                by_class.setdefault(cls, []).append(lob)
+
+            for cls, group in by_class.items():
+                timestamps = [l["timestamp"] for l in group]
+                spread = max(timestamps) - min(timestamps)
+                if spread > LOCALIZER_CORRELATION_WINDOW:
+                    continue
+                if len(group) < LOCALIZER_MIN_LOBS:
+                    continue
+
+                # ── 3. COMPUTE: WLS triangulation ────────────────────
+                estimate = wls_bearing_intersection(group)
+                if estimate is None:
+                    continue
+                if estimate["residual_m"] > LOCALIZER_RESIDUAL_CAP:
+                    continue
+
+                sensors = [l["name"] for l in group]
+                obs_body = build_location_estimate(
+                    estimate,
+                    contributing_sensors=sensors,
+                    contributing_lobs=group,
+                    classification=cls,
+                )
+
+                print(f"[localizer] FIX: {cls}  lat={estimate['estimatedLat']:.6f}  "
+                      f"lon={estimate['estimatedLon']:.6f}  "
+                      f"cep50={estimate['cep50_m']}m  n={estimate['n']}")
+
+                # ── 4. PRODUCE: Publish back to CSAPI ────────────────
+                try:
+                    api_post(f"datastreams/{localizer_ds}/observations", obs_body)
+                    fixes_published += 1
+                except Exception as e:
+                    print(f"[localizer] POST failed: {e}")
+
+            st.stop_event.wait(timeout=LOCALIZER_POLL_INTERVAL)
+
+        print(f"[localizer] Stopped. Fixes published: {fixes_published}")
+
+    except Exception as exc:
+        print(f"[localizer] ERROR: {exc}")
 
 
 
@@ -277,6 +387,13 @@ def simulation_worker(st: SimState):
 # ═══════════════════════════════════════════════════════════════════════════
 #  Observation clearing (reuses logic from clear_observations.py)
 # ═══════════════════════════════════════════════════════════════════════════
+
+# ── Localizer configuration ───────────────────────────────────────────────
+LOCALIZER_POLL_INTERVAL = 5    # seconds — matches simulator tick rate
+LOCALIZER_MAX_LOB_AGE_S = 15   # staleness gate (3× poll interval)
+LOCALIZER_CORRELATION_WINDOW = 10  # max timestamp spread within a fusion group
+LOCALIZER_RESIDUAL_CAP = 500   # metres — reject wild intersections
+LOCALIZER_MIN_LOBS = 2         # need at least 2 bearings for a fix
 
 # Detection-capabilities datastreams — NEVER cleared (static config, auto-seeded)
 DETECTION_DS_IDS = ["04dg", "04e0", "04eg"]  # MA-1, MA-2, MA-3
@@ -578,7 +695,12 @@ def start_simulation(req: StartRequest = StartRequest()):
     t = threading.Thread(target=simulation_worker, args=(state,), daemon=True)
     state.thread = t
     t.start()
-    return MessageResponse(ok=True, message="Simulation started")
+
+    # Start localizer thread alongside the simulator
+    lt = threading.Thread(target=localizer_worker, args=(state,), daemon=True)
+    lt.start()
+
+    return MessageResponse(ok=True, message="Simulation started (with localizer)")
 
 
 @app.post("/stop", response_model=MessageResponse)
