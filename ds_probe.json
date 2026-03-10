@@ -1,0 +1,111 @@
+{
+  "items": [
+    {
+      "id": "044g",
+      "name": "SENREP (Sensor Report)",
+      "description": "Doctrinal SENREP-style sensor report produced by SET.",
+      "system@id": "040g",
+      "system@link": {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/040g?f=json",
+        "uid": "urn:os4csapi:system:set:ft-huachuca:001",
+        "type": "application/geo+json"
+      },
+      "outputName": "senrep",
+      "validTime": [
+        "2026-02-27T00:00:00Z",
+        "now"
+      ],
+      "observedProperties": [
+        {
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/reportTitle",
+          "label": "Title"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/senderId",
+          "label": "Sender ID"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/seqNo",
+          "label": "Sequence number"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/classification",
+          "label": "Classification"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/releasably",
+          "label": "Releasability"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/dateOfReport",
+          "label": "Date of report"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/envirOpName",
+          "label": "Environment/OpName"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/strNo",
+          "label": "Sensor string number"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/detectTimeZ",
+          "label": "Detection time (Z)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/qty",
+          "label": "Quantity"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/tgtTyp",
+          "label": "Target type"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/subTyp",
+          "label": "Subtype"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/spd",
+          "label": "Speed"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/dirCardinal",
+          "label": "Direction (cardinal)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/colLengthM",
+          "label": "Column length"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/etaLat",
+          "label": "ETA lat"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/etaLon",
+          "label": "ETA lon"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/etaTimeZ",
+          "label": "ETA time (Z)"
+        },
+        {
+          "definition": "https://os4csapi.org/def/csapi/comments",
+          "label": "Comments"
+        }
+      ],
+      "resultType": "record",
+      "formats": [
+        "application/om+json",
+        "application/swe+json",
+        "application/swe+csv",
+        "application/swe+xml",
+        "application/swe+binary"
+      ]
+    }{
+  "status": 500,
+  "message": "Internal server error"
+}
