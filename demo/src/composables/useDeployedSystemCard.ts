@@ -67,6 +67,10 @@ export interface DeployedSystemCardModel {
   docsLinks: DocLink[]
   mediaLinks: MediaLink[]
 
+  // BuoyCAM (live camera image from NDBC BuoyCAM datastream)
+  buoycamImageUrl: string
+  buoycamTimestamp: string
+
   // Advanced IDs
   advancedDeploymentUid: string
   advancedSystemUid: string
@@ -674,6 +678,32 @@ export function useDeployedSystemCard() {
         } catch { /* latest obs fetch optional */ }
       }
 
+      // ── Resolve BuoyCAM image (detect camera datastream) ─────────
+      let buoycamImageUrl = ''
+      let buoycamTimestamp = ''
+      const buoycamDs = datastreams.find(ds =>
+        /buoycam|buoy[\s_-]?cam|camera/i.test(ds.name)
+      )
+      if (buoycamDs) {
+        try {
+          const camRes = await apiFetch(
+            `/datastreams/${buoycamDs.id}/observations?limit=1&resultTime=latest`,
+            { headers: { 'Accept': 'application/json' } },
+          )
+          if (camRes.ok && camRes.data) {
+            const camItems = camRes.data.items || camRes.data || []
+            if (Array.isArray(camItems) && camItems.length > 0) {
+              const obs = camItems[0]
+              const result = obs.result || {}
+              if (result.imageUrl && typeof result.mediaType === 'string' && result.mediaType.startsWith('image/')) {
+                buoycamImageUrl = result.imageUrl
+                buoycamTimestamp = obs.phenomenonTime || obs.resultTime || ''
+              }
+            }
+          }
+        } catch { /* buoycam fetch optional */ }
+      }
+
       // ── Resolve control streams count ────────────────────────────
       let controlCount = 0
       if (systemId) {
@@ -819,6 +849,10 @@ export function useDeployedSystemCard() {
         // Media / References
         docsLinks: smlDocs.filter(d => !smlMedia.some(m => m.href === d.href)),
         mediaLinks: smlMedia.slice(1), // first one is thumbnail
+
+        // BuoyCAM
+        buoycamImageUrl,
+        buoycamTimestamp,
 
         // Advanced IDs
         advancedDeploymentUid: deploymentUid,

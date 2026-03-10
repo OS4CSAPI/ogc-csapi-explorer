@@ -661,6 +661,33 @@ function getItemName(item: any): string {
   return item?.properties?.name || item?.properties?.title || item?.name || item?.title || ''
 }
 
+/** Check if an observation item has an image result (e.g. BuoyCAM) */
+function getObsImageUrl(item: any): string | null {
+  const r = item?.result
+  if (!r || typeof r !== 'object') return null
+  const mt = r.mediaType ?? r.media_type
+  if (typeof mt !== 'string' || !mt.startsWith('image/')) return null
+  const url = r.imageUrl ?? r.image_url ?? r.imageUri
+  return typeof url === 'string' && url.startsWith('http') ? url : null
+}
+
+/** Get the latest observation image from a relation's items */
+function getLatestObsImage(relation: string): { url: string; time: string; station: string } | null {
+  const state = relationStates[relation]
+  if (!state?.items?.length) return null
+  for (const item of state.items) {
+    const url = getObsImageUrl(item)
+    if (url) {
+      return {
+        url,
+        time: item.phenomenonTime || item.resultTime || '',
+        station: item.result?.stationId || '',
+      }
+    }
+  }
+  return null
+}
+
 /** Click a related item → navigate directly to its detail view */
 function viewRelatedItem(link: RelatedResourceLink, item: any) {
   const id = getItemId(item)
@@ -1314,15 +1341,30 @@ function docIcon(doc: any): string {
           </Message>
 
           <div v-if="getRelState(link.relation).expanded" class="relation-body">
+            <!-- Latest image preview banner for image-bearing observation feeds -->
+            <div v-if="link.childType === 'observations' && getLatestObsImage(link.relation)" class="relation-image-preview">
+              <a :href="getLatestObsImage(link.relation)!.url" target="_blank" rel="noopener" title="Open full image">
+                <img :src="getLatestObsImage(link.relation)!.url" alt="Latest observation image" class="relation-image-thumb" loading="lazy" />
+              </a>
+              <div class="relation-image-meta">
+                📷 Latest image · {{ getLatestObsImage(link.relation)!.time }}
+                <span v-if="getLatestObsImage(link.relation)!.station"> · Station {{ getLatestObsImage(link.relation)!.station }}</span>
+              </div>
+            </div>
             <div v-if="getRelState(link.relation).items.length > 0" class="relation-list">
               <div
                 v-for="item in getRelState(link.relation).items"
                 :key="getItemId(item)"
                 class="relation-item"
+                :class="{ 'relation-item--has-image': getObsImageUrl(item) }"
                 @click="viewRelatedItem(link, item)"
               >
-                <code class="relation-item-id">{{ getItemId(item) }}</code>
-                <span v-if="getItemName(item)" class="relation-item-name">{{ getItemName(item) }}</span>
+                <img v-if="getObsImageUrl(item)" :src="getObsImageUrl(item)!" alt="" class="relation-item-thumb" loading="lazy" />
+                <div class="relation-item-text">
+                  <code class="relation-item-id">{{ getItemId(item) }}</code>
+                  <span v-if="getItemName(item)" class="relation-item-name">{{ getItemName(item) }}</span>
+                  <span v-else-if="item.phenomenonTime" class="relation-item-name">{{ item.phenomenonTime }}</span>
+                </div>
                 <i class="pi pi-arrow-right relation-arrow"></i>
               </div>
               <button
@@ -1424,11 +1466,14 @@ function docIcon(doc: any): string {
 .relation-header:hover { background: #e0f2fe; }
 .relation-count { background: #0369a1; color: #fff; font-size: 0.65rem; font-weight: 700; min-width: 1.1rem; height: 1.1rem; line-height: 1.1rem; text-align: center; border-radius: 999px; padding: 0 0.3rem; }
 .chevron { font-size: 0.65rem; color: #7dd3fc; }
-.relation-body { border-top: 1px solid #bae6fd; max-height: 200px; overflow-y: auto; }
+.relation-body { border-top: 1px solid #bae6fd; max-height: 400px; overflow-y: auto; }
 .relation-list { display: flex; flex-direction: column; }
 .relation-item { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.65rem; cursor: pointer; font-size: 0.8rem; border-bottom: 1px solid #e0f2fe; transition: background 0.1s; }
+.relation-item--has-image { padding: 0.4rem 0.65rem; }
 .relation-item:last-child { border-bottom: none; }
 .relation-item:hover { background: #e0f2fe; }
+.relation-item-thumb { width: 48px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; flex-shrink: 0; }
+.relation-item-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1; }
 .relation-item-id { background: #e0f2fe; padding: 0.05rem 0.3rem; border-radius: 3px; font-size: 0.72rem; color: #0369a1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
 .relation-item-name { color: #0c4a6e; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.78rem; }
 .relation-arrow { margin-left: auto; font-size: 0.6rem; color: #38bdf8; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
@@ -1436,6 +1481,12 @@ function docIcon(doc: any): string {
 .relation-empty { padding: 0.4rem 0.65rem; color: #7dd3fc; font-size: 0.75rem; font-style: italic; }
 .relation-error { padding: 0.4rem 0.65rem; color: #dc2626; font-size: 0.75rem; }
 .browse-all-link { display: block; width: 100%; padding: 0.3rem 0.65rem; border: none; background: transparent; color: #0369a1; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-align: left; }
+
+/* Image preview banner inside relation card */
+.relation-image-preview { text-align: center; background: #0f172a; border-bottom: 1px solid #334155; padding: 0.5rem; }
+.relation-image-thumb { max-width: 100%; max-height: 200px; object-fit: contain; display: block; margin: 0 auto; border-radius: 4px; cursor: pointer; transition: transform 0.15s; }
+.relation-image-thumb:hover { transform: scale(1.02); }
+.relation-image-meta { font-size: 0.68rem; color: #94a3b8; margin-top: 0.3rem; }
 .browse-all-link:hover { background: #e0f2fe; }
 
 /* Filter toggle button in relation header */

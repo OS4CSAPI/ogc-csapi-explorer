@@ -14,6 +14,7 @@ import { computed, ref } from 'vue'
 import type { DeployedSystemCardModel } from '../composables/useDeployedSystemCard'
 
 const showImageOverlay = ref(false)
+const showBuoycamOverlay = ref(false)
 
 const props = defineProps<{
   card: DeployedSystemCardModel
@@ -109,6 +110,14 @@ const trustLine = computed(() => {
         </button>
       </div>
     </div>
+    <div v-if="showBuoycamOverlay" class="dsc-lightbox" @click="showBuoycamOverlay = false">
+      <div class="dsc-lightbox-inner" @click.stop>
+        <img :src="card.buoycamImageUrl" alt="BuoyCAM" class="dsc-lightbox-img" />
+        <button class="dsc-lightbox-close" @click="showBuoycamOverlay = false" title="Close">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+    </div>
   </Teleport>
 
   <div class="dsc" :class="{ 'dsc--loading': loading }">
@@ -146,6 +155,18 @@ const trustLine = computed(() => {
     <p v-if="card.summarySentence" class="dsc-summary">
       {{ card.summarySentence }}
     </p>
+
+    <!-- ── 2b. BUOYCAM IMAGE ── -->
+    <section v-if="card.buoycamImageUrl" class="dsc-sec dsc-buoycam">
+      <h3 class="dsc-sec-hd"><i class="pi pi-camera"></i> Live BuoyCAM</h3>
+      <div class="dsc-buoycam-frame" @click="showBuoycamOverlay = true" title="Click to enlarge">
+        <img :src="card.buoycamImageUrl" alt="BuoyCAM" class="dsc-buoycam-img" />
+      </div>
+      <div v-if="card.buoycamTimestamp" class="dsc-buoycam-time">
+        <i class="pi pi-clock"></i>
+        {{ new Date(card.buoycamTimestamp).toLocaleString() }}
+      </div>
+    </section>
 
     <!-- ── 3. OUTPUTS ── -->
     <section class="dsc-sec">
@@ -603,4 +624,45 @@ const trustLine = computed(() => {
   color: #334155;
   text-align: right;
 }
+
+/* ═══ BuoyCAM Section ═══ */
+.dsc-buoycam {
+  background: #0f172a;
+  border-radius: 8px;
+  padding: 0.6rem !important;
+  margin-top: 0.4rem;
+}
+.dsc-buoycam .dsc-sec-hd {
+  color: #e2e8f0;
+  margin-bottom: 0.45rem;
+}
+.dsc-buoycam .dsc-sec-hd i {
+  color: #38bdf8;
+}
+.dsc-buoycam-frame {
+  cursor: pointer;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+  line-height: 0;
+}
+.dsc-buoycam-frame:hover {
+  box-shadow: 0 0 0 2px #38bdf8;
+}
+.dsc-buoycam-img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  max-height: 200px;
+  display: block;
+}
+.dsc-buoycam-time {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  margin-top: 0.35rem;
+}
+.dsc-buoycam-time i { font-size: 0.72rem; }
 </style>
