@@ -195,8 +195,13 @@ function clearFilters(link: RelatedResourceLink) {
  * only the API-relative portion (e.g. "/systems/0420").  This helper strips
  * everything up to and including the "/api" segment in the path.
  */
-function normalizeLinkHref(href: string): string {
+function normalizeLinkHref(href: string, collection?: string): string {
   if (!href) return href
+  // Bare ID (no slashes) — prefix with the expected collection path.
+  // OSH SensorHub returns platform@link.href as "0520" instead of "/systems/0520".
+  if (!href.includes('/') && collection) {
+    return `/${collection}/${href}`
+  }
   // Absolute URL → extract pathname
   if (href.startsWith('http')) {
     try {
@@ -231,7 +236,7 @@ async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Pro
       try {
         const acceptType = getContentType('procedures')
         // href may be absolute URL or root-relative — normalize to API-relative
-        const path = normalizeLinkHref(skLink.href)
+        const path = normalizeLinkHref(skLink.href, 'procedures')
         const res = await apiFetch(path, { headers: { 'Accept': acceptType } })
         if (res.ok && res.data) {
           return [res.data]
@@ -255,9 +260,12 @@ async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Pro
       const hasStrongLink = (dep: any): boolean => {
         const dp = dep?.properties || dep || {}
         const platformLink = dp['platform@link']
-        if (platformLink?.href && platformLink.href.includes(systemUrl)) return true
+        if (platformLink?.href) {
+          // Match full path ("systems/0520") or bare ID ("0520")
+          if (platformLink.href.includes(systemUrl) || platformLink.href === parentId) return true
+        }
         const dsLinks = dp['deployedSystems@link']
-        if (Array.isArray(dsLinks) && dsLinks.some((l: any) => l?.href && l.href.includes(systemUrl))) return true
+        if (Array.isArray(dsLinks) && dsLinks.some((l: any) => l?.href && (l.href.includes(systemUrl) || l.href === parentId))) return true
         return false
       }
       const hasWeakLink = (dep: any): boolean => {
@@ -312,7 +320,7 @@ async function tryLinkFallback(link: RelatedResourceLink, parentId: string): Pro
       for (const l of dsLinks) {
         if (!l?.href) continue
         try {
-          const path = normalizeLinkHref(l.href)
+          const path = normalizeLinkHref(l.href, 'systems')
           const acceptType = getContentType('systems')
           const res = await apiFetch(path, { headers: { 'Accept': acceptType } })
           if (res.ok && res.data) items.push(res.data)
@@ -360,7 +368,7 @@ async function resolveDeployedSystemsInline(): Promise<{ items: any[]; source: s
     for (const l of dsLinks) {
       if (!l?.href) continue
       try {
-        const path = normalizeLinkHref(l.href)
+        const path = normalizeLinkHref(l.href, 'systems')
         const res = await apiFetch(path, { headers: { Accept: acceptType } })
         if (res.ok && res.data && typeof res.data === 'object') items.push(res.data)
       } catch { /* skip broken links */ }
@@ -377,7 +385,7 @@ async function resolveDeployedSystemsInline(): Promise<{ items: any[]; source: s
   const platformLink = parentProps['platform@link']
   if (platformLink?.href) {
     try {
-      const path = normalizeLinkHref(platformLink.href)
+      const path = normalizeLinkHref(platformLink.href, 'systems')
       const res = await apiFetch(path, { headers: { Accept: acceptType } })
       if (res.ok && res.data && typeof res.data === 'object') {
         return {

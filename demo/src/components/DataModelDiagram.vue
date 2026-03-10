@@ -418,8 +418,13 @@ const countEstimates = reactive(new Set<number>())
  * OSH may return hrefs as absolute URLs, root-relative (e.g. /sensorhub/api/...),
  * or API-relative (/systems/...). apiFetch expects only the API-relative portion.
  */
-function normalizeLinkHref(href: string): string {
+function normalizeLinkHref(href: string, collection?: string): string {
   if (!href) return href
+  // Bare ID (no slashes) — prefix with the expected collection path.
+  // OSH SensorHub returns platform@link.href as "0520" instead of "/systems/0520".
+  if (!href.includes('/') && collection) {
+    return `/${collection}/${href}`
+  }
   if (href.startsWith('http')) {
     try { href = new URL(href).pathname } catch { /* keep as-is */ }
   }
@@ -477,14 +482,41 @@ async function resolveDeployedSystems(deploymentId: string): Promise<{ count: nu
       }
     }
 
-    if (!systemHrefs.length && !systemUIDs.length) return empty
+    // 4. Walk subdeployments to aggregate system references (for root/group deployments)
+    if (!systemHrefs.length && !systemUIDs.length) {
+      const walkSubs = async (depId: string, depth: number): Promise<void> => {
+        if (depth > 5) return
+        try {
+          const subRes = await apiFetch(`/deployments/${depId}/subdeployments?limit=100`, { headers: { Accept: acceptType } })
+          if (!subRes.ok || !subRes.data) return
+          const subs = (subRes.data?.items || subRes.data?.features || []) as any[]
+          for (const sub of subs) {
+            const sp = sub?.properties || sub || {}
+            const pl = sp['platform@link']
+            if (pl?.href) systemHrefs.push(pl.href)
+            const dsl = sp['deployedSystems@link']
+            if (Array.isArray(dsl)) {
+              for (const l of dsl) { if (l?.href) systemHrefs.push(l.href) }
+            }
+            const subId = sub?.id || sp.id
+            if (subId) await walkSubs(String(subId), depth + 1)
+          }
+        } catch { /* non-critical */ }
+      }
+      await walkSubs(deploymentId, 0)
+      // Deduplicate
+      const unique = [...new Set(systemHrefs)]
+      systemHrefs.length = 0
+      systemHrefs.push(...unique)
+      if (!systemHrefs.length && !systemUIDs.length) return empty
+    }
 
     // Resolve hrefs to system items
     const items: Array<{ id: string; name: string }> = []
     const sysAccept = getContentType('systems')
     for (const href of systemHrefs) {
       try {
-        const p = normalizeLinkHref(href)
+        const p = normalizeLinkHref(href, 'systems')
         const r = await apiFetch(p, { headers: { Accept: sysAccept } })
         if (r.ok && r.data) {
           const sp = r.data?.properties || r.data || {}
@@ -537,9 +569,12 @@ async function resolveSystemDeployments(systemId: string): Promise<{ count: numb
     const hasStrongLink = (dep: any): boolean => {
       const dp = dep?.properties || dep || {}
       const platformLink = dp['platform@link']
-      if (platformLink?.href && platformLink.href.includes(systemUrl)) return true
+      if (platformLink?.href) {
+        // Match full path ("systems/0520") or bare ID ("0520")
+        if (platformLink.href.includes(systemUrl) || platformLink.href === systemId) return true
+      }
       const dsLinks = dp['deployedSystems@link']
-      if (Array.isArray(dsLinks) && dsLinks.some((l: any) => l?.href && l.href.includes(systemUrl))) return true
+      if (Array.isArray(dsLinks) && dsLinks.some((l: any) => l?.href && (l.href.includes(systemUrl) || l.href === systemId))) return true
       return false
     }
     const hasWeakLink = (dep: any): boolean => {
@@ -642,6 +677,26 @@ async function fetchCounts() {
             needSystemDeploymentsCluster = true
             counts[rel.childType] = null  // keep loading state
             return
+          }
+          // Fallback: System → Procedure via SML3 typeOf
+          if (parentType === 'systems' && rel.relation === 'procedures') {
+            try {
+              const smlRes = await apiFetch(getDetailUrl('systems', parentId), { headers: { Accept: 'application/sml+json' } })
+              if (gen !== fetchGeneration) return
+              if (smlRes.ok && smlRes.data) {
+                const typeOf = smlRes.data?.typeOf
+                const href = typeOf?.['xlink:href'] || typeOf?.href
+                if (href) {
+                  const procPath = normalizeLinkHref(href, 'procedures')
+                  const procRes = await apiFetch(procPath, { headers: { Accept: getContentType('procedures') } })
+                  if (gen !== fetchGeneration) return
+                  if (procRes.ok && procRes.data) {
+                    counts[rel.childType] = 1
+                    return
+                  }
+                }
+              }
+            } catch { /* non-critical */ }
           }
           counts[rel.childType] = -1
           if (isSelfHierarchy) { selfChildItems.value = []; selfChildTotal.value = 0 }
@@ -955,6 +1010,16 @@ function formatCount(n: number | null | undefined): string {
   return `${n}${suffix}`
 }
 
+/** Generate tooltip text explaining a node's status */
+function nodeTooltip(nodeId: string): string {
+  if (isActive(nodeId)) return ''
+  const c = counts[nodeId]
+  if (c == null) return ''
+  if (c < 0) return `Not available on this server`
+  if (c === 0) return `No ${nodeId} found`
+  return `${c} ${nodeId} — click to explore`
+}
+
 onMounted(() => {
   if (connection.connected && props.activeId) fetchCounts()
 })
@@ -1008,9 +1073,10 @@ function navigateToType(nodeId: string) {
   const rel = relations?.find(r => r.childType === nodeId)
 
   if (rel) {
-    // Deployments → Systems: cluster handles navigation; don't link the node itself.
+    // Deployments → Systems: cluster chips handle navigation when items are resolved.
+    // Only block if the cluster has items; otherwise fall through for default navigation.
     if (props.activeType === 'deployments' && nodeId === 'systems') {
-      return
+      if (deployedSystemItems.value.length > 0) return
     }
 
     // Systems → Deployments: cluster handles navigation; don't link the node itself.
@@ -1454,6 +1520,7 @@ function browseAllChildren() {
         }"
         @click="navigateToType(node.id)"
       >
+        <title v-if="nodeTooltip(node.id)">{{ nodeTooltip(node.id) }}</title>
         <!-- Stacked card effect for hierarchical (self-referencing) nodes -->
         <template v-if="hasSelfLoop(node.id)">
           <rect
