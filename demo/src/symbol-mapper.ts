@@ -91,6 +91,7 @@ const ENT_SEA_SURFACE = '110000'      // Generic sea surface
 
 // Entity codes — METOC (SS 45)
 const ENT_WEATHER_BUOY = '121104'     // Weather Buoy — Surface
+const ENT_WEATHER_SENSOR = '111101'   // Stationary Weather Sensor — Land
 
 // ─── SIDC Builder ──────────────────────────────────────────────────────────────
 
@@ -159,8 +160,12 @@ const SYSTEM_RULES: KeywordRule[] = [
   // Fixed wing aircraft
   { keywords: ['aircraft', 'airplane', 'fixed-wing', 'plane'],
     identity: SI_FRIEND, symbolSet: SS_AIR, entity: ENT_FIXED_WING },
-  // Weather / METOC / radar
-  { keywords: ['weather', 'metoc', 'meteorolog', 'radar', 'lidar'],
+  // Weather / METOC / meteorological sensor → Friendly METOC Stationary Weather Sensor (Land)
+  // SIDC 10034500001111010000
+  { keywords: ['weather', 'metoc', 'meteorolog', 'asos', 'nws', 'metar'],
+    identity: SI_FRIEND, symbolSet: SS_METOC, entity: ENT_WEATHER_SENSOR },
+  // Radar / lidar → keep as land equipment
+  { keywords: ['radar', 'lidar'],
     identity: SI_NEUTRAL, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_RADAR },
   // Camera / EO / video
   { keywords: ['camera', 'video', 'electro-optical', 'eo ', 'imagery', 'photo', 'optical'],
