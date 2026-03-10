@@ -6,6 +6,7 @@ import Message from 'primevue/message'
 import Panel from 'primevue/panel'
 import ProgressSpinner from 'primevue/progressspinner'
 import Password from 'primevue/password'
+import { useHealthCheck } from '../composables/useHealthCheck'
 
 // ── Client-side auth gate ────────────────────────────────────────────────
 const AUTH_USER = 'admin'
@@ -207,6 +208,26 @@ const detectionRate = computed(() => {
   return `${Math.round((status.value.detecting_ticks / status.value.tick) * 100)}%`
 })
 
+// ── Health Check ─────────────────────────────────────────────────────
+const {
+  checks: hcChecks,
+  running: hcRunning,
+  elapsed: hcElapsed,
+  timestamp: hcTimestamp,
+  summary: hcSummary,
+  overallStatus: hcStatus,
+  runAll: hcRunAll,
+} = useHealthCheck()
+
+const hcGrouped = computed(() => {
+  const groups: Record<string, typeof hcChecks.value> = {}
+  for (const c of hcChecks.value) {
+    if (!groups[c.group]) groups[c.group] = []
+    groups[c.group].push(c)
+  }
+  return groups
+})
+
 // ── Lifecycle ────────────────────────────────────────────────────────
 onMounted(() => {
   startPolling()
@@ -374,6 +395,62 @@ onUnmounted(() => {
           :disabled="!connected || (status?.running ?? false)"
           @click="resetDemo"
         />
+      </div>
+    </Panel>
+
+    <!-- Health Check -->
+    <Panel header="Production Health Check" class="mb-4">
+      <div class="hc-toolbar">
+        <Button
+          label="Run Health Check"
+          icon="pi pi-heart"
+          severity="info"
+          :loading="hcRunning"
+          @click="hcRunAll"
+        />
+        <span v-if="hcTimestamp && !hcRunning" class="hc-meta">
+          {{ hcSummary.total }} checks in {{ hcElapsed }}ms
+        </span>
+      </div>
+
+      <!-- Overall status badge -->
+      <div v-if="hcChecks.length && !hcRunning" class="hc-overall mt-2">
+        <span class="hc-badge" :class="hcStatus === 'pass' ? 'hc-pass' : 'hc-fail'">
+          <i :class="hcStatus === 'pass' ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i>
+          {{ hcStatus === 'pass' ? 'ALL CHECKS PASSED' : `${hcSummary.failed} FAILED` }}
+          <span class="hc-counts">
+            {{ hcSummary.passed }} passed, {{ hcSummary.failed }} failed, {{ hcSummary.skipped }} skipped
+          </span>
+        </span>
+      </div>
+
+      <!-- Running spinner -->
+      <div v-if="hcRunning" class="hc-running mt-2">
+        <ProgressSpinner style="width: 20px; height: 20px" /> Running checks…
+      </div>
+
+      <!-- Grouped results -->
+      <div v-if="hcChecks.length" class="hc-results mt-2">
+        <div v-for="(groupChecks, groupName) in hcGrouped" :key="groupName" class="hc-group">
+          <div class="hc-group-header">{{ groupName }}</div>
+          <div class="hc-check-list">
+            <div
+              v-for="c in groupChecks"
+              :key="c.name"
+              class="hc-check"
+              :class="'hc-check-' + c.status"
+            >
+              <span class="hc-icon">
+                <i v-if="c.status === 'pass'" class="pi pi-check" style="color: #16a34a"></i>
+                <i v-else-if="c.status === 'fail'" class="pi pi-times" style="color: #dc2626"></i>
+                <i v-else-if="c.status === 'running'" class="pi pi-spin pi-spinner" style="color: #2563eb"></i>
+                <i v-else class="pi pi-minus" style="color: #94a3b8"></i>
+              </span>
+              <span class="hc-name">{{ c.name }}</span>
+              <span class="hc-detail">{{ c.detail }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </Panel>
 
@@ -661,5 +738,115 @@ ssh ubuntu@129.80.248.53 "sudo systemctl restart simulator"</pre>
   display: flex;
   justify-content: flex-end;
   margin-bottom: 0.5rem;
+}
+
+/* ── Health Check ────────────────────────────────────────────── */
+.hc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hc-meta {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.hc-overall {
+  margin-bottom: 0.5rem;
+}
+
+.hc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.hc-pass {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.hc-fail {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.hc-counts {
+  font-weight: 400;
+  margin-left: 0.5rem;
+  opacity: 0.8;
+}
+
+.hc-running {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.hc-results {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.hc-group {
+  margin-bottom: 0.75rem;
+}
+
+.hc-group-header {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  padding-left: 0.2rem;
+}
+
+.hc-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.hc-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  transition: background 0.15s;
+}
+
+.hc-check:hover {
+  background: #f1f5f9;
+}
+
+.hc-check-fail {
+  background: #fef2f2;
+}
+
+.hc-icon {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+}
+
+.hc-name {
+  font-weight: 600;
+  min-width: 180px;
+}
+
+.hc-detail {
+  color: #64748b;
+  font-family: monospace;
+  font-size: 0.78rem;
 }
 </style>
