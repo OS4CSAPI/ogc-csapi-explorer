@@ -35,18 +35,18 @@ const EXPECTED_SYSTEMS: Record<string, string> = {
   '0560': 'NWS KDAY',
   '056g': 'NWS KFFO',
   // NDBC buoys
-  '04ug': 'NDBC 44025 Long Island',
-  '04v0': 'NDBC 41009 Canaveral',
-  '04vg': 'NDBC 42036 W Tampa',
-  '0500': 'NDBC 46025 Santa Monica',
-  '050g': 'NDBC 46013 Bodega Bay',
+  '0570': 'NDBC 44025 Long Island',
+  '057g': 'NDBC 41009 Canaveral',
+  '0580': 'NDBC 42036 W Tampa',
+  '058g': 'NDBC 46025 Santa Monica',
+  '0590': 'NDBC 46013 Bodega Bay',
 }
 
 const EXPECTED_DEPLOYMENTS: Record<string, string> = {
   '040g': 'Intelligence Collection Operation',
   '048g': 'Orbital Tracking Demo',
   '04mg': 'NWS Weather Demo',
-  '04ig': 'NDBC Buoy Demo',
+  '04sg': 'NDBC Buoy Demo',
 }
 
 interface DsInfo {
@@ -73,11 +73,11 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'UAS Location Estimate':  { id: '04l0', system: '04o0' },
   'SENREP':                 { id: '044g', system: '040g' },
   // NDBC buoys
-  'NDBC 44025 Buoy Obs':    { id: '04o0', system: '04ug' },
-  'NDBC 41009 Buoy Obs':    { id: '04og', system: '04v0' },
-  'NDBC 42036 Buoy Obs':    { id: '04p0', system: '04vg' },
-  'NDBC 46025 Buoy Obs':    { id: '04pg', system: '0500' },
-  'NDBC 46013 Buoy Obs':    { id: '04q0', system: '050g' },
+  'NDBC 44025 Buoy Obs':    { id: '04vg', system: '0570' },
+  'NDBC 41009 Buoy Obs':    { id: '0500', system: '057g' },
+  'NDBC 42036 Buoy Obs':    { id: '050g', system: '0580' },
+  'NDBC 46025 Buoy Obs':    { id: '0510', system: '058g' },
+  'NDBC 46013 Buoy Obs':    { id: '051g', system: '0590' },
 }
 
 // ── Staleness thresholds (minutes) ──
