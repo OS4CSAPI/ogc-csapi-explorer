@@ -282,15 +282,14 @@ def simulation_worker(st: SimState):
 DETECTION_DS_IDS = ["04dg", "04e0", "04eg"]  # MA-1, MA-2, MA-3
 
 # SENREP datastreams — cleared only on /reset (Tier 3)
-SENREP_DS_IDS = ["044g", "04i0"]  # original + v1.1
+SENREP_DS_IDS = ["044g"]  # original (v1.1 DS 04i0 was corrupted/deleted 2026-03-10)
 
 # Sim/localizer datastreams — cleared on /clear (Tier 2)
 SIM_DS_IDS = [
     "0430", "043g", "04c0", "0440", "0410", "041g", "042g",  # MA-1 (04c0 = LOB)
     "0450", "045g", "04cg", "046g", "0470", "047g", "0480",  # MA-2 (04cg = LOB)
     "048g", "0490", "04d0", "04a0", "04ag", "04b0", "04bg",  # MA-3 (04d0 = LOB)
-    "04g0",  # UAS Location Estimate (compound localizer)
-    "04hg",  # Location Estimate (localizer v2)
+    "04l0",  # Location Estimate (localizer v3 — re-bootstrapped 2026-03-10)
 ]
 
 # Combined list (for reference)
