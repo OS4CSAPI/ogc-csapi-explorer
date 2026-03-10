@@ -20,7 +20,7 @@ import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
 import Polygon, { circular as circularPolygon } from 'ol/geom/Polygon'
 import LineString from 'ol/geom/LineString'
-import { Style, Circle as CircleStyle, Fill, Stroke, Text as OlText, Icon as OlIcon } from 'ol/style'
+import { Style, Circle as CircleStyle, Fill, Stroke, Text as OlText, Icon as OlIcon, RegularShape } from 'ol/style'
 import Overlay from 'ol/Overlay'
 import { getSymbolForResource, getSymbolSizeForType, renderSenrepSymbol, type MilSymbolResult } from '../symbol-mapper'
 import type { Coordinate } from 'ol/coordinate'
@@ -588,6 +588,53 @@ const satObsPointStyle = new Style({
   }),
 })
 
+// Weather observation point style — teal diamond for NWS/METAR stations
+const weatherObsPointStyle = new Style({
+  image: new RegularShape({
+    points: 4,
+    radius: 7,
+    angle: Math.PI / 4,
+    fill: new Fill({ color: '#0ea5e9' }),    // sky-500
+    stroke: new Stroke({ color: '#fff', width: 1.5 }),
+  }),
+})
+
+/**
+ * Detect whether an observation result represents a weather/surface observation
+ * (NWS, METAR, etc.) by checking for temperature_c + stationId signature fields.
+ */
+function isWeatherObservation(rawData: any): boolean {
+  if (!rawData?.result) return false
+  return typeof rawData.result.temperature_c === 'number'
+    && typeof rawData.result.stationId === 'string'
+}
+
+/**
+ * Map weather textDescription to an emoji icon for the popup.
+ */
+function weatherIcon(desc: string | undefined): string {
+  if (!desc) return '🌡️'
+  const d = desc.toLowerCase()
+  if (d.includes('thunder') || d.includes('storm')) return '⛈️'
+  if (d.includes('rain') || d.includes('drizzle') || d.includes('shower')) return '🌧️'
+  if (d.includes('snow') || d.includes('flurr')) return '🌨️'
+  if (d.includes('fog') || d.includes('mist') || d.includes('haze')) return '🌫️'
+  if (d.includes('cloud') || d.includes('overcast')) return '☁️'
+  if (d.includes('partly') || d.includes('mostly sunny')) return '⛅'
+  if (d.includes('fair') || d.includes('clear') || d.includes('sunny')) return '☀️'
+  if (d.includes('wind')) return '💨'
+  return '🌡️'
+}
+
+/**
+ * Convert wind direction degrees to cardinal arrow.
+ */
+function windArrow(deg: number | undefined): string {
+  if (deg == null || isNaN(deg)) return ''
+  const dirs = ['↓N', '↙NE', '←E', '↖SE', '↑S', '↗SW', '→W', '↘NW']
+  return dirs[Math.round(deg / 45) % 8]
+}
+
 // Bearing-line styles bucketed by quantized energy (10 buckets → max 10 style objects)
 const bearingStyleCache = new Map<number, Style>()
 function getCachedBearingLineStyle(energy: number): Style {
@@ -1058,6 +1105,9 @@ function isLocationRelatedDatastream(ds: any): boolean {
   if (name.includes('lob') || name.includes('track') || name.includes('ssl')
     || name.includes('sst') || name.includes('scene') || name.includes('classification')
     || name.includes('bearing')) return true
+  // Weather / surface observation datastreams (NWS, METAR, etc.)
+  if (name.includes('surface') || name.includes('weather') || name.includes('metar')
+    || name.includes('nws')) return true
 
   const rawProps = ds.observedProperties
   const props: any[] = Array.isArray(rawProps) ? rawProps : rawProps ? [rawProps] : []
@@ -2849,6 +2899,10 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         || dsNameLower.includes('tracker')
       )
 
+      // Detect weather/surface observation datastreams (NWS, METAR, etc.)
+      const isWeatherDs = dsNameLower.includes('surface') || dsNameLower.includes('weather')
+        || dsNameLower.includes('metar') || dsNameLower.includes('nws')
+
       for (let obsIdx = 0; obsIdx < items.length; obsIdx++) {
         const obs = items[obsIdx]
         // --- Observation points: results with lat/lon coordinates ---
@@ -2866,10 +2920,12 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
               const feature = new Feature({
                 geometry: new Point(fromLonLat([lon, lat])),
               })
-              feature.setStyle(isSatDs ? satObsPointStyle : getStyle('observationPoints'))
+              feature.setStyle(isWeatherDs ? weatherObsPointStyle : isSatDs ? satObsPointStyle : getStyle('observationPoints'))
               feature.set('resourceType', 'observationPoints')
               feature.set('resourceId', obs.id || `${dsInfo.id}-obs-${pointCount}`)
-              feature.set('resourceName', `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
+              feature.set('resourceName', isWeatherDs && obs.result?.stationName
+                ? `${obs.result.stationId} — ${obs.result.stationName}`
+                : `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
               feature.set('enriched', true)
               feature.set('enrichmentSource', dsInfo.name)
               feature.set('rawData', {
@@ -3855,8 +3911,65 @@ watch(selectedFeature, (feat) => {
         </p>
       </div>
 
+      <!-- Weather observation detail panel (NWS / METAR) -->
+      <div v-if="selectedFeature && !dscCard && !isDeployedSystemLeaf(selectedFeature) && isWeatherObservation(selectedFeature.rawData)" class="detail-panel weather-detail-panel">
+        <div class="detail-header">
+          <span class="detail-type-badge" style="background-color: #0ea5e9;">◆</span>
+          <strong>{{ selectedFeature.rawData.result.stationName || selectedFeature.resourceName }}</strong>
+        </div>
+        <div class="weather-station-id">{{ selectedFeature.rawData.result.stationId }}</div>
+        <div class="weather-hero">
+          <span class="weather-hero-icon">{{ weatherIcon(selectedFeature.rawData.result.textDescription) }}</span>
+          <div class="weather-hero-temp">
+            {{ selectedFeature.rawData.result.temperature_c?.toFixed(1) }}°C
+            <span class="weather-hero-temp-f">({{ (selectedFeature.rawData.result.temperature_c * 9 / 5 + 32).toFixed(1) }}°F)</span>
+          </div>
+          <div class="weather-hero-desc">{{ selectedFeature.rawData.result.textDescription || 'N/A' }}</div>
+        </div>
+        <div class="weather-fields">
+          <div class="weather-field">
+            <span class="weather-field-label">💧 Humidity</span>
+            <span>{{ selectedFeature.rawData.result.humidity_pct?.toFixed(0) }}%</span>
+          </div>
+          <div class="weather-field">
+            <span class="weather-field-label">🌡️ Dewpoint</span>
+            <span>{{ selectedFeature.rawData.result.dewpoint_c?.toFixed(1) }}°C</span>
+          </div>
+          <div class="weather-field">
+            <span class="weather-field-label">💨 Wind</span>
+            <span>{{ selectedFeature.rawData.result.wind_speed_kmh?.toFixed(0) }} km/h {{ windArrow(selectedFeature.rawData.result.wind_direction_deg) }}</span>
+          </div>
+          <div v-if="selectedFeature.rawData.result.wind_gust_kmh && !isNaN(selectedFeature.rawData.result.wind_gust_kmh)" class="weather-field">
+            <span class="weather-field-label">💨 Gusts</span>
+            <span>{{ selectedFeature.rawData.result.wind_gust_kmh?.toFixed(0) }} km/h</span>
+          </div>
+          <div class="weather-field">
+            <span class="weather-field-label">📊 Pressure</span>
+            <span>{{ (selectedFeature.rawData.result.barometric_pressure_pa / 100).toFixed(1) }} hPa</span>
+          </div>
+          <div class="weather-field">
+            <span class="weather-field-label">👁️ Visibility</span>
+            <span>{{ (selectedFeature.rawData.result.visibility_m / 1000).toFixed(1) }} km</span>
+          </div>
+          <div class="weather-field">
+            <span class="weather-field-label">⛰️ Elevation</span>
+            <span>{{ selectedFeature.rawData.result.elev_m?.toFixed(0) }} m</span>
+          </div>
+        </div>
+        <div v-if="selectedFeature.rawData.phenomenonTime" class="weather-time">
+          <i class="pi pi-clock"></i> {{ selectedFeature.rawData.phenomenonTime }}
+        </div>
+        <details v-if="selectedFeature.rawData.result.rawMessage" class="weather-metar-details">
+          <summary>Raw METAR</summary>
+          <pre class="weather-metar-pre">{{ selectedFeature.rawData.result.rawMessage }}</pre>
+        </details>
+        <button class="detail-link-btn" @click="goToDetail">
+          <i class="pi pi-external-link"></i> View in Explorer
+        </button>
+      </div>
+
       <!-- Detail panel when a feature is selected (non-deployment features only) -->
-      <div v-if="selectedFeature && !dscCard && !isDeployedSystemLeaf(selectedFeature)" class="detail-panel">
+      <div v-if="selectedFeature && !dscCard && !isDeployedSystemLeaf(selectedFeature) && !isWeatherObservation(selectedFeature.rawData)" class="detail-panel">
         <template>
         <div class="detail-header">
           <span class="detail-type-badge" :style="{ backgroundColor: TYPE_COLORS[selectedFeature.resourceType] }">
@@ -3947,6 +4060,26 @@ watch(selectedFeature, (feat) => {
               <div>{{ selectedFeature.rawData.estimatedLat?.toFixed(5) }}°N, {{ selectedFeature.rawData.estimatedLon?.toFixed(5) }}°W</div>
               <div v-if="selectedFeature.rawData.senderId">Operator: {{ selectedFeature.rawData.senderId }}</div>
               <div v-if="selectedFeature.rawData.comments">{{ selectedFeature.rawData.comments }}</div>
+            </div>
+          </template>
+          <!-- Weather observation popup (NWS / METAR) -->
+          <template v-if="isWeatherObservation(selectedFeature.rawData)">
+            <div class="popup-weather-detail">
+              <div class="popup-weather-conditions">
+                <span class="popup-weather-icon">{{ weatherIcon(selectedFeature.rawData.result.textDescription) }}</span>
+                <span class="popup-weather-desc">{{ selectedFeature.rawData.result.textDescription || 'N/A' }}</span>
+              </div>
+              <div class="popup-weather-temp">
+                {{ selectedFeature.rawData.result.temperature_c?.toFixed(1) }}°C
+                <span class="popup-weather-temp-f">({{ (selectedFeature.rawData.result.temperature_c * 9 / 5 + 32).toFixed(1) }}°F)</span>
+              </div>
+              <div class="popup-weather-grid">
+                <span title="Wind">💨 {{ selectedFeature.rawData.result.wind_speed_kmh?.toFixed(0) }} km/h {{ windArrow(selectedFeature.rawData.result.wind_direction_deg) }}</span>
+                <span title="Humidity">💧 {{ selectedFeature.rawData.result.humidity_pct?.toFixed(0) }}%</span>
+              </div>
+              <div v-if="selectedFeature.rawData.result.rawMessage" class="popup-weather-metar">
+                {{ selectedFeature.rawData.result.rawMessage }}
+              </div>
             </div>
           </template>
           <!-- "Submit SENREP" button on gold dot popup -->
@@ -4233,6 +4366,46 @@ watch(selectedFeature, (feat) => {
                 @explore="goToDetail"
                 @close="closePopup"
               />
+            </div>
+            <!-- Weather observation mobile detail -->
+            <div v-else-if="mobilePanel === 'detail' && selectedFeature && isWeatherObservation(selectedFeature.rawData)" class="tak-sheet-body">
+              <div class="tak-detail-header">
+                <span class="tak-detail-badge" style="background-color: #0ea5e9;">◆</span>
+                <strong>{{ selectedFeature.rawData.result.stationName || selectedFeature.resourceName }}</strong>
+              </div>
+              <div class="weather-station-id" style="margin: 0.2rem 0 0.5rem;">{{ selectedFeature.rawData.result.stationId }}</div>
+              <div class="weather-hero" style="margin-bottom: 0.5rem;">
+                <span class="weather-hero-icon">{{ weatherIcon(selectedFeature.rawData.result.textDescription) }}</span>
+                <div class="weather-hero-temp">
+                  {{ selectedFeature.rawData.result.temperature_c?.toFixed(1) }}°C
+                  <span class="weather-hero-temp-f">({{ (selectedFeature.rawData.result.temperature_c * 9 / 5 + 32).toFixed(1) }}°F)</span>
+                </div>
+                <div class="weather-hero-desc">{{ selectedFeature.rawData.result.textDescription || 'N/A' }}</div>
+              </div>
+              <div class="weather-fields">
+                <div class="weather-field">
+                  <span class="weather-field-label">💧 Humidity</span>
+                  <span>{{ selectedFeature.rawData.result.humidity_pct?.toFixed(0) }}%</span>
+                </div>
+                <div class="weather-field">
+                  <span class="weather-field-label">💨 Wind</span>
+                  <span>{{ selectedFeature.rawData.result.wind_speed_kmh?.toFixed(0) }} km/h {{ windArrow(selectedFeature.rawData.result.wind_direction_deg) }}</span>
+                </div>
+                <div class="weather-field">
+                  <span class="weather-field-label">📊 Pressure</span>
+                  <span>{{ (selectedFeature.rawData.result.barometric_pressure_pa / 100).toFixed(1) }} hPa</span>
+                </div>
+                <div class="weather-field">
+                  <span class="weather-field-label">👁️ Visibility</span>
+                  <span>{{ (selectedFeature.rawData.result.visibility_m / 1000).toFixed(1) }} km</span>
+                </div>
+              </div>
+              <div v-if="selectedFeature.rawData.phenomenonTime" class="weather-time" style="margin-top: 0.5rem;">
+                <i class="pi pi-clock"></i> {{ selectedFeature.rawData.phenomenonTime }}
+              </div>
+              <button class="tak-explore-btn" @click="goToDetail">
+                <i class="pi pi-external-link"></i> View in Explorer
+              </button>
             </div>
             <div v-else-if="mobilePanel === 'detail' && selectedFeature" class="tak-sheet-body">
               <div v-if="dscLoading && isDeployedSystemLeaf(selectedFeature)" class="dsc-inline-loading">
@@ -5534,6 +5707,124 @@ watch(selectedFeature, (feat) => {
   color: #334155;
   margin-top: 0.3rem;
   line-height: 1.5;
+}
+
+/* ═══ Weather Observation Popup & Detail Styles ═══ */
+.popup-weather-detail {
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  color: #334155;
+  line-height: 1.5;
+}
+.popup-weather-conditions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 600;
+}
+.popup-weather-icon { font-size: 1.2rem; }
+.popup-weather-desc { color: #475569; }
+.popup-weather-temp {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0ea5e9;
+  margin: 0.15rem 0;
+}
+.popup-weather-temp-f {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+.popup-weather-grid {
+  display: flex;
+  gap: 0.6rem;
+  font-size: 0.72rem;
+  color: #475569;
+}
+.popup-weather-metar {
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.65rem;
+  color: #64748b;
+  margin-top: 0.3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+
+/* Sidebar weather detail panel */
+.weather-detail-panel {
+  border-left: 3px solid #0ea5e9;
+}
+.weather-station-id {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+  letter-spacing: 0.04em;
+}
+.weather-hero {
+  text-align: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 0.5rem;
+}
+.weather-hero-icon { font-size: 2rem; }
+.weather-hero-temp {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0ea5e9;
+  margin: 0.2rem 0;
+}
+.weather-hero-temp-f {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+.weather-hero-desc {
+  font-size: 0.85rem;
+  color: #475569;
+  font-weight: 500;
+}
+.weather-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+.weather-field {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.78rem;
+  padding: 0.3rem 0;
+}
+.weather-field-label {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.weather-time {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+}
+.weather-time .pi { font-size: 0.7rem; }
+.weather-metar-details {
+  margin-top: 0.5rem;
+}
+.weather-metar-details summary {
+  font-size: 0.72rem;
+  color: #64748b;
+  cursor: pointer;
+}
+.weather-metar-pre {
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.68rem;
+  color: #334155;
+  background: #f1f5f9;
+  padding: 0.4rem;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin-top: 0.3rem;
 }
 
 /* ═══ Deployed System Card — floating right-side panel ═══ */
