@@ -5,7 +5,7 @@
  * - Global endpoints (/datastreams, /systems, /deployments)
  * - 24 individual systems
  * - 4 deployments
- * - 22 critical datastream observations with staleness thresholds
+ * - 27 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM)
  *
  * READ-ONLY: no writes to the server.
  */
@@ -72,12 +72,18 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'AZ-MA-3 LOB':            { id: '04d0', system: '049g' },
   'UAS Location Estimate':  { id: '04l0', system: '04o0' },
   'SENREP':                 { id: '044g', system: '040g' },
-  // NDBC buoys
-  'NDBC 44025 Buoy Obs':    { id: '04vg', system: '0570' },
-  'NDBC 41009 Buoy Obs':    { id: '0500', system: '057g' },
-  'NDBC 42036 Buoy Obs':    { id: '050g', system: '0580' },
-  'NDBC 46025 Buoy Obs':    { id: '0510', system: '058g' },
-  'NDBC 46013 Buoy Obs':    { id: '051g', system: '0590' },
+  // NDBC buoys (met obs)
+  'NDBC 44025 Met Obs':     { id: '04vg', system: '0570' },
+  'NDBC 41009 Met Obs':     { id: '050g', system: '057g' },
+  'NDBC 42036 Met Obs':     { id: '051g', system: '0580' },
+  'NDBC 46025 Met Obs':     { id: '052g', system: '058g' },
+  'NDBC 46013 Met Obs':     { id: '053g', system: '0590' },
+  // NDBC buoys (BuoyCAM)
+  'NDBC 44025 BuoyCAM':     { id: '0500', system: '0570' },
+  'NDBC 41009 BuoyCAM':     { id: '0510', system: '057g' },
+  'NDBC 42036 BuoyCAM':     { id: '0520', system: '0580' },
+  'NDBC 46025 BuoyCAM':     { id: '0530', system: '058g' },
+  'NDBC 46013 BuoyCAM':     { id: '0540', system: '0590' },
 }
 
 // ── Staleness thresholds (minutes) ──
@@ -242,6 +248,11 @@ export function useHealthCheck() {
     } else if (dsName.includes('NDBC')) {
       if (ageMin > THRESHOLDS.NDBC) {
         fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.NDBC})`)
+      } else if (dsName.includes('BuoyCAM')) {
+        const result = obs.result ?? {}
+        const status = result.cameraStatus ?? '—'
+        const sizeKb = result.contentLength ? `${Math.round(result.contentLength / 1024)} KB` : '—'
+        pass(c, `${Math.round(ageMin)} min old, camera=${status}, ${sizeKb}`)
       } else {
         const result = obs.result ?? {}
         const airTemp = result.air_temp_c

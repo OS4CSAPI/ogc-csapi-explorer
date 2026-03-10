@@ -147,6 +147,43 @@ function formatValue(value: unknown): string {
   return String(value)
 }
 
+/**
+ * Detect if a field is an image URL that should be rendered as a thumbnail.
+ * Checks for a sibling `mediaType` field starting with `image/` and the field
+ * name containing 'imageUrl' or 'image_url', or a value ending in a common
+ * image extension.
+ */
+function isImageUrlField(field: ResultField, result: unknown): boolean {
+  // Must be a Text field with a URL-looking value
+  const val = getValueByPath(result, field.name)
+  if (typeof val !== 'string' || !val.startsWith('http')) return false
+
+  // Check if sibling mediaType field indicates image/*
+  const mediaType = getValueByPath(result, 'mediaType') ?? getValueByPath(result, 'media_type')
+  if (typeof mediaType === 'string' && mediaType.startsWith('image/')) {
+    if (/image.?url/i.test(field.name)) return true
+  }
+
+  // Fallback: URL ends in a common image extension
+  if (/\.(jpg|jpeg|png|gif|webp|svg)(\?|#|$)/i.test(val)) return true
+
+  return false
+}
+
+/** Get the image preview URL from the result, if one exists */
+function getImagePreviewUrl(result: unknown): string | null {
+  if (result == null || typeof result !== 'object') return null
+  const r = result as Record<string, unknown>
+  const mediaType = r.mediaType ?? r.media_type
+  if (typeof mediaType === 'string' && mediaType.startsWith('image/')) {
+    const url = r.imageUrl ?? r.image_url ?? r.imageUri ?? r.image_uri
+    if (typeof url === 'string' && url.startsWith('http')) return url
+  }
+  return null
+}
+
+const imagePreviewUrl = computed(() => getImagePreviewUrl(props.result))
+
 /** Check if result appears to be a structured object (not a scalar) */
 const isStructuredResult = computed(() => {
   return typeof props.result === 'object' && props.result !== null && !Array.isArray(props.result)
@@ -261,6 +298,13 @@ const rawJsonTruncated = computed(() => {
   <div class="obs-result-table">
     <!-- Schema-aware structured table -->
     <div v-if="schemaFields.length > 0 && isStructuredResult" class="result-structured">
+      <!-- Image preview banner -->
+      <div v-if="imagePreviewUrl" class="result-image-preview">
+        <a :href="imagePreviewUrl" target="_blank" rel="noopener" title="Open full image">
+          <img :src="imagePreviewUrl" alt="Observation image" class="result-image-thumb" loading="lazy" />
+        </a>
+      </div>
+
       <div class="result-header">
         <span class="result-title">
           <i class="pi pi-table"></i> Observation Result
@@ -291,7 +335,13 @@ const rawJsonTruncated = computed(() => {
               </span>
             </td>
             <td class="field-value">
-              <code>{{ formatValue(getValueByPath(result, field.name)) }}</code>
+              <template v-if="isImageUrlField(field, result)">
+                <a :href="String(getValueByPath(result, field.name))" target="_blank" rel="noopener" class="field-image-link">
+                  <img :src="String(getValueByPath(result, field.name))" alt="" class="field-image-inline" loading="lazy" />
+                  <code class="field-image-url">{{ formatValue(getValueByPath(result, field.name)) }}</code>
+                </a>
+              </template>
+              <code v-else>{{ formatValue(getValueByPath(result, field.name)) }}</code>
             </td>
             <td><span class="type-chip">{{ field.type }}</span></td>
             <td>
@@ -380,4 +430,13 @@ const rawJsonTruncated = computed(() => {
 .raw-fallback { margin-top: 0.15rem; }
 .raw-fallback summary { cursor: pointer; font-size: 0.72rem; color: #94a3b8; font-weight: 600; }
 .raw-json-block { font-size: 0.72rem; background: #f8fafc; padding: 0.5rem; border-radius: 4px; max-height: 200px; overflow: auto; margin: 0.25rem 0 0; }
+
+/* ── Image preview ── */
+.result-image-preview { margin-bottom: 0.5rem; text-align: center; background: #0f172a; border-radius: 6px; overflow: hidden; }
+.result-image-thumb { max-width: 100%; max-height: 260px; object-fit: contain; display: block; margin: 0 auto; cursor: pointer; transition: transform 0.15s; }
+.result-image-thumb:hover { transform: scale(1.02); }
+
+.field-image-link { display: flex; align-items: center; gap: 0.4rem; text-decoration: none; }
+.field-image-inline { width: 40px; height: 30px; object-fit: cover; border-radius: 3px; border: 1px solid #cbd5e1; flex-shrink: 0; }
+.field-image-url { font-size: 0.72rem; background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 3px; word-break: break-all; color: #3b82f6; }
 </style>

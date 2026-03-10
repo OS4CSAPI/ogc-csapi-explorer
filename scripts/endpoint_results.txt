@@ -1,0 +1,121 @@
+
+=== 1. Systems navigation (NWS KTUS 0520) ===
+    200  count=    0  /systems/0520/subsystems?limit=5
+    200  count=    1  /systems/0520/datastreams?limit=5
+         notable: system@id, system@link
+    200  count=    0  /systems/0520/controlstreams?limit=5
+    200  count=    0  /systems/0520/samplingFeatures?limit=5
+    400  count=  N/A  /systems/0520/deployments?limit=5
+    400  count=  N/A  /systems/0520/procedures?limit=5
+
+=== 2. Deployment navigation ===
+    200  count=    1  /deployments/04mg/subdeployments?limit=5
+    200  count=    0  /deployments/04ng/subdeployments?limit=5
+    400  count=  N/A  /deployments/04mg/systems?limit=5
+    200  count=  N/A  /deployments/04ng
+         notable: links, link_rels=['canonical', 'alternate', 'alternate', 'parent']
+    FULL KEYS: ['geometry', 'id', 'links', 'properties', 'type']
+
+=== 3. Procedure navigation ===
+    200  count=  N/A  /procedures/049g
+         notable: links, link_rels=['canonical', 'alternate', 'alternate']
+
+  -- Listing procedures --
+    200  count=   16  /procedures?limit=50
+    proc id=040g  name=  uid=
+    proc id=0410  name=  uid=
+    proc id=041g  name=  uid=
+    proc id=0420  name=  uid=
+    proc id=042g  name=  uid=
+    proc id=0430  name=  uid=
+    proc id=043g  name=  uid=
+    proc id=0440  name=  uid=
+    proc id=044g  name=  uid=
+    proc id=045g  name=  uid=
+    proc id=046g  name=  uid=
+    proc id=0470  name=  uid=
+    proc id=047g  name=  uid=
+    proc id=048g  name=  uid=
+    proc id=0490  name=  uid=
+    proc id=049g  name=  uid=
+  No NWS procedure found; testing 049g sub-endpoints anyway
+    400  count=  N/A  /procedures/049g/systems?limit=5
+    400  count=  N/A  /procedures/049g/datastreams?limit=5
+
+=== 4. Datastream navigation ===
+    200  count=  N/A  /datastreams/04qg
+         notable: links, system@id, system@link, link_rels=['canonical', 'alternate', 'system', 'observations'], system@id=0520
+    FULL KEYS: ['description', 'formats', 'id', 'links', 'name', 'observedProperties', 'outputName', 'phenomenonTime', 'resultTime', 'resultType', 'system@id', 'system@link', 'validTime']
+    200  count=    1  /datastreams/04qg/observations?limit=2
+         notable: datastream@id
+    400  count=  N/A  /datastreams/04qg/systems?limit=5
+
+=== 5. Observation navigation ===
+    200  count=    1  /datastreams/04qg/observations?limit=1
+         notable: datastream@id
+    OBS KEYS: ['datastream@id', 'id', 'phenomenonTime', 'result', 'resultTime']
+    datastream@id = 04qg
+    phenomenonTime = 2026-03-10T16:19:00Z
+    resultTime = 2026-03-10T16:49:24Z
+    result = {...}
+
+=== 6. Property navigation ===
+    200  count=    0  /properties?limit=5
+
+=== 7. Simulator system (SET Ft Huachuca 040g) ===
+    200  count=    0  /systems/040g/subsystems?limit=5
+    200  count=    1  /systems/040g/datastreams?limit=5
+         notable: system@id, system@link
+    400  count=  N/A  /systems/040g/deployments?limit=5
+    400  count=  N/A  /systems/040g/procedures?limit=5
+
+=== 8. System 0520 detail ===
+    200  count=  N/A  /systems/0520
+         notable: links, link_rels=['canonical', 'alternate', 'alternate', 'datastreams']
+    FULL KEYS: ['geometry', 'id', 'links', 'properties', 'type']
+    LINKS:
+      rel=canonical  href=https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0520  title=
+      rel=alternate  href=https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0520?f=sml3  title=This system resource in SensorML format
+      rel=alternate  href=https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0520?f=html  title=This system resource in HTML format
+      rel=datastreams  href=https://os4csapi-osh.duckdns.org/sensorhub/api/systems/0520/datastreams?f=json  title=List of system datastreams
+
+=== BONUS: Deployment root 04mg detail ===
+    200  count=  N/A  /deployments/04mg
+         notable: links, link_rels=['canonical', 'alternate', 'alternate', 'subdeployments']
+    FULL KEYS: ['geometry', 'id', 'links', 'properties', 'type']
+    LINKS:
+      rel=canonical  href=https://os4csapi-osh.duckdns.org/sensorhub/api/deployments/04mg  title=
+      rel=alternate  href=https://os4csapi-osh.duckdns.org/sensorhub/api/deployments/04mg?f=sml3  title=This deployment resource in SensorML format
+      rel=alternate  href=https://os4csapi-osh.duckdns.org/sensorhub/api/deployments/04mg?f=html  title=This deployment resource in HTML format
+      rel=subdeployments  href=https://os4csapi-osh.duckdns.org/sensorhub/api/deployments/04mg/subdeployments?f=geojson  title=List of subdeployments
+
+
+========================================================================================================================
+Label                          Path                                                    Status  Count  Notable
+------------------------------------------------------------------------------------------------------------------------
+sys subsystems                 /systems/0520/subsystems?limit=5                           200      0  
+sys datastreams                /systems/0520/datastreams?limit=5                          200      1  system@id, system@link
+sys controlstreams             /systems/0520/controlstreams?limit=5                       200      0  
+sys samplingFeatures           /systems/0520/samplingFeatures?limit=5                     200      0  
+sys deployments                /systems/0520/deployments?limit=5                          400    N/A  
+sys procedures                 /systems/0520/procedures?limit=5                           400    N/A  
+deploy root subdeployments     /deployments/04mg/subdeployments?limit=5                   200      1  
+deploy leaf subdeployments     /deployments/04ng/subdeployments?limit=5                   200      0  
+deploy root systems            /deployments/04mg/systems?limit=5                          400    N/A  
+deploy leaf detail             /deployments/04ng                                          200    N/A  links, link_rels=['canonical', 'alternate', 'alternate', 'parent']
+procedure 049g detail          /procedures/049g                                           200    N/A  links, link_rels=['canonical', 'alternate', 'alternate']
+procedures list                /procedures?limit=50                                       200     16  
+proc 049g systems              /procedures/049g/systems?limit=5                           400    N/A  
+proc 049g datastreams          /procedures/049g/datastreams?limit=5                       400    N/A  
+ds 04qg detail                 /datastreams/04qg                                          200    N/A  links, system@id, system@link, link_rels=['canonical', 'alternate', 'system', 'observations'], system@id=0520
+ds observations                /datastreams/04qg/observations?limit=2                     200      1  datastream@id
+ds systems                     /datastreams/04qg/systems?limit=5                          400    N/A  
+obs from ds                    /datastreams/04qg/observations?limit=1                     200      1  datastream@id
+properties list                /properties?limit=5                                        200      0  
+sim subsystems                 /systems/040g/subsystems?limit=5                           200      0  
+sim datastreams                /systems/040g/datastreams?limit=5                          200      1  system@id, system@link
+sim deployments                /systems/040g/deployments?limit=5                          400    N/A  
+sim procedures                 /systems/040g/procedures?limit=5                           400    N/A  
+sys 0520 detail                /systems/0520                                              200    N/A  links, link_rels=['canonical', 'alternate', 'alternate', 'datastreams']
+deploy root detail             /deployments/04mg                                          200    N/A  links, link_rels=['canonical', 'alternate', 'alternate', 'subdeployments']
+========================================================================================================================

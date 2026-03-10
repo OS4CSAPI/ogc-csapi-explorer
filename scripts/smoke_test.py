@@ -114,12 +114,18 @@ DATASTREAMS = {
     "NWS KNYG Surface Obs":           {"id": "04u0", "system": "055g"},
     "NWS KDAY Surface Obs":           {"id": "04ug", "system": "0560"},
     "NWS KFFO Surface Obs":           {"id": "04v0", "system": "056g"},
-    # ── NDBC buoys ──
-    "NDBC 44025 Buoy Obs":             {"id": "04vg", "system": "0570"},
-    "NDBC 41009 Buoy Obs":             {"id": "0500", "system": "057g"},
-    "NDBC 42036 Buoy Obs":             {"id": "050g", "system": "0580"},
-    "NDBC 46025 Buoy Obs":             {"id": "0510", "system": "058g"},
-    "NDBC 46013 Buoy Obs":             {"id": "051g", "system": "0590"},
+    # ── NDBC buoys (met obs) ──
+    "NDBC 44025 Met Obs":              {"id": "04vg", "system": "0570"},
+    "NDBC 41009 Met Obs":              {"id": "050g", "system": "057g"},
+    "NDBC 42036 Met Obs":              {"id": "051g", "system": "0580"},
+    "NDBC 46025 Met Obs":              {"id": "052g", "system": "058g"},
+    "NDBC 46013 Met Obs":              {"id": "053g", "system": "0590"},
+    # ── NDBC buoys (BuoyCAM) ──
+    "NDBC 44025 BuoyCAM":              {"id": "0500", "system": "0570"},
+    "NDBC 41009 BuoyCAM":              {"id": "0510", "system": "057g"},
+    "NDBC 42036 BuoyCAM":              {"id": "0520", "system": "0580"},
+    "NDBC 46025 BuoyCAM":              {"id": "0530", "system": "058g"},
+    "NDBC 46013 BuoyCAM":              {"id": "0540", "system": "0590"},
 }
 
 # These DS we MUST have fresh observations for (active feeds)
@@ -142,11 +148,16 @@ CRITICAL_DATASTREAMS = [
     "AZ-MA-3 LOB",
     "UAS Location Estimate",
     "SENREP",
-    "NDBC 44025 Buoy Obs",
-    "NDBC 41009 Buoy Obs",
-    "NDBC 42036 Buoy Obs",
-    "NDBC 46025 Buoy Obs",
-    "NDBC 46013 Buoy Obs",
+    "NDBC 44025 Met Obs",
+    "NDBC 41009 Met Obs",
+    "NDBC 42036 Met Obs",
+    "NDBC 46025 Met Obs",
+    "NDBC 46013 Met Obs",
+    "NDBC 44025 BuoyCAM",
+    "NDBC 41009 BuoyCAM",
+    "NDBC 42036 BuoyCAM",
+    "NDBC 46025 BuoyCAM",
+    "NDBC 46013 BuoyCAM",
 ]
 
 # ── Helpers ──────────────────────────────────────────────────────────

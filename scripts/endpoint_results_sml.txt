@@ -1,0 +1,149 @@
+=== System 0520 SML3 format ===
+Status: 200
+{
+  "type": "PhysicalSystem",
+  "id": "0520",
+  "uniqueId": "urn:os4csapi:system:nws:ktus:v1",
+  "label": "NWS KTUS \u2014 Tucson International Airport",
+  "description": "ASOS/AWOS surface weather observing station at Tucson International Airport (KTUS). The NWS ASOS program is operated collaboratively by NWS, FAA, and DoD. This station resource represents the local observing system exposed through api.weather.gov.",
+  "identifiers": [
+    {
+      "label": "OS4CSAPI UID",
+      "value": "urn:os4csapi:system:nws:ktus:v1"
+    },
+    {
+      "label": "NWS Station Identifier",
+      "value": "KTUS"
+    }
+  ],
+  "classifiers": [
+    {
+      "label": "System Type",
+      "value": "ASOS/AWOS"
+    },
+    {
+      "label": "Operator",
+      "value": "National Weather Service"
+    },
+    {
+      "label": "Program",
+      "value": "ASOS / AWOS Surface Weather Observation Network"
+    }
+  ],
+  "validTime": [
+    "2026-03-10T16:44:57.310495838Z",
+    "now"
+  ],
+  "characteristics": [
+    {
+      "label": "Reporting Cadence",
+      "characteristics": []
+    },
+    {
+      "label": "Latency Note",
+      "characteristics": []
+    },
+    {
+      "label": "Representative Image",
+      "characteristics": []
+    }
+  ],
+  "contacts": [
+    {
+      "role": "operator"
+    },
+    {
+      "role": "support"
+    }
+  ],
+  "position": {
+    "type": "Point",
+    "coordinates": [
+      -110.9564,
+      32.1315,
+      776
+    ]
+  }
+}
+
+
+=== Deployment 04ng SML3 format ===
+Status: 500
+
+
+=== Procedure 049g SML3 format ===
+Status: 200
+{
+  "type": "SimpleProcess",
+  "id": "049g",
+  "uniqueId": "urn:os4csapi:procedure:nws-surface-observation:v1",
+  "definition": "sosa:ObservingProcedure",
+  "label": "NWS Surface Observation v1",
+  "description": "Publishes real-time NWS surface observations derived from api.weather.gov station resources. Latest station observations are normalized to SI-oriented fields and published as flat JSON result objects. The underlying observing network is primarily ASOS/AWOS; nominal station reporting is hourly with special observations as conditions warrant, and API publication may lag upstream MADIS availability by up to about 20 minutes.",
+  "validTime": [
+    "2026-01-01T00:00:00Z",
+    ".."
+  ]
+}
+
+
+=== Deployment 04ng JSON detail (all fields) ===
+Status: 200
+{
+  "type": "Feature",
+  "id": "04ng",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -110.9564,
+      32.1315
+    ]
+  },
+  "properties": {
+    "uid": "urn:os4csapi:deployment:nws-ktus:v1",
+    "featureType": "sosa:Deployment",
+    "name": "KTUS Station Feed",
+    "description": "CSAPI deployment node for station KTUS (Tucson International Airport) and its surface observation datastream.",
+    "validTime": [
+      "2026-01-01T00:00:00Z",
+      ".."
+    ],
+    "platform@link": {
+      "href": "0520",
+      "title": "NWS KTUS",
+      "uid": "urn:os4csapi:system:nws:ktus:v1"
+    }
+  },
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/deployments/04ng",
+      "type": "application/json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This deployment resource in SensorML format",
+      "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/deployments/04ng?f=sml3",
+      "type": "application/sml+json"
+    },
+    {
+      "rel": "alternate",
+      "title": "This deployment resource in HTML format",
+      "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/deployments/04ng?f=html",
+      "type": "text/html"
+    },
+    {
+      "rel": "parent",
+      "title": "Parent deployment",
+      "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/deployments/04n0?f=geojson",
+      "type": "application/geo+json"
+    }
+  ]
+}
+
+
+=== Error details ===
+  400  /systems/0520/deployments?limit=5  =>  
+  400  /systems/0520/procedures?limit=5  =>  
+  400  /deployments/04mg/systems?limit=5  =>  
+  400  /procedures/049g/systems?limit=5  =>  

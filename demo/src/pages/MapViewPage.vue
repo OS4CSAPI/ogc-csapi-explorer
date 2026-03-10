@@ -4116,6 +4116,18 @@ watch(selectedFeature, (feat) => {
               </div>
             </div>
           </template>
+          <!-- BuoyCAM / image observation popup -->
+          <template v-if="selectedFeature.rawData?.result?.mediaType?.startsWith('image/') && selectedFeature.rawData?.result?.imageUrl">
+            <div class="popup-buoycam-detail">
+              <a :href="selectedFeature.rawData.result.imageUrl" target="_blank" rel="noopener" title="Open full image">
+                <img :src="selectedFeature.rawData.result.imageUrl" alt="BuoyCAM" class="popup-buoycam-img" loading="lazy" />
+              </a>
+              <div class="popup-buoycam-meta">
+                📷 {{ selectedFeature.rawData.result.cameraStatus || 'ok' }}
+                · {{ Math.round((selectedFeature.rawData.result.contentLength || 0) / 1024) }} KB
+              </div>
+            </div>
+          </template>
           <!-- "Submit SENREP" button on gold dot popup -->
           <button
             v-if="selectedFeature.resourceType === 'locationEstimates' && selectedFeature.rawData"
@@ -5785,6 +5797,12 @@ watch(selectedFeature, (feat) => {
   text-overflow: ellipsis;
   max-width: 250px;
 }
+
+/* BuoyCAM popup image */
+.popup-buoycam-detail { margin-top: 0.35rem; text-align: center; }
+.popup-buoycam-img { max-width: 240px; max-height: 160px; border-radius: 4px; object-fit: contain; border: 1px solid #cbd5e1; cursor: pointer; transition: transform 0.15s; }
+.popup-buoycam-img:hover { transform: scale(1.03); }
+.popup-buoycam-meta { font-size: 0.68rem; color: #64748b; margin-top: 0.2rem; }
 
 /* Sidebar weather detail panel */
 .weather-detail-panel {
