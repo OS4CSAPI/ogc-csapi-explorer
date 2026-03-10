@@ -46,6 +46,11 @@ EXPECTED_SYSTEMS = {
     "04qg": "NWS KFHU",
     "04r0": "NWS KLUF",
     "04rg": "NWS KPHX",
+    "04s0": "NWS KDCA",
+    "04sg": "NWS KIAD",
+    "04t0": "NWS KNYG",
+    "04tg": "NWS KDAY",
+    "04u0": "NWS KFFO",
 }
 
 EXPECTED_DEPLOYMENTS = {
@@ -97,6 +102,11 @@ DATASTREAMS = {
     "NWS KFHU Surface Obs":           {"id": "04jg", "system": "04qg"},
     "NWS KLUF Surface Obs":           {"id": "04k0", "system": "04r0"},
     "NWS KPHX Surface Obs":           {"id": "04kg", "system": "04rg"},
+    "NWS KDCA Surface Obs":           {"id": "04lg", "system": "04s0"},
+    "NWS KIAD Surface Obs":           {"id": "04m0", "system": "04sg"},
+    "NWS KNYG Surface Obs":           {"id": "04mg", "system": "04t0"},
+    "NWS KDAY Surface Obs":           {"id": "04n0", "system": "04tg"},
+    "NWS KFFO Surface Obs":           {"id": "04ng", "system": "04u0"},
 }
 
 # These DS we MUST have fresh observations for (active feeds)
@@ -109,6 +119,11 @@ CRITICAL_DATASTREAMS = [
     "NWS KFHU Surface Obs",
     "NWS KLUF Surface Obs",
     "NWS KPHX Surface Obs",
+    "NWS KDCA Surface Obs",
+    "NWS KIAD Surface Obs",
+    "NWS KNYG Surface Obs",
+    "NWS KDAY Surface Obs",
+    "NWS KFFO Surface Obs",
     "AZ-MA-1 LOB",
     "AZ-MA-2 LOB",
     "AZ-MA-3 LOB",
@@ -184,8 +199,8 @@ def check_global_datastreams(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 30:
-        c.fail(f"Only {count} datastreams (expected >= 30)")
+    if count < 35:
+        c.fail(f"Only {count} datastreams (expected >= 35)")
     else:
         c.ok(f"{count} datastreams")
     return c
@@ -198,8 +213,8 @@ def check_global_systems(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 14:
-        c.fail(f"Only {count} systems (expected >= 14)")
+    if count < 19:
+        c.fail(f"Only {count} systems (expected >= 19)")
     else:
         c.ok(f"{count} systems")
     return c

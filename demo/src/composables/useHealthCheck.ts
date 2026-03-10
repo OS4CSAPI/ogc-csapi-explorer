@@ -3,9 +3,9 @@
  *
  * Checks all known resources on the OS4CSAPI server:
  * - Global endpoints (/datastreams, /systems, /deployments)
- * - 14 individual systems
+ * - 19 individual systems
  * - 3 deployments
- * - 12 critical datastream observations with staleness thresholds
+ * - 17 critical datastream observations with staleness thresholds
  *
  * READ-ONLY: no writes to the server.
  */
@@ -29,6 +29,11 @@ const EXPECTED_SYSTEMS: Record<string, string> = {
   '04qg': 'NWS KFHU',
   '04r0': 'NWS KLUF',
   '04rg': 'NWS KPHX',
+  '04s0': 'NWS KDCA',
+  '04sg': 'NWS KIAD',
+  '04t0': 'NWS KNYG',
+  '04tg': 'NWS KDAY',
+  '04u0': 'NWS KFFO',
 }
 
 const EXPECTED_DEPLOYMENTS: Record<string, string> = {
@@ -50,6 +55,11 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'NWS KFHU Surface Obs':   { id: '04jg', system: '04qg' },
   'NWS KLUF Surface Obs':   { id: '04k0', system: '04r0' },
   'NWS KPHX Surface Obs':   { id: '04kg', system: '04rg' },
+  'NWS KDCA Surface Obs':   { id: '04lg', system: '04s0' },
+  'NWS KIAD Surface Obs':   { id: '04m0', system: '04sg' },
+  'NWS KNYG Surface Obs':   { id: '04mg', system: '04t0' },
+  'NWS KDAY Surface Obs':   { id: '04n0', system: '04tg' },
+  'NWS KFFO Surface Obs':   { id: '04ng', system: '04u0' },
   'AZ-MA-1 LOB':            { id: '04c0', system: '0420' },
   'AZ-MA-2 LOB':            { id: '04cg', system: '0490' },
   'AZ-MA-3 LOB':            { id: '04d0', system: '049g' },
