@@ -588,22 +588,6 @@ const satObsPointStyle = new Style({
   }),
 })
 
-// Weather observation point style — bright teal diamond for NWS/METAR stations
-// Uses large radius + bold stroke so stations are unmissable on the map.
-const weatherObsPointStyle = new Style({
-  image: new RegularShape({
-    points: 4,
-    radius: 14,
-    angle: Math.PI / 4,
-    fill: new Fill({ color: '#0ea5e9' }),    // sky-500
-    stroke: new Stroke({ color: '#0c4a6e', width: 2.5 }),  // sky-900
-  }),
-  text: new OlText({
-    text: '🌡️',
-    font: '16px sans-serif',
-    offsetY: -22,
-  }),
-})
 /**
  * Create a per-station weather style with temperature label so stations
  * are immediately identifiable without clicking.
@@ -1349,9 +1333,6 @@ async function buildSystemLocationCache(): Promise<void> {
         name: ds.name || ds.outputName || 'Unknown',
         systemId: ds['system@id'] || ds.system?.id,
       }))
-    const wxCount = locationDatastreamList.filter(d => d.name.toLowerCase().includes('surface')).length
-    console.warn(`[Weather] locationDatastreamList: ${locationDatastreamList.length} DS total, ${wxCount} weather (${locationDatastreamList.map(d => d.name).join(', ')})`)
-
 
     // NOTE: Previously this block added ALL datastreams for systems with
     // cached locations.  That caused up to N×500 observation fetches and
@@ -3131,10 +3112,6 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
   }
   featureCounts.value['observationPoints'] = pointCount
   featureCounts.value['observationTracks'] = trackCount
-
-  // Summary diagnostic — visible as yellow warning in browser DevTools
-  const wxFeatures = pendingPoints.filter(f => f.get('enrichmentSource')?.toLowerCase().includes('surface'))
-  console.warn(`[Weather] ${wxFeatures.length} weather station features loaded (${pointCount} total obs points, ${locationDatastreamList.length} DS in pipeline)`)
 }
 
 async function loadAllResources() {
