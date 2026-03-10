@@ -42,6 +42,7 @@ const SS_LAND_EQUIPMENT = '15'
 const SS_LAND_INSTALLATION = '20'
 const SS_SEA_SURFACE = '30'
 const SS_ACTIVITY = '40'
+const SS_METOC = '45'              // Meteorological / Oceanographic
 const SS_SIGINT = '52'
 
 // Entity codes (6 digits) — Land Equipment (SS 15)
@@ -87,6 +88,9 @@ const ENT_ACTIVITY = '110000'         // Generic activity/event
 
 // Entity codes — Sea Surface (SS 30)
 const ENT_SEA_SURFACE = '110000'      // Generic sea surface
+
+// Entity codes — METOC (SS 45)
+const ENT_WEATHER_BUOY = '121104'     // Weather Buoy — Surface
 
 // ─── SIDC Builder ──────────────────────────────────────────────────────────────
 
@@ -170,8 +174,12 @@ const SYSTEM_RULES: KeywordRule[] = [
   // Reconnaissance / surveillance
   { keywords: ['recon', 'surveillance', 'monitor'],
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_UNIT_RECON },
-  // Sea / marine / buoy
-  { keywords: ['buoy', 'marine', 'ocean', 'sea', 'ship', 'vessel', 'boat'],
+  // NDBC Weather Buoy → Friendly METOC Weather Buoy (Surface)
+  // SIDC 10034500001211040000
+  { keywords: ['buoy', 'ndbc'],
+    identity: SI_FRIEND, symbolSet: SS_METOC, entity: ENT_WEATHER_BUOY },
+  // Sea / marine / vessel (generic)
+  { keywords: ['marine', 'ocean', 'sea', 'ship', 'vessel', 'boat'],
     identity: SI_NEUTRAL, symbolSet: SS_SEA_SURFACE, entity: ENT_SEA_SURFACE },
   // SIGINT
   { keywords: ['sigint', 'signal intelligence', 'intercept'],
