@@ -239,10 +239,13 @@ export function getSymbolForResource(
     return null
   }
 
-  const name = rawData?.properties?.name || rawData?.name || rawData?.label || ''
-  const description = rawData?.properties?.description || rawData?.description || ''
-  const featureType = rawData?.properties?.featureType || rawData?.featureType || ''
-  const searchText = `${name} ${description} ${featureType}`
+  const props = rawData?.properties || rawData || {}
+  const name = props.name || rawData?.name || rawData?.label || ''
+  const description = props.description || rawData?.description || ''
+  const featureType = props.featureType || rawData?.featureType || ''
+  const platformTitle = props['platform@link']?.title || ''
+  const uid = props.uid || rawData?.uid || ''
+  const searchText = `${name} ${description} ${featureType} ${platformTitle} ${uid}`
 
   let sidc: string
 
