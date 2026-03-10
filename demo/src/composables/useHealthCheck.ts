@@ -3,9 +3,9 @@
  *
  * Checks all known resources on the OS4CSAPI server:
  * - Global endpoints (/datastreams, /systems, /deployments)
- * - 19 individual systems
- * - 3 deployments
- * - 17 critical datastream observations with staleness thresholds
+ * - 24 individual systems
+ * - 4 deployments
+ * - 22 critical datastream observations with staleness thresholds
  *
  * READ-ONLY: no writes to the server.
  */
@@ -34,12 +34,19 @@ const EXPECTED_SYSTEMS: Record<string, string> = {
   '04t0': 'NWS KNYG',
   '04tg': 'NWS KDAY',
   '04u0': 'NWS KFFO',
+  // NDBC buoys
+  '04ug': 'NDBC 44025 Long Island',
+  '04v0': 'NDBC 41009 Canaveral',
+  '04vg': 'NDBC 42036 W Tampa',
+  '0500': 'NDBC 46025 Santa Monica',
+  '050g': 'NDBC 46013 Bodega Bay',
 }
 
 const EXPECTED_DEPLOYMENTS: Record<string, string> = {
   '040g': 'Intelligence Collection Operation',
   '048g': 'Orbital Tracking Demo',
   '04cg': 'NWS Weather Demo',
+  '04ig': 'NDBC Buoy Demo',
 }
 
 interface DsInfo {
@@ -65,12 +72,19 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'AZ-MA-3 LOB':            { id: '04d0', system: '049g' },
   'UAS Location Estimate':  { id: '04l0', system: '04o0' },
   'SENREP':                 { id: '044g', system: '040g' },
+  // NDBC buoys
+  'NDBC 44025 Buoy Obs':    { id: '04o0', system: '04ug' },
+  'NDBC 41009 Buoy Obs':    { id: '04og', system: '04v0' },
+  'NDBC 42036 Buoy Obs':    { id: '04p0', system: '04vg' },
+  'NDBC 46025 Buoy Obs':    { id: '04pg', system: '0500' },
+  'NDBC 46013 Buoy Obs':    { id: '04q0', system: '050g' },
 }
 
 // ── Staleness thresholds (minutes) ──
 const THRESHOLDS = {
   ISS: 5,
   NWS: 480,  // 8 hours — publisher may run periodically
+  NDBC: 480, // 8 hours — publisher runs hourly
   SIM: 360,  // 6 hours — simulator may restart
 }
 
@@ -225,6 +239,17 @@ export function useHealthCheck() {
         const tempStr = temp == null || isNaN(temp) ? '—' : `${temp}°C`
         pass(c, `${Math.round(ageMin)} min old, ${tempStr}`)
       }
+    } else if (dsName.includes('NDBC')) {
+      if (ageMin > THRESHOLDS.NDBC) {
+        fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.NDBC})`)
+      } else {
+        const result = obs.result ?? {}
+        const airTemp = result.air_temp_c
+        const waterTemp = result.water_temp_c
+        const airStr = airTemp == null || isNaN(airTemp) ? '—' : `${airTemp}°C`
+        const waterStr = waterTemp == null || isNaN(waterTemp) ? '—' : `${waterTemp}°C`
+        pass(c, `${Math.round(ageMin)} min old, air=${airStr} water=${waterStr}`)
+      }
     } else {
       if (ageMin > THRESHOLDS.SIM) {
         fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.SIM})`)
@@ -246,9 +271,9 @@ export function useHealthCheck() {
     try {
       // Global endpoints (parallel)
       await Promise.all([
-        checkGlobalEndpoint('datastreams', '/datastreams', 30),
-        checkGlobalEndpoint('systems', '/systems', 14),
-        checkGlobalEndpoint('deployments', '/deployments', 3),
+        checkGlobalEndpoint('datastreams', '/datastreams', 35),
+        checkGlobalEndpoint('systems', '/systems', 19),
+        checkGlobalEndpoint('deployments', '/deployments', 4),
       ])
 
       // Systems (parallel)

@@ -51,12 +51,19 @@ EXPECTED_SYSTEMS = {
     "04t0": "NWS KNYG",
     "04tg": "NWS KDAY",
     "04u0": "NWS KFFO",
+    # ── NDBC buoys ──
+    "04ug": "NDBC 44025 Long Island",
+    "04v0": "NDBC 41009 Canaveral",
+    "04vg": "NDBC 42036 W Tampa",
+    "0500": "NDBC 46025 Santa Monica",
+    "050g": "NDBC 46013 Bodega Bay",
 }
 
 EXPECTED_DEPLOYMENTS = {
     "040g": "Intelligence Collection Operation",
     "048g": "Orbital Tracking Demo",
     "04cg": "NWS Weather Demo",
+    "04ig": "NDBC Buoy Demo",
 }
 
 # Datastreams grouped by feed for clearer reporting
@@ -107,6 +114,12 @@ DATASTREAMS = {
     "NWS KNYG Surface Obs":           {"id": "04mg", "system": "04t0"},
     "NWS KDAY Surface Obs":           {"id": "04n0", "system": "04tg"},
     "NWS KFFO Surface Obs":           {"id": "04ng", "system": "04u0"},
+    # ── NDBC buoys ──
+    "NDBC 44025 Buoy Obs":             {"id": "04o0", "system": "04ug"},
+    "NDBC 41009 Buoy Obs":             {"id": "04og", "system": "04v0"},
+    "NDBC 42036 Buoy Obs":             {"id": "04p0", "system": "04vg"},
+    "NDBC 46025 Buoy Obs":             {"id": "04pg", "system": "0500"},
+    "NDBC 46013 Buoy Obs":             {"id": "04q0", "system": "050g"},
 }
 
 # These DS we MUST have fresh observations for (active feeds)
@@ -129,6 +142,11 @@ CRITICAL_DATASTREAMS = [
     "AZ-MA-3 LOB",
     "UAS Location Estimate",
     "SENREP",
+    "NDBC 44025 Buoy Obs",
+    "NDBC 41009 Buoy Obs",
+    "NDBC 42036 Buoy Obs",
+    "NDBC 46025 Buoy Obs",
+    "NDBC 46013 Buoy Obs",
 ]
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -199,8 +217,8 @@ def check_global_datastreams(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 35:
-        c.fail(f"Only {count} datastreams (expected >= 35)")
+    if count < 40:
+        c.fail(f"Only {count} datastreams (expected >= 40)")
     else:
         c.ok(f"{count} datastreams")
     return c
@@ -213,8 +231,8 @@ def check_global_systems(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 19:
-        c.fail(f"Only {count} systems (expected >= 19)")
+    if count < 24:
+        c.fail(f"Only {count} systems (expected >= 24)")
     else:
         c.ok(f"{count} systems")
     return c
@@ -227,8 +245,8 @@ def check_global_deployments(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 3:
-        c.fail(f"Only {count} deployments (expected >= 3)")
+    if count < 4:
+        c.fail(f"Only {count} deployments (expected >= 4)")
     else:
         c.ok(f"{count} deployments")
     return c
@@ -301,7 +319,7 @@ def check_datastream_obs(ds_name: str, ds_info: dict, is_critical: bool, verbose
         else:
             c.ok(f"fresh — {age_min:.1f} min old")
 
-    elif "NWS" in ds_name:
+    elif "NWS" in ds_name or "NDBC" in ds_name:
         max_age = 120 if strict else 480
         if age_min > max_age:
             c.fail(f"Stale — {age_min:.0f} min old (max {max_age} min)")
@@ -310,7 +328,8 @@ def check_datastream_obs(ds_name: str, ds_info: dict, is_critical: bool, verbose
             result = obs.get("result", {})
             lat = result.get("lat_deg")
             lon = result.get("lon_deg")
-            temp = result.get("temperature_c")
+            # NWS uses temperature_c, NDBC uses air_temp_c
+            temp = result.get("temperature_c") if "NWS" in ds_name else result.get("air_temp_c")
             missing = []
             if lat is None:
                 missing.append("lat")
