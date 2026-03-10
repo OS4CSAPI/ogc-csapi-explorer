@@ -1327,8 +1327,54 @@ function createEnrichedFeature(
 async function enrichResourcesWithLocations(): Promise<void> {
   for (const key of Object.keys(enrichedCounts.value)) delete enrichedCounts.value[key]
 
+  // Snapshot system IDs known BEFORE deployment enrichment so we can detect
+  // newly-discovered systems (e.g. ISS linked via platform@link).
+  const preEnrichSystemIds = new Set(primarySystemIds)
+
   // --- Enrich deployments FIRST (resolves all deployment geometry + updates systemLocationCache) ---
   await enrichDeployments()
+
+  // --- Supplementary datastream discovery for deployment-linked systems ---
+  // enrichDeployments() adds systems via platform@link to primarySystemIds.
+  // Systems without static geometry (e.g. ISS) are only discoverable this way.
+  // Fetch their datastreams now and append location-related ones to
+  // locationDatastreamList so loadObservationLayers() can render them.
+  const newSystemIds = Array.from(primarySystemIds).filter(id => !preEnrichSystemIds.has(id))
+  if (newSystemIds.length > 0) {
+    const existingDsIds = new Set(locationDatastreamList.map(d => d.id))
+    const supplementaryResults = await Promise.all(
+      newSystemIds.map(async (sysId) => {
+        try {
+          const res = await apiFetch(`/systems/${sysId}/datastreams?limit=100`)
+          if (!res.ok || !res.data) return [] as any[]
+          return (res.data.items || res.data.features || []) as any[]
+        } catch { return [] as any[] }
+      })
+    )
+    for (const dsList of supplementaryResults) {
+      for (const ds of dsList) {
+        if (!ds.id || existingDsIds.has(ds.id)) continue
+        if (!isLocationRelatedDatastream(ds)) continue
+        const sysId = ds['system@id'] || ds.system?.id
+        if (!sysId) continue
+        const nm = (ds.name || ds.outputName || '').toLowerCase()
+        if (nm.includes('lob') || nm.includes('bearing')
+          || nm.includes('position') || nm.includes('location')) {
+          locationDatastreamList.push({
+            id: ds.id,
+            name: ds.name || ds.outputName || 'Unknown',
+            systemId: sysId,
+          })
+          existingDsIds.add(ds.id)
+        }
+        // Also populate systemLocationCache if not already set (for latest obs fetch)
+        if (!systemLocationCache[sysId]) {
+          // Will be resolved by loadObservationLayers via observation data
+        }
+      }
+    }
+  }
+
   // --- Enrich systems (uses updated cache with deployment locations) ---
   await enrichSystems()
   // --- Enrich sampling features ---
