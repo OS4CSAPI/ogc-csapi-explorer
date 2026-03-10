@@ -54,7 +54,7 @@ function buildListUrl(options: QueryOptions): string {
 }
 
 // Filter state
-const limit = ref(10)
+const limit = ref(100)
 const offset = ref(0)
 const q = ref('')
 const sortBy = ref('')
