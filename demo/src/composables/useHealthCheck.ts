@@ -4,8 +4,8 @@
  * Checks all known resources on the OS4CSAPI server:
  * - Global endpoints (/datastreams, /systems, /deployments)
  * - 38 individual systems (incl. 8 USGS Water)
- * - 9 deployments (incl. USGS Water)
- * - 54 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky, 16 USGS Water)
+ * - 10 deployments (incl. USGS Water, NIMS Imagery)
+ * - 62 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky, 16 USGS Water, 8 NIMS Imagery)
  *
  * READ-ONLY: no writes to the server.
  */
@@ -90,6 +90,7 @@ const EXPECTED_DEPLOYMENTS: Record<string, string> = {
   '04h0': 'Airspace Tracking Demo',
   '04hg': 'OpenSky ADS-B Feed',
   '04qg': 'USGS Water Monitoring Demo',
+  '04vg': 'USGS NIMS Imagery Demo',
 }
 
 interface DsInfo {
@@ -159,6 +160,15 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'USGS 05051300 Gage Height':    { id: '0540', system: '0580' },
   'USGS 12439500 Gage Height':    { id: '0550', system: '058g' },
   'USGS 02135000 Gage Height':    { id: '0560', system: '0590' },
+  // USGS NIMS Imagery (companion datastreams on existing water systems)
+  'NIMS 09380000 Imagery':          { id: '056g', system: '055g' },
+  'NIMS 09019850 Imagery':          { id: '0570', system: '0560' },
+  'NIMS 11313433 Imagery':          { id: '057g', system: '056g' },
+  'NIMS 08171000 Imagery':          { id: '0580', system: '0570' },
+  'NIMS 01650800 Imagery':          { id: '058g', system: '057g' },
+  'NIMS 05051300 Imagery':          { id: '0590', system: '0580' },
+  'NIMS 12439500 Imagery':          { id: '059g', system: '058g' },
+  'NIMS 02135000 Imagery':          { id: '05a0', system: '0590' },
 }
 
 // ── Staleness thresholds (minutes) ──
@@ -170,6 +180,7 @@ const THRESHOLDS = {
   AWX: 480,   // 8 hours — publisher runs every 5 min
   OPENSKY: 480, // 8 hours — publisher runs every 5 min
   USGS: 480,  // 8 hours — publisher runs every 15 min
+  NIMS: 480,  // 8 hours — imagery publisher runs every 15 min
   SIM: 360,   // 6 hours — simulator may restart
 }
 
@@ -371,6 +382,15 @@ export function useHealthCheck() {
         const altStr = alt != null && alt !== 'NaN' ? `${alt}m` : '—'
         pass(c, `${Math.round(ageMin)} min old, ${callsign} alt=${altStr}`)
       }
+    } else if (dsName.includes('NIMS')) {
+      if (ageMin > THRESHOLDS.NIMS) {
+        fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.NIMS})`)
+      } else {
+        const result = obs.result ?? {}
+        const fn = result.filename ?? '—'
+        const thumb = result.thumbUrl ? '✓' : '—'
+        pass(c, `${Math.round(ageMin)} min old, ${fn}, thumb=${thumb}`)
+      }
     } else if (dsName.includes('USGS')) {
       if (ageMin > THRESHOLDS.USGS) {
         fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.USGS})`)
@@ -407,9 +427,9 @@ export function useHealthCheck() {
     try {
       // Global endpoints (parallel)
       await Promise.all([
-        checkGlobalEndpoint('datastreams', '/datastreams', 62),
+        checkGlobalEndpoint('datastreams', '/datastreams', 70),
         checkGlobalEndpoint('systems', '/systems', 38),
-        checkGlobalEndpoint('deployments', '/deployments', 9),
+        checkGlobalEndpoint('deployments', '/deployments', 10),
       ])
 
       // Systems (parallel)
