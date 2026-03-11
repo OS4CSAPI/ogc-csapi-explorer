@@ -57,6 +57,12 @@ EXPECTED_SYSTEMS = {
     "0580": "NDBC 42036 W Tampa",
     "058g": "NDBC 46025 Santa Monica",
     "0590": "NDBC 46013 Bodega Bay",
+    # ── CO-OPS tide stations ──
+    "059g": "CO-OPS 8518750 The Battery",
+    "05a0": "CO-OPS 8723214 Virginia Key",
+    "05ag": "CO-OPS 8726520 St. Petersburg",
+    "05b0": "CO-OPS 9414290 San Francisco",
+    "05bg": "CO-OPS 8443970 Boston",
 }
 
 EXPECTED_DEPLOYMENTS = {
@@ -64,6 +70,7 @@ EXPECTED_DEPLOYMENTS = {
     "048g": "Orbital Tracking Demo",
     "04mg": "NWS Weather Demo",
     "04sg": "NDBC Buoy Demo",
+    "0500": "CO-OPS Coastal Demo",
 }
 
 # Datastreams grouped by feed for clearer reporting
@@ -126,6 +133,12 @@ DATASTREAMS = {
     "NDBC 42036 BuoyCAM":              {"id": "0520", "system": "0580"},
     "NDBC 46025 BuoyCAM":              {"id": "0530", "system": "058g"},
     "NDBC 46013 BuoyCAM":              {"id": "0540", "system": "0590"},
+    # ── CO-OPS tide stations ──
+    "CO-OPS 8518750 Coastal Obs":       {"id": "0570", "system": "059g"},
+    "CO-OPS 8723214 Coastal Obs":       {"id": "0550", "system": "05a0"},
+    "CO-OPS 8726520 Coastal Obs":       {"id": "055g", "system": "05ag"},
+    "CO-OPS 9414290 Coastal Obs":       {"id": "0560", "system": "05b0"},
+    "CO-OPS 8443970 Coastal Obs":       {"id": "056g", "system": "05bg"},
 }
 
 # These DS we MUST have fresh observations for (active feeds)
@@ -158,6 +171,11 @@ CRITICAL_DATASTREAMS = [
     "NDBC 42036 BuoyCAM",
     "NDBC 46025 BuoyCAM",
     "NDBC 46013 BuoyCAM",
+    "CO-OPS 8518750 Coastal Obs",
+    "CO-OPS 8723214 Coastal Obs",
+    "CO-OPS 8726520 Coastal Obs",
+    "CO-OPS 9414290 Coastal Obs",
+    "CO-OPS 8443970 Coastal Obs",
 ]
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -228,8 +246,8 @@ def check_global_datastreams(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 40:
-        c.fail(f"Only {count} datastreams (expected >= 40)")
+    if count < 45:
+        c.fail(f"Only {count} datastreams (expected >= 45)")
     else:
         c.ok(f"{count} datastreams")
     return c
@@ -242,8 +260,8 @@ def check_global_systems(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 24:
-        c.fail(f"Only {count} systems (expected >= 24)")
+    if count < 29:
+        c.fail(f"Only {count} systems (expected >= 29)")
     else:
         c.ok(f"{count} systems")
     return c
@@ -256,8 +274,8 @@ def check_global_deployments(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 4:
-        c.fail(f"Only {count} deployments (expected >= 4)")
+    if count < 5:
+        c.fail(f"Only {count} deployments (expected >= 5)")
     else:
         c.ok(f"{count} deployments")
     return c
@@ -330,7 +348,7 @@ def check_datastream_obs(ds_name: str, ds_info: dict, is_critical: bool, verbose
         else:
             c.ok(f"fresh — {age_min:.1f} min old")
 
-    elif "NWS" in ds_name or "NDBC" in ds_name:
+    elif "NWS" in ds_name or "NDBC" in ds_name or "CO-OPS" in ds_name:
         max_age = 120 if strict else 480
         if age_min > max_age:
             c.fail(f"Stale — {age_min:.0f} min old (max {max_age} min)")
@@ -339,8 +357,11 @@ def check_datastream_obs(ds_name: str, ds_info: dict, is_critical: bool, verbose
             result = obs.get("result", {})
             lat = result.get("lat_deg")
             lon = result.get("lon_deg")
-            # NWS uses temperature_c, NDBC uses air_temp_c
-            temp = result.get("temperature_c") if "NWS" in ds_name else result.get("air_temp_c")
+            # NWS uses temperature_c, NDBC uses air_temp_c, CO-OPS uses air_temp_c
+            if "NWS" in ds_name:
+                temp = result.get("temperature_c")
+            else:
+                temp = result.get("air_temp_c")
             missing = []
             if lat is None:
                 missing.append("lat")
@@ -352,7 +373,12 @@ def check_datastream_obs(ds_name: str, ds_info: dict, is_critical: bool, verbose
                 c.fail(f"Missing fields: {', '.join(missing)}")
             else:
                 temp_str = "NaN" if (isinstance(temp, float) and math.isnan(temp)) else f"{temp}°C"
-                c.ok(f"fresh — {age_min:.0f} min old, {temp_str}")
+                if "CO-OPS" in ds_name:
+                    wl = result.get("water_level_m")
+                    wl_str = f", wl={wl}m" if wl is not None else ""
+                    c.ok(f"fresh — {age_min:.0f} min old, {temp_str}{wl_str}")
+                else:
+                    c.ok(f"fresh — {age_min:.0f} min old, {temp_str}")
 
     # Simulator feeds (LOB, SENREP, Location Estimate)
     else:

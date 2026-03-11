@@ -186,6 +186,10 @@ const SYSTEM_RULES: KeywordRule[] = [
   // Doctrinal SIDC: 10034500001211040000 (METOC SS unsupported by milsymbol)
   { keywords: ['buoy', 'ndbc'],
     identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
+  // CO-OPS Tide Gauge Station → Friend Sensor Emplaced (same family as NDBC/NWS)
+  // NOAA CO-OPS coastal water level stations, fixed pier/platform installations
+  { keywords: ['co-ops', 'coops', 'tide', 'water level', 'coastal obs'],
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
   // Sea / marine / vessel (generic)
   { keywords: ['marine', 'ocean', 'sea', 'ship', 'vessel', 'boat'],
     identity: SI_NEUTRAL, symbolSet: SS_SEA_SURFACE, entity: ENT_SEA_SURFACE },

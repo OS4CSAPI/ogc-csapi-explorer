@@ -3,9 +3,9 @@
  *
  * Checks all known resources on the OS4CSAPI server:
  * - Global endpoints (/datastreams, /systems, /deployments)
- * - 24 individual systems
- * - 4 deployments
- * - 27 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM)
+ * - 29 individual systems
+ * - 5 deployments
+ * - 32 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS)
  *
  * READ-ONLY: no writes to the server.
  */
@@ -40,6 +40,12 @@ const EXPECTED_SYSTEMS: Record<string, string> = {
   '0580': 'NDBC 42036 W Tampa',
   '058g': 'NDBC 46025 Santa Monica',
   '0590': 'NDBC 46013 Bodega Bay',
+  // CO-OPS tide stations
+  '059g': 'CO-OPS 8518750 The Battery',
+  '05a0': 'CO-OPS 8723214 Virginia Key',
+  '05ag': 'CO-OPS 8726520 St. Petersburg',
+  '05b0': 'CO-OPS 9414290 San Francisco',
+  '05bg': 'CO-OPS 8443970 Boston',
 }
 
 const EXPECTED_DEPLOYMENTS: Record<string, string> = {
@@ -47,6 +53,7 @@ const EXPECTED_DEPLOYMENTS: Record<string, string> = {
   '048g': 'Orbital Tracking Demo',
   '04mg': 'NWS Weather Demo',
   '04sg': 'NDBC Buoy Demo',
+  '0500': 'CO-OPS Coastal Demo',
 }
 
 interface DsInfo {
@@ -84,14 +91,21 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'NDBC 42036 BuoyCAM':     { id: '0520', system: '0580' },
   'NDBC 46025 BuoyCAM':     { id: '0530', system: '058g' },
   'NDBC 46013 BuoyCAM':     { id: '0540', system: '0590' },
+  // CO-OPS tide stations
+  'CO-OPS 8518750 Coastal Obs': { id: '0570', system: '059g' },
+  'CO-OPS 8723214 Coastal Obs': { id: '0550', system: '05a0' },
+  'CO-OPS 8726520 Coastal Obs': { id: '055g', system: '05ag' },
+  'CO-OPS 9414290 Coastal Obs': { id: '0560', system: '05b0' },
+  'CO-OPS 8443970 Coastal Obs': { id: '056g', system: '05bg' },
 }
 
 // ── Staleness thresholds (minutes) ──
 const THRESHOLDS = {
   ISS: 5,
-  NWS: 480,  // 8 hours — publisher may run periodically
-  NDBC: 480, // 8 hours — publisher runs hourly
-  SIM: 360,  // 6 hours — simulator may restart
+  NWS: 480,   // 8 hours — publisher may run periodically
+  NDBC: 480,  // 8 hours — publisher runs hourly
+  COOPS: 480, // 8 hours — publisher runs every 6 min
+  SIM: 360,   // 6 hours — simulator may restart
 }
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -261,6 +275,17 @@ export function useHealthCheck() {
         const waterStr = waterTemp == null || isNaN(waterTemp) ? '—' : `${waterTemp}°C`
         pass(c, `${Math.round(ageMin)} min old, air=${airStr} water=${waterStr}`)
       }
+    } else if (dsName.includes('CO-OPS')) {
+      if (ageMin > THRESHOLDS.COOPS) {
+        fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.COOPS})`)
+      } else {
+        const result = obs.result ?? {}
+        const wl = result.water_level_m
+        const airTemp = result.air_temp_c
+        const wlStr = wl == null || (typeof wl === 'string' && wl === 'NaN') ? '—' : `${wl}m`
+        const airStr = airTemp == null || (typeof airTemp === 'string' && airTemp === 'NaN') ? '—' : `${airTemp}°C`
+        pass(c, `${Math.round(ageMin)} min old, wl=${wlStr} air=${airStr}`)
+      }
     } else {
       if (ageMin > THRESHOLDS.SIM) {
         fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.SIM})`)
@@ -282,9 +307,9 @@ export function useHealthCheck() {
     try {
       // Global endpoints (parallel)
       await Promise.all([
-        checkGlobalEndpoint('datastreams', '/datastreams', 35),
-        checkGlobalEndpoint('systems', '/systems', 19),
-        checkGlobalEndpoint('deployments', '/deployments', 4),
+        checkGlobalEndpoint('datastreams', '/datastreams', 40),
+        checkGlobalEndpoint('systems', '/systems', 24),
+        checkGlobalEndpoint('deployments', '/deployments', 5),
       ])
 
       // Systems (parallel)
