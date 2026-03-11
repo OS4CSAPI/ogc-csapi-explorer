@@ -3,9 +3,9 @@
  *
  * Checks all known resources on the OS4CSAPI server:
  * - Global endpoints (/datastreams, /systems, /deployments)
- * - 30 individual systems
- * - 8 deployments
- * - 38 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky)
+ * - 38 individual systems (incl. 8 USGS Water)
+ * - 9 deployments (incl. USGS Water)
+ * - 54 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky, 16 USGS Water)
  *
  * READ-ONLY: no writes to the server.
  */
@@ -69,6 +69,15 @@ const EXPECTED_SYSTEMS: Record<string, string> = {
   '04cg': 'AWX KPHX Sky Harbor',
   // OpenSky ADS-B feed
   '04d0': 'OpenSky ADS-B Feed',
+  // USGS Water monitoring stations
+  '055g': 'USGS 09380000 Colorado River Lees Ferry',
+  '0560': 'USGS 09019850 Willow Creek Granby',
+  '056g': 'USGS 11313433 Dutch Slough',
+  '0570': 'USGS 08171000 Blanco River Wimberley',
+  '057g': 'USGS 01650800 Sligo Creek Takoma Park',
+  '0580': 'USGS 05051300 Bois De Sioux Doran',
+  '058g': 'USGS 12439500 Okanogan River Oroville',
+  '0590': 'USGS 02135000 Little Pee Dee Galivants Ferry',
 }
 
 const EXPECTED_DEPLOYMENTS: Record<string, string> = {
@@ -80,6 +89,7 @@ const EXPECTED_DEPLOYMENTS: Record<string, string> = {
   '04dg': 'AWX METAR Demo',
   '04h0': 'Airspace Tracking Demo',
   '04hg': 'OpenSky ADS-B Feed',
+  '04qg': 'USGS Water Monitoring Demo',
 }
 
 interface DsInfo {
@@ -131,6 +141,24 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'AWX KPHX METAR Obs':         { id: '04f0', system: '04cg' },
   // OpenSky ADS-B feed
   'OpenSky ADS-B States':         { id: '04fg', system: '04d0' },
+  // USGS Water monitoring (discharge)
+  'USGS 09380000 Discharge':      { id: '04ug', system: '055g' },
+  'USGS 09019850 Discharge':      { id: '04vg', system: '0560' },
+  'USGS 11313433 Discharge':      { id: '050g', system: '056g' },
+  'USGS 08171000 Discharge':      { id: '051g', system: '0570' },
+  'USGS 01650800 Discharge':      { id: '052g', system: '057g' },
+  'USGS 05051300 Discharge':      { id: '053g', system: '0580' },
+  'USGS 12439500 Discharge':      { id: '054g', system: '058g' },
+  'USGS 02135000 Discharge':      { id: '055g', system: '0590' },
+  // USGS Water monitoring (gage height)
+  'USGS 09380000 Gage Height':    { id: '04v0', system: '055g' },
+  'USGS 09019850 Gage Height':    { id: '0500', system: '0560' },
+  'USGS 11313433 Gage Height':    { id: '0510', system: '056g' },
+  'USGS 08171000 Gage Height':    { id: '0520', system: '0570' },
+  'USGS 01650800 Gage Height':    { id: '0530', system: '057g' },
+  'USGS 05051300 Gage Height':    { id: '0540', system: '0580' },
+  'USGS 12439500 Gage Height':    { id: '0550', system: '058g' },
+  'USGS 02135000 Gage Height':    { id: '0560', system: '0590' },
 }
 
 // ── Staleness thresholds (minutes) ──
@@ -141,6 +169,7 @@ const THRESHOLDS = {
   COOPS: 480, // 8 hours — publisher runs every 6 min
   AWX: 480,   // 8 hours — publisher runs every 5 min
   OPENSKY: 480, // 8 hours — publisher runs every 5 min
+  USGS: 480,  // 8 hours — publisher runs every 15 min
   SIM: 360,   // 6 hours — simulator may restart
 }
 
@@ -342,6 +371,21 @@ export function useHealthCheck() {
         const altStr = alt != null && alt !== 'NaN' ? `${alt}m` : '—'
         pass(c, `${Math.round(ageMin)} min old, ${callsign} alt=${altStr}`)
       }
+    } else if (dsName.includes('USGS')) {
+      if (ageMin > THRESHOLDS.USGS) {
+        fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.USGS})`)
+      } else {
+        const result = obs.result ?? {}
+        if (dsName.includes('Discharge')) {
+          const val = result.discharge_cfs
+          const valStr = val != null && val !== 'NaN' ? `${val} ft³/s` : '—'
+          pass(c, `${Math.round(ageMin)} min old, ${valStr}`)
+        } else {
+          const val = result.gage_height_ft
+          const valStr = val != null && val !== 'NaN' ? `${val} ft` : '—'
+          pass(c, `${Math.round(ageMin)} min old, ${valStr}`)
+        }
+      }
     } else {
       if (ageMin > THRESHOLDS.SIM) {
         fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.SIM})`)
@@ -363,9 +407,9 @@ export function useHealthCheck() {
     try {
       // Global endpoints (parallel)
       await Promise.all([
-        checkGlobalEndpoint('datastreams', '/datastreams', 46),
-        checkGlobalEndpoint('systems', '/systems', 30),
-        checkGlobalEndpoint('deployments', '/deployments', 8),
+        checkGlobalEndpoint('datastreams', '/datastreams', 62),
+        checkGlobalEndpoint('systems', '/systems', 38),
+        checkGlobalEndpoint('deployments', '/deployments', 9),
       ])
 
       // Systems (parallel)
