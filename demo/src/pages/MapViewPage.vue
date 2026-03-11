@@ -1346,6 +1346,8 @@ async function buildSystemLocationCache(): Promise<void> {
           || nm.includes('position') || nm.includes('location')
           || nm.includes('surface') || nm.includes('weather')
           || nm.includes('metar') || nm.includes('nws') || nm.includes('awx')
+          || nm.includes('aircraft') || nm.includes('adsb') || nm.includes('ads-b')
+          || nm.includes('state vector') || nm.includes('flight')
         return pass
       })
       .map((ds: any) => ({
@@ -1458,7 +1460,9 @@ async function enrichResourcesWithLocations(): Promise<void> {
         if (!sysId) continue
         const nm = (ds.name || ds.outputName || '').toLowerCase()
         if (nm.includes('lob') || nm.includes('bearing')
-          || nm.includes('position') || nm.includes('location')) {
+          || nm.includes('position') || nm.includes('location')
+          || nm.includes('aircraft') || nm.includes('adsb') || nm.includes('ads-b')
+          || nm.includes('state vector') || nm.includes('flight')) {
           locationDatastreamList.push({
             id: ds.id,
             name: ds.name || ds.outputName || 'Unknown',
