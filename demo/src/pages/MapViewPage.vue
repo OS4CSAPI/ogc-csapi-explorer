@@ -643,6 +643,31 @@ function isWeatherObservation(rawData: any): boolean {
 }
 
 /**
+ * Detect whether an observation result represents an ADS-B aircraft state vector
+ * by checking for icao24 + lat_deg + lon_deg signature fields.
+ */
+function isAircraftObservation(rawData: any): boolean {
+  if (!rawData?.result) return false
+  const r = rawData.result
+  return typeof r.icao24 === 'string' && typeof r.lat_deg === 'number'
+    && typeof r.lon_deg === 'number'
+}
+
+/** Format altitude for display: meters → feet with label */
+function altFmt(m: any): string {
+  if (m == null || m === 'NaN' || (typeof m === 'number' && isNaN(m))) return '—'
+  const ft = Number(m) * 3.28084
+  return `${Number(m).toFixed(0)} m (${ft.toFixed(0)} ft)`
+}
+
+/** Format speed for display: m/s → knots */
+function spdFmt(ms: any): string {
+  if (ms == null || ms === 'NaN' || (typeof ms === 'number' && isNaN(ms))) return '—'
+  const kt = Number(ms) * 1.94384
+  return `${Number(ms).toFixed(1)} m/s (${kt.toFixed(0)} kt)`
+}
+
+/**
  * Map weather textDescription to an emoji icon for the popup.
  */
 function weatherIcon(desc: string | undefined): string {
@@ -4036,8 +4061,81 @@ watch(selectedFeature, (feat) => {
         </button>
       </div>
 
+      <!-- Aircraft observation detail panel (ADS-B / OpenSky) -->
+      <div v-if="selectedFeature && !dscCard && !isDeployedSystemLeaf(selectedFeature) && isAircraftObservation(selectedFeature.rawData)" class="detail-panel aircraft-detail-panel">
+        <div class="detail-header">
+          <span class="detail-type-badge" style="background-color: #3b82f6;">✈</span>
+          <strong>{{ selectedFeature.rawData.result.callsign?.trim() || selectedFeature.rawData.result.icao24 }}</strong>
+        </div>
+        <div class="aircraft-icao">ICAO24: {{ selectedFeature.rawData.result.icao24 }}</div>
+        <div class="aircraft-hero">
+          <div class="aircraft-hero-heading">
+            <span class="aircraft-heading-arrow" :style="{ transform: `rotate(${selectedFeature.rawData.result.true_track_deg || 0}deg)` }">▲</span>
+            <span>{{ typeof selectedFeature.rawData.result.true_track_deg === 'number' ? selectedFeature.rawData.result.true_track_deg.toFixed(1) + '°' : '—' }}</span>
+          </div>
+          <div class="aircraft-hero-alt">
+            {{ altFmt(selectedFeature.rawData.result.baro_altitude_m) }}
+          </div>
+          <div class="aircraft-hero-status">
+            {{ selectedFeature.rawData.result.on_ground === 'true' || selectedFeature.rawData.result.on_ground === true ? '🛬 On Ground' : '✈️ Airborne' }}
+          </div>
+        </div>
+        <div class="aircraft-fields">
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">🏎️ Speed</span>
+            <span>{{ spdFmt(selectedFeature.rawData.result.velocity_ms) }}</span>
+          </div>
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">📐 Heading</span>
+            <span>{{ typeof selectedFeature.rawData.result.true_track_deg === 'number' ? selectedFeature.rawData.result.true_track_deg.toFixed(1) + '°' : '—' }}</span>
+          </div>
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">⬆️ Baro Alt</span>
+            <span>{{ altFmt(selectedFeature.rawData.result.baro_altitude_m) }}</span>
+          </div>
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">🌍 Geo Alt</span>
+            <span>{{ altFmt(selectedFeature.rawData.result.geo_altitude_m) }}</span>
+          </div>
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">↕️ Vert Rate</span>
+            <span>{{ selectedFeature.rawData.result.vertical_rate_ms != null && selectedFeature.rawData.result.vertical_rate_ms !== 'NaN' ? Number(selectedFeature.rawData.result.vertical_rate_ms).toFixed(1) + ' m/s' : '—' }}</span>
+          </div>
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">🌐 Country</span>
+            <span>{{ selectedFeature.rawData.result.origin_country || '—' }}</span>
+          </div>
+          <div v-if="selectedFeature.rawData.result.squawk" class="aircraft-field">
+            <span class="aircraft-field-label">📟 Squawk</span>
+            <span>{{ selectedFeature.rawData.result.squawk }}</span>
+          </div>
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">📡 Source</span>
+            <span>{{ selectedFeature.rawData.result.position_source || 'ADS-B' }}</span>
+          </div>
+        </div>
+        <div class="aircraft-how-it-works">
+          <details>
+            <summary>How is this data collected?</summary>
+            <p>
+              Aircraft with Mode S transponders continuously broadcast their GPS position,
+              altitude, speed, and heading on 1090 MHz via ADS-B (Automatic Dependent
+              Surveillance–Broadcast). The OpenSky Network collects these broadcasts using
+              ~30,000 crowd-sourced ground receivers worldwide. This system queries the
+              OpenSky REST API every 5 minutes for all aircraft over southern Arizona.
+            </p>
+          </details>
+        </div>
+        <div v-if="selectedFeature.rawData.phenomenonTime" class="aircraft-time">
+          <i class="pi pi-clock"></i> {{ selectedFeature.rawData.phenomenonTime }}
+        </div>
+        <button class="detail-link-btn" @click="goToDetail">
+          <i class="pi pi-external-link"></i> View in Explorer
+        </button>
+      </div>
+
       <!-- Detail panel when a feature is selected (non-deployment features only) -->
-      <div v-if="selectedFeature && !dscCard && !isDeployedSystemLeaf(selectedFeature) && !isWeatherObservation(selectedFeature.rawData)" class="detail-panel">
+      <div v-if="selectedFeature && !dscCard && !isDeployedSystemLeaf(selectedFeature) && !isWeatherObservation(selectedFeature.rawData) && !isAircraftObservation(selectedFeature.rawData)" class="detail-panel">
         <template>
         <div class="detail-header">
           <span class="detail-type-badge" :style="{ backgroundColor: TYPE_COLORS[selectedFeature.resourceType] }">
@@ -4147,6 +4245,21 @@ watch(selectedFeature, (feat) => {
               </div>
               <div v-if="selectedFeature.rawData.result.rawMessage" class="popup-weather-metar">
                 {{ selectedFeature.rawData.result.rawMessage }}
+              </div>
+            </div>
+          </template>
+          <!-- Aircraft observation popup (ADS-B / OpenSky) -->
+          <template v-if="isAircraftObservation(selectedFeature.rawData)">
+            <div class="popup-aircraft-detail">
+              <div class="popup-aircraft-id">
+                {{ selectedFeature.rawData.result.callsign?.trim() || selectedFeature.rawData.result.icao24 }}
+                <span class="popup-aircraft-country">{{ selectedFeature.rawData.result.origin_country }}</span>
+              </div>
+              <div class="popup-aircraft-grid">
+                <span title="Altitude">⬆️ {{ altFmt(selectedFeature.rawData.result.baro_altitude_m) }}</span>
+                <span title="Speed">🏎️ {{ spdFmt(selectedFeature.rawData.result.velocity_ms) }}</span>
+                <span title="Heading">📐 {{ typeof selectedFeature.rawData.result.true_track_deg === 'number' ? selectedFeature.rawData.result.true_track_deg.toFixed(1) + '°' : '—' }}</span>
+                <span title="Status">{{ selectedFeature.rawData.result.on_ground === 'true' || selectedFeature.rawData.result.on_ground === true ? '🛬 Ground' : '✈️ Airborne' }}</span>
               </div>
             </div>
           </template>
@@ -5912,6 +6025,115 @@ watch(selectedFeature, (feat) => {
   word-break: break-all;
   margin-top: 0.3rem;
 }
+
+/* ═══ Aircraft Observation Popup & Detail Styles ═══ */
+.popup-aircraft-detail {
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  color: #334155;
+  line-height: 1.5;
+}
+.popup-aircraft-id {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #1e3a5f;
+}
+.popup-aircraft-country {
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-left: 0.3rem;
+}
+.popup-aircraft-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem 0.6rem;
+  font-size: 0.72rem;
+  color: #475569;
+  margin-top: 0.2rem;
+}
+
+/* Sidebar aircraft detail panel */
+.aircraft-detail-panel {
+  border-left: 3px solid #3b82f6;
+}
+.aircraft-icao {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+  letter-spacing: 0.04em;
+}
+.aircraft-hero {
+  text-align: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 0.5rem;
+}
+.aircraft-hero-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #3b82f6;
+}
+.aircraft-heading-arrow {
+  display: inline-block;
+  font-size: 1.5rem;
+  transition: transform 0.3s;
+  color: #3b82f6;
+}
+.aircraft-hero-alt {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin: 0.2rem 0;
+}
+.aircraft-hero-status {
+  font-size: 0.85rem;
+  color: #475569;
+  font-weight: 500;
+}
+.aircraft-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+.aircraft-field {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.78rem;
+  padding: 0.3rem 0;
+}
+.aircraft-field-label {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.aircraft-how-it-works {
+  margin-top: 0.6rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.4rem;
+}
+.aircraft-how-it-works summary {
+  font-size: 0.72rem;
+  color: #3b82f6;
+  cursor: pointer;
+  font-weight: 600;
+}
+.aircraft-how-it-works p {
+  font-size: 0.72rem;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0.3rem 0 0;
+}
+.aircraft-time {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+}
+.aircraft-time .pi { font-size: 0.7rem; }
 
 /* ═══ Deployed System Card — floating right-side panel ═══ */
 .dsc-float-panel {
