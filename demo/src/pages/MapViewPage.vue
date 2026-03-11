@@ -589,6 +589,22 @@ const satObsPointStyle = new Style({
 })
 
 /**
+ * Aircraft observation point style — rotated triangle showing heading.
+ * Uses true_track_deg from ADS-B state vectors for orientation.
+ */
+function aircraftObsPointStyle(headingDeg: number): Style {
+  return new Style({
+    image: new RegularShape({
+      points: 3,
+      radius: 8,
+      rotation: (headingDeg * Math.PI) / 180,
+      fill: new Fill({ color: '#3b82f6' }),
+      stroke: new Stroke({ color: '#1e3a5f', width: 1.5 }),
+    }),
+  })
+}
+
+/**
  * Create a per-station weather style with temperature label so stations
  * are immediately identifiable without clicking.
  */
@@ -1135,6 +1151,9 @@ function isLocationRelatedDatastream(ds: any): boolean {
   // Weather / surface observation datastreams (NWS, METAR, etc.)
   if (name.includes('surface') || name.includes('weather') || name.includes('metar')
     || name.includes('nws') || name.includes('awx')) return true
+  // Aircraft / ADS-B surveillance datastreams (OpenSky, AISHub, etc.)
+  if (name.includes('aircraft') || name.includes('adsb') || name.includes('ads-b')
+    || name.includes('state vector') || name.includes('flight')) return true
 
   const rawProps = ds.observedProperties
   const props: any[] = Array.isArray(rawProps) ? rawProps : rawProps ? [rawProps] : []
@@ -2821,13 +2840,17 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // Detect weather/surface observation datastreams for special handling
       const isWeatherDs = dsNameLower.includes('surface') || dsNameLower.includes('weather')
         || dsNameLower.includes('metar') || dsNameLower.includes('nws') || dsNameLower.includes('awx')
+      // Detect aircraft / ADS-B surveillance datastreams
+      const isAircraftDs = dsNameLower.includes('aircraft') || dsNameLower.includes('adsb')
+        || dsNameLower.includes('ads-b') || dsNameLower.includes('state vector')
       // Position/satellite DS: cap at obsLimit (default 500) to keep total
       // observation count manageable.
       // LOB DS in live mode: exactly 1 per sensor — cleanest visual, shows only
       // the very latest bearing from each MA system.
       // Weather DS: only latest observation per station (no track needed).
+      // Aircraft DS: fetch up to 200 to capture the full batch (~140 aircraft).
       // Other DS: use caller's obsLimit.
-      const effectiveLimit = (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : obsLimit
+      const effectiveLimit = (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : isAircraftDs ? 200 : obsLimit
 
       // OSH returns observations oldest-first and ignores sort params, so a
       // bare limit=N always returns the N OLDEST observations.  For position/
@@ -2844,7 +2867,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // non-LOB observations.  Fetch a larger batch so genuine LOBs survive
       // after filtering, then keep only the most recent ones so bearings
       // converge on the current target position.
-      const useTimeWindow = isLive || isPositionDs || isWeatherDs
+      const useTimeWindow = isLive || isPositionDs || isWeatherDs || isAircraftDs
       if (useTimeWindow) {
         const latestUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
           resultTime: 'latest',
@@ -2861,7 +2884,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         // (~92 min each → 4h ≈ 2.6 orbits).
         // LOB datastreams: 5-minute window for tight real-time view.
         // Weather datastreams: 2-hour window (obs ~hourly) to ensure latest.
-        const windowMinutes = isPositionDs ? 240 : isWeatherDs ? 120 : 5
+        const windowMinutes = isPositionDs ? 240 : isWeatherDs ? 120 : isAircraftDs ? 10 : 5
         const latestMs = new Date(latestTime).getTime()
         // Fetch limit: position DS gets 2× effective to allow burst dedup
         // headroom, LOB DS needs extra to overcome OSH scope-leak contamination,
@@ -2955,12 +2978,17 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
               const wxStyle = isWeatherDs
                 ? weatherStationStyle(obs.result?.stationId || '?', obs.result?.temperature_c ?? null)
                 : null
-              feature.setStyle(wxStyle || (isSatDs ? satObsPointStyle : getStyle('observationPoints')))
+              const acStyle = isAircraftDs
+                ? aircraftObsPointStyle(typeof obs.result?.true_track_deg === 'number' ? obs.result.true_track_deg : 0)
+                : null
+              feature.setStyle(wxStyle || acStyle || (isSatDs ? satObsPointStyle : getStyle('observationPoints')))
               feature.set('resourceType', 'observationPoints')
               feature.set('resourceId', obs.id || `${dsInfo.id}-obs-${pointCount}`)
               feature.set('resourceName', isWeatherDs && obs.result?.stationName
                 ? `${obs.result.stationId} — ${obs.result.stationName}`
-                : `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
+                : isAircraftDs && obs.result?.callsign
+                  ? `✈ ${obs.result.callsign.trim()} (${obs.result.icao24 || '?'})`
+                  : `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
               feature.set('enriched', true)
               feature.set('enrichmentSource', dsInfo.name)
               feature.set('rawData', {
@@ -3042,7 +3070,8 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
 
       // Track LineString from all parsed coordinates
       // Detect orbit/satellite tracks and apply distinct styling + date-line splitting
-      if (trackSource && trackCoords.length >= 2) {
+      // Skip track lines for aircraft DS — each obs is a different aircraft, not a time series
+      if (trackSource && trackCoords.length >= 2 && !isAircraftDs) {
         // Split track at antimeridian (±180° lon) crossings to avoid ugly wrapping lines
         const segments = splitTrackAtDateLine(trackCoords)
         for (const segment of segments) {
