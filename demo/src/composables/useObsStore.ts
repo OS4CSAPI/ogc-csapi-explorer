@@ -169,17 +169,33 @@ export function useObsStore() {
     }
 
     // Fetch in parallel (batched to avoid overwhelming server)
-    const batchSize = 8
+    // OSH SensorHub does not support numberMatched, so we fetch with a large
+    // limit and count items.  If a "next" link is present, more obs exist.
+    const COUNT_LIMIT = 10000
+    const batchSize = 4
     for (let i = 0; i < counts.value.length; i += batchSize) {
       const batch = counts.value.slice(i, i + batchSize)
       await Promise.all(
         batch.map(async (entry) => {
           const { ok, data } = await apiFetch(
-            `/datastreams/${entry.dsId}/observations?limit=0`
+            `/datastreams/${entry.dsId}/observations?limit=${COUNT_LIMIT}`
           )
           if (ok && data) {
-            entry.count = data.numberMatched ?? data.numberReturned ?? 0
-            entry.error = null
+            const items = data.items ?? []
+            const links = data.links ?? []
+            const hasNext = links.some((l: any) => l.rel === 'next')
+            // If numberMatched is present, prefer it; otherwise count items
+            if (typeof data.numberMatched === 'number' && data.numberMatched > 0) {
+              entry.count = data.numberMatched
+            } else {
+              entry.count = items.length
+            }
+            // Flag overflow: more obs exist beyond our limit
+            if (hasNext && entry.count === COUNT_LIMIT) {
+              entry.error = `${COUNT_LIMIT.toLocaleString()}+`
+            } else {
+              entry.error = null
+            }
           } else {
             entry.count = null
             entry.error = typeof data === 'string' ? data : `HTTP error`

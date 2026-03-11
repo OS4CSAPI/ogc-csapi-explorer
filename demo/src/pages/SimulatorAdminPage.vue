@@ -261,9 +261,16 @@ function getCountEntry(dsId: string) {
 function formatCount(dsId: string): string {
   const entry = getCountEntry(dsId)
   if (!entry) return '—'
-  if (entry.error) return entry.error
+  if (entry.count === null && entry.error) return entry.error  // real error
   if (entry.count === null) return '…'
+  // Overflow indicator (e.g. "10,000+") stored in error field
+  if (entry.error && entry.count > 0) return entry.error
   return entry.count.toLocaleString()
+}
+
+function isRealError(dsId: string): boolean {
+  const entry = getCountEntry(dsId)
+  return !!(entry?.error && entry.count === null)
 }
 
 // ── Health Check Console (terminal-style output) ────────────────────
@@ -519,7 +526,7 @@ onUnmounted(() => {
               class="obs-ds-row"
             >
               <span class="obs-ds-label">{{ ds.label }}</span>
-              <span class="obs-ds-count" :class="getCountEntry(ds.id)?.error ? 'obs-ds-error' : ''">
+              <span class="obs-ds-count" :class="isRealError(ds.id) ? 'obs-ds-error' : ''">
                 {{ formatCount(ds.id) }}
               </span>
             </div>
