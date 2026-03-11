@@ -11,6 +11,21 @@
 import { ref, computed } from 'vue'
 import { connection } from '../state'
 
+// ── CSAPI server (fallback when connection.baseUrl is not set, e.g. admin page) ──
+const CSAPI_BASE = 'https://os4csapi-osh.duckdns.org/sensorhub/api'
+const CSAPI_AUTH = 'Basic b3M0Y3NhcGk6b2djMTM0bW0='
+
+function getBaseUrl() {
+  return connection.baseUrl || CSAPI_BASE
+}
+
+function getAuthHeaders(): Record<string, string> {
+  if (connection.baseUrl && Object.keys(connection.authHeaders).length) {
+    return connection.authHeaders
+  }
+  return { Authorization: CSAPI_AUTH }
+}
+
 // ── Publisher datastream registry ────────────────────────────────────
 
 export interface DsEntry {
@@ -113,12 +128,12 @@ export function useObsStore() {
   // ── API helpers ──
 
   async function apiFetch(path: string, method = 'GET'): Promise<{ ok: boolean; status: number; data: any }> {
-    const url = connection.baseUrl + path
+    const url = getBaseUrl() + path
     try {
       const resp = await fetch(url, {
         method,
         headers: {
-          ...connection.authHeaders,
+          ...getAuthHeaders(),
           'Accept': 'application/json',
         },
       })
