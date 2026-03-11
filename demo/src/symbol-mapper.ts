@@ -190,6 +190,10 @@ const SYSTEM_RULES: KeywordRule[] = [
   // NOAA CO-OPS coastal water level stations, fixed pier/platform installations
   { keywords: ['co-ops', 'coops', 'tide', 'water level', 'coastal obs'],
     identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
+  // USGS Water Monitoring Station → Friend Sensor Emplaced
+  // USGS stream gauges measuring discharge / gage height — same sensor family as NDBC/CO-OPS
+  { keywords: ['usgs', 'nwis', 'streamflow', 'stream gauge', 'gage height', 'discharge'],
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
   // Sea / marine / vessel (generic)
   { keywords: ['marine', 'ocean', 'sea', 'ship', 'vessel', 'boat'],
     identity: SI_NEUTRAL, symbolSet: SS_SEA_SURFACE, entity: ENT_SEA_SURFACE },
