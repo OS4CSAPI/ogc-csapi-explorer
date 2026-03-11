@@ -7,6 +7,7 @@ import Panel from 'primevue/panel'
 import ProgressSpinner from 'primevue/progressspinner'
 import Password from 'primevue/password'
 import { useHealthCheck } from '../composables/useHealthCheck'
+import { useObsStore } from '../composables/useObsStore'
 
 // ── Client-side auth gate ────────────────────────────────────────────────
 const AUTH_USER = 'admin'
@@ -228,12 +229,49 @@ const hcGrouped = computed(() => {
   return groups
 })
 
-// ── Smoke Test Console (terminal-style output) ──────────────────────
+// ── Observation Store ────────────────────────────────────────────────
+const {
+  counts: obsCounts,
+  fetching: obsFetching,
+  purging: obsPurging,
+  purgeLog: obsPurgeLog,
+  lastFetched: obsLastFetched,
+  totalObs,
+  groupTotals,
+  fetchCounts: obsFetchCounts,
+  purgeAll: obsPurgeAll,
+  PUBLISHER_GROUPS,
+} = useObsStore()
+
+const showPurgeConfirm = ref(false)
+
+function confirmPurge() {
+  showPurgeConfirm.value = true
+}
+
+async function executePurge() {
+  showPurgeConfirm.value = false
+  await obsPurgeAll()
+}
+
+function getCountEntry(dsId: string) {
+  return obsCounts.value.find(c => c.dsId === dsId) ?? null
+}
+
+function formatCount(dsId: string): string {
+  const entry = getCountEntry(dsId)
+  if (!entry) return '—'
+  if (entry.error) return entry.error
+  if (entry.count === null) return '…'
+  return entry.count.toLocaleString()
+}
+
+// ── Health Check Console (terminal-style output) ────────────────────
 const consoleOutput = computed(() => {
   if (!hcChecks.value.length) return ''
   const lines: string[] = []
   lines.push('=' .repeat(60))
-  lines.push('  OS4CSAPI Production Smoke Test')
+  lines.push('  OS4CSAPI Production Health Check')
   if (hcTimestamp.value) {
     lines.push(`  ${hcTimestamp.value}`)
   }
@@ -251,9 +289,9 @@ const consoleOutput = computed(() => {
   lines.push('-'.repeat(60))
   const s = hcSummary.value
   if (s.failed > 0) {
-    lines.push('  ❌  SMOKE TEST FAILED')
+    lines.push('  ❌  HEALTH CHECK FAILED')
   } else {
-    lines.push('  ✅  SMOKE TEST PASSED')
+    lines.push('  ✅  HEALTH CHECK PASSED')
   }
   lines.push(`  ${s.passed} passed, ${s.failed} failed, ${s.skipped} skipped  (${s.total} total, ${hcElapsed.value}ms)`)
   lines.push('-'.repeat(60))
@@ -430,11 +468,86 @@ onUnmounted(() => {
       </div>
     </Panel>
 
-    <!-- Smoke Test Console -->
-    <Panel header="Smoke Test Console" class="mb-4">
+    <!-- Observation Store -->
+    <Panel header="Observation Store" class="mb-4">
+      <div class="obs-toolbar">
+        <Button
+          label="Fetch Counts"
+          icon="pi pi-database"
+          severity="info"
+          :loading="obsFetching"
+          @click="obsFetchCounts"
+        />
+        <Button
+          label="Purge All Publisher Obs"
+          icon="pi pi-trash"
+          severity="danger"
+          :loading="obsPurging"
+          :disabled="obsFetching || obsPurging"
+          @click="confirmPurge"
+        />
+        <span v-if="obsLastFetched && !obsFetching" class="obs-meta">
+          Last fetched {{ obsLastFetched }} &mdash; {{ totalObs.toLocaleString() }} total
+        </span>
+      </div>
+
+      <!-- Purge Confirmation -->
+      <div v-if="showPurgeConfirm" class="purge-confirm mt-2">
+        <Message severity="warn" :closable="false">
+          <strong>Confirm Purge:</strong> This will permanently delete ALL observations from
+          {{ PUBLISHER_GROUPS.reduce((n, g) => n + g.datastreams.length, 0) }} publisher datastreams
+          (ISS, NWS, NDBC, CO-OPS). Simulator data is not affected.
+        </Message>
+        <div class="purge-actions mt-2">
+          <Button label="Yes, Purge Everything" icon="pi pi-exclamation-triangle" severity="danger" @click="executePurge" />
+          <Button label="Cancel" severity="secondary" text @click="showPurgeConfirm = false" />
+        </div>
+      </div>
+
+      <!-- Group counts grid -->
+      <div v-if="obsCounts.length && !obsFetching" class="obs-groups mt-2">
+        <div v-for="group in PUBLISHER_GROUPS" :key="group.name" class="obs-group-card">
+          <div class="obs-group-header">
+            <i :class="group.icon"></i>
+            <span class="obs-group-name">{{ group.name }}</span>
+            <span class="obs-group-total">{{ (groupTotals[group.name] ?? 0).toLocaleString() }}</span>
+          </div>
+          <div class="obs-ds-list">
+            <div
+              v-for="ds in group.datastreams"
+              :key="ds.id"
+              class="obs-ds-row"
+            >
+              <span class="obs-ds-label">{{ ds.label }}</span>
+              <span class="obs-ds-count" :class="getCountEntry(ds.id)?.error ? 'obs-ds-error' : ''">
+                {{ formatCount(ds.id) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Running spinner -->
+      <div v-if="obsFetching" class="hc-running mt-2">
+        <ProgressSpinner style="width: 20px; height: 20px" /> Fetching observation counts…
+      </div>
+
+      <!-- Purge log -->
+      <div v-if="obsPurgeLog.length" class="console-terminal mt-2">
+        <pre class="console-pre">{{ obsPurgeLog.join('\n') }}</pre>
+      </div>
+
+      <!-- No data yet -->
+      <div v-if="!obsCounts.length && !obsFetching && !obsPurgeLog.length" class="placeholder-text mt-2">
+        Click "Fetch Counts" to query observation counts for all publisher datastreams.
+      </div>
+    </Panel>
+
+    <!-- Production Health Check -->
+    <Panel header="Production Health Check" class="mb-4">
       <div class="hc-toolbar">
         <Button
-          label="Run Smoke Test"
+          label="Run Health Check"
           icon="pi pi-play"
           severity="info"
           :loading="hcRunning"
@@ -468,7 +581,7 @@ onUnmounted(() => {
 
       <!-- Placeholder when no results yet -->
       <div v-if="!hcChecks.length && !hcRunning" class="placeholder-text mt-2">
-        Click "Run Smoke Test" to check all {{ Object.keys(hcGrouped).length || '' }} server resources.
+        Click "Run Health Check" to verify all {{ Object.keys(hcGrouped).length || '' }} server resources.
       </div>
     </Panel>
 
@@ -826,5 +939,96 @@ ssh ubuntu@129.80.248.53 "sudo systemctl restart simulator"</pre>
   margin: 0;
   white-space: pre;
   overflow-x: auto;
+}
+
+/* ── Observation Store ────────────────────────────────────── */
+.obs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.obs-meta {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.obs-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+.obs-group-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.obs-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.obs-group-name {
+  flex: 1;
+}
+
+.obs-group-total {
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.9rem;
+  color: #0369a1;
+}
+
+.obs-ds-list {
+  padding: 0.25rem 0;
+}
+
+.obs-ds-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.obs-ds-row:hover {
+  background: #e2e8f0;
+}
+
+.obs-ds-label {
+  color: #475569;
+}
+
+.obs-ds-count {
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-weight: 600;
+  color: #334155;
+  min-width: 4rem;
+  text-align: right;
+}
+
+.obs-ds-error {
+  color: #dc2626;
+  font-weight: 400;
+  font-family: inherit;
+}
+
+.purge-confirm {
+  border-left: 3px solid #f59e0b;
+  padding-left: 0.5rem;
+}
+
+.purge-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 </style>
