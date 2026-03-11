@@ -210,64 +210,91 @@ export function useObsStore() {
 
   // ── Purge observations ──
 
-  async function purgeAll() {
+  /** Core purge logic — deletes all obs from the given datastreams */
+  async function purgeDatastreams(targets: DsEntry[], label: string) {
     purging.value = true
     purgeLog.value = []
     let totalDeleted = 0
 
-    for (const group of PUBLISHER_GROUPS) {
-      for (const ds of group.datastreams) {
-        purgeLog.value.push(`Purging ${ds.label} (${ds.id})…`)
+    purgeLog.value.push(`── Purging: ${label} (${targets.length} datastream${targets.length > 1 ? 's' : ''}) ──`)
+    purgeLog.value.push('')
 
-        // Attempt collection delete: DELETE /datastreams/{id}/observations
-        const { ok, status } = await apiFetch(
-          `/datastreams/${ds.id}/observations`,
-          'DELETE'
-        )
+    for (const ds of targets) {
+      purgeLog.value.push(`Purging ${ds.label} (${ds.id})…`)
 
-        if (ok || status === 204) {
-          // Find the count entry to see how many were removed
-          const entry = counts.value.find(c => c.dsId === ds.id)
-          const n = entry?.count ?? '?'
-          purgeLog.value.push(`  ✅ ${ds.label}: deleted ${n} observations`)
-          if (entry) {
-            totalDeleted += entry.count ?? 0
-            entry.count = 0
-          }
-        } else if (status === 405) {
-          // Server doesn't support bulk delete — fall back to iterative
-          purgeLog.value.push(`  ⚠️ ${ds.label}: bulk delete not supported, deleting individually…`)
-          let deleted = 0
-          let hasMore = true
-          while (hasMore) {
-            const { ok: listOk, data } = await apiFetch(
-              `/datastreams/${ds.id}/observations?limit=100`
-            )
-            if (!listOk || !data?.items?.length) {
-              hasMore = false
-              break
-            }
-            for (const obs of data.items) {
-              const obsId = obs.id ?? obs['@id']
-              if (!obsId) continue
-              await apiFetch(`/observations/${obsId}`, 'DELETE')
-              deleted++
-            }
-            if (data.items.length < 100) hasMore = false
-          }
-          purgeLog.value.push(`  ✅ ${ds.label}: deleted ${deleted} observations (individually)`)
-          totalDeleted += deleted
-          const entry = counts.value.find(c => c.dsId === ds.id)
-          if (entry) entry.count = 0
-        } else {
-          purgeLog.value.push(`  ❌ ${ds.label}: failed (HTTP ${status})`)
+      // Attempt collection delete: DELETE /datastreams/{id}/observations
+      const { ok, status } = await apiFetch(
+        `/datastreams/${ds.id}/observations`,
+        'DELETE'
+      )
+
+      if (ok || status === 204) {
+        const entry = counts.value.find(c => c.dsId === ds.id)
+        const n = entry?.count ?? '?'
+        purgeLog.value.push(`  ✅ ${ds.label}: deleted ${n} observations`)
+        if (entry) {
+          totalDeleted += entry.count ?? 0
+          entry.count = 0
+          entry.error = null
         }
+      } else if (status === 405) {
+        // Server doesn't support bulk delete — fall back to iterative
+        purgeLog.value.push(`  ⚠️ ${ds.label}: bulk delete not supported, deleting individually…`)
+        let deleted = 0
+        let hasMore = true
+        while (hasMore) {
+          const { ok: listOk, data } = await apiFetch(
+            `/datastreams/${ds.id}/observations?limit=100`
+          )
+          if (!listOk || !data?.items?.length) {
+            hasMore = false
+            break
+          }
+          for (const obs of data.items) {
+            const obsId = obs.id ?? obs['@id']
+            if (!obsId) continue
+            await apiFetch(`/observations/${obsId}`, 'DELETE')
+            deleted++
+          }
+          if (data.items.length < 100) hasMore = false
+        }
+        purgeLog.value.push(`  ✅ ${ds.label}: deleted ${deleted} observations (individually)`)
+        totalDeleted += deleted
+        const entry = counts.value.find(c => c.dsId === ds.id)
+        if (entry) { entry.count = 0; entry.error = null }
+      } else {
+        purgeLog.value.push(`  ❌ ${ds.label}: failed (HTTP ${status})`)
       }
     }
 
     purgeLog.value.push('')
     purgeLog.value.push(`Done — ${totalDeleted.toLocaleString()} total observations purged`)
     purging.value = false
+  }
+
+  /** Purge all publisher observations */
+  async function purgeAll() {
+    const allDs = PUBLISHER_GROUPS.flatMap(g => g.datastreams)
+    await purgeDatastreams(allDs, 'All Publishers')
+  }
+
+  /** Purge all observations for a single publisher group (e.g. 'ISS') */
+  async function purgeGroup(groupName: string) {
+    const group = PUBLISHER_GROUPS.find(g => g.name === groupName)
+    if (!group) return
+    await purgeDatastreams(group.datastreams, group.name)
+  }
+
+  /** Purge observations for a single datastream by ID */
+  async function purgeDatastream(dsId: string) {
+    // Find the DS entry across all groups
+    for (const group of PUBLISHER_GROUPS) {
+      const ds = group.datastreams.find(d => d.id === dsId)
+      if (ds) {
+        await purgeDatastreams([ds], ds.label)
+        return
+      }
+    }
   }
 
   return {
@@ -280,6 +307,8 @@ export function useObsStore() {
     groupTotals,
     fetchCounts,
     purgeAll,
+    purgeGroup,
+    purgeDatastream,
     PUBLISHER_GROUPS,
   }
 }

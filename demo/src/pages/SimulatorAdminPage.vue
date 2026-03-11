@@ -240,18 +240,42 @@ const {
   groupTotals,
   fetchCounts: obsFetchCounts,
   purgeAll: obsPurgeAll,
+  purgeGroup: obsPurgeGroup,
+  purgeDatastream: obsPurgeDatastream,
   PUBLISHER_GROUPS,
 } = useObsStore()
 
 const showPurgeConfirm = ref(false)
+const purgeTarget = ref<{ type: 'all' } | { type: 'group'; name: string } | { type: 'ds'; id: string; label: string } | null>(null)
 
-function confirmPurge() {
+function confirmPurge(target: typeof purgeTarget.value) {
+  purgeTarget.value = target
   showPurgeConfirm.value = true
+}
+
+function purgeDescription(): string {
+  if (!purgeTarget.value) return ''
+  if (purgeTarget.value.type === 'all') {
+    const n = PUBLISHER_GROUPS.reduce((s, g) => s + g.datastreams.length, 0)
+    return `ALL observations from ${n} publisher datastreams (ISS, NWS, NDBC, CO-OPS)`
+  }
+  if (purgeTarget.value.type === 'group') {
+    const gName = purgeTarget.value.name
+    const g = PUBLISHER_GROUPS.find(pg => pg.name === gName)
+    const n = g?.datastreams.length ?? '?'
+    return `all observations from ${gName} (${n} datastreams)`
+  }
+  return `all observations from ${purgeTarget.value.label}`
 }
 
 async function executePurge() {
   showPurgeConfirm.value = false
-  await obsPurgeAll()
+  const t = purgeTarget.value
+  purgeTarget.value = null
+  if (!t) return
+  if (t.type === 'all') await obsPurgeAll()
+  else if (t.type === 'group') await obsPurgeGroup(t.name)
+  else await obsPurgeDatastream(t.id)
 }
 
 function getCountEntry(dsId: string) {
@@ -491,7 +515,7 @@ onUnmounted(() => {
           severity="danger"
           :loading="obsPurging"
           :disabled="obsFetching || obsPurging"
-          @click="confirmPurge"
+          @click="confirmPurge({ type: 'all' })"
         />
         <span v-if="obsLastFetched && !obsFetching" class="obs-meta">
           Last fetched {{ obsLastFetched }} &mdash; {{ totalObs.toLocaleString() }} total
@@ -501,12 +525,12 @@ onUnmounted(() => {
       <!-- Purge Confirmation -->
       <div v-if="showPurgeConfirm" class="purge-confirm mt-2">
         <Message severity="warn" :closable="false">
-          <strong>Confirm Purge:</strong> This will permanently delete ALL observations from
-          {{ PUBLISHER_GROUPS.reduce((n, g) => n + g.datastreams.length, 0) }} publisher datastreams
-          (ISS, NWS, NDBC, CO-OPS). Simulator data is not affected.
+          <strong>Confirm Purge:</strong> This will permanently delete
+          {{ purgeDescription() }}.
+          Simulator data is not affected.
         </Message>
         <div class="purge-actions mt-2">
-          <Button label="Yes, Purge Everything" icon="pi pi-exclamation-triangle" severity="danger" @click="executePurge" />
+          <Button label="Yes, Purge" icon="pi pi-exclamation-triangle" severity="danger" @click="executePurge" />
           <Button label="Cancel" severity="secondary" text @click="showPurgeConfirm = false" />
         </div>
       </div>
@@ -518,6 +542,16 @@ onUnmounted(() => {
             <i :class="group.icon"></i>
             <span class="obs-group-name">{{ group.name }}</span>
             <span class="obs-group-total">{{ (groupTotals[group.name] ?? 0).toLocaleString() }}</span>
+            <Button
+              icon="pi pi-trash"
+              severity="danger"
+              text
+              size="small"
+              :disabled="obsPurging || (groupTotals[group.name] ?? 0) === 0"
+              @click="confirmPurge({ type: 'group', name: group.name })"
+              v-tooltip.top="'Purge ' + group.name"
+              class="obs-purge-btn"
+            />
           </div>
           <div class="obs-ds-list">
             <div
@@ -529,6 +563,15 @@ onUnmounted(() => {
               <span class="obs-ds-count" :class="isRealError(ds.id) ? 'obs-ds-error' : ''">
                 {{ formatCount(ds.id) }}
               </span>
+              <Button
+                icon="pi pi-times"
+                severity="danger"
+                text
+                size="small"
+                :disabled="obsPurging || (getCountEntry(ds.id)?.count ?? 0) === 0"
+                @click="confirmPurge({ type: 'ds', id: ds.id, label: ds.label })"
+                class="obs-purge-ds-btn"
+              />
             </div>
           </div>
         </div>
@@ -1037,5 +1080,23 @@ ssh ubuntu@129.80.248.53 "sudo systemctl restart simulator"</pre>
 .purge-actions {
   display: flex;
   gap: 0.5rem;
+}
+
+.obs-purge-btn {
+  margin-left: auto;
+  padding: 0.15rem 0.35rem;
+  font-size: 0.75rem;
+}
+
+.obs-purge-ds-btn {
+  padding: 0.1rem 0.25rem;
+  font-size: 0.7rem;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.obs-ds-row:hover .obs-purge-ds-btn {
+  opacity: 1;
 }
 </style>
