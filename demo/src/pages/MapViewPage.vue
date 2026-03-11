@@ -617,12 +617,13 @@ function weatherStationStyle(stationId: string, tempC: number | null): Style {
 
 /**
  * Detect whether an observation result represents a weather/surface observation
- * (NWS, METAR, etc.) by checking for temperature_c + stationId signature fields.
+ * (NWS, METAR, etc.) by checking for temperature_c or temp_c + stationId signature fields.
  */
 function isWeatherObservation(rawData: any): boolean {
   if (!rawData?.result) return false
-  return typeof rawData.result.temperature_c === 'number'
-    && typeof rawData.result.stationId === 'string'
+  const r = rawData.result
+  return (typeof r.temperature_c === 'number' || typeof r.temp_c === 'number')
+    && typeof r.stationId === 'string'
 }
 
 /**
@@ -1133,7 +1134,7 @@ function isLocationRelatedDatastream(ds: any): boolean {
     || name.includes('bearing')) return true
   // Weather / surface observation datastreams (NWS, METAR, etc.)
   if (name.includes('surface') || name.includes('weather') || name.includes('metar')
-    || name.includes('nws')) return true
+    || name.includes('nws') || name.includes('awx')) return true
 
   const rawProps = ds.observedProperties
   const props: any[] = Array.isArray(rawProps) ? rawProps : rawProps ? [rawProps] : []
@@ -1325,7 +1326,7 @@ async function buildSystemLocationCache(): Promise<void> {
         const pass = nm.includes('lob') || nm.includes('bearing')
           || nm.includes('position') || nm.includes('location')
           || nm.includes('surface') || nm.includes('weather')
-          || nm.includes('metar') || nm.includes('nws')
+          || nm.includes('metar') || nm.includes('nws') || nm.includes('awx')
         return pass
       })
       .map((ds: any) => ({
@@ -2819,7 +2820,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       const isLobDs = dsNameLower.includes('lob') || dsNameLower.includes('bearing')
       // Detect weather/surface observation datastreams for special handling
       const isWeatherDs = dsNameLower.includes('surface') || dsNameLower.includes('weather')
-        || dsNameLower.includes('metar') || dsNameLower.includes('nws')
+        || dsNameLower.includes('metar') || dsNameLower.includes('nws') || dsNameLower.includes('awx')
       // Position/satellite DS: cap at obsLimit (default 500) to keep total
       // observation count manageable.
       // LOB DS in live mode: exactly 1 per sensor — cleanest visual, shows only
@@ -3955,10 +3956,10 @@ watch(selectedFeature, (feat) => {
         <div class="weather-hero">
           <span class="weather-hero-icon">{{ weatherIcon(selectedFeature.rawData.result.textDescription) }}</span>
           <div class="weather-hero-temp">
-            {{ wxFmt(selectedFeature.rawData.result.temperature_c, 1) }}°C
-            <span class="weather-hero-temp-f">({{ wxFmt(selectedFeature.rawData.result.temperature_c * 9 / 5 + 32, 1) }}°F)</span>
+            {{ wxFmt(selectedFeature.rawData.result.temperature_c ?? selectedFeature.rawData.result.temp_c, 1) }}°C
+            <span class="weather-hero-temp-f">({{ wxFmt((selectedFeature.rawData.result.temperature_c ?? selectedFeature.rawData.result.temp_c) * 9 / 5 + 32, 1) }}°F)</span>
           </div>
-          <div class="weather-hero-desc">{{ selectedFeature.rawData.result.textDescription || 'N/A' }}</div>
+          <div class="weather-hero-desc">{{ selectedFeature.rawData.result.textDescription || selectedFeature.rawData.result.flight_category || 'N/A' }}</div>
         </div>
         <div class="weather-fields">
           <div class="weather-field">
@@ -3967,11 +3968,11 @@ watch(selectedFeature, (feat) => {
           </div>
           <div class="weather-field">
             <span class="weather-field-label">🌡️ Dewpoint</span>
-            <span>{{ wxFmt(selectedFeature.rawData.result.dewpoint_c, 1) }}°C</span>
+            <span>{{ wxFmt(selectedFeature.rawData.result.dewpoint_c ?? selectedFeature.rawData.result.dewp_c, 1) }}°C</span>
           </div>
           <div class="weather-field">
             <span class="weather-field-label">💨 Wind</span>
-            <span>{{ wxFmt(selectedFeature.rawData.result.wind_speed_kmh) }} km/h {{ windArrow(selectedFeature.rawData.result.wind_direction_deg) }}</span>
+            <span>{{ wxFmt(selectedFeature.rawData.result.wind_speed_kmh ?? (selectedFeature.rawData.result.wind_speed_kt ? selectedFeature.rawData.result.wind_speed_kt * 1.852 : undefined)) }} km/h {{ windArrow(selectedFeature.rawData.result.wind_direction_deg ?? selectedFeature.rawData.result.wind_dir_deg) }}</span>
           </div>
           <div v-if="wxFmt(selectedFeature.rawData.result.wind_gust_kmh) !== '—'" class="weather-field">
             <span class="weather-field-label">💨 Gusts</span>
@@ -3979,11 +3980,11 @@ watch(selectedFeature, (feat) => {
           </div>
           <div class="weather-field">
             <span class="weather-field-label">📊 Pressure</span>
-            <span>{{ wxFmt(selectedFeature.rawData.result.barometric_pressure_pa / 100, 1) }} hPa</span>
+            <span>{{ wxFmt(selectedFeature.rawData.result.barometric_pressure_pa ? selectedFeature.rawData.result.barometric_pressure_pa / 100 : selectedFeature.rawData.result.slp_hpa, 1) }} hPa</span>
           </div>
           <div class="weather-field">
             <span class="weather-field-label">👁️ Visibility</span>
-            <span>{{ wxFmt(selectedFeature.rawData.result.visibility_m / 1000, 1) }} km</span>
+            <span>{{ wxFmt(selectedFeature.rawData.result.visibility_m ? selectedFeature.rawData.result.visibility_m / 1000 : (selectedFeature.rawData.result.visibility_sm ? selectedFeature.rawData.result.visibility_sm * 1.609 : undefined), 1) }} km</span>
           </div>
           <div class="weather-field">
             <span class="weather-field-label">⛰️ Elevation</span>
@@ -4101,14 +4102,14 @@ watch(selectedFeature, (feat) => {
             <div class="popup-weather-detail">
               <div class="popup-weather-conditions">
                 <span class="popup-weather-icon">{{ weatherIcon(selectedFeature.rawData.result.textDescription) }}</span>
-                <span class="popup-weather-desc">{{ selectedFeature.rawData.result.textDescription || 'N/A' }}</span>
+                <span class="popup-weather-desc">{{ selectedFeature.rawData.result.textDescription || selectedFeature.rawData.result.flight_category || 'N/A' }}</span>
               </div>
               <div class="popup-weather-temp">
-                {{ wxFmt(selectedFeature.rawData.result.temperature_c, 1) }}°C
-                <span class="popup-weather-temp-f">({{ wxFmt(selectedFeature.rawData.result.temperature_c * 9 / 5 + 32, 1) }}°F)</span>
+                {{ wxFmt(selectedFeature.rawData.result.temperature_c ?? selectedFeature.rawData.result.temp_c, 1) }}°C
+                <span class="popup-weather-temp-f">({{ wxFmt((selectedFeature.rawData.result.temperature_c ?? selectedFeature.rawData.result.temp_c) * 9 / 5 + 32, 1) }}°F)</span>
               </div>
               <div class="popup-weather-grid">
-                <span title="Wind">💨 {{ wxFmt(selectedFeature.rawData.result.wind_speed_kmh) }} km/h {{ windArrow(selectedFeature.rawData.result.wind_direction_deg) }}</span>
+                <span title="Wind">💨 {{ wxFmt(selectedFeature.rawData.result.wind_speed_kmh ?? (selectedFeature.rawData.result.wind_speed_kt ? selectedFeature.rawData.result.wind_speed_kt * 1.852 : undefined)) }} km/h {{ windArrow(selectedFeature.rawData.result.wind_direction_deg ?? selectedFeature.rawData.result.wind_dir_deg) }}</span>
                 <span title="Humidity">💧 {{ wxFmt(selectedFeature.rawData.result.humidity_pct) }}%</span>
               </div>
               <div v-if="selectedFeature.rawData.result.rawMessage" class="popup-weather-metar">

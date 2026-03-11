@@ -163,7 +163,7 @@ const SYSTEM_RULES: KeywordRule[] = [
   // Weather / METOC / meteorological sensor → EW Radar/Sensor (letter SIDC)
   // Doctrinal SIDC: 10034500001111010000 (METOC SS unsupported by milsymbol)
   // Renders: blue Friend circle + antenna + measurement lines
-  { keywords: ['weather', 'metoc', 'meteorolog', 'asos', 'nws', 'metar'],
+  { keywords: ['weather', 'metoc', 'meteorolog', 'asos', 'nws', 'metar', 'awx', 'aviation weather'],
     identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
     letterSidc: 'SFGPEWRH-------' },
   // Radar / lidar → keep as land equipment

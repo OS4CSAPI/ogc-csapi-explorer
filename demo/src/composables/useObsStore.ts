@@ -91,6 +91,17 @@ export const PUBLISHER_GROUPS: PublisherGroup[] = [
       { id: '056g', label: 'CO-OPS 8443970 Boston' },
     ],
   },
+  {
+    name: 'AWX METAR',
+    icon: 'pi pi-cloud',
+    datastreams: [
+      { id: '057g', label: 'AWX KTUS Tucson' },
+      { id: '0580', label: 'AWX KDMA Davis-Monthan' },
+      { id: '058g', label: 'AWX KFHU Ft Huachuca' },
+      { id: '0590', label: 'AWX KLUF Luke AFB' },
+      { id: '059g', label: 'AWX KPHX Sky Harbor' },
+    ],
+  },
 ]
 
 // ── Types ────────────────────────────────────────────────────────────

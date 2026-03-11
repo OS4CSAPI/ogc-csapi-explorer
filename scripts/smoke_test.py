@@ -63,6 +63,12 @@ EXPECTED_SYSTEMS = {
     "05ag": "CO-OPS 8726520 St. Petersburg",
     "05b0": "CO-OPS 9414290 San Francisco",
     "05bg": "CO-OPS 8443970 Boston",
+    # ── AviationWeather METAR stations ──
+    "05c0": "AWX KTUS Tucson Intl",
+    "05cg": "AWX KDMA Davis-Monthan",
+    "05d0": "AWX KFHU Fort Huachuca",
+    "05dg": "AWX KLUF Luke AFB",
+    "05e0": "AWX KPHX Sky Harbor",
 }
 
 EXPECTED_DEPLOYMENTS = {
@@ -71,6 +77,7 @@ EXPECTED_DEPLOYMENTS = {
     "04mg": "NWS Weather Demo",
     "04sg": "NDBC Buoy Demo",
     "0500": "CO-OPS Coastal Demo",
+    "053g": "AWX METAR Demo",
 }
 
 # Datastreams grouped by feed for clearer reporting
@@ -139,6 +146,12 @@ DATASTREAMS = {
     "CO-OPS 8726520 Coastal Obs":       {"id": "055g", "system": "05ag"},
     "CO-OPS 9414290 Coastal Obs":       {"id": "0560", "system": "05b0"},
     "CO-OPS 8443970 Coastal Obs":       {"id": "056g", "system": "05bg"},
+    # ── AviationWeather METAR stations ──
+    "AWX KTUS METAR Obs":              {"id": "057g", "system": "05c0"},
+    "AWX KDMA METAR Obs":              {"id": "0580", "system": "05cg"},
+    "AWX KFHU METAR Obs":              {"id": "058g", "system": "05d0"},
+    "AWX KLUF METAR Obs":              {"id": "0590", "system": "05dg"},
+    "AWX KPHX METAR Obs":              {"id": "059g", "system": "05e0"},
 }
 
 # These DS we MUST have fresh observations for (active feeds)
@@ -176,6 +189,11 @@ CRITICAL_DATASTREAMS = [
     "CO-OPS 8726520 Coastal Obs",
     "CO-OPS 9414290 Coastal Obs",
     "CO-OPS 8443970 Coastal Obs",
+    "AWX KTUS METAR Obs",
+    "AWX KDMA METAR Obs",
+    "AWX KFHU METAR Obs",
+    "AWX KLUF METAR Obs",
+    "AWX KPHX METAR Obs",
 ]
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -348,7 +366,7 @@ def check_datastream_obs(ds_name: str, ds_info: dict, is_critical: bool, verbose
         else:
             c.ok(f"fresh — {age_min:.1f} min old")
 
-    elif "NWS" in ds_name or "NDBC" in ds_name or "CO-OPS" in ds_name:
+    elif "NWS" in ds_name or "NDBC" in ds_name or "CO-OPS" in ds_name or "AWX" in ds_name:
         max_age = 120 if strict else 480
         if age_min > max_age:
             c.fail(f"Stale — {age_min:.0f} min old (max {max_age} min)")

@@ -5,7 +5,7 @@
  * - Global endpoints (/datastreams, /systems, /deployments)
  * - 29 individual systems
  * - 5 deployments
- * - 32 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS)
+ * - 37 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR)
  *
  * READ-ONLY: no writes to the server.
  */
@@ -61,6 +61,12 @@ const EXPECTED_SYSTEMS: Record<string, string> = {
   '05ag': 'CO-OPS 8726520 St. Petersburg',
   '05b0': 'CO-OPS 9414290 San Francisco',
   '05bg': 'CO-OPS 8443970 Boston',
+  // AviationWeather METAR stations
+  '05c0': 'AWX KTUS Tucson Intl',
+  '05cg': 'AWX KDMA Davis-Monthan',
+  '05d0': 'AWX KFHU Fort Huachuca',
+  '05dg': 'AWX KLUF Luke AFB',
+  '05e0': 'AWX KPHX Sky Harbor',
 }
 
 const EXPECTED_DEPLOYMENTS: Record<string, string> = {
@@ -69,6 +75,7 @@ const EXPECTED_DEPLOYMENTS: Record<string, string> = {
   '04mg': 'NWS Weather Demo',
   '04sg': 'NDBC Buoy Demo',
   '0500': 'CO-OPS Coastal Demo',
+  '053g': 'AWX METAR Demo',
 }
 
 interface DsInfo {
@@ -112,6 +119,12 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'CO-OPS 8726520 Coastal Obs': { id: '055g', system: '05ag' },
   'CO-OPS 9414290 Coastal Obs': { id: '0560', system: '05b0' },
   'CO-OPS 8443970 Coastal Obs': { id: '056g', system: '05bg' },
+  // AviationWeather METAR stations
+  'AWX KTUS METAR Obs':         { id: '057g', system: '05c0' },
+  'AWX KDMA METAR Obs':         { id: '0580', system: '05cg' },
+  'AWX KFHU METAR Obs':         { id: '058g', system: '05d0' },
+  'AWX KLUF METAR Obs':         { id: '0590', system: '05dg' },
+  'AWX KPHX METAR Obs':         { id: '059g', system: '05e0' },
 }
 
 // ── Staleness thresholds (minutes) ──
@@ -120,6 +133,7 @@ const THRESHOLDS = {
   NWS: 480,   // 8 hours — publisher may run periodically
   NDBC: 480,  // 8 hours — publisher runs hourly
   COOPS: 480, // 8 hours — publisher runs every 6 min
+  AWX: 480,   // 8 hours — publisher runs every 5 min
   SIM: 360,   // 6 hours — simulator may restart
 }
 
@@ -301,6 +315,16 @@ export function useHealthCheck() {
         const airStr = airTemp == null || (typeof airTemp === 'string' && airTemp === 'NaN') ? '—' : `${airTemp}°C`
         pass(c, `${Math.round(ageMin)} min old, wl=${wlStr} air=${airStr}`)
       }
+    } else if (dsName.includes('AWX')) {
+      if (ageMin > THRESHOLDS.AWX) {
+        fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.AWX})`)
+      } else {
+        const result = obs.result ?? {}
+        const temp = result.temp_c
+        const fltCat = result.flight_category ?? '—'
+        const tempStr = temp == null || (typeof temp === 'string' && temp === 'NaN') ? '—' : `${temp}°C`
+        pass(c, `${Math.round(ageMin)} min old, ${tempStr} ${fltCat}`)
+      }
     } else {
       if (ageMin > THRESHOLDS.SIM) {
         fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.SIM})`)
@@ -322,9 +346,9 @@ export function useHealthCheck() {
     try {
       // Global endpoints (parallel)
       await Promise.all([
-        checkGlobalEndpoint('datastreams', '/datastreams', 40),
-        checkGlobalEndpoint('systems', '/systems', 24),
-        checkGlobalEndpoint('deployments', '/deployments', 5),
+        checkGlobalEndpoint('datastreams', '/datastreams', 45),
+        checkGlobalEndpoint('systems', '/systems', 29),
+        checkGlobalEndpoint('deployments', '/deployments', 6),
       ])
 
       // Systems (parallel)
