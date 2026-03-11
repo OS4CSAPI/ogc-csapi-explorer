@@ -3,9 +3,9 @@
  *
  * Checks all known resources on the OS4CSAPI server:
  * - Global endpoints (/datastreams, /systems, /deployments)
- * - 29 individual systems
- * - 5 deployments
- * - 37 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR)
+ * - 30 individual systems
+ * - 8 deployments
+ * - 38 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky)
  *
  * READ-ONLY: no writes to the server.
  */
@@ -67,6 +67,8 @@ const EXPECTED_SYSTEMS: Record<string, string> = {
   '05d0': 'AWX KFHU Fort Huachuca',
   '05dg': 'AWX KLUF Luke AFB',
   '05e0': 'AWX KPHX Sky Harbor',
+  // OpenSky ADS-B feed
+  '05eg': 'OpenSky ADS-B Feed',
 }
 
 const EXPECTED_DEPLOYMENTS: Record<string, string> = {
@@ -76,6 +78,8 @@ const EXPECTED_DEPLOYMENTS: Record<string, string> = {
   '04sg': 'NDBC Buoy Demo',
   '0500': 'CO-OPS Coastal Demo',
   '053g': 'AWX METAR Demo',
+  '0570': 'Airspace Tracking Demo',
+  '057g': 'OpenSky ADS-B Feed',
 }
 
 interface DsInfo {
@@ -125,6 +129,8 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'AWX KFHU METAR Obs':         { id: '058g', system: '05d0' },
   'AWX KLUF METAR Obs':         { id: '0590', system: '05dg' },
   'AWX KPHX METAR Obs':         { id: '059g', system: '05e0' },
+  // OpenSky ADS-B feed
+  'OpenSky ADS-B States':         { id: '05a0', system: '05eg' },
 }
 
 // ── Staleness thresholds (minutes) ──
@@ -134,6 +140,7 @@ const THRESHOLDS = {
   NDBC: 480,  // 8 hours — publisher runs hourly
   COOPS: 480, // 8 hours — publisher runs every 6 min
   AWX: 480,   // 8 hours — publisher runs every 5 min
+  OPENSKY: 480, // 8 hours — publisher runs every 5 min
   SIM: 360,   // 6 hours — simulator may restart
 }
 
@@ -325,6 +332,16 @@ export function useHealthCheck() {
         const tempStr = temp == null || (typeof temp === 'string' && temp === 'NaN') ? '—' : `${temp}°C`
         pass(c, `${Math.round(ageMin)} min old, ${tempStr} ${fltCat}`)
       }
+    } else if (dsName.includes('OpenSky')) {
+      if (ageMin > THRESHOLDS.OPENSKY) {
+        fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.OPENSKY})`)
+      } else {
+        const result = obs.result ?? {}
+        const callsign = (result.callsign ?? '?').trim()
+        const alt = result.baro_altitude_m
+        const altStr = alt != null && alt !== 'NaN' ? `${alt}m` : '—'
+        pass(c, `${Math.round(ageMin)} min old, ${callsign} alt=${altStr}`)
+      }
     } else {
       if (ageMin > THRESHOLDS.SIM) {
         fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.SIM})`)
@@ -346,9 +363,9 @@ export function useHealthCheck() {
     try {
       // Global endpoints (parallel)
       await Promise.all([
-        checkGlobalEndpoint('datastreams', '/datastreams', 45),
-        checkGlobalEndpoint('systems', '/systems', 29),
-        checkGlobalEndpoint('deployments', '/deployments', 6),
+        checkGlobalEndpoint('datastreams', '/datastreams', 46),
+        checkGlobalEndpoint('systems', '/systems', 30),
+        checkGlobalEndpoint('deployments', '/deployments', 8),
       ])
 
       // Systems (parallel)

@@ -1,7 +1,7 @@
 /**
  * Observation Store Monitor — counts and purges publisher observations
  *
- * Groups publisher datastreams by feed (ISS, NWS, NDBC, CO-OPS) and provides:
+ * Groups publisher datastreams by feed (ISS, NWS, NDBC, CO-OPS, AWX, OpenSky) and provides:
  * - Per-datastream observation count via CSAPI `numberMatched` (limit=0)
  * - Bulk purge: DELETE all observations in selected publisher datastreams
  *
@@ -100,6 +100,13 @@ export const PUBLISHER_GROUPS: PublisherGroup[] = [
       { id: '058g', label: 'AWX KFHU Ft Huachuca' },
       { id: '0590', label: 'AWX KLUF Luke AFB' },
       { id: '059g', label: 'AWX KPHX Sky Harbor' },
+    ],
+  },
+  {
+    name: 'OpenSky ADS-B',
+    icon: 'pi pi-send',
+    datastreams: [
+      { id: '05a0', label: 'OpenSky ADS-B States' },
     ],
   },
 ]

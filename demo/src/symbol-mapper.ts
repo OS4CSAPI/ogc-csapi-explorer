@@ -157,8 +157,8 @@ const SYSTEM_RULES: KeywordRule[] = [
   // Rotary wing aircraft
   { keywords: ['helicopter', 'rotor', 'rotary'],
     identity: SI_FRIEND, symbolSet: SS_AIR, entity: ENT_ROTARY },
-  // Fixed wing aircraft
-  { keywords: ['aircraft', 'airplane', 'fixed-wing', 'plane'],
+  // Fixed wing aircraft / ADS-B feed
+  { keywords: ['aircraft', 'airplane', 'fixed-wing', 'plane', 'opensky', 'ads-b', 'adsb'],
     identity: SI_FRIEND, symbolSet: SS_AIR, entity: ENT_FIXED_WING },
   // Weather / METOC / meteorological sensor → EW Radar/Sensor (letter SIDC)
   // Doctrinal SIDC: 10034500001111010000 (METOC SS unsupported by milsymbol)

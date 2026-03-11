@@ -69,6 +69,8 @@ EXPECTED_SYSTEMS = {
     "05d0": "AWX KFHU Fort Huachuca",
     "05dg": "AWX KLUF Luke AFB",
     "05e0": "AWX KPHX Sky Harbor",
+    # ── OpenSky ADS-B feed ──
+    "05eg": "OpenSky ADS-B Feed",
 }
 
 EXPECTED_DEPLOYMENTS = {
@@ -78,6 +80,8 @@ EXPECTED_DEPLOYMENTS = {
     "04sg": "NDBC Buoy Demo",
     "0500": "CO-OPS Coastal Demo",
     "053g": "AWX METAR Demo",
+    "0570": "Airspace Tracking Demo",
+    "057g": "OpenSky ADS-B Feed",
 }
 
 # Datastreams grouped by feed for clearer reporting
@@ -152,6 +156,8 @@ DATASTREAMS = {
     "AWX KFHU METAR Obs":              {"id": "058g", "system": "05d0"},
     "AWX KLUF METAR Obs":              {"id": "0590", "system": "05dg"},
     "AWX KPHX METAR Obs":              {"id": "059g", "system": "05e0"},
+    # ── OpenSky ADS-B feed ──
+    "OpenSky ADS-B States":              {"id": "05a0", "system": "05eg"},
 }
 
 # These DS we MUST have fresh observations for (active feeds)
@@ -194,6 +200,7 @@ CRITICAL_DATASTREAMS = [
     "AWX KFHU METAR Obs",
     "AWX KLUF METAR Obs",
     "AWX KPHX METAR Obs",
+    "OpenSky ADS-B States",
 ]
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -264,8 +271,8 @@ def check_global_datastreams(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 45:
-        c.fail(f"Only {count} datastreams (expected >= 45)")
+    if count < 46:
+        c.fail(f"Only {count} datastreams (expected >= 46)")
     else:
         c.ok(f"{count} datastreams")
     return c
@@ -278,8 +285,8 @@ def check_global_systems(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 29:
-        c.fail(f"Only {count} systems (expected >= 29)")
+    if count < 30:
+        c.fail(f"Only {count} systems (expected >= 30)")
     else:
         c.ok(f"{count} systems")
     return c
@@ -292,8 +299,8 @@ def check_global_deployments(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 5:
-        c.fail(f"Only {count} deployments (expected >= 5)")
+    if count < 8:
+        c.fail(f"Only {count} deployments (expected >= 8)")
     else:
         c.ok(f"{count} deployments")
     return c
@@ -397,6 +404,18 @@ def check_datastream_obs(ds_name: str, ds_info: dict, is_critical: bool, verbose
                     c.ok(f"fresh — {age_min:.0f} min old, {temp_str}{wl_str}")
                 else:
                     c.ok(f"fresh — {age_min:.0f} min old, {temp_str}")
+
+    # OpenSky ADS-B feed (aircraft state vectors)
+    elif "OpenSky" in ds_name:
+        max_age = 120 if strict else 480
+        if age_min > max_age:
+            c.fail(f"Stale — {age_min:.0f} min old (max {max_age} min)")
+        else:
+            result = obs.get("result", {})
+            callsign = result.get("callsign", "?").strip()
+            alt = result.get("baro_altitude_m")
+            alt_str = f"{alt}m" if alt is not None and alt != "NaN" else "—"
+            c.ok(f"fresh — {age_min:.0f} min old, {callsign} alt={alt_str}")
 
     # Simulator feeds (LOB, SENREP, Location Estimate)
     else:
