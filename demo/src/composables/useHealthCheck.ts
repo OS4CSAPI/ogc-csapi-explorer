@@ -3,9 +3,9 @@
  *
  * Checks all known resources on the OS4CSAPI server:
  * - Global endpoints (/datastreams, /systems, /deployments)
- * - 38 individual systems (incl. 8 USGS Water)
- * - 10 deployments (incl. USGS Water, NIMS Imagery)
- * - 62 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky, 16 USGS Water, 8 NIMS Imagery)
+ * - 39 individual systems (incl. 8 USGS Water, 1 USGS Earthquake)
+ * - 12 deployments (incl. USGS Water, NIMS Imagery, USGS Earthquake)
+ * - 63 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky, 16 USGS Water, 8 NIMS Imagery, 1 USGS Earthquake)
  *
  * READ-ONLY: no writes to the server.
  */
@@ -78,6 +78,8 @@ const EXPECTED_SYSTEMS: Record<string, string> = {
   '0580': 'USGS 05051300 Bois De Sioux Doran',
   '058g': 'USGS 12439500 Okanogan River Oroville',
   '0590': 'USGS 02135000 Little Pee Dee Galivants Ferry',
+  // USGS Earthquake feed
+  '059g': 'USGS Earthquake Feed',
 }
 
 const EXPECTED_DEPLOYMENTS: Record<string, string> = {
@@ -91,6 +93,9 @@ const EXPECTED_DEPLOYMENTS: Record<string, string> = {
   '04hg': 'OpenSky ADS-B Feed',
   '04qg': 'USGS Water Monitoring Demo',
   '04vg': 'USGS NIMS Imagery Demo',
+  // USGS Earthquake feed
+  '054g': 'Seismic Monitoring Demo',
+  '0550': 'USGS Earthquake Feed',
 }
 
 interface DsInfo {
@@ -169,6 +174,8 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'NIMS 05051300 Imagery':          { id: '0590', system: '0580' },
   'NIMS 12439500 Imagery':          { id: '059g', system: '058g' },
   'NIMS 02135000 Imagery':          { id: '05a0', system: '0590' },
+  // USGS Earthquake feed
+  'USGS Earthquake Events':          { id: '05ag', system: '059g' },
 }
 
 // ── Staleness thresholds (minutes) ──
@@ -181,6 +188,7 @@ const THRESHOLDS = {
   OPENSKY: 480, // 8 hours — publisher runs every 5 min
   USGS: 480,  // 8 hours — publisher runs every 15 min
   NIMS: 480,  // 8 hours — imagery publisher runs every 15 min
+  EARTHQUAKE: 480, // 8 hours — earthquake publisher runs every 60s
   SIM: 360,   // 6 hours — simulator may restart
 }
 
@@ -391,6 +399,16 @@ export function useHealthCheck() {
         const thumb = result.thumbUrl ? '✓' : '—'
         pass(c, `${Math.round(ageMin)} min old, ${fn}, thumb=${thumb}`)
       }
+    } else if (dsName.includes('Earthquake')) {
+      if (ageMin > THRESHOLDS.EARTHQUAKE) {
+        fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.EARTHQUAKE})`)
+      } else {
+        const result = obs.result ?? {}
+        const mag = result.magnitude
+        const place = result.place ?? '—'
+        const magStr = mag != null && mag !== 'NaN' ? `M${mag}` : '—'
+        pass(c, `${Math.round(ageMin)} min old, ${magStr} ${place}`)
+      }
     } else if (dsName.includes('USGS')) {
       if (ageMin > THRESHOLDS.USGS) {
         fail(c, `Stale — ${Math.round(ageMin)} min (max ${THRESHOLDS.USGS})`)
@@ -427,9 +445,9 @@ export function useHealthCheck() {
     try {
       // Global endpoints (parallel)
       await Promise.all([
-        checkGlobalEndpoint('datastreams', '/datastreams', 70),
-        checkGlobalEndpoint('systems', '/systems', 38),
-        checkGlobalEndpoint('deployments', '/deployments', 10),
+        checkGlobalEndpoint('datastreams', '/datastreams', 71),
+        checkGlobalEndpoint('systems', '/systems', 39),
+        checkGlobalEndpoint('deployments', '/deployments', 12),
       ])
 
       // Systems (parallel)
