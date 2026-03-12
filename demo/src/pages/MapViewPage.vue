@@ -423,7 +423,7 @@ async function submitSenrep(): Promise<void> {
       senrepForm.value.sourceFixObsId ? `fixId=${senrepForm.value.sourceFixObsId}` : '',
     ].filter(Boolean).join(' | ')
 
-    // Map form data → doctrinal SENREP 20-field schema (matches DS 044g)
+    // Map form data → doctrinal SENREP 20-field schema (matches DS 04g0)
     const obs = {
       phenomenonTime: now.toISOString(),
       resultTime: now.toISOString(),
@@ -2511,7 +2511,8 @@ function clearEphemeralLocFeatures(source: VectorSource | undefined) {
 }
 
 // ── SENREP DS ID (Monitoring Team A sensor reports) ────────────────
-const SENREP_DS_ID = '044g'
+// Updated 2026-03-11 after H2 MVStore rebuild (was 044g → now NWS KDAY)
+const SENREP_DS_ID = '04g0'
 
 /**
  * SENREP marker style — red diamond

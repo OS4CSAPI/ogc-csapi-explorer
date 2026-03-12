@@ -32,10 +32,11 @@ const AUTH_HEADER = 'Basic ' + btoa('os4csapi:ogc134mm')
 const POLL_INTERVAL_MS = 10_000
 
 // Datastream IDs
-const LOB_DS_IDS  = ['04c0', '04cg', '04d0']  // MA-1, MA-2, MA-3
+// Updated 2026-03-11 after H2 MVStore rebuild
+const LOB_DS_IDS  = ['04hg', '04lg', '04pg']  // MA-1, MA-2, MA-3
 const LOB_LABELS  = ['AZ-MA-1', 'AZ-MA-2', 'AZ-MA-3']
 const LOB_COLORS  = ['#f97316', '#facc15', '#a78bfa'] // orange, yellow, purple
-const SENREP_DS   = '044g'
+const SENREP_DS   = '04g0'
 
 // Sensor positions (authoritative deployment coordinates)
 const SENSORS = [
