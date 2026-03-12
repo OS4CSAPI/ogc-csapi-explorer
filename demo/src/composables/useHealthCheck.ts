@@ -4,7 +4,7 @@
  * Checks all known resources on the OS4CSAPI server:
  * - Global endpoints (/datastreams, /systems, /deployments)
  * - 39 individual systems (incl. 8 USGS Water, 1 USGS Earthquake)
- * - 12 deployments (incl. USGS Water, NIMS Imagery, USGS Earthquake)
+ * - 12 deployments (10 top-level + 2 sub-deployments; incl. USGS Water, NIMS Imagery, USGS Earthquake)
  * - 63 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky, 16 USGS Water, 8 NIMS Imagery [enriched 2026-03-11], 1 USGS Earthquake)
  *
  * READ-ONLY: no writes to the server.
@@ -449,7 +449,7 @@ export function useHealthCheck() {
       await Promise.all([
         checkGlobalEndpoint('datastreams', '/datastreams', 71),
         checkGlobalEndpoint('systems', '/systems', 39),
-        checkGlobalEndpoint('deployments', '/deployments', 12),
+        checkGlobalEndpoint('deployments', '/deployments', 10),
       ])
 
       // Systems (parallel)
