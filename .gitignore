@@ -32,3 +32,7 @@ __pycache__/
 
 # Python virtual environments
 .venv*/
+
+# Environment files with secrets
+.env
+simulator/.env

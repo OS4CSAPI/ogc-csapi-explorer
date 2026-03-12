@@ -11,20 +11,38 @@ No dependencies beyond the Python stdlib.
 import base64
 import json
 import math
+import os
 import random
 import ssl
+import sys
 import time
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  Server configuration
+#  Server configuration (from environment variables)
 # ═══════════════════════════════════════════════════════════════════════════
 
-BASE_URL  = "https://os4csapi-osh.duckdns.org/sensorhub/api"
-AUTH_USER = "os4csapi"
-AUTH_PASS = "ogc134mm"
+_OSH_ADDRESS = os.environ.get("OSH_ADDRESS", "")
+_OSH_USER    = os.environ.get("OSH_USER", "")
+_OSH_PASS    = os.environ.get("OSH_PASS", "")
+
+if not _OSH_ADDRESS or not _OSH_USER or not _OSH_PASS:
+    print(
+        "ERROR: Missing required environment variables.\n"
+        "Set OSH_ADDRESS, OSH_USER, and OSH_PASS before starting.\n"
+        "Example:\n"
+        '  OSH_ADDRESS="my-osh-server.example.com"\n'
+        '  OSH_USER="admin"\n'
+        '  OSH_PASS="secret"\n',
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+
+BASE_URL  = f"https://{_OSH_ADDRESS}/sensorhub/api"
+AUTH_USER = _OSH_USER
+AUTH_PASS = _OSH_PASS
 
 _ssl_ctx = ssl.create_default_context()
 _ssl_ctx.check_hostname = False

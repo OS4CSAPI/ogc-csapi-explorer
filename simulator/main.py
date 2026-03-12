@@ -19,6 +19,8 @@ from pydantic import BaseModel, Field
 
 # Import the simulator engine (shared module)
 from engine import (
+    AUTH_PASS,
+    AUTH_USER,
     BASE_URL,
     NODES,
     UAV_WAYPOINTS,
@@ -446,7 +448,7 @@ def clear_observations(ds_ids: list[str], protected_ds_ids: list[str] | None = N
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
-    auth = "Basic " + b64.b64encode(b"os4csapi:ogc134mm").decode()
+    auth = "Basic " + b64.b64encode(f"{AUTH_USER}:{AUTH_PASS}".encode()).decode()
 
     total_deleted = 0
     errors = 0
@@ -533,7 +535,7 @@ def clear_sampling_features() -> dict[str, int]:
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
-    auth = "Basic " + b64.b64encode(b"os4csapi:ogc134mm").decode()
+    auth = "Basic " + b64.b64encode(f"{AUTH_USER}:{AUTH_PASS}".encode()).decode()
 
     SENREP_SF_UID_PREFIX = "urn:os4csapi:track:"
 
