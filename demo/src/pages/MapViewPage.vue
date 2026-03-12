@@ -210,7 +210,7 @@ const LIVE_REFRESH_MS = 8000                // 8s cycle (scaled for 15-20 concur
 const INITIAL_POLL_STAGGER_MS = 3000        // Random delay before first live poll (thundering herd prevention)
 
 // ── Simulator / Reset Controls ────────────────────────────────
-const SIM_API = 'https://os4csapi-osh.duckdns.org/simulator'
+const SIM_API = 'https://129-80-248-53.sslip.io/simulator'
 const simRunning = ref(false)
 const simStarting = ref(false)
 const simStopping = ref(false)

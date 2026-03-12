@@ -128,7 +128,7 @@
         <text x="600" y="105" text-anchor="middle" class="ad-node-title" fill="#4ade80">Server</text>
         <text x="600" y="123" text-anchor="middle" class="ad-node-sub" fill="#86efac">Connected Sensors API</text>
         <text x="600" y="140" text-anchor="middle" class="ad-node-sub-detail" fill="#94a3b8">OpenSensorHub</text>
-        <text x="600" y="155" text-anchor="middle" class="ad-node-sub-detail" fill="#64748b">os4csapi-osh.duckdns.org</text>
+        <text x="600" y="155" text-anchor="middle" class="ad-node-sub-detail" fill="#64748b">129-80-248-53.sslip.io</text>
       </g>
 
       <!-- ═══════════════════════════════════════════════════════════

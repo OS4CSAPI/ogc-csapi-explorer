@@ -26,7 +26,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api\/52north/, ''),
       },
       '/api/osh': {
-        target: 'https://os4csapi-osh.duckdns.org/sensorhub/api',
+        target: 'https://129-80-248-53.sslip.io/sensorhub/api',
         changeOrigin: true,
         secure: true,
         rewrite: (path) => path.replace(/^\/api\/osh/, ''),

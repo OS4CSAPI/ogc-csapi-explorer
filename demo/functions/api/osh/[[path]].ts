@@ -2,7 +2,7 @@
  * Cloudflare Pages Function — reverse proxy for OSH SensorHub.
  *
  * Matches all requests to /api/osh/* and forwards them to the actual
- * OSH server at https://os4csapi-osh.duckdns.org/sensorhub/api/*
+ * OSH server at https://129-80-248-53.sslip.io/sensorhub/api/*
  * (Oracle Cloud, Caddy reverse proxy with basic auth + auto-HTTPS),
  * passing through query strings and request bodies.
  *
@@ -57,7 +57,7 @@ export const onRequest: PagesFunction = async (context) => {
     const raw = params.path
     const suffix = Array.isArray(raw) ? raw.join('/') : (raw || '')
     const qs = new URL(request.url).search
-    const target = `https://os4csapi-osh.duckdns.org/sensorhub/api/${suffix}${qs}`
+    const target = `https://129-80-248-53.sslip.io/sensorhub/api/${suffix}${qs}`
 
     // Forward with the real Caddy credentials (always use upstream auth)
     const fwdHeaders = new Headers()

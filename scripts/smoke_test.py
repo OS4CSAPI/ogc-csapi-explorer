@@ -23,7 +23,7 @@ from base64 import b64encode
 from datetime import datetime, timezone
 
 # ── Server config ────────────────────────────────────────────────────
-BASE = "https://os4csapi-osh.duckdns.org/sensorhub/api"
+BASE = "https://129-80-248-53.sslip.io/sensorhub/api"
 AUTH = b64encode(b"os4csapi:ogc134mm").decode()
 HEADERS = {
     "Authorization": f"Basic {AUTH}",

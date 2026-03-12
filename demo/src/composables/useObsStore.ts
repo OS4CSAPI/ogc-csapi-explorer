@@ -12,7 +12,7 @@ import { ref, computed } from 'vue'
 import { connection } from '../state'
 
 // ── CSAPI server (fallback when connection.baseUrl is not set, e.g. admin page) ──
-const CSAPI_BASE = 'https://os4csapi-osh.duckdns.org/sensorhub/api'
+const CSAPI_BASE = 'https://129-80-248-53.sslip.io/sensorhub/api'
 const CSAPI_AUTH = 'Basic b3M0Y3NhcGk6b2djMTM0bW0='
 
 function getBaseUrl() {

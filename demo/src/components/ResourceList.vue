@@ -452,8 +452,8 @@ async function fetchNestedSystems() {
 }
 
 function extractProxyPath(absoluteUrl: string): string {
-  // The server returns absolute URLs like https://os4csapi-osh.duckdns.org/sensorhub/api/systems?offset=10
-  // connection.baseUrl is like https://os4csapi-osh.duckdns.org/sensorhub/api (via proxy or direct)
+  // The server returns absolute URLs like https://129-80-248-53.sslip.io/sensorhub/api/systems?offset=10
+  // connection.baseUrl is like https://129-80-248-53.sslip.io/sensorhub/api (via proxy or direct)
   // We need to strip the origin AND the base path prefix, keeping only the
   // resource path + query (e.g., /systems?offset=10) that apiFetch can use.
   try {

@@ -36,7 +36,7 @@ function logout() {
 
 // ── Simulator service URL ────────────────────────────────────────────────
 // Default to Oracle VM (behind Caddy reverse proxy)
-const defaultUrl = 'https://os4csapi-osh.duckdns.org/simulator'
+const defaultUrl = 'https://129-80-248-53.sslip.io/simulator'
 const serviceUrl = ref(defaultUrl)
 const urlInput = ref(defaultUrl)
 
