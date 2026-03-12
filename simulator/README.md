@@ -141,7 +141,6 @@ The simulator will **fail-fast on startup** if any of these are missing.
 | `engine.py` | Core simulation logic — server config, geo math, HTTP helpers, observation & estimate builders, datastream discovery, WLS triangulation |
 | `main.py` | FastAPI wrapper — `SimState`, simulation/localizer workers, observation clearing, REST endpoints |
 | `Dockerfile` | Container build (Python 3.12-slim, uvicorn on port 8080) |
-| `fly.toml` | Fly.io deployment config |
 | `.env.example` | Environment variable template |
 | `requirements.txt` | Python dependencies (FastAPI, uvicorn, pydantic) |
 
@@ -193,15 +192,6 @@ RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
-```
-
-### Fly.io
-
-Secrets are set via the Fly CLI:
-
-```bash
-fly secrets set OSH_ADDRESS=my-osh-server.example.com OSH_USER=admin OSH_PASS=secret
-fly deploy
 ```
 
 ## Notes
