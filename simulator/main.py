@@ -174,13 +174,14 @@ def simulation_worker(st: SimState):
 
         # ── Verify SENREP infrastructure ─────────────────────────────
         try:
-            resp = api_get("datastreams/044g")
-            if resp and resp.get("id") == "044g":
-                print("[sim] SENREP infrastructure verified (DS 044g exists)")
+            senrep_id = SENREP_DS_IDS[0]  # primary SENREP DS
+            resp = api_get(f"datastreams/{senrep_id}")
+            if resp and resp.get("id") == senrep_id:
+                print(f"[sim] SENREP infrastructure verified (DS {senrep_id} exists)")
             else:
-                print("[sim] WARNING: SENREP DS 044g not found — report submission will fail")
+                print(f"[sim] WARNING: SENREP DS {senrep_id} not found — report submission will fail")
         except Exception:
-            print("[sim] WARNING: Could not verify SENREP DS 044g")
+            print(f"[sim] WARNING: Could not verify SENREP DS {SENREP_DS_IDS[0]}")
 
         # ── Discover datastream IDs ──────────────────────────────────
         with st.lock:
@@ -396,17 +397,20 @@ LOCALIZER_RESIDUAL_CAP = 500   # metres — reject wild intersections
 LOCALIZER_MIN_LOBS = 2         # need at least 2 bearings for a fix
 
 # Detection-capabilities datastreams — NEVER cleared (static config, auto-seeded)
-DETECTION_DS_IDS = ["04dg", "04e0", "04eg"]  # MA-1, MA-2, MA-3
+# Updated 2026-03-11 after H2 MVStore rebuild
+DETECTION_DS_IDS = ["04k0", "04o0", "04s0"]  # MA-1, MA-2, MA-3
 
 # SENREP datastreams — cleared only on /reset (Tier 3)
-SENREP_DS_IDS = ["044g"]  # original (v1.1 DS 04i0 was corrupted/deleted 2026-03-10)
+# Updated 2026-03-11 after H2 MVStore rebuild
+SENREP_DS_IDS = ["04g0", "04sg"]  # senrep + senrep_v1_1
 
 # Sim/localizer datastreams — cleared on /clear (Tier 2)
+# Updated 2026-03-11 after H2 MVStore rebuild
 SIM_DS_IDS = [
-    "0430", "043g", "04c0", "0440", "0410", "041g", "042g",  # MA-1 (04c0 = LOB)
-    "0450", "045g", "04cg", "046g", "0470", "047g", "0480",  # MA-2 (04cg = LOB)
-    "048g", "0490", "04d0", "04a0", "04ag", "04b0", "04bg",  # MA-3 (04d0 = LOB)
-    "04l0",  # Location Estimate (localizer v3 — re-bootstrapped 2026-03-10)
+    "04gg", "04h0", "04hg", "04i0", "04ig", "04j0", "04jg",  # MA-1 (04hg = LOB)
+    "04kg", "04l0", "04lg", "04m0", "04mg", "04n0", "04ng",  # MA-2 (04lg = LOB)
+    "04og", "04p0", "04pg", "04q0", "04qg", "04r0", "04rg",  # MA-3 (04pg = LOB)
+    "04t0",  # Location Estimate (localizer v3 — re-bootstrapped 2026-03-10)
 ]
 
 # Combined list (for reference)

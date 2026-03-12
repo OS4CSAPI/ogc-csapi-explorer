@@ -304,10 +304,11 @@ MIN_LOBS              = 2
 
 
 # System IDs for the 3 MA nodes (for LOB datastream discovery)
+# Updated 2026-03-11 after H2 MVStore rebuild
 SYSTEM_IDS = {
-    "AZ-MA-1": "0420",
-    "AZ-MA-2": "0490",
-    "AZ-MA-3": "049g",
+    "AZ-MA-1": "04f0",
+    "AZ-MA-2": "04fg",
+    "AZ-MA-3": "04g0",
 }
 
 
