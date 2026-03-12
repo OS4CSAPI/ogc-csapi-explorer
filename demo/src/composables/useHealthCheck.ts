@@ -94,8 +94,8 @@ const EXPECTED_DEPLOYMENTS: Record<string, string> = {
   '04qg': 'USGS Water Monitoring Demo',
   '055g': 'USGS NIMS Imagery Demo',
   // USGS Earthquake feed
-  '054g': 'Seismic Monitoring Demo',
-  '0550': 'USGS Earthquake Feed',
+  '05ag': 'Seismic Monitoring Demo',
+  '05b0': 'USGS Earthquake Feed',
 }
 
 interface DsInfo {
@@ -175,7 +175,7 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'NIMS 12439500 Imagery':          { id: '05e0', system: '058g' },
   'NIMS 02135000 Imagery':          { id: '05eg', system: '0590' },
   // USGS Earthquake feed
-  'USGS Earthquake Events':          { id: '05ag', system: '059g' },
+  'USGS Earthquake Events':          { id: '05f0', system: '059g' },
 }
 
 // ── Staleness thresholds (minutes) ──
