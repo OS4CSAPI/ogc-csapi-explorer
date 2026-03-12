@@ -120,6 +120,47 @@ const activeLayers = ref<Record<string, boolean>>({
   senrepMarkers: true,
 })
 
+// ── Observation Source Toggle (per-publisher filtering) ─────────────────
+const OBS_SOURCE_DEFS: Array<{ key: string; label: string; color: string; icon: string }> = [
+  { key: 'src-iss',        label: 'ISS / Satellite',  color: '#a855f7', icon: '🛰️' },
+  { key: 'src-nws',        label: 'NWS Weather',      color: '#60a5fa', icon: '🌤️' },
+  { key: 'src-ndbc',       label: 'NDBC Buoys',       color: '#06b6d4', icon: '🌊' },
+  { key: 'src-coops',      label: 'CO-OPS Tides',     color: '#14b8a6', icon: '🌊' },
+  { key: 'src-metar',      label: 'Aviation METAR',   color: '#f59e0b', icon: '✈️' },
+  { key: 'src-opensky',    label: 'OpenSky ADS-B',    color: '#ec4899', icon: '✈️' },
+  { key: 'src-water',      label: 'USGS Water',       color: '#22d3ee', icon: '💧' },
+  { key: 'src-nims',       label: 'USGS NIMS',        color: '#a78bfa', icon: '📷' },
+  { key: 'src-earthquake', label: 'Earthquakes',      color: '#ef4444', icon: '🌋' },
+]
+const OBS_SOURCE_MAP = Object.fromEntries(OBS_SOURCE_DEFS.map(d => [d.key, d]))
+
+/** Classify a datastream name into a source category key. */
+function classifyObsSource(dsName: string): string {
+  const n = dsName.toLowerCase()
+  if (n.includes('sgp4') || n.includes('orbital') || n.includes('orbit')
+    || (n.includes('iss') && (n.includes('position') || n.includes('track')))) return 'src-iss'
+  if (n.includes('earthquake') || n.includes('seismic') || n.includes('quake')) return 'src-earthquake'
+  if (n.includes('aircraft') || n.includes('adsb') || n.includes('ads-b')
+    || n.includes('state vector') || n.includes('opensky')) return 'src-opensky'
+  if (n.includes('nws')) return 'src-nws'
+  if (n.includes('ndbc') || (n.includes('buoy') && !n.includes('cam'))) return 'src-ndbc'
+  if (n.includes('co-ops') || n.includes('coops') || n.includes('tide') || n.includes('coastal')) return 'src-coops'
+  if (n.includes('metar') || n.includes('awx') || n.includes('aviation')) return 'src-metar'
+  if (n.includes('discharge') || n.includes('gage height')
+    || n.includes('streamflow') || (n.includes('usgs') && n.includes('water'))) return 'src-water'
+  if (n.includes('nims') || n.includes('station image')) return 'src-nims'
+  // Generic position/location fallback — still ISS-like
+  if (n.includes('position') || n.includes('location') || n.includes('gps')) return 'src-iss'
+  return 'src-other'
+}
+
+// Per-source visibility + counts (dynamically populated during observation loading)
+const activeObsSources = ref<Record<string, boolean>>({})
+const obsSourceCounts = ref<Record<string, number>>({})
+
+// Invisible style used to hide features when their source is toggled off
+const HIDDEN_STYLE = new Style({})
+
 // Cache: systemId → { lat, lon, alt?, datastreamName? }
 const systemLocationCache: Record<string, { lat: number; lon: number; alt?: number; datastreamName?: string; phenomenonTime?: string }> = {}
 // Primary (top-level) system IDs — limits per-system API calls to avoid O(N) subsystem fetches
@@ -1269,6 +1310,14 @@ function isLocationRelatedDatastream(ds: any): boolean {
     || name.includes('state vector') || name.includes('flight')) return true
   // Earthquake / seismic event datastreams (USGS, etc.)
   if (name.includes('earthquake') || name.includes('seismic') || name.includes('quake')) return true
+  // NDBC buoy observations (contain lat_deg/lon_deg in result)
+  if (name.includes('ndbc') || name.includes('buoy')) return true
+  // CO-OPS coastal/tide observations
+  if (name.includes('co-ops') || name.includes('coops') || name.includes('tide') || name.includes('coastal')) return true
+  // USGS Water (discharge, gage height)
+  if (name.includes('discharge') || name.includes('gage') || name.includes('streamflow')) return true
+  // USGS NIMS imagery
+  if (name.includes('nims') || name.includes('station image')) return true
 
   const rawProps = ds.observedProperties
   const props: any[] = Array.isArray(rawProps) ? rawProps : rawProps ? [rawProps] : []
@@ -1463,6 +1512,12 @@ async function buildSystemLocationCache(): Promise<void> {
           || nm.includes('metar') || nm.includes('nws') || nm.includes('awx')
           || nm.includes('aircraft') || nm.includes('adsb') || nm.includes('ads-b')
           || nm.includes('state vector') || nm.includes('flight')
+          // ── Sources that were missing from the secondary filter ──
+          || nm.includes('earthquake') || nm.includes('seismic') || nm.includes('quake')
+          || nm.includes('ndbc') || nm.includes('buoy')
+          || nm.includes('co-ops') || nm.includes('coops') || nm.includes('tide') || nm.includes('coastal')
+          || nm.includes('discharge') || nm.includes('gage') || nm.includes('streamflow')
+          || nm.includes('nims') || nm.includes('station image')
         return pass
       })
       .map((ds: any) => ({
@@ -1577,7 +1632,12 @@ async function enrichResourcesWithLocations(): Promise<void> {
         if (nm.includes('lob') || nm.includes('bearing')
           || nm.includes('position') || nm.includes('location')
           || nm.includes('aircraft') || nm.includes('adsb') || nm.includes('ads-b')
-          || nm.includes('state vector') || nm.includes('flight')) {
+          || nm.includes('state vector') || nm.includes('flight')
+          || nm.includes('earthquake') || nm.includes('seismic') || nm.includes('quake')
+          || nm.includes('ndbc') || nm.includes('buoy')
+          || nm.includes('co-ops') || nm.includes('coops') || nm.includes('tide') || nm.includes('coastal')
+          || nm.includes('discharge') || nm.includes('gage') || nm.includes('streamflow')
+          || nm.includes('nims') || nm.includes('station image')) {
           locationDatastreamList.push({
             id: ds.id,
             name: ds.name || ds.outputName || 'Unknown',
@@ -2946,6 +3006,9 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
   let trackCount = 0
   let bearingCount = 0
 
+  // Track per-source observation counts for the source toggle UI
+  const srcCounts: Record<string, number> = {}
+
   const promises = locationDatastreamList.map(async (dsInfo) => {
     try {
       let items: any[] = []
@@ -2959,12 +3022,18 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // Detect weather/surface observation datastreams for special handling
       const isWeatherDs = dsNameLower.includes('surface') || dsNameLower.includes('weather')
         || dsNameLower.includes('metar') || dsNameLower.includes('nws') || dsNameLower.includes('awx')
+        || dsNameLower.includes('ndbc') || dsNameLower.includes('buoy')
+        || dsNameLower.includes('co-ops') || dsNameLower.includes('coops') || dsNameLower.includes('tide') || dsNameLower.includes('coastal')
+        || dsNameLower.includes('discharge') || dsNameLower.includes('gage') || dsNameLower.includes('streamflow')
+        || dsNameLower.includes('nims') || dsNameLower.includes('station image')
       // Detect aircraft / ADS-B surveillance datastreams
       const isAircraftDs = dsNameLower.includes('aircraft') || dsNameLower.includes('adsb')
         || dsNameLower.includes('ads-b') || dsNameLower.includes('state vector')
       // Detect earthquake / seismic event datastreams
       const isEarthquakeDs = dsNameLower.includes('earthquake') || dsNameLower.includes('seismic')
         || dsNameLower.includes('quake')
+      // Classify into a source category for the per-source toggle
+      const obsSourceKey = classifyObsSource(dsInfo.name)
       // Position/satellite DS: cap at obsLimit (default 500) to keep total
       // observation count manageable.
       // LOB DS in live mode: exactly 1 per sensor — cleanest visual, shows only
@@ -3132,6 +3201,18 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
                 lat, lon, alt,
                 result: obs.result,
               })
+              // Tag feature with source category for per-source toggle
+              feature.set('obsSourceKey', obsSourceKey)
+              feature.set('_origStyle', feature.getStyle())
+              srcCounts[obsSourceKey] = (srcCounts[obsSourceKey] || 0) + 1
+              // Auto-register new sources as visible
+              if (activeObsSources.value[obsSourceKey] === undefined) {
+                activeObsSources.value[obsSourceKey] = true
+              }
+              // Apply per-source visibility
+              if (activeObsSources.value[obsSourceKey] === false) {
+                feature.setStyle(HIDDEN_STYLE)
+              }
               pendingPoints.push(feature)
               pointCount++
             }
@@ -3221,6 +3302,12 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
           lineFeature.set('enriched', true)
           lineFeature.set('enrichmentSource', `${trackCoords.length} observations from ${dsInfo.name}`)
           lineFeature.set('rawData', { datastreamId: dsInfo.id, datastreamName: dsInfo.name, systemId: dsInfo.systemId, pointCount: trackCoords.length })
+          // Tag track with same source category for per-source toggle
+          lineFeature.set('obsSourceKey', obsSourceKey)
+          lineFeature.set('_origStyle', lineFeature.getStyle())
+          if (activeObsSources.value[obsSourceKey] === false) {
+            lineFeature.setStyle(HIDDEN_STYLE)
+          }
           pendingTracks.push(lineFeature)
           trackCount++
         }
@@ -3273,6 +3360,9 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
   }
   featureCounts.value['observationPoints'] = pointCount
   featureCounts.value['observationTracks'] = trackCount
+
+  // Update per-source observation counts for the toggle UI
+  obsSourceCounts.value = srcCounts
 }
 
 async function loadAllResources() {
@@ -3414,6 +3504,39 @@ function toggleLayer(key: string) {
     layer.setVisible(activeLayers.value[key])
   }
 }
+
+/**
+ * Toggle visibility of a specific observation data source (e.g. NWS, NDBC, OpenSky).
+ * Iterates point and track features, hiding/restoring based on the source tag.
+ */
+function toggleObsSource(key: string) {
+  activeObsSources.value[key] = !activeObsSources.value[key]
+  const visible = activeObsSources.value[key]
+  // Toggle observation points
+  const pointSource = vectorSources['observationPoints']
+  if (pointSource) {
+    for (const f of pointSource.getFeatures()) {
+      if (f.get('obsSourceKey') === key) {
+        f.setStyle(visible ? f.get('_origStyle') : HIDDEN_STYLE)
+      }
+    }
+  }
+  // Toggle observation tracks
+  const trackSource = vectorSources['observationTracks']
+  if (trackSource) {
+    for (const f of trackSource.getFeatures()) {
+      if (f.get('obsSourceKey') === key) {
+        f.setStyle(visible ? f.get('_origStyle') : HIDDEN_STYLE)
+      }
+    }
+  }
+}
+
+/** Computed list of discovered sources (only those with features) for the UI. */
+const discoveredObsSources = computed(() => {
+  const counts = obsSourceCounts.value
+  return OBS_SOURCE_DEFS.filter(d => (counts[d.key] || 0) > 0)
+})
 
 /**
  * Re-apply styles to all features on the map when the milsymbol toggle changes.
@@ -3958,6 +4081,22 @@ watch(selectedFeature, (feat) => {
           <span class="layer-dot" :style="{ backgroundColor: TYPE_COLORS['senrepMarkers'] }"></span>
           <span class="layer-label">SENREP Reports</span>
           <span class="layer-count">{{ featureCounts['senrepMarkers'] ?? '—' }}</span>
+        </button>
+      </div>
+
+      <!-- Data Sources (per-publisher observation toggle) -->
+      <div v-if="discoveredObsSources.length > 0" class="source-controls">
+        <div class="layer-section-label" style="margin-top: 0.5rem;">Data Sources</div>
+        <button
+          v-for="src in discoveredObsSources"
+          :key="src.key"
+          :class="['source-toggle', { inactive: activeObsSources[src.key] === false }]"
+          @click="toggleObsSource(src.key)"
+        >
+          <span class="source-icon">{{ src.icon }}</span>
+          <span class="source-dot" :style="{ backgroundColor: src.color }"></span>
+          <span class="source-label">{{ src.label }}</span>
+          <span class="source-count">{{ obsSourceCounts[src.key] ?? 0 }}</span>
         </button>
       </div>
 
@@ -4641,6 +4780,19 @@ watch(selectedFeature, (feat) => {
               <div v-if="Object.values(enrichedCounts).some(c => c > 0)" class="tak-enrichment">
                 {{ Object.values(enrichedCounts).reduce((s, n) => s + n, 0) }} locations from observations
               </div>
+              <!-- Mobile Data Sources -->
+              <div v-if="discoveredObsSources.length > 0" class="tak-source-section">
+                <div class="tak-source-heading">Data Sources</div>
+                <div class="tak-layer-grid">
+                  <button v-for="src in discoveredObsSources" :key="src.key"
+                    :class="['tak-layer-chip', { inactive: activeObsSources[src.key] === false }]"
+                    @click="toggleObsSource(src.key)">
+                    <span class="tak-source-icon">{{ src.icon }}</span>
+                    <span class="tak-layer-name">{{ src.label }}</span>
+                    <span class="tak-layer-count">{{ obsSourceCounts[src.key] ?? 0 }}</span>
+                  </button>
+                </div>
+              </div>
               <div class="tak-live-row">
                 <button :class="['tak-live-btn', { active: liveMode }]" @click="toggleLiveMode">
                   <i class="pi pi-bolt"></i>
@@ -4881,6 +5033,64 @@ watch(selectedFeature, (feat) => {
 .layer-count {
   font-size: 0.8rem;
   color: #64748b;
+  font-weight: 600;
+  min-width: 1.5rem;
+  text-align: right;
+}
+
+/* ── Data Source Toggle (per-publisher) ─────────────────────────── */
+.source-controls {
+  padding: 0.25rem 0.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.source-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.35rem 0.75rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  transition: background 0.15s, opacity 0.2s;
+}
+
+.source-toggle:hover {
+  background: #e2e8f0;
+}
+
+.source-toggle.inactive {
+  opacity: 0.3;
+}
+
+.source-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+  width: 1.1rem;
+  text-align: center;
+}
+
+.source-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.source-label {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-count {
+  font-size: 0.75rem;
+  color: #94a3b8;
   font-weight: 600;
   min-width: 1.5rem;
   text-align: right;
@@ -5680,6 +5890,28 @@ watch(selectedFeature, (feat) => {
     border-radius: 4px;
     font-size: 0.72rem;
     color: #93c5fd;
+    text-align: center;
+  }
+
+  .tak-source-section {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .tak-source-heading {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    padding: 0 4px 4px;
+  }
+
+  .tak-source-icon {
+    font-size: 0.85rem;
+    line-height: 1;
+    width: 1.1rem;
     text-align: center;
   }
 
