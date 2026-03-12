@@ -10,10 +10,7 @@
  */
 import { ref, computed } from 'vue'
 import { connection } from '../state'
-
-// ── CSAPI server (fallback when connection.baseUrl is not set, e.g. admin page) ──
-const CSAPI_BASE = 'https://129-80-248-53.sslip.io/sensorhub/api'
-const CSAPI_AUTH = 'Basic b3M0Y3NhcGk6b2djMTM0bW0='
+import { fetchWithFallback, CSAPI_BASE, CSAPI_AUTH } from './originFallback'
 
 function getBaseUrl() {
   return connection.baseUrl || CSAPI_BASE
@@ -146,15 +143,22 @@ export function useObsStore() {
   // ── API helpers ──
 
   async function apiFetch(path: string, method = 'GET'): Promise<{ ok: boolean; status: number; data: any }> {
-    const url = getBaseUrl() + path
     try {
-      const resp = await fetch(url, {
-        method,
-        headers: {
-          ...getAuthHeaders(),
-          'Accept': 'application/json',
-        },
-      })
+      let resp: Response
+      if (connection.baseUrl) {
+        // Connected via proxy — use that URL directly
+        resp = await fetch(getBaseUrl() + path, {
+          method,
+          headers: { ...getAuthHeaders(), 'Accept': 'application/json' },
+        })
+      } else {
+        // Direct-to-server with fallback across origins
+        resp = await fetchWithFallback(
+          path.replace(/^\//, ''),
+          { method, headers: { 'Accept': 'application/json' } },
+          getAuthHeaders(),
+        )
+      }
       if (!resp.ok) return { ok: false, status: resp.status, data: null }
       // DELETE may return 204 with no body
       if (resp.status === 204 || resp.headers.get('content-length') === '0') {

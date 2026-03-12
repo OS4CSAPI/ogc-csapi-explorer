@@ -11,10 +11,7 @@
  */
 import { ref, computed } from 'vue'
 import { connection } from '../state'
-
-// ── CSAPI server (fallback when connection.baseUrl is not set, e.g. admin page) ──
-const CSAPI_BASE = 'https://129-80-248-53.sslip.io/sensorhub/api'
-const CSAPI_AUTH = 'Basic b3M0Y3NhcGk6b2djMTM0bW0='
+import { fetchWithFallback, CSAPI_BASE, CSAPI_AUTH } from './originFallback'
 
 function getBaseUrl() {
   return connection.baseUrl || CSAPI_BASE
@@ -234,17 +231,23 @@ export function useHealthCheck() {
 
   // ── API helper ──
   async function apiGet(path: string): Promise<{ status: number; data: any }> {
-    const url = getBaseUrl() + path
     try {
-      const resp = await fetch(url, {
-        headers: {
-          ...getAuthHeaders(),
-          'Accept': 'application/json',
-        },
-      })
+      // When connected via proxy, use that URL directly; otherwise use origin fallback
+      if (connection.baseUrl) {
+        const resp = await fetch(getBaseUrl() + path, {
+          headers: { ...getAuthHeaders(), 'Accept': 'application/json' },
+        })
+        if (!resp.ok) return { status: resp.status, data: null }
+        return { status: resp.status, data: await resp.json() }
+      }
+      // Direct-to-server with fallback across origins
+      const resp = await fetchWithFallback(
+        path.replace(/^\//, ''),
+        { headers: { 'Accept': 'application/json' } },
+        getAuthHeaders(),
+      )
       if (!resp.ok) return { status: resp.status, data: null }
-      const data = await resp.json()
-      return { status: resp.status, data }
+      return { status: resp.status, data: await resp.json() }
     } catch (e: any) {
       return { status: 0, data: e.message }
     }

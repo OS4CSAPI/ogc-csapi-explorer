@@ -25,6 +25,8 @@ export default defineConfig({
         secure: false, // their SSL cert is expired as of 2026-02-16
         rewrite: (path) => path.replace(/^\/api\/52north/, ''),
       },
+      // OSH SensorHub on Oracle Cloud — primary: sslip.io, fallback: os4csapi-osh.duckdns.org
+      // Production fallback is in functions/api/osh/[[path]].ts; dev proxy uses primary only.
       '/api/osh': {
         target: 'https://129-80-248-53.sslip.io/sensorhub/api',
         changeOrigin: true,
