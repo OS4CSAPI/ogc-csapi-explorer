@@ -5,7 +5,7 @@
  * - Global endpoints (/datastreams, /systems, /deployments)
  * - 39 individual systems (incl. 8 USGS Water, 1 USGS Earthquake)
  * - 12 deployments (incl. USGS Water, NIMS Imagery, USGS Earthquake)
- * - 63 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky, 16 USGS Water, 8 NIMS Imagery, 1 USGS Earthquake)
+ * - 63 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky, 16 USGS Water, 8 NIMS Imagery [enriched 2026-03-11], 1 USGS Earthquake)
  *
  * READ-ONLY: no writes to the server.
  */
@@ -92,7 +92,7 @@ const EXPECTED_DEPLOYMENTS: Record<string, string> = {
   '04h0': 'Airspace Tracking Demo',
   '04hg': 'OpenSky ADS-B Feed',
   '04qg': 'USGS Water Monitoring Demo',
-  '04vg': 'USGS NIMS Imagery Demo',
+  '055g': 'USGS NIMS Imagery Demo',
   // USGS Earthquake feed
   '054g': 'Seismic Monitoring Demo',
   '0550': 'USGS Earthquake Feed',
@@ -165,15 +165,15 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'USGS 05051300 Gage Height':    { id: '0540', system: '0580' },
   'USGS 12439500 Gage Height':    { id: '0550', system: '058g' },
   'USGS 02135000 Gage Height':    { id: '0560', system: '0590' },
-  // USGS NIMS Imagery (companion datastreams on existing water systems)
-  'NIMS 09380000 Imagery':          { id: '056g', system: '055g' },
-  'NIMS 09019850 Imagery':          { id: '0570', system: '0560' },
-  'NIMS 11313433 Imagery':          { id: '057g', system: '056g' },
-  'NIMS 08171000 Imagery':          { id: '0580', system: '0570' },
-  'NIMS 01650800 Imagery':          { id: '058g', system: '057g' },
-  'NIMS 05051300 Imagery':          { id: '0590', system: '0580' },
-  'NIMS 12439500 Imagery':          { id: '059g', system: '058g' },
-  'NIMS 02135000 Imagery':          { id: '05a0', system: '0590' },
+  // USGS NIMS Imagery (companion datastreams on existing water systems) [enriched 2026-03-11]
+  'NIMS 09380000 Imagery':          { id: '05b0', system: '055g' },
+  'NIMS 09019850 Imagery':          { id: '05bg', system: '0560' },
+  'NIMS 11313433 Imagery':          { id: '05c0', system: '056g' },
+  'NIMS 08171000 Imagery':          { id: '05cg', system: '0570' },
+  'NIMS 01650800 Imagery':          { id: '05d0', system: '057g' },
+  'NIMS 05051300 Imagery':          { id: '05dg', system: '0580' },
+  'NIMS 12439500 Imagery':          { id: '05e0', system: '058g' },
+  'NIMS 02135000 Imagery':          { id: '05eg', system: '0590' },
   // USGS Earthquake feed
   'USGS Earthquake Events':          { id: '05ag', system: '059g' },
 }
@@ -396,8 +396,10 @@ export function useHealthCheck() {
       } else {
         const result = obs.result ?? {}
         const fn = result.filename ?? '—'
+        const cam = result.camId ?? '—'
         const thumb = result.thumbUrl ? '✓' : '—'
-        pass(c, `${Math.round(ageMin)} min old, ${fn}, thumb=${thumb}`)
+        const tl = result.timeLapseUrl ? '✓' : '—'
+        pass(c, `${Math.round(ageMin)} min old, cam=${cam}, ${fn}, thumb=${thumb}, timelapse=${tl}`)
       }
     } else if (dsName.includes('Earthquake')) {
       if (ageMin > THRESHOLDS.EARTHQUAKE) {
