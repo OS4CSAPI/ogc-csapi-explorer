@@ -112,7 +112,7 @@ const trustLine = computed(() => {
     </div>
     <div v-if="showBuoycamOverlay" class="dsc-lightbox" @click="showBuoycamOverlay = false">
       <div class="dsc-lightbox-inner" @click.stop>
-        <img :src="card.buoycamImageUrl" alt="BuoyCAM" class="dsc-lightbox-img" />
+        <img :src="card.cameraImageUrl" alt="Camera" class="dsc-lightbox-img" />
         <button class="dsc-lightbox-close" @click="showBuoycamOverlay = false" title="Close">
           <i class="pi pi-times"></i>
         </button>
@@ -156,16 +156,30 @@ const trustLine = computed(() => {
       {{ card.summarySentence }}
     </p>
 
-    <!-- ── 2b. BUOYCAM IMAGE ── -->
-    <section v-if="card.buoycamImageUrl" class="dsc-sec dsc-buoycam">
-      <h3 class="dsc-sec-hd"><i class="pi pi-camera"></i> Live BuoyCAM</h3>
+    <!-- ── 2b. LIVE CAMERA IMAGE (BuoyCAM / NIMS) ── -->
+    <section v-if="card.cameraImageUrl" class="dsc-sec dsc-buoycam">
+      <h3 class="dsc-sec-hd"><i class="pi pi-camera"></i> {{ card.cameraLabel || 'Live Camera' }}</h3>
       <div class="dsc-buoycam-frame" @click="showBuoycamOverlay = true" title="Click to enlarge">
-        <img :src="card.buoycamImageUrl" alt="BuoyCAM" class="dsc-buoycam-img" />
+        <img :src="card.cameraThumbUrl || card.cameraImageUrl" alt="Camera" class="dsc-buoycam-img" />
       </div>
-      <div v-if="card.buoycamTimestamp" class="dsc-buoycam-time">
-        <i class="pi pi-clock"></i>
-        {{ new Date(card.buoycamTimestamp).toLocaleString() }}
+      <div class="dsc-buoycam-meta">
+        <div v-if="card.cameraTimestamp" class="dsc-buoycam-time">
+          <i class="pi pi-clock"></i>
+          {{ new Date(card.cameraTimestamp).toLocaleString() }}
+        </div>
+        <div v-if="card.cameraCamId" class="dsc-buoycam-camid">
+          📹 {{ card.cameraCamId }}
+        </div>
       </div>
+      <a
+        v-if="card.cameraTimeLapseUrl"
+        :href="card.cameraTimeLapseUrl"
+        target="_blank"
+        rel="noopener"
+        class="dsc-timelapse-link"
+      >
+        <i class="pi pi-play-circle"></i> View Timelapse
+      </a>
     </section>
 
     <!-- ── 3. OUTPUTS ── -->
@@ -665,4 +679,36 @@ const trustLine = computed(() => {
   margin-top: 0.35rem;
 }
 .dsc-buoycam-time i { font-size: 0.72rem; }
+.dsc-buoycam-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+}
+.dsc-buoycam-camid {
+  color: #94a3b8;
+  font-size: 0.72rem;
+}
+.dsc-timelapse-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+  padding: 0.3rem 0.6rem;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.dsc-timelapse-link:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+}
+.dsc-timelapse-link i { font-size: 0.8rem; }
 </style>

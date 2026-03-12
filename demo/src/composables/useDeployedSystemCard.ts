@@ -67,8 +67,17 @@ export interface DeployedSystemCardModel {
   docsLinks: DocLink[]
   mediaLinks: MediaLink[]
 
-  // BuoyCAM (live camera image from NDBC BuoyCAM datastream)
+  // Live Camera (NDBC BuoyCAM or USGS NIMS imagery datastream)
+  cameraImageUrl: string
+  cameraTimestamp: string
+  cameraLabel: string       // e.g. "Live BuoyCAM" or "Live Camera"
+  cameraThumbUrl: string    // NIMS thumbnail URL (empty for BuoyCAM)
+  cameraTimeLapseUrl: string // NIMS timelapse URL (empty for BuoyCAM)
+  cameraCamId: string       // NIMS camId (empty for BuoyCAM)
+
+  /** @deprecated Use cameraImageUrl instead */
   buoycamImageUrl: string
+  /** @deprecated Use cameraTimestamp instead */
   buoycamTimestamp: string
 
   // Advanced IDs
@@ -678,16 +687,22 @@ export function useDeployedSystemCard() {
         } catch { /* latest obs fetch optional */ }
       }
 
-      // ── Resolve BuoyCAM image (detect camera datastream) ─────────
-      let buoycamImageUrl = ''
-      let buoycamTimestamp = ''
-      const buoycamDs = datastreams.find(ds =>
-        /buoycam|buoy[\s_-]?cam|camera/i.test(ds.name)
+      // ── Resolve live camera image (BuoyCAM or NIMS) ──────────────
+      let cameraImageUrl = ''
+      let cameraTimestamp = ''
+      let cameraLabel = ''
+      let cameraThumbUrl = ''
+      let cameraTimeLapseUrl = ''
+      let cameraCamId = ''
+      const cameraDs = datastreams.find(ds =>
+        /buoycam|buoy[\s_-]?cam|camera|nims.*image|station.*image/i.test(ds.name)
       )
-      if (buoycamDs) {
+      if (cameraDs) {
+        const isBuoyCAM = /buoycam|buoy[\s_-]?cam/i.test(cameraDs.name)
+        cameraLabel = isBuoyCAM ? 'Live BuoyCAM' : 'Live Camera'
         try {
           const camRes = await apiFetch(
-            `/datastreams/${buoycamDs.id}/observations?limit=1&resultTime=latest`,
+            `/datastreams/${cameraDs.id}/observations?limit=1&resultTime=latest`,
             { headers: { 'Accept': 'application/json' } },
           )
           if (camRes.ok && camRes.data) {
@@ -696,13 +711,20 @@ export function useDeployedSystemCard() {
               const obs = camItems[0]
               const result = obs.result || {}
               if (result.imageUrl && typeof result.mediaType === 'string' && result.mediaType.startsWith('image/')) {
-                buoycamImageUrl = result.imageUrl
-                buoycamTimestamp = obs.phenomenonTime || obs.resultTime || ''
+                cameraImageUrl = result.imageUrl
+                cameraTimestamp = obs.phenomenonTime || obs.resultTime || ''
+                // NIMS-specific fields
+                cameraThumbUrl = result.thumbUrl || ''
+                cameraTimeLapseUrl = result.timeLapseUrl || ''
+                cameraCamId = result.camId || ''
               }
             }
           }
-        } catch { /* buoycam fetch optional */ }
+        } catch { /* camera fetch optional */ }
       }
+      // Backwards-compat aliases
+      const buoycamImageUrl = cameraImageUrl
+      const buoycamTimestamp = cameraTimestamp
 
       // ── Resolve control streams count ────────────────────────────
       let controlCount = 0
@@ -850,7 +872,13 @@ export function useDeployedSystemCard() {
         docsLinks: smlDocs.filter(d => !smlMedia.some(m => m.href === d.href)),
         mediaLinks: smlMedia.slice(1), // first one is thumbnail
 
-        // BuoyCAM
+        // Live Camera
+        cameraImageUrl,
+        cameraTimestamp,
+        cameraLabel,
+        cameraThumbUrl,
+        cameraTimeLapseUrl,
+        cameraCamId,
         buoycamImageUrl,
         buoycamTimestamp,
 

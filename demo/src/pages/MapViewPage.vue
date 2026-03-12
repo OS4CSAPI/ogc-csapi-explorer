@@ -4263,16 +4263,25 @@ watch(selectedFeature, (feat) => {
               </div>
             </div>
           </template>
-          <!-- BuoyCAM / image observation popup -->
+          <!-- BuoyCAM / NIMS image observation popup -->
           <template v-if="selectedFeature.rawData?.result?.mediaType?.startsWith('image/') && selectedFeature.rawData?.result?.imageUrl">
             <div class="popup-buoycam-detail">
               <a :href="selectedFeature.rawData.result.imageUrl" target="_blank" rel="noopener" title="Open full image">
-                <img :src="selectedFeature.rawData.result.imageUrl" alt="BuoyCAM" class="popup-buoycam-img" loading="lazy" />
+                <img :src="selectedFeature.rawData.result.thumbUrl || selectedFeature.rawData.result.imageUrl" alt="Camera" class="popup-buoycam-img" loading="lazy" />
               </a>
               <div class="popup-buoycam-meta">
-                📷 {{ selectedFeature.rawData.result.cameraStatus || 'ok' }}
-                · {{ Math.round((selectedFeature.rawData.result.contentLength || 0) / 1024) }} KB
+                📷 {{ selectedFeature.rawData.result.cameraStatus || selectedFeature.rawData.result.camId || 'ok' }}
+                · {{ Math.round((selectedFeature.rawData.result.contentLength || 0) / 1024) || '' }} {{ selectedFeature.rawData.result.contentLength ? 'KB' : '' }}
               </div>
+              <a
+                v-if="selectedFeature.rawData.result.timeLapseUrl"
+                :href="selectedFeature.rawData.result.timeLapseUrl"
+                target="_blank"
+                rel="noopener"
+                class="popup-timelapse-link"
+              >
+                ▶ Timelapse
+              </a>
             </div>
           </template>
           <!-- "Submit SENREP" button on gold dot popup -->
@@ -5945,11 +5954,25 @@ watch(selectedFeature, (feat) => {
   max-width: 250px;
 }
 
-/* BuoyCAM popup image */
+/* Camera popup image (BuoyCAM / NIMS) */
 .popup-buoycam-detail { margin-top: 0.35rem; text-align: center; }
 .popup-buoycam-img { max-width: 240px; max-height: 160px; border-radius: 4px; object-fit: contain; border: 1px solid #cbd5e1; cursor: pointer; transition: transform 0.15s; }
 .popup-buoycam-img:hover { transform: scale(1.03); }
 .popup-buoycam-meta { font-size: 0.68rem; color: #64748b; margin-top: 0.2rem; }
+.popup-timelapse-link {
+  display: inline-block;
+  margin-top: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #0ea5e9;
+  background: rgba(14, 165, 233, 0.08);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.popup-timelapse-link:hover { background: rgba(14, 165, 233, 0.18); }
 
 /* Sidebar weather detail panel */
 .weather-detail-panel {
