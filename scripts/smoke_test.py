@@ -71,6 +71,17 @@ EXPECTED_SYSTEMS = {
     "04cg": "AWX KPHX Sky Harbor",
     # ── OpenSky ADS-B feed ──
     "04d0": "OpenSky ADS-B Feed",
+    # ── USGS Water monitoring stations ──
+    "055g": "USGS 09380000 Colorado River Lees Ferry",
+    "0560": "USGS 09019850 Willow Creek Granby",
+    "056g": "USGS 11313433 Dutch Slough",
+    "0570": "USGS 08171000 Blanco River Wimberley",
+    "057g": "USGS 01650800 Sligo Creek Takoma Park",
+    "0580": "USGS 05051300 Bois De Sioux Doran",
+    "058g": "USGS 12439500 Okanogan River Oroville",
+    "0590": "USGS 02135000 Little Pee Dee Galivants Ferry",
+    # ── USGS Earthquake feed ──
+    "059g": "USGS Earthquake Feed",
 }
 
 EXPECTED_DEPLOYMENTS = {
@@ -81,7 +92,11 @@ EXPECTED_DEPLOYMENTS = {
     "04a0": "CO-OPS Coastal Demo",
     "04dg": "AWX METAR Demo",
     "04h0": "Airspace Tracking Demo",
-    "04hg": "OpenSky ADS-B Feed",
+    "04hg": "OpenSky ADS-B Feed",           # sub-deployment of 04h0
+    "04qg": "USGS Water Monitoring Demo",
+    "055g": "USGS NIMS Imagery Demo",
+    "05ag": "Seismic Monitoring Demo",
+    "05b0": "USGS Earthquake Feed",          # sub-deployment of 05ag
 }
 
 # Datastreams grouped by feed for clearer reporting
@@ -158,6 +173,35 @@ DATASTREAMS = {
     "AWX KPHX METAR Obs":              {"id": "04f0", "system": "04cg"},
     # ── OpenSky ADS-B feed ──
     "OpenSky ADS-B States":              {"id": "04fg", "system": "04d0"},
+    # ── USGS Water monitoring (discharge) ──
+    "USGS 09380000 Discharge":            {"id": "04ug", "system": "055g"},
+    "USGS 09019850 Discharge":            {"id": "04vg", "system": "0560"},
+    "USGS 11313433 Discharge":            {"id": "050g", "system": "056g"},
+    "USGS 08171000 Discharge":            {"id": "051g", "system": "0570"},
+    "USGS 01650800 Discharge":            {"id": "052g", "system": "057g"},
+    "USGS 05051300 Discharge":            {"id": "053g", "system": "0580"},
+    "USGS 12439500 Discharge":            {"id": "054g", "system": "058g"},
+    "USGS 02135000 Discharge":            {"id": "055g", "system": "0590"},
+    # ── USGS Water monitoring (gage height) ──
+    "USGS 09380000 Gage Height":          {"id": "04v0", "system": "055g"},
+    "USGS 09019850 Gage Height":          {"id": "0500", "system": "0560"},
+    "USGS 11313433 Gage Height":          {"id": "0510", "system": "056g"},
+    "USGS 08171000 Gage Height":          {"id": "0520", "system": "0570"},
+    "USGS 01650800 Gage Height":          {"id": "0530", "system": "057g"},
+    "USGS 05051300 Gage Height":          {"id": "0540", "system": "0580"},
+    "USGS 12439500 Gage Height":          {"id": "0550", "system": "058g"},
+    "USGS 02135000 Gage Height":          {"id": "0560", "system": "0590"},
+    # ── USGS NIMS Imagery ──
+    "NIMS 09380000 Imagery":              {"id": "05b0", "system": "055g"},
+    "NIMS 09019850 Imagery":              {"id": "05bg", "system": "0560"},
+    "NIMS 11313433 Imagery":              {"id": "05c0", "system": "056g"},
+    "NIMS 08171000 Imagery":              {"id": "05cg", "system": "0570"},
+    "NIMS 01650800 Imagery":              {"id": "05d0", "system": "057g"},
+    "NIMS 05051300 Imagery":              {"id": "05dg", "system": "0580"},
+    "NIMS 12439500 Imagery":              {"id": "05e0", "system": "058g"},
+    "NIMS 02135000 Imagery":              {"id": "05eg", "system": "0590"},
+    # ── USGS Earthquake feed ──
+    "USGS Earthquake Events":             {"id": "05f0", "system": "059g"},
 }
 
 # These DS we MUST have fresh observations for (active feeds)
@@ -201,6 +245,35 @@ CRITICAL_DATASTREAMS = [
     "AWX KLUF METAR Obs",
     "AWX KPHX METAR Obs",
     "OpenSky ADS-B States",
+    # ── USGS Water (discharge) ──
+    "USGS 09380000 Discharge",
+    "USGS 09019850 Discharge",
+    "USGS 11313433 Discharge",
+    "USGS 08171000 Discharge",
+    "USGS 01650800 Discharge",
+    "USGS 05051300 Discharge",
+    "USGS 12439500 Discharge",
+    "USGS 02135000 Discharge",
+    # ── USGS Water (gage height) ──
+    "USGS 09380000 Gage Height",
+    "USGS 09019850 Gage Height",
+    "USGS 11313433 Gage Height",
+    "USGS 08171000 Gage Height",
+    "USGS 01650800 Gage Height",
+    "USGS 05051300 Gage Height",
+    "USGS 12439500 Gage Height",
+    "USGS 02135000 Gage Height",
+    # ── USGS NIMS Imagery ──
+    "NIMS 09380000 Imagery",
+    "NIMS 09019850 Imagery",
+    "NIMS 11313433 Imagery",
+    "NIMS 08171000 Imagery",
+    "NIMS 01650800 Imagery",
+    "NIMS 05051300 Imagery",
+    "NIMS 12439500 Imagery",
+    "NIMS 02135000 Imagery",
+    # ── USGS Earthquake feed ──
+    "USGS Earthquake Events",
 ]
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -271,8 +344,8 @@ def check_global_datastreams(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 46:
-        c.fail(f"Only {count} datastreams (expected >= 46)")
+    if count < 71:
+        c.fail(f"Only {count} datastreams (expected >= 71)")
     else:
         c.ok(f"{count} datastreams")
     return c
@@ -285,8 +358,8 @@ def check_global_systems(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 30:
-        c.fail(f"Only {count} systems (expected >= 30)")
+    if count < 39:
+        c.fail(f"Only {count} systems (expected >= 39)")
     else:
         c.ok(f"{count} systems")
     return c
@@ -299,10 +372,10 @@ def check_global_deployments(verbose: bool) -> Check:
         c.fail(f"HTTP {status}")
         return c
     count = len(data.get("items", []))
-    if count < 8:
-        c.fail(f"Only {count} deployments (expected >= 8)")
+    if count < 10:
+        c.fail(f"Only {count} deployments (expected >= 10)")
     else:
-        c.ok(f"{count} deployments")
+        c.ok(f"{count} top-level deployments")
     return c
 
 
@@ -372,6 +445,29 @@ def check_datastream_obs(ds_name: str, ds_info: dict, is_critical: bool, verbose
             c.fail(f"Stale — {age_min:.0f} min old (max {max_age} min)")
         else:
             c.ok(f"fresh — {age_min:.1f} min old")
+
+    elif "USGS" in ds_name or "NIMS" in ds_name:
+        max_age = 120 if strict else 480
+        if age_min > max_age:
+            c.fail(f"Stale — {age_min:.0f} min old (max {max_age} min)")
+        else:
+            result = obs.get("result", {})
+            if "Discharge" in ds_name:
+                val = result.get("discharge_cfs")
+                val_str = f"{val} ft³/s" if val is not None else "—"
+            elif "Gage" in ds_name:
+                val = result.get("gage_height_ft")
+                val_str = f"{val} ft" if val is not None else "—"
+            elif "NIMS" in ds_name:
+                fn = result.get("filename", "—")
+                val_str = fn
+            elif "Earthquake" in ds_name:
+                mag = result.get("magnitude")
+                place = result.get("place", "—")
+                val_str = f"M{mag} {place}" if mag is not None else place
+            else:
+                val_str = "ok"
+            c.ok(f"fresh — {age_min:.0f} min old, {val_str}")
 
     elif "NWS" in ds_name or "NDBC" in ds_name or "CO-OPS" in ds_name or "AWX" in ds_name:
         max_age = 120 if strict else 480
