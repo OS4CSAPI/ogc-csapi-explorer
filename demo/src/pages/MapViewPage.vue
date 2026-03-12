@@ -693,6 +693,94 @@ function windArrow(deg: number | undefined): string {
   return dirs[Math.round(Number(deg) / 45) % 8]
 }
 
+// ── Earthquake visualization helpers ─────────────────────────────────────
+
+/**
+ * Detect whether an observation result represents a USGS earthquake event
+ * by checking for magnitude + eventType + depth_km signature fields.
+ */
+function isEarthquakeObservation(rawData: any): boolean {
+  if (!rawData?.result) return false
+  const r = rawData.result
+  return (typeof r.magnitude === 'number' || typeof r.magnitude === 'string')
+    && typeof r.eventType === 'string'
+    && typeof r.depth_km === 'number'
+}
+
+/**
+ * Map magnitude to a color:
+ *   < 2.5  → green (micro)
+ *   2.5–4.5 → yellow (light)
+ *   4.5–6.0 → orange (moderate)
+ *   ≥ 6.0   → red (strong+)
+ */
+function eqMagColor(mag: number): string {
+  if (mag < 2.5) return '#22c55e'
+  if (mag < 4.5) return '#eab308'
+  if (mag < 6.0) return '#f97316'
+  return '#ef4444'
+}
+
+/**
+ * Map magnitude to a circle radius (exponential scaling like USGS map).
+ * min ~4px for micro events, up to ~22px for M7+
+ */
+function eqMagRadius(mag: number): number {
+  const clamped = Math.max(0, Math.min(mag, 9))
+  return 4 + Math.pow(clamped, 1.5) * 0.8
+}
+
+/**
+ * Earthquake observation point style — circle sized by magnitude,
+ * colored by severity. Mimics USGS earthquake map visualization.
+ */
+function earthquakeObsPointStyle(mag: number): Style {
+  const color = eqMagColor(mag)
+  const radius = eqMagRadius(mag)
+  return new Style({
+    image: new CircleStyle({
+      radius,
+      fill: new Fill({ color: color + 'cc' }),  // slight transparency
+      stroke: new Stroke({ color: '#1e293b', width: 1.5 }),
+    }),
+    text: mag >= 4.0 ? new OlText({
+      text: `M${typeof mag === 'number' ? mag.toFixed(1) : mag}`,
+      font: 'bold 10px sans-serif',
+      offsetY: -(radius + 10),
+      fill: new Fill({ color }),
+      stroke: new Stroke({ color: '#0f172a', width: 2.5 }),
+      textAlign: 'center',
+    }) : undefined,
+  })
+}
+
+/** Relative time label for earthquake popup — "2 min ago", "3 hr ago", etc. */
+function eqTimeAgo(epochMs: number | string | undefined): string {
+  if (!epochMs) return ''
+  const ms = typeof epochMs === 'string' ? parseInt(epochMs, 10) : epochMs
+  if (isNaN(ms)) return ''
+  const diffMs = Date.now() - ms
+  if (diffMs < 0) return 'just now'
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins} min ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs} hr ago`
+  const days = Math.floor(hrs / 24)
+  return `${days} day${days > 1 ? 's' : ''} ago`
+}
+
+/** Magnitude description label */
+function eqMagLabel(mag: number): string {
+  if (mag < 2.5) return 'Micro'
+  if (mag < 4.0) return 'Minor'
+  if (mag < 5.0) return 'Light'
+  if (mag < 6.0) return 'Moderate'
+  if (mag < 7.0) return 'Strong'
+  if (mag < 8.0) return 'Major'
+  return 'Great'
+}
+
 /**
  * Safely format a numeric value that may be NaN, "NaN" string, null, or undefined.
  */
@@ -1179,6 +1267,8 @@ function isLocationRelatedDatastream(ds: any): boolean {
   // Aircraft / ADS-B surveillance datastreams (OpenSky, AISHub, etc.)
   if (name.includes('aircraft') || name.includes('adsb') || name.includes('ads-b')
     || name.includes('state vector') || name.includes('flight')) return true
+  // Earthquake / seismic event datastreams (USGS, etc.)
+  if (name.includes('earthquake') || name.includes('seismic') || name.includes('quake')) return true
 
   const rawProps = ds.observedProperties
   const props: any[] = Array.isArray(rawProps) ? rawProps : rawProps ? [rawProps] : []
@@ -2872,14 +2962,18 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // Detect aircraft / ADS-B surveillance datastreams
       const isAircraftDs = dsNameLower.includes('aircraft') || dsNameLower.includes('adsb')
         || dsNameLower.includes('ads-b') || dsNameLower.includes('state vector')
+      // Detect earthquake / seismic event datastreams
+      const isEarthquakeDs = dsNameLower.includes('earthquake') || dsNameLower.includes('seismic')
+        || dsNameLower.includes('quake')
       // Position/satellite DS: cap at obsLimit (default 500) to keep total
       // observation count manageable.
       // LOB DS in live mode: exactly 1 per sensor — cleanest visual, shows only
       // the very latest bearing from each MA system.
       // Weather DS: only latest observation per station (no track needed).
       // Aircraft DS: fetch up to 200 to capture the full batch (~140 aircraft).
+      // Earthquake DS: fetch up to 300 to cover 24h of global events.
       // Other DS: use caller's obsLimit.
-      const effectiveLimit = (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : isAircraftDs ? 200 : obsLimit
+      const effectiveLimit = (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : isAircraftDs ? 200 : isEarthquakeDs ? 300 : obsLimit
 
       // OSH returns observations oldest-first and ignores sort params, so a
       // bare limit=N always returns the N OLDEST observations.  For position/
@@ -2896,7 +2990,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // non-LOB observations.  Fetch a larger batch so genuine LOBs survive
       // after filtering, then keep only the most recent ones so bearings
       // converge on the current target position.
-      const useTimeWindow = isLive || isPositionDs || isWeatherDs || isAircraftDs
+      const useTimeWindow = isLive || isPositionDs || isWeatherDs || isAircraftDs || isEarthquakeDs
       if (useTimeWindow) {
         const latestUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
           resultTime: 'latest',
@@ -2913,7 +3007,8 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         // (~92 min each → 4h ≈ 2.6 orbits).
         // LOB datastreams: 5-minute window for tight real-time view.
         // Weather datastreams: 2-hour window (obs ~hourly) to ensure latest.
-        const windowMinutes = isPositionDs ? 240 : isWeatherDs ? 120 : isAircraftDs ? 10 : 5
+        // Earthquake datastreams: 24-hour window to show all recent events.
+        const windowMinutes = isPositionDs ? 240 : isWeatherDs ? 120 : isAircraftDs ? 10 : isEarthquakeDs ? 1440 : 5
         const latestMs = new Date(latestTime).getTime()
         // Fetch limit: position DS gets 2× effective to allow burst dedup
         // headroom, LOB DS needs extra to overcome OSH scope-leak contamination,
@@ -3010,14 +3105,21 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
               const acStyle = isAircraftDs
                 ? aircraftObsPointStyle(typeof obs.result?.true_track_deg === 'number' ? obs.result.true_track_deg : 0)
                 : null
-              feature.setStyle(wxStyle || acStyle || (isSatDs ? satObsPointStyle : getStyle('observationPoints')))
+              // Earthquake events: magnitude-scaled colored circle
+              const eqMag = isEarthquakeDs && obs.result?.magnitude != null
+                ? (typeof obs.result.magnitude === 'number' ? obs.result.magnitude : parseFloat(obs.result.magnitude))
+                : NaN
+              const eqStyle = isEarthquakeDs && !isNaN(eqMag) ? earthquakeObsPointStyle(eqMag) : null
+              feature.setStyle(wxStyle || acStyle || eqStyle || (isSatDs ? satObsPointStyle : getStyle('observationPoints')))
               feature.set('resourceType', 'observationPoints')
               feature.set('resourceId', obs.id || `${dsInfo.id}-obs-${pointCount}`)
               feature.set('resourceName', isWeatherDs && obs.result?.stationName
                 ? `${obs.result.stationId} — ${obs.result.stationName}`
                 : isAircraftDs && obs.result?.callsign
                   ? `✈ ${obs.result.callsign.trim()} (${obs.result.icao24 || '?'})`
-                  : `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
+                  : isEarthquakeDs && obs.result?.magnitude != null
+                    ? `🌋 M${typeof obs.result.magnitude === 'number' ? obs.result.magnitude.toFixed(1) : obs.result.magnitude} — ${obs.result.place || 'Unknown'}`
+                    : `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
               feature.set('enriched', true)
               feature.set('enrichmentSource', dsInfo.name)
               feature.set('rawData', {
@@ -3099,8 +3201,8 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
 
       // Track LineString from all parsed coordinates
       // Detect orbit/satellite tracks and apply distinct styling + date-line splitting
-      // Skip track lines for aircraft DS — each obs is a different aircraft, not a time series
-      if (trackSource && trackCoords.length >= 2 && !isAircraftDs) {
+      // Skip track lines for aircraft/earthquake DS — each obs is a different entity, not a time series
+      if (trackSource && trackCoords.length >= 2 && !isAircraftDs && !isEarthquakeDs) {
         // Split track at antimeridian (±180° lon) crossings to avoid ugly wrapping lines
         const segments = splitTrackAtDateLine(trackCoords)
         for (const segment of segments) {
@@ -4261,6 +4363,38 @@ watch(selectedFeature, (feat) => {
                 <span title="Heading">📐 {{ typeof selectedFeature.rawData.result.true_track_deg === 'number' ? selectedFeature.rawData.result.true_track_deg.toFixed(1) + '°' : '—' }}</span>
                 <span title="Status">{{ selectedFeature.rawData.result.on_ground === 'true' || selectedFeature.rawData.result.on_ground === true ? '🛬 Ground' : '✈️ Airborne' }}</span>
               </div>
+            </div>
+          </template>
+          <!-- Earthquake observation popup (USGS) -->
+          <template v-if="isEarthquakeObservation(selectedFeature.rawData)">
+            <div class="popup-earthquake-detail">
+              <div class="popup-eq-header">
+                <span
+                  class="popup-eq-mag-badge"
+                  :style="{ backgroundColor: eqMagColor(Number(selectedFeature.rawData.result.magnitude) || 0) }"
+                >
+                  M{{ typeof selectedFeature.rawData.result.magnitude === 'number' ? selectedFeature.rawData.result.magnitude.toFixed(1) : selectedFeature.rawData.result.magnitude }}
+                </span>
+                <span class="popup-eq-severity">
+                  {{ eqMagLabel(Number(selectedFeature.rawData.result.magnitude) || 0) }}
+                  <span v-if="selectedFeature.rawData.result.magType" class="popup-eq-magtype">({{ selectedFeature.rawData.result.magType }})</span>
+                </span>
+              </div>
+              <div class="popup-eq-place">📍 {{ selectedFeature.rawData.result.place || 'Unknown location' }}</div>
+              <div class="popup-eq-grid">
+                <span title="Depth">⬇️ {{ typeof selectedFeature.rawData.result.depth_km === 'number' ? selectedFeature.rawData.result.depth_km.toFixed(1) + ' km' : '—' }}</span>
+                <span title="Status">{{ selectedFeature.rawData.result.status === 'reviewed' ? '✅ Reviewed' : '🤖 Automatic' }}</span>
+                <span v-if="selectedFeature.rawData.result.eventTime" title="Time">🕐 {{ eqTimeAgo(selectedFeature.rawData.result.eventTime) }}</span>
+              </div>
+              <a
+                v-if="selectedFeature.rawData.result.detailUrl"
+                :href="selectedFeature.rawData.result.detailUrl.replace('/fdsnws/event/1/query?eventid=', '/earthquakes/eventpage/')"
+                target="_blank"
+                rel="noopener"
+                class="popup-eq-usgs-link"
+              >
+                🌐 View on USGS
+              </a>
             </div>
           </template>
           <!-- BuoyCAM / NIMS image observation popup -->
@@ -5973,6 +6107,69 @@ watch(selectedFeature, (feat) => {
   transition: background 0.15s;
 }
 .popup-timelapse-link:hover { background: rgba(14, 165, 233, 0.18); }
+
+/* ═══ Earthquake Observation Popup Styles ═══ */
+.popup-earthquake-detail {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: #334155;
+  line-height: 1.5;
+}
+.popup-eq-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+.popup-eq-mag-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2rem;
+  padding: 0.15rem 0.35rem;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  letter-spacing: -0.02em;
+}
+.popup-eq-severity {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.8rem;
+}
+.popup-eq-magtype {
+  font-weight: 400;
+  color: #94a3b8;
+  font-size: 0.7rem;
+}
+.popup-eq-place {
+  font-size: 0.78rem;
+  color: #334155;
+  margin-bottom: 0.2rem;
+}
+.popup-eq-grid {
+  display: flex;
+  gap: 0.6rem;
+  font-size: 0.72rem;
+  color: #475569;
+  flex-wrap: wrap;
+}
+.popup-eq-usgs-link {
+  display: inline-block;
+  margin-top: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.popup-eq-usgs-link:hover { background: rgba(59, 130, 246, 0.18); }
 
 /* Sidebar weather detail panel */
 .weather-detail-panel {
