@@ -103,7 +103,7 @@ export const PUBLISHER_GROUPS: PublisherGroup[] = [
     name: 'OpenSky ADS-B',
     icon: 'pi pi-send',
     datastreams: [
-      { id: '04fg', label: 'OpenSky ADS-B States' },
+      { id: '05fg', label: 'OpenSky ADS-B States' },
     ],
   },
 ]

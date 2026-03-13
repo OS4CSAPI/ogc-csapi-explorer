@@ -172,7 +172,7 @@ DATASTREAMS = {
     "AWX KLUF METAR Obs":              {"id": "04eg", "system": "04c0"},
     "AWX KPHX METAR Obs":              {"id": "04f0", "system": "04cg"},
     # ── OpenSky ADS-B feed ──
-    "OpenSky ADS-B States":              {"id": "04fg", "system": "04d0"},
+    "OpenSky ADS-B States":              {"id": "05fg", "system": "04d0"},
     # ── USGS Water monitoring (discharge) ──
     "USGS 09380000 Discharge":            {"id": "04ug", "system": "055g"},
     "USGS 09019850 Discharge":            {"id": "04vg", "system": "0560"},
