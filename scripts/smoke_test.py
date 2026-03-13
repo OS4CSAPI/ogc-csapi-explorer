@@ -148,11 +148,11 @@ DATASTREAMS = {
     "NWS KDAY Surface Obs":           {"id": "044g", "system": "044g"},
     "NWS KFFO Surface Obs":           {"id": "0450", "system": "0450"},
     # ── NDBC buoys (met obs) ──
-    "NDBC 44025 Met Obs":              {"id": "045g", "system": "045g"},
-    "NDBC 41009 Met Obs":              {"id": "046g", "system": "0460"},
-    "NDBC 42036 Met Obs":              {"id": "047g", "system": "046g"},
-    "NDBC 46025 Met Obs":              {"id": "048g", "system": "0470"},
-    "NDBC 46013 Met Obs":              {"id": "049g", "system": "047g"},
+    "NDBC 44025 Met Obs":              {"id": "05g0", "system": "045g"},
+    "NDBC 41009 Met Obs":              {"id": "05gg", "system": "0460"},
+    "NDBC 42036 Met Obs":              {"id": "05h0", "system": "046g"},
+    "NDBC 46025 Met Obs":              {"id": "05hg", "system": "0470"},
+    "NDBC 46013 Met Obs":              {"id": "05i0", "system": "047g"},
     # ── NDBC buoys (BuoyCAM) ──
     "NDBC 44025 BuoyCAM":              {"id": "0460", "system": "045g"},
     "NDBC 41009 BuoyCAM":              {"id": "0470", "system": "0460"},
@@ -160,11 +160,11 @@ DATASTREAMS = {
     "NDBC 46025 BuoyCAM":              {"id": "0490", "system": "0470"},
     "NDBC 46013 BuoyCAM":              {"id": "04a0", "system": "047g"},
     # ── CO-OPS tide stations ──
-    "CO-OPS 8518750 Coastal Obs":       {"id": "04ag", "system": "0480"},
-    "CO-OPS 8723214 Coastal Obs":       {"id": "04b0", "system": "048g"},
-    "CO-OPS 8726520 Coastal Obs":       {"id": "04bg", "system": "0490"},
-    "CO-OPS 9414290 Coastal Obs":       {"id": "04c0", "system": "049g"},
-    "CO-OPS 8443970 Coastal Obs":       {"id": "04cg", "system": "04a0"},
+    "CO-OPS 8518750 Coastal Obs":       {"id": "05ig", "system": "0480"},
+    "CO-OPS 8723214 Coastal Obs":       {"id": "05j0", "system": "048g"},
+    "CO-OPS 8726520 Coastal Obs":       {"id": "05jg", "system": "0490"},
+    "CO-OPS 9414290 Coastal Obs":       {"id": "05k0", "system": "049g"},
+    "CO-OPS 8443970 Coastal Obs":       {"id": "05kg", "system": "04a0"},
     # ── AviationWeather METAR stations ──
     "AWX KTUS METAR Obs":              {"id": "04d0", "system": "04ag"},
     "AWX KDMA METAR Obs":              {"id": "04dg", "system": "04b0"},
@@ -192,7 +192,7 @@ DATASTREAMS = {
     "USGS 12439500 Gage Height":          {"id": "0550", "system": "058g"},
     "USGS 02135000 Gage Height":          {"id": "0560", "system": "0590"},
     # ── USGS NIMS Imagery ──
-    "NIMS 09380000 Imagery":              {"id": "05b0", "system": "055g"},
+    "NIMS 09380000 Imagery":              {"id": "05l0", "system": "055g"},
     "NIMS 09019850 Imagery":              {"id": "05bg", "system": "0560"},
     "NIMS 11313433 Imagery":              {"id": "05c0", "system": "056g"},
     "NIMS 08171000 Imagery":              {"id": "05cg", "system": "0570"},
