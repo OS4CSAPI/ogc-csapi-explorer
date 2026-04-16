@@ -19,6 +19,12 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api/csapi-go': {
+        target: 'https://129-80-248-53.sslip.io/csapi-go',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/csapi-go/, ''),
+      },
       '/api/52north': {
         target: 'https://csa.demo.52north.org',
         changeOrigin: true,
