@@ -1291,6 +1291,16 @@ function extractLatLonFromResult(result: any): { lat: number; lon: number; alt?:
 }
 
 /**
+ * Extract the parent system ID from a datastream or control-stream object.
+ * Handles both `system@id` (SensorHub) and `system@link.href` (Go CSAPI).
+ */
+function extractSystemId(resource: any): string | undefined {
+  return resource['system@id']
+    || resource.system?.id
+    || resource['system@link']?.href?.split('/').pop()
+}
+
+/**
  * Check whether a datastream might produce observations with geographic
  * coordinates, based on its name or observedProperty definitions/labels.
  */
@@ -1489,7 +1499,7 @@ async function buildSystemLocationCache(): Promise<void> {
     // but keep ALL location datastreams for observation track rendering
     const bySystem: Record<string, any> = {}
     for (const ds of locationDs) {
-      const sysId = ds['system@id'] || ds.system?.id
+      const sysId = extractSystemId(ds)
       if (!sysId) continue
       // Only use observation-derived location if no static location exists
       if (systemLocationCache[sysId]) continue
@@ -1503,7 +1513,7 @@ async function buildSystemLocationCache(): Promise<void> {
     // LOB datastreams → bearing lines; position datastreams → orbit markers.
     locationDatastreamList = locationDs
       .filter((ds: any) => {
-        const sysId = ds['system@id'] || ds.system?.id
+        const sysId = extractSystemId(ds)
         if (!sysId) return false
         const nm = (ds.name || ds.outputName || '').toLowerCase()
         const pass = nm.includes('lob') || nm.includes('bearing')
@@ -1523,7 +1533,7 @@ async function buildSystemLocationCache(): Promise<void> {
       .map((ds: any) => ({
         id: ds.id,
         name: ds.name || ds.outputName || 'Unknown',
-        systemId: ds['system@id'] || ds.system?.id,
+        systemId: extractSystemId(ds),
       }))
 
     // NOTE: Previously this block added ALL datastreams for systems with
@@ -1626,7 +1636,7 @@ async function enrichResourcesWithLocations(): Promise<void> {
       for (const ds of dsList) {
         if (!ds.id || existingDsIds.has(ds.id)) continue
         if (!isLocationRelatedDatastream(ds)) continue
-        const sysId = ds['system@id'] || ds.system?.id
+        const sysId = extractSystemId(ds)
         if (!sysId) continue
         const nm = (ds.name || ds.outputName || '').toLowerCase()
         if (nm.includes('lob') || nm.includes('bearing')
@@ -2764,7 +2774,7 @@ async function loadDatastreams(): Promise<void> {
 
     const dsBatch: Feature[] = []
     for (const ds of items) {
-      const sysId = ds['system@id'] || ds.system?.id
+      const sysId = extractSystemId(ds)
       if (!sysId) continue
       const loc = systemLocationCache[sysId]
       if (!loc) continue
@@ -2821,7 +2831,7 @@ async function loadControlStreams(): Promise<void> {
 
     const csBatch: Feature[] = []
     for (const cs of items) {
-      const sysId = cs['system@id'] || cs.system?.id
+      const sysId = extractSystemId(cs)
       if (!sysId) continue
       const loc = systemLocationCache[sysId]
       if (!loc) continue

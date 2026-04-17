@@ -96,7 +96,9 @@ function parseBaseStream(
         : [],
       ...(typeof obj['system@id'] === 'string'
         ? { systemId: obj['system@id'] as string }
-        : {}),
+        : typeof obj['system@link']?.href === 'string'
+          ? { systemId: (obj['system@link'].href as string).split('/').pop()! }
+          : {}),
       links: Array.isArray(obj.links) ? (obj.links as ResourceLink[]) : [],
     },
   };

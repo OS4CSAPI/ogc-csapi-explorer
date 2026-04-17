@@ -948,6 +948,14 @@ async function fetchCounts() {
           discoveredGrandparents.push(ref)
           discoveredAncestors['systems'] = ref
           counts['systems'] = 1
+        } else if (raw?.['system@link']?.href && !hasResources('systems')) {
+          const sysId = String(raw['system@link'].href).split('/').pop()
+          if (sysId) {
+            const ref = { resourceType: 'systems', resourceId: sysId }
+            discoveredGrandparents.push(ref)
+            discoveredAncestors['systems'] = ref
+            counts['systems'] = 1
+          }
         }
         if (typeof raw?.['datastream@id'] === 'string' && !hasResources('datastreams')) {
           const ref = { resourceType: 'datastreams', resourceId: raw['datastream@id'] }
