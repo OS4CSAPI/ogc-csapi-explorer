@@ -3,9 +3,9 @@
  *
  * Checks all known resources on the OS4CSAPI server:
  * - Global endpoints (/datastreams, /systems, /deployments)
- * - 39 individual systems (incl. 8 USGS Water, 1 USGS Earthquake)
- * - 12 deployments (10 top-level + 2 sub-deployments; incl. USGS Water, NIMS Imagery, USGS Earthquake)
- * - 63 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky, 16 USGS Water, 8 NIMS Imagery [enriched 2026-03-11], 1 USGS Earthquake)
+ * - 44 individual systems (incl. 8 USGS Water, 1 USGS Earthquake)
+ * - 10 deployments (incl. USGS Water, NIMS Imagery, Seismic Monitoring)
+ * - 63 critical datastream observations with staleness thresholds (incl. 5 BuoyCAM, 5 CO-OPS, 5 AWX METAR, 1 OpenSky, 16 USGS Water, 8 NIMS Imagery, 1 USGS Earthquake)
  *
  * READ-ONLY: no writes to the server.
  */
@@ -27,15 +27,15 @@ function getAuthHeaders(): Record<string, string> {
 // ── Expected resources (mirrors scripts/smoke_test.py) ──────────────
 
 const EXPECTED_SYSTEMS: Record<string, string> = {
-  '04dg': 'SET Ft Huachuca',
-  '04e0': 'Monitoring Site Node',
-  '04eg': 'VHF Relay/Repeater',
-  '04f0': 'ODAS AZ-MA-1',
-  '04fg': 'ODAS AZ-MA-2',
-  '04g0': 'ODAS AZ-MA-3',
-  '0540': 'Localizer',
-  '054g': 'ISS Position Publisher',
-  '0550': 'ISS Orbit Track Publisher',
+  '04j0': 'SET Ft Huachuca',
+  '04jg': 'Monitoring Site Node',
+  '04k0': 'VHF Relay/Repeater',
+  '04kg': 'ODAS AZ-MA-1',
+  '04l0': 'ODAS AZ-MA-2',
+  '04lg': 'ODAS AZ-MA-3',
+  '059g': 'Localizer',
+  '04i0': 'ISS Position Publisher',
+  '04ig': 'ISS Orbit Track Publisher',
   '040g': 'NWS KTUS',
   '0410': 'NWS KDMA',
   '041g': 'NWS KFHU',
@@ -66,33 +66,30 @@ const EXPECTED_SYSTEMS: Record<string, string> = {
   '04cg': 'AWX KPHX Sky Harbor',
   // OpenSky ADS-B feed
   '04d0': 'OpenSky ADS-B Feed',
-  // USGS Water monitoring stations
-  '055g': 'USGS 09380000 Colorado River Lees Ferry',
-  '0560': 'USGS 09019850 Willow Creek Granby',
-  '056g': 'USGS 11313433 Dutch Slough',
-  '0570': 'USGS 08171000 Blanco River Wimberley',
-  '057g': 'USGS 01650800 Sligo Creek Takoma Park',
-  '0580': 'USGS 05051300 Bois De Sioux Doran',
-  '058g': 'USGS 12439500 Okanogan River Oroville',
-  '0590': 'USGS 02135000 Little Pee Dee Galivants Ferry',
   // USGS Earthquake feed
-  '059g': 'USGS Earthquake Feed',
+  '04dg': 'USGS Earthquake Feed',
+  // USGS Water monitoring stations
+  '04e0': 'USGS 09380000 Colorado River Lees Ferry',
+  '04eg': 'USGS 09019850 Willow Creek Granby',
+  '04f0': 'USGS 11313433 Dutch Slough',
+  '04fg': 'USGS 08171000 Blanco River Wimberley',
+  '04g0': 'USGS 01650800 Sligo Creek Takoma Park',
+  '04gg': 'USGS 05051300 Bois De Sioux Doran',
+  '04h0': 'USGS 12439500 Okanogan River Oroville',
+  '04hg': 'USGS 02135000 Little Pee Dee Galivants Ferry',
 }
 
 const EXPECTED_DEPLOYMENTS: Record<string, string> = {
-  '04i0': 'Intelligence Collection Operation',
-  '04o0': 'Orbital Tracking Demo',
+  '04vg': 'Intelligence Collection Operation',
+  '04t0': 'Orbital Tracking Demo',
   '040g': 'NWS Weather Demo',
   '046g': 'NDBC Buoy Demo',
   '04a0': 'CO-OPS Coastal Demo',
   '04dg': 'AWX METAR Demo',
   '04h0': 'Airspace Tracking Demo',
-  '04hg': 'OpenSky ADS-B Feed',
-  '04qg': 'USGS Water Monitoring Demo',
-  '055g': 'USGS NIMS Imagery Demo',
-  // USGS Earthquake feed
-  '05ag': 'Seismic Monitoring Demo',
-  '05b0': 'USGS Earthquake Feed',
+  '04i0': 'Seismic Monitoring Demo',
+  '04j0': 'USGS Water Monitoring Demo',
+  '04o0': 'USGS NIMS Imagery Demo',
 }
 
 interface DsInfo {
@@ -101,8 +98,8 @@ interface DsInfo {
 }
 
 const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
-  'ISS Position SGP4':      { id: '04tg', system: '054g' },
-  'ISS Orbit Ground Track': { id: '04u0', system: '0550' },
+  'ISS Position SGP4':      { id: '04sg', system: '04i0' },
+  'ISS Orbit Ground Track': { id: '04t0', system: '04ig' },
   'NWS KTUS Surface Obs':   { id: '040g', system: '040g' },
   'NWS KDMA Surface Obs':   { id: '0410', system: '0410' },
   'NWS KFHU Surface Obs':   { id: '041g', system: '041g' },
@@ -113,17 +110,17 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'NWS KNYG Surface Obs':   { id: '0440', system: '0440' },
   'NWS KDAY Surface Obs':   { id: '044g', system: '044g' },
   'NWS KFFO Surface Obs':   { id: '0450', system: '0450' },
-  'AZ-MA-1 LOB':            { id: '04hg', system: '04f0' },
-  'AZ-MA-2 LOB':            { id: '04lg', system: '04fg' },
-  'AZ-MA-3 LOB':            { id: '04pg', system: '04g0' },
-  'UAS Location Estimate':  { id: '04t0', system: '0540' },
-  'SENREP':                 { id: '04g0', system: '04dg' },
+  'AZ-MA-1 LOB':            { id: '04v0', system: '04kg' },
+  'AZ-MA-2 LOB':            { id: '0530', system: '04l0' },
+  'AZ-MA-3 LOB':            { id: '0570', system: '04lg' },
+  'UAS Location Estimate':  { id: '05a0', system: '059g' },
+  'SENREP':                 { id: '04tg', system: '04j0' },
   // NDBC buoys (met obs)
-  'NDBC 44025 Met Obs':     { id: '05g0', system: '045g' },
-  'NDBC 41009 Met Obs':     { id: '05gg', system: '0460' },
-  'NDBC 42036 Met Obs':     { id: '05h0', system: '046g' },
-  'NDBC 46025 Met Obs':     { id: '05hg', system: '0470' },
-  'NDBC 46013 Met Obs':     { id: '05i0', system: '047g' },
+  'NDBC 44025 Met Obs':     { id: '045g', system: '045g' },
+  'NDBC 41009 Met Obs':     { id: '046g', system: '0460' },
+  'NDBC 42036 Met Obs':     { id: '047g', system: '046g' },
+  'NDBC 46025 Met Obs':     { id: '048g', system: '0470' },
+  'NDBC 46013 Met Obs':     { id: '049g', system: '047g' },
   // NDBC buoys (BuoyCAM)
   'NDBC 44025 BuoyCAM':     { id: '0460', system: '045g' },
   'NDBC 41009 BuoyCAM':     { id: '0470', system: '0460' },
@@ -131,11 +128,11 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'NDBC 46025 BuoyCAM':     { id: '0490', system: '0470' },
   'NDBC 46013 BuoyCAM':     { id: '04a0', system: '047g' },
   // CO-OPS tide stations
-  'CO-OPS 8518750 Coastal Obs': { id: '05ig', system: '0480' },
-  'CO-OPS 8723214 Coastal Obs': { id: '05j0', system: '048g' },
-  'CO-OPS 8726520 Coastal Obs': { id: '05jg', system: '0490' },
-  'CO-OPS 9414290 Coastal Obs': { id: '05k0', system: '049g' },
-  'CO-OPS 8443970 Coastal Obs': { id: '05kg', system: '04a0' },
+  'CO-OPS 8518750 Coastal Obs': { id: '04ag', system: '0480' },
+  'CO-OPS 8723214 Coastal Obs': { id: '04b0', system: '048g' },
+  'CO-OPS 8726520 Coastal Obs': { id: '04bg', system: '0490' },
+  'CO-OPS 9414290 Coastal Obs': { id: '04c0', system: '049g' },
+  'CO-OPS 8443970 Coastal Obs': { id: '04cg', system: '04a0' },
   // AviationWeather METAR stations
   'AWX KTUS METAR Obs':         { id: '04d0', system: '04ag' },
   'AWX KDMA METAR Obs':         { id: '04dg', system: '04b0' },
@@ -143,36 +140,36 @@ const CRITICAL_DATASTREAMS: Record<string, DsInfo> = {
   'AWX KLUF METAR Obs':         { id: '04eg', system: '04c0' },
   'AWX KPHX METAR Obs':         { id: '04f0', system: '04cg' },
   // OpenSky ADS-B feed
-  'OpenSky ADS-B States':         { id: '05fg', system: '04d0' },
+  'OpenSky ADS-B States':         { id: '04fg', system: '04d0' },
   // USGS Water monitoring (discharge)
-  'USGS 09380000 Discharge':      { id: '04ug', system: '055g' },
-  'USGS 09019850 Discharge':      { id: '04vg', system: '0560' },
-  'USGS 11313433 Discharge':      { id: '050g', system: '056g' },
-  'USGS 08171000 Discharge':      { id: '051g', system: '0570' },
-  'USGS 01650800 Discharge':      { id: '052g', system: '057g' },
-  'USGS 05051300 Discharge':      { id: '053g', system: '0580' },
-  'USGS 12439500 Discharge':      { id: '054g', system: '058g' },
-  'USGS 02135000 Discharge':      { id: '055g', system: '0590' },
+  'USGS 09380000 Discharge':      { id: '04gg', system: '04e0' },
+  'USGS 09019850 Discharge':      { id: '04hg', system: '04eg' },
+  'USGS 11313433 Discharge':      { id: '04ig', system: '04f0' },
+  'USGS 08171000 Discharge':      { id: '04jg', system: '04fg' },
+  'USGS 01650800 Discharge':      { id: '04kg', system: '04g0' },
+  'USGS 05051300 Discharge':      { id: '04lg', system: '04gg' },
+  'USGS 12439500 Discharge':      { id: '04mg', system: '04h0' },
+  'USGS 02135000 Discharge':      { id: '04ng', system: '04hg' },
   // USGS Water monitoring (gage height)
-  'USGS 09380000 Gage Height':    { id: '04v0', system: '055g' },
-  'USGS 09019850 Gage Height':    { id: '0500', system: '0560' },
-  'USGS 11313433 Gage Height':    { id: '0510', system: '056g' },
-  'USGS 08171000 Gage Height':    { id: '0520', system: '0570' },
-  'USGS 01650800 Gage Height':    { id: '0530', system: '057g' },
-  'USGS 05051300 Gage Height':    { id: '0540', system: '0580' },
-  'USGS 12439500 Gage Height':    { id: '0550', system: '058g' },
-  'USGS 02135000 Gage Height':    { id: '0560', system: '0590' },
-  // USGS NIMS Imagery (companion datastreams on existing water systems) [enriched 2026-03-11]
-  'NIMS 09380000 Imagery':          { id: '05l0', system: '055g' },
-  'NIMS 09019850 Imagery':          { id: '05bg', system: '0560' },
-  'NIMS 11313433 Imagery':          { id: '05c0', system: '056g' },
-  'NIMS 08171000 Imagery':          { id: '05cg', system: '0570' },
-  'NIMS 01650800 Imagery':          { id: '05d0', system: '057g' },
-  'NIMS 05051300 Imagery':          { id: '05dg', system: '0580' },
-  'NIMS 12439500 Imagery':          { id: '05e0', system: '058g' },
-  'NIMS 02135000 Imagery':          { id: '05eg', system: '0590' },
+  'USGS 09380000 Gage Height':    { id: '04h0', system: '04e0' },
+  'USGS 09019850 Gage Height':    { id: '04i0', system: '04eg' },
+  'USGS 11313433 Gage Height':    { id: '04j0', system: '04f0' },
+  'USGS 08171000 Gage Height':    { id: '04k0', system: '04fg' },
+  'USGS 01650800 Gage Height':    { id: '04l0', system: '04g0' },
+  'USGS 05051300 Gage Height':    { id: '04m0', system: '04gg' },
+  'USGS 12439500 Gage Height':    { id: '04n0', system: '04h0' },
+  'USGS 02135000 Gage Height':    { id: '04o0', system: '04hg' },
+  // USGS NIMS Imagery (companion datastreams on existing water systems)
+  'NIMS 09380000 Imagery':          { id: '04og', system: '04e0' },
+  'NIMS 09019850 Imagery':          { id: '04p0', system: '04eg' },
+  'NIMS 11313433 Imagery':          { id: '04pg', system: '04f0' },
+  'NIMS 08171000 Imagery':          { id: '04q0', system: '04fg' },
+  'NIMS 01650800 Imagery':          { id: '04qg', system: '04g0' },
+  'NIMS 05051300 Imagery':          { id: '04r0', system: '04gg' },
+  'NIMS 12439500 Imagery':          { id: '04rg', system: '04h0' },
+  'NIMS 02135000 Imagery':          { id: '04s0', system: '04hg' },
   // USGS Earthquake feed
-  'USGS Earthquake Events':          { id: '05f0', system: '059g' },
+  'USGS Earthquake Events':          { id: '04g0', system: '04dg' },
 }
 
 // ── Staleness thresholds (minutes) ──

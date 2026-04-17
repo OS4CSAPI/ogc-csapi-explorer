@@ -41,8 +41,8 @@ export const PUBLISHER_GROUPS: PublisherGroup[] = [
     name: 'ISS',
     icon: 'pi pi-globe',
     datastreams: [
-      { id: '04tg', label: 'ISS Position SGP4' },
-      { id: '04u0', label: 'ISS Orbit Ground Track' },
+      { id: '04sg', label: 'ISS Position SGP4' },
+      { id: '04t0', label: 'ISS Orbit Ground Track' },
     ],
   },
   {
@@ -65,11 +65,11 @@ export const PUBLISHER_GROUPS: PublisherGroup[] = [
     name: 'NDBC',
     icon: 'pi pi-compass',
     datastreams: [
-      { id: '05g0', label: 'NDBC 44025 Met' },
-      { id: '05gg', label: 'NDBC 41009 Met' },
-      { id: '05h0', label: 'NDBC 42036 Met' },
-      { id: '05hg', label: 'NDBC 46025 Met' },
-      { id: '05i0', label: 'NDBC 46013 Met' },
+      { id: '045g', label: 'NDBC 44025 Met' },
+      { id: '046g', label: 'NDBC 41009 Met' },
+      { id: '047g', label: 'NDBC 42036 Met' },
+      { id: '048g', label: 'NDBC 46025 Met' },
+      { id: '049g', label: 'NDBC 46013 Met' },
       { id: '0460', label: 'NDBC 44025 CAM' },
       { id: '0470', label: 'NDBC 41009 CAM' },
       { id: '0480', label: 'NDBC 42036 CAM' },
@@ -81,11 +81,11 @@ export const PUBLISHER_GROUPS: PublisherGroup[] = [
     name: 'CO-OPS',
     icon: 'pi pi-wave-pulse',
     datastreams: [
-      { id: '05ig', label: 'CO-OPS 8518750 The Battery' },
-      { id: '05j0', label: 'CO-OPS 8723214 Virginia Key' },
-      { id: '05jg', label: 'CO-OPS 8726520 St. Petersburg' },
-      { id: '05k0', label: 'CO-OPS 9414290 San Francisco' },
-      { id: '05kg', label: 'CO-OPS 8443970 Boston' },
+      { id: '04ag', label: 'CO-OPS 8518750 The Battery' },
+      { id: '04b0', label: 'CO-OPS 8723214 Virginia Key' },
+      { id: '04bg', label: 'CO-OPS 8726520 St. Petersburg' },
+      { id: '04c0', label: 'CO-OPS 9414290 San Francisco' },
+      { id: '04cg', label: 'CO-OPS 8443970 Boston' },
     ],
   },
   {
@@ -103,7 +103,7 @@ export const PUBLISHER_GROUPS: PublisherGroup[] = [
     name: 'OpenSky ADS-B',
     icon: 'pi pi-send',
     datastreams: [
-      { id: '05fg', label: 'OpenSky ADS-B States' },
+      { id: '04fg', label: 'OpenSky ADS-B States' },
     ],
   },
 ]
