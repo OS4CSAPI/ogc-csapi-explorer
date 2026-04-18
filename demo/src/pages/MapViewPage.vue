@@ -3139,6 +3139,19 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         if (obsRes.ok && obsRes.data) {
           let allItems = obsRes.data.items || []
 
+          // Normalize ordering: the CSAPI spec doesn't mandate a default sort
+          // order, and `sortBy`/`sortOrder` are honored by OSH but silently
+          // ignored by the Go reference implementation (which returns
+          // descending). Sort ascending here so downstream gap-based dedup
+          // and track LineString construction are order-agnostic.
+          if (allItems.length > 1) {
+            allItems.sort((a: any, b: any) => {
+              const ta = new Date(a.resultTime || a.phenomenonTime || 0).getTime()
+              const tb = new Date(b.resultTime || b.phenomenonTime || 0).getTime()
+              return ta - tb
+            })
+          }
+
           // Deduplicate: discard burst observations (gap < 10s from previous).
           // Normal cadence is 30s; burst is ~70ms.  This cleanly removes
           // reconnect-induced rapid-fire clumps while keeping real data.
