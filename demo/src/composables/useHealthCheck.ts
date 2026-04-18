@@ -316,9 +316,15 @@ export function useHealthCheck() {
     if (dsStatus !== 200) { fail(c, `DS not found (HTTP ${dsStatus})`); return }
 
     // Fetch latest obs
-    const { status: obsStatus, data: obsData } = await apiGet(
+    let { status: obsStatus, data: obsData } = await apiGet(
       `/datastreams/${dsInfo.id}/observations?limit=1&resultTime=latest`
     )
+    // Fallback: Go CSAPI server ignores resultTime=latest
+    if (obsStatus === 200 && !(obsData?.items?.length)) {
+      ({ status: obsStatus, data: obsData } = await apiGet(
+        `/datastreams/${dsInfo.id}/observations?limit=1`
+      ))
+    }
     if (obsStatus !== 200) { fail(c, `Obs query HTTP ${obsStatus}`); return }
 
     const items = obsData?.items ?? []

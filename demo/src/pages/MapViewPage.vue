@@ -1553,9 +1553,21 @@ async function buildSystemLocationCache(): Promise<void> {
           resultTime: 'latest',
           limit: 1,
         } as any)
-        const obsRes = await apiFetch(obsUrl, {
+        let obsRes = await apiFetch(obsUrl, {
           headers: { 'Accept': 'application/om+json' },
         })
+        // Fallback: Go CSAPI server ignores resultTime=latest.  Retry with
+        // plain limit=1 (Go returns newest-first by default).
+        // Fallback: Go CSAPI server ignores resultTime=latest.  Retry with
+        // plain limit=1 (Go returns newest-first by default).
+        if (obsRes.ok && obsRes.data && !(obsRes.data.items?.[0] || obsRes.data[0])) {
+          const fallbackUrl = getNestedListUrl('datastreams', ds.id, 'observations', {
+            limit: 1,
+          } as any)
+          obsRes = await apiFetch(fallbackUrl, {
+            headers: { 'Accept': 'application/om+json' },
+          })
+        }
         if (!obsRes.ok || !obsRes.data) return
 
         const obs = obsRes.data.items?.[0] || obsRes.data[0]
@@ -1563,17 +1575,16 @@ async function buildSystemLocationCache(): Promise<void> {
 
         const loc = extractLatLonFromResult(obs.result)
         if (!loc) return
-
         systemLocationCache[sysId] = {
           lat: loc.lat, lon: loc.lon, alt: loc.alt,
           datastreamName: ds.name,
           phenomenonTime: obs.phenomenonTime,
         }
-      } catch { /* skip */ }
+      } catch { /* observation fetch failed for one DS — continue with others */ }
     })
 
     await Promise.all(promises)
-  } catch { /* cache remains empty */ }
+  } catch { /* Phase C global DS fetch failed */ }
 }
 
 /**
@@ -1728,7 +1739,7 @@ async function enrichSystems(): Promise<void> {
     if (batch.length) source.addFeatures(batch)
     enrichedCounts.value['systems'] = batch.length
     featureCounts.value['systems'] = (featureCounts.value['systems'] || 0) + batch.length
-  } catch { /* skip */ }
+  } catch { /* enrichSystems failed */ }
 }
 
 async function enrichDeployments(): Promise<void> {
@@ -2305,10 +2316,20 @@ async function loadLocationEstimates(): Promise<void> {
       resultTime: 'latest',
       limit: 1,
     } as any)
-    const obsRes = await apiFetch(
+    let obsRes = await apiFetch(
       latestUrl,
       { headers: { 'Accept': 'application/om+json' } },
     )
+    // Fallback: Go CSAPI server ignores resultTime=latest
+    if (obsRes.ok && obsRes.data && !(obsRes.data.items?.length)) {
+      const fallbackUrl = getNestedListUrl('datastreams', localizerDatastreamId, 'observations', {
+        limit: 1,
+      } as any)
+      obsRes = await apiFetch(
+        fallbackUrl,
+        { headers: { 'Accept': 'application/om+json' } },
+      )
+    }
     if (!obsRes.ok || !obsRes.data) return
     let items = obsRes.data.items || []
     let obs = items.find(isGenuineFix)
@@ -3076,9 +3097,18 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
           resultTime: 'latest',
           limit: 1,
         } as any)
-        const latestRes = await apiFetch(latestUrl, {
+        let latestRes = await apiFetch(latestUrl, {
           headers: { 'Accept': 'application/om+json' },
         })
+        // Fallback: Go CSAPI server ignores resultTime=latest
+        if (latestRes.ok && !latestRes.data?.items?.length) {
+          const fallbackUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
+            limit: 1,
+          } as any)
+          latestRes = await apiFetch(fallbackUrl, {
+            headers: { 'Accept': 'application/om+json' },
+          })
+        }
         if (!latestRes.ok || !latestRes.data?.items?.length) return
         const latestTime = latestRes.data.items[0].resultTime || latestRes.data.items[0].phenomenonTime
         if (!latestTime) return
@@ -3608,9 +3638,18 @@ async function updateMovingSystemPositions(): Promise<void> {
         resultTime: 'latest',
         limit: 1,
       } as any)
-      const res = await apiFetch(posUrl, {
+      let res = await apiFetch(posUrl, {
         headers: { 'Accept': 'application/om+json' },
       })
+      // Fallback: Go CSAPI server ignores resultTime=latest
+      if (res.ok && !res.data?.items?.length) {
+        const fallbackUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
+          limit: 1,
+        } as any)
+        res = await apiFetch(fallbackUrl, {
+          headers: { 'Accept': 'application/om+json' },
+        })
+      }
       if (!res.ok || !res.data?.items?.length) return
       const obs = res.data.items[0]
       const loc = extractLatLonFromResult(obs.result)
@@ -3760,6 +3799,7 @@ onMounted(() => {
       zoom: 2,
     }),
   })
+
 
   // Click handler for features
   map.on('singleclick', (evt) => {

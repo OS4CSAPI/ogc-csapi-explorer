@@ -674,10 +674,17 @@ export function useDeployedSystemCard() {
       if (datastreams.length > 0) {
         // Check first (primary) datastream for latest observation
         try {
-          const latestRes = await apiFetch(
+          let latestRes = await apiFetch(
             `/datastreams/${datastreams[0]!.id}/observations?limit=1&resultTime=latest`,
             { headers: { 'Accept': 'application/json' } },
           )
+          // Fallback: Go CSAPI server ignores resultTime=latest
+          if (latestRes.ok && latestRes.data && !(latestRes.data.items?.length || (Array.isArray(latestRes.data) && latestRes.data.length))) {
+            latestRes = await apiFetch(
+              `/datastreams/${datastreams[0]!.id}/observations?limit=1`,
+              { headers: { 'Accept': 'application/json' } },
+            )
+          }
           if (latestRes.ok && latestRes.data) {
             const items = latestRes.data.items || latestRes.data || []
             if (Array.isArray(items) && items.length > 0) {
@@ -701,10 +708,17 @@ export function useDeployedSystemCard() {
         const isBuoyCAM = /buoycam|buoy[\s_-]?cam/i.test(cameraDs.name)
         cameraLabel = isBuoyCAM ? 'Live BuoyCAM' : 'Live Camera'
         try {
-          const camRes = await apiFetch(
+          let camRes = await apiFetch(
             `/datastreams/${cameraDs.id}/observations?limit=1&resultTime=latest`,
             { headers: { 'Accept': 'application/json' } },
           )
+          // Fallback: Go CSAPI server ignores resultTime=latest
+          if (camRes.ok && camRes.data && !(camRes.data.items?.length || (Array.isArray(camRes.data) && camRes.data.length))) {
+            camRes = await apiFetch(
+              `/datastreams/${cameraDs.id}/observations?limit=1`,
+              { headers: { 'Accept': 'application/json' } },
+            )
+          }
           if (camRes.ok && camRes.data) {
             const camItems = camRes.data.items || camRes.data || []
             if (Array.isArray(camItems) && camItems.length > 0) {
