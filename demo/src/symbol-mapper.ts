@@ -287,7 +287,7 @@ export function getSymbolForResource(
       break
     }
     case 'datastreams': {
-      // DataStreams inherit parent system classification if possible,
+      // Datastreams inherit parent system classification if possible,
       // but default to a friendly sensor with smaller rendering
       const dsName = rawData?.name || rawData?.outputName || ''
       const rule = matchKeywords(`${dsName} ${searchText}`, SYSTEM_RULES)

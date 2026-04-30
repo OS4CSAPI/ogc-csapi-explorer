@@ -1,9 +1,9 @@
 ---
 status: deferred
 priority: enhancement
-issue_id: "110"
+issue_id: '110'
 tags: [enhancement, link-resolution, cross-reference, out-of-scope]
-dependencies: ["#108", "#109", "#103"]
+dependencies: ['#108', '#109', '#103']
 related: []
 ---
 

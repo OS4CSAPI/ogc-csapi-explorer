@@ -6,7 +6,7 @@
  *   1. Deployment  — context, role, hierarchy, location, lifecycle
  *   2. Occupant System — identity, kind, ownership, manufacturer/model
  *   3. Procedures — how the thing works
- *   4. DataStreams — what it produces, freshness
+ *   4. Datastreams — what it produces, freshness
  *
  * Only applies to deployment leaves with an occupant system (platform@link).
  */

@@ -5,12 +5,13 @@
 **Version:** 1.0
 **Date:** March 7, 2026
 **Complements:** Phase-specific review templates remain available for targeted reviews:
+
 - `code-review-prompt-template.md` (Phase 2)
 - `code-review-prompt-template-phase-3.md` (Phase 3)
 - `code-review-prompt-template-phase-5.md` (Phase 5)
 - `code-review-prompt-template-phase-6.md` (Phase 6)
 - `code-review-prompt-template-phase-7.md` (Phase 7)
-**Report destination:** `docs/implementation/full-scope-contribution-review.md`
+  **Report destination:** `docs/implementation/full-scope-contribution-review.md`
 
 ---
 
@@ -19,6 +20,7 @@
 This template should be used **exactly once** — as the final gate review before porting Phase 7 changes to the `clean-pr` branch and pushing the updated PR #136 to camptocamp/ogc-client.
 
 **Prerequisites before triggering:**
+
 1. All Phase 7 issues are closed (Steps 1–20, Issues #98–#151)
 2. `phase-7` branch passes all CI gates (`tsc`, `lint`, `test`, `prettier`)
 3. Phase 7 review (`code-review-prompt-template-phase-7.md`) has been executed and all "Fix Now" items resolved
@@ -30,14 +32,14 @@ This template should be used **exactly once** — as the final gate review befor
 
 Phase-specific templates evaluate whether individual phase work is correct. This template evaluates whether the **complete contribution is ready for upstream submission**:
 
-| Dimension | Phase-Specific Reviews | Full-Scope Review |
-|-----------|----------------------|-------------------|
-| Scope | One phase at a time (20-50 files) | Entire fork diff vs upstream (60 files, 125 commits) |
-| Question answered | "Is this phase's work correct?" | "Is this contribution mergeable and professionally complete?" |
-| Audience | Internal QA | Upstream maintainer (jahow) |
-| Success criteria | Tests pass, code quality acceptable | PR #136 worth merging — clean diff, complete coverage, no debris |
-| Prior review history | None or 1-2 per phase | ~30 prior code review reports across all phases |
-| Risk concern | Phase-specific regressions | Cross-phase inconsistencies, accumulated technical debt, stale patterns |
+| Dimension            | Phase-Specific Reviews              | Full-Scope Review                                                       |
+| -------------------- | ----------------------------------- | ----------------------------------------------------------------------- |
+| Scope                | One phase at a time (20-50 files)   | Entire fork diff vs upstream (60 files, 125 commits)                    |
+| Question answered    | "Is this phase's work correct?"     | "Is this contribution mergeable and professionally complete?"           |
+| Audience             | Internal QA                         | Upstream maintainer (jahow)                                             |
+| Success criteria     | Tests pass, code quality acceptable | PR #136 worth merging — clean diff, complete coverage, no debris        |
+| Prior review history | None or 1-2 per phase               | ~30 prior code review reports across all phases                         |
+| Risk concern         | Phase-specific regressions          | Cross-phase inconsistencies, accumulated technical debt, stale patterns |
 
 ---
 
@@ -46,6 +48,7 @@ Phase-specific templates evaluate whether individual phase work is correct. This
 This review covers the **complete CSAPI implementation** contributed to camptocamp/ogc-client:
 
 **What we built:**
+
 - Connected Systems API (CSAPI) support implementing OGC API - Connected Systems Parts 1 & 2
 - 9 resource types: Systems, Deployments, Procedures, Sampling Features, Properties, DataStreams, Observations, Control Streams, Commands
 - URL builder with 87 public methods for all CRUD/query operations
@@ -59,12 +62,14 @@ This review covers the **complete CSAPI implementation** contributed to camptoca
 - Barrel file with complete public API exports
 
 **Integration footprint in upstream files:**
+
 - `src/ogc-api/endpoint.ts` — factory method, conformance getters (~35 lines)
 - `src/ogc-api/endpoint.spec.ts` — integration tests (~60 lines)
 - `src/ogc-api/info.ts` — conformance checking (~12 lines)
 - `src/index.ts` — root re-exports (~17 lines, now removed in Phase 6 — barrel-only export)
 
 **Diff stats (origin/main → phase-7):**
+
 - 60 source files changed
 - ~4,691 lines added / ~2,297 lines removed
 - 5 new files created, 55 existing files modified
@@ -72,6 +77,7 @@ This review covers the **complete CSAPI implementation** contributed to camptoca
 - 13 fixture files added (354 lines)
 
 **Development history:**
+
 - 7 phases (Phases 1–7)
 - 125 commits on development branch
 - ~30 code review reports in `docs/implementation/`
@@ -474,17 +480,17 @@ Every full-scope contribution review MUST include:
 
 ## Reference Documents
 
-| Document | Location | Purpose |
-|----------|----------|---------|
-| Contribution Goal | `docs/planning/contribution-goal-and-definition.md` | What the contribution is |
-| Implementation Guide | `docs/planning/csapi-implementation-guide.md` | Complete architectural guide (v7.0) |
-| ROADMAP | `docs/planning/ROADMAP.md` | Phase definitions and task breakdown (v3.4) |
-| P7 Cleanup Plan | `docs/planning/phase-7/P7-code-review-cleanup-plan.md` | Phase 7 execution plan |
-| AI Constraints | `docs/governance/AI_OPERATIONAL_CONSTRAINTS.md` | Behavioral boundaries |
-| Phase 2 Lessons | `docs/governance/phase-2-lessons-learned.md` | General guardrails |
-| Phase 3 Lessons | `docs/governance/phase-3-lessons-learned.md` | Parser-specific lessons |
-| Code Review Findings (16) | `docs/code-review/003-*.md` through `016-*.md` | Senior dev review findings |
-| Upstream Findings | `docs/code-review/upstream-findings-report.md` | 4 upstream-only findings |
-| Phase 7 Review Template | `docs/governance/code-review-prompt-template-phase-7.md` | Phase 7-specific review |
-| Prior Review Reports (~30) | `docs/implementation/phase-*.md` | All prior phase reviews |
-| Prior Smoke Tests (~20) | `docs/implementation/live-server-smoke-test-*.md` | All prior smoke tests |
+| Document                   | Location                                                 | Purpose                                     |
+| -------------------------- | -------------------------------------------------------- | ------------------------------------------- |
+| Contribution Goal          | `docs/planning/contribution-goal-and-definition.md`      | What the contribution is                    |
+| Implementation Guide       | `docs/planning/csapi-implementation-guide.md`            | Complete architectural guide (v7.0)         |
+| ROADMAP                    | `docs/planning/ROADMAP.md`                               | Phase definitions and task breakdown (v3.4) |
+| P7 Cleanup Plan            | `docs/planning/phase-7/P7-code-review-cleanup-plan.md`   | Phase 7 execution plan                      |
+| AI Constraints             | `docs/governance/AI_OPERATIONAL_CONSTRAINTS.md`          | Behavioral boundaries                       |
+| Phase 2 Lessons            | `docs/governance/phase-2-lessons-learned.md`             | General guardrails                          |
+| Phase 3 Lessons            | `docs/governance/phase-3-lessons-learned.md`             | Parser-specific lessons                     |
+| Code Review Findings (16)  | `docs/code-review/003-*.md` through `016-*.md`           | Senior dev review findings                  |
+| Upstream Findings          | `docs/code-review/upstream-findings-report.md`           | 4 upstream-only findings                    |
+| Phase 7 Review Template    | `docs/governance/code-review-prompt-template-phase-7.md` | Phase 7-specific review                     |
+| Prior Review Reports (~30) | `docs/implementation/phase-*.md`                         | All prior phase reviews                     |
+| Prior Smoke Tests (~20)    | `docs/implementation/live-server-smoke-test-*.md`        | All prior smoke tests                       |

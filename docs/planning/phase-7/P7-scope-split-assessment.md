@@ -20,37 +20,37 @@ The `url_builder.ts` file (2,490 lines, 87 public methods) was measured in detai
 
 ## Key Measurements
 
-| File | Lines | Public Methods | `assertResourceAvailable` calls | `buildResourceUrl` calls |
-|------|-------|----------------|--------------------------------|-------------------------|
-| `url_builder.ts` | 2,490 | 87 | 87 | 87 |
-| `parser.ts` (swecommon) | — | — | 19 redundant casts | — |
-| `data-array.ts` (swecommon) | — | — | 8 redundant casts | — |
-| `part2.ts` | — | 5 parsers with identical null-guard | 2 duplicated stream parsers (~30 lines each) | — |
+| File                        | Lines | Public Methods                      | `assertResourceAvailable` calls              | `buildResourceUrl` calls |
+| --------------------------- | ----- | ----------------------------------- | -------------------------------------------- | ------------------------ |
+| `url_builder.ts`            | 2,490 | 87                                  | 87                                           | 87                       |
+| `parser.ts` (swecommon)     | —     | —                                   | 19 redundant casts                           | —                        |
+| `data-array.ts` (swecommon) | —     | —                                   | 8 redundant casts                            | —                        |
+| `part2.ts`                  | —     | 5 parsers with identical null-guard | 2 duplicated stream parsers (~30 lines each) | —                        |
 
 ### url_builder.ts Method Breakdown by Resource Type
 
-| Resource Type | Total Methods | List/Create (keep assert) | Per-ID (remove assert) |
-|---------------|---------------|---------------------------|------------------------|
-| Systems | 16 | 2 | 14 |
-| Deployments | 9 | 2 | 7 |
-| Procedures | 8 | 2 | 6 |
-| SamplingFeatures | 8 | 2 | 6 |
-| Properties | 6 | 1 | 5 |
-| Datastreams | 11 | 2 | 9 |
-| Observations | 8 | 1 | 7 |
-| ControlStreams | 11 | 2 | 9 |
-| Commands | 10 | 1 | 9 |
-| **Total** | **87** | **15** | **72** |
+| Resource Type    | Total Methods | List/Create (keep assert) | Per-ID (remove assert) |
+| ---------------- | ------------- | ------------------------- | ---------------------- |
+| Systems          | 16            | 2                         | 14                     |
+| Deployments      | 9             | 2                         | 7                      |
+| Procedures       | 8             | 2                         | 6                      |
+| SamplingFeatures | 8             | 2                         | 6                      |
+| Properties       | 6             | 1                         | 5                      |
+| Datastreams      | 11            | 2                         | 9                      |
+| Observations     | 8             | 1                         | 7                      |
+| ControlStreams   | 11            | 2                         | 9                      |
+| Commands         | 10            | 1                         | 9                      |
+| **Total**        | **87**        | **15**                    | **72**                 |
 
 ### Issue #151 — Test Fixture Factory Scope
 
-| Spec File | Factory Name | Lines | Links |
-|-----------|-------------|-------|-------|
-| `discovery.spec.ts` | `makeCSAPICollection()` | 51 | 10 |
-| `observation.spec.ts` | `makeCollection()` | 39 | 4 |
-| `command.spec.ts` | `makeCollection()` | 38 | 4 |
-| `navigation.spec.ts` | `makeFullCollection()` | 49 | 9 |
-| **Total duplicated** | | **~177 lines** | |
+| Spec File             | Factory Name            | Lines          | Links |
+| --------------------- | ----------------------- | -------------- | ----- |
+| `discovery.spec.ts`   | `makeCSAPICollection()` | 51             | 10    |
+| `observation.spec.ts` | `makeCollection()`      | 39             | 4     |
+| `command.spec.ts`     | `makeCollection()`      | 38             | 4     |
+| `navigation.spec.ts`  | `makeFullCollection()`  | 49             | 9     |
+| **Total duplicated**  |                         | **~177 lines** |       |
 
 ---
 
@@ -58,21 +58,21 @@ The `url_builder.ts` file (2,490 lines, 87 public methods) was measured in detai
 
 ### Single Pass — Confident (13 issues)
 
-| Step | Issue | Scope | Rationale |
-|------|-------|-------|-----------|
-| 1 | #98 | JSDoc edit, 1 line | Trivial |
-| 2 | #148 | 27 cast deletions, 2 files | Mechanical, identical pattern |
-| 3 | #149 | Extract 1 helper, 5 call sites, 1 file | Small scope |
-| 4 | #146 | Extract 1 helper from 2 functions, 1 file | ~30 duplicated lines |
-| 5 | #140 | 1-line fallback + 1 test fixture | Trivial |
-| 7 | #143 | Null check before 1 cast, 1 function | Trivial |
-| 8 | #144 | ~1-3 functions, SensorML parsers | See flag below |
-| 9 | #142 | Union type + runtime check, 2 functions, 2 files | Focused scope |
-| 10 | #139 | Fix 1 method + update test fixture | Small scope |
-| 12 | #102 | Add optional param to 14 methods (7+7 clustered) | Patterned, clustered |
-| 14 | #150 | 1-line body replacement | Trivial |
-| 15 | #147 | Scheme validation at 3 points, 1 function | Small scope |
-| 16 | #151 | Create 1 shared file, modify 4 spec files | Straightforward extract |
+| Step | Issue | Scope                                            | Rationale                     |
+| ---- | ----- | ------------------------------------------------ | ----------------------------- |
+| 1    | #98   | JSDoc edit, 1 line                               | Trivial                       |
+| 2    | #148  | 27 cast deletions, 2 files                       | Mechanical, identical pattern |
+| 3    | #149  | Extract 1 helper, 5 call sites, 1 file           | Small scope                   |
+| 4    | #146  | Extract 1 helper from 2 functions, 1 file        | ~30 duplicated lines          |
+| 5    | #140  | 1-line fallback + 1 test fixture                 | Trivial                       |
+| 7    | #143  | Null check before 1 cast, 1 function             | Trivial                       |
+| 8    | #144  | ~1-3 functions, SensorML parsers                 | See flag below                |
+| 9    | #142  | Union type + runtime check, 2 functions, 2 files | Focused scope                 |
+| 10   | #139  | Fix 1 method + update test fixture               | Small scope                   |
+| 12   | #102  | Add optional param to 14 methods (7+7 clustered) | Patterned, clustered          |
+| 14   | #150  | 1-line body replacement                          | Trivial                       |
+| 15   | #147  | Scheme validation at 3 points, 1 function        | Small scope                   |
+| 16   | #151  | Create 1 shared file, modify 4 spec files        | Straightforward extract       |
 
 ### Needs Splitting — 3 Issues
 
@@ -82,9 +82,9 @@ The `url_builder.ts` file (2,490 lines, 87 public methods) was measured in detai
 
 **Recommended split (2 parts):**
 
-| Part | Scope | Edits |
-|------|-------|-------|
-| **A** | Implement `parseCollectionResponse` change + update production callers + `response.spec.ts` unit tests | ~8-10 edits |
+| Part  | Scope                                                                                                                                                              | Edits        |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| **A** | Implement `parseCollectionResponse` change + update production callers + `response.spec.ts` unit tests                                                             | ~8-10 edits  |
 | **B** | Update integration test call sites (`discovery.spec.ts`, `observation.spec.ts`, `command.spec.ts`, `navigation.spec.ts`, `pipeline.spec.ts`, remaining spec files) | ~35-40 edits |
 
 ---
@@ -95,10 +95,10 @@ The `url_builder.ts` file (2,490 lines, 87 public methods) was measured in detai
 
 **Recommended split (2 parts):**
 
-| Part | Resource Types | Method Count |
-|------|---------------|-------------|
-| **A** | Systems (14) + Deployments (7) + Procedures (6) + SamplingFeatures (6) | 33 |
-| **B** | Properties (5) + Datastreams (9) + Observations (7) + ControlStreams (9) + Commands (9) | 39 |
+| Part  | Resource Types                                                                          | Method Count |
+| ----- | --------------------------------------------------------------------------------------- | ------------ |
+| **A** | Systems (14) + Deployments (7) + Procedures (6) + SamplingFeatures (6)                  | 33           |
+| **B** | Properties (5) + Datastreams (9) + Observations (7) + ControlStreams (9) + Commands (9) | 39           |
 
 ---
 
@@ -108,11 +108,11 @@ The `url_builder.ts` file (2,490 lines, 87 public methods) was measured in detai
 
 **Recommended split (3 parts):**
 
-| Part | Resource Types | Method Count |
-|------|---------------|-------------|
-| **A** | Create `build()` helper + Systems (16) + Deployments (9) + Procedures (8) | 33 |
-| **B** | SamplingFeatures (8) + Properties (6) + Datastreams (11) | 25 |
-| **C** | Observations (8) + ControlStreams (11) + Commands (10) | 29 |
+| Part  | Resource Types                                                            | Method Count |
+| ----- | ------------------------------------------------------------------------- | ------------ |
+| **A** | Create `build()` helper + Systems (16) + Deployments (9) + Procedures (8) | 33           |
+| **B** | SamplingFeatures (8) + Properties (6) + Datastreams (11)                  | 25           |
+| **C** | Observations (8) + ControlStreams (11) + Commands (10)                    | 29           |
 
 ---
 
@@ -126,12 +126,12 @@ If scope is confirmed as small (1-3 functions with minor changes), single pass i
 
 ## Totals
 
-| Category | Issues | Plan Steps | Execution Passes |
-|----------|--------|------------|-----------------|
-| Single pass | 13 | 13 | 13 |
-| Split into 2 parts | #141, #100 | 2 | 4 |
-| Split into 3 parts | #145 | 1 | 3 |
-| **Total** | **16 steps** | **16** | **20 passes** |
+| Category           | Issues       | Plan Steps | Execution Passes |
+| ------------------ | ------------ | ---------- | ---------------- |
+| Single pass        | 13           | 13         | 13               |
+| Split into 2 parts | #141, #100   | 2          | 4                |
+| Split into 3 parts | #145         | 1          | 3                |
+| **Total**          | **16 steps** | **16**     | **20 passes**    |
 
 ---
 

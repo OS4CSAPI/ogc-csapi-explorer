@@ -21,18 +21,19 @@ Four findings (001, 002, 005, 006) from the senior developer's code review targe
 
 **MD file:** [001-upstream-p1-path-traversal-item-id.md](001-upstream-p1-path-traversal-item-id.md)
 
-| Field | Value |
-|-------|-------|
-| **Severity** | P1-Critical |
-| **File** | `src/ogc-api/endpoint.ts:551` |
-| **Upstream author** | Olivier Guyot (commit `ecdb8442`, 2023-02-12) |
-| **Exists in `upstream/main`** | Yes — identical line |
-| **In our diff** | No |
-| **CSAPI affected** | No — CSAPI uses `encodeResourceId()` |
+| Field                         | Value                                         |
+| ----------------------------- | --------------------------------------------- |
+| **Severity**                  | P1-Critical                                   |
+| **File**                      | `src/ogc-api/endpoint.ts:551`                 |
+| **Upstream author**           | Olivier Guyot (commit `ecdb8442`, 2023-02-12) |
+| **Exists in `upstream/main`** | Yes — identical line                          |
+| **In our diff**               | No                                            |
+| **CSAPI affected**            | No — CSAPI uses `encodeResourceId()`          |
 
-**Assessment:** The finding is correct. `url.pathname += \`/\${itemId}\`` without `encodeURIComponent` is a textbook path traversal vector. However, this line was written by the upstream maintainer in 2023, exists identically in `upstream/main`, and is not part of our contribution. Our CSAPI module is not affected because it uses `encodeResourceId()` (which wraps `encodeURIComponent`) for all resource IDs.
+**Assessment:** The finding is correct. `url.pathname += \`/\${itemId}\``without`encodeURIComponent`is a textbook path traversal vector. However, this line was written by the upstream maintainer in 2023, exists identically in`upstream/main`, and is not part of our contribution. Our CSAPI module is not affected because it uses `encodeResourceId()`(which wraps`encodeURIComponent`) for all resource IDs.
 
 **Out of scope because:**
+
 - We did not author this code
 - It is not in our diff to `clean-pr`
 - Modifying upstream code we didn't write violates our governance rules
@@ -44,18 +45,19 @@ Four findings (001, 002, 005, 006) from the senior developer's code review targe
 
 **MD file:** [002-upstream-p1-query-param-injection.md](002-upstream-p1-query-param-injection.md)
 
-| Field | Value |
-|-------|-------|
-| **Severity** | P1-Critical |
-| **File** | `src/ogc-api/endpoint.ts:651` |
-| **Upstream author** | Olivia (commit `d587336c`, 2025-08-04) |
-| **Exists in `upstream/main`** | Yes — identical line |
-| **In our diff** | No |
-| **CSAPI affected** | No — CSAPI uses typed `buildQueryString()` |
+| Field                         | Value                                      |
+| ----------------------------- | ------------------------------------------ |
+| **Severity**                  | P1-Critical                                |
+| **File**                      | `src/ogc-api/endpoint.ts:651`              |
+| **Upstream author**           | Olivia (commit `d587336c`, 2025-08-04)     |
+| **Exists in `upstream/main`** | Yes — identical line                       |
+| **In our diff**               | No                                         |
+| **CSAPI affected**            | No — CSAPI uses typed `buildQueryString()` |
 
 **Assessment:** The finding is correct. `encodeURI(options.query)` does not encode `&`, `=`, `?`, or `#`, enabling parameter injection and URL corruption. However, this line was authored by an upstream contributor in 2025, exists identically in `upstream/main`, and is not part of our contribution. Our CSAPI URL builder uses typed query parameter construction via `buildQueryString()` which individually encodes each parameter value — not affected.
 
 **Out of scope because:**
+
 - We did not author this code
 - It is not in our diff to `clean-pr`
 - Modifying upstream code we didn't write violates our governance rules
@@ -67,18 +69,19 @@ Four findings (001, 002, 005, 006) from the senior developer's code review targe
 
 **MD file:** [005-pending-p2-http-no-enforcement.md](005-pending-p2-http-no-enforcement.md)
 
-| Field | Value |
-|-------|-------|
-| **Severity** | P2 |
-| **File** | `src/ogc-api/endpoint.ts:148` |
-| **Upstream author** | camptocamp — constructor exists on `upstream/main` |
-| **Exists in `upstream/main`** | Yes — identical constructor |
-| **In our diff** | No |
-| **CSAPI affected** | Indirectly — inherits scheme from caller |
+| Field                         | Value                                              |
+| ----------------------------- | -------------------------------------------------- |
+| **Severity**                  | P2                                                 |
+| **File**                      | `src/ogc-api/endpoint.ts:148`                      |
+| **Upstream author**           | camptocamp — constructor exists on `upstream/main` |
+| **Exists in `upstream/main`** | Yes — identical constructor                        |
+| **In our diff**               | No                                                 |
+| **CSAPI affected**            | Indirectly — inherits scheme from caller           |
 
 **Assessment:** The finding is correct. The `OgcApiEndpoint` constructor accepts any URL scheme including `http://` with no validation or warning. All downstream URL construction inherits the insecure scheme, enabling mixed-content blocks in browsers and credential exposure over cleartext. However, this constructor is upstream code we did not author or modify. The recommended fix (a `console.warn` on non-localhost HTTP) would be a valuable contribution but should be offered as a separate upstream PR.
 
 **Out of scope because:**
+
 - We did not author this code
 - It is not in our diff to `clean-pr`
 - Modifying upstream code we didn't write violates our governance rules
@@ -89,18 +92,19 @@ Four findings (001, 002, 005, 006) from the senior developer's code review targe
 
 **MD file:** [006-pending-p2-error-object-logged.md](006-pending-p2-error-object-logged.md)
 
-| Field | Value |
-|-------|-------|
-| **Severity** | P2 |
-| **File** | `src/ogc-api/endpoint.ts:656` |
-| **Upstream author** | Ronit Jadhav (commit `6ff1fff`, 2024-04-05) |
-| **Exists in `upstream/main`** | Yes — identical line |
-| **In our diff** | No |
-| **CSAPI affected** | No — CSAPI methods use different error handling |
+| Field                         | Value                                           |
+| ----------------------------- | ----------------------------------------------- |
+| **Severity**                  | P2                                              |
+| **File**                      | `src/ogc-api/endpoint.ts:656`                   |
+| **Upstream author**           | Ronit Jadhav (commit `6ff1fff`, 2024-04-05)     |
+| **Exists in `upstream/main`** | Yes — identical line                            |
+| **In our diff**               | No                                              |
+| **CSAPI affected**            | No — CSAPI methods use different error handling |
 
 **Assessment:** The finding is correct. `getCollectionItemsUrl()` logs the full `error` object (not just `error.message`), which can expose API keys embedded in URLs. The same file has the correct pattern (`.message` only) at lines 701 and 746, confirming this is a pre-existing inconsistency — one handler was updated and the other was not. Both the buggy line (Ronit Jadhav, 2024) and the correct lines (ronitjadhav, 2024) are upstream commits. A one-character fix (`error` → `error.message`) should be offered as a trivial upstream PR or issue.
 
 **Out of scope because:**
+
 - We did not author this code
 - It is not in our diff to `clean-pr`
 - Pre-existing inconsistency between upstream contributors' handlers

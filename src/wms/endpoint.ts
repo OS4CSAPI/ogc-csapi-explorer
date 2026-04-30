@@ -1,6 +1,6 @@
 import { parseWmsCapabilities } from '../worker/index.js';
 import { useCache } from '../shared/cache.js';
-import { setQueryParams } from '../shared/http-utils.js';
+import { queryXmlDocument, setQueryParams } from '../shared/http-utils.js';
 import {
   BoundingBox,
   CrsCode,
@@ -10,8 +10,14 @@ import {
   type OperationName,
   type OperationUrl,
 } from '../shared/models.js';
-import { WmsLayerFull, WmsLayerSummary, WmsVersion } from './model.js';
-import { generateGetMapUrl } from './url.js';
+import {
+  WmsLayerDescription,
+  WmsLayerFull,
+  WmsLayerSummary,
+  WmsVersion,
+} from './model.js';
+import { generateDescribeLayerUrl, generateGetMapUrl } from './url.js';
+import { parseDescribeLayerResponse } from './describelayer.js';
 
 /**
  * Represents a WMS endpoint advertising several layers arranged in a tree structure.
@@ -198,6 +204,38 @@ export default class WmsEndpoint {
       SERVICE: 'WMS',
       REQUEST: 'GetCapabilities',
     });
+  }
+
+  /**
+   * Performs a DescribeLayer request for the given layer and returns its description,
+   * including the underlying OWS type (e.g. "WFS" for vector data).
+   * @param layerName Layer name to describe
+   * @return Returns null if the endpoint is not ready or does not advertise DescribeLayer
+   */
+  describeLayer(layerName: string): Promise<WmsLayerDescription | null> {
+    if (!this._layers) {
+      return Promise.resolve(null);
+    }
+    const describeLayerBaseUrl = this.getOperationUrl('DescribeLayer');
+    if (!describeLayerBaseUrl) {
+      return Promise.resolve(null);
+    }
+    return useCache(
+      () => {
+        const url = generateDescribeLayerUrl(
+          describeLayerBaseUrl,
+          this._version,
+          layerName
+        );
+        return queryXmlDocument(url).then((doc) =>
+          parseDescribeLayerResponse(doc, layerName)
+        );
+      },
+      'WMS',
+      'DESCRIBELAYER',
+      this._capabilitiesUrl,
+      layerName
+    );
   }
 
   /**

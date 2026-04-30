@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p3
-issue_id: "016"
+issue_id: '016'
 tags: [code-review, dry, tests]
 dependencies: []
 ---
@@ -14,12 +14,12 @@ Each of the 4 integration test files declares its own local `makeCollection`/`ma
 
 ## Findings
 
-| File | Function | Lines |
-|---|---|---|
-| `integration/discovery.spec.ts` | `makeCSAPICollection` | 37–88 |
-| `integration/observation.spec.ts` | `makeCollection` | 24–59 |
-| `integration/command.spec.ts` | `makeCollection` | 33–68 |
-| `integration/navigation.spec.ts` | `makeFullCollection` | 48–98 |
+| File                              | Function              | Lines |
+| --------------------------------- | --------------------- | ----- |
+| `integration/discovery.spec.ts`   | `makeCSAPICollection` | 37–88 |
+| `integration/observation.spec.ts` | `makeCollection`      | 24–59 |
+| `integration/command.spec.ts`     | `makeCollection`      | 33–68 |
+| `integration/navigation.spec.ts`  | `makeFullCollection`  | 48–98 |
 
 All 4 share these 12 identical padding fields:
 `itemFormats: []`, `bulkDownloadLinks: {}`, `jsonDownloadLink: ''`, `crs: []`, `itemCount: 0`, `queryables: []`, `sortables: []`, `mapTileFormats: []`, `vectorTileFormats: []`, `supportedTileMatrixSets: []`
@@ -35,22 +35,38 @@ The entire `src/ogc-api/csapi/integration/` directory is fork-only code (absent 
 ## Proposed Solutions
 
 ### Option A: Create a shared `_fixtures.ts` in the integration directory (Recommended)
+
 ```typescript
 // src/ogc-api/csapi/integration/_fixtures.ts
 import type { OgcApiCollectionInfo } from '../../model.js';
 
 const PADDING = {
-  itemFormats: [], bulkDownloadLinks: {}, jsonDownloadLink: '',
-  crs: [], itemCount: 0, queryables: [], sortables: [],
-  mapTileFormats: [], vectorTileFormats: [], supportedTileMatrixSets: [],
+  itemFormats: [],
+  bulkDownloadLinks: {},
+  jsonDownloadLink: '',
+  crs: [],
+  itemCount: 0,
+  queryables: [],
+  sortables: [],
+  mapTileFormats: [],
+  vectorTileFormats: [],
+  supportedTileMatrixSets: [],
 };
 
-export const ALL_CSAPI_LINKS = [ /* 9 standard rel entries */ ];
+export const ALL_CSAPI_LINKS = [
+  /* 9 standard rel entries */
+];
 
 export function makeFullCsapiCollection(
   overrides: Partial<OgcApiCollectionInfo> = {}
 ): OgcApiCollectionInfo {
-  return { ...PADDING, links: ALL_CSAPI_LINKS, id: 'test', title: 'Test', ...overrides };
+  return {
+    ...PADDING,
+    links: ALL_CSAPI_LINKS,
+    id: 'test',
+    title: 'Test',
+    ...overrides,
+  };
 }
 ```
 

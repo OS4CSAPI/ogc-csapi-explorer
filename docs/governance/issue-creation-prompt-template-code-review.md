@@ -29,7 +29,7 @@
 
 ## Template C: Code Review Finding
 
-```markdown
+````markdown
 ## Finding
 
 {{One-sentence summary. Example: "Path traversal via unencoded itemId in getCollectionItem" or "parseCollectionResponse<T> casts raw JSON to T[] without validation."}}
@@ -50,6 +50,7 @@
 ```typescript
 // Show the problematic code with file path and line reference
 ```
+````
 
 **Scenario:**
 
@@ -72,10 +73,10 @@ $ git diff upstream/main clean-fork/clean-pr -- <file> | grep -A3 -B3 "<pattern>
 
 ## Files to Modify
 
-| File | Action | Est. Lines | Purpose |
-|------|--------|-----------|---------|
-| {{`path/to/file.ts`}} | Modify | {{~N}} | {{Brief purpose}} |
-| {{`path/to/file.spec.ts`}} | Modify | {{~N}} | {{Brief purpose}} |
+| File                       | Action | Est. Lines | Purpose           |
+| -------------------------- | ------ | ---------- | ----------------- |
+| {{`path/to/file.ts`}}      | Modify | {{~N}}     | {{Brief purpose}} |
+| {{`path/to/file.spec.ts`}} | Modify | {{~N}}     | {{Brief purpose}} |
 
 ## Proposed Solutions
 
@@ -128,6 +129,7 @@ $ git diff upstream/main clean-fork/clean-pr -- <file> | grep -A3 -B3 "<pattern>
 > **⚠️ MANDATORY:** Before starting work on this issue, review [`docs/governance/AI_OPERATIONAL_CONSTRAINTS.md`](AI_OPERATIONAL_CONSTRAINTS.md).
 
 Key constraints:
+
 - **Precedence:** OGC specifications → AI Collaboration Agreement → This issue description → Existing code → Conversational context
 - **No scope expansion:** Fix the finding, nothing more
 - **Minimal diffs:** Prefer the smallest change that satisfies the acceptance criteria
@@ -137,16 +139,19 @@ Key constraints:
 ### Ownership-Specific Constraints
 
 **If Ours:**
+
 - Fix on the `phase-6` branch (or the current working branch)
 - Include in the next commit to `clean-pr` if the PR is still open
 - Add tests that cover the finding
 
 **If Upstream:**
+
 - Do NOT modify the upstream code in our PR — it changes code we didn't write
 - Track the issue for potential future contribution or discussion with the maintainer
 - If the fix is trivial and clearly beneficial, note in the issue that it could be offered as a separate upstream PR
 
 **If Shared:**
+
 - Fix only the parts that are in our code
 - Document the upstream component as a known limitation
 
@@ -154,12 +159,13 @@ Key constraints:
 
 ## References
 
-| # | Document | What It Provides |
-|---|----------|------------------|
-| 1 | {{Code review report or analysis output}} | Original finding with full context |
-| 2 | {{Affected source file with line reference}} | Code to modify |
-| 3 | {{OGC spec or MDN reference if applicable}} | Spec-correct behavior |
-| 4 | {{Related existing pattern in codebase}} | Blueprint for the fix |
+| #   | Document                                     | What It Provides                   |
+| --- | -------------------------------------------- | ---------------------------------- |
+| 1   | {{Code review report or analysis output}}    | Original finding with full context |
+| 2   | {{Affected source file with line reference}} | Code to modify                     |
+| 3   | {{OGC spec or MDN reference if applicable}}  | Spec-correct behavior              |
+| 4   | {{Related existing pattern in codebase}}     | Blueprint for the fix              |
+
 ```
 
 ---
@@ -204,13 +210,15 @@ Apply these labels consistently:
 ### Ownership Decision Tree
 
 ```
+
 Is the affected code in our diff (git diff upstream/main clean-fork/clean-pr)?
 ├── YES → Ownership: Ours
-│         Action: Fix it. Include in clean-pr if PR is open.
-├── NO  → Ownership: Upstream
-│         Action: Track it. Do NOT modify in our PR.
+│ Action: Fix it. Include in clean-pr if PR is open.
+├── NO → Ownership: Upstream
+│ Action: Track it. Do NOT modify in our PR.
 └── PARTIALLY → Ownership: Shared
-              Action: Fix our part. Document the upstream part.
+Action: Fix our part. Document the upstream part.
+
 ```
 
 ### Batching Related Findings
@@ -230,3 +238,4 @@ When in doubt, keep them separate. It's easier to close two issues than to track
 | Phase 6 ROADMAP / Verification | `issue-creation-prompt-template-phase-6.md` | Planned tasks or verification gate failures |
 | Phase 5 Parsers | `issue-creation-prompt-template-phase-5.md` | Parser implementation tasks |
 | **Code Review (this template)** | `issue-creation-prompt-template-code-review.md` | Post-implementation findings from human or automated review |
+```

@@ -41,10 +41,10 @@ This plan covers the execution of **Phase 7: Code Review Cleanup** — resolving
 
 This work spans two repositories with different purposes:
 
-| Repository | Branch | Purpose |
-|-----------|--------|---------|
+| Repository                    | Branch                    | Purpose                                                     |
+| ----------------------------- | ------------------------- | ----------------------------------------------------------- |
 | `OS4CSAPI/ogc-client-CSAPI_2` | `phase-7` (off `phase-6`) | Development — full context, granular commits, planning docs |
-| `OS4CSAPI/ogc-client` | `clean-pr` | PR delivery — squashed commit for upstream review |
+| `OS4CSAPI/ogc-client`         | `clean-pr`                | PR delivery — squashed commit for upstream review           |
 
 ### Workflow Steps
 
@@ -55,6 +55,7 @@ Create a `phase-7` branch off `phase-6` in the development repo. Execute all 20 
 **Step 2: Validate in CSAPI_2**
 
 After all 20 steps pass the per-phase validation gates, run the full suite:
+
 - `tsc --noEmit` — zero type errors
 - `npm test` — all tests pass
 - `npm run lint` — zero lint errors
@@ -112,6 +113,7 @@ git push origin clean-pr
 ### Pre-requisite: Verify `src/` sync
 
 Before starting, confirm that `phase-6` in CSAPI_2 and `clean-pr` in ogc-client have identical `src/` content. If Phase 6 was applied to both, the patch ports cleanly. If they've diverged, reconcile first.
+
 - All tests must pass after each step
 - Review `docs/governance/AI_OPERATIONAL_CONSTRAINTS.md` before starting implementation
 
@@ -121,50 +123,50 @@ Before starting, confirm that `phase-6` in CSAPI_2 and `clean-pr` in ogc-client 
 
 ### Code Review Findings (must fix)
 
-| # | Finding | Category | Primary File | Severity |
-|---|---------|----------|-------------|----------|
-| #141 | `parseCollectionResponse` casts raw JSON to `T[]` without validation | Type Safety | `endpoint.ts` | P1 |
-| #142 | `subPath` appended without encoding or type constraint | Type Safety + Security | `url_builder.ts` | P2 |
-| #143 | `extractCSAPIFeature` casts `properties` without null check | Type Safety | `geojson.ts` | P2 |
-| #144 | SensorML parsers spread raw JSON into typed results | Type Safety | `sensorml.ts` | P2 |
-| #145 | `assertResourceAvailable()` + `buildResourceUrl()` repeated 90× | DRY / Architecture | `url_builder.ts` | P2 |
-| #146 | `parseDatastream` / `parseControlStream` ~30 lines duplicated | DRY / Architecture | `part2.ts` | P2 |
-| #147 | `scanCsapiLinks()` no URL scheme validation | Security | `helpers.ts` | P3 |
-| #148 | Redundant `as Record` casts after `isRecord` narrowing | Code Quality | `parser.ts`, `data-array.ts` | P3 |
-| #149 | Null-guard + cast boilerplate duplicated 5× | Code Quality | `part2.ts` | P3 |
-| #150 | `createCommand()` / `createCommands()` byte-identical | DRY | `url_builder.ts` | P3 |
-| #151 | Collection fixture factory duplicated in 4 test files | Code Quality | `integration/*.spec.ts` | P3 |
+| #    | Finding                                                              | Category               | Primary File                 | Severity |
+| ---- | -------------------------------------------------------------------- | ---------------------- | ---------------------------- | -------- |
+| #141 | `parseCollectionResponse` casts raw JSON to `T[]` without validation | Type Safety            | `endpoint.ts`                | P1       |
+| #142 | `subPath` appended without encoding or type constraint               | Type Safety + Security | `url_builder.ts`             | P2       |
+| #143 | `extractCSAPIFeature` casts `properties` without null check          | Type Safety            | `geojson.ts`                 | P2       |
+| #144 | SensorML parsers spread raw JSON into typed results                  | Type Safety            | `sensorml.ts`                | P2       |
+| #145 | `assertResourceAvailable()` + `buildResourceUrl()` repeated 90×      | DRY / Architecture     | `url_builder.ts`             | P2       |
+| #146 | `parseDatastream` / `parseControlStream` ~30 lines duplicated        | DRY / Architecture     | `part2.ts`                   | P2       |
+| #147 | `scanCsapiLinks()` no URL scheme validation                          | Security               | `helpers.ts`                 | P3       |
+| #148 | Redundant `as Record` casts after `isRecord` narrowing               | Code Quality           | `parser.ts`, `data-array.ts` | P3       |
+| #149 | Null-guard + cast boilerplate duplicated 5×                          | Code Quality           | `part2.ts`                   | P3       |
+| #150 | `createCommand()` / `createCommands()` byte-identical                | DRY                    | `url_builder.ts`             | P3       |
+| #151 | Collection fixture factory duplicated in 4 test files                | Code Quality           | `integration/*.spec.ts`      | P3       |
 
 ### Pre-existing Issues (bundled — same files)
 
-| # | Title | Category | Primary File | Why Include |
-|---|-------|----------|-------------|-------------|
-| #98 | `parseCommandStatus` `@see` link precision (F18) | Documentation | `part2.ts` | Same file as #146, #149; trivial |
-| #100 | `assertResourceAvailable()` overly strict for per-ID methods | Bug | `url_builder.ts` | Must precede #158; split into #156 + #157 |
-| #102 | Command/observation CRUD need nested parent IDs | Bug | `url_builder.ts` | Must precede #158 |
-| #111 | `getCommandStatus()` string concatenation (F45) | Bug | `url_builder.ts` | Auto-resolved by #160 |
-| #139 | `getDeploymentSystems()` builds non-standard URL | Bug | `url_builder.ts` | Same file; independent fix |
-| #140 | `parseControlStreamSchemaResponse()` drops `paramsSchema` | Bug | `part2.ts` | Same file; data loss bug |
+| #    | Title                                                        | Category      | Primary File     | Why Include                               |
+| ---- | ------------------------------------------------------------ | ------------- | ---------------- | ----------------------------------------- |
+| #98  | `parseCommandStatus` `@see` link precision (F18)             | Documentation | `part2.ts`       | Same file as #146, #149; trivial          |
+| #100 | `assertResourceAvailable()` overly strict for per-ID methods | Bug           | `url_builder.ts` | Must precede #158; split into #156 + #157 |
+| #102 | Command/observation CRUD need nested parent IDs              | Bug           | `url_builder.ts` | Must precede #158                         |
+| #111 | `getCommandStatus()` string concatenation (F45)              | Bug           | `url_builder.ts` | Auto-resolved by #160                     |
+| #139 | `getDeploymentSystems()` builds non-standard URL             | Bug           | `url_builder.ts` | Same file; independent fix                |
+| #140 | `parseControlStreamSchemaResponse()` drops `paramsSchema`    | Bug           | `part2.ts`       | Same file; data loss bug                  |
 
 ### Excluded
 
-| # | Title | Reason | Details |
-|---|-------|--------|---------|
-| 001 | Path traversal via unencoded `itemId` | Upstream-only (P1) | See `docs/code-review/upstream-findings-report.md` |
-| 002 | Query param injection via `encodeURI` | Upstream-only (P1) | See `docs/code-review/upstream-findings-report.md` |
-| 005 | `OgcApiEndpoint` accepts `http://` without warning | Upstream-only (P2) | See `docs/code-review/upstream-findings-report.md` |
-| 006 | Full `error` object logged — may expose API keys | Upstream-only (P2) | See `docs/code-review/upstream-findings-report.md` |
-| #110 | `@link` / `@id` resolution utilities | New functionality | See `docs/code-review/110-deferred-enhancement-link-resolution-utilities.md` |
+| #    | Title                                              | Reason             | Details                                                                      |
+| ---- | -------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------- |
+| 001  | Path traversal via unencoded `itemId`              | Upstream-only (P1) | See `docs/code-review/upstream-findings-report.md`                           |
+| 002  | Query param injection via `encodeURI`              | Upstream-only (P1) | See `docs/code-review/upstream-findings-report.md`                           |
+| 005  | `OgcApiEndpoint` accepts `http://` without warning | Upstream-only (P2) | See `docs/code-review/upstream-findings-report.md`                           |
+| 006  | Full `error` object logged — may expose API keys   | Upstream-only (P2) | See `docs/code-review/upstream-findings-report.md`                           |
+| #110 | `@link` / `@id` resolution utilities               | New functionality  | See `docs/code-review/110-deferred-enhancement-link-resolution-utilities.md` |
 
 ### Issue Splits
 
 Three issues were split into smaller passes for safe single-pass execution (see `P7-scope-split-assessment.md`):
 
-| Parent | Split Into | Rationale |
-|--------|-----------|----------|
-| #141 | **#154** (Part 1) + **#155** (Part 2) | Part 1: core `parseItem` callback impl + unit tests (`response.ts`); Part 2: ~35–40 integration test call site updates (~5 spec files) |
-| #100 | **#156** (Part 1) + **#157** (Part 2) | Part 1: Systems/Deployments/Procedures/SamplingFeatures (33 methods); Part 2: Properties/Datastreams/Observations/ControlStreams/Commands (39 methods) |
-| #145 | **#158** (Part 1) + **#159** (Part 2) + **#160** (Part 3) | Part 1: `build()` helper + Systems/Deployments/Procedures (33 methods); Part 2: SamplingFeatures/Properties/Datastreams (25 methods); Part 3: Observations/ControlStreams/Commands (29 methods, resolves #111) |
+| Parent | Split Into                                                | Rationale                                                                                                                                                                                                      |
+| ------ | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #141   | **#154** (Part 1) + **#155** (Part 2)                     | Part 1: core `parseItem` callback impl + unit tests (`response.ts`); Part 2: ~35–40 integration test call site updates (~5 spec files)                                                                         |
+| #100   | **#156** (Part 1) + **#157** (Part 2)                     | Part 1: Systems/Deployments/Procedures/SamplingFeatures (33 methods); Part 2: Properties/Datastreams/Observations/ControlStreams/Commands (39 methods)                                                         |
+| #145   | **#158** (Part 1) + **#159** (Part 2) + **#160** (Part 3) | Part 1: `build()` helper + Systems/Deployments/Procedures (33 methods); Part 2: SamplingFeatures/Properties/Datastreams (25 methods); Part 3: Observations/ControlStreams/Commands (29 methods, resolves #111) |
 
 Parent issues (#141, #100, #145) are marked `[SPLIT]` on GitHub and reference their child issues.
 
@@ -380,23 +382,23 @@ Phase F (independent):
 
 ## Files Touched Summary
 
-| File | Issues | Total Steps |
-|------|--------|-------------|
-| `src/ogc-api/csapi/formats/part2.ts` | #98, #149, #146, #140 | 4 |
-| `src/ogc-api/csapi/url_builder.ts` | #142, #139, #156, #157, #102, #158, #159, #160, #150 | 9 |
-| `src/ogc-api/csapi/formats/swecommon/parser.ts` | #148 | 1 |
-| `src/ogc-api/csapi/formats/swecommon/data-array.ts` | #148 | 1 |
-| `src/ogc-api/csapi/formats/response.ts` | #154 | 1 |
-| `src/ogc-api/csapi/formats/response.spec.ts` | #154 | 1 |
-| `src/ogc-api/csapi/formats/sensorml.ts` | #144 | 1 |
-| `src/ogc-api/csapi/formats/geojson.ts` | #143 | 1 |
-| `src/ogc-api/csapi/helpers.ts` | #147 | 1 |
-| `src/ogc-api/csapi/integration/*.spec.ts` | #155 | 1 |
-| `src/ogc-api/csapi/integration/_fixtures.ts` | #151 (new) | 1 |
-| `src/ogc-api/csapi/integration/discovery.spec.ts` | #151 | 1 |
-| `src/ogc-api/csapi/integration/observation.spec.ts` | #151 | 1 |
-| `src/ogc-api/csapi/integration/command.spec.ts` | #151 | 1 |
-| `src/ogc-api/csapi/integration/navigation.spec.ts` | #151 | 1 |
+| File                                                | Issues                                               | Total Steps |
+| --------------------------------------------------- | ---------------------------------------------------- | ----------- |
+| `src/ogc-api/csapi/formats/part2.ts`                | #98, #149, #146, #140                                | 4           |
+| `src/ogc-api/csapi/url_builder.ts`                  | #142, #139, #156, #157, #102, #158, #159, #160, #150 | 9           |
+| `src/ogc-api/csapi/formats/swecommon/parser.ts`     | #148                                                 | 1           |
+| `src/ogc-api/csapi/formats/swecommon/data-array.ts` | #148                                                 | 1           |
+| `src/ogc-api/csapi/formats/response.ts`             | #154                                                 | 1           |
+| `src/ogc-api/csapi/formats/response.spec.ts`        | #154                                                 | 1           |
+| `src/ogc-api/csapi/formats/sensorml.ts`             | #144                                                 | 1           |
+| `src/ogc-api/csapi/formats/geojson.ts`              | #143                                                 | 1           |
+| `src/ogc-api/csapi/helpers.ts`                      | #147                                                 | 1           |
+| `src/ogc-api/csapi/integration/*.spec.ts`           | #155                                                 | 1           |
+| `src/ogc-api/csapi/integration/_fixtures.ts`        | #151 (new)                                           | 1           |
+| `src/ogc-api/csapi/integration/discovery.spec.ts`   | #151                                                 | 1           |
+| `src/ogc-api/csapi/integration/observation.spec.ts` | #151                                                 | 1           |
+| `src/ogc-api/csapi/integration/command.spec.ts`     | #151                                                 | 1           |
+| `src/ogc-api/csapi/integration/navigation.spec.ts`  | #151                                                 | 1           |
 
 ---
 
@@ -423,16 +425,16 @@ After porting to ogc-client `clean-pr`:
 
 ## Estimated Effort
 
-| Phase | Steps | Estimated Time | Risk |
-|-------|-------|---------------|------|
-| A: Quick Wins | 2 | 30 min | None |
-| B: `part2.ts` Batch | 3 | 1–2 hours | Low |
-| C: Type Safety | 4 | 1.5–3 hours | Low–Med |
-| D: `url_builder.ts` Batch | 9 | 5–8 hours | Medium |
-| E: Security Hardening | 1 | 30 min | Low |
-| F: Test Cleanup | 1 | 30 min–1 hour | None |
-| Porting to `clean-pr` | — | 30 min | Low |
-| **Total** | **20** | **10–16 hours** | |
+| Phase                     | Steps  | Estimated Time  | Risk    |
+| ------------------------- | ------ | --------------- | ------- |
+| A: Quick Wins             | 2      | 30 min          | None    |
+| B: `part2.ts` Batch       | 3      | 1–2 hours       | Low     |
+| C: Type Safety            | 4      | 1.5–3 hours     | Low–Med |
+| D: `url_builder.ts` Batch | 9      | 5–8 hours       | Medium  |
+| E: Security Hardening     | 1      | 30 min          | Low     |
+| F: Test Cleanup           | 1      | 30 min–1 hour   | None    |
+| Porting to `clean-pr`     | —      | 30 min          | Low     |
+| **Total**                 | **20** | **10–16 hours** |         |
 
 ---
 

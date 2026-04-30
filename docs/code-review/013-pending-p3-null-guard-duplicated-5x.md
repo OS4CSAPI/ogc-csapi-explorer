@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p3
-issue_id: "013"
+issue_id: '013'
 tags: [code-review, dry, quality]
 dependencies: [010]
 ---
@@ -32,6 +32,7 @@ const obj = json as Record<string, unknown>;
 ## Proposed Solutions
 
 ### Option A: Extract `requireObject` helper
+
 ```typescript
 function requireObject(json: unknown, fn: string): Record<string, unknown> {
   if (typeof json !== 'object' || json === null)
@@ -45,6 +46,7 @@ export function parseDatastream(json: unknown): Datastream {
   // ...
 }
 ```
+
 **Effort:** Small (10 lines of change, eliminates 15 lines) | **Risk:** None
 
 ## Recommended Action

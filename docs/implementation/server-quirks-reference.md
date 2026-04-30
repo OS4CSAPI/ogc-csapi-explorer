@@ -38,13 +38,13 @@
 
 ### OSH Connection & Auth
 
-| Property                | Value                                                            |
-| ----------------------- | ---------------------------------------------------------------- |
-| **Base URL**            | `http://45.55.99.236:8080/sensorhub/api`                         |
-| **Protocol**            | HTTP (no SSL/TLS)                                                |
-| **Authentication**      | Basic auth required (credentials via env vars)                   |
-| **Root response**       | 200 OK — "Connected Systems API Service", 10 links               |
-| **Conformance classes** | 33 (Parts 1–3, including create-replace-delete, pub/sub)         |
+| Property                | Value                                                    |
+| ----------------------- | -------------------------------------------------------- |
+| **Base URL**            | `http://45.55.99.236:8080/sensorhub/api`                 |
+| **Protocol**            | HTTP (no SSL/TLS)                                        |
+| **Authentication**      | Basic auth required (credentials via env vars)           |
+| **Root response**       | 200 OK — "Connected Systems API Service", 10 links       |
+| **Conformance classes** | 33 (Parts 1–3, including create-replace-delete, pub/sub) |
 
 ### OSH Content Negotiation
 

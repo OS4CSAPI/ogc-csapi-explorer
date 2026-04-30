@@ -1,10 +1,10 @@
 ---
 status: duplicate
 priority: p3
-issue_id: "015"
+issue_id: '015'
 tags: [code-review, dry, quality]
 dependencies: [009]
-duplicate_of: "#111"
+duplicate_of: '#111'
 ---
 
 # `getCommandStatus` Manually Appends Query String Instead of Using `buildResourceUrl`
@@ -45,21 +45,26 @@ The inconsistency was introduced in commit `23126d4` (Issue #106 — "Add missin
 ## Proposed Solutions
 
 ### Option A: Pass `options` as the fourth arg to `buildResourceUrl` (Recommended)
+
 ```typescript
 getCommandStatus(id: string, options?: CommandStatusQueryOptions): string {
   this.assertResourceAvailable('commands');
   return this.buildResourceUrl('commands', id, 'status', options);
 }
 ```
+
 **Effort:** Trivial | **Risk:** None (identical behavior — `buildResourceUrl` calls `buildQueryString` internally)
 
 ### Option B: Wait for Issue #145 (`build()` wrapper)
+
 The `build()` method proposed in #145 / Finding 009 would collapse this to:
+
 ```typescript
 getCommandStatus(id: string, options?: CommandStatusQueryOptions): string {
   return this.build('commands', id, 'status', options);
 }
 ```
+
 This resolves the inconsistency automatically as part of the broader DRY refactor.
 
 ## Recommended Action

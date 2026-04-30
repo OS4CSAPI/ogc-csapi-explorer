@@ -42,3 +42,23 @@ export function generateGetMapUrl(
 
   return setQueryParams(serviceUrl, newParams);
 }
+
+/**
+ * Generates an URL for a DescribeLayer operation
+ * @param serviceUrl
+ * @param version
+ * @param layerName Layer name to describe
+ */
+export function generateDescribeLayerUrl(
+  serviceUrl: string,
+  version: WmsVersion,
+  layerName: string
+): string {
+  return setQueryParams(serviceUrl, {
+    SERVICE: 'WMS',
+    REQUEST: 'DescribeLayer',
+    VERSION: version,
+    LAYERS: layerName,
+    SLD_VERSION: '1.1.0',
+  });
+}

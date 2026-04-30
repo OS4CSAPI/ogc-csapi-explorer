@@ -50,4 +50,11 @@ export type WmsLayerFull = {
   children?: WmsLayerFull[];
 };
 
+export type WmsLayerDescription = {
+  layerName: string;
+  owsType: 'wcs' | 'wfs';
+  owsUrl: string;
+  typeName?: string;
+};
+
 export type WmsVersion = '1.1.0' | '1.1.1' | '1.3.0';

@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p2
-issue_id: "009"
+issue_id: '009'
 tags: [code-review, dry, architecture, url-builder]
 dependencies: []
 ---
@@ -24,6 +24,7 @@ This guard-then-build sequence is repeated identically across all 90 methods. Th
 **File:** `src/ogc-api/csapi/url_builder.ts` (2,490 lines)
 
 Confirmed counts via grep:
+
 - `assertResourceAvailable` — **90 occurrences** (1 definition + 89 call sites)
 - `buildResourceUrl` — **89 occurrences** (1 definition + 88 standard calls + 1 concatenation variant at `getCommandStatus`)
 
@@ -118,12 +119,14 @@ Create a custom ESLint rule that verifies every public method calls `assertResou
 ## Coordination Notes
 
 **⚠️ Must coordinate with issue #100** (`assertResourceAvailable()` overly strict for per-ID methods):
+
 - Issue #100 proposes removing `assertResourceAvailable()` from 69 per-ID methods entirely
 - If #100 is implemented first, only ~21 collection/list methods would retain the guard-then-build pattern
 - The `build()` method would need to handle the asymmetry (guard for collection methods, no guard for per-ID methods)
 - **Recommendation:** Resolve #100 first, then apply the `build()` fusion to the remaining methods. Or if finding 010 (CRUD groups / table-driven) is pursued, it would subsume both.
 
 **Also related:**
+
 - Issue #111 (`getCommandStatus` concatenation) — would be automatically resolved by the `build()` method
 - Issue #102 (nested-only servers) — adds optional parent ID parameters that would interact with the `build()` method signature
 - Finding 010 (CRUD groups / table-driven approach) — a table-driven refactor would make both this finding and #100 largely moot

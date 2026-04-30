@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p3
-issue_id: "011"
+issue_id: '011'
 tags: [code-review, security, defense-in-depth]
 dependencies: []
 ---
@@ -17,6 +17,7 @@ dependencies: []
 ## Findings
 
 **File:** `src/ogc-api/csapi/helpers.ts`, **lines 147–154**
+
 ```typescript
 result.set(match[1], typeof href === 'string' ? href : '');
 result.set(rel, typeof href === 'string' ? href : '');
@@ -28,6 +29,7 @@ Relative URLs are safe (they resolve against the trusted base). Absolute non-HTT
 ## Proposed Solutions
 
 ### Option A: Filter on `isTrustedHref` before storing (Recommended)
+
 ```typescript
 function isTrustedHref(href: string): boolean {
   try {
@@ -41,9 +43,11 @@ function isTrustedHref(href: string): boolean {
 // In scanCsapiLinks, before result.set():
 if (!isTrustedHref(href)) continue;
 ```
+
 **Effort:** Small | **Risk:** None
 
 ### Option B: No change — document that consumers are responsible for trusting their servers
+
 **Effort:** Trivial | **Risk:** Low (bounded, defense-in-depth only)
 
 ## Recommended Action

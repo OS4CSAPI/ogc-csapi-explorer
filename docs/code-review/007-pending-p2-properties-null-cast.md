@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p2
-issue_id: "007"
+issue_id: '007'
 tags: [code-review, typescript, type-safety]
 dependencies: []
 ---
@@ -15,19 +15,20 @@ dependencies: []
 ## Findings
 
 **File:** `src/ogc-api/csapi/formats/geojson.ts`, **lines 437–438**
+
 ```typescript
 const f = feature as Record<string, unknown>;
-const p = f.properties as Record<string, unknown>;  // ← no null check on f.properties
+const p = f.properties as Record<string, unknown>; // ← no null check on f.properties
 // ...
-const featureType = p.featureType;   // ← throws if p is null
-const uid = p.uid;                   // ← same
+const featureType = p.featureType; // ← throws if p is null
+const uid = p.uid; // ← same
 ```
 
 `isRecord` is already imported in this file and used elsewhere — it checks `typeof x === 'object' && x !== null`.
 
 ### Existing Indirect Guard (Mitigating Factor)
 
-`extractCSAPIFeature` calls `getCSAPIResourceType(feature)` at line 430 *before* reaching line 438. That function delegates to `getFeatureType()` (line 114), which explicitly checks:
+`extractCSAPIFeature` calls `getCSAPIResourceType(feature)` at line 430 _before_ reaching line 438. That function delegates to `getFeatureType()` (line 114), which explicitly checks:
 
 ```typescript
 if (typeof props !== 'object' || props === null) {
@@ -42,6 +43,7 @@ So in practice, `properties: null` features already throw before the unsafe cast
 ## Proposed Solutions
 
 ### Option A: Guard with `isRecord` before the cast (Recommended)
+
 ```typescript
 const f = feature as Record<string, unknown>;
 if (!isRecord(f.properties)) {
@@ -49,15 +51,18 @@ if (!isRecord(f.properties)) {
     'Cannot extract CSAPI feature: "properties" must be a non-null object'
   );
 }
-const p = f.properties;  // now narrowed by isRecord — no cast needed
+const p = f.properties; // now narrowed by isRecord — no cast needed
 ```
+
 **Pros:** Uses the existing `isRecord` helper; meaningful error message; TypeScript narrows correctly.
 **Effort:** Small | **Risk:** None
 
 ### Option B: Return `null` / `undefined` on null properties instead of throwing
+
 ```typescript
 if (!isRecord(f.properties)) return null;
 ```
+
 **Pros:** Non-throwing; caller decides whether to skip the feature.
 **Cons:** Callers must check for `null`; unclear if null-properties CSAPI features are ever valid.
 **Effort:** Small | **Risk:** Low (changes return type)

@@ -1,10 +1,10 @@
 ---
 status: upstream
 priority: p1
-issue_id: "002"
+issue_id: '002'
 tags: [code-review, security, input-encoding, upstream]
 dependencies: []
-related: ["001"]
+related: ['001']
 ---
 
 # Query Parameter Injection via `encodeURI` in `getCollectionItemsUrl`
@@ -27,11 +27,11 @@ if (options.query !== undefined)
   url.search += (url.search ? '&' : '') + encodeURI(options.query);
 
 // Attack 1 — override pagination:
-getCollectionItemsUrl('sensors', { query: 'name=foo&limit=99999' })
+getCollectionItemsUrl('sensors', { query: 'name=foo&limit=99999' });
 // → &name=foo&limit=99999 appended — limit=99999 overrides the 10-item limit set earlier
 
 // Attack 2 — URL corruption:
-getCollectionItemsUrl('sensors', { query: '#anything' })
+getCollectionItemsUrl('sensors', { query: '#anything' });
 // → # treated as fragment boundary, rest of URL ignored by server
 ```
 
@@ -66,6 +66,7 @@ The recommended fix (Option A: `URLSearchParams`) is correct — properly encode
 ## Proposed Solutions
 
 ### Option A: Parse `query` as key=value pairs via `URLSearchParams` (Recommended)
+
 ```typescript
 if (options.query !== undefined) {
   for (const [k, v] of new URLSearchParams(options.query)) {
@@ -73,11 +74,13 @@ if (options.query !== undefined) {
   }
 }
 ```
+
 **Pros:** Properly encodes each value; prevents injection of extra `&k=v` pairs; clear intent.
 **Cons:** Breaking change if callers pass pre-encoded strings or raw filter syntax (e.g. CQL).
 **Effort:** Small | **Risk:** Low (may break callers relying on pass-through behaviour)
 
 ### Option B: Document `query` as a deliberate escape hatch
+
 Add explicit security warning to JSDoc that `query` is not sanitized.
 **Pros:** No code change, honest documentation.
 **Cons:** Leaves the injection vector open.

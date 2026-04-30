@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p2
-issue_id: "010"
+issue_id: '010'
 tags: [code-review, dry, architecture]
 dependencies: []
 ---
@@ -17,6 +17,7 @@ dependencies: []
 **File:** `src/ogc-api/csapi/formats/part2.ts`
 
 Identical blocks:
+
 - Lines 114–118 (null guard + cast) ↔ Lines 214–219
 - Lines 126–129 (`name`, `description`, `id` extraction) ↔ Lines 222–225
 - Lines 139–141 (`validTime` extraction) ↔ Lines 228–230
@@ -29,40 +30,63 @@ Only the time-interval field names and one or two resource-specific fields diffe
 ## Proposed Solutions
 
 ### Option A: Extract `parseBaseStream` helper (Recommended)
+
 ```typescript
 interface BaseStream {
-  id: string; name: string; description?: string;
-  validTime?: TimeInterval; formats: string[];
-  systemId?: string; links: ResourceLink[];
+  id: string;
+  name: string;
+  description?: string;
+  validTime?: TimeInterval;
+  formats: string[];
+  systemId?: string;
+  links: ResourceLink[];
 }
 
 function parseBaseStream(
-  fn: string, json: unknown
+  fn: string,
+  json: unknown
 ): { base: BaseStream; obj: Record<string, unknown> } {
   if (typeof json !== 'object' || json === null)
     throw new Error(`${fn}: input must be a non-null object`);
   const obj = json as Record<string, unknown>;
-  return { obj, base: {
-    id:   typeof obj.id === 'string' ? obj.id : '',
-    name: typeof obj.name === 'string' ? obj.name : '',
-    ...(typeof obj.description === 'string' ? { description: obj.description } : {}),
-    validTime: parseValidTime(obj.validTime),
-    formats: Array.isArray(obj.formats)
-      ? obj.formats.filter((f): f is string => typeof f === 'string') : [],
-    ...(typeof obj['system@id'] === 'string' ? { systemId: obj['system@id'] as string } : {}),
-    links: Array.isArray(obj.links) ? (obj.links as ResourceLink[]) : [],
-  }};
+  return {
+    obj,
+    base: {
+      id: typeof obj.id === 'string' ? obj.id : '',
+      name: typeof obj.name === 'string' ? obj.name : '',
+      ...(typeof obj.description === 'string'
+        ? { description: obj.description }
+        : {}),
+      validTime: parseValidTime(obj.validTime),
+      formats: Array.isArray(obj.formats)
+        ? obj.formats.filter((f): f is string => typeof f === 'string')
+        : [],
+      ...(typeof obj['system@id'] === 'string'
+        ? { systemId: obj['system@id'] as string }
+        : {}),
+      links: Array.isArray(obj.links) ? (obj.links as ResourceLink[]) : [],
+    },
+  };
 }
 
 export function parseDatastream(json: unknown): Datastream {
   const { base, obj } = parseBaseStream('parseDatastream', json);
   // ...only Datastream-specific fields below
-  return { ...base, observedProperties, phenomenonTime, resultTime, resultType, live };
+  return {
+    ...base,
+    observedProperties,
+    phenomenonTime,
+    resultTime,
+    resultType,
+    live,
+  };
 }
 ```
+
 **Effort:** Medium | **Risk:** Low
 
 ### Option B: Leave as-is with a comment linking the two functions
+
 **Effort:** Trivial | **Risk:** None (but bug-magnets remain)
 
 ## Recommended Action

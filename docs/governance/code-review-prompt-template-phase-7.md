@@ -13,16 +13,16 @@
 
 Phase 7 code differs fundamentally from Phase 6 code:
 
-| Dimension          | Phase 6 (Upstream Acceptance Refactoring)                                          | Phase 7 (Code Review Cleanup)                                                          |
-| ------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Primary output     | Structural changes — barrel file, factory function, export reorganization          | Quality fixes — type safety, DRY consolidation, security hardening, test cleanup       |
-| Correctness check  | "Is the module boundary clean? Do all 12 verification gates pass?"                 | "Are the review findings properly resolved? Is behavior preserved?"                    |
-| Test strategy      | 2 factory tests + `git grep` boundary checks + full CI suite regression            | Per-issue unit/integration tests + full CI suite regression                            |
-| Pattern reference  | `formats/index.ts` barrel, EDR factory blueprint, existing `package.json` exports  | `build()` private helper, `parseBaseStream` extraction, `makeTestCollection` factory   |
-| Validation concern | Export completeness, import direction, tree-shaking, visibility changes            | Type narrowing correctness, URL encoding, scheme validation, deduplication             |
+| Dimension          | Phase 6 (Upstream Acceptance Refactoring)                                          | Phase 7 (Code Review Cleanup)                                                                      |
+| ------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Primary output     | Structural changes — barrel file, factory function, export reorganization          | Quality fixes — type safety, DRY consolidation, security hardening, test cleanup                   |
+| Correctness check  | "Is the module boundary clean? Do all 12 verification gates pass?"                 | "Are the review findings properly resolved? Is behavior preserved?"                                |
+| Test strategy      | 2 factory tests + `git grep` boundary checks + full CI suite regression            | Per-issue unit/integration tests + full CI suite regression                                        |
+| Pattern reference  | `formats/index.ts` barrel, EDR factory blueprint, existing `package.json` exports  | `build()` private helper, `parseBaseStream` extraction, `makeTestCollection` factory               |
+| Validation concern | Export completeness, import direction, tree-shaking, visibility changes            | Type narrowing correctness, URL encoding, scheme validation, deduplication                         |
 | Heatmap dimensions | Architecture-specific (boundary isolation, export coverage, formatting compliance) | Issue-specific (20 issues across 6 phases: quick wins, parsers, type safety, DRY, security, tests) |
-| Spec references    | jahow's PR #136 review requirements                                                | Senior developer code review findings (16 docs), OGC 23-002 Part 2, OGC 23-001        |
-| Risk profile       | Build/bundle correctness, import resolution                                        | Behavioral correctness, backward compatibility, zero public API breakage               |
+| Spec references    | jahow's PR #136 review requirements                                                | Senior developer code review findings (16 docs), OGC 23-002 Part 2, OGC 23-001                     |
+| Risk profile       | Build/bundle correctness, import resolution                                        | Behavioral correctness, backward compatibility, zero public API breakage                           |
 
 The Phase 6 boundary gates (V1–V4), export completeness audit, and task-specific checklists (Categories A–G) do not apply. Phase 7 needs issue-resolution and code-quality review dimensions.
 
@@ -487,10 +487,12 @@ docs/implementation/phase-{major}.{minor}-code-review.md
 ```
 
 Where:
+
 - **Major** = project phase (7 for Phase 7)
 - **Minor** = sequential review number within Phase 7 (1, 2, 3...)
 
 Examples:
+
 - `phase-7.1-code-review.md` (Phase 7, first review — partial, e.g., Phase A+B only)
 - `phase-7.2-code-review.md` (Phase 7, second review — comprehensive, all 20 steps)
 - `phase-7.3-code-review.md` (Phase 7, third review — post-fix re-review)
@@ -501,50 +503,50 @@ Examples:
 
 When performing a Phase 7 code review, the reviewer should have access to:
 
-| Document | Location | Purpose |
-|----------|----------|---------|
-| P7 Cleanup Plan | `docs/planning/phase-7/P7-code-review-cleanup-plan.md` | 20-step execution plan, dependency graph, issue inventory |
-| P7 Scope Split Assessment | `docs/planning/phase-7/P7-scope-split-assessment.md` | Rationale for splitting #141, #100, #145 |
-| Code Review Finding Docs (16) | `docs/code-review/003-*.md` through `016-*.md` | Original senior dev findings with severity, evidence, recommendations |
-| Upstream Findings Report | `docs/code-review/upstream-findings-report.md` | 4 findings excluded from Phase 7 (upstream-only) |
-| Deferred Enhancement | `docs/code-review/110-deferred-enhancement-link-resolution-utilities.md` | #110 — deferred, not in Phase 7 scope |
-| AI Operational Constraints | `docs/governance/AI_OPERATIONAL_CONSTRAINTS.md` | Behavioral boundaries — mandatory for all AI work |
-| Phase 3 Lessons Learned | `docs/governance/phase-3-lessons-learned.md` | Lessons 1, 2, 4, 10 still active |
-| Phase 2 Lessons Learned | `docs/governance/phase-2-lessons-learned.md` | General guardrails — Lessons 6-10 still active |
-| CSAPI Implementation Guide | `docs/planning/csapi-implementation-guide.md` | Overall CSAPI architecture and design decisions |
-| ROADMAP | `docs/planning/ROADMAP.md` | Phase definitions and sequencing |
+| Document                      | Location                                                                 | Purpose                                                               |
+| ----------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| P7 Cleanup Plan               | `docs/planning/phase-7/P7-code-review-cleanup-plan.md`                   | 20-step execution plan, dependency graph, issue inventory             |
+| P7 Scope Split Assessment     | `docs/planning/phase-7/P7-scope-split-assessment.md`                     | Rationale for splitting #141, #100, #145                              |
+| Code Review Finding Docs (16) | `docs/code-review/003-*.md` through `016-*.md`                           | Original senior dev findings with severity, evidence, recommendations |
+| Upstream Findings Report      | `docs/code-review/upstream-findings-report.md`                           | 4 findings excluded from Phase 7 (upstream-only)                      |
+| Deferred Enhancement          | `docs/code-review/110-deferred-enhancement-link-resolution-utilities.md` | #110 — deferred, not in Phase 7 scope                                 |
+| AI Operational Constraints    | `docs/governance/AI_OPERATIONAL_CONSTRAINTS.md`                          | Behavioral boundaries — mandatory for all AI work                     |
+| Phase 3 Lessons Learned       | `docs/governance/phase-3-lessons-learned.md`                             | Lessons 1, 2, 4, 10 still active                                      |
+| Phase 2 Lessons Learned       | `docs/governance/phase-2-lessons-learned.md`                             | General guardrails — Lessons 6-10 still active                        |
+| CSAPI Implementation Guide    | `docs/planning/csapi-implementation-guide.md`                            | Overall CSAPI architecture and design decisions                       |
+| ROADMAP                       | `docs/planning/ROADMAP.md`                                               | Phase definitions and sequencing                                      |
 
 ### Phase 7 Source Files (27 files changed)
 
-| File | Primary Issues | Category |
-|------|---------------|----------|
-| `src/ogc-api/csapi/url_builder.ts` | #142, #139, #156, #157, #102, #158, #159, #160, #150 | URL building (9 issues) |
-| `src/ogc-api/csapi/url_builder.spec.ts` | (tests for above) | Tests |
-| `src/ogc-api/csapi/formats/part2.ts` | #98, #149, #146, #140 | Parser helpers (4 issues) |
-| `src/ogc-api/csapi/formats/response.ts` | #154 | Collection response parsing |
-| `src/ogc-api/csapi/formats/response.spec.ts` | #154 | Tests |
-| `src/ogc-api/csapi/formats/schema-response.ts` | #140 | Schema response parsing |
-| `src/ogc-api/csapi/formats/schema-response.spec.ts` | #140 | Tests |
-| `src/ogc-api/csapi/formats/geojson.ts` | #143 | GeoJSON extraction |
-| `src/ogc-api/csapi/formats/geojson.spec.ts` | #143 | Tests |
-| `src/ogc-api/csapi/formats/sensorml/physical-system.ts` | #144 | SensorML parser |
-| `src/ogc-api/csapi/formats/sensorml/physical-system.spec.ts` | #144 | Tests |
-| `src/ogc-api/csapi/formats/sensorml/simple-process.ts` | #144 | SensorML parser |
-| `src/ogc-api/csapi/formats/sensorml/simple-process.spec.ts` | #144 | Tests |
-| `src/ogc-api/csapi/formats/sensorml/aggregate-process.ts` | #144 | SensorML parser |
-| `src/ogc-api/csapi/formats/sensorml/aggregate-process.spec.ts` | #144 | Tests |
-| `src/ogc-api/csapi/formats/swecommon/parser.ts` | #148 | SWE Common parser |
-| `src/ogc-api/csapi/formats/swecommon/data-array.ts` | #148 | SWE Common data array |
-| `src/ogc-api/csapi/helpers.ts` | #147 | Link scanning helpers |
-| `src/ogc-api/csapi/helpers.spec.ts` | #147 | Tests |
-| `src/ogc-api/csapi/command-routing.ts` | #142 | Command routing |
-| `src/ogc-api/csapi/command-routing.spec.ts` | #142 | Tests |
-| `src/ogc-api/csapi/integration/_fixtures.ts` | #151 (new file) | Shared test fixtures |
-| `src/ogc-api/csapi/integration/discovery.spec.ts` | #151, #155 | Integration tests |
-| `src/ogc-api/csapi/integration/observation.spec.ts` | #151, #155 | Integration tests |
-| `src/ogc-api/csapi/integration/command.spec.ts` | #151, #155 | Integration tests |
-| `src/ogc-api/csapi/integration/navigation.spec.ts` | #151, #155 | Integration tests |
-| `src/ogc-api/csapi/integration/pipeline.spec.ts` | #155 | Integration tests |
+| File                                                           | Primary Issues                                       | Category                    |
+| -------------------------------------------------------------- | ---------------------------------------------------- | --------------------------- |
+| `src/ogc-api/csapi/url_builder.ts`                             | #142, #139, #156, #157, #102, #158, #159, #160, #150 | URL building (9 issues)     |
+| `src/ogc-api/csapi/url_builder.spec.ts`                        | (tests for above)                                    | Tests                       |
+| `src/ogc-api/csapi/formats/part2.ts`                           | #98, #149, #146, #140                                | Parser helpers (4 issues)   |
+| `src/ogc-api/csapi/formats/response.ts`                        | #154                                                 | Collection response parsing |
+| `src/ogc-api/csapi/formats/response.spec.ts`                   | #154                                                 | Tests                       |
+| `src/ogc-api/csapi/formats/schema-response.ts`                 | #140                                                 | Schema response parsing     |
+| `src/ogc-api/csapi/formats/schema-response.spec.ts`            | #140                                                 | Tests                       |
+| `src/ogc-api/csapi/formats/geojson.ts`                         | #143                                                 | GeoJSON extraction          |
+| `src/ogc-api/csapi/formats/geojson.spec.ts`                    | #143                                                 | Tests                       |
+| `src/ogc-api/csapi/formats/sensorml/physical-system.ts`        | #144                                                 | SensorML parser             |
+| `src/ogc-api/csapi/formats/sensorml/physical-system.spec.ts`   | #144                                                 | Tests                       |
+| `src/ogc-api/csapi/formats/sensorml/simple-process.ts`         | #144                                                 | SensorML parser             |
+| `src/ogc-api/csapi/formats/sensorml/simple-process.spec.ts`    | #144                                                 | Tests                       |
+| `src/ogc-api/csapi/formats/sensorml/aggregate-process.ts`      | #144                                                 | SensorML parser             |
+| `src/ogc-api/csapi/formats/sensorml/aggregate-process.spec.ts` | #144                                                 | Tests                       |
+| `src/ogc-api/csapi/formats/swecommon/parser.ts`                | #148                                                 | SWE Common parser           |
+| `src/ogc-api/csapi/formats/swecommon/data-array.ts`            | #148                                                 | SWE Common data array       |
+| `src/ogc-api/csapi/helpers.ts`                                 | #147                                                 | Link scanning helpers       |
+| `src/ogc-api/csapi/helpers.spec.ts`                            | #147                                                 | Tests                       |
+| `src/ogc-api/csapi/command-routing.ts`                         | #142                                                 | Command routing             |
+| `src/ogc-api/csapi/command-routing.spec.ts`                    | #142                                                 | Tests                       |
+| `src/ogc-api/csapi/integration/_fixtures.ts`                   | #151 (new file)                                      | Shared test fixtures        |
+| `src/ogc-api/csapi/integration/discovery.spec.ts`              | #151, #155                                           | Integration tests           |
+| `src/ogc-api/csapi/integration/observation.spec.ts`            | #151, #155                                           | Integration tests           |
+| `src/ogc-api/csapi/integration/command.spec.ts`                | #151, #155                                           | Integration tests           |
+| `src/ogc-api/csapi/integration/navigation.spec.ts`             | #151, #155                                           | Integration tests           |
+| `src/ogc-api/csapi/integration/pipeline.spec.ts`               | #155                                                 | Integration tests           |
 
 ---
 
@@ -552,14 +554,14 @@ When performing a Phase 7 code review, the reviewer should have access to:
 
 For reviewers familiar with the Phase 6 template, these are the substantive changes:
 
-| Section | Phase 6 | Phase 7 |
-|---------|---------|---------|
+| Section                      | Phase 6                                                                                 | Phase 7                                                                                     |
+| ---------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | Quality dimension categories | A–G (barrel, factory, endpoint, root exports, package.json, formatting, test migration) | A1–F1 (quick wins, parser cleanup, type safety, url_builder batch, security, test fixtures) |
-| Verification gates | 5 CI (C1–C5) + 4 boundary (V1–V4) = 9 total | 4 CI (C1–C4) + diff stats = 5 total |
-| Traceability | Task completion heatmap | Issue resolution heatmap + finding doc traceability matrix |
-| Pattern references | `formats/index.ts` barrel, EDR factory, `package.json` exports | `build()` helper, `parseBaseStream`, `requireObject`, `isSafeHref`, `makeTestCollection` |
-| Scope basis | 13 Phase 6 tasks | 20 Phase 7 steps resolving 17 issues across 6 phases |
-| Review source | jahow's PR #136 review requirements | Senior developer code review (16 finding documents) |
-| Boundary checks | 4 `git grep` boundary gates (V1–V4) | Not applicable — Phase 7 didn't change module boundaries |
-| Export audit | 6-section barrel completeness table | Not applicable — no barrel changes |
-| Recommendation tiers | "Fix Before Push" (to upstream) | "Fix Before Push" (before updating PR #136) |
+| Verification gates           | 5 CI (C1–C5) + 4 boundary (V1–V4) = 9 total                                             | 4 CI (C1–C4) + diff stats = 5 total                                                         |
+| Traceability                 | Task completion heatmap                                                                 | Issue resolution heatmap + finding doc traceability matrix                                  |
+| Pattern references           | `formats/index.ts` barrel, EDR factory, `package.json` exports                          | `build()` helper, `parseBaseStream`, `requireObject`, `isSafeHref`, `makeTestCollection`    |
+| Scope basis                  | 13 Phase 6 tasks                                                                        | 20 Phase 7 steps resolving 17 issues across 6 phases                                        |
+| Review source                | jahow's PR #136 review requirements                                                     | Senior developer code review (16 finding documents)                                         |
+| Boundary checks              | 4 `git grep` boundary gates (V1–V4)                                                     | Not applicable — Phase 7 didn't change module boundaries                                    |
+| Export audit                 | 6-section barrel completeness table                                                     | Not applicable — no barrel changes                                                          |
+| Recommendation tiers         | "Fix Before Push" (to upstream)                                                         | "Fix Before Push" (before updating PR #136)                                                 |

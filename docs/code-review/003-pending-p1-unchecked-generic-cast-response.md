@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p1
-issue_id: "003"
+issue_id: '003'
 tags: [code-review, typescript, type-safety]
 dependencies: []
 ---
@@ -21,41 +21,46 @@ dependencies: []
 ```typescript
 let items: T[];
 if (Array.isArray(obj.features)) {
-  items = obj.features as T[];   // ← lie: no element is validated
+  items = obj.features as T[]; // ← lie: no element is validated
 } else if (Array.isArray(obj.items)) {
-  items = obj.items as T[];      // ← same lie
+  items = obj.items as T[]; // ← same lie
 }
 ```
 
 **Concrete scenario:**
+
 ```typescript
 // Server returns { "items": [null, 42, { "no-id": true }] }
 const result = parseCollectionResponse<Datastream>(body);
-result.items[0].id   // TypeError: Cannot read properties of null
-result.items[1].id   // TypeError: undefined is not a property of number
+result.items[0].id; // TypeError: Cannot read properties of null
+result.items[1].id; // TypeError: undefined is not a property of number
 // TypeScript shows no warning — it believes items are all Datastream
 ```
 
 ## Proposed Solutions
 
 ### Option A: Add `parseItem` callback parameter (Recommended)
+
 ```typescript
 export function parseCollectionResponse<T>(
   body: unknown,
   parseItem: (item: unknown, index: number) => T
 ): CollectionResponse<T> {
   // ...existing envelope normalization unchanged...
-  const rawItems = Array.isArray(obj.features) ? obj.features : (obj.items as unknown[]);
+  const rawItems = Array.isArray(obj.features)
+    ? obj.features
+    : (obj.items as unknown[]);
   const items = rawItems.map((item, i) => parseItem(item, i));
   return { items, links, numberMatched, numberReturned, timeStamp };
 }
 ```
 
 All callers become:
+
 ```typescript
-parseCollectionResponse(body, parseDatastream)
-parseCollectionResponse(body, parseObservation)
-parseCollectionResponse(body, extractCSAPIFeature)
+parseCollectionResponse(body, parseDatastream);
+parseCollectionResponse(body, parseObservation);
+parseCollectionResponse(body, extractCSAPIFeature);
 ```
 
 **Pros:** Closes the gap completely; each item goes through its own parser; composable; consistent with the existing pattern where every resource has a dedicated parser function.
@@ -63,19 +68,26 @@ parseCollectionResponse(body, extractCSAPIFeature)
 **Effort:** Medium | **Risk:** Low (internal function only)
 
 ### Option B: Change return type to `CollectionResponse<unknown>` and let callers map
+
 ```typescript
-export function parseCollectionResponse(body: unknown): CollectionResponse<unknown>
+export function parseCollectionResponse(
+  body: unknown
+): CollectionResponse<unknown>;
 ```
+
 Callers then do `result.items.map(parseDatastream)`.
 **Pros:** Honest about what the function does.
 **Cons:** Loses the convenience of single-call parse; callers must always map.
 **Effort:** Small | **Risk:** Low
 
 ### Option C: Keep current API, add runtime filter
+
 ```typescript
-items = (Array.isArray(obj.features) ? obj.features : obj.items)
-  .filter((item): item is T => item !== null && typeof item === 'object');
+items = (Array.isArray(obj.features) ? obj.features : obj.items).filter(
+  (item): item is T => item !== null && typeof item === 'object'
+);
 ```
+
 **Pros:** No API change; filters obvious garbage.
 **Cons:** Still lying about T — filters objects but doesn't confirm shape.
 **Effort:** Trivial | **Risk:** Low (still technically a lie, but safer)

@@ -1,7 +1,7 @@
 ---
 status: upstream
 priority: p2
-issue_id: "005"
+issue_id: '005'
 tags: [code-review, security, https-enforcement]
 dependencies: []
 ---
@@ -15,6 +15,7 @@ dependencies: []
 ## Findings
 
 **File:** `src/ogc-api/endpoint.ts`, **line 148**
+
 ```typescript
 constructor(private baseUrl: string) {}
 ```
@@ -24,6 +25,7 @@ No scheme check. No warning. All 30+ methods that call `fetchDocument`, `fetchLi
 ## Proposed Solutions
 
 ### Option A: `console.warn` on non-localhost `http://` (Recommended for library)
+
 ```typescript
 constructor(private baseUrl: string) {
   try {
@@ -43,16 +45,19 @@ constructor(private baseUrl: string) {
   }
 }
 ```
+
 **Pros:** Warns consumers without breaking existing callers; allows HTTP for localhost dev/test; non-breaking.
 **Effort:** Small | **Risk:** None
 
 ### Option B: Throw `EndpointError` on non-localhost `http://`
+
 Same check as Option A but throws instead of warning.
 **Pros:** Enforces HTTPS for all non-local use.
 **Cons:** Breaking change for consumers currently using HTTP endpoints (government/enterprise OGC servers often still serve HTTP).
 **Effort:** Small | **Risk:** Breaking for some consumers
 
 ### Option C: No change, document the requirement in JSDoc
+
 ```typescript
 /**
  * @param baseUrl - The OGC API endpoint URL. Must use https:// for non-localhost URLs
@@ -60,6 +65,7 @@ Same check as Option A but throws instead of warning.
  */
 constructor(private baseUrl: string) {}
 ```
+
 **Effort:** Trivial | **Risk:** None (but doesn't protect consumers)
 
 ## Recommended Action

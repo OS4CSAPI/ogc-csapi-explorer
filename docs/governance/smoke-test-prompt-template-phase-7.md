@@ -12,19 +12,19 @@
 
 ## What's New in This Template vs Phase 5
 
-| Aspect | Phase 5 Template | Phase 7 Template |
-|--------|-----------------|-----------------|
-| Servers tested | 2 (OSH + 52North) | **3** (OSH + 52North + **OS4CSAPI-OSH**) |
-| Query parameters | 12 params | **14 params** (+`sortBy`, +`sortOrder`) |
-| Phase 7 bug-fix verification | N/A | **Dedicated step** (Step 16) — 7 specific fixes verified against live servers |
-| Security fix verification | N/A | **Included in Step 16** — URL scheme validation, subPath encoding |
-| Finding series | P5-F1, P5-F2... | **P7-F1, P7-F2...** |
-| Test baseline | 1,283 tests / 29 suites | **1,339 tests / 30 suites** |
-| Required reading | 8 documents | **10 documents** (+ Phase 7 code reviews, review report) |
-| Steps | 18 | **20** (Steps 16–17 are new Phase 7 verification) |
-| Prior findings to regress | F1–F90, P4-F1–F5, P5-F1–F5 | **All prior** + Phase 6 architecture verification |
-| Nested parent ID CRUD | Not tested | **Tested** — command/observation CRUD with parent IDs |
-| 3rd server comparison | N/A | **Full cross-server comparison** across 3 servers |
+| Aspect                       | Phase 5 Template           | Phase 7 Template                                                              |
+| ---------------------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| Servers tested               | 2 (OSH + 52North)          | **3** (OSH + 52North + **OS4CSAPI-OSH**)                                      |
+| Query parameters             | 12 params                  | **14 params** (+`sortBy`, +`sortOrder`)                                       |
+| Phase 7 bug-fix verification | N/A                        | **Dedicated step** (Step 16) — 7 specific fixes verified against live servers |
+| Security fix verification    | N/A                        | **Included in Step 16** — URL scheme validation, subPath encoding             |
+| Finding series               | P5-F1, P5-F2...            | **P7-F1, P7-F2...**                                                           |
+| Test baseline                | 1,283 tests / 29 suites    | **1,339 tests / 30 suites**                                                   |
+| Required reading             | 8 documents                | **10 documents** (+ Phase 7 code reviews, review report)                      |
+| Steps                        | 18                         | **20** (Steps 16–17 are new Phase 7 verification)                             |
+| Prior findings to regress    | F1–F90, P4-F1–F5, P5-F1–F5 | **All prior** + Phase 6 architecture verification                             |
+| Nested parent ID CRUD        | Not tested                 | **Tested** — command/observation CRUD with parent IDs                         |
+| 3rd server comparison        | N/A                        | **Full cross-server comparison** across 3 servers                             |
 
 ---
 
@@ -1243,39 +1243,39 @@ docs/implementation/live-server-retest-post-issues-{N}-{M}.md — Targeted retes
 
 ## Changes from Phase 5 Template
 
-| Aspect | Phase 5 | Phase 7 |
-|--------|---------|---------|
-| Servers | 2 (OSH + 52N) | **3** (OSH + 52N + OS4CSAPI-OSH) |
-| Finding numbers | P5-F1, P5-F2... | P7-F1, P7-F2... (new series) |
-| Query parameters tested | 12 params | **14+ params** (+sortBy, +sortOrder) |
-| Phase 7 verification | N/A | **Dedicated steps 16–17** (7 bug/security fixes + DRY refactor confidence) |
-| Server 3 first-contact | N/A | **Exploratory discovery** with dedicated report section |
-| Test baseline | 1,283 / 29 suites | **1,339 / 30 suites** |
-| Required reading | 8 documents | **10 documents** |
-| Steps | 18 | **20** (+Phase 7 verification, +DRY confidence check) |
-| CRUD testing | 1 server (OSH) | **2 servers** (OSH + OS4CSAPI-OSH) |
-| Cross-server comparison | 2-way | **3-way** |
-| Critical rules | 15 rules | **20 rules** (+3-server testing, +Phase 7 mandatory, +Server 3 first-contact, +per-server cleanup) |
-| Fixture comparison | 2-server | **3-server** |
-| Parser validation | 2-server | **3-server** |
-| Post-workflow | 7 items | **8 items** (+Server 3 quirks documentation) |
+| Aspect                  | Phase 5           | Phase 7                                                                                            |
+| ----------------------- | ----------------- | -------------------------------------------------------------------------------------------------- |
+| Servers                 | 2 (OSH + 52N)     | **3** (OSH + 52N + OS4CSAPI-OSH)                                                                   |
+| Finding numbers         | P5-F1, P5-F2...   | P7-F1, P7-F2... (new series)                                                                       |
+| Query parameters tested | 12 params         | **14+ params** (+sortBy, +sortOrder)                                                               |
+| Phase 7 verification    | N/A               | **Dedicated steps 16–17** (7 bug/security fixes + DRY refactor confidence)                         |
+| Server 3 first-contact  | N/A               | **Exploratory discovery** with dedicated report section                                            |
+| Test baseline           | 1,283 / 29 suites | **1,339 / 30 suites**                                                                              |
+| Required reading        | 8 documents       | **10 documents**                                                                                   |
+| Steps                   | 18                | **20** (+Phase 7 verification, +DRY confidence check)                                              |
+| CRUD testing            | 1 server (OSH)    | **2 servers** (OSH + OS4CSAPI-OSH)                                                                 |
+| Cross-server comparison | 2-way             | **3-way**                                                                                          |
+| Critical rules          | 15 rules          | **20 rules** (+3-server testing, +Phase 7 mandatory, +Server 3 first-contact, +per-server cleanup) |
+| Fixture comparison      | 2-server          | **3-server**                                                                                       |
+| Parser validation       | 2-server          | **3-server**                                                                                       |
+| Post-workflow           | 7 items           | **8 items** (+Server 3 quirks documentation)                                                       |
 
 ---
 
 ## Server Quick Reference
 
-| Property              | OpenSensorHub (S1)                               | 52North (S2)                                                        | OS4CSAPI-OSH (S3)                                            |
-| --------------------- | ------------------------------------------------ | ------------------------------------------------------------------- | ------------------------------------------------------------ |
-| URL                   | `http://45.55.99.236:8080/sensorhub/api`         | `https://csa.demo.52north.org/`                                     | `https://os4csapi-osh.duckdns.org/sensorhub/api`            |
-| Auth                  | Basic (⚠️ ask user for credentials)              | None                                                                | Basic (⚠️ ask user for credentials)                          |
-| SSL                   | HTTP (no SSL issues)                             | HTTPS (expired cert — use `-SkipCertificateCheck`)                  | HTTPS (valid cert — no special handling)                     |
-| Conformance           | 20+ CSAPI classes                                | Zero CSAPI classes                                                  | TBD (first contact)                                          |
-| Content negotiation   | `?f=` query parameter (Accept headers ignored)   | `Accept` header (routes to different backends)                      | Likely `?f=` (confirm during test)                           |
-| Default content type  | `application/json`                               | `application/sml+json`                                              | TBD (first contact)                                          |
-| Part 1 resources      | ✅ All work                                       | ✅ systems, deployments, procedures (SFs empty)                      | TBD (first contact)                                          |
-| Part 2 resources      | ✅ All work                                       | ❌ All broken (500/400/404)                                          | TBD (first contact)                                          |
-| Write operations      | ✅ Full CRUD                                      | ❓ Not tested                                                        | TBD (first contact)                                          |
-| SML access            | `?f=sml3`                                        | `Accept: application/sml+json`                                      | Likely `?f=sml3` (confirm during test)                       |
-| Response envelope     | `{items}` or `{FeatureCollection}`               | `{items}` or `{FeatureCollection}` depending on Accept              | TBD (first contact)                                          |
-| Parser testable?      | ✅ All parsers                                    | ⚠️ Part 1 only (Part 2 broken)                                      | TBD (first contact — expect full)                            |
-| Previously tested?    | ✅ ST#1–ST#23                                     | ✅ ST#1–ST#23                                                        | ❌ First contact in ST#24                                     |
+| Property             | OpenSensorHub (S1)                             | 52North (S2)                                           | OS4CSAPI-OSH (S3)                                |
+| -------------------- | ---------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------ |
+| URL                  | `http://45.55.99.236:8080/sensorhub/api`       | `https://csa.demo.52north.org/`                        | `https://os4csapi-osh.duckdns.org/sensorhub/api` |
+| Auth                 | Basic (⚠️ ask user for credentials)            | None                                                   | Basic (⚠️ ask user for credentials)              |
+| SSL                  | HTTP (no SSL issues)                           | HTTPS (expired cert — use `-SkipCertificateCheck`)     | HTTPS (valid cert — no special handling)         |
+| Conformance          | 20+ CSAPI classes                              | Zero CSAPI classes                                     | TBD (first contact)                              |
+| Content negotiation  | `?f=` query parameter (Accept headers ignored) | `Accept` header (routes to different backends)         | Likely `?f=` (confirm during test)               |
+| Default content type | `application/json`                             | `application/sml+json`                                 | TBD (first contact)                              |
+| Part 1 resources     | ✅ All work                                    | ✅ systems, deployments, procedures (SFs empty)        | TBD (first contact)                              |
+| Part 2 resources     | ✅ All work                                    | ❌ All broken (500/400/404)                            | TBD (first contact)                              |
+| Write operations     | ✅ Full CRUD                                   | ❓ Not tested                                          | TBD (first contact)                              |
+| SML access           | `?f=sml3`                                      | `Accept: application/sml+json`                         | Likely `?f=sml3` (confirm during test)           |
+| Response envelope    | `{items}` or `{FeatureCollection}`             | `{items}` or `{FeatureCollection}` depending on Accept | TBD (first contact)                              |
+| Parser testable?     | ✅ All parsers                                 | ⚠️ Part 1 only (Part 2 broken)                         | TBD (first contact — expect full)                |
+| Previously tested?   | ✅ ST#1–ST#23                                  | ✅ ST#1–ST#23                                          | ❌ First contact in ST#24                        |

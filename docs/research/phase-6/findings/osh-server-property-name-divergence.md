@@ -4,12 +4,12 @@
 > **Research Questions Answered:** 4 of 4
 > **Status:** Complete | Branch: `phase-6`
 
-| Metadata         | Value                                                    |
-| ---------------- | -------------------------------------------------------- |
-| Research Start   | 2026-02-27                                               |
-| Research End     | 2026-02-28                                               |
-| Actual Time      | ~4 hours (across smoke test debugging sessions)          |
-| Methodology      | Bytecode decompilation (`javap -c -p`), live server testing, cross-server comparison, source code analysis |
+| Metadata       | Value                                                                                                      |
+| -------------- | ---------------------------------------------------------------------------------------------------------- |
+| Research Start | 2026-02-27                                                                                                 |
+| Research End   | 2026-02-28                                                                                                 |
+| Actual Time    | ~4 hours (across smoke test debugging sessions)                                                            |
+| Methodology    | Bytecode decompilation (`javap -c -p`), live server testing, cross-server comparison, source code analysis |
 
 ---
 
@@ -51,21 +51,21 @@ During automated smoke testing of the CSAPI Explorer against a rebuilt OpenSenso
 
 **Root cause:** The compiled OSH server JARs use **different JSON property names** than both the OGC specification and the current GitHub `main` branch source code:
 
-| Context                      | Compiled JARs (Oracle Cloud) | OGC Spec / GitHub Source / DigitalOcean |
-| ---------------------------- | ---------------------------- | --------------------------------------- |
-| Control Stream schema GET    | `paramsSchema`               | `parametersSchema`                      |
-| Command POST payload         | `params`                     | `parameters`                            |
+| Context                   | Compiled JARs (Oracle Cloud) | OGC Spec / GitHub Source / DigitalOcean |
+| ------------------------- | ---------------------------- | --------------------------------------- |
+| Control Stream schema GET | `paramsSchema`               | `parametersSchema`                      |
+| Command POST payload      | `params`                     | `parameters`                            |
 
 This was discovered by decompiling the server's compiled `.class` files using `javap -c -p` and searching for string constants in the bytecode — a technique that bypasses any discrepancy between source code on GitHub and the actual compiled artifacts running on the server.
 
 The finding has **direct impact on the upstream library** (camptocamp/ogc-client PR #136): the `parseControlStreamSchemaResponse()` function only looks for `parametersSchema`, meaning it will silently return `parametersSchema: undefined` when parsing responses from servers running the older compiled JARs. A fix has already been applied in the ogc-csapi-explorer's local copy but has **not yet been ported to the upstream PR**.
 
-| Metric                                     | Value           |
-| ------------------------------------------ | --------------- |
-| Affected upstream library functions         | 1               |
-| Affected property names                     | 2 (`paramsSchema`, `params`) |
-| Smoke test result after fix                 | 42/44 PASS, 0 FAIL, 2 SKIP |
-| Servers confirmed to use `paramsSchema`     | Oracle Cloud OSH (rebuilt from source) |
+| Metric                                      | Value                                     |
+| ------------------------------------------- | ----------------------------------------- |
+| Affected upstream library functions         | 1                                         |
+| Affected property names                     | 2 (`paramsSchema`, `params`)              |
+| Smoke test result after fix                 | 42/44 PASS, 0 FAIL, 2 SKIP                |
+| Servers confirmed to use `paramsSchema`     | Oracle Cloud OSH (rebuilt from source)    |
 | Servers confirmed to use `parametersSchema` | DigitalOcean OSH (pre-built distribution) |
 
 ---
@@ -137,11 +137,11 @@ $ javap -c -p -cp /opt/sensorhub/lib/sensorhub-service-consys-*.jar \
 
 **Finding:** The property names vary by server build version, not by server product.
 
-| Server                    | Build Source                  | `controlStream/schema` | Command payload | Verified By        |
-| ------------------------- | ----------------------------- | ---------------------- | --------------- | ------------------ |
-| Oracle Cloud OSH          | Built from source (e74e12e2)  | `paramsSchema`         | `params`        | `javap` bytecode   |
-| DigitalOcean OSH          | Pre-built distribution        | `parametersSchema`     | `parameters`    | Live API response  |
-| 52°North CSA Demo         | N/A (different implementation)| `parametersSchema`     | `parameters`    | Live API response  |
+| Server            | Build Source                   | `controlStream/schema` | Command payload | Verified By       |
+| ----------------- | ------------------------------ | ---------------------- | --------------- | ----------------- |
+| Oracle Cloud OSH  | Built from source (e74e12e2)   | `paramsSchema`         | `params`        | `javap` bytecode  |
+| DigitalOcean OSH  | Pre-built distribution         | `parametersSchema`     | `parameters`    | Live API response |
+| 52°North CSA Demo | N/A (different implementation) | `parametersSchema`     | `parameters`    | Live API response |
 
 **Analysis:** A robust client library must tolerate both property names. Servers in production may be running any build version, and operators do not always upgrade in lockstep with the latest source. This is a classic Postel's Law scenario: "Be conservative in what you send, be liberal in what you accept."
 
@@ -160,6 +160,7 @@ const rawParametersSchema = obj.parametersSchema;
 ```
 
 This means:
+
 1. Parsing a control stream schema from an OSH server running older JARs will silently return `parametersSchema: undefined`
 2. The consumer receives a `ControlStreamSchemaResponse` with no schema, even though the server sent one under the `paramsSchema` key
 3. No error is thrown — the data is silently lost
@@ -204,13 +205,13 @@ The smoke test page (`demo/src/pages/SmokeTestPage.vue`) also uses `params` (the
 
 ## Impact on Implementation
 
-| Decision                                     | Rationale                                                   | Affected Files / Plans                                      |
-| -------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
-| Port dual-name fix to upstream PR            | Prevents silent data loss on older OSH server builds        | `OS4CSAPI/ogc-client` `clean-pr` branch: `schema-response.ts` |
-| Add test case for `paramsSchema` variant     | Regression prevention                                       | `OS4CSAPI/ogc-client` `clean-pr` branch: `schema-response.spec.ts` |
-| Document property name variants in JSDoc     | Help future maintainers understand the dual-name pattern    | `schema-response.ts` JSDoc comments                         |
-| No change needed for observation parsers     | `phenomenonTime`, `resultTime`, `result` are consistent     | N/A                                                         |
-| CSAPI Explorer local fix is already complete | Committed as `6650839`, verified by 42/44 smoke test        | `src/ogc-api/csapi/formats/schema-response.ts`              |
+| Decision                                     | Rationale                                                | Affected Files / Plans                                             |
+| -------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------ |
+| Port dual-name fix to upstream PR            | Prevents silent data loss on older OSH server builds     | `OS4CSAPI/ogc-client` `clean-pr` branch: `schema-response.ts`      |
+| Add test case for `paramsSchema` variant     | Regression prevention                                    | `OS4CSAPI/ogc-client` `clean-pr` branch: `schema-response.spec.ts` |
+| Document property name variants in JSDoc     | Help future maintainers understand the dual-name pattern | `schema-response.ts` JSDoc comments                                |
+| No change needed for observation parsers     | `phenomenonTime`, `resultTime`, `result` are consistent  | N/A                                                                |
+| CSAPI Explorer local fix is already complete | Committed as `6650839`, verified by 42/44 smoke test     | `src/ogc-api/csapi/formats/schema-response.ts`                     |
 
 ---
 
@@ -243,18 +244,19 @@ The smoke test page (`demo/src/pages/SmokeTestPage.vue`) also uses `params` (the
 
 ### Smoke Test Results (Oracle Cloud, post-fix)
 
-| Category              | Pass | Fail | Skip | Total |
-| --------------------- | ---- | ---- | ---- | ----- |
-| Feature Collections   | 16   | 0    | 0    | 16    |
-| Nested Resources      | 8    | 0    | 0    | 8     |
-| DataStreams CRUD       | 4    | 0    | 0    | 4     |
-| ControlStreams CRUD    | 3    | 0    | 1    | 4     |
-| Observations           | 2    | 0    | 0    | 2     |
-| Commands               | 0    | 0    | 1    | 1     |
-| DELETE Cleanup          | 9    | 0    | 0    | 9     |
-| **Total**              | **42** | **0** | **2** | **44** |
+| Category            | Pass   | Fail  | Skip  | Total  |
+| ------------------- | ------ | ----- | ----- | ------ |
+| Feature Collections | 16     | 0     | 0     | 16     |
+| Nested Resources    | 8      | 0     | 0     | 8      |
+| DataStreams CRUD    | 4      | 0     | 0     | 4      |
+| ControlStreams CRUD | 3      | 0     | 1     | 4      |
+| Observations        | 2      | 0     | 0     | 2      |
+| Commands            | 0      | 0     | 1     | 1      |
+| DELETE Cleanup      | 9      | 0     | 0     | 9      |
+| **Total**           | **42** | **0** | **2** | **44** |
 
 The 2 SKIPs are known server-side limitations:
+
 - **ControlStream UPDATE** — OSH server bug: `NullPointerException: UniqueID cannot be null` in `CommandStreamChangedEvent` (uses raw deserialized input instead of merged object with systemUID)
 - **Command CREATE** — Server rejects with "Receiving system is disabled" (API-created systems have no connected driver)
 

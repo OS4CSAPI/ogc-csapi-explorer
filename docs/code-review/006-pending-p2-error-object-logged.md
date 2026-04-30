@@ -1,7 +1,7 @@
 ---
 status: upstream
 priority: p2
-issue_id: "006"
+issue_id: '006'
 tags: [code-review, security, credential-leakage]
 dependencies: []
 ---
@@ -15,6 +15,7 @@ dependencies: []
 ## Findings
 
 **File:** `src/ogc-api/endpoint.ts`, **line 656**
+
 ```typescript
 .catch((error) => {
   console.error('Error fetching collection items URL:', error);  // ← full object, not .message
@@ -23,6 +24,7 @@ dependencies: []
 ```
 
 Contrast with the consistent (safer) pattern in the same file at **lines 701, 746**:
+
 ```typescript
 .catch((error) => {
   console.error('Error fetching collection tileset URL:', error.message);  // ← .message only
@@ -35,21 +37,25 @@ The inconsistency itself is a signal — one handler was updated and the other w
 ## Proposed Solutions
 
 ### Option A: Log `error.message` only (Recommended)
+
 ```typescript
 .catch((error) => {
   console.error('Error fetching collection items URL:', error.message);
   throw error;
 });
 ```
+
 **Pros:** One-word fix; consistent with lines 701/746; eliminates URL exposure in logs.
 **Effort:** Trivial | **Risk:** None
 
 ### Option B: Remove `console.error` entirely (callers receive the thrown error)
+
 ```typescript
 .catch((error) => {
   throw error;
 });
 ```
+
 **Pros:** Libraries generally should not log to console at all — the consuming app can log what it needs.
 **Cons:** Removes a convenience log that may help debugging during development.
 **Effort:** Trivial | **Risk:** None

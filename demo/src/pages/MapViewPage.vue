@@ -2761,7 +2761,7 @@ async function enrichSamplingFeatures(): Promise<void> {
 }
 
 /**
- * Load Part 2 DataStreams and place them at their parent system's cached location.
+ * Load Part 2 Datastreams and place them at their parent system's cached location.
  */
 async function loadDatastreams(): Promise<void> {
   const source = vectorSources['datastreams']

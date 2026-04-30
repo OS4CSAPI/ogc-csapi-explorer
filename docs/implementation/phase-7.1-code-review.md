@@ -4,6 +4,7 @@
 **Reviewer:** GitHub Copilot (Claude Opus 4.6)
 **Scope:** Comprehensive review of all 20 Phase 7 (Code Review Cleanup) execution steps — type safety, DRY refactoring, security hardening, and test fixture centralization.
 **Commits:**
+
 - `ac889a9` — `@see` link precision (#98)
 - `7858a76` — 27 redundant `as Record` casts removed (#148)
 - `d0912ce` — `requireObject` helper extracted (#149)
@@ -31,12 +32,12 @@
 
 ### CI Gates
 
-| Check | Result |
-|-------|--------|
-| tsc --noEmit (C1) | ✅ exit 0 — clean |
-| lint (C2) | ✅ exit 0 — clean |
-| test (C3) | ✅ CSAPI: 30 suites, 30 pass, 1325 tests, 1325 pass, 0 fail. Full suite: 61 suites (55 pass, 6 fail — all upstream WFS timeouts). |
-| prettier (C4) | ✅ exit 0 — all CSAPI files formatted |
+| Check             | Result                                                                                                                            |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| tsc --noEmit (C1) | ✅ exit 0 — clean                                                                                                                 |
+| lint (C2)         | ✅ exit 0 — clean                                                                                                                 |
+| test (C3)         | ✅ CSAPI: 30 suites, 30 pass, 1325 tests, 1325 pass, 0 fail. Full suite: 61 suites (55 pass, 6 fail — all upstream WFS timeouts). |
+| prettier (C4)     | ✅ exit 0 — all CSAPI files formatted                                                                                             |
 
 #### C3 — Pre-Existing CSAPI Test Failures (Resolved)
 
@@ -89,71 +90,71 @@ Expected: 27 files, ~1,166 insertions, ~797 deletions. **Matches exactly.**
 
 ## Phase 7 Commit History
 
-| Step | Commit | Issue(s) | Description |
-|------|--------|----------|-------------|
-| 1 | `ac889a9` | #98 | `@see` link precision |
-| 2 | `7858a76` | #148 | 27 redundant casts removed |
-| 3 | `d0912ce` | #149 | `requireObject` helper |
-| 4 | `f25acf0` | #146 | `parseBaseStream` helper |
-| 5 | `010bcfb` | #140 | `paramsSchema` fallback |
-| 6 | `829164f` | #154 | `parseItem` callback |
-| 7 | `a3106c2` | #155 | Integration test call sites |
-| 8 | `0ef76ec` | #143 | Null properties guard |
-| 9 | `916dedb` | #144 | SensorML explicit fields |
-| 10 | `596ef3c` | #142 | `subPath` union types |
-| 11 | `6dea9d5` | #139 | Deprecate `getDeploymentSystems` |
-| 12 | `693388a` | #156 | Remove asserts (33 methods) |
-| 13 | `3f2bd4f` | #157 | Remove asserts (39 methods) |
-| 14 | `423da95` | #102 | Nested parent IDs |
-| 15 | `3fb211d` | #158 | `build()` + 33 methods |
-| 16 | `154b36e` | #159 | `build()` + 25 methods |
-| 17 | `f84a874` | #160 | `build()` + 29 methods + #111 |
-| 18 | `451aa95` | #150 | `createCommands` delegation |
-| 19 | `b1759e0` | #147 | `isSafeHref` URL scheme guard |
-| 20 | `85686ed` | #151 | Shared fixture factory |
+| Step | Commit    | Issue(s) | Description                      |
+| ---- | --------- | -------- | -------------------------------- |
+| 1    | `ac889a9` | #98      | `@see` link precision            |
+| 2    | `7858a76` | #148     | 27 redundant casts removed       |
+| 3    | `d0912ce` | #149     | `requireObject` helper           |
+| 4    | `f25acf0` | #146     | `parseBaseStream` helper         |
+| 5    | `010bcfb` | #140     | `paramsSchema` fallback          |
+| 6    | `829164f` | #154     | `parseItem` callback             |
+| 7    | `a3106c2` | #155     | Integration test call sites      |
+| 8    | `0ef76ec` | #143     | Null properties guard            |
+| 9    | `916dedb` | #144     | SensorML explicit fields         |
+| 10   | `596ef3c` | #142     | `subPath` union types            |
+| 11   | `6dea9d5` | #139     | Deprecate `getDeploymentSystems` |
+| 12   | `693388a` | #156     | Remove asserts (33 methods)      |
+| 13   | `3f2bd4f` | #157     | Remove asserts (39 methods)      |
+| 14   | `423da95` | #102     | Nested parent IDs                |
+| 15   | `3fb211d` | #158     | `build()` + 33 methods           |
+| 16   | `154b36e` | #159     | `build()` + 25 methods           |
+| 17   | `f84a874` | #160     | `build()` + 29 methods + #111    |
+| 18   | `451aa95` | #150     | `createCommands` delegation      |
+| 19   | `b1759e0` | #147     | `isSafeHref` URL scheme guard    |
+| 20   | `85686ed` | #151     | Shared fixture factory           |
 
 ---
 
 ## Files Reviewed
 
-| File | Lines Changed | Issues |
-|------|--------------|--------|
-| `src/ogc-api/csapi/url_builder.ts` | +494 / -494 (rewrite) | #142, #139, #156, #157, #102, #158, #159, #160, #150 |
-| `src/ogc-api/csapi/url_builder.spec.ts` | +324 (net growth) | Tests for above |
-| `src/ogc-api/csapi/formats/part2.ts` | +139 / -139 (refactor) | #98, #149, #146, #140 |
-| `src/ogc-api/csapi/formats/response.ts` | +13 / -13 | #154 |
-| `src/ogc-api/csapi/formats/response.spec.ts` | +77 (net growth) | #154 tests |
-| `src/ogc-api/csapi/formats/schema-response.ts` | +6 | #140 |
-| `src/ogc-api/csapi/formats/schema-response.spec.ts` | +29 | #140 tests |
-| `src/ogc-api/csapi/formats/geojson.ts` | +8 | #143 |
-| `src/ogc-api/csapi/formats/geojson.spec.ts` | +9 | #143 tests |
-| `src/ogc-api/csapi/formats/sensorml/physical-system.ts` | +132 / -132 (refactor) | #144 |
-| `src/ogc-api/csapi/formats/sensorml/physical-system.spec.ts` | +40 | #144 tests |
-| `src/ogc-api/csapi/formats/sensorml/simple-process.ts` | +56 / -56 (refactor) | #144 |
-| `src/ogc-api/csapi/formats/sensorml/simple-process.spec.ts` | +20 | #144 tests |
-| `src/ogc-api/csapi/formats/sensorml/aggregate-process.ts` | +60 / -60 (refactor) | #144 |
-| `src/ogc-api/csapi/formats/sensorml/aggregate-process.spec.ts` | +20 | #144 tests |
-| `src/ogc-api/csapi/formats/swecommon/parser.ts` | -53 (reduced) | #148 |
-| `src/ogc-api/csapi/formats/swecommon/data-array.ts` | -22 (reduced) | #148 |
-| `src/ogc-api/csapi/helpers.ts` | +33 | #147 |
-| `src/ogc-api/csapi/helpers.spec.ts` | +69 | #147 tests |
-| `src/ogc-api/csapi/command-routing.ts` | +25 | #142 (subPath type) |
-| `src/ogc-api/csapi/command-routing.spec.ts` | +13 | #142 tests |
-| `src/ogc-api/csapi/integration/_fixtures.ts` | +98 (new file) | #151 |
-| `src/ogc-api/csapi/integration/discovery.spec.ts` | +60 / -60 (refactor) | #151, #155 |
-| `src/ogc-api/csapi/integration/navigation.spec.ts` | +69 / -69 (refactor) | #151, #155 |
-| `src/ogc-api/csapi/integration/observation.spec.ts` | +35 / -35 (refactor) | #151, #155 |
-| `src/ogc-api/csapi/integration/command.spec.ts` | +29 / -29 (refactor) | #151, #155 |
-| `src/ogc-api/csapi/integration/pipeline.spec.ts` | +30 / -30 (refactor) | #155 |
+| File                                                           | Lines Changed          | Issues                                               |
+| -------------------------------------------------------------- | ---------------------- | ---------------------------------------------------- |
+| `src/ogc-api/csapi/url_builder.ts`                             | +494 / -494 (rewrite)  | #142, #139, #156, #157, #102, #158, #159, #160, #150 |
+| `src/ogc-api/csapi/url_builder.spec.ts`                        | +324 (net growth)      | Tests for above                                      |
+| `src/ogc-api/csapi/formats/part2.ts`                           | +139 / -139 (refactor) | #98, #149, #146, #140                                |
+| `src/ogc-api/csapi/formats/response.ts`                        | +13 / -13              | #154                                                 |
+| `src/ogc-api/csapi/formats/response.spec.ts`                   | +77 (net growth)       | #154 tests                                           |
+| `src/ogc-api/csapi/formats/schema-response.ts`                 | +6                     | #140                                                 |
+| `src/ogc-api/csapi/formats/schema-response.spec.ts`            | +29                    | #140 tests                                           |
+| `src/ogc-api/csapi/formats/geojson.ts`                         | +8                     | #143                                                 |
+| `src/ogc-api/csapi/formats/geojson.spec.ts`                    | +9                     | #143 tests                                           |
+| `src/ogc-api/csapi/formats/sensorml/physical-system.ts`        | +132 / -132 (refactor) | #144                                                 |
+| `src/ogc-api/csapi/formats/sensorml/physical-system.spec.ts`   | +40                    | #144 tests                                           |
+| `src/ogc-api/csapi/formats/sensorml/simple-process.ts`         | +56 / -56 (refactor)   | #144                                                 |
+| `src/ogc-api/csapi/formats/sensorml/simple-process.spec.ts`    | +20                    | #144 tests                                           |
+| `src/ogc-api/csapi/formats/sensorml/aggregate-process.ts`      | +60 / -60 (refactor)   | #144                                                 |
+| `src/ogc-api/csapi/formats/sensorml/aggregate-process.spec.ts` | +20                    | #144 tests                                           |
+| `src/ogc-api/csapi/formats/swecommon/parser.ts`                | -53 (reduced)          | #148                                                 |
+| `src/ogc-api/csapi/formats/swecommon/data-array.ts`            | -22 (reduced)          | #148                                                 |
+| `src/ogc-api/csapi/helpers.ts`                                 | +33                    | #147                                                 |
+| `src/ogc-api/csapi/helpers.spec.ts`                            | +69                    | #147 tests                                           |
+| `src/ogc-api/csapi/command-routing.ts`                         | +25                    | #142 (subPath type)                                  |
+| `src/ogc-api/csapi/command-routing.spec.ts`                    | +13                    | #142 tests                                           |
+| `src/ogc-api/csapi/integration/_fixtures.ts`                   | +98 (new file)         | #151                                                 |
+| `src/ogc-api/csapi/integration/discovery.spec.ts`              | +60 / -60 (refactor)   | #151, #155                                           |
+| `src/ogc-api/csapi/integration/navigation.spec.ts`             | +69 / -69 (refactor)   | #151, #155                                           |
+| `src/ogc-api/csapi/integration/observation.spec.ts`            | +35 / -35 (refactor)   | #151, #155                                           |
+| `src/ogc-api/csapi/integration/command.spec.ts`                | +29 / -29 (refactor)   | #151, #155                                           |
+| `src/ogc-api/csapi/integration/pipeline.spec.ts`               | +30 / -30 (refactor)   | #155                                                 |
 
 ---
 
 ## Overall Codebase Metrics (Cumulative)
 
-| Category | Files | Lines Added | Lines Removed | Net | Tests Added |
-|----------|-------|-------------|---------------|-----|-------------|
-| Phase 7 (Code Review Cleanup) | 27 | ~1,166 | ~797 | +369 | ~75 new test lines |
-| **Total CSAPI (est.)** | **~60** | **~4,691** | **~2,297** | **~+2,394** | **~1,325** |
+| Category                      | Files   | Lines Added | Lines Removed | Net         | Tests Added        |
+| ----------------------------- | ------- | ----------- | ------------- | ----------- | ------------------ |
+| Phase 7 (Code Review Cleanup) | 27      | ~1,166      | ~797          | +369        | ~75 new test lines |
+| **Total CSAPI (est.)**        | **~60** | **~4,691**  | **~2,297**    | **~+2,394** | **~1,325**         |
 
 ---
 
@@ -271,28 +272,28 @@ No prior Phase 7 code review exists — this is the first Phase 7 review (7.1).
 
 ## Issue Resolution Heatmap
 
-| Step | Issue | Phase | Resolution | Acceptance Criteria Met | Tests | Status |
-|------|-------|-------|------------|------------------------|-------|--------|
-| 1 | #98 | A | `@see` link updated to `#clause-commandstatus-resource` | ✅ | 0 | ✅ |
-| 2 | #148 | A | 27 redundant `as Record<string, unknown>` casts removed from `parser.ts` and `data-array.ts` | ✅ tsc clean | 0 | ✅ |
-| 3 | #149 | B | `requireObject(json, fn)` helper extracted; 5 inline null-guards replaced | ✅ same error messages | 0 (behavior-preserving) | ✅ |
-| 4 | #146 | B | `parseBaseStream(fn, json)` extracts 7 shared fields; `parseDatastream` and `parseControlStream` use it | ✅ DRY, correct | 0 (behavior-preserving) | ✅ |
-| 5 | #140 | B | `parseControlStreamSchemaResponse` accepts `paramsSchema` via `?? obj.paramsSchema` | ✅ additive only | +29 lines in spec | ✅ |
-| 6 | #154 | C | `parseCollectionResponse<T>()` requires `parseItem` callback | ✅ type-safe, backward-compatible when callback provided | +77 lines in spec | ✅ |
-| 7 | #155 | C | ~35–40 integration test call sites updated with parser callbacks | ✅ all call sites pass | 0 (call site updates) | ✅ |
-| 8 | #143 | C | `extractCSAPIFeature` checks `isRecord(f.properties)` before cast | ✅ guards null properties | +9 lines in spec | ✅ |
-| 9 | #144 | C | 3 SensorML parsers use explicit field extraction instead of `...json` spread | ✅ no raw field leakage | +80 lines across 3 specs | ✅ |
-| 10 | #142 | D | `ResourceSubPath` union type + `CommandSubPath` union type + runtime allowlists | ✅ compile + runtime defense | +38 lines across 2 specs | ✅ |
-| 11 | #139 | D | `@deprecated` tag + `console.warn()` + migration guidance | ✅ backward-compatible | 0 (deprecation only) | ✅ |
-| 12 | #156 | D | `assertResourceAvailable` removed from 33 per-ID methods | ✅ per-ID methods skip guard | ~included in #158–#160 rewrites | ✅ |
-| 13 | #157 | D | `assertResourceAvailable` removed from 39 per-ID methods | ✅ per-ID methods skip guard | ~included in #158–#160 rewrites | ✅ |
-| 14 | #102 | D | Optional `datastreamId`/`controlStreamId` params on observation/command methods | ✅ backward-compatible (optional) | +test coverage in url_builder.spec | ✅ |
-| 15 | #158 | D | `build()` private helper created; 33 Systems/Deployments/Procedures methods rewritten | ✅ zero direct `assertResourceAvailable`/`buildResourceUrl` calls | +tests in url_builder.spec | ✅ |
-| 16 | #159 | D | 25 SamplingFeatures/Properties/Datastreams methods rewritten through `build()` | ✅ consistent pattern | 0 (pattern rewrite) | ✅ |
-| 17 | #160 | D | 29 Observations/ControlStreams/Commands methods rewritten + #111 auto-resolved | ✅ #111 no longer uses manual `buildQueryString` | +tests in url_builder.spec | ✅ |
-| 18 | #150 | D | `createCommands()` → `return this.createCommand(controlStreamId)` | ✅ single-line delegation | 0 (DRY fix) | ✅ |
-| 19 | #147 | E | `isSafeHref()` validates URL schemes at all 3 `scanCsapiLinks` storage points | ✅ defense-in-depth | +69 lines in helpers.spec | ✅ |
-| 20 | #151 | F | `_fixtures.ts` with `PADDING`, `ALL_CSAPI_LINKS`, `makeTestCollection()` | ✅ 4 specs import shared factory | 0 (test-infra, not new production tests) | ✅ |
+| Step | Issue | Phase | Resolution                                                                                              | Acceptance Criteria Met                                           | Tests                                    | Status |
+| ---- | ----- | ----- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------- | ------ |
+| 1    | #98   | A     | `@see` link updated to `#clause-commandstatus-resource`                                                 | ✅                                                                | 0                                        | ✅     |
+| 2    | #148  | A     | 27 redundant `as Record<string, unknown>` casts removed from `parser.ts` and `data-array.ts`            | ✅ tsc clean                                                      | 0                                        | ✅     |
+| 3    | #149  | B     | `requireObject(json, fn)` helper extracted; 5 inline null-guards replaced                               | ✅ same error messages                                            | 0 (behavior-preserving)                  | ✅     |
+| 4    | #146  | B     | `parseBaseStream(fn, json)` extracts 7 shared fields; `parseDatastream` and `parseControlStream` use it | ✅ DRY, correct                                                   | 0 (behavior-preserving)                  | ✅     |
+| 5    | #140  | B     | `parseControlStreamSchemaResponse` accepts `paramsSchema` via `?? obj.paramsSchema`                     | ✅ additive only                                                  | +29 lines in spec                        | ✅     |
+| 6    | #154  | C     | `parseCollectionResponse<T>()` requires `parseItem` callback                                            | ✅ type-safe, backward-compatible when callback provided          | +77 lines in spec                        | ✅     |
+| 7    | #155  | C     | ~35–40 integration test call sites updated with parser callbacks                                        | ✅ all call sites pass                                            | 0 (call site updates)                    | ✅     |
+| 8    | #143  | C     | `extractCSAPIFeature` checks `isRecord(f.properties)` before cast                                       | ✅ guards null properties                                         | +9 lines in spec                         | ✅     |
+| 9    | #144  | C     | 3 SensorML parsers use explicit field extraction instead of `...json` spread                            | ✅ no raw field leakage                                           | +80 lines across 3 specs                 | ✅     |
+| 10   | #142  | D     | `ResourceSubPath` union type + `CommandSubPath` union type + runtime allowlists                         | ✅ compile + runtime defense                                      | +38 lines across 2 specs                 | ✅     |
+| 11   | #139  | D     | `@deprecated` tag + `console.warn()` + migration guidance                                               | ✅ backward-compatible                                            | 0 (deprecation only)                     | ✅     |
+| 12   | #156  | D     | `assertResourceAvailable` removed from 33 per-ID methods                                                | ✅ per-ID methods skip guard                                      | ~included in #158–#160 rewrites          | ✅     |
+| 13   | #157  | D     | `assertResourceAvailable` removed from 39 per-ID methods                                                | ✅ per-ID methods skip guard                                      | ~included in #158–#160 rewrites          | ✅     |
+| 14   | #102  | D     | Optional `datastreamId`/`controlStreamId` params on observation/command methods                         | ✅ backward-compatible (optional)                                 | +test coverage in url_builder.spec       | ✅     |
+| 15   | #158  | D     | `build()` private helper created; 33 Systems/Deployments/Procedures methods rewritten                   | ✅ zero direct `assertResourceAvailable`/`buildResourceUrl` calls | +tests in url_builder.spec               | ✅     |
+| 16   | #159  | D     | 25 SamplingFeatures/Properties/Datastreams methods rewritten through `build()`                          | ✅ consistent pattern                                             | 0 (pattern rewrite)                      | ✅     |
+| 17   | #160  | D     | 29 Observations/ControlStreams/Commands methods rewritten + #111 auto-resolved                          | ✅ #111 no longer uses manual `buildQueryString`                  | +tests in url_builder.spec               | ✅     |
+| 18   | #150  | D     | `createCommands()` → `return this.createCommand(controlStreamId)`                                       | ✅ single-line delegation                                         | 0 (DRY fix)                              | ✅     |
+| 19   | #147  | E     | `isSafeHref()` validates URL schemes at all 3 `scanCsapiLinks` storage points                           | ✅ defense-in-depth                                               | +69 lines in helpers.spec                | ✅     |
+| 20   | #151  | F     | `_fixtures.ts` with `PADDING`, `ALL_CSAPI_LINKS`, `makeTestCollection()`                                | ✅ 4 specs import shared factory                                  | 0 (test-infra, not new production tests) | ✅     |
 
 **Result: 20/20 steps pass acceptance criteria.** ✅
 
@@ -300,35 +301,35 @@ No prior Phase 7 code review exists — this is the first Phase 7 review (7.1).
 
 ## CI Verification Matrix
 
-| Gate | Command | Expected | Actual | Status |
-|------|---------|----------|--------|--------|
-| C1 | `npx tsc --noEmit` | exit 0 | exit 0 | ✅ |
-| C2 | `npm run lint` | exit 0 | exit 0 | ✅ |
-| C3 | `npm test` | CSAPI: all pass | 1325 pass, 0 fail | ✅ |
-| C4 | `npx prettier --check src/` | exit 0 | exit 0 | ✅ |
+| Gate | Command                     | Expected        | Actual            | Status |
+| ---- | --------------------------- | --------------- | ----------------- | ------ |
+| C1   | `npx tsc --noEmit`          | exit 0          | exit 0            | ✅     |
+| C2   | `npm run lint`              | exit 0          | exit 0            | ✅     |
+| C3   | `npm test`                  | CSAPI: all pass | 1325 pass, 0 fail | ✅     |
+| C4   | `npx prettier --check src/` | exit 0          | exit 0            | ✅     |
 
 ---
 
 ## Code Review Finding Traceability
 
-| Finding Doc | Issue | Severity | Resolution Status | Evidence |
-|-------------|-------|----------|-------------------|----------|
-| 003-pending-p1-unchecked-generic-cast-response | #141 (#154+#155) | P1 | ✅ Resolved | `parseItem` callback in `response.ts` (commit `829164f`); all call sites updated (commit `a3106c2`) |
-| 004-pending-p2-subpath-no-encoding | #142 | P2 | ✅ Resolved | `ResourceSubPath` union type + runtime allowlist in `url_builder.ts` (commit `596ef3c`) |
-| 007-pending-p2-properties-null-cast | #143 | P2 | ✅ Resolved | `isRecord(f.properties)` guard in `geojson.ts` (commit `0ef76ec`) |
-| 008-pending-p2-raw-json-spread-into-typed-result | #144 | P2 | ✅ Resolved | Explicit field extraction in 3 SensorML parsers (commit `916dedb`) |
-| 009-pending-p2-assert-resource-paired-pattern | #145 (#158+#159+#160) | P2 | ✅ Resolved | `build()` private helper in `url_builder.ts` (commits `3fb211d`, `154b36e`, `f84a874`) |
-| 010-pending-p2-datastream-controlstream-base-duplication | #146 | P2 | ✅ Resolved | `parseBaseStream()` in `part2.ts` (commit `f25acf0`) |
-| 011-pending-p3-server-href-scheme-validation | #147 | P3 | ✅ Resolved | `isSafeHref()` in `helpers.ts` (commit `b1759e0`) |
-| 012-pending-p3-redundant-casts-after-isrecord | #148 | P3 | ✅ Resolved | 27 casts removed from `parser.ts` and `data-array.ts` (commit `7858a76`) |
-| 013-pending-p3-null-guard-duplicated-5x | #149 | P3 | ✅ Resolved | `requireObject()` in `part2.ts` (commit `d0912ce`) |
-| 014-pending-p3-create-command-duplicate | #150 | P3 | ✅ Resolved | `createCommands` delegates to `createCommand` (commit `451aa95`) |
-| 015-duplicate-p3-get-command-status-inconsistent | #111 | P3 | ✅ Auto-resolved | `getCommandStatus()` rewritten via `build()` in #160 (commit `f84a874`) |
-| 016-pending-p3-integration-test-fixture-duplication | #151 | P3 | ✅ Resolved | `_fixtures.ts` shared factory (commit `85686ed`) |
-| 001-upstream-p1-path-traversal (upstream-only) | — | P1 | NOT IN SCOPE | Upstream-only — confirmed untouched |
-| 002-upstream-p1-query-param-injection (upstream-only) | — | P1 | NOT IN SCOPE | Upstream-only — confirmed untouched |
-| 005-pending-p2-http-no-enforcement (upstream-only) | — | P2 | NOT IN SCOPE | Upstream-only — confirmed untouched |
-| 006-pending-p2-error-object-logged (upstream-only) | — | P2 | NOT IN SCOPE | Upstream-only — confirmed untouched |
+| Finding Doc                                              | Issue                 | Severity | Resolution Status | Evidence                                                                                            |
+| -------------------------------------------------------- | --------------------- | -------- | ----------------- | --------------------------------------------------------------------------------------------------- |
+| 003-pending-p1-unchecked-generic-cast-response           | #141 (#154+#155)      | P1       | ✅ Resolved       | `parseItem` callback in `response.ts` (commit `829164f`); all call sites updated (commit `a3106c2`) |
+| 004-pending-p2-subpath-no-encoding                       | #142                  | P2       | ✅ Resolved       | `ResourceSubPath` union type + runtime allowlist in `url_builder.ts` (commit `596ef3c`)             |
+| 007-pending-p2-properties-null-cast                      | #143                  | P2       | ✅ Resolved       | `isRecord(f.properties)` guard in `geojson.ts` (commit `0ef76ec`)                                   |
+| 008-pending-p2-raw-json-spread-into-typed-result         | #144                  | P2       | ✅ Resolved       | Explicit field extraction in 3 SensorML parsers (commit `916dedb`)                                  |
+| 009-pending-p2-assert-resource-paired-pattern            | #145 (#158+#159+#160) | P2       | ✅ Resolved       | `build()` private helper in `url_builder.ts` (commits `3fb211d`, `154b36e`, `f84a874`)              |
+| 010-pending-p2-datastream-controlstream-base-duplication | #146                  | P2       | ✅ Resolved       | `parseBaseStream()` in `part2.ts` (commit `f25acf0`)                                                |
+| 011-pending-p3-server-href-scheme-validation             | #147                  | P3       | ✅ Resolved       | `isSafeHref()` in `helpers.ts` (commit `b1759e0`)                                                   |
+| 012-pending-p3-redundant-casts-after-isrecord            | #148                  | P3       | ✅ Resolved       | 27 casts removed from `parser.ts` and `data-array.ts` (commit `7858a76`)                            |
+| 013-pending-p3-null-guard-duplicated-5x                  | #149                  | P3       | ✅ Resolved       | `requireObject()` in `part2.ts` (commit `d0912ce`)                                                  |
+| 014-pending-p3-create-command-duplicate                  | #150                  | P3       | ✅ Resolved       | `createCommands` delegates to `createCommand` (commit `451aa95`)                                    |
+| 015-duplicate-p3-get-command-status-inconsistent         | #111                  | P3       | ✅ Auto-resolved  | `getCommandStatus()` rewritten via `build()` in #160 (commit `f84a874`)                             |
+| 016-pending-p3-integration-test-fixture-duplication      | #151                  | P3       | ✅ Resolved       | `_fixtures.ts` shared factory (commit `85686ed`)                                                    |
+| 001-upstream-p1-path-traversal (upstream-only)           | —                     | P1       | NOT IN SCOPE      | Upstream-only — confirmed untouched                                                                 |
+| 002-upstream-p1-query-param-injection (upstream-only)    | —                     | P1       | NOT IN SCOPE      | Upstream-only — confirmed untouched                                                                 |
+| 005-pending-p2-http-no-enforcement (upstream-only)       | —                     | P2       | NOT IN SCOPE      | Upstream-only — confirmed untouched                                                                 |
+| 006-pending-p2-error-object-logged (upstream-only)       | —                     | P2       | NOT IN SCOPE      | Upstream-only — confirmed untouched                                                                 |
 
 **Result: 12/12 in-scope findings resolved. 4 upstream-only findings confirmed untouched.** ✅
 
@@ -336,16 +337,16 @@ No prior Phase 7 code review exists — this is the first Phase 7 review (7.1).
 
 ## Summary
 
-| Category | Count | Details |
-|----------|-------|---------|
-| Issues resolved | 17/17 | All 11 code-review findings + 6 pre-existing bugs |
-| Auto-resolved | 1 | #111 via #160 |
-| New findings (resolved) | 2 | F1 (3 stale error tests — fixed), F2 (prettier — fixed) |
-| Positive findings | 8 | F3–F10 (quality improvements across all categories) |
-| Informational | 4 | F11–F14 (documentation, fallback, type system, deprecation) |
-| Consistency | 2 | F15–F16 (null guard pattern, export scope) |
-| Regressions | 0 | No behavioral regressions detected |
-| Pre-existing failures | 0 | All resolved |
+| Category                | Count | Details                                                     |
+| ----------------------- | ----- | ----------------------------------------------------------- |
+| Issues resolved         | 17/17 | All 11 code-review findings + 6 pre-existing bugs           |
+| Auto-resolved           | 1     | #111 via #160                                               |
+| New findings (resolved) | 2     | F1 (3 stale error tests — fixed), F2 (prettier — fixed)     |
+| Positive findings       | 8     | F3–F10 (quality improvements across all categories)         |
+| Informational           | 4     | F11–F14 (documentation, fallback, type system, deprecation) |
+| Consistency             | 2     | F15–F16 (null guard pattern, export scope)                  |
+| Regressions             | 0     | No behavioral regressions detected                          |
+| Pre-existing failures   | 0     | All resolved                                                |
 
 ---
 
@@ -354,6 +355,7 @@ No prior Phase 7 code review exists — this is the first Phase 7 review (7.1).
 ### Fix Now (before porting to clean-pr)
 
 All "Fix Now" items resolved:
+
 - ~~[F1] Update 3 stale error-scenario tests~~ — ✅ Done
 - ~~[F2] Run prettier on 9 affected files~~ — ✅ Done
 

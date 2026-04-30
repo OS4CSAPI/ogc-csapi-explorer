@@ -176,7 +176,7 @@ export function getListUrl(resourceType: string, options?: QueryOptions): string
       case 'procedures': return b.getProcedures(options)
       case 'samplingFeatures': return b.getSamplingFeatures(options)
       case 'properties': return b.getProperties(options as PropertyQueryOptions)
-      case 'datastreams': return b.getDataStreams(options as DatastreamQueryOptions)
+      case 'datastreams': return b.getDatastreams(options as DatastreamQueryOptions)
       case 'observations': return b.getObservations(options as ObservationQueryOptions)
       case 'controlStreams': return b.getControlStreams(options as ControlStreamQueryOptions)
       case 'commands': return b.getCommands(options as CommandQueryOptions)
@@ -203,7 +203,7 @@ export function getDetailUrl(resourceType: string, id: string): string {
       case 'procedures': return b.getProcedure(id)
       case 'samplingFeatures': return b.getSamplingFeature(id)
       case 'properties': return b.getProperty(id)
-      case 'datastreams': return b.getDataStream(id)
+      case 'datastreams': return b.getDatastream(id)
       case 'observations': return b.getObservation(id)
       case 'controlStreams': return b.getControlStream(id)
       case 'commands': return b.getCommand(id)
@@ -237,7 +237,7 @@ export function getCreateUrl(resourceType: string, parentId?: string): string {
       case 'samplingFeatures': return b.createSamplingFeature()
       // Part 2: use nested URLs via parent ID — library methods don't accept parentId
       case 'datastreams':
-        return parentId ? b.getSystemDataStreams(parentId).split('?')[0] : b.createDataStream()
+        return parentId ? b.getSystemDatastreams(parentId).split('?')[0] : b.createDatastream()
       case 'observations': return b.createObservation(parentId || '')
       case 'controlStreams':
         return parentId ? b.getSystemControlStreams(parentId).split('?')[0] : b.createControlStream()
@@ -274,7 +274,7 @@ export function getUpdateUrl(resourceType: string, id: string): string {
       case 'deployments': return b.updateDeployment(id)
       case 'procedures': return b.updateProcedure(id)
       case 'samplingFeatures': return b.updateSamplingFeature(id)
-      case 'datastreams': return b.updateDataStream(id)
+      case 'datastreams': return b.updateDatastream(id)
       case 'observations': return b.updateObservation(id)
       case 'controlStreams': return b.updateControlStream(id)
       case 'commands': return b.updateCommand(id)
@@ -298,7 +298,7 @@ export function getDeleteUrl(resourceType: string, id: string): string {
       case 'deployments': return b.deleteDeployment(id)
       case 'procedures': return b.deleteProcedure(id)
       case 'samplingFeatures': return b.deleteSamplingFeature(id)
-      case 'datastreams': return b.deleteDataStream(id)
+      case 'datastreams': return b.deleteDatastream(id)
       case 'observations': return b.deleteObservation(id)
       case 'controlStreams': return b.deleteControlStream(id)
       case 'commands': return b.deleteCommand(id)
@@ -335,7 +335,7 @@ export function getNestedListUrl(
     if (parentType === 'systems') {
       switch (relation) {
         case 'subsystems': return b.getSystemSubsystems(parentId, options as SystemQueryOptions)
-        case 'datastreams': return b.getSystemDataStreams(parentId, options as DatastreamQueryOptions)
+        case 'datastreams': return b.getSystemDatastreams(parentId, options as DatastreamQueryOptions)
         case 'controlstreams': return b.getSystemControlStreams(parentId, options as ControlStreamQueryOptions)
         case 'samplingFeatures': return b.getSystemSamplingFeatures(parentId, options)
         case 'deployments': return b.getSystemDeployments(parentId, options as DeploymentQueryOptions)
@@ -350,9 +350,9 @@ export function getNestedListUrl(
     }
     if (parentType === 'datastreams') {
       switch (relation) {
-        case 'observations': return b.getDataStreamObservations(parentId, options as ObservationQueryOptions)
-        case 'systems': return b.getDataStreamSystems(parentId, options)
-        case 'procedures': return b.getDataStreamProcedures(parentId, options)
+        case 'observations': return b.getDatastreamObservations(parentId, options as ObservationQueryOptions)
+        case 'systems': return b.getDatastreamSystems(parentId, options)
+        case 'procedures': return b.getDatastreamProcedures(parentId, options)
       }
     }
     if (parentType === 'controlStreams') {
@@ -363,7 +363,7 @@ export function getNestedListUrl(
     if (parentType === 'procedures') {
       switch (relation) {
         case 'systems': return b.getProcedureSystems(parentId, options)
-        case 'datastreams': return b.getProcedureDataStreams(parentId, options)
+        case 'datastreams': return b.getProcedureDatastreams(parentId, options)
       }
     }
     if (parentType === 'samplingFeatures') {
@@ -375,7 +375,7 @@ export function getNestedListUrl(
     if (parentType === 'properties') {
       switch (relation) {
         case 'systems': return b.getPropertySystems(parentId, options)
-        case 'datastreams': return b.getPropertyDataStreams(parentId, options)
+        case 'datastreams': return b.getPropertyDatastreams(parentId, options)
         case 'controlstreams': return b.getPropertyControlStreams(parentId, options)
       }
     }
@@ -397,7 +397,7 @@ export function getSchemaUrl(datastreamId: string): string | null {
   const b = builder.value
   if (!b) return `/datastreams/${datastreamId}/schema`
   try {
-    return b.getDataStreamSchema(datastreamId)
+    return b.getDatastreamSchema(datastreamId)
   } catch {
     // Builder may throw if 'datastreams' wasn't discovered as a top-level resource
     // (e.g., OSH only advertises it nested under systems). Fall back to direct path.

@@ -1,7 +1,7 @@
 ---
 status: pending
 priority: p3
-issue_id: "012"
+issue_id: '012'
 tags: [code-review, typescript, quality]
 dependencies: []
 ---
@@ -21,6 +21,7 @@ Approximately 15 occurrences across:
 - **`src/ogc-api/csapi/formats/swecommon/data-record.ts`** — correctly does NOT re-cast (use as template)
 
 Representative example at `parser.ts:363–367`:
+
 ```typescript
 } else if (
   isRecord(json.values) &&
@@ -36,6 +37,7 @@ After `isRecord(json.values)`, `json.values` IS `Record<string, unknown>` — no
 ## Proposed Solutions
 
 ### Option A: Remove all redundant re-casts in a cleanup pass
+
 Find all `isRecord(x)` calls and verify the narrowed `x` is used directly on the next line without re-casting.
 **Effort:** Small | **Risk:** None
 

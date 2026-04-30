@@ -1,10 +1,10 @@
 ---
 status: upstream
 priority: p1
-issue_id: "001"
+issue_id: '001'
 tags: [code-review, security, input-encoding, upstream]
 dependencies: []
-related: ["002"]
+related: ['002']
 ---
 
 # Path Traversal via Unencoded `itemId` in `getCollectionItem`
@@ -26,7 +26,7 @@ related: ["002"]
 url.pathname += `/${itemId}`;
 
 // Example attack:
-getCollectionItem('sensors', '../admin/secret')
+getCollectionItem('sensors', '../admin/secret');
 // → url.pathname becomes /collections/sensors/items/../admin/secret
 // → resolves to /collections/admin/secret
 ```
@@ -62,18 +62,23 @@ The recommended fix (Option A: `encodeURIComponent`) is correct — one-characte
 ## Proposed Solutions
 
 ### Option A: `encodeURIComponent` at the point of injection (Recommended)
+
 ```typescript
 url.pathname += `/${encodeURIComponent(itemId)}`;
 ```
+
 **Pros:** One-character fix, no API change, zero risk of regression, consistent with `encodeResourceId()` used in CSAPI.
 **Cons:** None.
 **Effort:** Small | **Risk:** None
 
 ### Option B: Validate that `itemId` contains no `/` before appending
+
 ```typescript
-if (itemId.includes('/')) throw new EndpointError(`Invalid itemId: "${itemId}"`);
+if (itemId.includes('/'))
+  throw new EndpointError(`Invalid itemId: "${itemId}"`);
 url.pathname += `/${itemId}`;
 ```
+
 **Pros:** Explicit rejection of traversal attempts.
 **Cons:** Breaks callers with legitimate slash-containing IDs (valid per OGC spec). Encoding is the correct solution, not rejection.
 **Effort:** Small | **Risk:** Low (breaks valid use cases)

@@ -4,6 +4,10 @@ import capabilities130 from '../../fixtures/wms/capabilities-brgm-1-3-0.xml';
 import capabilitiesStates from '../../fixtures/wms/capabilities-states-1-3-0.xml';
 // @ts-expect-error ts-migrate(7016)
 import exceptionReportWfs from '../../fixtures/wms/service-exception-report-wfs.xml';
+// @ts-expect-error ts-migrate(7016)
+import describeLayerWfs from '../../fixtures/wms/describelayer-wfs.xml';
+// @ts-expect-error ts-migrate(7016)
+import describeLayerWcs from '../../fixtures/wms/describelayer-wcs.xml';
 import WmsEndpoint from './endpoint.js';
 import { useCache } from '../shared/cache.js';
 import { EndpointError, ServiceExceptionError } from '../shared/errors.js';
@@ -412,6 +416,67 @@ describe('WmsEndpoint', () => {
       expect(endpoint.getOperationUrl('GetMap')).toBe(
         'http://geoservices.brgm.fr/geologie?language=fre&'
       );
+    });
+  });
+
+  describe('#describeLayer', () => {
+    beforeEach(() => {
+      globalThis.fetchResponseFactory = (url) => {
+        if (url.indexOf('DescribeLayer') > -1) {
+          if (url.indexOf('imagery') > -1) return describeLayerWcs;
+          return describeLayerWfs;
+        }
+        return capabilities130;
+      };
+      endpoint = new WmsEndpoint(
+        'https://my.test.service/ogc/wms?service=wms&request=GetMap&aa=bb'
+      );
+    });
+
+    it('returns the layer description for a vector layer', async () => {
+      await endpoint.isReady();
+      const result = await endpoint.describeLayer('geodata:geography_vector');
+      expect(result).toEqual({
+        layerName: 'geodata:geography_vector',
+        owsType: 'wfs',
+        owsUrl: 'https://www.example.com/geoserver/wfs',
+        typeName: 'geodata:geography_vector',
+      });
+    });
+
+    it('returns the layer description for a raster layer', async () => {
+      await endpoint.isReady();
+      const result = await endpoint.describeLayer('imagery:ortho_coverage');
+      expect(result).toEqual({
+        layerName: 'imagery:ortho_coverage',
+        owsType: 'wcs',
+        owsUrl: 'https://www.geodata-service.org/ows/wcs',
+        typeName: 'imagery:ortho_coverage',
+      });
+    });
+
+    it('returns null when the response contains no layer description', async () => {
+      const emptyDescribeLayer = `<?xml version="1.0" encoding="UTF-8"?>
+<DescribeLayerResponse xmlns="http://www.opengis.net/sld">
+    <Version>1.1.0</Version>
+</DescribeLayerResponse>`;
+      globalThis.fetchResponseFactory = (url) => {
+        if (url.indexOf('DescribeLayer') > -1) return emptyDescribeLayer;
+        return capabilities130;
+      };
+      endpoint = new WmsEndpoint(
+        'https://my.test.service/ogc/wms?service=wms&request=GetMap&aa=bb'
+      );
+      await endpoint.isReady();
+      const result = await endpoint.describeLayer('nonexistent:layer');
+      expect(result).toBeNull();
+    });
+
+    it('returns null when DescribeLayer is not advertised', async () => {
+      globalThis.fetchResponseFactory = () => capabilitiesStates;
+      endpoint = new WmsEndpoint('https://my.test.service/ogc/wms');
+      await endpoint.isReady();
+      await expect(endpoint.describeLayer('usa:states')).resolves.toBeNull();
     });
   });
 });
