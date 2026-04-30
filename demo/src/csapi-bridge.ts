@@ -107,6 +107,25 @@ export interface BuilderInitResult {
    * Surfaced in the UI so users can file conformance bugs against servers.
    */
   strictModeError?: string
+  /**
+   * Classifier for the strict-mode failure mode. Lets the UI distinguish
+   * a known library-side limitation (relative baseUrl trips the upstream
+   * `URL` constructor) from a genuine server-side conformance gap, so we
+   * don't mis-attribute the failure when displaying the warning.
+   *
+   * - 'library-relative-baseurl' — captured error matches /Invalid URL/i.
+   *     The library's `getBaseUrl()` cannot resolve the proxy-relative base
+   *     used by this explorer (`/api/csapi-go`, `/api/osh`, etc.). This is
+   *     a known upstream limitation tracked at
+   *     OS4CSAPI/ogc-client-CSAPI_2 issue #187 and documented in
+   *     docs/implementation/phase-8-strict-mode-validation-warning-root-cause.md.
+   *     Not a server problem.
+   * - 'server-conformance' — anything else (missing conformance class,
+   *     missing collection document, network failure, etc.). Treat as a
+   *     potential server-side issue.
+   * - undefined when mode === 'strict' (no failure to classify).
+   */
+  strictModeFailureKind?: 'library-relative-baseurl' | 'server-conformance'
 }
 
 /**
@@ -224,6 +243,22 @@ export async function initializeBuilder(
   const newBuilder = new CSAPIQueryBuilder(collectionInfo, resourceUrls)
   builder.value = newBuilder
 
+  // Classify the failure (if any) so the UI can avoid the misleading
+  // "server-side conformance issue" framing when the actual cause is the
+  // upstream library's intolerance of relative base URLs. See issue #187
+  // in OS4CSAPI/ogc-client-CSAPI_2.
+  let strictModeFailureKind:
+    | 'library-relative-baseurl'
+    | 'server-conformance'
+    | undefined
+  if (!strict.ok) {
+    strictModeFailureKind = /Invalid URL|Failed to construct 'URL'/i.test(
+      strict.error
+    )
+      ? 'library-relative-baseurl'
+      : 'server-conformance'
+  }
+
   return {
     builder: newBuilder,
     discoveredTypes,
@@ -231,6 +266,7 @@ export async function initializeBuilder(
     mode: strict.ok ? 'strict' : 'fallback',
     strictCollectionId: strict.ok ? strict.collectionId : undefined,
     strictModeError: strict.ok ? undefined : strict.error,
+    strictModeFailureKind,
   }
 }
 

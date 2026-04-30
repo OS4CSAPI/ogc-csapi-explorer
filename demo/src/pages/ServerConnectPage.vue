@@ -374,14 +374,28 @@ async function connect() {
           + 'real CSAPI collection document. The explorer is using the canonical '
           + 'ogc-client entry point for discovery.',
       })
+    } else if (initResult.strictModeFailureKind === 'library-relative-baseurl') {
+      // Known upstream limitation: getBaseUrl() throws on proxy-relative
+      // base URLs. Not a server problem. Tracked at OS4CSAPI/ogc-client-CSAPI_2 #187.
+      detectedWarnings.push({
+        severity: 'info',
+        summary: 'Library strict-mode validation skipped (known library limitation)',
+        detail: 'The canonical OgcApiEndpoint.csapi() entry point cannot run against '
+          + 'proxy-relative base URLs (e.g. "/api/csapi-go") because the upstream '
+          + 'ogc-client library throws when constructing URLs from a relative base. '
+          + 'The explorer fell back to permissive discovery and is functioning normally. '
+          + 'This is NOT a server-side issue \u2014 it is a known limitation tracked at '
+          + 'OS4CSAPI/ogc-client-CSAPI_2 issue #187. '
+          + `(Captured error: ${initResult.strictModeError ?? 'unknown'})`,
+      })
     } else {
       detectedWarnings.push({
         severity: 'warn',
         summary: 'Library strict-mode validation skipped',
         detail: 'The canonical OgcApiEndpoint.csapi() entry point could not be used '
           + `against this server (${initResult.strictModeError ?? 'unknown reason'}). `
-          + 'The explorer fell back to permissive discovery so it can still connect, '
-          + 'but this is a server-side conformance issue worth reporting upstream.',
+          + 'The explorer fell back to permissive discovery so it can still connect. '
+          + 'This may indicate a server-side conformance issue worth reporting upstream.',
       })
     }
 
