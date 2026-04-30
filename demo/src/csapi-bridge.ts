@@ -10,6 +10,8 @@
  * apiFetch() prepends with the proxy base URL (e.g., `/api/52north`).
  */
 import { shallowRef } from 'vue'
+import OgcApiEndpoint from '@csapi/ogc-api/endpoint'
+import { EndpointError } from '@csapi/shared/endpoint-error'
 import CSAPIQueryBuilder from '@csapi/ogc-api/csapi/url_builder'
 import { parseCollectionResponse } from '@csapi/ogc-api/csapi/formats/response'
 import { extractCSAPIFeature, getCSAPIResourceType } from '@csapi/ogc-api/csapi/formats/geojson'
@@ -79,55 +81,140 @@ export const builder = shallowRef<CSAPIQueryBuilder | null>(null)
 export interface BuilderInitResult {
   builder: CSAPIQueryBuilder
   discoveredTypes: string[]
+  /**
+   * True when no CSAPI links were discovered and the bridge fell back to
+   * assuming all 9 standard resource types at their default paths.
+   * Retained for backward compatibility with the existing connect-page UI.
+   */
   usedFallback: boolean
+  /**
+   * 'strict'   — `OgcApiEndpoint.csapi(collectionId)` succeeded for at
+   *              least one collection (server advertises a Connected
+   *              Systems conformance class and exposes a real CSAPI
+   *              collection document).
+   * 'fallback' — strict validation failed; the bridge built a permissive
+   *              synthetic builder that ignores conformance and
+   *              collection-existence checks. This preserves the
+   *              explorer's ability to connect to servers that
+   *              under-advertise conformance or expose CSAPI resources
+   *              outside `/collections`.
+   */
+  mode: 'strict' | 'fallback'
+  /** Collection id that satisfied the strict path, when mode === 'strict'. */
+  strictCollectionId?: string
+  /**
+   * Reason the strict path was not used (only set when mode === 'fallback').
+   * Surfaced in the UI so users can file conformance bugs against servers.
+   */
+  strictModeError?: string
 }
 
-export function initializeBuilder(
+/**
+ * Attempt the canonical library entry point, `OgcApiEndpoint.csapi(id)`,
+ * for any collection the explorer already discovered. The strict path
+ * enforces:
+ *   1. `/conformance` lists a Connected Systems conformance class
+ *   2. The collection id resolves to a real collection document
+ *   3. The collection / root links can be scanned for CSAPI resources
+ *
+ * Returns the discovered resource types on success, or an error string
+ * on failure. Never throws.
+ *
+ * Note: even on success we discard the strict builder's URLs because
+ * those would be absolute server URLs (which break the explorer's
+ * proxy chain). We use the strict path strictly for *validation*; URL
+ * construction always uses proxy-relative paths.
+ */
+async function tryStrictDiscovery(
+  baseUrl: string,
+  collections: any[]
+): Promise<
+  | { ok: true; types: Set<string>; collectionId: string }
+  | { ok: false; error: string }
+> {
+  if (!baseUrl) return { ok: false, error: 'No base URL provided' }
+  const collIds: string[] = (collections ?? [])
+    .map((c: any) => c?.id)
+    .filter((x: any): x is string => typeof x === 'string' && x.length > 0)
+  if (collIds.length === 0) {
+    return { ok: false, error: 'Server exposed no collections to validate against' }
+  }
+
+  let endpoint: OgcApiEndpoint
+  try {
+    endpoint = new OgcApiEndpoint(baseUrl)
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
+
+  let lastErr = 'Unknown error'
+  for (const id of collIds) {
+    try {
+      const strictBuilder = await endpoint.csapi(id)
+      const types = new Set<string>(strictBuilder.availableResources)
+      return { ok: true, types, collectionId: id }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      lastErr = msg
+      // Conformance gate is a server-wide signal — no point trying further collections
+      if (e instanceof EndpointError && /Connected Systems/i.test(msg)) {
+        return { ok: false, error: msg }
+      }
+    }
+  }
+  return { ok: false, error: lastErr }
+}
+
+export async function initializeBuilder(
+  baseUrl: string,
   landingPage: any,
   collections: any[]
-): BuilderInitResult {
-  // Gather all links from landing page and collections
+): Promise<BuilderInitResult> {
+  // 1. Strict validation via OgcApiEndpoint.csapi(). Best-effort; failures
+  //    are non-fatal — we still produce a working (permissive) builder
+  //    so the explorer can connect to non-conformant servers.
+  const strict = await tryStrictDiscovery(baseUrl, collections)
+
+  // 2. Permissive discovery from raw landing/collection links (legacy path).
   const allLinks: Array<{ rel?: string; href?: string }> = []
-
-  if (Array.isArray(landingPage?.links)) {
-    allLinks.push(...landingPage.links)
-  }
+  if (Array.isArray(landingPage?.links)) allLinks.push(...landingPage.links)
   for (const coll of collections) {
-    if (Array.isArray(coll?.links)) {
-      allLinks.push(...coll.links)
-    }
+    if (Array.isArray(coll?.links)) allLinks.push(...coll.links)
   }
+  const permissive = scanCsapiLinks(allLinks)
 
-  // Discover CSAPI resources using the library's own link scanner
-  const discovered = scanCsapiLinks(allLinks)
-
-  // Build relative resource URL map — the builder will use these paths
-  // (not the absolute server URLs) so paths stay proxy-compatible
+  // 3. Pick the best discovered type set (strict > permissive > full fallback)
   const resourceUrls = new Map<string, string>()
+  let discoveredTypes: string[]
+  let usedFallback = false
 
-  if (discovered.size > 0) {
-    // Server advertises CSAPI links — use discovered types with standard path
-    // toUrlPath() normalizes keys like 'controlStreams' → 'controlstreams'
-    for (const type of discovered.keys()) {
+  if (strict.ok && strict.types.size > 0) {
+    for (const type of strict.types) {
       resourceUrls.set(type, `/${toUrlPath(type)}`)
     }
+    discoveredTypes = Array.from(strict.types)
+  } else if (permissive.size > 0) {
+    for (const type of permissive.keys()) {
+      resourceUrls.set(type, `/${toUrlPath(type)}`)
+    }
+    discoveredTypes = Array.from(permissive.keys())
   } else {
-    // Fallback: assume all 9 standard types at their standard paths
     for (const type of CSAPIResourceTypes) {
       resourceUrls.set(type, `/${toUrlPath(type)}`)
     }
+    discoveredTypes = Array.from(CSAPIResourceTypes)
+    usedFallback = true
   }
 
-  // Build synthetic collection with links that scanCsapiLinks will recognize
-  // Convention 2: plain resource name as rel → automatically populates availableResources
+  // 4. Build the proxy-safe builder. URLs in the resourceUrls map are
+  //    proxy-relative regardless of strict/fallback so apiFetch() can
+  //    prepend connection.baseUrl transparently.
   const syntheticLinks = Array.from(resourceUrls).map(([type, url]) => ({
     rel: type,
     href: url,
   }))
   syntheticLinks.push({ rel: 'self', href: '/' })
 
-  // Create the builder with a minimal collection info object
-  // (only id, title, links are used by CSAPIQueryBuilder)
   const collectionInfo = {
     id: 'csapi-explorer',
     title: landingPage?.title || 'CSAPI Server',
@@ -136,10 +223,14 @@ export function initializeBuilder(
 
   const newBuilder = new CSAPIQueryBuilder(collectionInfo, resourceUrls)
   builder.value = newBuilder
+
   return {
     builder: newBuilder,
-    discoveredTypes: Array.from(discovered.keys()),
-    usedFallback: discovered.size === 0,
+    discoveredTypes,
+    usedFallback,
+    mode: strict.ok ? 'strict' : 'fallback',
+    strictCollectionId: strict.ok ? strict.collectionId : undefined,
+    strictModeError: strict.ok ? undefined : strict.error,
   }
 }
 

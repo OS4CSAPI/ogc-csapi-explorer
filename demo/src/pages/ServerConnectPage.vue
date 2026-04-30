@@ -344,7 +344,7 @@ async function connect() {
     }
 
     // 3. CSAPI resource link discovery
-    const initResult = initializeBuilder(landingData, collections.value)
+    const initResult = await initializeBuilder(baseUrl, landingData, collections.value)
     if (initResult.usedFallback) {
       detectedWarnings.push({
         severity: 'warn',
@@ -361,6 +361,27 @@ async function connect() {
         detail: `The server advertises ${initResult.discoveredTypes.length} Connected Systems API `
           + `resource type${initResult.discoveredTypes.length !== 1 ? 's' : ''} via landing page `
           + `or collection links: ${initResult.discoveredTypes.join(', ')}.`,
+      })
+    }
+
+    // 3b. Library-level (strict) validation via OgcApiEndpoint.csapi()
+    if (initResult.mode === 'strict') {
+      detectedWarnings.push({
+        severity: 'success',
+        summary: 'Library strict-mode validation passed',
+        detail: `OgcApiEndpoint.csapi('${initResult.strictCollectionId}') succeeded: `
+          + 'the server advertises a Connected Systems conformance class and exposes a '
+          + 'real CSAPI collection document. The explorer is using the canonical '
+          + 'ogc-client entry point for discovery.',
+      })
+    } else {
+      detectedWarnings.push({
+        severity: 'warn',
+        summary: 'Library strict-mode validation skipped',
+        detail: 'The canonical OgcApiEndpoint.csapi() entry point could not be used '
+          + `against this server (${initResult.strictModeError ?? 'unknown reason'}). `
+          + 'The explorer fell back to permissive discovery so it can still connect, '
+          + 'but this is a server-side conformance issue worth reporting upstream.',
       })
     }
 
