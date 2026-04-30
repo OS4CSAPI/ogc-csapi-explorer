@@ -358,7 +358,7 @@ async function testReadOperations(server: ServerConfig, builder: CSAPIQueryBuild
         case 'systems': url = builder.getSystems({ limit: 3 }); getMethod = `getSystems({ limit: 3 })`; break;
         case 'deployments': url = builder.getDeployments({ limit: 3 }); getMethod = `getDeployments({ limit: 3 })`; break;
         case 'procedures': url = builder.getProcedures({ limit: 3 }); getMethod = `getProcedures({ limit: 3 })`; break;
-        case 'datastreams': url = builder.getDataStreams({ limit: 3 }); getMethod = `getDataStreams({ limit: 3 })`; break;
+        case 'datastreams': url = builder.getDatastreams({ limit: 3 }); getMethod = `getDatastreams({ limit: 3 })`; break;
         case 'observations': url = builder.getObservations({ limit: 3 }); getMethod = `getObservations({ limit: 3 })`; break;
       }
     } catch (e: any) {
@@ -409,7 +409,7 @@ async function testParsers(server: ServerConfig, builder: CSAPIQueryBuilder) {
         case 'systems': url = builder.getSystems({ limit: 3 }); break;
         case 'deployments': url = builder.getDeployments({ limit: 3 }); break;
         case 'procedures': url = builder.getProcedures({ limit: 3 }); break;
-        case 'datastreams': url = builder.getDataStreams({ limit: 3 }); break;
+        case 'datastreams': url = builder.getDatastreams({ limit: 3 }); break;
         case 'observations': url = builder.getObservations({ limit: 3 }); break;
       }
     } catch {
@@ -511,14 +511,14 @@ async function testNestedResources(server: ServerConfig, builder: CSAPIQueryBuil
 
   const systems = sysR.body?.features || sysR.body?.items || [];
   for (const sys of systems) {
-    // Test getSystemDataStreams
+    // Test getSystemDatastreams
     try {
-      const dsUrl = builder.getSystemDataStreams(sys.id);
+      const dsUrl = builder.getSystemDatastreams(sys.id);
       const dsR = await httpRequest(server, 'GET', dsUrl);
       if (dsR.ok) {
         const items = dsR.body?.features || dsR.body?.items || [];
         if (items.length > 0) {
-          pass(server.name, category, `getSystemDataStreams('${sys.id}')`,
+          pass(server.name, category, `getSystemDatastreams('${sys.id}')`,
             `${items.length} datastreams, envelope: ${dsR.body?.features ? 'features' : 'items'}`,
             { url: dsUrl, httpStatus: dsR.status });
 
@@ -554,7 +554,7 @@ async function testNestedResources(server: ServerConfig, builder: CSAPIQueryBuil
         }
       }
     } catch (e: any) {
-      fail(server.name, category, `getSystemDataStreams('${sys.id}')`, `Error: ${e.message}`);
+      fail(server.name, category, `getSystemDatastreams('${sys.id}')`, `Error: ${e.message}`);
     }
   }
 }

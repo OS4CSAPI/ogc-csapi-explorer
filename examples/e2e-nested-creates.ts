@@ -2,14 +2,14 @@
  * End-to-End Nested Create Operations Test
  *
  * Follow-up to e2e-write-operations.ts — the initial test found that
- * `createDataStream()` POSTs to `/datastreams` (top-level) which the OSH
+ * `createDatastream()` POSTs to `/datastreams` (top-level) which the OSH
  * SensorHub rejects with 405: "Datastreams can only be created within a
  * System resource". This test validates the nested creation pattern:
  *
  *   System → Datastream (under system) → Observation (under datastream)
  *
- * It also tests whether `getSystemDataStreams(id)` can serve as the POST
- * target (workaround for missing `createDataStreamForSystem(id)` method).
+ * It also tests whether `getSystemDatastreams(id)` can serve as the POST
+ * target (workaround for missing `createDatastreamForSystem(id)` method).
  *
  * Usage:
  *   npx tsx examples/e2e-nested-creates.ts
@@ -227,11 +227,11 @@ async function main() {
   console.log('  PHASE 2: NESTED DATASTREAM CREATION');
   console.log(hr + '\n');
 
-  // 2a: First confirm top-level createDataStream() fails (expected)
-  console.log('--- Test 2a: Top-level createDataStream() (expected 405) ---\n');
-  const topLevelDsUrl = builder.createDataStream();
+  // 2a: First confirm top-level createDatastream() fails (expected)
+  console.log('--- Test 2a: Top-level createDatastream() (expected 405) ---\n');
+  const topLevelDsUrl = builder.createDatastream();
   const topLevelDsPayload = {
-    name: 'Test DataStream — top-level',
+    name: 'Test Datastream — top-level',
     outputName: 'testTopLevel',
     schema: {
       obsFormat: 'application/json',
@@ -248,25 +248,25 @@ async function main() {
 
   const topLevelDsResult = await httpRequest('POST', topLevelDsUrl, topLevelDsPayload, 'application/json');
   if (topLevelDsResult.status === 405) {
-    console.log(pct(`Top-level createDataStream() correctly rejected with 405`));
+    console.log(pct(`Top-level createDatastream() correctly rejected with 405`));
     console.log(`   URL: ${topLevelDsUrl}`);
     console.log(`   Server: ${JSON.stringify(topLevelDsResult.body)}`);
     results.push({
-      name: 'Top-level createDataStream() — expected 405',
+      name: 'Top-level createDatastream() — expected 405',
       passed: true,
-      builderMethod: 'builder.createDataStream()',
+      builderMethod: 'builder.createDatastream()',
       generatedUrl: topLevelDsUrl,
       httpMethod: `POST ${topLevelDsResult.status}`,
       httpStatus: topLevelDsResult.status,
       details: 'Correctly rejected: 405 Method Not Allowed',
-      finding: 'FINDING: createDataStream() generates top-level URL that servers reject. Datastreams must be created as nested resources under a system.',
+      finding: 'FINDING: createDatastream() generates top-level URL that servers reject. Datastreams must be created as nested resources under a system.',
     });
   } else {
-    console.log(pwn(`Top-level createDataStream() got ${topLevelDsResult.status} (expected 405)`));
+    console.log(pwn(`Top-level createDatastream() got ${topLevelDsResult.status} (expected 405)`));
     results.push({
-      name: 'Top-level createDataStream() — expected 405',
+      name: 'Top-level createDatastream() — expected 405',
       passed: false,
-      builderMethod: 'builder.createDataStream()',
+      builderMethod: 'builder.createDatastream()',
       generatedUrl: topLevelDsUrl,
       httpMethod: `POST ${topLevelDsResult.status}`,
       httpStatus: topLevelDsResult.status,
@@ -274,11 +274,11 @@ async function main() {
     });
   }
 
-  // 2b: Use getSystemDataStreams(systemId) as POST target (workaround)
-  console.log('\n--- Test 2b: Nested create via getSystemDataStreams(systemId) ---\n');
-  const nestedDsUrl = builder.getSystemDataStreams(systemId);
+  // 2b: Use getSystemDatastreams(systemId) as POST target (workaround)
+  console.log('\n--- Test 2b: Nested create via getSystemDatastreams(systemId) ---\n');
+  const nestedDsUrl = builder.getSystemDatastreams(systemId);
   const datastreamPayload = {
-    name: `Test DataStream — nested under ${systemId}`,
+    name: `Test Datastream — nested under ${systemId}`,
     outputName: `testNested_${UNIQUE}`,
     schema: {
       obsFormat: 'application/json',
@@ -297,19 +297,19 @@ async function main() {
   const datastreamId = extractId(nestedDsResult);
 
   if (nestedDsResult.status === 201 && datastreamId) {
-    console.log(pct(`Nested datastream created via getSystemDataStreams()`));
-    console.log(`   Builder: builder.getSystemDataStreams('${systemId}') → "${nestedDsUrl}"`);
+    console.log(pct(`Nested datastream created via getSystemDatastreams()`));
+    console.log(`   Builder: builder.getSystemDatastreams('${systemId}') → "${nestedDsUrl}"`);
     console.log(`   HTTP: POST ${nestedDsResult.status} — ID: ${datastreamId}`);
-    cleanup.push({ type: 'datastream', id: datastreamId, url: builder.deleteDataStream(datastreamId) });
+    cleanup.push({ type: 'datastream', id: datastreamId, url: builder.deleteDatastream(datastreamId) });
     results.push({
       name: 'CREATE Datastream (nested under system)',
       passed: true,
-      builderMethod: `builder.getSystemDataStreams('${systemId}')`,
+      builderMethod: `builder.getSystemDatastreams('${systemId}')`,
       generatedUrl: nestedDsUrl,
       httpMethod: `POST ${nestedDsResult.status}`,
       httpStatus: nestedDsResult.status,
       details: `Created datastream ${datastreamId} under system ${systemId}`,
-      finding: 'WORKAROUND: getSystemDataStreams(id) can serve as POST target for nested datastream creation. Library should add createDataStreamForSystem(systemId) method.',
+      finding: 'WORKAROUND: getSystemDatastreams(id) can serve as POST target for nested datastream creation. Library should add createDatastreamForSystem(systemId) method.',
     });
   } else {
     console.log(pfl(`Nested datastream creation FAILED: ${nestedDsResult.status}`));
@@ -318,7 +318,7 @@ async function main() {
     results.push({
       name: 'CREATE Datastream (nested under system)',
       passed: false,
-      builderMethod: `builder.getSystemDataStreams('${systemId}')`,
+      builderMethod: `builder.getSystemDatastreams('${systemId}')`,
       generatedUrl: nestedDsUrl,
       httpMethod: `POST ${nestedDsResult.status}`,
       httpStatus: nestedDsResult.status,
@@ -331,16 +331,16 @@ async function main() {
   // 2c: Verify created datastream with GET
   console.log('\n--- Test 2c: Verify nested datastream with GET ---\n');
   if (datastreamId) {
-    const getDsUrl = builder.getDataStream(datastreamId);
+    const getDsUrl = builder.getDatastream(datastreamId);
     const getDsResult = await httpRequest('GET', getDsUrl);
     if (getDsResult.status === 200) {
       console.log(pct(`GET nested datastream ${datastreamId}`));
-      console.log(`   Builder: builder.getDataStream('${datastreamId}') → "${getDsUrl}"`);
+      console.log(`   Builder: builder.getDatastream('${datastreamId}') → "${getDsUrl}"`);
       console.log(`   Name: ${getDsResult.body?.name}`);
       results.push({
         name: 'GET nested Datastream (verify creation)',
         passed: true,
-        builderMethod: `builder.getDataStream('${datastreamId}')`,
+        builderMethod: `builder.getDatastream('${datastreamId}')`,
         generatedUrl: getDsUrl,
         httpMethod: `GET ${getDsResult.status}`,
         httpStatus: getDsResult.status,
@@ -352,7 +352,7 @@ async function main() {
       results.push({
         name: 'GET nested Datastream (verify creation)',
         passed: false,
-        builderMethod: `builder.getDataStream('${datastreamId}')`,
+        builderMethod: `builder.getDatastream('${datastreamId}')`,
         generatedUrl: getDsUrl,
         httpMethod: `GET ${getDsResult.status}`,
         httpStatus: getDsResult.status,
@@ -366,18 +366,18 @@ async function main() {
   // 2d: List system's datastreams to verify nesting
   console.log('\n--- Test 2d: List system datastreams to verify relationship ---\n');
   if (datastreamId) {
-    const listDsUrl = builder.getSystemDataStreams(systemId);
+    const listDsUrl = builder.getSystemDatastreams(systemId);
     const listDsResult = await httpRequest('GET', listDsUrl);
     if (listDsResult.status === 200) {
       const items = listDsResult.body?.items || [];
       const found = items.find((i: any) => i.id === datastreamId);
       console.log(pct(`List system datastreams shows ${items.length} items`));
-      console.log(`   Builder: builder.getSystemDataStreams('${systemId}') → "${listDsUrl}"`);
+      console.log(`   Builder: builder.getSystemDatastreams('${systemId}') → "${listDsUrl}"`);
       console.log(`   Our datastream found in list: ${found ? 'Yes' : 'No'}`);
       results.push({
         name: 'LIST system datastreams (verify nesting)',
         passed: !!found,
-        builderMethod: `builder.getSystemDataStreams('${systemId}')`,
+        builderMethod: `builder.getSystemDatastreams('${systemId}')`,
         generatedUrl: listDsUrl,
         httpMethod: `GET ${listDsResult.status}`,
         httpStatus: listDsResult.status,
@@ -388,7 +388,7 @@ async function main() {
       results.push({
         name: 'LIST system datastreams (verify nesting)',
         passed: false,
-        builderMethod: `builder.getSystemDataStreams('${systemId}')`,
+        builderMethod: `builder.getSystemDatastreams('${systemId}')`,
         generatedUrl: listDsUrl,
         httpMethod: `GET ${listDsResult.status}`,
         httpStatus: listDsResult.status,
@@ -527,19 +527,19 @@ async function main() {
   // 4a: Update datastream
   if (datastreamId) {
     console.log('--- Test 4a: UPDATE Datastream (PUT) ---\n');
-    const updateDsUrl = builder.updateDataStream(datastreamId);
+    const updateDsUrl = builder.updateDatastream(datastreamId);
     const updateDsPayload = {
       ...datastreamPayload,
-      name: `Test DataStream — UPDATED — nested under ${systemId}`,
+      name: `Test Datastream — UPDATED — nested under ${systemId}`,
     };
     const updateDsResult = await httpRequest('PUT', updateDsUrl, updateDsPayload, 'application/json');
     if (updateDsResult.status === 204) {
       console.log(pct(`UPDATE Datastream ${datastreamId}`));
-      console.log(`   Builder: builder.updateDataStream('${datastreamId}') → "${updateDsUrl}"`);
+      console.log(`   Builder: builder.updateDatastream('${datastreamId}') → "${updateDsUrl}"`);
       results.push({
         name: 'UPDATE Datastream (PUT)',
         passed: true,
-        builderMethod: `builder.updateDataStream('${datastreamId}')`,
+        builderMethod: `builder.updateDatastream('${datastreamId}')`,
         generatedUrl: updateDsUrl,
         httpMethod: `PUT ${updateDsResult.status}`,
         httpStatus: updateDsResult.status,
@@ -547,7 +547,7 @@ async function main() {
       });
 
       // Verify update
-      const verifyDs = await httpRequest('GET', builder.getDataStream(datastreamId));
+      const verifyDs = await httpRequest('GET', builder.getDatastream(datastreamId));
       console.log(`   Verification: name = "${verifyDs.body?.name}"`);
       console.log(`   Update verified: ${verifyDs.body?.name?.includes('UPDATED') ? '✓' : '✗'}`);
     } else {
@@ -556,7 +556,7 @@ async function main() {
       results.push({
         name: 'UPDATE Datastream (PUT)',
         passed: false,
-        builderMethod: `builder.updateDataStream('${datastreamId}')`,
+        builderMethod: `builder.updateDatastream('${datastreamId}')`,
         generatedUrl: updateDsUrl,
         httpMethod: `PUT ${updateDsResult.status}`,
         httpStatus: updateDsResult.status,
@@ -605,22 +605,22 @@ async function main() {
   // 4c: Delete datastream
   if (datastreamId) {
     console.log('\n--- Test 4c: DELETE Datastream ---\n');
-    const deleteDsUrl = builder.deleteDataStream(datastreamId);
+    const deleteDsUrl = builder.deleteDatastream(datastreamId);
     const deleteDsResult = await httpRequest('DELETE', deleteDsUrl);
     if (deleteDsResult.status === 204) {
       console.log(pct(`DELETE Datastream ${datastreamId}`));
-      console.log(`   Builder: builder.deleteDataStream('${datastreamId}') → "${deleteDsUrl}"`);
+      console.log(`   Builder: builder.deleteDatastream('${datastreamId}') → "${deleteDsUrl}"`);
       // Remove from cleanup since we've already deleted it
       const idx = cleanup.findIndex(c => c.id === datastreamId);
       if (idx >= 0) cleanup.splice(idx, 1);
 
       // Verify deletion
-      const verifyDs = await httpRequest('GET', builder.getDataStream(datastreamId));
+      const verifyDs = await httpRequest('GET', builder.getDatastream(datastreamId));
       console.log(`   Verification GET: ${verifyDs.status} (expected 404)`);
       results.push({
         name: 'DELETE Datastream',
         passed: true,
-        builderMethod: `builder.deleteDataStream('${datastreamId}')`,
+        builderMethod: `builder.deleteDatastream('${datastreamId}')`,
         generatedUrl: deleteDsUrl,
         httpMethod: `DELETE ${deleteDsResult.status}`,
         httpStatus: deleteDsResult.status,
@@ -631,7 +631,7 @@ async function main() {
       results.push({
         name: 'DELETE Datastream',
         passed: false,
-        builderMethod: `builder.deleteDataStream('${datastreamId}')`,
+        builderMethod: `builder.deleteDatastream('${datastreamId}')`,
         generatedUrl: deleteDsUrl,
         httpMethod: `DELETE ${deleteDsResult.status}`,
         httpStatus: deleteDsResult.status,
@@ -691,7 +691,7 @@ async function main() {
   let foundSystemWithDs = false;
 
   for (const sys of knownSystems) {
-    const dsListUrl = builder.getSystemDataStreams(sys.id);
+    const dsListUrl = builder.getSystemDatastreams(sys.id);
     const dsListResult = await httpRequest('GET', dsListUrl);
     if (dsListResult.status === 200) {
       try {
@@ -706,7 +706,7 @@ async function main() {
         results.push({
           name: `parseCollectionResponse — system/${sys.id}/datastreams`,
           passed: true,
-          builderMethod: `parseCollectionResponse() on getSystemDataStreams('${sys.id}')`,
+          builderMethod: `parseCollectionResponse() on getSystemDatastreams('${sys.id}')`,
           generatedUrl: dsListUrl,
           httpMethod: `GET ${dsListResult.status}`,
           httpStatus: dsListResult.status,
@@ -718,7 +718,7 @@ async function main() {
         results.push({
           name: `parseCollectionResponse — system/${sys.id}/datastreams`,
           passed: false,
-          builderMethod: `parseCollectionResponse() on getSystemDataStreams('${sys.id}')`,
+          builderMethod: `parseCollectionResponse() on getSystemDatastreams('${sys.id}')`,
           generatedUrl: dsListUrl,
           httpMethod: `GET ${dsListResult.status}`,
           httpStatus: dsListResult.status,
@@ -732,11 +732,11 @@ async function main() {
 
   // 5b: Test extractCSAPIFeature on a datastream response
   console.log('\n--- Test 5b: extractCSAPIFeature on individual datastream ---\n');
-  const topDsList = await httpRequest('GET', builder.getDataStreams({ limit: 1 }));
+  const topDsList = await httpRequest('GET', builder.getDatastreams({ limit: 1 }));
   const topDsItems = topDsList.body?.items || [];
   if (topDsItems.length > 0) {
     const dsItem = topDsItems[0];
-    const dsGetUrl = builder.getDataStream(dsItem.id);
+    const dsGetUrl = builder.getDatastream(dsItem.id);
     const dsGetResult = await httpRequest('GET', dsGetUrl);
     if (dsGetResult.status === 200) {
       try {
@@ -749,7 +749,7 @@ async function main() {
         results.push({
           name: `extractCSAPIFeature — datastream/${dsItem.id}`,
           passed: true,
-          builderMethod: `extractCSAPIFeature(response) on getDataStream('${dsItem.id}')`,
+          builderMethod: `extractCSAPIFeature(response) on getDatastream('${dsItem.id}')`,
           generatedUrl: dsGetUrl,
           httpMethod: `GET ${dsGetResult.status}`,
           httpStatus: dsGetResult.status,
@@ -760,7 +760,7 @@ async function main() {
         results.push({
           name: `extractCSAPIFeature — datastream/${dsItem.id}`,
           passed: false,
-          builderMethod: `extractCSAPIFeature(response) on getDataStream('${dsItem.id}')`,
+          builderMethod: `extractCSAPIFeature(response) on getDatastream('${dsItem.id}')`,
           generatedUrl: dsGetUrl,
           httpMethod: `GET ${dsGetResult.status}`,
           httpStatus: dsGetResult.status,

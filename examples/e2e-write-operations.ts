@@ -429,7 +429,7 @@ async function testCreateProcedure(builder: CSAPIQueryBuilder): Promise<string |
 async function testCreateDatastream(builder: CSAPIQueryBuilder, systemId: string): Promise<string | null> {
   console.log('=== Test: CREATE Datastream ===\n');
 
-  const url = builder.createDataStream();
+  const url = builder.createDatastream();
   const payload = {
     name: 'E2E Test Datastream — CSAPI Explorer',
     description: 'Temporary datastream for library validation.',
@@ -467,7 +467,7 @@ async function testCreateDatastream(builder: CSAPIQueryBuilder, systemId: string
   logResult({
     name: 'CREATE Datastream (POST to collection URL)',
     passed,
-    builderMethod: 'builder.createDataStream()',
+    builderMethod: 'builder.createDatastream()',
     generatedUrl: url,
     httpMethod: `POST ${result.status}`,
     httpStatus: result.status,
@@ -588,7 +588,7 @@ async function testParseCollectionResponseOnAllTypes(builder: CSAPIQueryBuilder)
         case 'systems': url = builder.getSystems({ limit: 2 }); break;
         case 'deployments': url = builder.getDeployments({ limit: 2 }); break;
         case 'procedures': url = builder.getProcedures({ limit: 2 }); break;
-        case 'datastreams': url = builder.getDataStreams({ limit: 2 }); break;
+        case 'datastreams': url = builder.getDatastreams({ limit: 2 }); break;
         case 'observations': url = builder.getObservations({ limit: 2 }); break;
         default: continue;
       }
@@ -647,7 +647,7 @@ async function testCleanup(builder: CSAPIQueryBuilder, ids: { systems: string[],
 
   for (const dsId of ids.datastreams) {
     try {
-      const url = builder.deleteDataStream(dsId);
+      const url = builder.deleteDatastream(dsId);
       const result = await httpRequest('DELETE', url);
       console.log(`   Delete datastream ${dsId}: ${result.status}`);
     } catch (e) {
