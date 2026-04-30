@@ -339,18 +339,21 @@ function disconnect() {
   error.value = ''
 }
 
+// Recognise both the canonical spec form ('connectedsystems', no hyphen, used
+// by spec-compliant servers like csapi-go) and the legacy draft form
+// ('connected-systems', still emitted by some older OSH builds), plus the
+// historical loose substrings ('csapi', 'swecommon', 'sensorml').
+function isCsapiConformanceClass(c: string): boolean {
+  return c.includes('connectedsystems') || c.includes('connected-systems') ||
+    c.includes('csapi') || c.includes('swecommon') || c.includes('sensorml')
+}
+
 function csapiConformance(classes: string[]): string[] {
-  return classes.filter(c =>
-    c.includes('connected-systems') || c.includes('csapi') ||
-    c.includes('swecommon') || c.includes('sensorml')
-  )
+  return classes.filter(isCsapiConformanceClass)
 }
 
 function otherConformance(classes: string[]): string[] {
-  return classes.filter(c =>
-    !c.includes('connected-systems') && !c.includes('csapi') &&
-    !c.includes('swecommon') && !c.includes('sensorml')
-  )
+  return classes.filter(c => !isCsapiConformanceClass(c))
 }
 </script>
 
