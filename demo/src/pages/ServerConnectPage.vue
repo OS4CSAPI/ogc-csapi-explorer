@@ -16,6 +16,7 @@ const presets = [
   { label: 'OSH (OS4CSAPI)', proxyPath: '/api/osh', description: 'Oracle Cloud — HTTPS + basic auth', externalUrl: 'https://129-80-248-53.sslip.io/sensorhub/api', requiresAuth: true },
   { label: 'OSH SensorHub', proxyPath: '/api/osh-do', description: 'DigitalOcean — requires basic auth', externalUrl: 'http://45.55.99.236:8080/sensorhub/api', requiresAuth: true },
   { label: '52North CSA Demo', proxyPath: '/api/52north', description: 'Public demo — no auth required', externalUrl: 'https://csa.demo.52north.org', requiresAuth: false },
+  { label: '52North pygeoapi (Live)', proxyPath: '/api/csapi-pygeoapi', description: '52°North connected-systems-pygeoapi on Oracle Cloud — Phase 9 live deploy, no auth required', externalUrl: 'https://129-80-248-53.sslip.io/csapi-pygeoapi', requiresAuth: false },
   { label: 'Custom URL', proxyPath: '', description: 'Enter a custom server URL', externalUrl: '', requiresAuth: false },
 ]
 

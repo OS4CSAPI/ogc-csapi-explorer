@@ -25,6 +25,14 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => path.replace(/^\/api\/csapi-go/, ''),
       },
+      // 52North connected-systems-pygeoapi on Oracle (Phase 9 live deploy).
+      // No auth required. Documented in docs/research/phase-9 of ogc-client-CSAPI_2.
+      '/api/csapi-pygeoapi': {
+        target: 'https://129-80-248-53.sslip.io/csapi-pygeoapi',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/csapi-pygeoapi/, ''),
+      },
       '/api/52north': {
         target: 'https://csa.demo.52north.org',
         changeOrigin: true,
