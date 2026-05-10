@@ -4601,10 +4601,11 @@ watch(selectedFeature, (feat) => {
             </div>
           </template>
           <!-- BuoyCAM / NIMS image observation popup -->
-          <template v-if="selectedFeature.rawData?.result?.mediaType?.startsWith('image/') && selectedFeature.rawData?.result?.imageUrl">
+          <template v-if="selectedFeature.rawData?.result?.mediaType?.startsWith('image/') && (selectedFeature.rawData?.result?.imageUrl || selectedFeature.rawData?.result?.latestImageUrl)">
             <div class="popup-buoycam-detail">
-              <a :href="selectedFeature.rawData.result.imageUrl" target="_blank" rel="noopener" title="Open full image">
-                <img :src="selectedFeature.rawData.result.thumbUrl || selectedFeature.rawData.result.imageUrl" alt="Camera" class="popup-buoycam-img" loading="lazy" />
+              <!-- Prefer imageUrl when it is an absolute URL; fall back to latestImageUrl (live NDBC feed) when imageUrl is relative/missing -->
+              <a :href="selectedFeature.rawData.result.imageUrl?.startsWith('http') ? selectedFeature.rawData.result.imageUrl : (selectedFeature.rawData.result.latestImageUrl || selectedFeature.rawData.result.imageUrl)" target="_blank" rel="noopener" title="Open full image">
+                <img :src="selectedFeature.rawData.result.thumbUrl || (selectedFeature.rawData.result.imageUrl?.startsWith('http') ? selectedFeature.rawData.result.imageUrl : selectedFeature.rawData.result.latestImageUrl)" alt="Camera" class="popup-buoycam-img" loading="lazy" />
               </a>
               <div class="popup-buoycam-meta">
                 📷 {{ selectedFeature.rawData.result.cameraStatus || selectedFeature.rawData.result.camId || 'ok' }}

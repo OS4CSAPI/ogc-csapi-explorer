@@ -213,6 +213,13 @@ function normalizeLinkHref(href: string, collection?: string): string {
   if (apiIdx !== -1) return href.substring(apiIdx + 4)
   // If path just starts with /api (no trailing slash), treat similarly
   if (href.startsWith('/api')) return href.substring(4)
+  // For servers without "/api/" in the path (e.g. csapi-go-v2 at "/csapi-go-v2/systems/{id}"),
+  // find where the known collection type starts and extract from there.
+  // This strips the server-specific base prefix that would otherwise double-prepend.
+  if (collection) {
+    const collIdx = href.indexOf(`/${collection}/`)
+    if (collIdx !== -1) return href.substring(collIdx)
+  }
   return href
 }
 

@@ -724,8 +724,10 @@ export function useDeployedSystemCard() {
             if (Array.isArray(camItems) && camItems.length > 0) {
               const obs = camItems[0]
               const result = obs.result || {}
-              if (result.imageUrl && typeof result.mediaType === 'string' && result.mediaType.startsWith('image/')) {
-                cameraImageUrl = result.imageUrl
+              if ((result.imageUrl || result.latestImageUrl) && typeof result.mediaType === 'string' && result.mediaType.startsWith('image/')) {
+                // Prefer imageUrl when it is an absolute URL; fall back to latestImageUrl
+                // when imageUrl is a relative path (BUOYCAM_CACHE_BASE_URL not configured).
+                cameraImageUrl = result.imageUrl?.startsWith('http') ? result.imageUrl : (result.latestImageUrl || result.imageUrl || '')
                 cameraTimestamp = obs.phenomenonTime || obs.resultTime || ''
                 // NIMS-specific fields
                 cameraThumbUrl = result.thumbUrl || ''
