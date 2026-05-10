@@ -144,7 +144,8 @@ const SYSTEM_RULES: KeywordRule[] = [
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_MI, echelon: ECHELON_TEAM },
   // Acoustic / microphone sensor (C-UAS specific)
   { keywords: ['acoustic', 'microphone', 'odas', 'mic array', 'sound', 'audio', 'sensor array'],
-    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
+    letterSidc: 'SFGPEWRH-------' },
   // String processor / processing node
   { keywords: ['processor', 'triangulat', 'string proc', 'strproc', 'processing'],
     identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR },
@@ -185,15 +186,18 @@ const SYSTEM_RULES: KeywordRule[] = [
   // NOAA is a national org → Friend (blue), not Neutral (green)
   // Doctrinal SIDC: 10034500001211040000 (METOC SS unsupported by milsymbol)
   { keywords: ['buoy', 'ndbc'],
-    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
+    letterSidc: 'SFGPEWRH-------' },
   // CO-OPS Tide Gauge Station → Friend Sensor Emplaced (same family as NDBC/NWS)
   // NOAA CO-OPS coastal water level stations, fixed pier/platform installations
   { keywords: ['co-ops', 'coops', 'tide', 'water level', 'coastal obs'],
-    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
+    letterSidc: 'SFGPEWRH-------' },
   // USGS Water Monitoring Station → Friend Sensor Emplaced
   // USGS stream gauges measuring discharge / gage height — same sensor family as NDBC/CO-OPS
   { keywords: ['usgs', 'nwis', 'streamflow', 'stream gauge', 'gage height', 'discharge'],
-    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED },
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
+    letterSidc: 'SFGPEWRH-------' },
   // Sea / marine / vessel (generic)
   { keywords: ['marine', 'ocean', 'sea', 'ship', 'vessel', 'boat'],
     identity: SI_NEUTRAL, symbolSet: SS_SEA_SURFACE, entity: ENT_SEA_SURFACE },
