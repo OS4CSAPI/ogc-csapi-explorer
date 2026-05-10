@@ -613,16 +613,19 @@ export function useDeployedSystemCard() {
       const systemDesc = systemProps.description || ''
 
       // Extract SML details
-      const _smlLabel = extractSmlLabel(systemSml) // used for future enrichment
+      // Normalize: Go v2 returns SML as a GeoJSON Feature (type='Feature', fields in .properties)
+      // OSH returns SML with fields at top level (type='PhysicalSystem' etc.)
+      const smlSource = systemSml?.type === 'Feature' ? (systemSml?.properties || {}) : (systemSml || {})
+      const _smlLabel = extractSmlLabel(smlSource) // used for future enrichment
       void _smlLabel
-      const smlDesc = extractSmlDescription(systemSml)
-      const keywords = extractSmlKeywords(systemSml)
-      const identifiers = extractSmlIdentifiers(systemSml)
-      const classifiers = extractSmlClassifiers(systemSml)
-      const capabilities = extractSmlCapabilities(systemSml)
-      const contacts = extractSmlContacts(systemSml)
-      const smlDocs = extractSmlDocuments(systemSml)
-      const smlMedia = extractSmlMedia(systemSml)
+      const smlDesc = extractSmlDescription(smlSource)
+      const keywords = extractSmlKeywords(smlSource)
+      const identifiers = extractSmlIdentifiers(smlSource)
+      const classifiers = extractSmlClassifiers(smlSource)
+      const capabilities = extractSmlCapabilities(smlSource)
+      const contacts = extractSmlContacts(smlSource)
+      const smlDocs = extractSmlDocuments(smlSource)
+      const smlMedia = extractSmlMedia(smlSource)
 
       // ── Resolve datastreams ──────────────────────────────────────
       const datastreams: DatastreamSummary[] = []
