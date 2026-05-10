@@ -138,6 +138,30 @@ const rawResponse = ref<any>(null)
 const clientSideFallbackDetails = ref<string[]>([])
 
 /**
+ * Normalize an absolute or server-relative @link href to an API-relative path
+ * suitable for apiFetch() (which prepends connection.baseUrl).
+ * Mirrors the logic in ResourceDetail.normalizeLinkHref but kept local to avoid
+ * a cross-component import cycle.
+ */
+function normalizeLinkHrefForList(href: string, collection?: string): string {
+  if (!href) return href
+  if (!href.includes('/') && collection) return `/${collection}/${href}`
+  if (href.startsWith('http')) {
+    try { href = new URL(href).pathname } catch { /* keep as-is */ }
+  }
+  const apiIdx = href.indexOf('/api/')
+  if (apiIdx !== -1) return href.substring(apiIdx + 4)
+  if (href.startsWith('/api')) return href.substring(4)
+  // For servers without /api/ in the path (e.g. csapi-go-v2), find the
+  // collection type segment and return from there (/systems/{id}).
+  if (collection) {
+    const collIdx = href.indexOf(`/${collection}/`)
+    if (collIdx !== -1) return href.substring(collIdx)
+  }
+  return href
+}
+
+/**
  * Fetch the total number of matching resources (same filters, no limit/offset).
  * Fires in parallel with the paginated request so it doesn't slow things down.
  * Only used when the server doesn't provide numberMatched in the response.
@@ -218,6 +242,52 @@ async function fetchResources(cursorUrl?: string) {
       headers: { 'Accept': acceptType },
     })
     if (!res.ok) {
+      // --- OGC 23-001 Table 43: deployedSystems is an inline property, not a sub-resource ---
+      // csapi-go-v2 (and many other servers) return 404 for /deployments/{id}/systems.
+      // Fall back to resolving the system via platform@link embedded in the deployment properties.
+      if ((res.status === 404 || res.status === 400) &&
+          props.parentType === 'deployments' &&
+          props.parentRelation === 'systems' &&
+          props.parentId) {
+        const depRes = await apiFetch<any>(`/deployments/${props.parentId}`, {
+          headers: { Accept: 'application/json' },
+        })
+        if (depRes.ok && depRes.data) {
+          const depProps = depRes.data?.properties || depRes.data || {}
+          const resolvedItems: any[] = []
+
+          // 1. deployedSystems@link array (OGC standard location)
+          const dsLinks = depProps['deployedSystems@link']
+          if (Array.isArray(dsLinks)) {
+            for (const l of dsLinks) {
+              if (!l?.href) continue
+              const href = normalizeLinkHrefForList(l.href, 'systems')
+              const sr = await apiFetch(href, { headers: { Accept: acceptType } })
+              if (sr.ok && sr.data) resolvedItems.push(sr.data)
+            }
+          }
+
+          // 2. platform@link (single system — the standard fallback for station deployments)
+          if (resolvedItems.length === 0) {
+            const pl = depProps['platform@link']
+            if (pl?.href) {
+              const href = normalizeLinkHrefForList(pl.href, 'systems')
+              const sr = await apiFetch(href, { headers: { Accept: acceptType } })
+              if (sr.ok && sr.data) resolvedItems.push(sr.data)
+            }
+          }
+
+          if (resolvedItems.length > 0) {
+            items.value = resolvedItems
+            totalCount.value = resolvedItems.length
+            clientSideFallbackDetails.value = [
+              `Server returned ${res.status} for /deployments/${props.parentId}/systems — resolved ${resolvedItems.length} system(s) via inline @link fields in deployment properties.`,
+            ]
+            return
+          }
+        }
+      }
+
       // Provide a friendlier, more informative message for 400 errors on
       // resource types that are typically nested (commands under controlstreams, etc.)
       if (res.status === 400) {
