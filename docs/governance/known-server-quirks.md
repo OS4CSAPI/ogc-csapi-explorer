@@ -333,6 +333,76 @@ Invoke-RestMethod -Uri "https://csa.demo.52north.org/systems" -SkipCertificateCh
 
 ---
 
+---
+
+## Server 3: 52North pygeoapi (Live, Oracle Cloud — Phase 9)
+
+### Connection
+
+| Property                | Value                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Base URL**            | `https://129-80-248-53.sslip.io/csapi-pygeoapi`                                                        |
+| **Auth**                | None                                                                                                   |
+| **SSL**                 | HTTPS via Caddy (sslip.io domain, no auth header)                                                      |
+| **API Title**           | "connected-systems-pygeoapi"                                                                           |
+| **Conformance Classes** | `ogcapi-common-1/1.0/conf/core` only — **no CSAPI classes advertised** in `/conformance`               |
+| **OpenAPI**             | `/openapi` is **incomplete** — declares only ~11 paths; many active endpoints are not in the document  |
+
+This is OS4CSAPI's own self-hosted build of [`52North/connected-systems-pygeoapi`](https://github.com/52North/connected-systems-pygeoapi). It is a separate server from the public `csa.demo.52north.org` instance documented as Server 2 above. Deployment notes, image build patches (uv venv `--python`, shapely pin removal, rasterio clang/lld), the Caddy config patch, and seed-data provenance are documented in `ogc-client-CSAPI_2/docs/research/phase-9/03-52north-pygeoapi-deployment-findings.md`.
+
+---
+
+### Resource Inventory (as of 2026-05-09 seed run, captures under `ogc-client-CSAPI_2/docs/research/phase-9/captures/oracle-pygeoapi/`)
+
+| Endpoint            | GET listing | POST          | Notes                                                                                  |
+| ------------------- | :---------: | :-----------: | -------------------------------------------------------------------------------------- |
+| `/systems`          | OK          | OK (smljson)  | 10 systems after seed; 1 fixture + 9 seeded                                            |
+| `/procedures`       | OK          | OK (smljson)  | 7 procedures; **POST is hard-routed through the SensorML writer** regardless of body   |
+| `/deployments`      | OK          | OK (smljson)  | 4 deployments; `deployedSystems` field causes server-side `KeyError` if included       |
+| `/datastreams`      | OK          | OK            | 16 datastreams; standard CSAPI JSON                                                    |
+| `/observations`     | OK          | OK            | 170+ observations across 5 datastreams                                                 |
+| `/samplingFeatures` | **broken**  | **405**       | Listing returns empty; detail returns 500; POST returns **405 Method Not Allowed**     |
+| `/properties`       | OK          | **read-only** | No nested writer registered                                                            |
+| `/controlstreams`   | absent      | absent        | Not implemented in this build                                                          |
+| `/commands`         | absent      | absent        | Not implemented in this build                                                          |
+| `/systemEvents`     | absent      | absent        | Not implemented in this build                                                          |
+| `/systemHistory`    | absent      | absent        | Not implemented in this build                                                          |
+| `/features`         | absent      | absent        | Not implemented in this build                                                          |
+
+---
+
+### Write Surface — POST Payload Quirks (CRUD Smoke Test failures expected)
+
+**This server diverges from the spec on POST body shape for three Part 1 resources.** It does **not** accept the CSAPI GeoJSON `Feature` envelope (`{ type: "Feature", properties: {...}, geometry: {...} }`) that OSH and CSAPI-Go accept. The current Smoke Test page uses that envelope and fails predictably as follows:
+
+| Resource         | Status                            | Server Message                                              | Cause                                                                                                                                 |
+| ---------------- | --------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| System           | **400 InvalidParameterValue**     | `'AttrDict' object has no attribute 'get'`                  | Internal pygeoapi crash when parsing the `Feature` envelope. Provider expects a stripped JSON body — no `type:"Feature"`, no wrapper. |
+| Procedure        | **400 InvalidParameterValue**     | `smljson: ['definition' / 'id' / 'type' required]`          | `POST /procedures` is hard-routed through the SensorML writer. Body must be SML JSON (`{ "type":"PhysicalSystem", "id":..., ... }`).  |
+| Deployment       | **400 InvalidParameterValue**     | `smljson: ['id' / 'type' required]`                         | Same as Procedure — POST is wired to the smljson writer.                                                                              |
+| Sampling Feature | **405 Method Not Allowed** (HTML) | `The method is not allowed for the requested URL.`          | Read-only on this build. No POST handler registered despite occasional 201s from earlier seed paths.                                  |
+
+These four failures are **expected** when running the CRUD Smoke Test against this server with the current single-shape payload. All other resource types (Subsystem, Subdeployment, Datastream, Control Stream, Observation, Command) skip because their parent CREATE never produced an ID.
+
+---
+
+### Content Negotiation
+
+| Accept Header          | Behavior                                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `application/sml+json` | Returns SensorML JSON envelope `{ items: [...], links: [] }`. Required form for POST to /systems, /procedures, /deployments. |
+| `application/geo+json` | Returns GeoJSON `FeatureCollection`.                                                                                         |
+| `application/json`     | Returns CSAPI JSON envelope; populated for /systems, /datastreams, /observations.                                            |
+| `?f=smljson`           | Equivalent to `Accept: application/sml+json`.                                                                                |
+
+Unlike Server 2 (`csa.demo.52north.org`), `Accept: application/json` returns populated collections here.
+
+---
+
+### Conformance Posture
+
+`/conformance` advertises only `ogcapi-common-1/1.0/conf/core`. None of the CSAPI Part 1 / Part 2 conformance classes are declared, even though many of the endpoints work. **Treat this server as a partial CSAPI implementation for read paths and as a SensorML-only writer for Part 1 POSTs.** Strict-mode CSAPI conformance probing in the Connect screen will surface this as expected.
+
 ## Cross-Server Comparison
 
 | Dimension                       | OSH                                                 | 52N                                            |
@@ -365,3 +435,4 @@ Invoke-RestMethod -Uri "https://csa.demo.52north.org/systems" -SkipCertificateCh
 8. **52N: Part 2 is completely broken.** All Part 2 testing must use OSH.
 9. **OSH: Sub-resource relationship endpoints return 400** (but subsystems/subdeployments work).
 10. **OSH: Use lowercase `/controlstreams`** — camelCase `/controlStreams` returns 400.
+
