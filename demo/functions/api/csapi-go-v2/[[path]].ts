@@ -1,8 +1,10 @@
 /**
- * Cloudflare Pages Function — reverse proxy for Connected Systems Go server.
+ * Cloudflare Pages Function — reverse proxy for Connected Systems Go server (v2).
  *
- * Matches all requests to /api/csapi-go/* and forwards them to
- * https://129-80-248-53.sslip.io/csapi-go/*, passing through headers and bodies.
+ * Matches all requests to /api/csapi-go-v2/* and forwards them to
+ * https://129-80-248-53.sslip.io/csapi-go-v2/*, passing through headers and bodies.
+ *
+ * Backend pinned to SomethingCreativeStudios/connected-systems-go @ d14d16d3.
  */
 
 const CORS_HEADERS: Record<string, string> = {
@@ -25,7 +27,7 @@ export const onRequest: PagesFunction = async (context) => {
     const raw = params.path
     const suffix = Array.isArray(raw) ? raw.join('/') : (raw || '')
     const qs = new URL(request.url).search
-    const target = `https://129-80-248-53.sslip.io/csapi-go/${suffix}${qs}`
+    const target = `https://129-80-248-53.sslip.io/csapi-go-v2/${suffix}${qs}`
 
     // Only forward specific headers
     const fwdHeaders = new Headers()
