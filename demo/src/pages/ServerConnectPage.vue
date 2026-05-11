@@ -12,7 +12,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import ConnectionDiagram from '../components/ConnectionDiagram.vue'
 
 const presets = [
-  { label: 'CSAPI-Go v2', proxyPath: '/api/csapi-go-v2', description: 'Go + PostGIS — pinned to upstream connected-systems-go @ d14d16d3 (no auth)', externalUrl: 'https://129-80-248-53.sslip.io/csapi-go-v2', requiresAuth: false },
+  { label: 'CSAPI-Go v2', proxyPath: '/api/csapi-go-v2', description: 'Go + PostGIS — pinned to upstream connected-systems-go @ d14d16d3 (no auth)', externalUrl: 'https://129-80-248-53.sslip.io/csapi-go-v2/', requiresAuth: false },
   { label: 'OSH (OS4CSAPI)', proxyPath: '/api/osh', description: 'Oracle Cloud — HTTPS, no auth required', externalUrl: 'https://129-80-248-53.sslip.io/sensorhub/api', requiresAuth: false },
   { label: 'OSH SensorHub', proxyPath: '/api/osh-do', description: 'DigitalOcean — requires basic auth', externalUrl: 'http://45.55.99.236:8080/sensorhub/api', requiresAuth: true },
   { label: '52North CSA Demo', proxyPath: '/api/52north', description: 'Public demo — no auth required', externalUrl: 'https://csa.demo.52north.org', requiresAuth: false },
