@@ -1,14 +1,18 @@
-# Known Server Quirks, Bugs, and Limitations — Test Server Reference
+﻿# Known Server Quirks, Bugs, and Limitations — Test Server Reference
 
-**Purpose:** Comprehensive reference of all known behaviors, bugs, limitations, and content-negotiation quirks for the two CSAPI test servers. This document exists so that smoke test prompts can include it by reference, preventing the AI from re-discovering (or worse, forgetting) known issues.
+**Purpose:** Comprehensive reference of all known behaviors, bugs, limitations, and content-negotiation quirks for all CSAPI test servers. This document exists so that smoke test prompts can include it by reference, preventing the AI from re-discovering (or worse, forgetting) known issues.
 
-**Version:** 1.0
-**Date:** 2026-02-18
-**Source:** Smoke Tests #1–#18 (Phase 2.1–3.16), Demo App CRUD Testing (Issues #5–#26), Cross-Server Interoperability Analysis, F57 Content-Negotiation Correction
+**Version:** 2.0
+**Date:** 2026-05-11
+**Source:** Smoke Tests #1–#18 (Phase 2.1–3.16), Demo App CRUD Testing (Issues #5–#26), Cross-Server Interoperability Analysis, F57 Content-Negotiation Correction, Phase 9 NIMS/ISS/CO-OPS Map Integration Debugging (2026-05-10)
+
+> **⚠️ Server migration note:** The original OSH server at `45.55.99.236:8080` has been superseded by the Oracle Cloud VM at `129-80-248-53.sslip.io`. Server 1 below documents the original OSH for historical reference. See Server 4 (OSH production) and Server 5 (Go v2) for current production servers.
 
 ---
 
-## Server 1: OpenSensorHub (OSH)
+## Server 1: OpenSensorHub (OSH) — ORIGINAL / HISTORICAL
+
+> **Status: DECOMMISSIONED.** This server at `45.55.99.236:8080` is the original Phase 2–8 test server. It has been superseded by Server 4 (OSH on Oracle Cloud). Resource IDs, schema data, and quirks below are historical records from Smoke Tests #1–#18. **For current OSH production, see Server 4.**
 
 ### Connection
 
@@ -402,6 +406,101 @@ Unlike Server 2 (`csa.demo.52north.org`), `Accept: application/json` returns pop
 ### Conformance Posture
 
 `/conformance` advertises only `ogcapi-common-1/1.0/conf/core`. None of the CSAPI Part 1 / Part 2 conformance classes are declared, even though many of the endpoints work. **Treat this server as a partial CSAPI implementation for read paths and as a SensorML-only writer for Part 1 POSTs.** Strict-mode CSAPI conformance probing in the Connect screen will surface this as expected.
+---
+
+## Server 4: OpenSensorHub (OSH) — Current Production (Oracle Cloud)
+
+### Connection
+
+| Property                | Value                                                      |
+| ----------------------- | ---------------------------------------------------------- |
+| **Base URL**            | `https://129-80-248-53.sslip.io/sensorhub/api`            |
+| **Auth**                | **None** (public, no auth header required)                 |
+| **SSL**                 | HTTPS via Caddy                                            |
+| **API Title**           | "Connected Systems API Service"                            |
+| **Conformance Classes** | 20+ CSAPI conformance classes advertised                   |
+
+### PowerShell Pattern
+
+```powershell
+$headers = @{ Accept = "application/geo+json" }
+Invoke-RestMethod -Uri "https://129-80-248-53.sslip.io/sensorhub/api/systems" -Headers $headers
+# SML format:
+Invoke-RestMethod -Uri "https://129-80-248-53.sslip.io/sensorhub/api/systems/{id}?f=sml3"
+```
+
+### Key Quirks (current production, verified 2026-05-10)
+
+| Quirk | Description |
+|-------|-------------|
+| SML format param | Use `?f=sml3` (NOT `?f=application/sml%2Bjson`) |
+| SML response format | Fields at **top level** — `{type:"PhysicalSystem", label:..., documentation:...}` |
+| SML key for docs | Uses `documents` (not `documentation`) |
+| `system@link.href` | May contain `?f=json` query suffix — strip when extracting system ID |
+| `outputName` filter | `?outputName=X` on `/datastreams` is **unreliable** — returns wrong results |
+| `resultTime=latest` | Silently ignored |
+| Observation sort | Default **ascending** (oldest first) |
+| Sub-resource relationships | Most return 400; subsystems/subdeployments work |
+| Write Content-Type | Part 1: `application/geo+json`; Part 2: `application/json` |
+
+---
+
+## Server 5: connected-systems-go (Go v2) — Current Production (Oracle Cloud)
+
+### Connection
+
+| Property                | Value                                                        |
+| ----------------------- | ------------------------------------------------------------ |
+| **Base URL**            | `https://129-80-248-53.sslip.io/csapi-go-v2`                |
+| **Auth**                | Basic Auth — `os4csapi:ogc134mm`                             |
+| **SSL**                 | HTTPS via Caddy                                              |
+| **API Title**           | "OGC Connected Systems API"                                  |
+| **Conformance Classes** | CSAPI Part 1 + Part 2 classes advertised                     |
+
+### PowerShell Pattern
+
+```powershell
+$base = "https://129-80-248-53.sslip.io/csapi-go-v2"
+$headers = @{ Authorization = "Basic b3M0Y3NhcGk6b2djMTM0bW0="; Accept = "application/geo+json" }
+Invoke-RestMethod -Uri "$base/systems" -Headers $headers
+# SML format:
+$smlHeaders = @{ Authorization = "Basic b3M0Y3NhcGk6b2djMTM0bW0="; Accept = "application/sml+json" }
+Invoke-RestMethod -Uri "$base/systems/{id}" -Headers $smlHeaders
+```
+
+### Key Quirks (verified 2026-04 → 2026-05-10)
+
+| Quirk | Severity | Description |
+|-------|----------|-------------|
+| **SML response wrapped as GeoJSON Feature** | P2 | `GET /systems/{id}?f=application/sml+json` returns `{type:"Feature", geometry:{...}, properties:{uid, name, documentation,...}}` — SML fields are in `.properties`, NOT at top level. OSH returns raw SML at top level. **Client must detect `type === 'Feature'` and unwrap `.properties`.** |
+| **SML key for docs** | — | Uses `documentation` (not `documents`) |
+| **SML format param** | — | Use `?f=application/sml%2Bjson` (NOT `?f=sml3`) |
+| **POST `/deployments/{id}/subdeployments` → 400** | P2 | Full deployment body returns HTTP 400. Retry with minimal stub `{uid, name}` only. |
+| **`resultTime=latest` silently ignored** | P2 | Filter accepted but has no effect. Root cause: upstream issue #5 (`ToTimeRange` year-0001 bug). |
+| **Observations sorted descending** | P2 | Default is newest-first (opposite of OSH). Use `items[0]` to get the latest observation. |
+| **`GET /deployments/{id}/systems` → 404** | P2 | Sub-resource relationship endpoint not implemented. Use `platform@link` on deployment resources instead. |
+| **POST 201 with empty body** | P3 | Creates resource but returns no body — parse `Location` header for new resource ID. |
+| **`outputName` filter works** | — | Unlike OSH, `?outputName=X` on `/datastreams` works correctly. |
+| **`GET /api` returns 88-byte stub** | P2 | OpenAPI spec is a TODO stub, missing required `paths` field. |
+
+### SML Field Differences vs OSH
+
+| Field | OSH Server 4 (top-level) | Go v2 Server 5 (in `.properties`) |
+|-------|-------------------------|----------------------------------|
+| Response root | `{type:"PhysicalSystem", ...}` | `{type:"Feature", properties:{...}, geometry:{...}}` |
+| Documentation | `documents` key | `documentation` key |
+| Label | `label` | `name` |
+
+### Upstream Issues at SomethingCreativeStudios/connected-systems-go
+
+| Issue | Status | Summary |
+|-------|--------|---------|
+| [#1](https://github.com/SomethingCreativeStudios/connected-systems-go/issues/1) | Open | `GET /api` stub missing `paths` |
+| [#5](https://github.com/SomethingCreativeStudios/connected-systems-go/issues/5) | Open | `ToTimeRange` discards parse errors → year-0001 (explains silent filter failures) |
+| [#7](https://github.com/SomethingCreativeStudios/connected-systems-go/issues/7) | Open | `resultTime`/`phenomenonTime` empty string conflation |
+| [#10](https://github.com/SomethingCreativeStudios/connected-systems-go/issues/10) | Closed (PR #15) | `@link.href` absolutization fixed |
+| [#11](https://github.com/SomethingCreativeStudios/connected-systems-go/issues/11) | Open | Inline `@link` missing enrichment |
+
 
 ## Cross-Server Comparison
 
@@ -427,12 +526,16 @@ Unlike Server 2 (`csa.demo.52north.org`), `Accept: application/json` returns pop
 
 1. **Always document which `Accept` header you used** for every request. If you change it between smoke tests, note why.
 2. **Never conclude "data is gone"** without testing all three Accept variants: none, `application/json`, `application/geo+json`, `application/sml+json`.
-3. **OSH: Use `?f=` for content negotiation.** Accept headers are ignored.
-4. **52N: Never use `Accept: application/json`.** It returns empty collections.
+3. **OSH (Servers 1 & 4): Use `?f=` for content negotiation.** Accept headers are ignored.
+4. **52N (Servers 2 & 3): Never use `Accept: application/json`.** It returns empty collections.
 5. **POST to OSH: Do not include `Accept: application/geo+json`.** It causes network-level failures.
 6. **POST to OSH: Include `uid` in PUT payloads.** The library's type interfaces already require it.
 7. **POST nested resources to OSH:** Use `POST /systems/{id}/datastreams`, not `POST /datastreams`.
-8. **52N: Part 2 is completely broken.** All Part 2 testing must use OSH.
+8. **52N: Part 2 is completely broken.** All Part 2 testing must use OSH or Go v2.
 9. **OSH: Sub-resource relationship endpoints return 400** (but subsystems/subdeployments work).
 10. **OSH: Use lowercase `/controlstreams`** — camelCase `/controlStreams` returns 400.
-
+11. **Go v2: SML response wraps in GeoJSON Feature.** When you `GET /systems/{id}?f=application/sml%2Bjson`, the SML fields are in `.properties` not at top level. Check for `type === 'Feature'` and unwrap.
+12. **Go v2: Observations are sorted newest-first.** Use `items[0]` to get the latest, not `items[-1]`.
+13. **Go v2: `resultTime=latest` is silently ignored.** Do not rely on it for fetching latest observations.
+14. **Go v2: POST `/deployments/{id}/subdeployments` with full body → 400.** Retry with minimal stub `{uid, name}` only.
+15. **Go v2 auth:** `Basic b3M0Y3NhcGk6b2djMTM0bW0=` (os4csapi:ogc134mm).
