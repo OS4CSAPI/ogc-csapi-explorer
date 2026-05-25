@@ -1308,6 +1308,9 @@ function isLocationRelatedDatastream(ds: any): boolean {
   const name = (ds.name || ds.outputName || '').toLowerCase()
   // Classic GPS/location keywords
   if (name.includes('gps_data') || name.includes('location') || name.includes('position')) return true
+  // SGP4/orbital publishers (ISS position + predicted ground track)
+  if (name.includes('sgp4') || name.includes('orbit') || name.includes('orbital')
+    || name.includes('satellite') || name.includes('iss')) return true
   // Bearing / detection datastreams (LOB, SST, SSL, Track Updates, Scene Summary, Classification)
   if (name.includes('lob') || name.includes('track') || name.includes('ssl')
     || name.includes('sst') || name.includes('scene') || name.includes('classification')
@@ -1470,6 +1473,31 @@ async function buildSystemLocationCache(): Promise<void> {
       allDs = dsRes.data.items || dsRes.data.features || dsRes.data || []
     }
 
+    // Some OSH deployments expose datastreams only under /systems/{id}/datastreams
+    // while the global /datastreams collection returns an empty list. When that
+    // happens, scan all top-level systems once so geometry-less publishers such
+    // as ISS still contribute their observation layers.
+    if (allDs.length === 0) {
+      const sysRes = await apiFetch('/systems?limit=200', {
+        headers: { 'Accept': 'application/geo+json' },
+      })
+      const systems = sysRes.ok && sysRes.data
+        ? (sysRes.data.features || sysRes.data.items || [])
+        : []
+      const systemDsResults = await Promise.all(
+        systems.map(async (sys: any) => {
+          const sysId = extractId(sys)
+          if (!sysId) return [] as any[]
+          try {
+            const res = await apiFetch(`/systems/${sysId}/datastreams?limit=100`)
+            if (!res.ok || !res.data) return [] as any[]
+            return (res.data.items || res.data.features || []) as any[]
+          } catch { return [] as any[] }
+        })
+      )
+      allDs = systemDsResults.flat()
+    }
+
     // Also fetch datastreams for each PRIMARY system in the location cache
     // (skip subsystems — the global fetch + primary fetches cover them,
     // avoiding O(N) API calls for every subsystem which causes lag)
@@ -1518,6 +1546,8 @@ async function buildSystemLocationCache(): Promise<void> {
         const nm = (ds.name || ds.outputName || '').toLowerCase()
         const pass = nm.includes('lob') || nm.includes('bearing')
           || nm.includes('position') || nm.includes('location')
+          || nm.includes('sgp4') || nm.includes('orbit') || nm.includes('orbital')
+          || nm.includes('satellite') || nm.includes('iss')
           || nm.includes('surface') || nm.includes('weather')
           || nm.includes('metar') || nm.includes('nws') || nm.includes('awx')
           || nm.includes('aircraft') || nm.includes('adsb') || nm.includes('ads-b')
@@ -1652,6 +1682,8 @@ async function enrichResourcesWithLocations(): Promise<void> {
         const nm = (ds.name || ds.outputName || '').toLowerCase()
         if (nm.includes('lob') || nm.includes('bearing')
           || nm.includes('position') || nm.includes('location')
+          || nm.includes('sgp4') || nm.includes('orbit') || nm.includes('orbital')
+          || nm.includes('satellite') || nm.includes('iss')
           || nm.includes('aircraft') || nm.includes('adsb') || nm.includes('ads-b')
           || nm.includes('state vector') || nm.includes('flight')
           || nm.includes('earthquake') || nm.includes('seismic') || nm.includes('quake')
@@ -3048,6 +3080,8 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // Position/track datastreams need many observations to draw a meaningful
       // ground track; LOB/bearing datastreams only need the most recent few.
       const dsNameLower = dsInfo.name.toLowerCase()
+      const isOrbitTrackDs = (dsNameLower.includes('orbit') || dsNameLower.includes('orbital'))
+        && dsNameLower.includes('track')
       const isPositionDs = dsNameLower.includes('position') || dsNameLower.includes('location')
         || dsNameLower.includes('gps')
       const isLobDs = dsNameLower.includes('lob') || dsNameLower.includes('bearing')
@@ -3074,7 +3108,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // Aircraft DS: fetch up to 200 to capture the full batch (~140 aircraft).
       // Earthquake DS: fetch up to 300 to cover 24h of global events.
       // Other DS: use caller's obsLimit.
-      const effectiveLimit = (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : isAircraftDs ? 200 : isEarthquakeDs ? 300 : obsLimit
+      const effectiveLimit = isOrbitTrackDs ? 1 : (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : isAircraftDs ? 200 : isEarthquakeDs ? 300 : obsLimit
 
       // OSH returns observations oldest-first and ignores sort params, so a
       // bare limit=N always returns the N OLDEST observations.  For position/
@@ -3091,7 +3125,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // non-LOB observations.  Fetch a larger batch so genuine LOBs survive
       // after filtering, then keep only the most recent ones so bearings
       // converge on the current target position.
-      const useTimeWindow = isLive || isPositionDs || isWeatherDs || isAircraftDs || isEarthquakeDs
+      const useTimeWindow = isLive || isPositionDs || isOrbitTrackDs || isWeatherDs || isAircraftDs || isEarthquakeDs
       if (useTimeWindow) {
         const latestUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
           resultTime: 'latest',
@@ -3115,10 +3149,12 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
 
         // Position datastreams: 4-hour window to capture multiple full orbits
         // (~92 min each → 4h ≈ 2.6 orbits).
+        // Orbit-track datastreams: latest product is enough because it embeds
+        // the full predicted ground track as a JSON array.
         // LOB datastreams: 5-minute window for tight real-time view.
         // Weather datastreams: 2-hour window (obs ~hourly) to ensure latest.
         // Earthquake datastreams: 24-hour window to show all recent events.
-        const windowMinutes = isPositionDs ? 240 : isWeatherDs ? 120 : isAircraftDs ? 10 : isEarthquakeDs ? 1440 : 5
+        const windowMinutes = isPositionDs ? 240 : isOrbitTrackDs ? 10 : isWeatherDs ? 120 : isAircraftDs ? 10 : isEarthquakeDs ? 1440 : 5
         const latestMs = new Date(latestTime).getTime()
         // Fetch limit: position DS gets 2× effective to allow burst dedup
         // headroom, LOB DS needs extra to overcome OSH scope-leak contamination,
@@ -3198,7 +3234,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       const trackCoords: [number, number][] = []
 
       // Detect satellite/orbit datastreams for distinct styling
-      const isSatDs = dsNameLower.includes('position') && (
+      const isSatDs = (dsNameLower.includes('position') || isOrbitTrackDs) && (
         dsNameLower.includes('sgp4') || dsNameLower.includes('satellite')
         || dsNameLower.includes('iss') || dsNameLower.includes('orbital')
         || dsNameLower.includes('tracker')
@@ -3206,6 +3242,24 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
 
       for (let obsIdx = 0; obsIdx < items.length; obsIdx++) {
         const obs = items[obsIdx]
+        if (isOrbitTrackDs) {
+          const payload = obs.result?.trackPointsJson ?? obs.result?.trackPoints
+          let points: any[] = []
+          if (typeof payload === 'string') {
+            try { points = JSON.parse(payload) } catch { points = [] }
+          } else if (Array.isArray(payload)) {
+            points = payload
+          }
+          for (const p of points) {
+            if (typeof p?.lat_deg === 'number' && typeof p?.lon_deg === 'number') {
+              trackCoords.push([p.lon_deg, p.lat_deg])
+            } else if (typeof p?.lat === 'number' && typeof p?.lon === 'number') {
+              trackCoords.push([p.lon, p.lat])
+            }
+          }
+          continue
+        }
+
         // --- Observation points: results with lat/lon coordinates ---
         const loc = extractLatLonFromResult(obs.result)
         if (loc) {
