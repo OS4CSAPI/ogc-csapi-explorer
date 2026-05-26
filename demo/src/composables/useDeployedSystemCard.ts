@@ -486,6 +486,35 @@ const VALUE_PRIORITY_KEYS = [
   'conductivity_us_cm', 'conductivity_uS_cm',
 ]
 
+const SOURCE_VALUE_PRIORITY_KEYS: Array<{ pattern: RegExp; keys: string[] }> = [
+  {
+    pattern: /ndbc|buoy/i,
+    keys: [
+      'wind_speed_ms', 'wind_gust_ms', 'pressure_hpa',
+      'air_temp_c', 'air_temperature_c', 'water_temp_c', 'water_temperature_c', 'wave_height_m',
+    ],
+  },
+  {
+    pattern: /met office|weather datahub|land observations/i,
+    keys: [
+      'air_temperature_c', 'mean_sea_level_pressure_hpa', 'wind_speed_ms',
+      'wind_gust_ms', 'relative_humidity_pct', 'pressure_tendency_code', 'visibility_m',
+    ],
+  },
+  {
+    pattern: /environment agency|ea hydrology|river|rainfall|groundwater/i,
+    keys: ['value', 'river_level_m', 'river_flow_m3s', 'flow_m3s', 'rainfall_mm', 'groundwater_level_m'],
+  },
+  {
+    pattern: /uk-air|uk air|air quality|nitrogen dioxide|ozone|particulate/i,
+    keys: ['value', 'no2_ugm3', 'no2_ug_m3', 'o3_ugm3', 'o3_ug_m3', 'pm10_ugm3', 'pm10_ug_m3', 'pm25_ugm3', 'pm25_ug_m3'],
+  },
+  {
+    pattern: /bgs|sensorthings|ukgeos|hydro logger|conductivity|water level maod/i,
+    keys: ['water_level_maod_m', 'water_level_m', 'water_temperature_c', 'water_temp_c', 'conductivity_us_cm', 'conductivity_uS_cm'],
+  },
+]
+
 function formatObservationValue(value: unknown, unit: string): string {
   if (typeof value === 'number') {
     if (value === 0 && /mm/i.test(unit)) return '0.0'
@@ -521,8 +550,40 @@ function labelForReading(ds: DatastreamSummary, result: any, valueKey: string): 
   return ds.productLabel || ds.name || valueKey.replace(/_/g, ' ')
 }
 
-function chooseValueEntry(entries: Array<[string, unknown]>): [string, unknown] | undefined {
-  for (const key of VALUE_PRIORITY_KEYS) {
+function unitForValueKey(valueKey: string, result: any): string {
+  if (result?.unit) return result.unit
+  if (/_pct$/.test(valueKey)) return '%'
+  if (/_hpa$/.test(valueKey)) return 'hPa'
+  if (/_c$/.test(valueKey)) return 'C'
+  if (/_ms$/.test(valueKey)) return 'm/s'
+  if (/_m3s$/.test(valueKey)) return 'm3/s'
+  if (/_mm$/.test(valueKey)) return 'mm'
+  if (/_m$/.test(valueKey)) return 'm'
+  if (/_nmi$/.test(valueKey)) return 'nmi'
+  if (/_deg$/.test(valueKey)) return 'deg'
+  if (/_ugm3$/.test(valueKey) || /_ug_m3$/.test(valueKey)) return 'ug/m3'
+  if (/conductivity/i.test(valueKey)) return 'uS/cm'
+  return ''
+}
+
+function valuePriorityKeysFor(ds: DatastreamSummary, result: any): string[] {
+  const text = [
+    ds.name,
+    ds.productLabel,
+    ...ds.observedProperties,
+    result?.parameter,
+    result?.observedProperty,
+  ].filter(Boolean).join(' ')
+  const sourceSpecific = SOURCE_VALUE_PRIORITY_KEYS.find(priority => priority.pattern.test(text))?.keys || []
+  return [...sourceSpecific, ...VALUE_PRIORITY_KEYS]
+}
+
+function chooseValueEntry(
+  entries: Array<[string, unknown]>,
+  ds: DatastreamSummary,
+  result: any,
+): [string, unknown] | undefined {
+  for (const key of valuePriorityKeysFor(ds, result)) {
     const found = entries.find(([entryKey]) => entryKey === key)
     if (found) return found
   }
@@ -543,10 +604,10 @@ function extractNumericObservationValue(ds: DatastreamSummary, obs: any): {
     && typeof value === 'number'
     && Number.isFinite(value)
   )
-  const valueEntry = chooseValueEntry(entries)
+  const valueEntry = chooseValueEntry(entries, ds, result)
   if (!valueEntry) return null
   const [valueKey, value] = valueEntry
-  const unit = result.unit || ''
+  const unit = unitForValueKey(valueKey, result)
   const time = obs.phenomenonTime || obs.resultTime || ''
   if (!time) return null
   return {
@@ -566,13 +627,13 @@ function summarizeLatestReading(ds: DatastreamSummary, obs: any): LatestReadingS
     !RESULT_METADATA_KEYS.has(key)
     && value !== null
     && value !== undefined
-    && (typeof value === 'number' || typeof value === 'string')
+    && (typeof value === 'number' || (typeof value === 'string' && value.trim() && value.trim().toLowerCase() !== 'nan'))
   )
-  const valueEntry = chooseValueEntry(entries)
+  const valueEntry = chooseValueEntry(entries, ds, result)
   if (!valueEntry) return null
 
   const [valueKey, value] = valueEntry
-  const unit = result.unit || ''
+  const unit = unitForValueKey(valueKey, result)
   const phenomenonTime = obs.phenomenonTime || obs.resultTime || ''
   const resultTime = obs.resultTime || ''
 
