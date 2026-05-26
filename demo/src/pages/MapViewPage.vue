@@ -222,9 +222,6 @@ const bboxLayer = new VectorLayer({
 const vectorSources: Record<string, VectorSource> = {}
 const vectorLayers: Record<string, VectorLayer> = {}
 const STACKABLE_POINT_LAYER_KEYS = [
-  'systems',
-  'deployments',
-  'samplingFeatures',
   'observationPoints',
   'locationEstimates',
   'senrepMarkers',
@@ -1097,8 +1094,7 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
         stroke: new Stroke({ color, width: 2 }),
         fill: new Fill({ color: color + '33' }),
       })
-      const nameStyle = makeNameLabel(name, sym.size.height - sym.anchor.y + 14)
-      return nameStyle ? [iconStyle, nameStyle] : iconStyle
+      return iconStyle
     }
   }
 
@@ -1120,8 +1116,7 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
           stroke: new Stroke({ color, width: 2 }),
           fill: new Fill({ color: color + '33' }),
         })
-        const nameStyle = makeNameLabel(name, sym.size.height - sym.anchor.y + 14)
-        return nameStyle ? [iconStyle, nameStyle] : iconStyle
+        return iconStyle
       }
     }
   }
