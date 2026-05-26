@@ -11,6 +11,7 @@ import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 import ConnectionDiagram from '../components/ConnectionDiagram.vue'
 
+// Keep OSH first so the production demo opens against the live OS4CSAPI SensorHub by default.
 const presets = [
   { label: 'OSH (OS4CSAPI)', proxyPath: '/api/osh', description: 'Oracle Cloud — HTTPS, no auth required', externalUrl: 'https://129-80-248-53.sslip.io/sensorhub/api', requiresAuth: false },
   { label: 'CSAPI-Go v2', proxyPath: '/api/csapi-go-v2', description: 'Go + PostGIS — pinned to upstream connected-systems-go @ d14d16d3 (no auth)', externalUrl: 'https://129-80-248-53.sslip.io/csapi-go-v2/', requiresAuth: false },
