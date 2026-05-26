@@ -140,6 +140,11 @@ const SYSTEM_RULES: KeywordRule[] = [
   { keywords: ['environment agency', 'ea hydrology', 'hydrology', 'river level', 'river flow', 'rainfall', 'groundwater'],
     identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
     letterSidc: 'SFGPEWRH-------' },
+  // UK-AIR air-quality monitoring stations → Friend Sensor Emplaced
+  // Fixed public-health/environmental monitoring sites are closest to the established station sensor family.
+  { keywords: ['uk-air', 'uk air', 'air quality', 'air pollution', 'pollutant', 'no2', 'pm10', 'pm2.5', 'ozone'],
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
+    letterSidc: 'SFGPEWRH-------' },
   // Monitoring site / intel collector → MI + Sensor (letter SIDC for correct icon rendering)
   { keywords: ['monitoring site', 'mon-site', 'observation post', 'monitoring node', 'monitoring station'],
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_MI,

@@ -354,6 +354,7 @@ function representativeThumbnailForCard(
 // ─── Role/kind/status vocabulary normalization ─────────────────────────────
 
 const ROLE_LABELS: Record<string, string> = {
+  'air-quality-site': 'Air Quality Site',
   'sensor-node': 'Sensor Node',
   'acoustic-sensor-node': 'Acoustic Sensor Node',
   'localizer': 'Localizer',
@@ -570,6 +571,10 @@ function inferRoleFromContext(
 
   // Try keywords
   const kwStr = systemKeywords.join(' ').toLowerCase()
+  const contextText = `${kwStr} ${deploymentProps?.name || ''} ${deploymentProps?.description || ''}`.toLowerCase()
+  if (/uk[- ]air|air quality|air pollution|pollutant|\bno2\b|\bpm10\b|pm2\.5|ozone/.test(contextText)) {
+    return 'Air Quality Site'
+  }
   if (kwStr.includes('acoustic') && kwStr.includes('sensor')) return 'Acoustic Sensor Node'
   if (kwStr.includes('localizer') || kwStr.includes('fusion')) return 'Software Fusion Agent'
   if (kwStr.includes('relay') || kwStr.includes('communications')) return 'Communications Relay'
@@ -579,6 +584,9 @@ function inferRoleFromContext(
 
   // Try description
   const desc = (extractSmlDescription(systemSml) || deploymentProps?.description || '').toLowerCase()
+  if (/uk[- ]air|air quality|air pollution|pollutant|\bno2\b|\bpm10\b|pm2\.5|ozone/.test(desc)) {
+    return 'Air Quality Site'
+  }
   if (desc.includes('acoustic') || desc.includes('microphone')) return 'Sensor Node'
   if (desc.includes('localiz') || desc.includes('triangulat') || desc.includes('fusion')) return 'Fusion Agent'
   if (desc.includes('relay') || desc.includes('repeater')) return 'Communications Relay'

@@ -216,7 +216,7 @@ const trustLine = computed(() => {
           <div class="dsc-reading-main">
             <span class="dsc-reading-label">{{ reading.label }}</span>
             <span class="dsc-reading-value">
-              {{ reading.value }}<span v-if="reading.unit"> {{ reading.unit }}</span>
+              {{ reading.value }}{{ reading.unit ? ' ' + reading.unit : '' }}
             </span>
           </div>
           <div class="dsc-reading-meta">
