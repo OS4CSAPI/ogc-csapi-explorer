@@ -743,7 +743,7 @@ const ODAS_UIDS = [
 ]
 
 // Enable/disable milsymbol rendering (toggle for A/B comparison)
-const useMilSymbols = ref(true)
+const useMilSymbols = ref(false)
 
 // ── Pre-built style caches for high-volume feature types ──
 const obsPointStyle = new Style({
@@ -1146,8 +1146,7 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
     fill: new Fill({ color: color + '33' }),
   })
 
-  const nameStyle = isPart2 ? null : makeNameLabel(name, radius + 14)
-  return nameStyle ? [circleStyle, nameStyle] : circleStyle
+  return circleStyle
 }
 
 function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] {
