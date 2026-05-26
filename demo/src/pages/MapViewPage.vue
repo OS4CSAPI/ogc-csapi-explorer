@@ -3247,6 +3247,11 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         || dsNameLower.includes('co-ops') || dsNameLower.includes('coops') || dsNameLower.includes('tide') || dsNameLower.includes('coastal')
         || dsNameLower.includes('discharge') || dsNameLower.includes('gage') || dsNameLower.includes('streamflow')
         || dsNameLower.includes('nims') || dsNameLower.includes('station image')
+        || dsNameLower.includes('river level') || dsNameLower.includes('river flow') || dsNameLower.includes('rainfall')
+        || dsNameLower.includes('air quality') || dsNameLower.includes('nitrogen dioxide') || dsNameLower.includes('particulate matter') || dsNameLower.includes('ozone')
+        || dsNameLower.includes('water level maod') || dsNameLower.includes('conductivity') || dsNameLower.includes('water temperature')
+        || dsNameLower.includes('air temperature') || dsNameLower.includes('wind speed') || dsNameLower.includes('wind gust')
+        || dsNameLower.includes('mean sea level pressure') || dsNameLower.includes('pressure tendency') || dsNameLower.includes('relative humidity')
       // Detect aircraft / ADS-B surveillance datastreams
       const isAircraftDs = dsNameLower.includes('aircraft') || dsNameLower.includes('adsb')
         || dsNameLower.includes('ads-b') || dsNameLower.includes('state vector')
@@ -3417,6 +3422,13 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
 
         // --- Observation points: results with lat/lon coordinates ---
         const loc = extractLatLonFromResult(obs.result)
+          || (isWeatherDs && systemLocationCache[dsInfo.systemId]
+            ? {
+                lat: systemLocationCache[dsInfo.systemId]!.lat,
+                lon: systemLocationCache[dsInfo.systemId]!.lon,
+                alt: systemLocationCache[dsInfo.systemId]!.alt,
+              }
+            : null)
         if (loc) {
           const { lat, lon, alt } = loc
           let inBbox = true
