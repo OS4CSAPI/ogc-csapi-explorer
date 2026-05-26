@@ -225,8 +225,6 @@ const STACKABLE_POINT_LAYER_KEYS = [
   'systems',
   'deployments',
   'samplingFeatures',
-  'datastreams',
-  'controlStreams',
   'observationPoints',
   'locationEstimates',
   'senrepMarkers',
@@ -1153,7 +1151,7 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
     fill: new Fill({ color: color + '33' }),
   })
 
-  const nameStyle = makeNameLabel(name, radius + 14)
+  const nameStyle = isPart2 ? null : makeNameLabel(name, radius + 14)
   return nameStyle ? [circleStyle, nameStyle] : circleStyle
 }
 
