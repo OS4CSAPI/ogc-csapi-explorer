@@ -128,6 +128,8 @@ export interface MediaLink {
   type: string
 }
 
+const EA_HYDROLOGY_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Environment_Agency_Morton_River_Gauge_Station_-_geograph.org.uk_-_283345.jpg'
+
 // ─── SML field extractors ──────────────────────────────────────────────────
 
 function extractSmlLabel(sml: any): string {
@@ -323,6 +325,30 @@ function extractSmlMedia(sml: any): MediaLink[] {
     }
   }
   return media
+}
+
+function representativeThumbnailForCard(
+  rawData: any,
+  deploymentName: string,
+  systemName: string,
+  keywords: string[],
+): string {
+  const props = rawData?.properties || rawData || {}
+  const text = [
+    deploymentName,
+    props.name,
+    props.description,
+    props.uid,
+    props['platform@link']?.title,
+    props['platform@link']?.uid,
+    systemName,
+    ...keywords,
+  ].filter(Boolean).join(' ').toLowerCase()
+
+  if (text.includes('environment agency') && text.includes('hydrology')) {
+    return EA_HYDROLOGY_REPRESENTATIVE_IMAGE
+  }
+  return ''
 }
 
 // ─── Role/kind/status vocabulary normalization ─────────────────────────────
@@ -917,6 +943,7 @@ export function useDeployedSystemCard() {
       // ── STANAG symbol ──────────────────────────────────────────────
       const stanagResult = getSymbolForResource('deployments', rawData, 'normal')
       const stanagSvg = stanagResult?.svgDataUrl || ''
+      const representativeThumbnail = representativeThumbnailForCard(rawData, deploymentName, systemName, keywords)
 
       // ── Capabilities chips ───────────────────────────────────────
       const capChips: string[] = []
@@ -934,7 +961,7 @@ export function useDeployedSystemCard() {
         roleBadge: normalizeLabel(inferredRole, ROLE_LABELS) || 'Deployed System',
         statusBadge: normalizeLabel(status, {}) || 'Unknown Status',
         kindBadge: normalizeLabel(inferredKind, KIND_LABELS) || '',
-        thumbnail: smlMedia.length > 0 ? smlMedia[0]!.href : '',
+        thumbnail: smlMedia.length > 0 ? smlMedia[0]!.href : representativeThumbnail,
         stanagSvg,
 
         // Summary
