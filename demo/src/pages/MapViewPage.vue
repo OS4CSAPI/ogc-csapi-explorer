@@ -3023,7 +3023,7 @@ async function loadControlStreams(): Promise<void> {
     const sysResults = await Promise.all(
       Array.from(primarySystemIds).map(async (sysId) => {
         try {
-          const r = await apiFetch(`/systems/${sysId}/controlStreams?limit=100`)
+          const r = await apiFetch(`/systems/${sysId}/controlstreams?limit=100`)
           return (r.ok && r.data) ? (r.data.items || r.data.features || []) as any[] : [] as any[]
         } catch { return [] as any[] }
       })
