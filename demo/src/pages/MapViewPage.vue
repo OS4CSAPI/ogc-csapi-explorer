@@ -131,6 +131,10 @@ const OBS_SOURCE_DEFS: Array<{ key: string; label: string; color: string; icon: 
   { key: 'src-water',      label: 'USGS Water',       color: '#22d3ee', icon: '💧' },
   { key: 'src-nims',       label: 'USGS NIMS',        color: '#a78bfa', icon: '📷' },
   { key: 'src-earthquake', label: 'Earthquakes',      color: '#ef4444', icon: '🌋' },
+  { key: 'src-ea-hydrology', label: 'EA Hydrology',   color: '#0ea5e9', icon: '💧' },
+  { key: 'src-uk-air',     label: 'UK-AIR',           color: '#22c55e', icon: '🌿' },
+  { key: 'src-bgs',        label: 'BGS / UKGEOS',     color: '#a16207', icon: '⛏️' },
+  { key: 'src-met-office', label: 'Met Office',       color: '#38bdf8', icon: '🌤️' },
 ]
 const OBS_SOURCE_MAP = Object.fromEntries(OBS_SOURCE_DEFS.map(d => [d.key, d]))
 
@@ -149,6 +153,10 @@ function classifyObsSource(dsName: string): string {
   if (n.includes('discharge') || n.includes('gage height')
     || n.includes('streamflow') || (n.includes('usgs') && n.includes('water'))) return 'src-water'
   if (n.includes('nims') || n.includes('station image')) return 'src-nims'
+  if (n.includes('environment agency') || n.includes('ea hydrology')) return 'src-ea-hydrology'
+  if (n.includes('uk-air') || n.includes('uk air') || n.includes('air quality')) return 'src-uk-air'
+  if (n.includes('bgs') || n.includes('sensorthings') || n.includes('ukgeos') || n.includes('hydro logger')) return 'src-bgs'
+  if (n.includes('met office') || n.includes('weather datahub') || n.includes('land observations')) return 'src-met-office'
   // Generic position/location fallback — still ISS-like
   if (n.includes('position') || n.includes('location') || n.includes('gps')) return 'src-iss'
   return 'src-other'

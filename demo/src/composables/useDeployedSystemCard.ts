@@ -132,6 +132,7 @@ const EA_HYDROLOGY_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedi
 const UK_AIR_ROADSIDE_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Air_Quality_Monitoring_Station_-_geograph.org.uk_-_2573031.jpg'
 const UK_AIR_BACKGROUND_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/7/75/Air-quality_monitoring_station%2C_Dundonald_-_geograph.org.uk_-_3201697.jpg'
 const BGS_SENSORTHINGS_REPRESENTATIVE_IMAGE = 'https://www.ukgeos.ac.uk/assets/img/svgs/illustrations/borehole_dimmensions.svg'
+const MET_OFFICE_LAND_OBS_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Charterhall_Met_Office_Weather_Station_-_Image_%5E1_-_geograph.org.uk_-_2754908.jpg/960px-Charterhall_Met_Office_Weather_Station_-_Image_%5E1_-_geograph.org.uk_-_2754908.jpg'
 
 // ─── SML field extractors ──────────────────────────────────────────────────
 
@@ -360,6 +361,9 @@ function representativeThumbnailForCard(
     }
     return UK_AIR_BACKGROUND_REPRESENTATIVE_IMAGE
   }
+  if (text.includes('met office') || text.includes('weather datahub') || text.includes('land observations')) {
+    return MET_OFFICE_LAND_OBS_REPRESENTATIVE_IMAGE
+  }
   return ''
 }
 
@@ -368,6 +372,7 @@ function representativeThumbnailForCard(
 const ROLE_LABELS: Record<string, string> = {
   'air-quality-site': 'Air Quality Site',
   'groundwater-telemetry-site': 'Groundwater Telemetry Site',
+  'weather-observation-site': 'Weather Observation Site',
   'sensor-node': 'Sensor Node',
   'acoustic-sensor-node': 'Acoustic Sensor Node',
   'localizer': 'Localizer',
@@ -444,6 +449,7 @@ function readingFreshnessState(isoString: string): LatestReadingSummary['freshne
 const RESULT_METADATA_KEYS = new Set([
   'stationId', 'stationName', 'measureId', 'parameter', 'unit', 'valueType',
   'quality', 'completeness', 'sourceUrl', 'lat', 'lon', 'alt', 'latitude', 'longitude',
+  'locationId', 'geohash',
   'imageUrl', 'latestImageUrl', 'thumbUrl', 'mediaType', 'contentLength', 'camId',
   'thingId', 'sourceThingId', 'sourceDatastreamId', 'observedProperty', 'sourceObservationId', 'publishFlag',
 ])
@@ -469,6 +475,15 @@ function labelForReading(ds: DatastreamSummary, result: any, valueKey: string): 
   if (parameter === 'flow' || valueKey.toLowerCase().includes('flow')) return 'River flow'
   if (parameter === 'level' && unit === 'maod') return 'Groundwater level'
   if (parameter === 'level' || valueKey.toLowerCase().includes('level')) return 'River level'
+  if (valueKey === 'air_temperature_c') return 'Air Temperature'
+  if (valueKey === 'relative_humidity_pct') return 'Relative Humidity'
+  if (valueKey === 'mean_sea_level_pressure_hpa') return 'Mean Sea Level Pressure'
+  if (valueKey === 'visibility_m') return 'Visibility'
+  if (valueKey === 'weather_code') return 'Weather Code'
+  if (valueKey === 'wind_direction_deg') return 'Wind Direction'
+  if (valueKey === 'wind_speed_ms') return 'Wind Speed'
+  if (valueKey === 'wind_gust_ms') return 'Wind Gust'
+  if (valueKey === 'pressure_tendency_code') return 'Pressure Tendency'
   return ds.productLabel || ds.name || valueKey.replace(/_/g, ' ')
 }
 
@@ -596,6 +611,9 @@ function inferRoleFromContext(
   if (/uk[- ]air|air quality|air pollution|pollutant|\bno2\b|\bpm10\b|pm2\.5|ozone/.test(contextText)) {
     return 'Air Quality Site'
   }
+  if (/met office|weather datahub|land observations|weather observation|weather station/.test(contextText)) {
+    return 'Weather Observation Site'
+  }
   if (kwStr.includes('acoustic') && kwStr.includes('sensor')) return 'Acoustic Sensor Node'
   if (kwStr.includes('localizer') || kwStr.includes('fusion')) return 'Software Fusion Agent'
   if (kwStr.includes('relay') || kwStr.includes('communications')) return 'Communications Relay'
@@ -610,6 +628,9 @@ function inferRoleFromContext(
   }
   if (/uk[- ]air|air quality|air pollution|pollutant|\bno2\b|\bpm10\b|pm2\.5|ozone/.test(desc)) {
     return 'Air Quality Site'
+  }
+  if (/met office|weather datahub|land observations|weather observation|weather station/.test(desc)) {
+    return 'Weather Observation Site'
   }
   if (desc.includes('acoustic') || desc.includes('microphone')) return 'Sensor Node'
   if (desc.includes('localiz') || desc.includes('triangulat') || desc.includes('fusion')) return 'Fusion Agent'
