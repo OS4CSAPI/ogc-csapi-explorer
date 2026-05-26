@@ -58,6 +58,13 @@ const outputLines = computed(() => {
 
 const hasNoProducts = computed(() => props.card.productLabels.length === 0)
 
+function readingStateClass(state: string): string {
+  if (state === 'current') return 'reading-current'
+  if (state === 'recent') return 'reading-recent'
+  if (state === 'stale') return 'reading-stale'
+  return 'reading-unknown'
+}
+
 // Context — compact breadcrumb
 const contextLines = computed(() => {
   const parts: string[] = []
@@ -197,7 +204,38 @@ const trustLine = computed(() => {
       </ul>
     </section>
 
-    <!-- ── 4. CONTEXT ── -->
+    <!-- ── 4. LATEST READINGS ── -->
+    <section v-if="card.latestReadings.length" class="dsc-sec">
+      <h3 class="dsc-sec-hd"><i class="pi pi-bolt"></i> Latest readings</h3>
+      <div class="dsc-reading-list">
+        <div
+          v-for="reading in card.latestReadings"
+          :key="reading.datastreamId"
+          class="dsc-reading-item"
+        >
+          <div class="dsc-reading-main">
+            <span class="dsc-reading-label">{{ reading.label }}</span>
+            <span class="dsc-reading-value">
+              {{ reading.value }}<span v-if="reading.unit"> {{ reading.unit }}</span>
+            </span>
+          </div>
+          <div class="dsc-reading-meta">
+            <span v-if="reading.relativeTime" :title="reading.phenomenonTime">
+              {{ reading.relativeTime }}
+            </span>
+            <span
+              class="dsc-reading-state"
+              :class="readingStateClass(reading.freshnessState)"
+            >
+              {{ reading.freshnessState }}
+            </span>
+            <span v-if="reading.quality">{{ reading.quality }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 5. CONTEXT ── -->
     <section v-if="contextLines.length" class="dsc-sec">
       <h3 class="dsc-sec-hd"><i class="pi pi-sitemap"></i> Context</h3>
       <div class="dsc-breadcrumb">
@@ -208,7 +246,7 @@ const trustLine = computed(() => {
       </div>
     </section>
 
-    <!-- ── 5. OCCUPANT ── -->
+    <!-- ── 6. OCCUPANT ── -->
     <section v-if="hasOccupant" class="dsc-sec">
       <h3 class="dsc-sec-hd"><i class="pi pi-server"></i> Occupant</h3>
       <div class="dsc-kv">
@@ -229,7 +267,7 @@ const trustLine = computed(() => {
       </div>
     </section>
 
-    <!-- ── 6. FRESHNESS ── -->
+    <!-- ── 7. FRESHNESS ── -->
     <section class="dsc-sec dsc-fresh">
       <div class="dsc-fresh-row">
         <span class="dsc-fresh-label" :class="{ 'dsc-fresh-active': freshActive }">
@@ -240,7 +278,7 @@ const trustLine = computed(() => {
       </div>
     </section>
 
-    <!-- ── 7. LINKS ── -->
+    <!-- ── 8. LINKS ── -->
     <section class="dsc-sec dsc-links">
       <button class="dsc-action" @click="emit('explore')">
         <i class="pi pi-external-link"></i> View in Explorer
@@ -257,7 +295,7 @@ const trustLine = computed(() => {
       </a>
     </section>
 
-    <!-- ── 8. ADVANCED IDs (collapsed) ── -->
+    <!-- ── 9. ADVANCED IDs (collapsed) ── -->
     <details class="dsc-adv">
       <summary>Advanced IDs</summary>
       <div class="dsc-adv-body">
@@ -507,6 +545,59 @@ const trustLine = computed(() => {
   background: #fafafa !important;
   border-color: #f1f5f9 !important;
 }
+
+/* ═══ Latest Readings ═══ */
+.dsc-reading-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.dsc-reading-item {
+  padding: 0.35rem 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+.dsc-reading-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.dsc-reading-label {
+  min-width: 0;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.dsc-reading-value {
+  flex-shrink: 0;
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.dsc-reading-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+  color: #64748b;
+  font-size: 0.7rem;
+}
+.dsc-reading-state {
+  padding: 0.05rem 0.32rem;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+.reading-current { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+.reading-recent { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+.reading-stale { background: #fffbeb; color: #d97706; border-color: #fde68a; }
+.reading-unknown { background: #f8fafc; color: #64748b; border-color: #cbd5e1; }
 
 /* ═══ Context ═══ */
 .dsc-breadcrumb {

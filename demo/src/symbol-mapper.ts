@@ -135,6 +135,11 @@ const SYSTEM_RULES: KeywordRule[] = [
   // Relay / retransmission device → Signal Radio Relay (Land Unit full frame)
   { keywords: ['relay', 'retrans', 'repeater', 'retransmission'],
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_SIGNAL_RADIO_RELAY },
+  // Environment Agency Hydrology Station → Friend Sensor Emplaced
+  // River level, river flow, rainfall, and groundwater stations are closest to USGS Water/CO-OPS gauges.
+  { keywords: ['environment agency', 'ea hydrology', 'hydrology', 'river level', 'river flow', 'rainfall', 'groundwater'],
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
+    letterSidc: 'SFGPEWRH-------' },
   // Monitoring site / intel collector → MI + Sensor (letter SIDC for correct icon rendering)
   { keywords: ['monitoring site', 'mon-site', 'observation post', 'monitoring node', 'monitoring station'],
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_MI,

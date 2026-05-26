@@ -49,6 +49,7 @@ export interface DeployedSystemCardModel {
   primaryPurpose: string
   capabilities: string[]
   primaryDatastreams: DatastreamSummary[]
+  latestReadings: LatestReadingSummary[]
   productLabels: string[]
   latestActivityTime: string
   latestActivityRelative: string
@@ -94,6 +95,18 @@ export interface DatastreamSummary {
   name: string
   productLabel: string
   observedProperties: string[]
+}
+
+export interface LatestReadingSummary {
+  datastreamId: string
+  label: string
+  value: string
+  unit: string
+  phenomenonTime: string
+  resultTime: string
+  relativeTime: string
+  quality: string
+  freshnessState: 'current' | 'recent' | 'stale' | 'unknown'
 }
 
 export interface ProcedureSummary {
@@ -374,6 +387,95 @@ function relativeTime(isoString: string): string {
     return `${days}d ago`
   } catch {
     return ''
+  }
+}
+
+function readingFreshnessState(isoString: string): LatestReadingSummary['freshnessState'] {
+  if (!isoString) return 'unknown'
+  const then = new Date(isoString).getTime()
+  if (!Number.isFinite(then)) return 'unknown'
+  const ageMs = Date.now() - then
+  if (ageMs < 0) return 'current'
+  if (ageMs <= 60 * 60 * 1000) return 'current'
+  if (ageMs <= 24 * 60 * 60 * 1000) return 'recent'
+  return 'stale'
+}
+
+const RESULT_METADATA_KEYS = new Set([
+  'stationId', 'stationName', 'measureId', 'parameter', 'unit', 'valueType',
+  'quality', 'completeness', 'sourceUrl', 'lat', 'lon', 'alt', 'latitude', 'longitude',
+  'imageUrl', 'latestImageUrl', 'thumbUrl', 'mediaType', 'contentLength', 'camId',
+])
+
+function formatObservationValue(value: unknown, unit: string): string {
+  if (typeof value === 'number') {
+    if (value === 0 && /mm/i.test(unit)) return '0.0'
+    if (Number.isInteger(value)) return String(value)
+    return String(Number(value.toPrecision(4)))
+  }
+  if (typeof value === 'string') return value
+  return String(value ?? '')
+}
+
+function labelForReading(ds: DatastreamSummary, result: any, valueKey: string): string {
+  const parameter = String(result?.parameter || '').toLowerCase()
+  const unit = String(result?.unit || '').toLowerCase()
+  if (parameter === 'rainfall' || valueKey.toLowerCase().includes('rainfall')) return 'Rainfall'
+  if (parameter === 'flow' || valueKey.toLowerCase().includes('flow')) return 'River flow'
+  if (parameter === 'level' && unit === 'maod') return 'Groundwater level'
+  if (parameter === 'level' || valueKey.toLowerCase().includes('level')) return 'River level'
+  return ds.productLabel || ds.name || valueKey.replace(/_/g, ' ')
+}
+
+function summarizeLatestReading(ds: DatastreamSummary, obs: any): LatestReadingSummary | null {
+  const result = obs?.result || {}
+  if (!result || typeof result !== 'object') return null
+
+  const entries = Object.entries(result).filter(([key, value]) =>
+    !RESULT_METADATA_KEYS.has(key)
+    && value !== null
+    && value !== undefined
+    && (typeof value === 'number' || typeof value === 'string')
+  )
+  const valueEntry = entries.find(([, value]) => typeof value === 'number') || entries[0]
+  if (!valueEntry) return null
+
+  const [valueKey, value] = valueEntry
+  const unit = result.unit || ''
+  const phenomenonTime = obs.phenomenonTime || obs.resultTime || ''
+  const resultTime = obs.resultTime || ''
+
+  return {
+    datastreamId: ds.id,
+    label: labelForReading(ds, result, valueKey),
+    value: formatObservationValue(value, unit),
+    unit,
+    phenomenonTime,
+    resultTime,
+    relativeTime: phenomenonTime ? relativeTime(phenomenonTime) : '',
+    quality: result.quality || '',
+    freshnessState: readingFreshnessState(phenomenonTime),
+  }
+}
+
+async function fetchLatestReading(ds: DatastreamSummary): Promise<LatestReadingSummary | null> {
+  try {
+    let latestRes = await apiFetch(
+      `/datastreams/${ds.id}/observations?limit=1&resultTime=latest`,
+      { headers: { 'Accept': 'application/json' } },
+    )
+    if (latestRes.ok && latestRes.data && !(latestRes.data.items?.length || (Array.isArray(latestRes.data) && latestRes.data.length))) {
+      latestRes = await apiFetch(
+        `/datastreams/${ds.id}/observations?limit=1`,
+        { headers: { 'Accept': 'application/json' } },
+      )
+    }
+    if (!latestRes.ok || !latestRes.data) return null
+    const items = latestRes.data.items || latestRes.data || []
+    if (!Array.isArray(items) || items.length === 0) return null
+    return summarizeLatestReading(ds, items[0])
+  } catch {
+    return null
   }
 }
 
@@ -672,30 +774,17 @@ export function useDeployedSystemCard() {
         } catch { /* procedure fetch optional */ }
       }
 
-      // ── Resolve latest observation time ──────────────────────────
-      let latestTime = ''
-      if (datastreams.length > 0) {
-        // Check first (primary) datastream for latest observation
-        try {
-          let latestRes = await apiFetch(
-            `/datastreams/${datastreams[0]!.id}/observations?limit=1&resultTime=latest`,
-            { headers: { 'Accept': 'application/json' } },
-          )
-          // Fallback: Go CSAPI server ignores resultTime=latest
-          if (latestRes.ok && latestRes.data && !(latestRes.data.items?.length || (Array.isArray(latestRes.data) && latestRes.data.length))) {
-            latestRes = await apiFetch(
-              `/datastreams/${datastreams[0]!.id}/observations?limit=1`,
-              { headers: { 'Accept': 'application/json' } },
-            )
-          }
-          if (latestRes.ok && latestRes.data) {
-            const items = latestRes.data.items || latestRes.data || []
-            if (Array.isArray(items) && items.length > 0) {
-              latestTime = items[0].resultTime || items[0].phenomenonTime || ''
-            }
-          }
-        } catch { /* latest obs fetch optional */ }
-      }
+      // ── Resolve latest observation summaries ─────────────────────
+      const latestReadings = (await Promise.all(
+        datastreams.slice(0, 3).map(ds => fetchLatestReading(ds)),
+      )).filter((reading): reading is LatestReadingSummary => !!reading)
+      const latestTime = latestReadings
+        .map(reading => reading.phenomenonTime || reading.resultTime)
+        .filter(Boolean)
+        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || ''
+
+      const staleReadingCount = latestReadings.filter(reading => reading.freshnessState === 'stale').length
+      const qualityValues = Array.from(new Set(latestReadings.map(reading => reading.quality).filter(Boolean)))
 
       // ── Resolve live camera image (BuoyCAM or NIMS) ──────────────
       let cameraImageUrl = ''
@@ -873,6 +962,7 @@ export function useDeployedSystemCard() {
         primaryPurpose: purpose || 'Purpose not documented',
         capabilities: capChips.slice(0, 3),
         primaryDatastreams: datastreams.slice(0, 3),
+        latestReadings,
         productLabels,
         latestActivityTime: latestTime || '',
         latestActivityRelative: latestTime ? relativeTime(latestTime) : 'No recent activity',
@@ -883,8 +973,8 @@ export function useDeployedSystemCard() {
         keyAssumptions: [],
 
         // Freshness / Trust
-        qualitySummary: '',
-        healthState: '',
+        qualitySummary: qualityValues.slice(0, 2).join(', '),
+        healthState: staleReadingCount ? `${staleReadingCount} stale reading${staleReadingCount === 1 ? '' : 's'}` : '',
         contributingSources: '',
 
         // Media / References

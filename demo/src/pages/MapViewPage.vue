@@ -175,6 +175,13 @@ const enrichedCounts = ref<Record<string, number>>({})
 // Deployed system card composable
 const { loading: dscLoading, card: dscCard, isDeployedSystemLeaf, composeCard: dscComposeCard, clearCard: dscClearCard } = useDeployedSystemCard()
 
+function popupReadingStateClass(state: string): string {
+  if (state === 'current') return 'popup-reading-current'
+  if (state === 'recent') return 'popup-reading-recent'
+  if (state === 'stale') return 'popup-reading-stale'
+  return 'popup-reading-unknown'
+}
+
 // Deployment hierarchy maps — populated by enrichDeployments(), consumed by card composition
 let deploymentParentMap: Record<string, string> = {}
 let deploymentItemById: Record<string, any> = {}
@@ -4131,6 +4138,7 @@ function selectOlFeature(feature: any) {
 
   // Compose deployed-system card if this is a deployment leaf
   if (isDeployedSystemLeaf(selectedFeature.value)) {
+    dscClearCard()
     dscComposeCard(selectedFeature.value, deploymentParentMap, deploymentItemById)
   } else {
     dscClearCard()
@@ -4672,6 +4680,30 @@ watch(selectedFeature, (feat) => {
           <strong>{{ selectedFeature.resourceName }}</strong>
           <div v-if="selectedFeature.rawData?.phenomenonTime" class="popup-id">{{ selectedFeature.rawData.phenomenonTime }}</div>
           <div v-else class="popup-id">{{ selectedFeature.resourceId }}</div>
+          <div v-if="dscCard?.latestReadings?.length" class="popup-latest-readings">
+            <div
+              v-for="reading in dscCard.latestReadings.slice(0, 2)"
+              :key="reading.datastreamId"
+              class="popup-reading-row"
+            >
+              <span class="popup-reading-label">{{ reading.label }}</span>
+              <span class="popup-reading-value">
+                {{ reading.value }}<span v-if="reading.unit"> {{ reading.unit }}</span>
+              </span>
+              <span
+                v-if="reading.freshnessState === 'stale'"
+                class="popup-reading-state"
+                :class="popupReadingStateClass(reading.freshnessState)"
+                :title="reading.phenomenonTime"
+              >
+                stale
+              </span>
+            </div>
+            <div v-if="dscCard.latestReadings[0]?.relativeTime" class="popup-reading-time">
+              Latest {{ dscCard.latestReadings[0].relativeTime }}
+              <span v-if="dscCard.latestReadings[0].quality">· {{ dscCard.latestReadings[0].quality }}</span>
+            </div>
+          </div>
           <!-- Stacked-feature picker — shown when multiple features share the same pixel -->
           <div v-if="stackedFeatures.length > 1" class="stacked-picker">
             <div class="stacked-label">{{ stackedFeatures.length }} features here:</div>
@@ -5762,6 +5794,56 @@ watch(selectedFeature, (feat) => {
 .popup-id {
   font-size: 0.78rem;
   color: #475569;
+}
+
+.popup-latest-readings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  margin-top: 0.25rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.popup-reading-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+}
+
+.popup-reading-label {
+  min-width: 0;
+  overflow: hidden;
+  color: #475569;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.popup-reading-value {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.popup-reading-state {
+  padding: 0.02rem 0.25rem;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.popup-reading-current { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+.popup-reading-recent { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+.popup-reading-stale { background: #fffbeb; color: #d97706; border-color: #fde68a; }
+.popup-reading-unknown { background: #f8fafc; color: #64748b; border-color: #cbd5e1; }
+
+.popup-reading-time {
+  color: #64748b;
+  font-size: 0.68rem;
 }
 
 /* Stacked-feature picker */
