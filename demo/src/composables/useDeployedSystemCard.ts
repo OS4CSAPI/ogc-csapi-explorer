@@ -129,6 +129,8 @@ export interface MediaLink {
 }
 
 const EA_HYDROLOGY_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Environment_Agency_Morton_River_Gauge_Station_-_geograph.org.uk_-_283345.jpg'
+const UK_AIR_ROADSIDE_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Air_Quality_Monitoring_Station_-_geograph.org.uk_-_2573031.jpg'
+const UK_AIR_BACKGROUND_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/7/75/Air-quality_monitoring_station%2C_Dundonald_-_geograph.org.uk_-_3201697.jpg'
 
 // ─── SML field extractors ──────────────────────────────────────────────────
 
@@ -347,6 +349,12 @@ function representativeThumbnailForCard(
 
   if (text.includes('environment agency') && text.includes('hydrology')) {
     return EA_HYDROLOGY_REPRESENTATIVE_IMAGE
+  }
+  if (text.includes('uk-air') || text.includes('uk air')) {
+    if (text.includes('camden') || text.includes('roadside') || text.includes('kerbside')) {
+      return UK_AIR_ROADSIDE_REPRESENTATIVE_IMAGE
+    }
+    return UK_AIR_BACKGROUND_REPRESENTATIVE_IMAGE
   }
   return ''
 }
