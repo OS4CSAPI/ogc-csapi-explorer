@@ -277,7 +277,7 @@ async function stopSimulator() {
 
 async function fullDemoReset() {
   if (demoResetting.value) return
-  if (!confirm('Full demo reset: delete ALL sim data, SENREPs, and sampling features. Continue?')) return
+  if (!confirm('Full demo reset: delete C-UAS simulator observations, SENREP observations, and SENREP track sampling features only. ISS, USGS, weather, and other live feeds are not targeted. Continue?')) return
   demoResetting.value = true
   simMessage.value = ''
   try {
@@ -4916,7 +4916,16 @@ watch(selectedFeature, (feat) => {
           <i :class="simStarting ? 'pi pi-spin pi-spinner' : 'pi pi-play'"></i>
           {{ simStarting ? 'Starting…' : 'Start Simulator' }}
         </button>
-        <span v-else class="sim-msg">Simulation started</span>
+        <button
+          v-else
+          class="sim-btn sim-btn--stop"
+          :disabled="simStopping"
+          @click="stopSimulator"
+          title="Stop demo simulator"
+        >
+          <i :class="simStopping ? 'pi pi-spin pi-spinner' : 'pi pi-stop-circle'"></i>
+          {{ simStopping ? 'Stopping…' : 'Stop Demo' }}
+        </button>
         <button
           v-if="!simRunning"
           class="sim-btn sim-btn--reset"
@@ -4946,6 +4955,10 @@ watch(selectedFeature, (feat) => {
           <button v-if="!simRunning" class="tak-fab tak-fab--sim-start"
             :disabled="simStarting" @click="startSimulator" title="Start Simulator">
             <i :class="simStarting ? 'pi pi-spin pi-spinner' : 'pi pi-play'"></i>
+          </button>
+          <button v-else class="tak-fab tak-fab--sim-stop"
+            :disabled="simStopping" @click="stopSimulator" title="Stop Demo">
+            <i :class="simStopping ? 'pi pi-spin pi-spinner' : 'pi pi-stop-circle'"></i>
           </button>
           <button v-if="!simRunning" class="tak-fab tak-fab--reset"
             :disabled="demoResetting" @click="fullDemoReset" title="Full Reset">
@@ -6189,6 +6202,11 @@ watch(selectedFeature, (feat) => {
     background: rgba(34, 197, 94, 0.25) !important;
     border-color: rgba(34, 197, 94, 0.6) !important;
     color: #22c55e !important;
+  }
+  .tak-fab--sim-stop {
+    background: rgba(217, 119, 6, 0.25) !important;
+    border-color: rgba(217, 119, 6, 0.6) !important;
+    color: #f59e0b !important;
   }
   .tak-fab--reset {
     background: rgba(239, 68, 68, 0.25) !important;
