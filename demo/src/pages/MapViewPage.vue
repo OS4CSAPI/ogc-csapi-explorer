@@ -730,24 +730,11 @@ function aircraftObsPointStyle(headingDeg: number): Style {
  * are immediately identifiable without clicking.
  */
 function weatherStationStyle(stationId: string, tempC: number | null): Style {
-  const label = tempC != null && !isNaN(Number(tempC))
-    ? `${stationId}\n${Number(tempC).toFixed(0)}°C`
-    : stationId
   return new Style({
-    image: new RegularShape({
-      points: 4,
-      radius: 14,
-      angle: Math.PI / 4,
+    image: new CircleStyle({
+      radius: 5,
       fill: new Fill({ color: '#0ea5e9' }),
-      stroke: new Stroke({ color: '#0c4a6e', width: 2.5 }),
-    }),
-    text: new OlText({
-      text: label,
-      font: 'bold 11px sans-serif',
-      offsetY: 22,
-      fill: new Fill({ color: '#0c4a6e' }),
-      stroke: new Stroke({ color: '#fff', width: 3 }),
-      textAlign: 'center',
+      stroke: new Stroke({ color: '#fff', width: 1 }),
     }),
   })
 }
@@ -864,14 +851,6 @@ function earthquakeObsPointStyle(mag: number): Style {
       fill: new Fill({ color: color + 'cc' }),  // slight transparency
       stroke: new Stroke({ color: '#1e293b', width: 1.5 }),
     }),
-    text: mag >= 4.0 ? new OlText({
-      text: `M${typeof mag === 'number' ? mag.toFixed(1) : mag}`,
-      font: 'bold 10px sans-serif',
-      offsetY: -(radius + 10),
-      fill: new Fill({ color }),
-      stroke: new Stroke({ color: '#0f172a', width: 2.5 }),
-      textAlign: 'center',
-    }) : undefined,
   })
 }
 
@@ -1066,12 +1045,6 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
         lineDash: enriched ? [4, 4] : undefined,
       }),
     }),
-    text: new OlText({
-      text: label,
-      fill: new Fill({ color: '#fff' }),
-      font,
-      offsetY: 1,
-    }),
     stroke: new Stroke({ color, width: 2 }),
     fill: new Fill({ color: color + '33' }),
   })
@@ -1161,18 +1134,11 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
       fill: new Fill({ color }),
       stroke: new Stroke({ color: '#fbbf24', width: 3 }),
     }),
-    text: new OlText({
-      text: label,
-      fill: new Fill({ color: '#fff' }),
-      font,
-      offsetY: 1,
-    }),
     stroke: new Stroke({ color: '#fbbf24', width: 3 }),
     fill: new Fill({ color: color + '55' }),
   })
 
-  const nameStyle = makeNameLabel(name, radius + 14)
-  return nameStyle ? [circleStyle, nameStyle] : circleStyle
+  return circleStyle
 }
 
 // --- Data Loading ---
