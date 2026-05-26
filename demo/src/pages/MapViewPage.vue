@@ -221,6 +221,80 @@ const bboxLayer = new VectorLayer({
 // Vector sources per type so we can toggle layers
 const vectorSources: Record<string, VectorSource> = {}
 const vectorLayers: Record<string, VectorLayer> = {}
+const STACKABLE_POINT_LAYER_KEYS = [
+  'systems',
+  'deployments',
+  'samplingFeatures',
+  'datastreams',
+  'controlStreams',
+  'observationPoints',
+  'locationEstimates',
+  'senrepMarkers',
+]
+const STACK_OFFSET_PX = 28
+
+function clearStackOffset(feature: Feature) {
+  feature.unset('_stackBaseCoord', true)
+  feature.unset('_stackOffsetCount', true)
+  feature.unset('_stackOffsetIndex', true)
+}
+
+function applyStackedFeatureOffsets() {
+  if (!map) return
+  const resolution = map.getView().getResolution() || 1
+  const groups = new globalThis.Map<string, Feature[]>()
+
+  for (const key of STACKABLE_POINT_LAYER_KEYS) {
+    const layer = vectorLayers[key]
+    const source = vectorSources[key]
+    if (!layer?.getVisible() || !source) continue
+
+    for (const feature of source.getFeatures()) {
+      const geometry = feature.getGeometry()
+      if (!geometry || geometry.getType() !== 'Point') continue
+      let baseCoord = feature.get('_stackBaseCoord') as Coordinate | undefined
+      if (baseCoord) {
+        feature.setGeometry(new Point(baseCoord))
+      } else {
+        baseCoord = (geometry as Point).getCoordinates()
+        feature.set('_stackBaseCoord', [...baseCoord], true)
+      }
+      const stackKey = `${Math.round(baseCoord[0])}:${Math.round(baseCoord[1])}`
+      if (!groups.has(stackKey)) groups.set(stackKey, [])
+      groups.get(stackKey)!.push(feature)
+    }
+  }
+
+  for (const features of groups.values()) {
+    if (features.length < 2) {
+      const feature = features[0]
+      if (feature) {
+        feature.unset('_stackOffsetCount', true)
+        feature.unset('_stackOffsetIndex', true)
+      }
+      continue
+    }
+
+    features.sort((a, b) => {
+      const aType = a.get('resourceType') || ''
+      const bType = b.get('resourceType') || ''
+      if (aType !== bType) return aType.localeCompare(bType)
+      return String(a.get('resourceName') || '').localeCompare(String(b.get('resourceName') || ''))
+    })
+
+    const radius = STACK_OFFSET_PX * resolution
+    features.forEach((feature, index) => {
+      const baseCoord = feature.get('_stackBaseCoord') as Coordinate
+      const angle = -Math.PI / 2 + (2 * Math.PI * index) / features.length
+      feature.setGeometry(new Point([
+        baseCoord[0] + Math.cos(angle) * radius,
+        baseCoord[1] + Math.sin(angle) * radius,
+      ]))
+      feature.set('_stackOffsetCount', features.length, true)
+      feature.set('_stackOffsetIndex', index + 1, true)
+    })
+  }
+}
 
 // ── Live Mode (auto-refresh dynamic layers) ────────────────────────
 const liveMode = ref(true)
@@ -3711,6 +3785,9 @@ async function loadAllResources() {
       maxZoom: 16,
       duration: 500,
     })
+    map.once('moveend', applyStackedFeatureOffsets)
+  } else {
+    applyStackedFeatureOffsets()
   }
 }
 
@@ -3778,6 +3855,7 @@ function toggleLayer(key: string) {
   if (layer) {
     layer.setVisible(activeLayers.value[key])
   }
+  applyStackedFeatureOffsets()
 }
 
 /**
@@ -3842,6 +3920,7 @@ async function refreshLiveLayers() {
       loadSenrepMarkers(),
       updateMovingSystemPositions(),
     ])
+    applyStackedFeatureOffsets()
     lastRefreshTime.value = new Date().toLocaleTimeString()
   } catch { /* swallow errors during background refresh */ }
 }
@@ -3905,6 +3984,7 @@ async function updateMovingSystemPositions(): Promise<void> {
           const platHref = rawData?.properties?.['platform@link']?.href || ''
           const linkedSysId = platHref.replace(/\/+$/, '').split('/').pop()
           if (linkedSysId === dsInfo.systemId) {
+            clearStackOffset(feature)
             feature.setGeometry(new Point(newCoord))
           }
         }
@@ -3915,6 +3995,7 @@ async function updateMovingSystemPositions(): Promise<void> {
       if (sysSource) {
         for (const feature of sysSource.getFeatures()) {
           if (feature.get('resourceId') === dsInfo.systemId) {
+            clearStackOffset(feature)
             feature.setGeometry(new Point(newCoord))
           }
         }
@@ -4033,6 +4114,8 @@ onMounted(() => {
       zoom: 2,
     }),
   })
+
+  map.on('moveend', applyStackedFeatureOffsets)
 
 
   // Click handler for features

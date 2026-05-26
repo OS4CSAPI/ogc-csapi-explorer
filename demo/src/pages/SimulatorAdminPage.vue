@@ -180,7 +180,7 @@ async function clearObs() {
 }
 
 async function resetDemo() {
-  if (!confirm('Full demo reset: delete ALL sim data AND reports. Detection rings will be re-seeded on next start. Continue?')) return
+  if (!confirm('Full demo reset: delete simulator LOB/localizer observations, SENREP observations, and SENREP track sampling features only. Detection ranges will be re-seeded. Other publisher feeds are not targeted. Continue?')) return
   resetting.value = true
   actionMessage.value = ''
   try {
