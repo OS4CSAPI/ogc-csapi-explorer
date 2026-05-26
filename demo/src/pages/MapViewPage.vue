@@ -1003,7 +1003,8 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
         stroke: new Stroke({ color, width: 2 }),
         fill: new Fill({ color: color + '33' }),
       })
-      return iconStyle
+      const nameStyle = makeNameLabel(name, sym.size.height - sym.anchor.y + 14)
+      return nameStyle ? [iconStyle, nameStyle] : iconStyle
     }
   }
 
@@ -1025,7 +1026,8 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
           stroke: new Stroke({ color, width: 2 }),
           fill: new Fill({ color: color + '33' }),
         })
-        return iconStyle
+        const nameStyle = makeNameLabel(name, sym.size.height - sym.anchor.y + 14)
+        return nameStyle ? [iconStyle, nameStyle] : iconStyle
       }
     }
   }
@@ -1049,7 +1051,8 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
     fill: new Fill({ color: color + '33' }),
   })
 
-  return circleStyle
+  const nameStyle = makeNameLabel(name, radius + 14)
+  return nameStyle ? [circleStyle, nameStyle] : circleStyle
 }
 
 function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] {
@@ -1138,7 +1141,8 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
     fill: new Fill({ color: color + '55' }),
   })
 
-  return circleStyle
+  const nameStyle = makeNameLabel(name, radius + 14)
+  return nameStyle ? [circleStyle, nameStyle] : circleStyle
 }
 
 // --- Data Loading ---
