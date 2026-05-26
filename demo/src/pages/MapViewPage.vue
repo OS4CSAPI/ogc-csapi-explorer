@@ -109,7 +109,7 @@ const activeLayers = ref<Record<string, boolean>>({
   systems: false,
   deployments: false,
   procedures: false,
-  samplingFeatures: false,
+  samplingFeatures: true,
   datastreams: false,
   controlStreams: false,
   observationTracks: true,
@@ -673,7 +673,7 @@ const ODAS_UIDS = [
 ]
 
 // Enable/disable milsymbol rendering (toggle for A/B comparison)
-const useMilSymbols = ref(false)
+const useMilSymbols = ref(true)
 
 // ── Pre-built style caches for high-volume feature types ──
 const obsPointStyle = new Style({
