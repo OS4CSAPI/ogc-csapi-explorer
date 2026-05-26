@@ -107,9 +107,9 @@ const TYPE_LABELS: Record<string, string> = {
 // Active layer toggles
 const activeLayers = ref<Record<string, boolean>>({
   systems: false,
-  deployments: true,
+  deployments: false,
   procedures: false,
-  samplingFeatures: true,
+  samplingFeatures: false,
   datastreams: false,
   controlStreams: false,
   observationTracks: true,
