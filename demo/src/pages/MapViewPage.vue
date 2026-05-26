@@ -451,7 +451,13 @@ async function submitSenrep(): Promise<void> {
       },
     }
 
-    const res = await apiFetch(`/datastreams/${SENREP_DS_ID}/observations`, {
+    const senrepDsId = await resolveSenrepDatastreamId()
+    if (!senrepDsId) {
+      alert('SENREP submission failed: SENREP datastream not found')
+      return
+    }
+
+    const res = await apiFetch(`/datastreams/${senrepDsId}/observations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2573,9 +2579,47 @@ function clearEphemeralLocFeatures(source: VectorSource | undefined) {
   for (const f of toRemove) source.removeFeature(f)
 }
 
-// ── SENREP DS ID (Monitoring Team A sensor reports) ────────────────
-// Updated 2026-03-11 after H2 MVStore rebuild (was 044g → now NWS KDAY)
-const SENREP_DS_ID = '04g0'
+// ── SENREP datastream discovery (Monitoring Team A sensor reports) ─────────
+const SENREP_SYSTEM_UID = 'urn:os4csapi:system:set:ft-huachuca:001'
+const SENREP_OUTPUT_NAME = 'senrep'
+const senrepDatastreamId = ref('')
+
+function getResourceUid(item: any): string {
+  const props = item?.properties || item || {}
+  return props.uid || props.uniqueId || props.identifier || item?.uid || ''
+}
+
+function getOutputName(item: any): string {
+  const props = item?.properties || item || {}
+  return item?.outputName || props.outputName || ''
+}
+
+async function resolveSenrepDatastreamId(): Promise<string> {
+  if (senrepDatastreamId.value) return senrepDatastreamId.value
+
+  const systemsRes = await apiFetch(getListUrl('systems', { limit: 300 } as any), {
+    headers: { 'Accept': 'application/geo+json' },
+  })
+  if (!systemsRes.ok || !systemsRes.data) return ''
+
+  const systems = systemsRes.data.type === 'FeatureCollection'
+    ? (systemsRes.data.features || [])
+    : (systemsRes.data.items || [])
+  const senrepSystem = systems.find((system: any) => getResourceUid(system) === SENREP_SYSTEM_UID)
+  const systemId = senrepSystem?.id || senrepSystem?.properties?.id || senrepSystem?.['@id']
+  if (!systemId) return ''
+
+  const datastreamsRes = await apiFetch(getNestedListUrl('systems', systemId, 'datastreams', { limit: 50 } as any), {
+    headers: { 'Accept': 'application/json' },
+  })
+  if (!datastreamsRes.ok || !datastreamsRes.data) return ''
+
+  const datastreams = datastreamsRes.data.items || datastreamsRes.data.features || []
+  const senrepDs = datastreams.find((ds: any) => getOutputName(ds) === SENREP_OUTPUT_NAME)
+  const datastreamId = senrepDs?.id || senrepDs?.properties?.id || senrepDs?.['@id'] || ''
+  senrepDatastreamId.value = datastreamId
+  return datastreamId
+}
 
 /**
  * SENREP marker style — red diamond
@@ -2597,7 +2641,7 @@ const senrepMarkerStyle = new Style({
 })
 
 /**
- * Fetch SENREP observations from DS 044g and render red diamond markers.
+ * Fetch SENREP observations and render red diamond markers.
  */
 async function loadSenrepMarkers(): Promise<void> {
   const source = vectorSources['senrepMarkers']
@@ -2605,7 +2649,9 @@ async function loadSenrepMarkers(): Promise<void> {
   // Don't clear yet — wait until replacement data is ready to avoid blink
 
   try {
-    const senrepUrl = getNestedListUrl('datastreams', SENREP_DS_ID, 'observations', { limit: 50 } as any)
+    const senrepDsId = await resolveSenrepDatastreamId()
+    if (!senrepDsId) return
+    const senrepUrl = getNestedListUrl('datastreams', senrepDsId, 'observations', { limit: 50 } as any)
     const obsRes = await apiFetch(
       senrepUrl,
       { headers: { 'Accept': 'application/om+json' } },
@@ -2683,7 +2729,7 @@ async function loadSenrepMarkers(): Promise<void> {
       markerFeature.set('resourceName', `SENREP: ${s.contactId}`)
       markerFeature.set('rawData', {
         observationId: s.obs.id,
-        datastreamId: SENREP_DS_ID,
+        datastreamId: senrepDsId,
         phenomenonTime: s.time,
         contactId: s.contactId,
         classification: s.tgtType,
@@ -4790,7 +4836,7 @@ watch(selectedFeature, (feat) => {
               <summary>Provenance</summary>
               <div class="senrep-readonly" style="font-size: 0.7rem;">
                 Source Fix: {{ senrepForm.sourceFixObsId || '—' }}<br/>
-                DS: {{ SENREP_DS_ID }}
+                DS: {{ senrepDatastreamId || 'discovering' }}
               </div>
             </details>
           </div>
