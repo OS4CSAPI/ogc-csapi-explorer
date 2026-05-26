@@ -363,6 +363,7 @@ function representativeThumbnailForCard(
 
 const ROLE_LABELS: Record<string, string> = {
   'air-quality-site': 'Air Quality Site',
+  'groundwater-telemetry-site': 'Groundwater Telemetry Site',
   'sensor-node': 'Sensor Node',
   'acoustic-sensor-node': 'Acoustic Sensor Node',
   'localizer': 'Localizer',
@@ -440,6 +441,7 @@ const RESULT_METADATA_KEYS = new Set([
   'stationId', 'stationName', 'measureId', 'parameter', 'unit', 'valueType',
   'quality', 'completeness', 'sourceUrl', 'lat', 'lon', 'alt', 'latitude', 'longitude',
   'imageUrl', 'latestImageUrl', 'thumbUrl', 'mediaType', 'contentLength', 'camId',
+  'thingId', 'sourceThingId', 'sourceDatastreamId', 'observedProperty', 'sourceObservationId', 'publishFlag',
 ])
 
 function formatObservationValue(value: unknown, unit: string): string {
@@ -454,7 +456,11 @@ function formatObservationValue(value: unknown, unit: string): string {
 
 function labelForReading(ds: DatastreamSummary, result: any, valueKey: string): string {
   const parameter = String(result?.parameter || '').toLowerCase()
+  const observedProperty = String(result?.observedProperty || '').toLowerCase()
   const unit = String(result?.unit || '').toLowerCase()
+  if (observedProperty.includes('water level maod') || valueKey.toLowerCase().includes('maod')) return 'Water Level maOD'
+  if (observedProperty.includes('water temperature')) return 'Water Temperature'
+  if (observedProperty.includes('conductivity')) return 'Conductivity'
   if (parameter === 'rainfall' || valueKey.toLowerCase().includes('rainfall')) return 'Rainfall'
   if (parameter === 'flow' || valueKey.toLowerCase().includes('flow')) return 'River flow'
   if (parameter === 'level' && unit === 'maod') return 'Groundwater level'
@@ -580,6 +586,9 @@ function inferRoleFromContext(
   // Try keywords
   const kwStr = systemKeywords.join(' ').toLowerCase()
   const contextText = `${kwStr} ${deploymentProps?.name || ''} ${deploymentProps?.description || ''}`.toLowerCase()
+  if (/bgs|british geological survey|sensorthings|ukgeos|geothermal|groundwater|hydro logger/.test(contextText)) {
+    return 'Groundwater Telemetry Site'
+  }
   if (/uk[- ]air|air quality|air pollution|pollutant|\bno2\b|\bpm10\b|pm2\.5|ozone/.test(contextText)) {
     return 'Air Quality Site'
   }
@@ -592,6 +601,9 @@ function inferRoleFromContext(
 
   // Try description
   const desc = (extractSmlDescription(systemSml) || deploymentProps?.description || '').toLowerCase()
+  if (/bgs|british geological survey|sensorthings|ukgeos|geothermal|groundwater|hydro logger/.test(desc)) {
+    return 'Groundwater Telemetry Site'
+  }
   if (/uk[- ]air|air quality|air pollution|pollutant|\bno2\b|\bpm10\b|pm2\.5|ozone/.test(desc)) {
     return 'Air Quality Site'
   }

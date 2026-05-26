@@ -145,6 +145,10 @@ const SYSTEM_RULES: KeywordRule[] = [
   { keywords: ['uk-air', 'uk air', 'air quality', 'air pollution', 'pollutant', 'no2', 'pm10', 'pm2.5', 'ozone'],
     identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
     letterSidc: 'SFGPEWRH-------' },
+  // BGS SensorThings / UKGEOS groundwater telemetry -> Friend Sensor Emplaced
+  { keywords: ['bgs', 'british geological survey', 'sensorthings', 'ukgeos', 'geothermal', 'hydro logger'],
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
+    letterSidc: 'SFGPEWRH-------' },
   // Monitoring site / intel collector → MI + Sensor (letter SIDC for correct icon rendering)
   { keywords: ['monitoring site', 'mon-site', 'observation post', 'monitoring node', 'monitoring station'],
     identity: SI_FRIEND, symbolSet: SS_LAND_UNIT, entity: ENT_MI,
