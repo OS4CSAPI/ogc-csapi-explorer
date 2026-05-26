@@ -11,7 +11,7 @@
  *   - No raw schema, no debug text, no ISO timestamps in the main view
  */
 import { computed, ref } from 'vue'
-import type { DeployedSystemCardModel } from '../composables/useDeployedSystemCard'
+import type { DeployedSystemCardModel, TrendSummary } from '../composables/useDeployedSystemCard'
 
 const showImageOverlay = ref(false)
 const showBuoycamOverlay = ref(false)
@@ -63,6 +63,30 @@ function readingStateClass(state: string): string {
   if (state === 'recent') return 'reading-recent'
   if (state === 'stale') return 'reading-stale'
   return 'reading-unknown'
+}
+
+function trendStateClass(state: TrendSummary['trendState']): string {
+  if (state === 'rising') return 'trend-rising'
+  if (state === 'falling') return 'trend-falling'
+  return 'trend-steady'
+}
+
+function trendIcon(state: TrendSummary['trendState']): string {
+  if (state === 'rising') return 'pi-arrow-up'
+  if (state === 'falling') return 'pi-arrow-down'
+  return 'pi-minus'
+}
+
+function sparklinePoints(points: number[]): string {
+  if (points.length < 2) return ''
+  const min = Math.min(...points)
+  const max = Math.max(...points)
+  const span = max - min || 1
+  return points.map((value, index) => {
+    const x = points.length === 1 ? 50 : (index / (points.length - 1)) * 100
+    const y = 28 - ((value - min) / span) * 24
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(' ')
 }
 
 // Context — compact breadcrumb
@@ -230,6 +254,38 @@ const trustLine = computed(() => {
               {{ reading.freshnessState }}
             </span>
             <span v-if="reading.quality">{{ reading.quality }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 4b. RECENT TRENDS ── -->
+    <section v-if="card.trendSummaries.length" class="dsc-sec dsc-trends">
+      <h3 class="dsc-sec-hd"><i class="pi pi-chart-line"></i> Recent trend</h3>
+      <div class="dsc-trend-list">
+        <div
+          v-for="trend in card.trendSummaries"
+          :key="trend.datastreamId"
+          class="dsc-trend-item"
+        >
+          <div class="dsc-trend-top">
+            <div class="dsc-trend-name">
+              <span class="dsc-trend-label">{{ trend.label }}</span>
+              <span class="dsc-trend-window">{{ trend.windowLabel }} · {{ trend.sampleCount }} samples</span>
+            </div>
+            <span class="dsc-trend-badge" :class="trendStateClass(trend.trendState)">
+              <i class="pi" :class="trendIcon(trend.trendState)"></i>
+              {{ trend.trendLabel }}
+            </span>
+          </div>
+          <div class="dsc-trend-body">
+            <svg class="dsc-spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+              <polyline :points="sparklinePoints(trend.points)" />
+            </svg>
+            <div class="dsc-trend-value">
+              <strong>{{ trend.latestValue }}{{ trend.unit ? ' ' + trend.unit : '' }}</strong>
+              <span v-if="trend.latestRelativeTime">{{ trend.latestRelativeTime }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -598,6 +654,93 @@ const trustLine = computed(() => {
 .reading-recent { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
 .reading-stale { background: #fffbeb; color: #d97706; border-color: #fde68a; }
 .reading-unknown { background: #f8fafc; color: #64748b; border-color: #cbd5e1; }
+
+/* ═══ Recent Trends ═══ */
+.dsc-trend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.dsc-trend-item {
+  padding: 0.4rem 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+.dsc-trend-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.dsc-trend-name {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+.dsc-trend-label {
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.dsc-trend-window {
+  color: #64748b;
+  font-size: 0.68rem;
+}
+.dsc-trend-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  padding: 0.1rem 0.38rem;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.dsc-trend-badge i { font-size: 0.62rem; }
+.trend-rising { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+.trend-falling { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+.trend-steady { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+.dsc-trend-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+.dsc-spark {
+  width: 100%;
+  height: 32px;
+  display: block;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+}
+.dsc-spark polyline {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.dsc-trend-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 4.7rem;
+  color: #64748b;
+  font-size: 0.68rem;
+  line-height: 1.25;
+}
+.dsc-trend-value strong {
+  color: #0f172a;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
 
 /* ═══ Context ═══ */
 .dsc-breadcrumb {

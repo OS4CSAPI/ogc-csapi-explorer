@@ -50,6 +50,7 @@ export interface DeployedSystemCardModel {
   capabilities: string[]
   primaryDatastreams: DatastreamSummary[]
   latestReadings: LatestReadingSummary[]
+  trendSummaries: TrendSummary[]
   productLabels: string[]
   latestActivityTime: string
   latestActivityRelative: string
@@ -107,6 +108,19 @@ export interface LatestReadingSummary {
   relativeTime: string
   quality: string
   freshnessState: 'current' | 'recent' | 'stale' | 'unknown'
+}
+
+export interface TrendSummary {
+  datastreamId: string
+  label: string
+  unit: string
+  windowLabel: string
+  latestValue: string
+  latestRelativeTime: string
+  trendLabel: string
+  trendState: 'rising' | 'falling' | 'steady'
+  points: number[]
+  sampleCount: number
 }
 
 export interface ProcedureSummary {
@@ -446,13 +460,31 @@ function readingFreshnessState(isoString: string): LatestReadingSummary['freshne
   return 'stale'
 }
 
+function isCameraDatastreamName(name: string): boolean {
+  return /buoycam|buoy[\s_-]?cam|camera|nims.*image|station.*image/i.test(name)
+}
+
 const RESULT_METADATA_KEYS = new Set([
   'stationId', 'stationName', 'measureId', 'parameter', 'unit', 'valueType',
   'quality', 'completeness', 'sourceUrl', 'lat', 'lon', 'alt', 'latitude', 'longitude',
+  'lat_deg', 'lon_deg',
   'locationId', 'geohash',
   'imageUrl', 'latestImageUrl', 'thumbUrl', 'mediaType', 'contentLength', 'camId',
   'thingId', 'sourceThingId', 'sourceDatastreamId', 'observedProperty', 'sourceObservationId', 'publishFlag',
 ])
+
+const VALUE_PRIORITY_KEYS = [
+  'value',
+  'air_temperature_c', 'air_temp_c', 'temperature_c',
+  'water_temperature_c', 'water_temp_c',
+  'river_level_m', 'groundwater_level_m', 'water_level_m',
+  'river_flow_m3s', 'flow_m3s', 'discharge_m3s',
+  'rainfall_mm',
+  'wind_speed_ms', 'wind_gust_ms',
+  'pressure_hpa', 'mean_sea_level_pressure_hpa',
+  'relative_humidity_pct',
+  'conductivity_us_cm', 'conductivity_uS_cm',
+]
 
 function formatObservationValue(value: unknown, unit: string): string {
   if (typeof value === 'number') {
@@ -468,6 +500,17 @@ function labelForReading(ds: DatastreamSummary, result: any, valueKey: string): 
   const parameter = String(result?.parameter || '').toLowerCase()
   const observedProperty = String(result?.observedProperty || '').toLowerCase()
   const unit = String(result?.unit || '').toLowerCase()
+  if (valueKey === 'air_temperature_c' || valueKey === 'air_temp_c' || valueKey === 'temperature_c') return 'Air Temperature'
+  if (valueKey === 'relative_humidity_pct') return 'Relative Humidity'
+  if (valueKey === 'mean_sea_level_pressure_hpa' || valueKey === 'pressure_hpa') return 'Mean Sea Level Pressure'
+  if (valueKey === 'visibility_m' || valueKey === 'visibility_nmi') return 'Visibility'
+  if (valueKey === 'weather_code') return 'Weather Code'
+  if (valueKey === 'wind_direction_deg') return 'Wind Direction'
+  if (valueKey === 'wind_speed_ms') return 'Wind Speed'
+  if (valueKey === 'wind_gust_ms') return 'Wind Gust'
+  if (valueKey === 'pressure_tendency_code' || valueKey === 'pressure_tendency_hpa') return 'Pressure Tendency'
+  if (valueKey === 'water_temp_c' || valueKey === 'water_temperature_c') return 'Water Temperature'
+  if (valueKey === 'wave_height_m') return 'Wave Height'
   if (observedProperty.includes('water level maod') || valueKey.toLowerCase().includes('maod')) return 'Water Level maOD'
   if (observedProperty.includes('water temperature')) return 'Water Temperature'
   if (observedProperty.includes('conductivity')) return 'Conductivity'
@@ -475,16 +518,44 @@ function labelForReading(ds: DatastreamSummary, result: any, valueKey: string): 
   if (parameter === 'flow' || valueKey.toLowerCase().includes('flow')) return 'River flow'
   if (parameter === 'level' && unit === 'maod') return 'Groundwater level'
   if (parameter === 'level' || valueKey.toLowerCase().includes('level')) return 'River level'
-  if (valueKey === 'air_temperature_c') return 'Air Temperature'
-  if (valueKey === 'relative_humidity_pct') return 'Relative Humidity'
-  if (valueKey === 'mean_sea_level_pressure_hpa') return 'Mean Sea Level Pressure'
-  if (valueKey === 'visibility_m') return 'Visibility'
-  if (valueKey === 'weather_code') return 'Weather Code'
-  if (valueKey === 'wind_direction_deg') return 'Wind Direction'
-  if (valueKey === 'wind_speed_ms') return 'Wind Speed'
-  if (valueKey === 'wind_gust_ms') return 'Wind Gust'
-  if (valueKey === 'pressure_tendency_code') return 'Pressure Tendency'
   return ds.productLabel || ds.name || valueKey.replace(/_/g, ' ')
+}
+
+function chooseValueEntry(entries: Array<[string, unknown]>): [string, unknown] | undefined {
+  for (const key of VALUE_PRIORITY_KEYS) {
+    const found = entries.find(([entryKey]) => entryKey === key)
+    if (found) return found
+  }
+  return entries.find(([, value]) => typeof value === 'number') || entries[0]
+}
+
+function extractNumericObservationValue(ds: DatastreamSummary, obs: any): {
+  value: number
+  valueKey: string
+  unit: string
+  label: string
+  time: string
+} | null {
+  const result = obs?.result || {}
+  if (!result || typeof result !== 'object') return null
+  const entries = Object.entries(result).filter(([key, value]) =>
+    !RESULT_METADATA_KEYS.has(key)
+    && typeof value === 'number'
+    && Number.isFinite(value)
+  )
+  const valueEntry = chooseValueEntry(entries)
+  if (!valueEntry) return null
+  const [valueKey, value] = valueEntry
+  const unit = result.unit || ''
+  const time = obs.phenomenonTime || obs.resultTime || ''
+  if (!time) return null
+  return {
+    value: value as number,
+    valueKey,
+    unit,
+    label: labelForReading(ds, result, valueKey),
+    time,
+  }
 }
 
 function summarizeLatestReading(ds: DatastreamSummary, obs: any): LatestReadingSummary | null {
@@ -497,7 +568,7 @@ function summarizeLatestReading(ds: DatastreamSummary, obs: any): LatestReadingS
     && value !== undefined
     && (typeof value === 'number' || typeof value === 'string')
   )
-  const valueEntry = entries.find(([, value]) => typeof value === 'number') || entries[0]
+  const valueEntry = chooseValueEntry(entries)
   if (!valueEntry) return null
 
   const [valueKey, value] = valueEntry
@@ -520,20 +591,73 @@ function summarizeLatestReading(ds: DatastreamSummary, obs: any): LatestReadingS
 
 async function fetchLatestReading(ds: DatastreamSummary): Promise<LatestReadingSummary | null> {
   try {
-    let latestRes = await apiFetch(
-      `/datastreams/${ds.id}/observations?limit=1&resultTime=latest`,
+    const latestRes = await apiFetch(
+      `/datastreams/${ds.id}/observations?limit=1`,
       { headers: { 'Accept': 'application/json' } },
     )
-    if (latestRes.ok && latestRes.data && !(latestRes.data.items?.length || (Array.isArray(latestRes.data) && latestRes.data.length))) {
-      latestRes = await apiFetch(
-        `/datastreams/${ds.id}/observations?limit=1`,
-        { headers: { 'Accept': 'application/json' } },
-      )
-    }
     if (!latestRes.ok || !latestRes.data) return null
     const items = latestRes.data.items || latestRes.data || []
     if (!Array.isArray(items) || items.length === 0) return null
     return summarizeLatestReading(ds, items[0])
+  } catch {
+    return null
+  }
+}
+
+function trendWindowLabel(firstTime: string, lastTime: string): string {
+  const first = new Date(firstTime).getTime()
+  const last = new Date(lastTime).getTime()
+  if (!Number.isFinite(first) || !Number.isFinite(last) || last <= first) return 'Recent trend'
+  const hours = Math.max(1, Math.round((last - first) / (60 * 60 * 1000)))
+  if (hours >= 48) return `Last ${Math.round(hours / 24)}d`
+  return `Last ${hours}h`
+}
+
+async function fetchTrendSummary(ds: DatastreamSummary): Promise<TrendSummary | null> {
+  try {
+    if (isCameraDatastreamName(ds.name)) return null
+    const trendRes = await apiFetch(
+      `/datastreams/${ds.id}/observations?limit=48`,
+      { headers: { 'Accept': 'application/json' } },
+    )
+    if (!trendRes.ok || !trendRes.data) return null
+    const items = trendRes.data.items || trendRes.data || []
+    if (!Array.isArray(items) || items.length < 2) return null
+
+    const samples = items
+      .map(obs => extractNumericObservationValue(ds, obs))
+      .filter((sample): sample is NonNullable<typeof sample> => !!sample)
+      .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())
+
+    if (samples.length < 2) return null
+
+    const first = samples[0]!
+    const latest = samples[samples.length - 1]!
+    const values = samples.map(sample => sample.value)
+    const minValue = Math.min(...values)
+    const maxValue = Math.max(...values)
+    const range = maxValue - minValue
+    const delta = latest.value - first.value
+    const epsilon = Math.max(Math.abs(latest.value) * 0.005, range * 0.08, 0.0001)
+    const trendState: TrendSummary['trendState'] = Math.abs(delta) <= epsilon
+      ? 'steady'
+      : delta > 0 ? 'rising' : 'falling'
+    const trendLabel = trendState === 'steady'
+      ? 'Steady'
+      : trendState === 'rising' ? 'Rising' : 'Falling'
+
+    return {
+      datastreamId: ds.id,
+      label: latest.label,
+      unit: latest.unit,
+      windowLabel: trendWindowLabel(first.time, latest.time),
+      latestValue: formatObservationValue(latest.value, latest.unit),
+      latestRelativeTime: relativeTime(latest.time),
+      trendLabel,
+      trendState,
+      points: values,
+      sampleCount: samples.length,
+    }
   } catch {
     return null
   }
@@ -834,29 +958,20 @@ export function useDeployedSystemCard() {
 
       // ── Resolve procedures ───────────────────────────────────────
       const procedures: ProcedureSummary[] = []
-      if (systemId) {
-        try {
-          const procRes = await apiFetch(`/systems/${systemId}/procedures?limit=5`, {
-            headers: { 'Accept': 'application/json' },
-          })
-          if (procRes.ok && procRes.data) {
-            const procList = procRes.data.items || procRes.data || []
-            for (const p of (Array.isArray(procList) ? procList : [])) {
-              procedures.push({
-                id: p.id || '',
-                name: p.name || p.label || '',
-                description: p.description || '',
-                uid: p.uid || p.properties?.uid || '',
-              })
-            }
-          }
-        } catch { /* procedure fetch optional */ }
-      }
+      // Optional nested procedure discovery is intentionally skipped here.
+      // Some live OSH deployments return 400 for /systems/{id}/procedures;
+      // the card already has enough method/context from SensorML and docs.
 
       // ── Resolve latest observation summaries ─────────────────────
       const latestReadings = (await Promise.all(
         datastreams.slice(0, 3).map(ds => fetchLatestReading(ds)),
       )).filter((reading): reading is LatestReadingSummary => !!reading)
+      const trendSummaries = (await Promise.all(
+        datastreams
+          .filter(ds => !isCameraDatastreamName(ds.name))
+          .slice(0, 3)
+          .map(ds => fetchTrendSummary(ds)),
+      )).filter((trend): trend is TrendSummary => !!trend)
       const latestTime = latestReadings
         .map(reading => reading.phenomenonTime || reading.resultTime)
         .filter(Boolean)
@@ -872,24 +987,15 @@ export function useDeployedSystemCard() {
       let cameraThumbUrl = ''
       let cameraTimeLapseUrl = ''
       let cameraCamId = ''
-      const cameraDs = datastreams.find(ds =>
-        /buoycam|buoy[\s_-]?cam|camera|nims.*image|station.*image/i.test(ds.name)
-      )
+      const cameraDs = datastreams.find(ds => isCameraDatastreamName(ds.name))
       if (cameraDs) {
         const isBuoyCAM = /buoycam|buoy[\s_-]?cam/i.test(cameraDs.name)
         cameraLabel = isBuoyCAM ? 'Live BuoyCAM' : 'Live Camera'
         try {
-          let camRes = await apiFetch(
-            `/datastreams/${cameraDs.id}/observations?limit=1&resultTime=latest`,
+          const camRes = await apiFetch(
+            `/datastreams/${cameraDs.id}/observations?limit=1`,
             { headers: { 'Accept': 'application/json' } },
           )
-          // Fallback: Go CSAPI server ignores resultTime=latest
-          if (camRes.ok && camRes.data && !(camRes.data.items?.length || (Array.isArray(camRes.data) && camRes.data.length))) {
-            camRes = await apiFetch(
-              `/datastreams/${cameraDs.id}/observations?limit=1`,
-              { headers: { 'Accept': 'application/json' } },
-            )
-          }
           if (camRes.ok && camRes.data) {
             const camItems = camRes.data.items || camRes.data || []
             if (Array.isArray(camItems) && camItems.length > 0) {
@@ -1043,6 +1149,7 @@ export function useDeployedSystemCard() {
         capabilities: capChips.slice(0, 3),
         primaryDatastreams: datastreams.slice(0, 3),
         latestReadings,
+        trendSummaries,
         productLabels,
         latestActivityTime: latestTime || '',
         latestActivityRelative: latestTime ? relativeTime(latestTime) : 'No recent activity',
