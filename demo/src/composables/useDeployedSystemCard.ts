@@ -607,7 +607,9 @@ function summarizeForecast(ds: DatastreamSummary, obs: any): ForecastSummary | n
   const rawLeadTime = result.leadTimeHours
   const leadTimeHours = typeof rawLeadTime === 'number'
     ? `${rawLeadTime}h`
-    : (rawLeadTime ? String(rawLeadTime) : '')
+    : rawLeadTime && String(rawLeadTime).trim().toLowerCase() !== 'nan'
+      ? String(rawLeadTime)
+      : ''
 
   return {
     datastreamId: ds.id,
