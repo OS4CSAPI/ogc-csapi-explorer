@@ -330,6 +330,16 @@ const senrepForm = ref({
   sourceLobObsIds: '',
 })
 
+interface SenrepTrackPoint {
+  contactId: string
+  reportType: string
+  tgtType: string
+  lat: number
+  lon: number
+  time: string
+  senderId?: string
+}
+
 function generateContactId(): string {
   const d = new Date()
   const date = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
@@ -402,6 +412,104 @@ function onReportTypeChange() {
   }
 }
 
+const syncedSenrepTrackStates: Record<string, string> = {}
+
+function buildSenrepTrackUid(contactId: string): string {
+  return `urn:os4csapi:track:${contactId}`
+}
+
+function buildSenrepTrackSamplingFeature(track: SenrepTrackPoint): any {
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Point',
+      coordinates: [track.lon, track.lat],
+    },
+    properties: {
+      featureType: 'http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint',
+      uid: buildSenrepTrackUid(track.contactId),
+      name: `Track ${track.contactId}`,
+      description: `${track.tgtType || 'UAS'} contact track from latest ${track.reportType || 'SENREP'} by ${track.senderId || operatorInitials.value || 'XX'}`,
+      contactId: track.contactId,
+      latestReportType: track.reportType,
+      targetType: track.tgtType || 'UAS',
+      senderId: track.senderId || operatorInitials.value || 'XX',
+      latestSenrepTime: track.time,
+    },
+  }
+}
+
+function getSamplingFeatureServerId(item: any): string {
+  const props = item?.properties || {}
+  const rawId = item?.id || props.id || item?.['@id'] || ''
+  return typeof rawId === 'string' ? rawId.replace(/\/+$/, '').split('/').pop() || rawId : ''
+}
+
+function getSamplingFeatureUid(item: any): string {
+  const props = item?.properties || item || {}
+  return props.uid || item?.uid || ''
+}
+
+async function findSamplingFeatureByUid(uid: string): Promise<any | null> {
+  const sfListUrl = getListUrl('samplingFeatures', { limit: 500 } as any)
+  const sfListRes = await apiFetch(sfListUrl, {
+    headers: { 'Accept': 'application/geo+json' },
+  })
+  if (!sfListRes.ok || !sfListRes.data) return null
+
+  const sfItems = sfListRes.data.type === 'FeatureCollection'
+    ? (sfListRes.data.features || [])
+    : (sfListRes.data.items || [])
+  return sfItems.find((sf: any) => getSamplingFeatureUid(sf) === uid) || null
+}
+
+async function upsertSenrepTrackSamplingFeature(track: SenrepTrackPoint): Promise<boolean> {
+  if (!track.contactId || typeof track.lat !== 'number' || typeof track.lon !== 'number') return false
+
+  const signature = `${track.time}|${track.lat}|${track.lon}|${track.reportType}|${track.senderId || ''}`
+  if (syncedSenrepTrackStates[track.contactId] === signature) return false
+
+  const uid = buildSenrepTrackUid(track.contactId)
+  const body = JSON.stringify(buildSenrepTrackSamplingFeature(track))
+  const existing = await findSamplingFeatureByUid(uid)
+  const existingId = existing ? getSamplingFeatureServerId(existing) : ''
+
+  const res = existingId
+    ? await apiFetch(getUpdateUrl('samplingFeatures', existingId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/geo+json', 'Accept': 'application/json' },
+        body,
+      })
+    : await apiFetch('/samplingFeatures', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/geo+json', 'Accept': 'application/json' },
+        body,
+      })
+
+  if (res.ok) {
+    syncedSenrepTrackStates[track.contactId] = signature
+    return true
+  }
+  return false
+}
+
+async function syncSenrepTrackSamplingFeatures(parsed: SenrepTrackPoint[]): Promise<boolean> {
+  const latestByContact: Record<string, SenrepTrackPoint> = {}
+  for (const track of parsed) {
+    if (!track.contactId || track.contactId === 'SENREP') continue
+    const existing = latestByContact[track.contactId]
+    if (!existing || track.time > existing.time) latestByContact[track.contactId] = track
+  }
+
+  let changed = false
+  for (const track of Object.values(latestByContact)) {
+    try {
+      if (await upsertSenrepTrackSamplingFeature(track)) changed = true
+    } catch { /* non-fatal - SENREP observations still render */ }
+  }
+  return changed
+}
+
 async function submitSenrep(): Promise<void> {
   senrepSubmitting.value = true
   senrepSuccess.value = false
@@ -469,76 +577,23 @@ async function submitSenrep(): Promise<void> {
     if (res.ok) {
       senrepSuccess.value = true
 
-      // Phase 3.5: Create or update a SamplingFeature (track FOI) for this contact
-      if (senrepForm.value.reportType === 'INIT') {
-        try {
-          await apiFetch('/samplingFeatures', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/geo+json', 'Accept': 'application/json' },
-            body: JSON.stringify({
-              type: 'Feature',
-              geometry: {
-                type: 'Point',
-                coordinates: [senrepForm.value.estimatedLon, senrepForm.value.estimatedLat],
-              },
-              properties: {
-                featureType: 'http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint',
-                uid: `urn:os4csapi:track:${senrepForm.value.contactId}`,
-                name: `Track ${senrepForm.value.contactId}`,
-                description: `UAS contact track created on first SENREP by ${operatorInitials.value || 'XX'}`,
-              },
-            }),
-          })
-        } catch { /* non-fatal — track FOI is optional */ }
-      } else if (senrepForm.value.reportType === 'FUP' || senrepForm.value.reportType === 'FINAL') {
-        // Update the existing sampling feature's location to the latest estimate
-        try {
-          const trackUid = `urn:os4csapi:track:${senrepForm.value.contactId}`
-          // Find the sampling feature by UID — list with a limit and scan for match
-          const sfListUrl = getListUrl('samplingFeatures', { limit: 200 })
-          const sfListRes = await apiFetch(sfListUrl, {
-            headers: { 'Accept': 'application/geo+json' },
-          })
-          if (sfListRes.ok && sfListRes.data) {
-            const sfItems = sfListRes.data.type === 'FeatureCollection'
-              ? (sfListRes.data.features || [])
-              : (sfListRes.data.items || [])
-            const match = sfItems.find((sf: any) => {
-              const props = sf.properties || sf
-              return props.uid === trackUid
-            })
-            if (match) {
-              const sfId = match.id || match.properties?.id || match['@id']
-              if (sfId) {
-                const updateUrl = getUpdateUrl('samplingFeatures', sfId)
-                await apiFetch(updateUrl, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/geo+json', 'Accept': 'application/json' },
-                  body: JSON.stringify({
-                    type: 'Feature',
-                    geometry: {
-                      type: 'Point',
-                      coordinates: [senrepForm.value.estimatedLon, senrepForm.value.estimatedLat],
-                    },
-                    properties: {
-                      featureType: 'http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint',
-                      uid: trackUid,
-                      name: `Track ${senrepForm.value.contactId}`,
-                      description: `Location updated by ${senrepForm.value.reportType} SENREP from ${operatorInitials.value || 'XX'}`,
-                    },
-                  }),
-                })
-              }
-            }
-          }
-        } catch { /* non-fatal — location update is best-effort */ }
-      }
+      try {
+        await upsertSenrepTrackSamplingFeature({
+          contactId: senrepForm.value.contactId,
+          reportType: senrepForm.value.reportType || 'INIT',
+          tgtType: senrepForm.value.classification || 'UAS',
+          lat: senrepForm.value.estimatedLat,
+          lon: senrepForm.value.estimatedLon,
+          time: now.toISOString(),
+          senderId: operatorInitials.value || 'XX',
+        })
+      } catch { /* non-fatal - SENREP observation still succeeded */ }
 
       // Refresh SENREP markers to show the new one
       // Brief delay allows server to index the new observation before query
       await new Promise(resolve => setTimeout(resolve, 500))
       await loadSenrepMarkers()
-      // Also reload sampling features so the new track FOI appears
+      // Also reload sampling features so the new/updated track FOI appears
       const sfCount = await loadResourceType('samplingFeatures')
       featureCounts.value['samplingFeatures'] = sfCount
 
@@ -2673,8 +2728,7 @@ async function loadSenrepMarkers(): Promise<void> {
     }
 
     // Parse all valid SENREP observations and group by contactId for track lines
-    interface SenrepObs { obs: any; contactId: string; reportType: string; tgtType: string; lat: number; lon: number; time: string }
-    const parsed: SenrepObs[] = []
+    const parsed: Array<SenrepTrackPoint & { obs: any }> = []
     for (const obs of items) {
       const result = obs.result
       if (!result) continue
@@ -2688,6 +2742,7 @@ async function loadSenrepMarkers(): Promise<void> {
         tgtType: result.tgtTyp || 'UAS',
         lat, lon,
         time: obs.phenomenonTime || '',
+        senderId: result.senderId || '',
       })
     }
 
@@ -2780,6 +2835,12 @@ async function loadSenrepMarkers(): Promise<void> {
     source.clear()
     source.addFeatures(batch)
     featureCounts.value['senrepMarkers'] = parsed.length
+
+    const tracksChanged = await syncSenrepTrackSamplingFeatures(parsed)
+    if (tracksChanged) {
+      const sfCount = await loadResourceType('samplingFeatures')
+      featureCounts.value['samplingFeatures'] = sfCount
+    }
   } catch {
     // No data available — clear stale features
     source.clear()
