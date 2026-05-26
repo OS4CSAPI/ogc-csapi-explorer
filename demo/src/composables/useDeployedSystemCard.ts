@@ -50,6 +50,7 @@ export interface DeployedSystemCardModel {
   capabilities: string[]
   primaryDatastreams: DatastreamSummary[]
   latestReadings: LatestReadingSummary[]
+  forecastSummaries: ForecastSummary[]
   trendSummaries: TrendSummary[]
   productLabels: string[]
   latestActivityTime: string
@@ -108,6 +109,18 @@ export interface LatestReadingSummary {
   relativeTime: string
   quality: string
   freshnessState: 'current' | 'recent' | 'stale' | 'unknown'
+}
+
+export interface ForecastSummary {
+  datastreamId: string
+  label: string
+  value: string
+  unit: string
+  issuedTime: string
+  validTime: string
+  relativeValidTime: string
+  leadTimeHours: string
+  forecastType: string
 }
 
 export interface TrendSummary {
@@ -449,6 +462,21 @@ function relativeTime(isoString: string): string {
   }
 }
 
+function relativeForecastTime(isoString: string): string {
+  if (!isoString) return ''
+  const then = new Date(isoString).getTime()
+  if (!Number.isFinite(then)) return isoString
+  const diffMs = then - Date.now()
+  const absMs = Math.abs(diffMs)
+  const mins = Math.floor(absMs / 60000)
+  if (mins < 1) return diffMs >= 0 ? 'now' : 'just now'
+  if (mins < 60) return diffMs >= 0 ? `in ${mins}m` : `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return diffMs >= 0 ? `in ${hrs}h` : `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  return diffMs >= 0 ? `in ${days}d` : `${days}d ago`
+}
+
 function readingFreshnessState(isoString: string): LatestReadingSummary['freshnessState'] {
   if (!isoString) return 'unknown'
   const then = new Date(isoString).getTime()
@@ -464,11 +492,17 @@ function isCameraDatastreamName(name: string): boolean {
   return /buoycam|buoy[\s_-]?cam|camera|nims.*image|station.*image/i.test(name)
 }
 
+function isForecastDatastream(ds: DatastreamSummary): boolean {
+  const text = [ds.name, ds.productLabel, ...ds.observedProperties].filter(Boolean).join(' ')
+  return /forecast|global spot|site[-\s]?specific/i.test(text)
+}
+
 const RESULT_METADATA_KEYS = new Set([
   'stationId', 'stationName', 'measureId', 'parameter', 'unit', 'valueType',
   'quality', 'completeness', 'sourceUrl', 'lat', 'lon', 'alt', 'latitude', 'longitude',
   'lat_deg', 'lon_deg',
   'locationId', 'geohash',
+  'forecastType', 'issuedTime', 'validTime', 'leadTimeHours',
   'imageUrl', 'latestImageUrl', 'thumbUrl', 'mediaType', 'contentLength', 'camId',
   'thingId', 'sourceThingId', 'sourceDatastreamId', 'observedProperty', 'sourceObservationId', 'publishFlag',
 ])
@@ -481,6 +515,7 @@ const VALUE_PRIORITY_KEYS = [
   'river_flow_m3s', 'flow_m3s', 'discharge_m3s',
   'rainfall_mm',
   'wind_speed_ms', 'wind_gust_ms',
+  'precipitation_probability_pct', 'weather_code',
   'pressure_hpa', 'mean_sea_level_pressure_hpa',
   'relative_humidity_pct',
   'conductivity_us_cm', 'conductivity_uS_cm',
@@ -537,6 +572,7 @@ function labelForReading(ds: DatastreamSummary, result: any, valueKey: string): 
   if (valueKey === 'wind_direction_deg') return 'Wind Direction'
   if (valueKey === 'wind_speed_ms') return 'Wind Speed'
   if (valueKey === 'wind_gust_ms') return 'Wind Gust'
+  if (valueKey === 'precipitation_probability_pct') return 'Precipitation Probability'
   if (valueKey === 'pressure_tendency_code' || valueKey === 'pressure_tendency_hpa') return 'Pressure Tendency'
   if (valueKey === 'water_temp_c' || valueKey === 'water_temperature_c') return 'Water Temperature'
   if (valueKey === 'wave_height_m') return 'Wave Height'
@@ -548,6 +584,69 @@ function labelForReading(ds: DatastreamSummary, result: any, valueKey: string): 
   if (parameter === 'level' && unit === 'maod') return 'Groundwater level'
   if (parameter === 'level' || valueKey.toLowerCase().includes('level')) return 'River level'
   return ds.productLabel || ds.name || valueKey.replace(/_/g, ' ')
+}
+
+function summarizeForecast(ds: DatastreamSummary, obs: any): ForecastSummary | null {
+  const result = obs?.result || {}
+  if (!result || typeof result !== 'object') return null
+
+  const validTime = result.validTime || obs.phenomenonTime || ''
+  if (!validTime) return null
+
+  const entries = Object.entries(result).filter(([key, value]) =>
+    !RESULT_METADATA_KEYS.has(key)
+    && value !== null
+    && value !== undefined
+    && (typeof value === 'number' || (typeof value === 'string' && value.trim() && value.trim().toLowerCase() !== 'nan'))
+  )
+  const valueEntry = chooseValueEntry(entries, ds, result)
+  if (!valueEntry) return null
+
+  const [valueKey, value] = valueEntry
+  const unit = unitForValueKey(valueKey, result)
+  const rawLeadTime = result.leadTimeHours
+  const leadTimeHours = typeof rawLeadTime === 'number'
+    ? `${rawLeadTime}h`
+    : (rawLeadTime ? String(rawLeadTime) : '')
+
+  return {
+    datastreamId: ds.id,
+    label: labelForReading(ds, result, valueKey),
+    value: formatObservationValue(value, unit),
+    unit,
+    issuedTime: result.issuedTime || obs.resultTime || '',
+    validTime,
+    relativeValidTime: relativeForecastTime(validTime),
+    leadTimeHours,
+    forecastType: result.forecastType || 'Forecast',
+  }
+}
+
+async function fetchForecastSummary(ds: DatastreamSummary): Promise<ForecastSummary | null> {
+  try {
+    const forecastRes = await apiFetch(
+      `/datastreams/${ds.id}/observations?limit=24`,
+      { headers: { 'Accept': 'application/json' } },
+    )
+    if (!forecastRes.ok || !forecastRes.data) return null
+    const items = forecastRes.data.items || forecastRes.data || []
+    if (!Array.isArray(items) || items.length === 0) return null
+    const now = Date.now()
+    const forecasts = items
+      .map(obs => summarizeForecast(ds, obs))
+      .filter((summary): summary is ForecastSummary => !!summary)
+      .sort((a, b) => {
+        const aTime = new Date(a.validTime).getTime()
+        const bTime = new Date(b.validTime).getTime()
+        const aFuture = Number.isFinite(aTime) && aTime >= now
+        const bFuture = Number.isFinite(bTime) && bTime >= now
+        if (aFuture !== bFuture) return aFuture ? -1 : 1
+        return Math.abs(aTime - now) - Math.abs(bTime - now)
+      })
+    return forecasts[0] || null
+  } catch {
+    return null
+  }
 }
 
 function unitForValueKey(valueKey: string, result: any): string {
@@ -1024,11 +1123,16 @@ export function useDeployedSystemCard() {
       // the card already has enough method/context from SensorML and docs.
 
       // ── Resolve latest observation summaries ─────────────────────
+      const forecastDatastreams = datastreams.filter(ds => isForecastDatastream(ds))
+      const observationDatastreams = datastreams.filter(ds => !isForecastDatastream(ds))
+      const forecastSummaries = (await Promise.all(
+        forecastDatastreams.slice(0, 3).map(ds => fetchForecastSummary(ds)),
+      )).filter((forecast): forecast is ForecastSummary => !!forecast)
       const latestReadings = (await Promise.all(
-        datastreams.slice(0, 3).map(ds => fetchLatestReading(ds)),
+        observationDatastreams.slice(0, 3).map(ds => fetchLatestReading(ds)),
       )).filter((reading): reading is LatestReadingSummary => !!reading)
       const trendSummaries = (await Promise.all(
-        datastreams
+        observationDatastreams
           .filter(ds => !isCameraDatastreamName(ds.name))
           .slice(0, 3)
           .map(ds => fetchTrendSummary(ds)),
@@ -1210,6 +1314,7 @@ export function useDeployedSystemCard() {
         capabilities: capChips.slice(0, 3),
         primaryDatastreams: datastreams.slice(0, 3),
         latestReadings,
+        forecastSummaries,
         trendSummaries,
         productLabels,
         latestActivityTime: latestTime || '',

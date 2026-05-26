@@ -77,6 +77,13 @@ function trendIcon(state: TrendSummary['trendState']): string {
   return 'pi-minus'
 }
 
+function formatTimestamp(value: string): string {
+  if (!value) return ''
+  const time = new Date(value)
+  if (!Number.isFinite(time.getTime())) return value
+  return time.toLocaleString()
+}
+
 function sparklinePoints(points: number[]): string {
   if (points.length < 2) return ''
   const min = Math.min(...points)
@@ -228,7 +235,37 @@ const trustLine = computed(() => {
       </ul>
     </section>
 
-    <!-- ── 4. LATEST READINGS ── -->
+    <!-- ── 4. FORECASTS ── -->
+    <section v-if="card.forecastSummaries.length" class="dsc-sec dsc-forecasts">
+      <h3 class="dsc-sec-hd"><i class="pi pi-calendar-clock"></i> Forecast</h3>
+      <div class="dsc-forecast-list">
+        <div
+          v-for="forecast in card.forecastSummaries"
+          :key="forecast.datastreamId"
+          class="dsc-forecast-item"
+        >
+          <div class="dsc-forecast-main">
+            <span class="dsc-forecast-label">{{ forecast.label }}</span>
+            <span class="dsc-forecast-value">
+              {{ forecast.value }}
+            </span>
+          </div>
+          <div class="dsc-forecast-meta">
+            <span v-if="forecast.validTime" :title="forecast.validTime">
+              Valid {{ forecast.relativeValidTime }}
+            </span>
+            <span v-if="forecast.leadTimeHours" class="dsc-forecast-lead">
+              Lead {{ forecast.leadTimeHours }}
+            </span>
+            <span v-if="forecast.issuedTime" :title="forecast.issuedTime">
+              Issued {{ formatTimestamp(forecast.issuedTime) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 4b. LATEST READINGS ── -->
     <section v-if="card.latestReadings.length" class="dsc-sec">
       <h3 class="dsc-sec-hd"><i class="pi pi-bolt"></i> Latest readings</h3>
       <div class="dsc-reading-list">
@@ -259,7 +296,7 @@ const trustLine = computed(() => {
       </div>
     </section>
 
-    <!-- ── 4b. RECENT TRENDS ── -->
+    <!-- ── 4c. RECENT TRENDS ── -->
     <section v-if="card.trendSummaries.length" class="dsc-sec dsc-trends">
       <h3 class="dsc-sec-hd"><i class="pi pi-chart-line"></i> Recent trend</h3>
       <div class="dsc-trend-list">
@@ -603,6 +640,55 @@ const trustLine = computed(() => {
 }
 
 /* ═══ Latest Readings ═══ */
+.dsc-forecast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.dsc-forecast-item {
+  padding: 0.4rem 0.5rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+}
+.dsc-forecast-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.dsc-forecast-label {
+  min-width: 0;
+  color: #075985;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.dsc-forecast-value {
+  flex-shrink: 0;
+  color: #0c4a6e;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+.dsc-forecast-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+  color: #0369a1;
+  font-size: 0.7rem;
+}
+.dsc-forecast-lead {
+  padding: 0.05rem 0.32rem;
+  border-radius: 999px;
+  border: 1px solid #7dd3fc;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
 .dsc-reading-list {
   display: flex;
   flex-direction: column;
