@@ -132,7 +132,7 @@ def seed_detection_ranges() -> int:
     number of datastreams that were (re-)seeded.
     """
     seeded = 0
-    for ds_id in DETECTION_DS_IDS:
+    for ds_id in discover_detection_datastream_ids():
         try:
             resp = api_get(f"datastreams/{ds_id}/observations?resultTime=latest&limit=1")
             items = resp.get("items", []) if resp else []
@@ -176,14 +176,13 @@ def simulation_worker(st: SimState):
 
         # ── Verify SENREP infrastructure ─────────────────────────────
         try:
-            senrep_id = SENREP_DS_IDS[0]  # primary SENREP DS
-            resp = api_get(f"datastreams/{senrep_id}")
-            if resp and resp.get("id") == senrep_id:
-                print(f"[sim] SENREP infrastructure verified (DS {senrep_id} exists)")
+            senrep_ids = discover_senrep_datastream_ids()
+            if senrep_ids:
+                print(f"[sim] SENREP infrastructure verified (DS {senrep_ids[0]} exists)")
             else:
-                print(f"[sim] WARNING: SENREP DS {senrep_id} not found — report submission will fail")
+                print("[sim] WARNING: SENREP DS not found — report submission will fail")
         except Exception:
-            print(f"[sim] WARNING: Could not verify SENREP DS {SENREP_DS_IDS[0]}")
+            print("[sim] WARNING: Could not verify SENREP DS")
 
         # ── Discover datastream IDs ──────────────────────────────────
         with st.lock:
@@ -398,25 +397,64 @@ LOCALIZER_CORRELATION_WINDOW = 10  # max timestamp spread within a fusion group
 LOCALIZER_RESIDUAL_CAP = 500   # metres — reject wild intersections
 LOCALIZER_MIN_LOBS = 2         # need at least 2 bearings for a fix
 
-# Detection-capabilities datastreams — NEVER cleared (static config, auto-seeded)
-# Updated 2026-03-11 after H2 MVStore rebuild
-DETECTION_DS_IDS = ["04k0", "04o0", "04s0"]  # MA-1, MA-2, MA-3
+SET_SYSTEM_UID = "urn:os4csapi:system:set:ft-huachuca:001"
+SENREP_OUTPUT_NAMES = {"senrep", "senrep_v1_1"}
+DETECTION_OUTPUT_SUFFIX = "_detection_capabilities"
 
-# SENREP datastreams — cleared only on /reset (Tier 3)
-# Updated 2026-03-11 after H2 MVStore rebuild
-SENREP_DS_IDS = ["04g0", "04sg"]  # senrep + senrep_v1_1
 
-# Sim/localizer datastreams — cleared on /clear (Tier 2)
-# Updated 2026-03-11 after H2 MVStore rebuild
-SIM_DS_IDS = [
-    "04gg", "04h0", "04hg", "04i0", "04ig", "04j0", "04jg",  # MA-1 (04hg = LOB)
-    "04kg", "04l0", "04lg", "04m0", "04mg", "04n0", "04ng",  # MA-2 (04lg = LOB)
-    "04og", "04p0", "04pg", "04q0", "04qg", "04r0", "04rg",  # MA-3 (04pg = LOB)
-    "04t0",  # Location Estimate (localizer v3 — re-bootstrapped 2026-03-10)
-]
+def _list_system_datastreams(system_id: str) -> list[dict]:
+    result = api_get(f"systems/{system_id}/datastreams?limit=100")
+    if not result:
+        return []
+    return result.get("items", [])
 
-# Combined list (for reference)
-ALL_DS_IDS = SIM_DS_IDS + SENREP_DS_IDS + DETECTION_DS_IDS
+
+def _ds_output_name(ds: dict) -> str:
+    props = ds.get("properties", {})
+    return str(ds.get("outputName") or props.get("outputName") or "")
+
+
+def _discover_node_datastream_ids(*, include_detection: bool) -> list[str]:
+    ids: list[str] = []
+    for node in NODES:
+        sys_id = find_system_id(node["uid"])
+        if not sys_id:
+            continue
+        for ds in _list_system_datastreams(sys_id):
+            ds_id = ds.get("id")
+            if not ds_id:
+                continue
+            output_name = _ds_output_name(ds)
+            is_detection = output_name.endswith(DETECTION_OUTPUT_SUFFIX)
+            if include_detection == is_detection:
+                ids.append(ds_id)
+    return ids
+
+
+def discover_detection_datastream_ids() -> list[str]:
+    return _discover_node_datastream_ids(include_detection=True)
+
+
+def discover_sim_datastream_ids() -> list[str]:
+    ids = _discover_node_datastream_ids(include_detection=False)
+    try:
+        ids.append(discover_localizer_ds())
+    except Exception as exc:
+        print(f"[reset] Localizer datastream discovery skipped: {exc}")
+    return ids
+
+
+def discover_senrep_datastream_ids() -> list[str]:
+    sys_id = find_system_id(SET_SYSTEM_UID)
+    if not sys_id:
+        return []
+    ids: list[str] = []
+    for ds in _list_system_datastreams(sys_id):
+        ds_id = ds.get("id")
+        output_name = _ds_output_name(ds)
+        if ds_id and output_name in SENREP_OUTPUT_NAMES:
+            ids.append(ds_id)
+    return ids
 
 
 def clear_observations(ds_ids: list[str], protected_ds_ids: list[str] | None = None) -> dict[str, int]:
@@ -496,7 +534,7 @@ def clear_observations(ds_ids: list[str], protected_ds_ids: list[str] | None = N
                     protected_skipped += 1
                     continue
 
-                del_url = f"{BASE_URL}/datastreams/{ds_id}/observations/{obs_id}"
+                del_url = f"{BASE_URL}/datastreams/{obs_ds}/observations/{obs_id}"
                 del_req = urllib.request.Request(del_url, method="DELETE", headers={
                     "Authorization": auth,
                 })
@@ -727,7 +765,10 @@ def clear_sim_data():
         if state.running:
             return MessageResponse(ok=False, message="Stop simulator before clearing")
 
-    result = clear_observations(SIM_DS_IDS, protected_ds_ids=DETECTION_DS_IDS + SENREP_DS_IDS)
+    sim_ds_ids = discover_sim_datastream_ids()
+    detection_ds_ids = discover_detection_datastream_ids()
+    senrep_ds_ids = discover_senrep_datastream_ids()
+    result = clear_observations(sim_ds_ids, protected_ds_ids=detection_ds_ids + senrep_ds_ids)
     # Re-seed detection ranges so they're recent and discoverable despite scope-leak
     reseeded = seed_detection_ranges()
     return MessageResponse(
@@ -746,7 +787,10 @@ def reset_demo():
     # Clear sampling features FIRST — the OSH server may cascade-delete them
     # when observations are removed, so we must find them before obs cleanup.
     sf_result = clear_sampling_features()
-    result = clear_observations(SIM_DS_IDS + SENREP_DS_IDS, protected_ds_ids=DETECTION_DS_IDS)
+    sim_ds_ids = discover_sim_datastream_ids()
+    senrep_ds_ids = discover_senrep_datastream_ids()
+    detection_ds_ids = discover_detection_datastream_ids()
+    result = clear_observations(sim_ds_ids + senrep_ds_ids, protected_ds_ids=detection_ds_ids)
     # Re-seed detection ranges so they're recent and discoverable despite scope-leak
     reseeded = seed_detection_ranges()
     obs_msg = f"{result['deleted']} observations ({result['errors']} errors, {result['protected_skipped']} protected)"

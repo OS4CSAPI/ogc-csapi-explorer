@@ -321,15 +321,6 @@ RESIDUAL_CAP          = 500    # metres
 MIN_LOBS              = 2
 
 
-# System IDs for the 3 MA nodes (for LOB datastream discovery)
-# Updated 2026-03-11 after H2 MVStore rebuild
-SYSTEM_IDS = {
-    "AZ-MA-1": "04f0",
-    "AZ-MA-2": "04fg",
-    "AZ-MA-3": "04g0",
-}
-
-
 def wls_bearing_intersection(lobs: list[dict]) -> dict | None:
     """
     Weighted least-squares bearing intersection.
@@ -444,7 +435,12 @@ def discover_lob_datastreams() -> dict[str, str]:
     Returns {node_name: ds_id}.
     """
     lob_ds = {}
-    for name, sys_id in SYSTEM_IDS.items():
+    for node in NODES:
+        name = node["name"]
+        sys_id = find_system_id(node["uid"])
+        if not sys_id:
+            raise RuntimeError(f"System {name} ({node['uid']}): not found")
+
         result = api_get(f"systems/{sys_id}/datastreams")
         if not result or "items" not in result:
             raise RuntimeError(f"System {name} ({sys_id}): no datastreams found")
