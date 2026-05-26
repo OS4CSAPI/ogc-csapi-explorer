@@ -153,10 +153,15 @@ function classifyObsSource(dsName: string): string {
   if (n.includes('discharge') || n.includes('gage height')
     || n.includes('streamflow') || (n.includes('usgs') && n.includes('water'))) return 'src-water'
   if (n.includes('nims') || n.includes('station image')) return 'src-nims'
-  if (n.includes('environment agency') || n.includes('ea hydrology')) return 'src-ea-hydrology'
-  if (n.includes('uk-air') || n.includes('uk air') || n.includes('air quality')) return 'src-uk-air'
-  if (n.includes('bgs') || n.includes('sensorthings') || n.includes('ukgeos') || n.includes('hydro logger')) return 'src-bgs'
-  if (n.includes('met office') || n.includes('weather datahub') || n.includes('land observations')) return 'src-met-office'
+  if (n.includes('environment agency') || n.includes('ea hydrology')
+    || n.includes('river level') || n.includes('river flow') || n.includes('rainfall')) return 'src-ea-hydrology'
+  if (n.includes('uk-air') || n.includes('uk air') || n.includes('air quality')
+    || n.includes('nitrogen dioxide') || n.includes('particulate matter') || n.includes('ozone')) return 'src-uk-air'
+  if (n.includes('bgs') || n.includes('sensorthings') || n.includes('ukgeos') || n.includes('hydro logger')
+    || n.includes('water level maod') || n.includes('conductivity') || n.includes('water temperature')) return 'src-bgs'
+  if (n.includes('met office') || n.includes('weather datahub') || n.includes('land observations')
+    || n.includes('air temperature') || n.includes('wind speed') || n.includes('wind gust')
+    || n.includes('mean sea level pressure') || n.includes('pressure tendency') || n.includes('relative humidity')) return 'src-met-office'
   // Generic position/location fallback — still ISS-like
   if (n.includes('position') || n.includes('location') || n.includes('gps')) return 'src-iss'
   return 'src-other'
@@ -1407,6 +1412,16 @@ function isLocationRelatedDatastream(ds: any): boolean {
   if (name.includes('discharge') || name.includes('gage') || name.includes('streamflow')) return true
   // USGS NIMS imagery
   if (name.includes('nims') || name.includes('station image')) return true
+  // New public-station publishers with static deployment geometry and scalar observations
+  if (name.includes('environment agency') || name.includes('ea hydrology')
+    || name.includes('river level') || name.includes('river flow') || name.includes('rainfall')) return true
+  if (name.includes('uk-air') || name.includes('uk air') || name.includes('air quality')
+    || name.includes('nitrogen dioxide') || name.includes('particulate matter') || name.includes('ozone')) return true
+  if (name.includes('bgs') || name.includes('sensorthings') || name.includes('ukgeos') || name.includes('hydro logger')
+    || name.includes('water level maod') || name.includes('conductivity') || name.includes('water temperature')) return true
+  if (name.includes('met office') || name.includes('weather datahub') || name.includes('land observations')
+    || name.includes('air temperature') || name.includes('wind speed') || name.includes('wind gust')
+    || name.includes('mean sea level pressure') || name.includes('pressure tendency') || name.includes('relative humidity')) return true
 
   const rawProps = ds.observedProperties
   const props: any[] = Array.isArray(rawProps) ? rawProps : rawProps ? [rawProps] : []
@@ -1634,6 +1649,15 @@ async function buildSystemLocationCache(): Promise<void> {
           || nm.includes('co-ops') || nm.includes('coops') || nm.includes('tide') || nm.includes('coastal')
           || nm.includes('discharge') || nm.includes('gage') || nm.includes('streamflow')
           || nm.includes('nims') || nm.includes('station image')
+          || nm.includes('environment agency') || nm.includes('ea hydrology')
+          || nm.includes('river level') || nm.includes('river flow') || nm.includes('rainfall')
+          || nm.includes('uk-air') || nm.includes('uk air') || nm.includes('air quality')
+          || nm.includes('nitrogen dioxide') || nm.includes('particulate matter') || nm.includes('ozone')
+          || nm.includes('bgs') || nm.includes('sensorthings') || nm.includes('ukgeos') || nm.includes('hydro logger')
+          || nm.includes('water level maod') || nm.includes('conductivity') || nm.includes('water temperature')
+          || nm.includes('met office') || nm.includes('weather datahub') || nm.includes('land observations')
+          || nm.includes('air temperature') || nm.includes('wind speed') || nm.includes('wind gust')
+          || nm.includes('mean sea level pressure') || nm.includes('pressure tendency') || nm.includes('relative humidity')
         return pass
       })
       .map((ds: any) => ({
@@ -1766,7 +1790,16 @@ async function enrichResourcesWithLocations(): Promise<void> {
           || nm.includes('ndbc') || nm.includes('buoy')
           || nm.includes('co-ops') || nm.includes('coops') || nm.includes('tide') || nm.includes('coastal')
           || nm.includes('discharge') || nm.includes('gage') || nm.includes('streamflow')
-          || nm.includes('nims') || nm.includes('station image')) {
+          || nm.includes('nims') || nm.includes('station image')
+          || nm.includes('environment agency') || nm.includes('ea hydrology')
+          || nm.includes('river level') || nm.includes('river flow') || nm.includes('rainfall')
+          || nm.includes('uk-air') || nm.includes('uk air') || nm.includes('air quality')
+          || nm.includes('nitrogen dioxide') || nm.includes('particulate matter') || nm.includes('ozone')
+          || nm.includes('bgs') || nm.includes('sensorthings') || nm.includes('ukgeos') || nm.includes('hydro logger')
+          || nm.includes('water level maod') || nm.includes('conductivity') || nm.includes('water temperature')
+          || nm.includes('met office') || nm.includes('weather datahub') || nm.includes('land observations')
+          || nm.includes('air temperature') || nm.includes('wind speed') || nm.includes('wind gust')
+          || nm.includes('mean sea level pressure') || nm.includes('pressure tendency') || nm.includes('relative humidity')) {
           locationDatastreamList.push({
             id: ds.id,
             name: ds.name || ds.outputName || 'Unknown',
