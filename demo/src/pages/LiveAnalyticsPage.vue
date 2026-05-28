@@ -31,12 +31,12 @@ const PROXY_BASE = '/api/osh'
 const AUTH_HEADER = 'Basic ' + btoa('os4csapi:ogc134mm')
 const POLL_INTERVAL_MS = 10_000
 
-// Datastream IDs
-// Updated 2026-03-11 after H2 MVStore rebuild
-const LOB_DS_IDS  = ['04hg', '04lg', '04pg']  // MA-1, MA-2, MA-3
+// Datastream discovery keys. SensorHub assigns new datastream IDs after rebuilds,
+// so the analytics pipeline keys off stable output names instead.
+const LOB_OUTPUT_NAMES = ['az_ma_1_lob', 'az_ma_2_lob', 'az_ma_3_lob']
 const LOB_LABELS  = ['AZ-MA-1', 'AZ-MA-2', 'AZ-MA-3']
 const LOB_COLORS  = ['#f97316', '#facc15', '#a78bfa'] // orange, yellow, purple
-const SENREP_DS   = '04g0'
+const SENREP_OUTPUT_NAME = 'senrep'
 
 // Sensor positions (authoritative deployment coordinates)
 const SENSORS = [
@@ -109,7 +109,7 @@ const predictedTrajectory = reactive<PredictedPoint[]>([])
 const mapContainer = ref<HTMLDivElement | null>(null)
 let leafletMap: L.Map | null = null
 let tileLayer: L.TileLayer | null = null
-const darkMap = ref(true)
+const darkMap = ref(false)
 let uasTrackLine: L.Polyline | null = null
 let uasMarker: L.CircleMarker | null = null
 let cepCircle: L.Circle | null = null
@@ -139,6 +139,8 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 
 // Localized datastream discovery
 let localizerDsId = ''
+let senrepDsId = ''
+const lobDsIds = reactive<string[]>([])
 
 // ════════════════════════════════════════════════════════════════════════════
 //  HTTP helper
@@ -170,14 +172,33 @@ async function apiFetchJson(path: string): Promise<any> {
 //  Data fetching
 // ════════════════════════════════════════════════════════════════════════════
 
-async function discoverLocalizerDs(): Promise<void> {
-  const data = await apiFetchJson('/datastreams?limit=200')
+function datastreamText(ds: any): string {
+  return [ds.outputName, ds.name, ds.description]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+}
+
+async function discoverScenarioDatastreams(): Promise<void> {
+  const data = await apiFetchJson('/datastreams?limit=500')
   const dsList = data.items || data.features || []
   const loc = dsList.find((ds: any) => {
-    const nm = (ds.outputName || ds.name || '').toLowerCase()
-    return nm.includes('location_estimate')
+    return datastreamText(ds).includes('location_estimate')
   })
   if (loc) localizerDsId = loc.id
+
+  LOB_OUTPUT_NAMES.forEach((outputName, index) => {
+    const lob = dsList.find((ds: any) => (ds.outputName || '').toLowerCase() === outputName)
+      || dsList.find((ds: any) => {
+        const text = datastreamText(ds)
+        return text.includes(LOB_LABELS[index].toLowerCase()) && text.includes('lob')
+      })
+    lobDsIds[index] = lob?.id || ''
+  })
+
+  const senrep = dsList.find((ds: any) => (ds.outputName || '').toLowerCase() === SENREP_OUTPUT_NAME)
+    || dsList.find((ds: any) => datastreamText(ds).includes('senrep'))
+  if (senrep) senrepDsId = senrep.id
 }
 
 async function fetchUasFixes(): Promise<void> {
@@ -211,9 +232,12 @@ async function fetchUasFixes(): Promise<void> {
 }
 
 async function fetchLobs(): Promise<void> {
-  for (let i = 0; i < LOB_DS_IDS.length; i++) {
+  for (let i = 0; i < LOB_LABELS.length; i++) {
+    const dsId = lobDsIds[i]
+    if (!dsId) continue
+
     try {
-      const data = await apiFetch(`/datastreams/${LOB_DS_IDS[i]}/observations?limit=200&sortBy=resultTime&sortOrder=asc`)
+      const data = await apiFetch(`/datastreams/${dsId}/observations?limit=200&sortBy=resultTime&sortOrder=asc`)
       const items = (data.items || []).filter((o: any) =>
         o?.result && typeof o.result.bearingTrue === 'number'
       )
@@ -243,8 +267,10 @@ async function fetchLobs(): Promise<void> {
 }
 
 async function fetchSenreps(): Promise<void> {
+  if (!senrepDsId) return
+
   try {
-    const data = await apiFetch(`/datastreams/${SENREP_DS}/observations?limit=50&sortBy=resultTime&sortOrder=desc`)
+    const data = await apiFetch(`/datastreams/${senrepDsId}/observations?limit=50&sortBy=resultTime&sortOrder=desc`)
     const items = (data.items || []).filter((o: any) =>
       o?.result && typeof o.result.etaLat === 'number' && typeof o.result.etaLon === 'number' && o.result.title
     )
@@ -395,8 +421,8 @@ function initMap(): void {
     zoomControl: true,
   })
 
-  tileLayer = L.tileLayer(TILE_DARK, {
-    attribution: ATTR_DARK,
+  tileLayer = L.tileLayer(TILE_LIGHT, {
+    attribution: ATTR_LIGHT,
     maxZoom: 19,
   }).addTo(leafletMap)
 
@@ -472,7 +498,7 @@ function updateMap(): void {
   if (lobLayerGroup) {
     lobLayerGroup.clearLayers()
     // Show latest LOB per sensor
-    for (let i = 0; i < LOB_DS_IDS.length; i++) {
+    for (let i = 0; i < LOB_LABELS.length; i++) {
       const sensorLobs = lobObs.filter(l => l.dsIndex === i)
       if (!sensorLobs.length) continue
       const latest = sensorLobs[sensorLobs.length - 1]
@@ -613,7 +639,7 @@ function renderDashboard(): void {
 
   // 2. LOB Bearings over time (one series per sensor)
   if (chartBearing.value) {
-    const datasets = LOB_DS_IDS.map((_, i) => {
+    const datasets = LOB_LABELS.map((_, i) => {
       const sensorLobs = lobObs.filter(l => l.dsIndex === i)
       return {
         label: LOB_LABELS[i],
@@ -656,7 +682,7 @@ function renderDashboard(): void {
 
   // 3. Bearing StdDev over time
   if (chartStdDev.value) {
-    const datasets = LOB_DS_IDS.map((_, i) => {
+    const datasets = LOB_LABELS.map((_, i) => {
       const sensorLobs = lobObs.filter(l => l.dsIndex === i)
       return {
         label: LOB_LABELS[i],
@@ -925,6 +951,9 @@ function renderMlCharts(): void {
 
 async function poll(): Promise<void> {
   try {
+    if (!localizerDsId || !senrepDsId || lobDsIds.filter(Boolean).length < LOB_LABELS.length) {
+      await discoverScenarioDatastreams()
+    }
     await Promise.all([fetchUasFixes(), fetchLobs(), fetchSenreps()])
     computeML()
     updateMap()
@@ -971,7 +1000,7 @@ const anomalyCount = computed(() => anomalyResults.filter(a => a.isAnomaly).leng
 
 onMounted(async () => {
   try {
-    await discoverLocalizerDs()
+    await discoverScenarioDatastreams()
     await nextTick()
     initMap()
     await poll()
