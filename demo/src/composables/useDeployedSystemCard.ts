@@ -477,6 +477,48 @@ function relativeForecastTime(isoString: string): string {
   return diffMs >= 0 ? `in ${days}d` : `${days}d ago`
 }
 
+function observationItems(data: any): any[] {
+  const items = data?.items || data || []
+  return Array.isArray(items) ? items : []
+}
+
+async function fetchLatestObservation(datastreamId: string): Promise<any | null> {
+  const latestRes = await apiFetch(
+    `/datastreams/${datastreamId}/observations?resultTime=latest&limit=1`,
+    { headers: { 'Accept': 'application/json' } },
+  )
+  if (latestRes.ok && latestRes.data) {
+    const items = observationItems(latestRes.data)
+    if (items.length > 0) return items[0]
+  }
+
+  const fallbackRes = await apiFetch(
+    `/datastreams/${datastreamId}/observations?limit=1`,
+    { headers: { 'Accept': 'application/json' } },
+  )
+  if (!fallbackRes.ok || !fallbackRes.data) return null
+  return observationItems(fallbackRes.data)[0] || null
+}
+
+async function fetchRecentObservations(datastreamId: string, limit: number, windowHours: number): Promise<any[]> {
+  const latest = await fetchLatestObservation(datastreamId)
+  const anchorTime = latest?.resultTime || latest?.phenomenonTime
+  if (!anchorTime) return latest ? [latest] : []
+
+  const anchorMs = new Date(anchorTime).getTime()
+  if (!Number.isFinite(anchorMs)) return latest ? [latest] : []
+
+  const start = encodeURIComponent(new Date(anchorMs - windowHours * 60 * 60 * 1000).toISOString())
+  const end = encodeURIComponent(new Date(anchorMs + 1000).toISOString())
+  const windowRes = await apiFetch(
+    `/datastreams/${datastreamId}/observations?resultTime=${start}%2F${end}&limit=${limit}&sortBy=resultTime&sortOrder=asc`,
+    { headers: { 'Accept': 'application/json' } },
+  )
+  if (!windowRes.ok || !windowRes.data) return latest ? [latest] : []
+  const items = observationItems(windowRes.data)
+  return items.length > 0 ? items : (latest ? [latest] : [])
+}
+
 function readingFreshnessState(isoString: string): LatestReadingSummary['freshnessState'] {
   if (!isoString) return 'unknown'
   const then = new Date(isoString).getTime()
@@ -626,13 +668,8 @@ function summarizeForecast(ds: DatastreamSummary, obs: any): ForecastSummary | n
 
 async function fetchForecastSummary(ds: DatastreamSummary): Promise<ForecastSummary | null> {
   try {
-    const forecastRes = await apiFetch(
-      `/datastreams/${ds.id}/observations?limit=24`,
-      { headers: { 'Accept': 'application/json' } },
-    )
-    if (!forecastRes.ok || !forecastRes.data) return null
-    const items = forecastRes.data.items || forecastRes.data || []
-    if (!Array.isArray(items) || items.length === 0) return null
+    const items = await fetchRecentObservations(ds.id, 96, 48)
+    if (items.length === 0) return null
     const now = Date.now()
     const forecasts = items
       .map(obs => summarizeForecast(ds, obs))
@@ -753,14 +790,8 @@ function summarizeLatestReading(ds: DatastreamSummary, obs: any): LatestReadingS
 
 async function fetchLatestReading(ds: DatastreamSummary): Promise<LatestReadingSummary | null> {
   try {
-    const latestRes = await apiFetch(
-      `/datastreams/${ds.id}/observations?limit=1`,
-      { headers: { 'Accept': 'application/json' } },
-    )
-    if (!latestRes.ok || !latestRes.data) return null
-    const items = latestRes.data.items || latestRes.data || []
-    if (!Array.isArray(items) || items.length === 0) return null
-    return summarizeLatestReading(ds, items[0])
+    const latest = await fetchLatestObservation(ds.id)
+    return latest ? summarizeLatestReading(ds, latest) : null
   } catch {
     return null
   }
@@ -778,13 +809,8 @@ function trendWindowLabel(firstTime: string, lastTime: string): string {
 async function fetchTrendSummary(ds: DatastreamSummary): Promise<TrendSummary | null> {
   try {
     if (isCameraDatastreamName(ds.name)) return null
-    const trendRes = await apiFetch(
-      `/datastreams/${ds.id}/observations?limit=48`,
-      { headers: { 'Accept': 'application/json' } },
-    )
-    if (!trendRes.ok || !trendRes.data) return null
-    const items = trendRes.data.items || trendRes.data || []
-    if (!Array.isArray(items) || items.length < 2) return null
+    const items = await fetchRecentObservations(ds.id, 48, 48)
+    if (items.length < 2) return null
 
     const samples = items
       .map(obs => extractNumericObservationValue(ds, obs))
@@ -1159,26 +1185,17 @@ export function useDeployedSystemCard() {
         const isBuoyCAM = /buoycam|buoy[\s_-]?cam/i.test(cameraDs.name)
         cameraLabel = isBuoyCAM ? 'Live BuoyCAM' : 'Live Camera'
         try {
-          const camRes = await apiFetch(
-            `/datastreams/${cameraDs.id}/observations?limit=1`,
-            { headers: { 'Accept': 'application/json' } },
-          )
-          if (camRes.ok && camRes.data) {
-            const camItems = camRes.data.items || camRes.data || []
-            if (Array.isArray(camItems) && camItems.length > 0) {
-              const obs = camItems[0]
-              const result = obs.result || {}
-              if ((result.imageUrl || result.latestImageUrl) && typeof result.mediaType === 'string' && result.mediaType.startsWith('image/')) {
-                // Prefer imageUrl when it is an absolute URL; fall back to latestImageUrl
-                // when imageUrl is a relative path (BUOYCAM_CACHE_BASE_URL not configured).
-                cameraImageUrl = result.imageUrl?.startsWith('http') ? result.imageUrl : (result.latestImageUrl || result.imageUrl || '')
-                cameraTimestamp = obs.phenomenonTime || obs.resultTime || ''
-                // NIMS-specific fields
-                cameraThumbUrl = result.thumbUrl || ''
-                cameraTimeLapseUrl = result.timeLapseUrl || ''
-                cameraCamId = result.camId || ''
-              }
-            }
+          const obs = await fetchLatestObservation(cameraDs.id)
+          const result = obs?.result || {}
+          if ((result.imageUrl || result.latestImageUrl) && typeof result.mediaType === 'string' && result.mediaType.startsWith('image/')) {
+            // Prefer imageUrl when it is an absolute URL; fall back to latestImageUrl
+            // when imageUrl is a relative path (BUOYCAM_CACHE_BASE_URL not configured).
+            cameraImageUrl = result.imageUrl?.startsWith('http') ? result.imageUrl : (result.latestImageUrl || result.imageUrl || '')
+            cameraTimestamp = obs?.phenomenonTime || obs?.resultTime || ''
+            // NIMS-specific fields
+            cameraThumbUrl = result.thumbUrl || ''
+            cameraTimeLapseUrl = result.timeLapseUrl || ''
+            cameraCamId = result.camId || ''
           }
         } catch { /* camera fetch optional */ }
       }
