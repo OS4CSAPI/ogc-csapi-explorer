@@ -227,6 +227,26 @@ let liveInterval: ReturnType<typeof setInterval> | null = null
 const lastRefreshTime = ref('')
 const LIVE_REFRESH_MS = 8000                // 8s cycle (scaled for 15-20 concurrent users)
 const INITIAL_POLL_STAGGER_MS = 3000        // Random delay before first live poll (thundering herd prevention)
+const OPTIONAL_LAYER_TIMEOUT_MS = 25000
+
+async function runOptionalMapLayer(label: string, loadLayer: () => Promise<void>): Promise<void> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  try {
+    await Promise.race([
+      loadLayer(),
+      new Promise<void>((resolve) => {
+        timeoutId = setTimeout(() => {
+          console.warn(`[Map] ${label} did not finish within ${OPTIONAL_LAYER_TIMEOUT_MS}ms; continuing with available layers`)
+          resolve()
+        }, OPTIONAL_LAYER_TIMEOUT_MS)
+      }),
+    ])
+  } catch (err) {
+    console.warn(`[Map] ${label} failed`, err)
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId)
+  }
+}
 
 // ── Simulator / Reset Controls ────────────────────────────────
 const SIM_API = 'https://129-80-248-53.sslip.io/simulator'
@@ -3194,7 +3214,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
   // Track per-source observation counts for the source toggle UI
   const srcCounts: Record<string, number> = {}
 
-  const promises = locationDatastreamList.map(async (dsInfo) => {
+  const promises = locationDatastreamList.map((dsInfo) => runOptionalMapLayer(`observations for ${dsInfo.name}`, async () => {
     try {
       let items: any[] = []
 
@@ -3584,7 +3604,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         }
       }
     } catch (e: any) { console.warn(`[Obs] DS ${dsInfo.id} (${dsInfo.name}) error:`, e?.message || e) }
-  })
+  }))
 
   await Promise.all(promises)
 
@@ -3612,40 +3632,49 @@ async function loadAllResources() {
   hasSearched.value = true
   featureCounts.value = {}
   for (const key of Object.keys(enrichedCounts.value)) delete enrichedCounts.value[key]
+  let resourcesLoaded = false
 
-  // Close any open popup and clear selection
-  closePopup()
+  try {
+    // Close any open popup and clear selection
+    closePopup()
 
-  // 1. Load Part 1 resources (systems, deployments, procedures, samplingFeatures)
-  const promises = SPATIAL_TYPES.map(async (rt) => {
-    const count = await loadResourceType(rt.key)
-    featureCounts.value[rt.key] = count
-  })
-  await Promise.all(promises)
+    // 1. Load Part 1 resources (systems, deployments, procedures, samplingFeatures)
+    const promises = SPATIAL_TYPES.map(async (rt) => {
+      const count = await loadResourceType(rt.key)
+      featureCounts.value[rt.key] = count
+    })
+    await Promise.all(promises)
 
-  // 2. Build system location cache (static geometry + subsystem propagation + observation data)
-  await buildSystemLocationCache()
+    // 2. Build system location cache (static geometry + subsystem propagation + observation data)
+    await buildSystemLocationCache()
 
-  // 3. Enrich Part 1 resource types that have null geometry
-  await enrichResourcesWithLocations()
+    // 3. Enrich Part 1 resource types that have null geometry
+    await enrichResourcesWithLocations()
 
-  // 3b. Discover detection range configs from server, then build rings
-  await fetchDetectionRangeConfigs()
-  buildDetectionRanges()
+    // 3b. Discover detection range configs from server, then build rings
+    await fetchDetectionRangeConfigs()
+    buildDetectionRanges()
 
-  // 3c. Discover localizer datastream for location estimate rendering
-  await discoverLocalizerDatastream()
+    // 3c. Discover localizer datastream for location estimate rendering
+    await discoverLocalizerDatastream()
 
-  // 4. Load Part 2 resources at parent system locations + observation layers
-  await Promise.all([
-    loadDatastreams(),
-    loadControlStreams(),
-    loadObservationLayers(500),
-    loadLocationEstimates(),
-    loadSenrepMarkers(),
-  ])
+    // 4. Load Part 2 resources at parent system locations + optional dynamic layers
+    await Promise.all([
+      runOptionalMapLayer('datastream layer', loadDatastreams),
+      runOptionalMapLayer('control stream layer', loadControlStreams),
+      runOptionalMapLayer('observation layers', () => loadObservationLayers(500)),
+      runOptionalMapLayer('location estimates', loadLocationEstimates),
+      runOptionalMapLayer('SENREP markers', loadSenrepMarkers),
+    ])
+    resourcesLoaded = true
+  } catch (err: any) {
+    console.error('[Map] Failed to load map resources', err)
+    error.value = err?.message || 'Failed to load map resources'
+  } finally {
+    loading.value = false
+  }
 
-  loading.value = false
+  if (!resourcesLoaded) return
 
   // Start live refresh interval if Live Mode is on by default
   // Stagger first poll to prevent thundering herd when many users load simultaneously
