@@ -4405,6 +4405,9 @@ watch(selectedFeature, (feat) => {
             {{ lastRefreshTime || '...' }}
           </span>
         </label>
+        <div class="live-mode-note">
+          Updates visible CSAPI layers; publisher cadences vary.
+        </div>
       </div>
 
       <!-- MIL-STD-2525 symbol toggle -->
@@ -5443,6 +5446,13 @@ watch(selectedFeature, (feat) => {
   width: 15px;
   height: 15px;
   cursor: pointer;
+}
+
+.live-mode-note {
+  margin: 0.25rem 0 0 1.45rem;
+  color: #64748b;
+  font-size: 0.72rem;
+  line-height: 1.25;
 }
 
 .search-btn {

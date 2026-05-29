@@ -146,6 +146,22 @@ const refreshRows = computed(() => {
   return rows
 })
 
+const cadenceClarifier = computed(() => {
+  const searchable = [
+    props.card.title,
+    props.card.subtitle,
+    props.card.occupantName,
+    props.card.occupantUid,
+    props.card.advancedSystemUid,
+    props.card.primaryPurpose,
+    ...props.card.productLabels,
+  ].join(' ')
+  if (/opensky|ads-?b|state vector/i.test(searchable)) {
+    return 'Periodic ADS-B state vectors; not streaming.'
+  }
+  return ''
+})
+
 const trustLine = computed(() => {
   const parts: string[] = []
   if (props.card.healthState) parts.push(props.card.healthState)
@@ -392,6 +408,7 @@ const trustLine = computed(() => {
           <span class="dsc-refresh-v" :title="row.title">{{ row.value }}</span>
         </div>
       </div>
+      <p v-if="cadenceClarifier" class="dsc-refresh-note">{{ cadenceClarifier }}</p>
     </section>
 
     <!-- ── 8. LINKS ── -->
@@ -930,6 +947,12 @@ const trustLine = computed(() => {
   min-width: 0;
   color: #1e293b;
   overflow-wrap: anywhere;
+}
+.dsc-refresh-note {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.72rem;
+  line-height: 1.25;
 }
 
 /* ═══ Links ═══ */
