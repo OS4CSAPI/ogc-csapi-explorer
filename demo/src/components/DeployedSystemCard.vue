@@ -51,7 +51,6 @@ const outputLines = computed(() => {
   const pl = props.card.productLabels
   if (pl.length) lines.push(...pl.slice(0, 3))
   else lines.push('No public data products')
-  if (props.card.cadenceNote) lines.push(props.card.cadenceNote)
   if (props.card.methodSummary) lines.push(props.card.methodSummary)
   return lines
 })
@@ -128,6 +127,24 @@ const freshLabel = computed(() => {
 const freshActive = computed(() =>
   props.card.latestActivityRelative && props.card.latestActivityRelative !== 'No recent activity'
 )
+
+const refreshRows = computed(() => {
+  const rows: Array<{ label: string; value: string; title: string }> = []
+  const lastRefreshTime = props.card.lastRefreshTime || props.card.latestActivityTime
+  const lastRefreshRelative = props.card.lastRefreshRelative || props.card.latestActivityRelative
+  if (lastRefreshTime) {
+    rows.push({
+      label: 'Last refresh',
+      value: lastRefreshRelative ? `${lastRefreshRelative} (${formatTimestamp(lastRefreshTime)})` : formatTimestamp(lastRefreshTime),
+      title: lastRefreshTime,
+    })
+  }
+  const cadence = props.card.refreshCadence || props.card.cadenceNote.replace(/^Cadence:\s*/i, '')
+  if (cadence) {
+    rows.push({ label: 'Refresh rate', value: cadence, title: cadence })
+  }
+  return rows
+})
 
 const trustLine = computed(() => {
   const parts: string[] = []
@@ -368,6 +385,12 @@ const trustLine = computed(() => {
           {{ freshLabel }}
         </span>
         <span v-if="trustLine" class="dsc-trust">{{ trustLine }}</span>
+      </div>
+      <div v-if="refreshRows.length" class="dsc-refresh-grid">
+        <div v-for="row in refreshRows" :key="row.label" class="dsc-refresh-row">
+          <span class="dsc-refresh-k">{{ row.label }}</span>
+          <span class="dsc-refresh-v" :title="row.title">{{ row.value }}</span>
+        </div>
       </div>
     </section>
 
@@ -886,6 +909,27 @@ const trustLine = computed(() => {
 .dsc-trust {
   font-size: 0.75rem;
   color: #94a3b8;
+}
+.dsc-refresh-grid {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.3rem;
+}
+.dsc-refresh-row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 0.4rem;
+  align-items: baseline;
+  font-size: 0.76rem;
+}
+.dsc-refresh-k {
+  color: #64748b;
+  font-weight: 700;
+}
+.dsc-refresh-v {
+  min-width: 0;
+  color: #1e293b;
+  overflow-wrap: anywhere;
 }
 
 /* ═══ Links ═══ */

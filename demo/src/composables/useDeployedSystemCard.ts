@@ -55,6 +55,9 @@ export interface DeployedSystemCardModel {
   productLabels: string[]
   latestActivityTime: string
   latestActivityRelative: string
+  lastRefreshTime: string
+  lastRefreshRelative: string
+  refreshCadence: string
   cadenceNote: string
   controlStreamCount: number
   primaryProcedures: ProcedureSummary[]
@@ -466,6 +469,39 @@ function relativeTime(isoString: string): string {
   }
 }
 
+function metadataValue(map: Record<string, string>, labels: string[]): string {
+  const wanted = labels.map(label => label.toLowerCase().replace(/[^a-z0-9]/g, ''))
+  for (const [label, value] of Object.entries(map)) {
+    const normalized = label.toLowerCase().replace(/[^a-z0-9]/g, '')
+    if (wanted.includes(normalized)) return value
+  }
+  return ''
+}
+
+function formatCadenceValue(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+
+  const match = trimmed.match(/^(\d+(?:\.\d+)?)\s*(s|sec|secs|second|seconds)$/i)
+  if (!match) return trimmed
+
+  const seconds = Number(match[1])
+  if (!Number.isFinite(seconds) || seconds <= 0) return trimmed
+  const secondsLabel = Number.isInteger(seconds) ? String(seconds) : String(Number(seconds.toPrecision(3)))
+  if (seconds < 60) return `Every ${secondsLabel}s`
+  if (seconds % 3600 === 0) {
+    const hours = seconds / 3600
+    const hoursLabel = Number.isInteger(hours) ? String(hours) : String(Number(hours.toPrecision(3)))
+    return `Every ${hoursLabel}h (${secondsLabel}s)`
+  }
+  if (seconds % 60 === 0) {
+    const minutes = seconds / 60
+    const minutesLabel = Number.isInteger(minutes) ? String(minutes) : String(Number(minutes.toPrecision(3)))
+    return `Every ${minutesLabel}m (${secondsLabel}s)`
+  }
+  return `Every ${secondsLabel}s`
+}
+
 function relativeForecastTime(isoString: string): string {
   if (!isoString) return ''
   const then = new Date(isoString).getTime()
@@ -486,14 +522,25 @@ function observationItems(data: any): any[] {
   return Array.isArray(items) ? items : []
 }
 
+function newestObservation(items: any[]): any | null {
+  return items
+    .filter(Boolean)
+    .sort((a, b) => {
+      const aTime = new Date(a.resultTime || a.phenomenonTime || '').getTime()
+      const bTime = new Date(b.resultTime || b.phenomenonTime || '').getTime()
+      return (Number.isFinite(bTime) ? bTime : 0) - (Number.isFinite(aTime) ? aTime : 0)
+    })[0] || null
+}
+
 async function fetchLatestObservation(datastreamId: string): Promise<any | null> {
   const latestRes = await apiFetch(
-    `/datastreams/${datastreamId}/observations?resultTime=latest&limit=1`,
+    `/datastreams/${datastreamId}/observations?resultTime=latest&limit=20`,
     { headers: { 'Accept': 'application/json' } },
   )
   if (latestRes.ok && latestRes.data) {
     const items = observationItems(latestRes.data)
-    if (items.length > 0) return items[0]
+    const latest = newestObservation(items)
+    if (latest) return latest
   }
 
   const fallbackRes = await apiFetch(
@@ -501,7 +548,7 @@ async function fetchLatestObservation(datastreamId: string): Promise<any | null>
     { headers: { 'Accept': 'application/json' } },
   )
   if (!fallbackRes.ok || !fallbackRes.data) return null
-  return observationItems(fallbackRes.data)[0] || null
+  return newestObservation(observationItems(fallbackRes.data))
 }
 
 async function fetchRecentObservations(datastreamId: string, limit: number, windowHours: number): Promise<any[]> {
@@ -1173,6 +1220,10 @@ export function useDeployedSystemCard() {
         .map(reading => reading.phenomenonTime || reading.resultTime)
         .filter(Boolean)
         .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || ''
+      const lastRefreshTime = latestReadings
+        .map(reading => reading.resultTime || reading.phenomenonTime)
+        .filter(Boolean)
+        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || ''
 
       const staleReadingCount = latestReadings.filter(reading => reading.freshnessState === 'stale').length
       const qualityValues = Array.from(new Set(latestReadings.map(reading => reading.quality).filter(Boolean)))
@@ -1266,14 +1317,25 @@ export function useDeployedSystemCard() {
       // ── Cadence note ─────────────────────────────────────────────
       // Infer cadence from capabilities or keywords
       let cadenceNote = ''
-      const cadenceCap = capabilities['Update Rate'] || capabilities['updateRate']
-        || capabilities['Sampling Rate'] || capabilities['samplingRate']
-        || capabilities['Reporting Rate'] || capabilities['reportingRate'] || ''
+      let refreshCadence = ''
+      const cadenceCap = metadataValue(capabilities, [
+        'Publish Interval',
+        'Update Interval',
+        'Update Rate',
+        'Refresh Rate',
+        'Refresh Interval',
+        'Sampling Rate',
+        'Reporting Rate',
+        'Cadence',
+      ])
       if (cadenceCap) {
-        cadenceNote = `Cadence: ${cadenceCap}`
+        refreshCadence = formatCadenceValue(cadenceCap)
+        cadenceNote = `Cadence: ${refreshCadence}`
       } else if (keywords.some(k => /event[- ]?driven/i.test(k)) || smlDesc?.toLowerCase().includes('event-driven')) {
+        refreshCadence = 'Event-driven'
         cadenceNote = 'Event-driven'
       } else if (keywords.some(k => /real[- ]?time/i.test(k))) {
+        refreshCadence = 'Near-real-time'
         cadenceNote = 'Near-real-time'
       }
 
@@ -1342,6 +1404,9 @@ export function useDeployedSystemCard() {
         productLabels,
         latestActivityTime: latestTime || '',
         latestActivityRelative: latestTime ? relativeTime(latestTime) : 'No recent activity',
+        lastRefreshTime,
+        lastRefreshRelative: lastRefreshTime ? relativeTime(lastRefreshTime) : '',
+        refreshCadence,
         cadenceNote,
         controlStreamCount: controlCount,
         primaryProcedures: procedures.slice(0, 2),
