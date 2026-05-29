@@ -489,16 +489,11 @@ const trustLine = computed(() => {
 .dsc-lightbox-inner {
   position: relative;
   cursor: default;
-  width: min(760px, 90vw);
+  max-width: 90vw;
   max-height: 90vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 .dsc-lightbox-img {
-  display: block;
-  width: 100%;
-  max-width: 100%;
+  max-width: 90vw;
   max-height: 85vh;
   border-radius: 10px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
