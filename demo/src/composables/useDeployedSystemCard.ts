@@ -164,6 +164,7 @@ const UK_AIR_BACKGROUND_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wik
 const BGS_SENSORTHINGS_REPRESENTATIVE_IMAGE = 'https://www.ukgeos.ac.uk/assets/img/svgs/illustrations/borehole_dimmensions.svg'
 const MET_OFFICE_LAND_OBS_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Charterhall_Met_Office_Weather_Station_-_Image_%5E1_-_geograph.org.uk_-_2754908.jpg/960px-Charterhall_Met_Office_Weather_Station_-_Image_%5E1_-_geograph.org.uk_-_2754908.jpg'
 const MET_OFFICE_GLOBAL_SPOT_REPRESENTATIVE_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E%3Crect width='320' height='200' fill='%23082f49'/%3E%3Cpath d='M0 138 C44 112 82 160 128 132 S210 92 320 126 L320 200 L0 200 Z' fill='%230f766e'/%3E%3Cpath d='M0 158 C58 128 104 178 166 144 S258 118 320 146' fill='none' stroke='%235eead4' stroke-width='3' opacity='.75'/%3E%3Ccircle cx='238' cy='58' r='26' fill='%23fef3c7'/%3E%3Cpath d='M70 66 h86 a26 26 0 0 0 -44 -18 a35 35 0 0 0 -66 11 a22 22 0 0 0 24 7z' fill='%23e0f2fe'/%3E%3Cpath d='M68 96 h178' stroke='%2393c5fd' stroke-width='4' stroke-linecap='round' stroke-dasharray='12 9'/%3E%3Ctext x='160' y='178' text-anchor='middle' font-family='Arial,sans-serif' font-size='19' font-weight='700' fill='%23f8fafc'%3EGlobal Spot Forecast%3C/text%3E%3C/svg%3E"
+const DIGITRAFFIC_ROAD_WEATHER_REPRESENTATIVE_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E%3Crect width='320' height='200' fill='%23e0f2fe'/%3E%3Cpath d='M0 148 C40 126 72 160 118 136 C158 114 190 124 224 106 C260 88 288 96 320 82 L320 200 L0 200 Z' fill='%2394a3b8'/%3E%3Cpath d='M0 172 C62 148 112 174 170 148 C226 123 268 133 320 112 L320 200 L0 200 Z' fill='%2322c55e' opacity='.65'/%3E%3Cpath d='M32 172 C95 150 153 144 288 132' fill='none' stroke='%23374151' stroke-width='18' stroke-linecap='round'/%3E%3Cpath d='M38 169 C101 150 157 145 282 135' fill='none' stroke='%23f8fafc' stroke-width='3' stroke-linecap='round' stroke-dasharray='14 12'/%3E%3Cpath d='M226 64 v70' stroke='%23334155' stroke-width='6' stroke-linecap='round'/%3E%3Crect x='202' y='44' width='48' height='24' rx='4' fill='%23f97316'/%3E%3Ccircle cx='214' cy='56' r='4' fill='%23fff7ed'/%3E%3Ccircle cx='226' cy='56' r='4' fill='%23fff7ed'/%3E%3Ccircle cx='238' cy='56' r='4' fill='%23fff7ed'/%3E%3Cpath d='M86 58 h62 a22 22 0 0 0 -38 -15 a30 30 0 0 0 -57 10 a18 18 0 0 0 33 5z' fill='%23f8fafc' opacity='.95'/%3E%3Cpath d='M92 92 h72' stroke='%230ea5e9' stroke-width='4' stroke-linecap='round' stroke-dasharray='9 8'/%3E%3Ctext x='160' y='186' text-anchor='middle' font-family='Arial,sans-serif' font-size='17' font-weight='700' fill='%23111827'%3EFinland Road Weather%3C/text%3E%3C/svg%3E"
 
 // ─── SML field extractors ──────────────────────────────────────────────────
 
@@ -397,6 +398,9 @@ function representativeThumbnailForCard(
   }
   if (text.includes('met office') || text.includes('weather datahub') || text.includes('land observations')) {
     return MET_OFFICE_LAND_OBS_REPRESENTATIVE_IMAGE
+  }
+  if (text.includes('digitraffic') || text.includes('fintraffic') || text.includes('road weather') || text.includes('roadweatherobs')) {
+    return DIGITRAFFIC_ROAD_WEATHER_REPRESENTATIVE_IMAGE
   }
   return ''
 }
