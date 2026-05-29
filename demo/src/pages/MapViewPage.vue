@@ -135,6 +135,7 @@ const OBS_SOURCE_DEFS: Array<{ key: string; label: string; color: string; icon: 
   { key: 'src-uk-air',     label: 'UK-AIR',           color: '#22c55e', icon: '🌿' },
   { key: 'src-bgs',        label: 'BGS / UKGEOS',     color: '#a16207', icon: '⛏️' },
   { key: 'src-met-office', label: 'Met Office',       color: '#38bdf8', icon: '🌤️' },
+  { key: 'src-digitraffic-road-weather', label: 'FIN Road Wx', color: '#f97316', icon: '🛣️' },
 ]
 const OBS_SOURCE_MAP = Object.fromEntries(OBS_SOURCE_DEFS.map(d => [d.key, d]))
 
@@ -162,6 +163,8 @@ function classifyObsSource(dsName: string): string {
   if (n.includes('met office') || n.includes('weather datahub') || n.includes('land observations')
     || n.includes('air temperature') || n.includes('wind speed') || n.includes('wind gust')
     || n.includes('mean sea level pressure') || n.includes('pressure tendency') || n.includes('relative humidity')) return 'src-met-office'
+  if (n.includes('digitraffic') || n.includes('fintraffic') || n.includes('road weather')
+    || n.includes('roadweatherobs') || n.includes('road surface temperature')) return 'src-digitraffic-road-weather'
   // Generic position/location fallback — still ISS-like
   if (n.includes('position') || n.includes('location') || n.includes('gps')) return 'src-iss'
   return 'src-other'
