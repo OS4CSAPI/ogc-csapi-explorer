@@ -135,6 +135,8 @@ const OBS_SOURCE_DEFS: Array<{ key: string; label: string; color: string; icon: 
   { key: 'src-uk-air',     label: 'UK-AIR',           color: '#22c55e', icon: '🌿' },
   { key: 'src-bgs',        label: 'BGS / UKGEOS',     color: '#a16207', icon: '⛏️' },
   { key: 'src-met-office', label: 'Met Office',       color: '#38bdf8', icon: '🌤️' },
+  { key: 'src-fmi-weather', label: 'FMI Weather',      color: '#0f766e', icon: '🌤️' },
+  { key: 'src-fmi-air-quality', label: 'FMI AQ',       color: '#84cc16', icon: '🌿' },
   { key: 'src-digitraffic-road-weather', label: 'FIN Road Wx', color: '#f97316', icon: '🛣️' },
 ]
 const OBS_SOURCE_MAP = Object.fromEntries(OBS_SOURCE_DEFS.map(d => [d.key, d]))
@@ -156,6 +158,8 @@ function classifyObsSource(dsName: string): string {
   if (n.includes('nims') || n.includes('station image')) return 'src-nims'
   if (n.includes('environment agency') || n.includes('ea hydrology')
     || n.includes('river level') || n.includes('river flow') || n.includes('rainfall')) return 'src-ea-hydrology'
+  if (n.includes('fmi air quality') || n.includes('fmiairqualityobs')) return 'src-fmi-air-quality'
+  if (n.includes('fmi weather') || n.includes('fmiweatherobs')) return 'src-fmi-weather'
   if (n.includes('uk-air') || n.includes('uk air') || n.includes('air quality')
     || n.includes('nitrogen dioxide') || n.includes('particulate matter') || n.includes('ozone')) return 'src-uk-air'
   if (n.includes('bgs') || n.includes('sensorthings') || n.includes('ukgeos') || n.includes('hydro logger')
