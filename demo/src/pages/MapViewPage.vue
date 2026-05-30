@@ -143,6 +143,12 @@ const OBS_SOURCE_DEFS: Array<{ key: string; label: string; color: string; icon: 
 const OBS_SOURCE_MAP = Object.fromEntries(OBS_SOURCE_DEFS.map(d => [d.key, d]))
 
 /** Classify a datastream name into a source category key. */
+function isMarineAisText(text: string): boolean {
+  const n = text.toLowerCase()
+  return n.includes('marine ais') || n.includes('digitrafficmarineais') || n.includes('vessel position')
+    || (n.includes('ais') && (n.includes('marine') || n.includes('vessel')))
+}
+
 function classifyObsSource(dsName: string): string {
   const n = dsName.toLowerCase()
   if (n.includes('sgp4') || n.includes('orbital') || n.includes('orbit')
@@ -168,8 +174,7 @@ function classifyObsSource(dsName: string): string {
   if (n.includes('met office') || n.includes('weather datahub') || n.includes('land observations')
     || n.includes('air temperature') || n.includes('wind speed') || n.includes('wind gust')
     || n.includes('mean sea level pressure') || n.includes('pressure tendency') || n.includes('relative humidity')) return 'src-met-office'
-  if (n.includes('marine ais') || n.includes('digitrafficmarineais') || n.includes('vessel position')
-    || (n.includes('ais') && (n.includes('marine') || n.includes('vessel')))) return 'src-digitraffic-marine-ais'
+  if (isMarineAisText(n)) return 'src-digitraffic-marine-ais'
   if (n.includes('digitraffic') || n.includes('fintraffic') || n.includes('road weather')
     || n.includes('roadweatherobs') || n.includes('road surface temperature')) return 'src-digitraffic-road-weather'
   // Generic position/location fallback — still ISS-like
@@ -755,6 +760,32 @@ function aircraftObsPointStyle(headingDeg: number): Style {
   })
 }
 
+function marineAisVesselStyle(headingDeg: number): Style {
+  return new Style({
+    image: new RegularShape({
+      points: 3,
+      radius: 8,
+      rotation: (headingDeg * Math.PI) / 180,
+      fill: new Fill({ color: '#2563eb' }),
+      stroke: new Stroke({ color: '#eff6ff', width: 1.5 }),
+    }),
+  })
+}
+
+function marineAisFmt(value: any, suffix = '', decimals = 1): string {
+  if (value == null || value === 'NaN') return '-'
+  const n = Number(value)
+  if (isNaN(n)) return '-'
+  return `${n.toFixed(decimals)}${suffix}`
+}
+
+function marineAisHeading(result: any): number {
+  const heading = Number(result?.heading_deg)
+  if (!isNaN(heading)) return heading
+  const course = Number(result?.cog_deg)
+  return isNaN(course) ? 0 : course
+}
+
 /**
  * Create a per-station weather style with temperature label so stations
  * are immediately identifiable without clicking.
@@ -789,6 +820,13 @@ function isAircraftObservation(rawData: any): boolean {
   const r = rawData.result
   return typeof r.icao24 === 'string' && typeof r.lat_deg === 'number'
     && typeof r.lon_deg === 'number'
+}
+
+function isMarineAisObservation(rawData: any): boolean {
+  if (!rawData?.result) return false
+  const r = rawData.result
+  return typeof r.mmsi === 'string' && typeof r.lat_deg === 'number' && typeof r.lon_deg === 'number'
+    && (r.sog_kts != null || r.cog_deg != null || r.heading_deg != null || isMarineAisText(rawData.datastreamName || ''))
 }
 
 /** Format altitude for display: meters → feet with label */
@@ -1096,6 +1134,9 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
   }
 
   if (resourceType === 'observationPoints') {
+    if (isMarineAisObservation(rawData)) {
+      return marineAisVesselStyle(marineAisHeading(rawData.result))
+    }
     return new Style({
       image: new CircleStyle({
         radius: 7,
@@ -1399,8 +1440,7 @@ function isLocationRelatedDatastream(ds: any): boolean {
   if (name.includes('aircraft') || name.includes('adsb') || name.includes('ads-b')
     || name.includes('state vector') || name.includes('flight')) return true
   // Marine AIS vessel positions
-  if (name.includes('marine ais') || name.includes('digitrafficmarineais') || name.includes('vessel position')
-    || (name.includes('ais') && (name.includes('marine') || name.includes('vessel')))) return true
+  if (isMarineAisText(name)) return true
   // Earthquake / seismic event datastreams (USGS, etc.)
   if (name.includes('earthquake') || name.includes('seismic') || name.includes('quake')) return true
   // NDBC buoy observations (contain lat_deg/lon_deg in result)
@@ -1642,6 +1682,7 @@ async function buildSystemLocationCache(): Promise<void> {
           || nm.includes('metar') || nm.includes('nws') || nm.includes('awx')
           || nm.includes('aircraft') || nm.includes('adsb') || nm.includes('ads-b')
           || nm.includes('state vector') || nm.includes('flight')
+          || isMarineAisText(nm)
           // ── Sources that were missing from the secondary filter ──
           || nm.includes('earthquake') || nm.includes('seismic') || nm.includes('quake')
           || nm.includes('ndbc') || nm.includes('buoy')
@@ -1785,6 +1826,7 @@ async function enrichResourcesWithLocations(): Promise<void> {
           || nm.includes('satellite') || nm.includes('iss')
           || nm.includes('aircraft') || nm.includes('adsb') || nm.includes('ads-b')
           || nm.includes('state vector') || nm.includes('flight')
+          || isMarineAisText(nm)
           || nm.includes('earthquake') || nm.includes('seismic') || nm.includes('quake')
           || nm.includes('ndbc') || nm.includes('buoy')
           || nm.includes('co-ops') || nm.includes('coops') || nm.includes('tide') || nm.includes('coastal')
@@ -3254,6 +3296,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // Detect aircraft / ADS-B surveillance datastreams
       const isAircraftDs = dsNameLower.includes('aircraft') || dsNameLower.includes('adsb')
         || dsNameLower.includes('ads-b') || dsNameLower.includes('state vector')
+      const isMarineAisDs = isMarineAisText(dsNameLower)
       // Detect earthquake / seismic event datastreams
       const isEarthquakeDs = dsNameLower.includes('earthquake') || dsNameLower.includes('seismic')
         || dsNameLower.includes('quake')
@@ -3264,10 +3307,10 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // LOB DS in live mode: exactly 1 per sensor — cleanest visual, shows only
       // the very latest bearing from each MA system.
       // Weather DS: only latest observation per station (no track needed).
-      // Aircraft DS: fetch up to 200 to capture the full batch (~140 aircraft).
+      // Aircraft/AIS DS: fetch enough to capture the full moving-object batch.
       // Earthquake DS: fetch up to 300 to cover 24h of global events.
       // Other DS: use caller's obsLimit.
-      const effectiveLimit = isOrbitTrackDs ? 1 : (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : isAircraftDs ? 200 : isEarthquakeDs ? 300 : obsLimit
+      const effectiveLimit = isOrbitTrackDs ? 1 : (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : isMarineAisDs ? 200 : isAircraftDs ? 200 : isEarthquakeDs ? 300 : obsLimit
 
       // OSH returns observations oldest-first and ignores sort params, so a
       // bare limit=N always returns the N OLDEST observations.  For position/
@@ -3313,12 +3356,12 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         // LOB datastreams: 5-minute window for tight real-time view.
         // Weather datastreams: 2-hour window (obs ~hourly) to ensure latest.
         // Earthquake datastreams: 24-hour window to show all recent events.
-        const windowMinutes = isPositionDs ? 240 : isOrbitTrackDs ? 10 : isWeatherDs ? 120 : isAircraftDs ? 10 : isEarthquakeDs ? 1440 : 5
+        const windowMinutes = isMarineAisDs ? 10 : isPositionDs ? 240 : isOrbitTrackDs ? 10 : isWeatherDs ? 120 : isAircraftDs ? 10 : isEarthquakeDs ? 1440 : 5
         const latestMs = new Date(latestTime).getTime()
         // Fetch limit: position DS gets 2× effective to allow burst dedup
         // headroom, LOB DS needs extra to overcome OSH scope-leak contamination,
         // others use effectiveLimit.
-        const fetchLimit = isPositionDs ? effectiveLimit * 2 : isLobDs ? 30 : effectiveLimit
+        const fetchLimit = isMarineAisDs ? effectiveLimit : isPositionDs ? effectiveLimit * 2 : isLobDs ? 30 : effectiveLimit
         const windowStartDate = new Date(latestMs - windowMinutes * 60 * 1000)
         const windowEndDate = new Date(latestMs + 1000)
         const timeWindowUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
@@ -3350,7 +3393,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
           // Deduplicate: discard burst observations (gap < 10s from previous).
           // Normal cadence is 30s; burst is ~70ms.  This cleanly removes
           // reconnect-induced rapid-fire clumps while keeping real data.
-          if (isPositionDs && allItems.length > 1) {
+          if (isPositionDs && !isMarineAisDs && allItems.length > 1) {
             const MIN_GAP_MS = 10_000
             const filtered = [allItems[0]]
             let prevMs = new Date(allItems[0].resultTime || allItems[0].phenomenonTime || 0).getTime()
@@ -3448,19 +3491,24 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
               const acStyle = isAircraftDs
                 ? aircraftObsPointStyle(typeof obs.result?.true_track_deg === 'number' ? obs.result.true_track_deg : 0)
                 : null
+              const aisStyle = isMarineAisDs
+                ? marineAisVesselStyle(marineAisHeading(obs.result))
+                : null
               // Earthquake events: magnitude-scaled colored circle
               const eqMag = isEarthquakeDs && obs.result?.magnitude != null
                 ? (typeof obs.result.magnitude === 'number' ? obs.result.magnitude : parseFloat(obs.result.magnitude))
                 : NaN
               const eqStyle = isEarthquakeDs && !isNaN(eqMag) ? earthquakeObsPointStyle(eqMag) : null
-              feature.setStyle(wxStyle || acStyle || eqStyle || (isSatDs ? satObsPointStyle : getStyle('observationPoints')))
+              feature.setStyle(wxStyle || acStyle || aisStyle || eqStyle || (isSatDs ? satObsPointStyle : getStyle('observationPoints')))
               feature.set('resourceType', 'observationPoints')
               feature.set('resourceId', obs.id || `${dsInfo.id}-obs-${pointCount}`)
               feature.set('resourceName', isWeatherDs && obs.result?.stationName
                 ? `${obs.result.stationId} — ${obs.result.stationName}`
                 : isAircraftDs && obs.result?.callsign
                   ? `✈ ${obs.result.callsign.trim()} (${obs.result.icao24 || '?'})`
-                  : isEarthquakeDs && obs.result?.magnitude != null
+                  : isMarineAisDs
+                    ? `${obs.result?.vesselName || obs.result?.callSign || 'AIS vessel'} (${obs.result?.mmsi || '?'})`
+                    : isEarthquakeDs && obs.result?.magnitude != null
                     ? `🌋 M${typeof obs.result.magnitude === 'number' ? obs.result.magnitude.toFixed(1) : obs.result.magnitude} — ${obs.result.place || 'Unknown'}`
                     : `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
               feature.set('enriched', true)
@@ -3556,8 +3604,8 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
 
       // Track LineString from all parsed coordinates
       // Detect orbit/satellite tracks and apply distinct styling + date-line splitting
-      // Skip track lines for aircraft/earthquake DS — each obs is a different entity, not a time series
-      if (trackSource && trackCoords.length >= 2 && !isAircraftDs && !isEarthquakeDs) {
+      // Skip track lines for aircraft/AIS/earthquake DS — each obs is a different entity, not a time series
+      if (trackSource && trackCoords.length >= 2 && !isAircraftDs && !isMarineAisDs && !isEarthquakeDs) {
         // Split track at antimeridian (±180° lon) crossings to avoid ugly wrapping lines
         const segments = splitTrackAtDateLine(trackCoords)
         for (const segment of segments) {
@@ -3864,6 +3912,7 @@ async function updateMovingSystemPositions(): Promise<void> {
   const positionDs = locationDatastreamList.filter(ds => {
     const nm = ds.name.toLowerCase()
     if (!(nm.includes('position') || nm.includes('location') || nm.includes('gps'))) return false
+    if (isMarineAisText(nm)) return false
     // Skip satellite/orbit datastreams — their position is already handled by
     // the snap-to-track-tip code in loadObservationLayers(). Running both in
     // parallel causes a visible blink where the marker jumps to the wrong
@@ -4671,8 +4720,61 @@ watch(selectedFeature, (feat) => {
         </button>
       </div>
 
+      <!-- Marine AIS vessel observation detail panel -->
+      <div v-if="selectedFeature && !dscCard && !isDeployedSystemLeaf(selectedFeature) && isMarineAisObservation(selectedFeature.rawData)" class="detail-panel aircraft-detail-panel">
+        <div class="detail-header">
+          <span class="detail-type-badge" style="background-color: #2563eb;">AIS</span>
+          <strong>{{ selectedFeature.rawData.result.vesselName || selectedFeature.rawData.result.callSign || selectedFeature.rawData.result.mmsi }}</strong>
+        </div>
+        <div class="aircraft-icao">MMSI: {{ selectedFeature.rawData.result.mmsi }}</div>
+        <div class="aircraft-hero">
+          <div class="aircraft-hero-heading">
+            <span class="aircraft-heading-arrow" :style="{ transform: `rotate(${marineAisHeading(selectedFeature.rawData.result)}deg)` }">▲</span>
+            <span>{{ marineAisFmt(marineAisHeading(selectedFeature.rawData.result), '°') }}</span>
+          </div>
+          <div class="aircraft-hero-alt">
+            {{ marineAisFmt(selectedFeature.rawData.result.sog_kts, ' kt') }}
+          </div>
+          <div class="aircraft-hero-status">
+            {{ selectedFeature.rawData.result.navStatus || 'AIS vessel' }}
+          </div>
+        </div>
+        <div class="aircraft-fields">
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">Speed</span>
+            <span>{{ marineAisFmt(selectedFeature.rawData.result.sog_kts, ' kt') }}</span>
+          </div>
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">Course</span>
+            <span>{{ marineAisFmt(selectedFeature.rawData.result.cog_deg, '°') }}</span>
+          </div>
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">Heading</span>
+            <span>{{ marineAisFmt(selectedFeature.rawData.result.heading_deg, '°') }}</span>
+          </div>
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">Call sign</span>
+            <span>{{ selectedFeature.rawData.result.callSign || '-' }}</span>
+          </div>
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">IMO</span>
+            <span>{{ selectedFeature.rawData.result.imo || '-' }}</span>
+          </div>
+          <div class="aircraft-field">
+            <span class="aircraft-field-label">Destination</span>
+            <span>{{ selectedFeature.rawData.result.destination || '-' }}</span>
+          </div>
+        </div>
+        <div v-if="selectedFeature.rawData.phenomenonTime" class="aircraft-time">
+          <i class="pi pi-clock"></i> {{ selectedFeature.rawData.phenomenonTime }}
+        </div>
+        <button class="detail-link-btn" @click="goToDetail">
+          <i class="pi pi-external-link"></i> View in Explorer
+        </button>
+      </div>
+
       <!-- Detail panel when a feature is selected (non-deployment features only) -->
-      <div v-if="selectedFeature && !dscCard && !isDeployedSystemLeaf(selectedFeature) && !isWeatherObservation(selectedFeature.rawData) && !isAircraftObservation(selectedFeature.rawData)" class="detail-panel">
+      <div v-if="selectedFeature && !dscCard && !isDeployedSystemLeaf(selectedFeature) && !isWeatherObservation(selectedFeature.rawData) && !isAircraftObservation(selectedFeature.rawData) && !isMarineAisObservation(selectedFeature.rawData)" class="detail-panel">
         <template>
         <div class="detail-header">
           <span class="detail-type-badge" :style="{ backgroundColor: TYPE_COLORS[selectedFeature.resourceType] }">
