@@ -3929,6 +3929,24 @@ function refreshAllStyles() {
   }
 }
 
+function interactiveHitPriority(feature: any): number {
+  const resourceType = feature.get('resourceType')
+  const resourceName = (feature.get('resourceName') || '').toLowerCase()
+  const rawData = feature.get('rawData')
+  const props = rawData?.properties || rawData || {}
+  const uid = (props.uid || '').toLowerCase()
+  const name = (props.name || resourceName).toLowerCase()
+  const isFeedDeployment = uid.includes(':deployment:') && (uid.includes('-feed:') || name.includes('feed'))
+
+  if (resourceType === 'deployments' && props['platform@link']?.href && isFeedDeployment) return 0
+  if (resourceType === 'deployments' && props['platform@link']?.href) return 1
+  if (resourceType === 'deployments') return 2
+  if (resourceType === 'systems') return 3
+  if (resourceType === 'observationPoints') return 4
+  if (resourceType === 'observationTracks') return 5
+  return 10
+}
+
 // ── Live Mode toggle ─────────────────────────────────────────────
 async function refreshLiveLayers() {
   try {
@@ -4150,6 +4168,8 @@ onMounted(() => {
       closePopup()
       return
     }
+
+    hits.sort((a, b) => interactiveHitPriority(a) - interactiveHitPriority(b))
 
     // Toggle: if clicking the already-selected feature (and only 1 hit), deselect
     if (hits.length === 1 && selectedFeature.value?._olFeature === hits[0]) {
