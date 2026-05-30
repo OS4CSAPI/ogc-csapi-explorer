@@ -138,6 +138,7 @@ const OBS_SOURCE_DEFS: Array<{ key: string; label: string; color: string; icon: 
   { key: 'src-fmi-weather', label: 'FMI Weather',      color: '#0f766e', icon: '🌤️' },
   { key: 'src-fmi-air-quality', label: 'FMI AQ',       color: '#84cc16', icon: '🌿' },
   { key: 'src-digitraffic-road-weather', label: 'FIN Road Wx', color: '#f97316', icon: '🛣️' },
+  { key: 'src-digitraffic-marine-ais', label: 'FIN AIS', color: '#2563eb', icon: '🚢' },
 ]
 const OBS_SOURCE_MAP = Object.fromEntries(OBS_SOURCE_DEFS.map(d => [d.key, d]))
 
@@ -167,6 +168,8 @@ function classifyObsSource(dsName: string): string {
   if (n.includes('met office') || n.includes('weather datahub') || n.includes('land observations')
     || n.includes('air temperature') || n.includes('wind speed') || n.includes('wind gust')
     || n.includes('mean sea level pressure') || n.includes('pressure tendency') || n.includes('relative humidity')) return 'src-met-office'
+  if (n.includes('marine ais') || n.includes('digitrafficmarineais') || n.includes('vessel position')
+    || (n.includes('ais') && (n.includes('marine') || n.includes('vessel')))) return 'src-digitraffic-marine-ais'
   if (n.includes('digitraffic') || n.includes('fintraffic') || n.includes('road weather')
     || n.includes('roadweatherobs') || n.includes('road surface temperature')) return 'src-digitraffic-road-weather'
   // Generic position/location fallback — still ISS-like
@@ -1395,6 +1398,9 @@ function isLocationRelatedDatastream(ds: any): boolean {
   // Aircraft / ADS-B surveillance datastreams (OpenSky, AISHub, etc.)
   if (name.includes('aircraft') || name.includes('adsb') || name.includes('ads-b')
     || name.includes('state vector') || name.includes('flight')) return true
+  // Marine AIS vessel positions
+  if (name.includes('marine ais') || name.includes('digitrafficmarineais') || name.includes('vessel position')
+    || (name.includes('ais') && (name.includes('marine') || name.includes('vessel')))) return true
   // Earthquake / seismic event datastreams (USGS, etc.)
   if (name.includes('earthquake') || name.includes('seismic') || name.includes('quake')) return true
   // NDBC buoy observations (contain lat_deg/lon_deg in result)
