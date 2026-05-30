@@ -3931,12 +3931,10 @@ function refreshAllStyles() {
 
 function interactiveHitPriority(feature: any): number {
   const resourceType = feature.get('resourceType')
-  const resourceName = (feature.get('resourceName') || '').toLowerCase()
   const rawData = feature.get('rawData')
   const props = rawData?.properties || rawData || {}
   const uid = (props.uid || '').toLowerCase()
-  const name = (props.name || resourceName).toLowerCase()
-  const isFeedDeployment = uid.includes(':deployment:') && (uid.includes('-feed:') || name.includes('feed'))
+  const isFeedDeployment = uid.includes(':deployment:') && uid.includes('-feed:')
 
   if (resourceType === 'deployments' && props['platform@link']?.href && isFeedDeployment) return 0
   if (resourceType === 'deployments' && props['platform@link']?.href) return 1
@@ -3945,6 +3943,14 @@ function interactiveHitPriority(feature: any): number {
   if (resourceType === 'observationPoints') return 4
   if (resourceType === 'observationTracks') return 5
   return 10
+}
+
+function interactiveHitDistance(feature: any, coordinate: Coordinate): number {
+  const point = feature.getGeometry()?.getClosestPoint?.(coordinate)
+  if (!point) return Infinity
+  const dx = point[0] - coordinate[0]
+  const dy = point[1] - coordinate[1]
+  return dx * dx + dy * dy
 }
 
 // ── Live Mode toggle ─────────────────────────────────────────────
@@ -4169,7 +4175,11 @@ onMounted(() => {
       return
     }
 
-    hits.sort((a, b) => interactiveHitPriority(a) - interactiveHitPriority(b))
+    hits.sort((a, b) => {
+      const priorityDelta = interactiveHitPriority(a) - interactiveHitPriority(b)
+      if (priorityDelta !== 0) return priorityDelta
+      return interactiveHitDistance(a, evt.coordinate) - interactiveHitDistance(b, evt.coordinate)
+    })
 
     // Toggle: if clicking the already-selected feature (and only 1 hit), deselect
     if (hits.length === 1 && selectedFeature.value?._olFeature === hits[0]) {
