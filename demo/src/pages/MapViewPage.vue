@@ -142,6 +142,12 @@ const OBS_SOURCE_DEFS: Array<{ key: string; label: string; color: string; icon: 
 ]
 const OBS_SOURCE_MAP = Object.fromEntries(OBS_SOURCE_DEFS.map(d => [d.key, d]))
 
+const FEED_SOURCE_METADATA: Record<string, { systemUid: string; kind: string }> = {
+  'src-opensky': { systemUid: 'urn:os4csapi:system:opensky-feed:v1', kind: 'Feed adapter' },
+  'src-earthquake': { systemUid: 'urn:os4csapi:system:usgs-eq-feed:v1', kind: 'Feed adapter' },
+  'src-digitraffic-marine-ais': { systemUid: 'urn:os4csapi:system:digitraffic-marine-ais-feed:v1', kind: 'Feed adapter' },
+}
+
 /** Classify a datastream name into a source category key. */
 function isMarineAisText(text: string): boolean {
   const n = text.toLowerCase()
@@ -3863,6 +3869,55 @@ function toggleObsSource(key: string) {
   }
 }
 
+async function openObsSourceMetadata(key: string) {
+  const meta = FEED_SOURCE_METADATA[key]
+  if (!meta) return
+  const srcDef = OBS_SOURCE_MAP[key]
+  closePopup()
+  try {
+    const sysRes = await apiFetch(`/systems?uid=${encodeURIComponent(meta.systemUid)}`, {
+      headers: { 'Accept': 'application/geo+json' },
+    })
+    const system = sysRes.ok && sysRes.data
+      ? (sysRes.data.items?.[0] || sysRes.data.features?.[0] || null)
+      : null
+    if (!system) {
+      error.value = `Source metadata not found for ${srcDef?.label || key}`
+      return
+    }
+
+    const systemId = extractId(system)
+    let datastreams: any[] = []
+    if (systemId) {
+      const dsRes = await apiFetch(`/systems/${systemId}/datastreams?limit=100`)
+      if (dsRes.ok && dsRes.data) datastreams = dsRes.data.items || dsRes.data.features || []
+    }
+
+    selectedFeature.value = {
+      resourceType: 'systems',
+      resourceId: systemId,
+      resourceName: extractName(system) || srcDef?.label || key,
+      rawData: {
+        ...system,
+        sourceMetadata: {
+          sourceKey: key,
+          sourceLabel: srcDef?.label || key,
+          sourceKind: meta.kind,
+          sourceColor: srcDef?.color || TYPE_COLORS.systems,
+          observationCount: obsSourceCounts.value[key] || 0,
+          datastreamCount: datastreams.length,
+          datastreams: datastreams.map(ds => ({ id: ds.id, name: ds.name || ds.outputName || 'Datastream', outputName: ds.outputName })),
+        },
+      },
+      enriched: false,
+      enrichmentSource: 'Data source metadata',
+    }
+    dscClearCard()
+  } catch (exc: any) {
+    error.value = exc?.message || `Failed to load metadata for ${srcDef?.label || key}`
+  }
+}
+
 /** Computed list of discovered sources (only those with features) for the UI. */
 const discoveredObsSources = computed(() => {
   const counts = obsSourceCounts.value
@@ -4429,17 +4484,29 @@ watch(selectedFeature, (feat) => {
       <!-- Data Sources (per-publisher observation toggle) -->
       <div v-if="discoveredObsSources.length > 0" class="source-controls">
         <div class="layer-section-label" style="margin-top: 0.5rem;">Data Sources</div>
-        <button
+        <div
           v-for="src in discoveredObsSources"
           :key="src.key"
-          :class="['source-toggle', { inactive: activeObsSources[src.key] === false }]"
-          @click="toggleObsSource(src.key)"
+          class="source-row"
         >
-          <span class="source-icon">{{ src.icon }}</span>
-          <span class="source-dot" :style="{ backgroundColor: src.color }"></span>
-          <span class="source-label">{{ src.label }}</span>
-          <span class="source-count">{{ obsSourceCounts[src.key] ?? 0 }}</span>
-        </button>
+          <button
+            :class="['source-toggle', { inactive: activeObsSources[src.key] === false }]"
+            @click="toggleObsSource(src.key)"
+          >
+            <span class="source-icon">{{ src.icon }}</span>
+            <span class="source-dot" :style="{ backgroundColor: src.color }"></span>
+            <span class="source-label">{{ src.label }}</span>
+            <span class="source-count">{{ obsSourceCounts[src.key] ?? 0 }}</span>
+          </button>
+          <button
+            v-if="FEED_SOURCE_METADATA[src.key]"
+            class="source-info-btn"
+            :title="`Open ${src.label} source metadata`"
+            @click.stop="openObsSourceMetadata(src.key)"
+          >
+            <i class="pi pi-info-circle"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Enrichment info -->
@@ -4810,6 +4877,14 @@ watch(selectedFeature, (feat) => {
         <div v-if="selectedFeature.rawData?.datastreamName" class="detail-field">
           <span class="field-label">Datastream:</span>
           {{ selectedFeature.rawData.datastreamName }}
+        </div>
+        <div v-if="selectedFeature.rawData?.sourceMetadata" class="detail-field">
+          <span class="field-label">Source:</span>
+          {{ selectedFeature.rawData.sourceMetadata.sourceLabel }} &middot; {{ selectedFeature.rawData.sourceMetadata.sourceKind }}
+        </div>
+        <div v-if="selectedFeature.rawData?.sourceMetadata" class="detail-field">
+          <span class="field-label">Live features:</span>
+          {{ selectedFeature.rawData.sourceMetadata.observationCount }} observations &middot; {{ selectedFeature.rawData.sourceMetadata.datastreamCount }} datastreams
         </div>
         <div v-if="selectedFeature.rawData?.properties?.description || selectedFeature.rawData?.description" class="detail-field">
           <span class="field-label">Description:</span>
@@ -5220,13 +5295,22 @@ watch(selectedFeature, (feat) => {
               <div v-if="discoveredObsSources.length > 0" class="tak-source-section">
                 <div class="tak-source-heading">Data Sources</div>
                 <div class="tak-layer-grid">
-                  <button v-for="src in discoveredObsSources" :key="src.key"
-                    :class="['tak-layer-chip', { inactive: activeObsSources[src.key] === false }]"
-                    @click="toggleObsSource(src.key)">
-                    <span class="tak-source-icon">{{ src.icon }}</span>
-                    <span class="tak-layer-name">{{ src.label }}</span>
-                    <span class="tak-layer-count">{{ obsSourceCounts[src.key] ?? 0 }}</span>
-                  </button>
+                  <div v-for="src in discoveredObsSources" :key="src.key" class="tak-source-chip-row">
+                    <button
+                      :class="['tak-layer-chip', { inactive: activeObsSources[src.key] === false }]"
+                      @click="toggleObsSource(src.key)">
+                      <span class="tak-source-icon">{{ src.icon }}</span>
+                      <span class="tak-layer-name">{{ src.label }}</span>
+                      <span class="tak-layer-count">{{ obsSourceCounts[src.key] ?? 0 }}</span>
+                    </button>
+                    <button
+                      v-if="FEED_SOURCE_METADATA[src.key]"
+                      class="source-info-btn tak-source-info-btn"
+                      :title="`Open ${src.label} source metadata`"
+                      @click.stop="openObsSourceMetadata(src.key)">
+                      <i class="pi pi-info-circle"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
               <div class="tak-live-row">
@@ -5480,11 +5564,19 @@ watch(selectedFeature, (feat) => {
   border-top: 1px solid #e2e8f0;
 }
 
+.source-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0.25rem;
+}
+
 .source-toggle {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 0.35rem 0.75rem;
   border: none;
   background: transparent;
@@ -5530,6 +5622,44 @@ watch(selectedFeature, (feat) => {
   font-weight: 600;
   min-width: 1.5rem;
   text-align: right;
+}
+
+.source-info-btn {
+  width: 1.6rem;
+  height: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.source-info-btn:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.tak-source-chip-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.tak-source-chip-row .tak-layer-chip {
+  flex: 1;
+  min-width: 0;
+}
+
+.tak-source-info-btn {
+  height: auto;
+  min-height: 2rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
 }
 
 .sidebar-status {
