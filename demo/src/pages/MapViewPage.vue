@@ -248,7 +248,7 @@ let liveInterval: ReturnType<typeof setInterval> | null = null
 const lastRefreshTime = ref('')
 const LIVE_REFRESH_MS = 8000                // 8s cycle (scaled for 15-20 concurrent users)
 const INITIAL_POLL_STAGGER_MS = 3000        // Random delay before first live poll (thundering herd prevention)
-const OPTIONAL_LAYER_TIMEOUT_MS = 25000
+const OPTIONAL_LAYER_TIMEOUT_MS = 10000
 
 async function runOptionalMapLayer(label: string, loadLayer: () => Promise<void>): Promise<void> {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
@@ -266,6 +266,27 @@ async function runOptionalMapLayer(label: string, loadLayer: () => Promise<void>
     console.warn(`[Map] ${label} failed`, err)
   } finally {
     if (timeoutId) clearTimeout(timeoutId)
+  }
+}
+
+function fitMapToLoadedFeatures(duration = 500) {
+  let hasAnyFeatures = false
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  for (const src of Object.values(vectorSources)) {
+    if (src.getFeatures().length === 0) continue
+    const ext = src.getExtent()
+    if (ext[0] < minX) minX = ext[0]
+    if (ext[1] < minY) minY = ext[1]
+    if (ext[2] > maxX) maxX = ext[2]
+    if (ext[3] > maxY) maxY = ext[3]
+    hasAnyFeatures = true
+  }
+  if (hasAnyFeatures && map) {
+    map.getView().fit([minX, minY, maxX, maxY], {
+      padding: [50, 50, 50, 50],
+      maxZoom: 16,
+      duration,
+    })
   }
 }
 
@@ -3712,6 +3733,9 @@ async function loadAllResources() {
     })
     await Promise.all(promises)
 
+    loading.value = false
+    fitMapToLoadedFeatures(250)
+
     // 2. Build system location cache (static geometry + subsystem propagation + observation data)
     await buildSystemLocationCache()
 
@@ -3755,25 +3779,7 @@ async function loadAllResources() {
     }, stagger)
   }
 
-  // Fit map to all features (merge extents directly — no intermediate VectorSource)
-  let hasAnyFeatures = false
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-  for (const src of Object.values(vectorSources)) {
-    if (src.getFeatures().length === 0) continue
-    const ext = src.getExtent()
-    if (ext[0] < minX) minX = ext[0]
-    if (ext[1] < minY) minY = ext[1]
-    if (ext[2] > maxX) maxX = ext[2]
-    if (ext[3] > maxY) maxY = ext[3]
-    hasAnyFeatures = true
-  }
-  if (hasAnyFeatures && map) {
-    map.getView().fit([minX, minY, maxX, maxY], {
-      padding: [50, 50, 50, 50],
-      maxZoom: 16,
-      duration: 500,
-    })
-  }
+  fitMapToLoadedFeatures()
 }
 
 // --- Bbox Filter ---
