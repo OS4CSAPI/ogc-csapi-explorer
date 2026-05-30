@@ -748,12 +748,20 @@ const senrepTrackStyle = new Style({
   stroke: new Stroke({ color: '#ef4444', width: 2.5, lineDash: [6, 4] }),
 })
 
-// Orbit track style — solid bright line for satellite ground tracks
+// Orbit track style — solid bright line for observed satellite ground tracks
 const orbitTrackStyle = new Style({
   stroke: new Stroke({ color: '#22d3ee', width: 2.5 }),
 })
 const orbitTrackGlowStyle = new Style({
   stroke: new Stroke({ color: 'rgba(34, 211, 238, 0.25)', width: 8 }),
+})
+
+// Predicted orbit products are future paths, not the current ISS trail.
+const predictedOrbitTrackStyle = new Style({
+  stroke: new Stroke({ color: '#a855f7', width: 2, lineDash: [10, 8] }),
+})
+const predictedOrbitTrackGlowStyle = new Style({
+  stroke: new Stroke({ color: 'rgba(168, 85, 247, 0.18)', width: 7 }),
 })
 
 // Satellite observation point style — distinct from generic obs points
@@ -3652,13 +3660,15 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
             geometry: new LineString(segment.map(c => fromLonLat(c))),
           })
           if (isSatDs) {
-            lineFeature.setStyle([orbitTrackGlowStyle, orbitTrackStyle])
+            lineFeature.setStyle(isOrbitTrackDs
+              ? [predictedOrbitTrackGlowStyle, predictedOrbitTrackStyle]
+              : [orbitTrackGlowStyle, orbitTrackStyle])
           } else {
             lineFeature.setStyle(getStyle('observationTracks'))
           }
           lineFeature.set('resourceType', 'observationTracks')
           lineFeature.set('resourceId', dsInfo.id)
-          lineFeature.set('resourceName', `Track: ${dsInfo.name}`)
+          lineFeature.set('resourceName', `${isOrbitTrackDs ? 'Predicted orbit' : 'Track'}: ${dsInfo.name}`)
           lineFeature.set('enriched', true)
           lineFeature.set('enrichmentSource', `${trackCoords.length} observations from ${dsInfo.name}`)
           lineFeature.set('rawData', { datastreamId: dsInfo.id, datastreamName: dsInfo.name, systemId: dsInfo.systemId, pointCount: trackCoords.length })
@@ -3673,9 +3683,10 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         }
       }
 
-      // Snap ISS/satellite marker to the last track point so marker and track
-      // are guaranteed to be at the same position (same data, no extra API call).
-      if (isSatDs && trackCoords.length > 0) {
+      // Snap ISS/satellite markers only from current position observations.
+      // Orbit-track datastreams carry predicted future paths; their last point
+      // is the end of the prediction window, not the current asset position.
+      if (isSatDs && !isOrbitTrackDs && trackCoords.length > 0) {
         const tip = trackCoords[trackCoords.length - 1]
         const tipCoord = fromLonLat(tip)
         systemLocationCache[dsInfo.systemId] = {

@@ -30,7 +30,7 @@ Add live ISS (International Space Station) satellite tracking to the CSAPI Explo
 - **Glow effect** on orbit track (wide translucent blue outer + solid cyan inner)
 - **MIL-STD-2525D symbol**: Neutral (green) Satellite with LEO modifier — SIDC `10040500001101000100`
 - **Symbol space**: `SS_SPACE = '05'` (first space asset in the system)
-- **Live mode support**: ISS marker updates every 8 seconds, snapped to last track coordinate
+- **Live mode support**: ISS marker updates every 8 seconds from the current position datastream; predicted orbit-track products render as a separate dashed future path and do not move the marker
 
 ### 3. Symbol Mapper Enhancements (`demo/src/symbol-mapper.ts`)
 - ISS keyword rule: `['iss', 'space station', 'zarya']` → Neutral Satellite LEO
@@ -39,7 +39,7 @@ Add live ISS (International Space Station) satellite tracking to the CSAPI Explo
 
 ### 4. Anti-Blink Architecture (MapViewPage + SimulatorAdminPage)
 - **Atomic source swap**: observation layers collect features into pending arrays during async fetch, then clear+addFeatures in one synchronous block — eliminates the 1-2 second visual blink where features vanish during API calls
-- **Satellite race elimination**: `updateMovingSystemPositions()` skips satellite datastreams entirely; ISS position is managed exclusively by the snap-to-track-tip code in `loadObservationLayers()` — single source of truth, no race
+- **Satellite race elimination**: `updateMovingSystemPositions()` skips satellite datastreams entirely; ISS position is managed exclusively by the position-observation path in `loadObservationLayers()`, while predicted orbit-track products are visualized without moving system/deployment markers — single source of truth, no race
 - **Simulator poll resilience**: 3 consecutive failures required before marking disconnected (was: 1 failure → instant UI flash)
 
 ---
@@ -53,7 +53,7 @@ Add live ISS (International Space Station) satellite tracking to the CSAPI Explo
 | 3 | ISS marker not moving in live mode | `updateMovingSystemPositions()` not awaited | Added `await`, then later replaced with snap-to-track-tip |
 | 4 | ISS symbol rendered as pink rectangle | MIL-STD entity 120900 (Space Station) not supported by milsymbol | Reverted to entity 110100 (Satellite) with Neutral identity + LEO modifier (`9c53956`) |
 | 5 | Relay symbol turned green | `'iss'` keyword matched as substring inside `'retransmission'` | Word-boundary regex `\b` for keywords ≤3 chars (`e6faf1e`) |
-| 6 | ISS marker offset from track (zoom view) | Separate API calls for marker vs. track returned data seconds apart; ISS moves ~7.7 km/s | Snap marker to last track coordinate — same data, zero race (`d088467`) |
+| 6 | ISS marker offset from track (zoom view) | Separate API calls for marker vs. track returned data seconds apart; ISS moves ~7.7 km/s | Snap marker from current position observations only; render predicted orbit products separately so the future-path endpoint is not mistaken for current ISS |
 | 7 | Live mode: ISS doesn't move, symbol disappears | `loadObservationLayers` cleared all sources every 8s; `skipSatellite` parameter broke initial load | Full revert to `e76475c` + 2 surgical re-applies (`252c3bc`) |
 | 8 | All observations disappeared (0 count) | `skipSatellite` + `isLive` check killed observations during non-live initial load | Reverted — clean code restored (`252c3bc`) |
 | 9 | UI panels blink on/off (Map + Simulator pages) | Sources cleared before fetch starts; simulator marks disconnected on 1 failed poll | Atomic swap pattern; 3-failure threshold (`4746e49`) |
@@ -65,7 +65,7 @@ Add live ISS (International Space Station) satellite tracking to the CSAPI Explo
 
 1. **Revert early, revert hard.** After 5 incremental patches each introduced new regressions, reverting to the last known-good commit (`e76475c`) and surgically re-applying only 2 essential fixes was the right call. The final working state has 55 fewer lines than the broken intermediate state.
 
-2. **One source of truth for position.** When two parallel async functions both try to set the same feature's geometry, one will always flash the wrong value. The fix is to pick one authoritative code path and exclude the other.
+2. **One source of truth for position.** When two parallel async functions both try to set the same feature's geometry, one will always flash the wrong value. The fix is to pick one authoritative current-position code path and exclude prediction/track products from marker movement.
 
 3. **Never clear-then-fetch.** Clearing a map source before the replacement data arrives creates a visible blink proportional to network latency. Atomic swap (collect → clear → add in one synchronous block) eliminates this entirely.
 
