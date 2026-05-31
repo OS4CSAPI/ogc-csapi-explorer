@@ -205,6 +205,17 @@ function classifyObsSource(dsName: string): string {
 // Per-source visibility + counts (dynamically populated during observation loading)
 const activeObsSources = ref<Record<string, boolean>>({})
 const obsSourceCounts = ref<Record<string, number>>({})
+const railTrainUniqueCount = ref(0)
+
+const railTrainShownCount = computed(() => {
+  const pointsLayerVisible = activeLayers.value['observationPoints'] !== false
+  const railSourceVisible = activeObsSources.value['src-digitraffic-rail'] !== false
+  return (pointsLayerVisible && railSourceVisible) ? railTrainUniqueCount.value : 0
+})
+
+const railTrainVisibilitySuppressed = computed(() => (
+  railTrainUniqueCount.value > 0 && railTrainShownCount.value === 0
+))
 
 // Invisible style used to hide features when their source is toggled off
 const HIDDEN_STYLE = new Style({})
@@ -764,7 +775,7 @@ const obsTrackStyle = new Style({
 })
 
 const railTrackStyle = new Style({
-  stroke: new Stroke({ color: '#1d4ed8', width: 2.5, lineDash: [6, 3] }),
+  stroke: new Stroke({ color: '#1d4ed8', width: 4, lineDash: [8, 4] }),
 })
 
 // SENREP track line style — red dashed line connecting consecutive SENREPs for the same contact
@@ -825,29 +836,47 @@ function marineAisVesselStyle(headingDeg: number): Style {
   })
 }
 
+const railTrainMovingHaloStyle = new Style({
+  image: new CircleStyle({
+    radius: 12,
+    fill: new Fill({ color: 'rgba(30, 64, 175, 0.25)' }),
+    stroke: new Stroke({ color: 'rgba(239, 246, 255, 0.9)', width: 1 }),
+  }),
+})
+
 const railTrainMovingStyle = new Style({
   image: new RegularShape({
     points: 4,
-    radius: 7,
+    radius: 10,
     angle: Math.PI / 4,
-    fill: new Fill({ color: '#1d4ed8' }),
-    stroke: new Stroke({ color: '#eff6ff', width: 1.5 }),
+    fill: new Fill({ color: '#1e40af' }),
+    stroke: new Stroke({ color: '#ffffff', width: 2 }),
   }),
 })
 
 const railTrainStoppedStyle = new Style({
   image: new RegularShape({
     points: 4,
-    radius: 7,
+    radius: 10,
     angle: Math.PI / 4,
-    fill: new Fill({ color: '#93c5fd' }),
-    stroke: new Stroke({ color: '#1e3a8a', width: 1.5 }),
+    fill: new Fill({ color: '#60a5fa' }),
+    stroke: new Stroke({ color: '#1e3a8a', width: 2 }),
   }),
 })
 
-function railTrainPointStyle(speedKmh: any): Style {
+const railTrainStoppedHaloStyle = new Style({
+  image: new CircleStyle({
+    radius: 12,
+    fill: new Fill({ color: 'rgba(96, 165, 250, 0.22)' }),
+    stroke: new Stroke({ color: 'rgba(239, 246, 255, 0.9)', width: 1 }),
+  }),
+})
+
+function railTrainPointStyle(speedKmh: any): Style[] {
   const speed = Number(speedKmh)
-  return !isNaN(speed) && speed > 1 ? railTrainMovingStyle : railTrainStoppedStyle
+  return !isNaN(speed) && speed > 1
+    ? [railTrainMovingHaloStyle, railTrainMovingStyle]
+    : [railTrainStoppedHaloStyle, railTrainStoppedStyle]
 }
 
 function marineAisFmt(value: any, suffix = '', decimals = 1): string {
@@ -3864,6 +3893,16 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
     bearingSource.clear(); bearingSource.addFeatures(pendingBearings)
     featureCounts.value['bearingLines'] = bearingCount
   }
+
+  const railKeys = new Set<string>()
+  for (const feature of pendingPoints) {
+    if (feature.get('obsSourceKey') !== 'src-digitraffic-rail') continue
+    const result = feature.get('rawData')?.result || {}
+    const key = `${result.trainNumber || '?'}|${result.departureDate || ''}`
+    railKeys.add(key)
+  }
+  railTrainUniqueCount.value = railKeys.size
+
   featureCounts.value['observationPoints'] = pointCount
   featureCounts.value['observationTracks'] = trackCount
 
@@ -5041,6 +5080,10 @@ watch(selectedFeature, (feat) => {
     <div class="map-area">
       <div ref="mapContainer" class="map-container"></div>
       <div v-if="mouseCoords" class="coord-display">{{ mouseCoords }}</div>
+      <div v-if="railTrainUniqueCount > 0" class="rail-live-indicator" :class="{ 'rail-live-indicator--muted': railTrainVisibilitySuppressed }">
+        🚆 Rail trains shown: {{ railTrainShownCount }}
+        <span class="rail-live-indicator-total">(feed: {{ railTrainUniqueCount }})</span>
+      </div>
 
       <!-- Popup overlay (attached to OL overlay, positioned on map) -->
       <div ref="popupContainer" class="ol-popup">
@@ -6092,6 +6135,44 @@ watch(selectedFeature, (feat) => {
   pointer-events: none;
   z-index: 10;
   user-select: none;
+}
+
+.rail-live-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 12;
+  background: rgba(15, 23, 42, 0.9);
+  color: #eff6ff;
+  border: 1px solid rgba(147, 197, 253, 0.65);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.35);
+  pointer-events: none;
+  user-select: none;
+}
+
+.rail-live-indicator-total {
+  margin-left: 0.35rem;
+  font-weight: 500;
+  color: #bfdbfe;
+}
+
+.rail-live-indicator--muted {
+  border-color: rgba(251, 191, 36, 0.75);
+  color: #fef3c7;
+}
+
+@media (max-width: 768px) {
+  .rail-live-indicator {
+    top: 8px;
+    right: 8px;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.5rem;
+    max-width: calc(100% - 16px);
+  }
 }
 
 /* OpenLayers popup — positioned above the feature with arrow pointing down */
