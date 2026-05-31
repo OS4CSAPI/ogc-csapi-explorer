@@ -10,16 +10,47 @@
  *   - Operational, not verbose
  *   - No raw schema, no debug text, no ISO timestamps in the main view
  */
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { DeployedSystemCardModel, TrendSummary } from '../composables/useDeployedSystemCard'
 
 const showImageOverlay = ref(false)
 const showBuoycamOverlay = ref(false)
+const FALLBACK_THUMBNAIL = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='220' viewBox='0 0 320 220'%3E%3Crect width='320' height='220' fill='%231e3a8a'/%3E%3Ctext x='160' y='112' fill='%23eff6ff' font-size='24' text-anchor='middle' font-family='Arial,sans-serif'%3ETrain%3C/text%3E%3C/svg%3E"
 
 const props = defineProps<{
   card: DeployedSystemCardModel
   loading?: boolean
 }>()
+
+const displayThumbnail = ref('')
+const displayCameraImage = ref('')
+
+function resetImageBindings() {
+  displayThumbnail.value = props.card.thumbnail || FALLBACK_THUMBNAIL
+  displayCameraImage.value = props.card.cameraThumbUrl || props.card.cameraImageUrl || ''
+}
+
+function onThumbnailError() {
+  if (displayThumbnail.value !== FALLBACK_THUMBNAIL) {
+    displayThumbnail.value = FALLBACK_THUMBNAIL
+  }
+}
+
+function onCameraImageError() {
+  if (props.card.cameraImageUrl && displayCameraImage.value !== props.card.cameraImageUrl) {
+    displayCameraImage.value = props.card.cameraImageUrl
+    return
+  }
+  if (displayCameraImage.value !== FALLBACK_THUMBNAIL) {
+    displayCameraImage.value = FALLBACK_THUMBNAIL
+  }
+}
+
+watch(
+  () => props.card,
+  () => resetImageBindings(),
+  { immediate: true, deep: true },
+)
 
 const emit = defineEmits<{
   (e: 'explore'): void
@@ -175,7 +206,7 @@ const trustLine = computed(() => {
   <Teleport to="body">
     <div v-if="showImageOverlay" class="dsc-lightbox" @click="showImageOverlay = false">
       <div class="dsc-lightbox-inner" @click.stop>
-        <img :src="card.thumbnail" alt="" class="dsc-lightbox-img" />
+        <img :src="displayThumbnail" alt="" class="dsc-lightbox-img" @error="onThumbnailError" />
         <button class="dsc-lightbox-close" @click="showImageOverlay = false" title="Close">
           <i class="pi pi-times"></i>
         </button>
@@ -183,7 +214,7 @@ const trustLine = computed(() => {
     </div>
     <div v-if="showBuoycamOverlay" class="dsc-lightbox" @click="showBuoycamOverlay = false">
       <div class="dsc-lightbox-inner" @click.stop>
-        <img :src="card.cameraImageUrl" alt="Camera" class="dsc-lightbox-img" />
+        <img :src="displayCameraImage || card.cameraImageUrl" alt="Camera" class="dsc-lightbox-img" @error="onCameraImageError" />
         <button class="dsc-lightbox-close" @click="showBuoycamOverlay = false" title="Close">
           <i class="pi pi-times"></i>
         </button>
@@ -201,8 +232,8 @@ const trustLine = computed(() => {
     <header class="dsc-hdr">
       <div class="dsc-hdr-row">
         <div class="dsc-icon-group">
-          <div class="dsc-icon" :class="{ 'dsc-icon--clickable': card.thumbnail }" @click="card.thumbnail && (showImageOverlay = true)">
-            <img v-if="card.thumbnail" :src="card.thumbnail" alt="" title="Click to enlarge" />
+          <div class="dsc-icon" :class="{ 'dsc-icon--clickable': !!displayThumbnail }" @click="displayThumbnail && (showImageOverlay = true)">
+            <img v-if="displayThumbnail" :src="displayThumbnail" alt="" title="Click to enlarge" @error="onThumbnailError" />
             <i v-else class="pi pi-map"></i>
           </div>
           <img v-if="card.stanagSvg" :src="card.stanagSvg" class="dsc-stanag" alt="STANAG" title="MIL-STD-2525 Symbol" />
@@ -231,7 +262,7 @@ const trustLine = computed(() => {
     <section v-if="card.cameraImageUrl" class="dsc-sec dsc-buoycam">
       <h3 class="dsc-sec-hd"><i class="pi pi-camera"></i> {{ card.cameraLabel || 'Live Camera' }}</h3>
       <div class="dsc-buoycam-frame" @click="showBuoycamOverlay = true" title="Click to enlarge">
-        <img :src="card.cameraThumbUrl || card.cameraImageUrl" alt="Camera" class="dsc-buoycam-img" />
+        <img :src="displayCameraImage || card.cameraImageUrl" alt="Camera" class="dsc-buoycam-img" @error="onCameraImageError" />
       </div>
       <div class="dsc-buoycam-meta">
         <div v-if="card.cameraTimestamp" class="dsc-buoycam-time">
