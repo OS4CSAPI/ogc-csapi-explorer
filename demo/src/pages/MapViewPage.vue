@@ -2300,6 +2300,7 @@ async function enrichDeployments(): Promise<void> {
     // Now that all deployment geometry is resolved, back-fill the cache
     // so enrichSystems() places systems at their deployment's location.
     for (const item of allItems) {
+      if (!deploymentMatchesKeyword(item)) continue
       const depId = extractId(item)
       const centroid = resolvedCentroid[depId]
       if (!centroid) continue
