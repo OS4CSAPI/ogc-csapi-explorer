@@ -5580,6 +5580,33 @@ watch(selectedFeature, (feat) => {
   overflow: hidden;
 }
 
+.map-sidebar {
+  width: 280px;
+  min-width: 280px;
+  min-height: 0;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 1rem 1rem 0.5rem;
+}
+
+.sidebar-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.layer-controls {
+  padding: 0.25rem 0.5rem;
+}
+
 .layer-toggle {
   display: flex;
   align-items: center;
