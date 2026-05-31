@@ -599,7 +599,7 @@ function readingFreshnessState(isoString: string): LatestReadingSummary['freshne
 }
 
 function isCameraDatastreamName(name: string): boolean {
-  return /buoycam|buoy[\s_-]?cam|camera|nims.*image|station.*image/i.test(name)
+  return /buoycam|buoy[\s_-]?cam|weather[\s_-]?cam|weather\s+camera|camera|webcam|cam.*image|nims.*image|station.*image/i.test(name)
 }
 
 function isForecastDatastream(ds: DatastreamSummary): boolean {
@@ -1255,7 +1255,8 @@ export function useDeployedSystemCard() {
       const cameraDs = datastreams.find(ds => isCameraDatastreamName(ds.name))
       if (cameraDs) {
         const isBuoyCAM = /buoycam|buoy[\s_-]?cam/i.test(cameraDs.name)
-        cameraLabel = isBuoyCAM ? 'Live BuoyCAM' : 'Live Camera'
+        const isWeathercam = /weather[\s_-]?cam|weather\s+camera|digitraffic.*cam/i.test(cameraDs.name)
+        cameraLabel = isBuoyCAM ? 'Live BuoyCAM' : isWeathercam ? 'Live Weathercam' : 'Live Camera'
         try {
           const obs = await fetchLatestObservation(cameraDs.id)
           const result = obs?.result || {}
