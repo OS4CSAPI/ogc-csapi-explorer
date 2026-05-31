@@ -206,11 +206,18 @@ function classifyObsSource(dsName: string): string {
 const activeObsSources = ref<Record<string, boolean>>({})
 const obsSourceCounts = ref<Record<string, number>>({})
 const railTrainUniqueCount = ref(0)
+const railTrailUniqueCount = ref(0)
 
 const railTrainShownCount = computed(() => {
   const pointsLayerVisible = activeLayers.value['observationPoints'] !== false
   const railSourceVisible = activeObsSources.value['src-digitraffic-rail'] !== false
   return (pointsLayerVisible && railSourceVisible) ? railTrainUniqueCount.value : 0
+})
+
+const railTrailShownCount = computed(() => {
+  const tracksLayerVisible = activeLayers.value['observationTracks'] !== false
+  const railSourceVisible = activeObsSources.value['src-digitraffic-rail'] !== false
+  return (tracksLayerVisible && railSourceVisible) ? railTrailUniqueCount.value : 0
 })
 
 const railTrainVisibilitySuppressed = computed(() => (
@@ -3459,7 +3466,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // Aircraft/AIS/Rail DS: fetch enough to capture the full moving-object batch.
       // Earthquake DS: fetch up to 300 to cover 24h of global events.
       // Other DS: use caller's obsLimit.
-      const effectiveLimit = isOrbitTrackDs ? 1 : (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : isRailDs ? 300 : isMarineAisDs ? 200 : isAircraftDs ? 200 : isEarthquakeDs ? 300 : obsLimit
+      const effectiveLimit = isOrbitTrackDs ? 1 : (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : isRailDs ? 1200 : isMarineAisDs ? 200 : isAircraftDs ? 200 : isEarthquakeDs ? 300 : obsLimit
 
       // OSH returns observations oldest-first and ignores sort params, so a
       // bare limit=N always returns the N OLDEST observations.  For position/
@@ -3505,7 +3512,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         // LOB datastreams: 5-minute window for tight real-time view.
         // Weather datastreams: 2-hour window (obs ~hourly) to ensure latest.
         // Earthquake datastreams: 24-hour window to show all recent events.
-        const windowMinutes = isRailDs ? 10 : isMarineAisDs ? 10 : isPositionDs ? 240 : isOrbitTrackDs ? 10 : isWeatherDs ? 120 : isAircraftDs ? 10 : isEarthquakeDs ? 1440 : 5
+        const windowMinutes = isRailDs ? 45 : isMarineAisDs ? 10 : isPositionDs ? 240 : isOrbitTrackDs ? 10 : isWeatherDs ? 120 : isAircraftDs ? 10 : isEarthquakeDs ? 1440 : 5
         const latestMs = new Date(latestTime).getTime()
         // Fetch limit: position DS gets 2× effective to allow burst dedup
         // headroom, LOB DS needs extra to overcome OSH scope-leak contamination,
@@ -3895,13 +3902,20 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
   }
 
   const railKeys = new Set<string>()
+  const railTrailKeys = new Set<string>()
   for (const feature of pendingPoints) {
     if (feature.get('obsSourceKey') !== 'src-digitraffic-rail') continue
     const result = feature.get('rawData')?.result || {}
     const key = `${result.trainNumber || '?'}|${result.departureDate || ''}`
     railKeys.add(key)
   }
+  for (const feature of pendingTracks) {
+    if (feature.get('obsSourceKey') !== 'src-digitraffic-rail') continue
+    const trainKey = feature.get('rawData')?.trainKey
+    if (trainKey) railTrailKeys.add(String(trainKey))
+  }
   railTrainUniqueCount.value = railKeys.size
+  railTrailUniqueCount.value = railTrailKeys.size
 
   featureCounts.value['observationPoints'] = pointCount
   featureCounts.value['observationTracks'] = trackCount
@@ -5083,6 +5097,7 @@ watch(selectedFeature, (feat) => {
       <div v-if="railTrainUniqueCount > 0" class="rail-live-indicator" :class="{ 'rail-live-indicator--muted': railTrainVisibilitySuppressed }">
         🚆 Rail trains shown: {{ railTrainShownCount }}
         <span class="rail-live-indicator-total">(feed: {{ railTrainUniqueCount }})</span>
+        <span class="rail-live-indicator-total"> · trails: {{ railTrailShownCount }}</span>
       </div>
 
       <!-- Popup overlay (attached to OL overlay, positioned on map) -->

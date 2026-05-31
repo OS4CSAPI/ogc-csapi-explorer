@@ -1410,7 +1410,7 @@ export function useDeployedSystemCard() {
         roleBadge: normalizeLabel(inferredRole, ROLE_LABELS) || 'Deployed System',
         statusBadge: normalizeLabel(status, {}) || 'Unknown Status',
         kindBadge: normalizeLabel(inferredKind, KIND_LABELS) || '',
-        thumbnail: smlMedia.length > 0 ? smlMedia[0]!.href : representativeThumbnail,
+        thumbnail: representativeThumbnail || (smlMedia.length > 0 ? smlMedia[0]!.href : ''),
         stanagSvg,
 
         // Summary
