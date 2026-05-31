@@ -142,7 +142,14 @@ const OBS_SOURCE_DEFS: Array<{ key: string; label: string; color: string; icon: 
   { key: 'src-digitraffic-rail', label: 'FIN Rail', color: '#1d4ed8', icon: '🚆' },
   { key: 'src-syke-hydrology', label: 'SYKE Hydrology', color: '#0284c7', icon: '💧' },
 ]
-const AIS_FEED_DEPLOYMENT_UID = 'urn:os4csapi:deployment:digitraffic-marine-ais-feed:v1'
+function isFeedDeployment(item: any): boolean {
+  const props = item?.properties || item || {}
+  const uid = String(props.uid || item?.uid || '').toLowerCase()
+  const name = String(props.name || item?.name || '').toLowerCase()
+  const hasPlatformLink = !!props['platform@link']?.href
+  if (!hasPlatformLink) return false
+  return (uid.includes(':deployment:') && uid.includes('feed')) || /\bfeed\b/.test(name)
+}
 
 /** Classify a datastream name into a source category key. */
 function isMarineAisText(text: string): boolean {
@@ -1308,7 +1315,7 @@ function createOlFeature(item: any, resourceType: string): Feature | null {
   feature.set('resourceId', extractId(item))
   feature.set('resourceName', extractName(item))
   feature.set('rawData', item)
-  if (resourceType === 'deployments' && item?.properties?.uid === AIS_FEED_DEPLOYMENT_UID) {
+  if (resourceType === 'deployments' && isFeedDeployment(item)) {
     feature.set('_deferredStyle', style)
     feature.setStyle(HIDDEN_STYLE)
   }
