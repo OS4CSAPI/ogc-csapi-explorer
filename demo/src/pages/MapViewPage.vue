@@ -151,6 +151,15 @@ function isFeedDeployment(item: any): boolean {
   return (uid.includes(':deployment:') && uid.includes('feed')) || /\bfeed\b/.test(name)
 }
 
+function getFeedAnchorKind(item: any): 'rail' | 'ais' | 'weather' | 'generic' {
+  const props = item?.properties || item || {}
+  const txt = `${props.uid || item?.uid || ''} ${props.name || item?.name || ''}`.toLowerCase()
+  if (txt.includes('rail') || txt.includes('train')) return 'rail'
+  if (txt.includes('ais') || txt.includes('marine')) return 'ais'
+  if (txt.includes('weather')) return 'weather'
+  return 'generic'
+}
+
 /** Classify a datastream name into a source category key. */
 function isMarineAisText(text: string): boolean {
   const n = text.toLowerCase()
@@ -1106,14 +1115,14 @@ function makeNameLabel(name: string, offsetY: number): Style | null {
   })
 }
 
-function makeFeedBadgeLabel(offsetY: number): Style {
+function makeFeedBadgeLabel(text: string, offsetY: number, fillColor: string): Style {
   return new Style({
     text: new OlText({
-      text: 'FEED',
+      text,
       font: 'bold 10px sans-serif',
       fill: new Fill({ color: '#e0f2fe' }),
       stroke: new Stroke({ color: '#0c4a6e', width: 3 }),
-      backgroundFill: new Fill({ color: 'rgba(2, 132, 199, 0.85)' }),
+      backgroundFill: new Fill({ color: fillColor }),
       backgroundStroke: new Stroke({ color: 'rgba(224, 242, 254, 0.9)', width: 1 }),
       padding: [1, 5, 1, 5],
       offsetY,
@@ -1123,15 +1132,29 @@ function makeFeedBadgeLabel(offsetY: number): Style {
   })
 }
 
-function feedAnchorRingStyle(radius: number, selected = false): Style {
+function feedAnchorRingStyle(radius: number, ringColor: string, selected = false): Style {
   return new Style({
     image: new CircleStyle({
       radius,
       fill: new Fill({ color: 'rgba(2, 132, 199, 0.08)' }),
-      stroke: new Stroke({ color: selected ? '#fbbf24' : '#38bdf8', width: selected ? 2.5 : 2 }),
+      stroke: new Stroke({ color: selected ? '#fbbf24' : ringColor, width: selected ? 2.5 : 2 }),
     }),
     zIndex: selected ? 108 : 98,
   })
+}
+
+function feedAnchorVisualSpec(item: any): { badgeText: string; ringColor: string; badgeColor: string } {
+  const kind = getFeedAnchorKind(item)
+  if (kind === 'rail') {
+    return { badgeText: 'RAIL FEED', ringColor: '#1d4ed8', badgeColor: 'rgba(29, 78, 216, 0.9)' }
+  }
+  if (kind === 'ais') {
+    return { badgeText: 'AIS FEED', ringColor: '#0ea5e9', badgeColor: 'rgba(14, 165, 233, 0.9)' }
+  }
+  if (kind === 'weather') {
+    return { badgeText: 'WX FEED', ringColor: '#0f766e', badgeColor: 'rgba(15, 118, 110, 0.9)' }
+  }
+  return { badgeText: 'FEED', ringColor: '#38bdf8', badgeColor: 'rgba(2, 132, 199, 0.85)' }
 }
 
 /** Check if a deployment has a platform@link — only these physical emplacements get STANAG symbols.
@@ -1162,6 +1185,7 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
     const sym = getSymbolForResource(resourceType, rawData, sz)
     if (sym) {
       const isFeed = isFeedDeployment(rawData)
+      const feedSpec = isFeed ? feedAnchorVisualSpec(rawData) : null
       const iconStyle = new Style({
         image: new OlIcon({
           src: sym.svgDataUrl,
@@ -1175,12 +1199,12 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
         fill: new Fill({ color: color + '33' }),
       })
       const styles: Style[] = []
-      if (isFeed) {
-        styles.push(feedAnchorRingStyle(Math.max(12, Math.round(sym.size.width * 0.6))))
+      if (feedSpec) {
+        styles.push(feedAnchorRingStyle(Math.max(12, Math.round(sym.size.width * 0.6)), feedSpec.ringColor))
       }
       styles.push(iconStyle)
-      if (isFeed) {
-        styles.push(makeFeedBadgeLabel(-(sym.anchor.y + 10)))
+      if (feedSpec) {
+        styles.push(makeFeedBadgeLabel(feedSpec.badgeText, -(sym.anchor.y + 10), feedSpec.badgeColor))
       }
       const nameStyle = makeNameLabel(name, sym.size.height - sym.anchor.y + 14)
       if (nameStyle) styles.push(nameStyle)
@@ -1271,6 +1295,7 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
     const sym = getSymbolForResource(resourceType, rawData, 'normal')
     if (sym) {
       const isFeed = isFeedDeployment(rawData)
+      const feedSpec = isFeed ? feedAnchorVisualSpec(rawData) : null
       const iconStyle = new Style({
         image: new OlIcon({
           src: sym.svgDataUrl,
@@ -1283,12 +1308,12 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
         fill: new Fill({ color: color + '55' }),
       })
       const styles: Style[] = []
-      if (isFeed) {
-        styles.push(feedAnchorRingStyle(Math.max(14, Math.round(sym.size.width * 0.75)), true))
+      if (feedSpec) {
+        styles.push(feedAnchorRingStyle(Math.max(14, Math.round(sym.size.width * 0.75)), feedSpec.ringColor, true))
       }
       styles.push(iconStyle)
-      if (isFeed) {
-        styles.push(makeFeedBadgeLabel(-(sym.anchor.y * 1.3 + 12)))
+      if (feedSpec) {
+        styles.push(makeFeedBadgeLabel(feedSpec.badgeText, -(sym.anchor.y * 1.3 + 12), feedSpec.badgeColor))
       }
       const nameStyle = makeNameLabel(name, (sym.size.height - sym.anchor.y) * 1.3 + 14)
       if (nameStyle) styles.push(nameStyle)
