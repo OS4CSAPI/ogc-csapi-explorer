@@ -166,8 +166,10 @@ const MET_OFFICE_LAND_OBS_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/w
 const MET_OFFICE_GLOBAL_SPOT_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/3/3b/Met_Office_Weather_Station_at_Lusa_-_geograph.org.uk_-_808151.jpg'
 const DIGITRAFFIC_ROAD_WEATHER_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/9/94/Traffic_weather_station_general_view.jpg'
 const DIGITRAFFIC_MARINE_AIS_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/5/51/Compact_AIS_antenna.jpg'
+const DIGITRAFFIC_RAIL_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/2/2d/Sm5_01_Helsinki_railway_station.jpg'
 const FMI_WEATHER_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/2/21/S%C3%A4%C3%A4asema_Kylm%C3%A4pihlaja.jpg'
 const FMI_AIR_QUALITY_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Oksakyvetti_-_Smear_II_-asema_-_Hyyti%C3%A4l%C3%A4%2C_Juupajoki.jpg'
+const SYKE_HYDROLOGY_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/1/12/Crews_Lake_Water_Level_Gauge.jpg'
 
 // ─── SML field extractors ──────────────────────────────────────────────────
 
@@ -408,6 +410,12 @@ function representativeThumbnailForCard(
   if (text.includes('fmi air quality') || text.includes('fmiairqualityobs') || (text.includes('finnish meteorological institute') && text.includes('air quality'))) {
     return FMI_AIR_QUALITY_REPRESENTATIVE_IMAGE
   }
+  if ((text.includes('digitraffic') || text.includes('fintraffic')) && (text.includes('rail') || text.includes('train'))) {
+    return DIGITRAFFIC_RAIL_REPRESENTATIVE_IMAGE
+  }
+  if (text.includes('syke') || text.includes('hydrologiarajapinta') || text.includes('vesi.fi')) {
+    return SYKE_HYDROLOGY_REPRESENTATIVE_IMAGE
+  }
   if (text.includes('marine ais') || text.includes('digitrafficmarineais') || text.includes('vessel position')
     || (text.includes('digitraffic') && text.includes('marine')) || (text.includes('fintraffic') && text.includes('ais'))) {
     return DIGITRAFFIC_MARINE_AIS_REPRESENTATIVE_IMAGE
@@ -622,7 +630,9 @@ const VALUE_PRIORITY_KEYS = [
   'air_temperature_c', 'air_temp_c', 'temperature_c',
   'water_temperature_c', 'water_temp_c',
   'river_level_m', 'groundwater_level_m', 'water_level_m',
+  'water_level_cm',
   'river_flow_m3s', 'flow_m3s', 'discharge_m3s',
+  'speed_kmh',
   'rainfall_mm',
   'wind_speed_ms', 'wind_gust_ms',
   'precipitation_probability_pct', 'weather_code',
@@ -649,6 +659,14 @@ const SOURCE_VALUE_PRIORITY_KEYS: Array<{ pattern: RegExp; keys: string[] }> = [
   {
     pattern: /environment agency|ea hydrology|river|rainfall|groundwater/i,
     keys: ['value', 'river_level_m', 'river_flow_m3s', 'flow_m3s', 'rainfall_mm', 'groundwater_level_m'],
+  },
+  {
+    pattern: /syke|hydrologiarajapinta|vesi\.fi|sykedischarge|sykewaterlevel/i,
+    keys: ['water_level_cm', 'discharge_m3s', 'value'],
+  },
+  {
+    pattern: /digitraffic|fintraffic|rail|train/i,
+    keys: ['speed_kmh', 'value'],
   },
   {
     pattern: /uk-air|uk air|air quality|nitrogen dioxide|ozone|particulate/i,
@@ -682,6 +700,7 @@ function labelForReading(ds: DatastreamSummary, result: any, valueKey: string): 
   if (valueKey === 'wind_direction_deg') return 'Wind Direction'
   if (valueKey === 'wind_speed_ms') return 'Wind Speed'
   if (valueKey === 'wind_gust_ms') return 'Wind Gust'
+  if (valueKey === 'speed_kmh') return 'Train Speed'
   if (valueKey === 'precipitation_probability_pct') return 'Precipitation Probability'
   if (valueKey === 'pressure_tendency_code' || valueKey === 'pressure_tendency_hpa') return 'Pressure Tendency'
   if (valueKey === 'water_temp_c' || valueKey === 'water_temperature_c') return 'Water Temperature'
@@ -690,6 +709,7 @@ function labelForReading(ds: DatastreamSummary, result: any, valueKey: string): 
   if (observedProperty.includes('water temperature')) return 'Water Temperature'
   if (observedProperty.includes('conductivity')) return 'Conductivity'
   if (parameter === 'rainfall' || valueKey.toLowerCase().includes('rainfall')) return 'Rainfall'
+  if (valueKey.toLowerCase().includes('water_level_cm')) return 'Water Level'
   if (parameter === 'flow' || valueKey.toLowerCase().includes('flow')) return 'River flow'
   if (parameter === 'level' && unit === 'maod') return 'Groundwater level'
   if (parameter === 'level' || valueKey.toLowerCase().includes('level')) return 'River level'
@@ -762,7 +782,9 @@ function unitForValueKey(valueKey: string, result: any): string {
   if (/_hpa$/.test(valueKey)) return 'hPa'
   if (/_c$/.test(valueKey)) return 'C'
   if (/_ms$/.test(valueKey)) return 'm/s'
+  if (/_kmh$/.test(valueKey)) return 'km/h'
   if (/_m3s$/.test(valueKey)) return 'm3/s'
+  if (/_cm$/.test(valueKey)) return 'cm'
   if (/_mm$/.test(valueKey)) return 'mm'
   if (/_m$/.test(valueKey)) return 'm'
   if (/_nmi$/.test(valueKey)) return 'nmi'

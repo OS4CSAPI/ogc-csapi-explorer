@@ -139,6 +139,8 @@ const OBS_SOURCE_DEFS: Array<{ key: string; label: string; color: string; icon: 
   { key: 'src-fmi-air-quality', label: 'FMI AQ',       color: '#84cc16', icon: '🌿' },
   { key: 'src-digitraffic-road-weather', label: 'FIN Road Wx', color: '#f97316', icon: '🛣️' },
   { key: 'src-digitraffic-marine-ais', label: 'FIN AIS', color: '#2563eb', icon: '🚢' },
+  { key: 'src-digitraffic-rail', label: 'FIN Rail', color: '#1d4ed8', icon: '🚆' },
+  { key: 'src-syke-hydrology', label: 'SYKE Hydrology', color: '#0284c7', icon: '💧' },
 ]
 const AIS_FEED_DEPLOYMENT_UID = 'urn:os4csapi:deployment:digitraffic-marine-ais-feed:v1'
 
@@ -160,6 +162,11 @@ function classifyObsSource(dsName: string): string {
   if (n.includes('ndbc') || (n.includes('buoy') && !n.includes('cam'))) return 'src-ndbc'
   if (n.includes('co-ops') || n.includes('coops') || n.includes('tide') || n.includes('coastal')) return 'src-coops'
   if (n.includes('metar') || n.includes('awx') || n.includes('aviation')) return 'src-metar'
+  if ((n.includes('digitraffic') || n.includes('fintraffic'))
+    && (n.includes('rail') || n.includes('train'))) return 'src-digitraffic-rail'
+  if (n.includes('digitrafficrailtrainposition') || n.includes('rail train') || n.includes('train position')) return 'src-digitraffic-rail'
+  if (n.includes('syke') || n.includes('hydrologiarajapinta') || n.includes('vesi.fi')
+    || n.includes('sykedischarge') || n.includes('sykewaterlevel') || n.includes('water_level_cm')) return 'src-syke-hydrology'
   if (n.includes('discharge') || n.includes('gage height')
     || n.includes('streamflow') || (n.includes('usgs') && n.includes('water'))) return 'src-water'
   if (n.includes('nims') || n.includes('station image')) return 'src-nims'
@@ -1769,7 +1776,7 @@ async function buildSystemLocationCache(): Promise<void> {
       })
       .map((ds: any) => ({
         id: ds.id,
-        name: ds.name || ds.outputName || 'Unknown',
+        name: [ds.name, ds.outputName].filter(Boolean).join(' ') || 'Unknown',
         systemId: extractSystemId(ds),
       }))
 
@@ -1910,7 +1917,7 @@ async function enrichResourcesWithLocations(): Promise<void> {
           || nm.includes('mean sea level pressure') || nm.includes('pressure tendency') || nm.includes('relative humidity')) {
           locationDatastreamList.push({
             id: ds.id,
-            name: ds.name || ds.outputName || 'Unknown',
+            name: [ds.name, ds.outputName].filter(Boolean).join(' ') || 'Unknown',
             systemId: sysId,
           })
           existingDsIds.add(ds.id)
