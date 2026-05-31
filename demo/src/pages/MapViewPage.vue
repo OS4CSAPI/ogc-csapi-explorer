@@ -1336,9 +1336,9 @@ function buildQueryOptions(extraLimit = 200): Record<string, any> {
 
 /** Like buildQueryOptions but WITHOUT bbox — for deployments, which derive geometry
  *  from subdeployments/deployed-systems and must be filtered client-side. */
-function buildQueryOptionsNoBbox(extraLimit = 200): Record<string, any> {
+function buildQueryOptionsNoBbox(extraLimit = 200, includeKeyword = true): Record<string, any> {
   const opts: Record<string, any> = { limit: extraLimit }
-  if (keywordFilter.value.trim()) opts.q = keywordFilter.value.trim()
+  if (includeKeyword && keywordFilter.value.trim()) opts.q = keywordFilter.value.trim()
   if (dtStart.value || dtEnd.value) {
     const s = dtStart.value ? new Date(dtStart.value) : undefined
     const e = dtEnd.value ? new Date(dtEnd.value) : undefined
@@ -1347,6 +1347,26 @@ function buildQueryOptionsNoBbox(extraLimit = 200): Record<string, any> {
     else if (e) opts.datetime = { end: e }
   }
   return opts
+}
+
+function deploymentMatchesKeyword(item: any): boolean {
+  const query = keywordFilter.value.trim().toLowerCase()
+  if (!query) return true
+  const props = item?.properties || item || {}
+  const platform = props['platform@link'] || {}
+  const text = [
+    item?.id,
+    props.id,
+    props.uid,
+    props.name,
+    props.title,
+    props.description,
+    props.deployedSystemUIDs,
+    platform.title,
+    platform.uid,
+    platform.href,
+  ].filter(Boolean).join(' ').toLowerCase()
+  return text.includes(query)
 }
 
 async function loadResourceType(resourceType: string): Promise<number> {
@@ -1978,7 +1998,7 @@ async function enrichDeployments(): Promise<void> {
     // Fetch WITHOUT bbox — top-level deployments often have no geometry;
     // subdeployments and deployed-system locations are resolved below,
     // then bbox is applied client-side.
-    const url = getListUrl('deployments', buildQueryOptionsNoBbox())
+    const url = getListUrl('deployments', buildQueryOptionsNoBbox(200, false))
     const res = await apiFetch(url, {
       headers: { 'Accept': 'application/geo+json' },
     })
@@ -2218,6 +2238,7 @@ async function enrichDeployments(): Promise<void> {
     for (const sub of allSubs) {
       const subId = extractId(sub)
       if (existingIds.has(subId)) continue
+      if (!deploymentMatchesKeyword(sub)) continue
       const geom = extractGeometry(sub)
       if (!geom) continue
       // Only draw if it has platform@link (physical emplacement).
@@ -2244,6 +2265,7 @@ async function enrichDeployments(): Promise<void> {
       const depId = extractId(item)
       if (!depId) continue
       if (existingIds.has(depId)) continue
+      if (!deploymentMatchesKeyword(item)) continue
 
       // Only draw deployments with platform@link (physical emplacement)
       const props = item.properties || item || {}
