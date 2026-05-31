@@ -166,7 +166,7 @@ const MET_OFFICE_LAND_OBS_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/w
 const MET_OFFICE_GLOBAL_SPOT_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/3/3b/Met_Office_Weather_Station_at_Lusa_-_geograph.org.uk_-_808151.jpg'
 const DIGITRAFFIC_ROAD_WEATHER_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/9/94/Traffic_weather_station_general_view.jpg'
 const DIGITRAFFIC_MARINE_AIS_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/5/51/Compact_AIS_antenna.jpg'
-const DIGITRAFFIC_RAIL_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/2/2d/Sm5_01_Helsinki_railway_station.jpg'
+const DIGITRAFFIC_RAIL_REPRESENTATIVE_IMAGE = 'https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&w=1200&q=80'
 const FMI_WEATHER_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/2/21/S%C3%A4%C3%A4asema_Kylm%C3%A4pihlaja.jpg'
 const FMI_AIR_QUALITY_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Oksakyvetti_-_Smear_II_-asema_-_Hyyti%C3%A4l%C3%A4%2C_Juupajoki.jpg'
 const SYKE_HYDROLOGY_REPRESENTATIVE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/1/12/Crews_Lake_Water_Level_Gauge.jpg'
