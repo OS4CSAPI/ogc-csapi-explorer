@@ -158,6 +158,12 @@ function isMarineAisText(text: string): boolean {
     || (n.includes('ais') && (n.includes('marine') || n.includes('vessel')))
 }
 
+function isRailTrainText(text: string): boolean {
+  const n = text.toLowerCase()
+  return n.includes('digitrafficrailtrainposition')
+    || ((n.includes('digitraffic') || n.includes('fintraffic')) && (n.includes('rail') || n.includes('train')))
+}
+
 function classifyObsSource(dsName: string): string {
   const n = dsName.toLowerCase()
   if (n.includes('sgp4') || n.includes('orbital') || n.includes('orbit')
@@ -813,6 +819,31 @@ function marineAisVesselStyle(headingDeg: number): Style {
       stroke: new Stroke({ color: '#eff6ff', width: 1.5 }),
     }),
   })
+}
+
+const railTrainMovingStyle = new Style({
+  image: new RegularShape({
+    points: 4,
+    radius: 7,
+    angle: Math.PI / 4,
+    fill: new Fill({ color: '#1d4ed8' }),
+    stroke: new Stroke({ color: '#eff6ff', width: 1.5 }),
+  }),
+})
+
+const railTrainStoppedStyle = new Style({
+  image: new RegularShape({
+    points: 4,
+    radius: 7,
+    angle: Math.PI / 4,
+    fill: new Fill({ color: '#93c5fd' }),
+    stroke: new Stroke({ color: '#1e3a8a', width: 1.5 }),
+  }),
+})
+
+function railTrainPointStyle(speedKmh: any): Style {
+  const speed = Number(speedKmh)
+  return !isNaN(speed) && speed > 1 ? railTrainMovingStyle : railTrainStoppedStyle
 }
 
 function marineAisFmt(value: any, suffix = '', decimals = 1): string {
@@ -3381,6 +3412,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       const isAircraftDs = dsNameLower.includes('aircraft') || dsNameLower.includes('adsb')
         || dsNameLower.includes('ads-b') || dsNameLower.includes('state vector')
       const isMarineAisDs = isMarineAisText(dsNameLower)
+      const isRailDs = isRailTrainText(dsNameLower)
       // Detect earthquake / seismic event datastreams
       const isEarthquakeDs = dsNameLower.includes('earthquake') || dsNameLower.includes('seismic')
         || dsNameLower.includes('quake')
@@ -3391,10 +3423,10 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // LOB DS in live mode: exactly 1 per sensor — cleanest visual, shows only
       // the very latest bearing from each MA system.
       // Weather DS: only latest observation per station (no track needed).
-      // Aircraft/AIS DS: fetch enough to capture the full moving-object batch.
+      // Aircraft/AIS/Rail DS: fetch enough to capture the full moving-object batch.
       // Earthquake DS: fetch up to 300 to cover 24h of global events.
       // Other DS: use caller's obsLimit.
-      const effectiveLimit = isOrbitTrackDs ? 1 : (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : isMarineAisDs ? 200 : isAircraftDs ? 200 : isEarthquakeDs ? 300 : obsLimit
+      const effectiveLimit = isOrbitTrackDs ? 1 : (isLobDs && isLive) ? 1 : isWeatherDs ? 1 : isRailDs ? 300 : isMarineAisDs ? 200 : isAircraftDs ? 200 : isEarthquakeDs ? 300 : obsLimit
 
       // OSH returns observations oldest-first and ignores sort params, so a
       // bare limit=N always returns the N OLDEST observations.  For position/
@@ -3411,7 +3443,7 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // non-LOB observations.  Fetch a larger batch so genuine LOBs survive
       // after filtering, then keep only the most recent ones so bearings
       // converge on the current target position.
-      const useTimeWindow = isLive || isPositionDs || isOrbitTrackDs || isWeatherDs || isAircraftDs || isEarthquakeDs
+      const useTimeWindow = isLive || isPositionDs || isOrbitTrackDs || isWeatherDs || isRailDs || isAircraftDs || isEarthquakeDs
       if (useTimeWindow) {
         const latestUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
           resultTime: 'latest',
@@ -3440,12 +3472,12 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         // LOB datastreams: 5-minute window for tight real-time view.
         // Weather datastreams: 2-hour window (obs ~hourly) to ensure latest.
         // Earthquake datastreams: 24-hour window to show all recent events.
-        const windowMinutes = isMarineAisDs ? 10 : isPositionDs ? 240 : isOrbitTrackDs ? 10 : isWeatherDs ? 120 : isAircraftDs ? 10 : isEarthquakeDs ? 1440 : 5
+        const windowMinutes = isRailDs ? 10 : isMarineAisDs ? 10 : isPositionDs ? 240 : isOrbitTrackDs ? 10 : isWeatherDs ? 120 : isAircraftDs ? 10 : isEarthquakeDs ? 1440 : 5
         const latestMs = new Date(latestTime).getTime()
         // Fetch limit: position DS gets 2× effective to allow burst dedup
         // headroom, LOB DS needs extra to overcome OSH scope-leak contamination,
         // others use effectiveLimit.
-        const fetchLimit = isMarineAisDs ? effectiveLimit : isPositionDs ? effectiveLimit * 2 : isLobDs ? 30 : effectiveLimit
+        const fetchLimit = (isMarineAisDs || isRailDs) ? effectiveLimit : isPositionDs ? effectiveLimit * 2 : isLobDs ? 30 : effectiveLimit
         const windowStartDate = new Date(latestMs - windowMinutes * 60 * 1000)
         const windowEndDate = new Date(latestMs + 1000)
         const timeWindowUrl = getNestedListUrl('datastreams', dsInfo.id, 'observations', {
@@ -3497,6 +3529,21 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
           if (isLobDs) {
             allItems = allItems.filter((o: any) =>
               typeof o.result?.bearingTrue === 'number' && typeof o.result?.bearingStdDev === 'number')
+          }
+
+          // Rail feed batches can include repeats for the same train snapshot;
+          // dedupe by train identity + source timestamp to reduce overplotting.
+          if (isRailDs && allItems.length > 1) {
+            const seenRail = new Set<string>()
+            const deduped: any[] = []
+            for (const o of allItems) {
+              const r = o?.result || {}
+              const key = `${r.trainNumber || ''}|${r.departureDate || ''}|${r.sourceTimestamp || o.resultTime || o.phenomenonTime || ''}`
+              if (seenRail.has(key)) continue
+              seenRail.add(key)
+              deduped.push(o)
+            }
+            allItems = deduped
           }
 
           items = allItems.slice(-effectiveLimit)
@@ -3578,12 +3625,15 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
               const aisStyle = isMarineAisDs
                 ? marineAisVesselStyle(marineAisHeading(obs.result))
                 : null
+              const railStyle = isRailDs
+                ? railTrainPointStyle(obs.result?.speed_kmh)
+                : null
               // Earthquake events: magnitude-scaled colored circle
               const eqMag = isEarthquakeDs && obs.result?.magnitude != null
                 ? (typeof obs.result.magnitude === 'number' ? obs.result.magnitude : parseFloat(obs.result.magnitude))
                 : NaN
               const eqStyle = isEarthquakeDs && !isNaN(eqMag) ? earthquakeObsPointStyle(eqMag) : null
-              feature.setStyle(wxStyle || acStyle || aisStyle || eqStyle || (isSatDs ? satObsPointStyle : getStyle('observationPoints')))
+              feature.setStyle(wxStyle || acStyle || aisStyle || railStyle || eqStyle || (isSatDs ? satObsPointStyle : getStyle('observationPoints')))
               feature.set('resourceType', 'observationPoints')
               feature.set('resourceId', obs.id || `${dsInfo.id}-obs-${pointCount}`)
               feature.set('resourceName', isWeatherDs && obs.result?.stationName
@@ -3592,6 +3642,8 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
                   ? `✈ ${obs.result.callsign.trim()} (${obs.result.icao24 || '?'})`
                   : isMarineAisDs
                     ? `${obs.result?.vesselName || obs.result?.callSign || 'AIS vessel'} (${obs.result?.mmsi || '?'})`
+                    : isRailDs
+                      ? `🚆 Train ${obs.result?.trainNumber || '?'}${obs.result?.trainType ? ` (${obs.result.trainType})` : ''} · ${Number(obs.result?.speed_kmh || 0).toFixed(0)} km/h`
                     : isEarthquakeDs && obs.result?.magnitude != null
                     ? `🌋 M${typeof obs.result.magnitude === 'number' ? obs.result.magnitude.toFixed(1) : obs.result.magnitude} — ${obs.result.place || 'Unknown'}`
                     : `Obs @ ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
@@ -3688,8 +3740,8 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
 
       // Track LineString from all parsed coordinates
       // Detect orbit/satellite tracks and apply distinct styling + date-line splitting
-      // Skip track lines for aircraft/AIS/earthquake DS — each obs is a different entity, not a time series
-      if (trackSource && trackCoords.length >= 2 && !isAircraftDs && !isMarineAisDs && !isEarthquakeDs) {
+      // Skip track lines for aircraft/AIS/rail/earthquake DS — each obs is a different entity, not a single time series.
+      if (trackSource && trackCoords.length >= 2 && !isAircraftDs && !isMarineAisDs && !isRailDs && !isEarthquakeDs) {
         // Split track at antimeridian (±180° lon) crossings to avoid ugly wrapping lines
         const segments = splitTrackAtDateLine(trackCoords)
         for (const segment of segments) {
