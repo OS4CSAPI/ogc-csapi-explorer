@@ -3580,7 +3580,6 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
       // rejects observations with incompatible result schemas.
 
       const trackCoords: [number, number][] = []
-      const railTrackCoordsByTrain: Record<string, [number, number][]> = {}
 
       // Detect satellite/orbit datastreams for distinct styling
       const isSatDs = (dsNameLower.includes('position') || isOrbitTrackDs) && (
@@ -3627,11 +3626,6 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
           }
           if (inBbox) {
             trackCoords.push([lon, lat])
-            if (isRailDs) {
-              const trainKey = `${obs.result?.trainNumber || '?'}|${obs.result?.departureDate || ''}`
-              if (!railTrackCoordsByTrain[trainKey]) railTrackCoordsByTrain[trainKey] = []
-              railTrackCoordsByTrain[trainKey].push([lon, lat])
-            }
             if (pointSource) {
               const feature = new Feature({
                 geometry: new Point(fromLonLat([lon, lat])),
@@ -3855,6 +3849,10 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
 
   // Update per-source observation counts for the toggle UI
   obsSourceCounts.value = srcCounts
+
+  // Feed deployments are intentionally deferred until dynamic observations
+  // complete to avoid startup flash ahead of data layers.
+  revealDeferredMapFeatures()
 }
 
 async function loadAllResources() {
@@ -3900,7 +3898,6 @@ async function loadAllResources() {
       runOptionalMapLayer('location estimates', loadLocationEstimates),
       runOptionalMapLayer('SENREP markers', loadSenrepMarkers),
     ])
-    revealDeferredMapFeatures()
     resourcesLoaded = true
   } catch (err: any) {
     console.error('[Map] Failed to load map resources', err)
