@@ -206,18 +206,11 @@ function classifyObsSource(dsName: string): string {
 const activeObsSources = ref<Record<string, boolean>>({})
 const obsSourceCounts = ref<Record<string, number>>({})
 const railTrainUniqueCount = ref(0)
-const railTrailUniqueCount = ref(0)
 
 const railTrainShownCount = computed(() => {
   const pointsLayerVisible = activeLayers.value['observationPoints'] !== false
   const railSourceVisible = activeObsSources.value['src-digitraffic-rail'] !== false
   return (pointsLayerVisible && railSourceVisible) ? railTrainUniqueCount.value : 0
-})
-
-const railTrailShownCount = computed(() => {
-  const tracksLayerVisible = activeLayers.value['observationTracks'] !== false
-  const railSourceVisible = activeObsSources.value['src-digitraffic-rail'] !== false
-  return (tracksLayerVisible && railSourceVisible) ? railTrailUniqueCount.value : 0
 })
 
 const railTrainVisibilitySuppressed = computed(() => (
@@ -843,14 +836,6 @@ function marineAisVesselStyle(headingDeg: number): Style {
   })
 }
 
-const railTrainMovingHaloStyle = new Style({
-  image: new CircleStyle({
-    radius: 12,
-    fill: new Fill({ color: 'rgba(30, 64, 175, 0.25)' }),
-    stroke: new Stroke({ color: 'rgba(239, 246, 255, 0.9)', width: 1 }),
-  }),
-})
-
 const railTrainMovingStyle = new Style({
   image: new RegularShape({
     points: 4,
@@ -871,19 +856,9 @@ const railTrainStoppedStyle = new Style({
   }),
 })
 
-const railTrainStoppedHaloStyle = new Style({
-  image: new CircleStyle({
-    radius: 12,
-    fill: new Fill({ color: 'rgba(96, 165, 250, 0.22)' }),
-    stroke: new Stroke({ color: 'rgba(239, 246, 255, 0.9)', width: 1 }),
-  }),
-})
-
-function railTrainPointStyle(speedKmh: any): Style[] {
+function railTrainPointStyle(speedKmh: any): Style {
   const speed = Number(speedKmh)
-  return !isNaN(speed) && speed > 1
-    ? [railTrainMovingHaloStyle, railTrainMovingStyle]
-    : [railTrainStoppedHaloStyle, railTrainStoppedStyle]
+  return !isNaN(speed) && speed > 1 ? railTrainMovingStyle : railTrainStoppedStyle
 }
 
 function marineAisFmt(value: any, suffix = '', decimals = 1): string {
@@ -3819,41 +3794,6 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
         }
       }
 
-      // Rail: build per-train trails using train identity, so motion is
-      // meaningful and does not stitch different trains together.
-      if (trackSource && isRailDs) {
-        for (const [trainKey, coords] of Object.entries(railTrackCoordsByTrain)) {
-          if (coords.length < 2) continue
-          const segments = splitTrackAtDateLine(coords)
-          for (const segment of segments) {
-            if (segment.length < 2) continue
-            const lineFeature = new Feature({
-              geometry: new LineString(segment.map(c => fromLonLat(c))),
-            })
-            lineFeature.setStyle(railTrackStyle)
-            lineFeature.set('resourceType', 'observationTracks')
-            lineFeature.set('resourceId', `${dsInfo.id}-train-${trainKey.replace(/[^a-zA-Z0-9_-]/g, '_')}`)
-            lineFeature.set('resourceName', `Train trail: ${trainKey.replace('|', ' / ')}`)
-            lineFeature.set('enriched', true)
-            lineFeature.set('enrichmentSource', `${segment.length} points from ${dsInfo.name}`)
-            lineFeature.set('rawData', {
-              datastreamId: dsInfo.id,
-              datastreamName: dsInfo.name,
-              systemId: dsInfo.systemId,
-              trainKey,
-              pointCount: segment.length,
-            })
-            lineFeature.set('obsSourceKey', obsSourceKey)
-            lineFeature.set('_origStyle', lineFeature.getStyle())
-            if (activeObsSources.value[obsSourceKey] === false) {
-              lineFeature.setStyle(HIDDEN_STYLE)
-            }
-            pendingTracks.push(lineFeature)
-            trackCount++
-          }
-        }
-      }
-
       // Snap ISS/satellite markers only from current position observations.
       // Orbit-track datastreams carry predicted future paths; their last point
       // is the end of the prediction window, not the current asset position.
@@ -3902,20 +3842,13 @@ async function loadObservationLayers(obsLimit = 500): Promise<void> {
   }
 
   const railKeys = new Set<string>()
-  const railTrailKeys = new Set<string>()
   for (const feature of pendingPoints) {
     if (feature.get('obsSourceKey') !== 'src-digitraffic-rail') continue
     const result = feature.get('rawData')?.result || {}
     const key = `${result.trainNumber || '?'}|${result.departureDate || ''}`
     railKeys.add(key)
   }
-  for (const feature of pendingTracks) {
-    if (feature.get('obsSourceKey') !== 'src-digitraffic-rail') continue
-    const trainKey = feature.get('rawData')?.trainKey
-    if (trainKey) railTrailKeys.add(String(trainKey))
-  }
   railTrainUniqueCount.value = railKeys.size
-  railTrailUniqueCount.value = railTrailKeys.size
 
   featureCounts.value['observationPoints'] = pointCount
   featureCounts.value['observationTracks'] = trackCount
@@ -5097,7 +5030,6 @@ watch(selectedFeature, (feat) => {
       <div v-if="railTrainUniqueCount > 0" class="rail-live-indicator" :class="{ 'rail-live-indicator--muted': railTrainVisibilitySuppressed }">
         🚆 Rail trains shown: {{ railTrainShownCount }}
         <span class="rail-live-indicator-total">(feed: {{ railTrainUniqueCount }})</span>
-        <span class="rail-live-indicator-total"> · trails: {{ railTrailShownCount }}</span>
       </div>
 
       <!-- Popup overlay (attached to OL overlay, positioned on map) -->
