@@ -1106,6 +1106,34 @@ function makeNameLabel(name: string, offsetY: number): Style | null {
   })
 }
 
+function makeFeedBadgeLabel(offsetY: number): Style {
+  return new Style({
+    text: new OlText({
+      text: 'FEED',
+      font: 'bold 10px sans-serif',
+      fill: new Fill({ color: '#e0f2fe' }),
+      stroke: new Stroke({ color: '#0c4a6e', width: 3 }),
+      backgroundFill: new Fill({ color: 'rgba(2, 132, 199, 0.85)' }),
+      backgroundStroke: new Stroke({ color: 'rgba(224, 242, 254, 0.9)', width: 1 }),
+      padding: [1, 5, 1, 5],
+      offsetY,
+      textAlign: 'center',
+    }),
+    zIndex: 110,
+  })
+}
+
+function feedAnchorRingStyle(radius: number, selected = false): Style {
+  return new Style({
+    image: new CircleStyle({
+      radius,
+      fill: new Fill({ color: 'rgba(2, 132, 199, 0.08)' }),
+      stroke: new Stroke({ color: selected ? '#fbbf24' : '#38bdf8', width: selected ? 2.5 : 2 }),
+    }),
+    zIndex: selected ? 108 : 98,
+  })
+}
+
 /** Check if a deployment has a platform@link — only these physical emplacements get STANAG symbols.
  *  Organizational deployments (ICO, R&S, SSO, SNET, Field, String) use plain circles. */
 function hasPlatformLink(rawData: any): boolean {
@@ -1133,6 +1161,7 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
     const sz = getSymbolSizeForType(resourceType)
     const sym = getSymbolForResource(resourceType, rawData, sz)
     if (sym) {
+      const isFeed = isFeedDeployment(rawData)
       const iconStyle = new Style({
         image: new OlIcon({
           src: sym.svgDataUrl,
@@ -1145,8 +1174,17 @@ function getStyle(resourceType: string, enriched = false, rawData?: any): Style 
         stroke: new Stroke({ color, width: 2 }),
         fill: new Fill({ color: color + '33' }),
       })
+      const styles: Style[] = []
+      if (isFeed) {
+        styles.push(feedAnchorRingStyle(Math.max(12, Math.round(sym.size.width * 0.6))))
+      }
+      styles.push(iconStyle)
+      if (isFeed) {
+        styles.push(makeFeedBadgeLabel(-(sym.anchor.y + 10)))
+      }
       const nameStyle = makeNameLabel(name, sym.size.height - sym.anchor.y + 14)
-      return nameStyle ? [iconStyle, nameStyle] : iconStyle
+      if (nameStyle) styles.push(nameStyle)
+      return styles.length === 1 ? styles[0] : styles
     }
   }
 
@@ -1232,6 +1270,7 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
   if (useMilSymbols.value && rawData && resourceType === 'deployments' && hasPlatformLink(rawData)) {
     const sym = getSymbolForResource(resourceType, rawData, 'normal')
     if (sym) {
+      const isFeed = isFeedDeployment(rawData)
       const iconStyle = new Style({
         image: new OlIcon({
           src: sym.svgDataUrl,
@@ -1243,8 +1282,17 @@ function getSelectedStyle(resourceType: string, rawData?: any): Style | Style[] 
         stroke: new Stroke({ color: '#fbbf24', width: 3 }),
         fill: new Fill({ color: color + '55' }),
       })
+      const styles: Style[] = []
+      if (isFeed) {
+        styles.push(feedAnchorRingStyle(Math.max(14, Math.round(sym.size.width * 0.75)), true))
+      }
+      styles.push(iconStyle)
+      if (isFeed) {
+        styles.push(makeFeedBadgeLabel(-(sym.anchor.y * 1.3 + 12)))
+      }
       const nameStyle = makeNameLabel(name, (sym.size.height - sym.anchor.y) * 1.3 + 14)
-      return nameStyle ? [iconStyle, nameStyle] : iconStyle
+      if (nameStyle) styles.push(nameStyle)
+      return styles.length === 1 ? styles[0] : styles
     }
   }
 
@@ -4585,6 +4633,22 @@ watch(selectedFeature, (feat) => {
           <span class="layer-label">SENREP Reports</span>
           <span class="layer-count">{{ featureCounts['senrepMarkers'] ?? '—' }}</span>
         </button>
+
+        <div class="map-key">
+          <div class="layer-section-label" style="padding-left: 0.5rem;">Map Key</div>
+          <div class="map-key-row">
+            <span class="map-key-swatch map-key-feed">FEED</span>
+            <span class="map-key-text">Feed anchor (click for metadata)</span>
+          </div>
+          <div class="map-key-row">
+            <span class="map-key-swatch map-key-train">◆</span>
+            <span class="map-key-text">Live train observation</span>
+          </div>
+          <div class="map-key-row">
+            <span class="map-key-swatch map-key-track">···</span>
+            <span class="map-key-text">Observation track (non-rail)</span>
+          </div>
+        </div>
       </div>
 
       <!-- Data Sources (per-publisher observation toggle) -->
@@ -5639,6 +5703,55 @@ watch(selectedFeature, (feat) => {
 .source-controls {
   padding: 0.25rem 0.5rem;
   border-top: 1px solid #e2e8f0;
+}
+
+.map-key {
+  margin: 0.4rem 0.45rem 0.5rem;
+  padding: 0.35rem 0.5rem 0.45rem;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.map-key-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0;
+}
+
+.map-key-swatch {
+  min-width: 2rem;
+  text-align: center;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.12rem 0.35rem;
+  border: 1px solid transparent;
+}
+
+.map-key-feed {
+  color: #e0f2fe;
+  background: #0284c7;
+  border-color: #7dd3fc;
+}
+
+.map-key-train {
+  color: #eff6ff;
+  background: #1d4ed8;
+  border-color: #93c5fd;
+}
+
+.map-key-track {
+  color: #0f172a;
+  background: rgba(6, 182, 212, 0.2);
+  border-color: rgba(6, 182, 212, 0.65);
+}
+
+.map-key-text {
+  font-size: 0.74rem;
+  color: #334155;
 }
 
 .source-toggle {
