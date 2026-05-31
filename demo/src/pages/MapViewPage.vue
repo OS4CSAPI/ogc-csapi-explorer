@@ -213,10 +213,6 @@ const railTrainShownCount = computed(() => {
   return (pointsLayerVisible && railSourceVisible) ? railTrainUniqueCount.value : 0
 })
 
-const railTrainVisibilitySuppressed = computed(() => (
-  railTrainUniqueCount.value > 0 && railTrainShownCount.value === 0
-))
-
 // Invisible style used to hide features when their source is toggled off
 const HIDDEN_STYLE = new Style({})
 
@@ -5024,11 +5020,6 @@ watch(selectedFeature, (feat) => {
     <div class="map-area">
       <div ref="mapContainer" class="map-container"></div>
       <div v-if="mouseCoords" class="coord-display">{{ mouseCoords }}</div>
-      <div v-if="railTrainUniqueCount > 0" class="rail-live-indicator" :class="{ 'rail-live-indicator--muted': railTrainVisibilitySuppressed }">
-        🚆 Rail trains shown: {{ railTrainShownCount }}
-        <span class="rail-live-indicator-total">(feed: {{ railTrainUniqueCount }})</span>
-      </div>
-
       <!-- Popup overlay (attached to OL overlay, positioned on map) -->
       <div ref="popupContainer" class="ol-popup">
         <a href="#" class="ol-popup-closer" @click.prevent="closePopup"></a>
@@ -5587,41 +5578,6 @@ watch(selectedFeature, (feat) => {
   display: flex;
   height: 100%;
   overflow: hidden;
-}
-
-.map-sidebar {
-  width: 280px;
-  min-width: 280px;
-  background: #f8fafc;
-  border-right: 1px solid #e2e8f0;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-}
-
-.sidebar-header {
-  padding: 1rem 1rem 0.5rem;
-}
-
-.sidebar-title {
-  font-weight: 700;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #64748b;
-}
-
-.layer-controls {
-  padding: 0.25rem 0.5rem;
-}
-
-.layer-section-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #94a3b8;
-  padding: 0.35rem 0.75rem 0.15rem;
 }
 
 .layer-toggle {
