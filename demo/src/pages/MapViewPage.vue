@@ -1662,8 +1662,9 @@ async function buildSystemLocationCache(): Promise<void> {
 
   // --- Phase C: Observation-derived locations (broadened filter) ---
   try {
-    // Fetch datastreams from the global endpoint
-    const dsRes = await apiFetch('/datastreams?limit=200')
+    // Fetch datastreams from the global endpoint using active filters. Without
+    // this, keyword-filtered maps can be re-flooded by global live observations.
+    const dsRes = await apiFetch(getListUrl('datastreams', buildQueryOptions()))
     let allDs: any[] = []
     if (dsRes.ok && dsRes.data) {
       allDs = dsRes.data.items || dsRes.data.features || dsRes.data || []
