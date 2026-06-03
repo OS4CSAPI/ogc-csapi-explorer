@@ -121,6 +121,22 @@ const cameraStatusLabel = computed(() => {
   return status.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 })
 
+const cameraFreshnessSummary = computed(() => {
+  if (!props.card.cameraLastCheckedTime && !props.card.cameraImageChangedTime && !props.card.cameraUnchangedDuration) return ''
+
+  const checked = props.card.cameraLastCheckedRelative || (props.card.cameraLastCheckedTime ? formatTimestamp(props.card.cameraLastCheckedTime) : '')
+  const changed = props.card.cameraImageChangedRelative || (props.card.cameraImageChangedTime ? formatTimestamp(props.card.cameraImageChangedTime) : '')
+  const duration = props.card.cameraUnchangedDuration
+
+  if (props.card.cameraImageChanged === true) {
+    return changed ? `New image detected ${changed}` : 'New image detected on the latest check'
+  }
+  if (duration && checked) return `Checked ${checked}; image unchanged for ${duration}`
+  if (checked) return `Checked ${checked}`
+  if (changed) return `Image last changed ${changed}`
+  return ''
+})
+
 function formatTimestamp(value: string): string {
   if (!value) return ''
   const time = new Date(value)
@@ -275,6 +291,19 @@ const trustLine = computed(() => {
     <!-- ── 2b. LIVE CAMERA IMAGE (BuoyCAM / NIMS) ── -->
     <section v-if="card.cameraImageUrl" class="dsc-sec dsc-buoycam">
       <h3 class="dsc-sec-hd"><i class="pi pi-camera"></i> {{ card.cameraLabel || 'Live Camera' }}</h3>
+      <div v-if="cameraFreshnessSummary || cameraStatusLabel" class="dsc-camera-heartbeat">
+        <div class="dsc-camera-heartbeat-main">
+          <i class="pi pi-sync"></i>
+          <span>{{ cameraFreshnessSummary || 'Camera heartbeat received' }}</span>
+        </div>
+        <span
+          v-if="cameraStatusLabel"
+          class="dsc-camera-status"
+          :class="cameraStatusClass(card.cameraStalenessStatus)"
+        >
+          {{ cameraStatusLabel }}
+        </span>
+      </div>
       <div class="dsc-buoycam-frame" @click="showBuoycamOverlay = true" title="Click to enlarge">
         <img :src="displayCameraImage || card.cameraImageUrl" alt="Camera" class="dsc-buoycam-img" @error="onCameraImageError" />
       </div>
@@ -284,7 +313,7 @@ const trustLine = computed(() => {
           Image changed {{ card.cameraImageChangedRelative || formatTimestamp(card.cameraImageChangedTime || card.cameraTimestamp) }}
         </div>
         <span
-          v-if="cameraStatusLabel"
+          v-if="cameraStatusLabel && !cameraFreshnessSummary"
           class="dsc-camera-status"
           :class="cameraStatusClass(card.cameraStalenessStatus)"
         >
@@ -1133,6 +1162,36 @@ const trustLine = computed(() => {
 }
 .dsc-buoycam .dsc-sec-hd i {
   color: #38bdf8;
+}
+.dsc-camera-heartbeat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  border-radius: 6px;
+  background: rgba(14, 165, 233, 0.14);
+}
+.dsc-camera-heartbeat-main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #e0f2fe;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.dsc-camera-heartbeat-main i {
+  flex-shrink: 0;
+  color: #7dd3fc;
+  font-size: 0.76rem;
+}
+.dsc-camera-heartbeat-main span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .dsc-buoycam-frame {
   cursor: pointer;
