@@ -15,6 +15,7 @@ import type { DeployedSystemCardModel, TrendSummary } from '../composables/useDe
 
 const showImageOverlay = ref(false)
 const showBuoycamOverlay = ref(false)
+const showLiveVideoOverlay = ref(false)
 const FALLBACK_THUMBNAIL = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='220' viewBox='0 0 320 220'%3E%3Crect width='320' height='220' fill='%231e3a8a'/%3E%3Ctext x='160' y='112' fill='%23eff6ff' font-size='24' text-anchor='middle' font-family='Arial,sans-serif'%3ETrain%3C/text%3E%3C/svg%3E"
 
 const props = defineProps<{
@@ -28,6 +29,7 @@ const displayCameraImage = ref('')
 function resetImageBindings() {
   displayThumbnail.value = props.card.thumbnail || FALLBACK_THUMBNAIL
   displayCameraImage.value = props.card.cameraThumbUrl || props.card.cameraImageUrl || ''
+  showLiveVideoOverlay.value = false
 }
 
 function onThumbnailError() {
@@ -264,6 +266,31 @@ const trustLine = computed(() => {
         </button>
       </div>
     </div>
+    <div v-if="showLiveVideoOverlay && card.cameraPlayerUrl" class="dsc-video-modal" @click="showLiveVideoOverlay = false">
+      <div class="dsc-video-modal-inner" @click.stop>
+        <div class="dsc-video-modal-hd">
+          <div>
+            <h2>{{ card.cameraLabel || card.title }}</h2>
+            <p>Provider live video</p>
+          </div>
+          <div class="dsc-video-modal-actions">
+            <a :href="card.cameraPlayerUrl" target="_blank" rel="noopener" title="Open in new tab">
+              <i class="pi pi-external-link"></i>
+            </a>
+            <button @click="showLiveVideoOverlay = false" title="Close">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        </div>
+        <iframe
+          :src="card.cameraPlayerUrl"
+          class="dsc-video-frame"
+          title="Provider live video"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
   </Teleport>
 
   <div class="dsc" :class="{ 'dsc--loading': loading }">
@@ -358,14 +385,21 @@ const trustLine = computed(() => {
         {{ cameraPosterNote }}
       </p>
       <div v-if="card.cameraPlayerUrl || card.cameraPageUrl" class="dsc-camera-links">
+        <button
+          v-if="card.cameraPlayerUrl"
+          class="dsc-camera-link"
+          @click="showLiveVideoOverlay = true"
+        >
+          <i class="pi pi-play-circle"></i> Open Live Video
+        </button>
         <a
           v-if="card.cameraPlayerUrl"
           :href="card.cameraPlayerUrl"
           target="_blank"
           rel="noopener"
-          class="dsc-camera-link"
+          class="dsc-camera-link dsc-camera-link-secondary"
         >
-          <i class="pi pi-play-circle"></i> Open Live Video
+          <i class="pi pi-external-link"></i> New Tab
         </a>
         <a
           v-if="card.cameraPageUrl"
@@ -699,6 +733,77 @@ const trustLine = computed(() => {
 }
 .dsc-lightbox-close:hover {
   background: #f1f5f9;
+}
+.dsc-video-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: rgba(2, 6, 23, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.dsc-video-modal-inner {
+  width: min(980px, 94vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(125, 211, 252, 0.32);
+  border-radius: 8px;
+  background: #020617;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.55);
+}
+.dsc-video-modal-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+}
+.dsc-video-modal-hd h2 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+.dsc-video-modal-hd p {
+  margin: 0.08rem 0 0;
+  color: #94a3b8;
+  font-size: 0.74rem;
+}
+.dsc-video-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.dsc-video-modal-actions a,
+.dsc-video-modal-actions button {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.88);
+  color: #e2e8f0;
+  cursor: pointer;
+  text-decoration: none;
+}
+.dsc-video-modal-actions a:hover,
+.dsc-video-modal-actions button:hover {
+  border-color: rgba(125, 211, 252, 0.65);
+  color: #7dd3fc;
+}
+.dsc-video-frame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: calc(92vh - 58px);
+  border: 0;
+  background: #000;
 }
 .dsc-stanag {
   width: 64px;
@@ -1317,10 +1422,19 @@ const trustLine = computed(() => {
   font-size: 0.72rem;
   font-weight: 700;
   text-decoration: none;
+  cursor: pointer;
+}
+.dsc-camera-link:is(button) {
+  font-family: inherit;
 }
 .dsc-camera-link:hover {
   background: rgba(56, 189, 248, 0.2);
   border-color: rgba(125, 211, 252, 0.55);
+}
+.dsc-camera-link-secondary {
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(148, 163, 184, 0.08);
 }
 .dsc-timelapse-link {
   display: inline-flex;
