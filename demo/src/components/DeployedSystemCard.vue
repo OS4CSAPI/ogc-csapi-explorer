@@ -118,7 +118,13 @@ function cameraStatusClass(status: string): string {
 const cameraStatusLabel = computed(() => {
   const status = props.card.cameraStalenessStatus
   if (!status) return ''
-  return status.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  const label = status.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  return props.card.cameraPlayerUrl ? `Poster ${label}` : label
+})
+
+const cameraPanelTitle = computed(() => {
+  if (props.card.cameraPlayerUrl) return 'Webcam Poster'
+  return props.card.cameraLabel || 'Camera Image'
 })
 
 const cameraFreshnessSummary = computed(() => {
@@ -129,11 +135,19 @@ const cameraFreshnessSummary = computed(() => {
   const duration = props.card.cameraUnchangedDuration
 
   if (props.card.cameraImageChanged === true) {
-    return changed ? `New image detected ${changed}` : 'New image detected on the latest check'
+    return changed ? `New poster image detected ${changed}` : 'New poster image detected on the latest check'
   }
-  if (duration && checked) return `Checked ${checked}; image unchanged for ${duration}`
-  if (checked) return `Checked ${checked}`
-  if (changed) return `Image last changed ${changed}`
+  if (duration && checked) return `Poster checked ${checked}; still image unchanged for ${duration}`
+  if (checked) return `Poster checked ${checked}`
+  if (changed) return `Poster image last changed ${changed}`
+  return ''
+})
+
+const cameraPosterNote = computed(() => {
+  if (!props.card.cameraPlayerUrl) return ''
+  if (/stale|unchanged/i.test(props.card.cameraStalenessStatus || '')) {
+    return 'Live video may be newer than this still image.'
+  }
   return ''
 })
 
@@ -290,11 +304,11 @@ const trustLine = computed(() => {
 
     <!-- ── 2b. LIVE CAMERA IMAGE (BuoyCAM / NIMS) ── -->
     <section v-if="card.cameraImageUrl" class="dsc-sec dsc-buoycam">
-      <h3 class="dsc-sec-hd"><i class="pi pi-camera"></i> {{ card.cameraLabel || 'Live Camera' }}</h3>
+      <h3 class="dsc-sec-hd"><i class="pi pi-camera"></i> {{ cameraPanelTitle }}</h3>
       <div v-if="cameraFreshnessSummary || cameraStatusLabel" class="dsc-camera-heartbeat">
         <div class="dsc-camera-heartbeat-main">
           <i class="pi pi-sync"></i>
-          <span>{{ cameraFreshnessSummary || 'Camera heartbeat received' }}</span>
+          <span>{{ cameraFreshnessSummary || 'Poster heartbeat received' }}</span>
         </div>
         <span
           v-if="cameraStatusLabel"
@@ -310,7 +324,7 @@ const trustLine = computed(() => {
       <div class="dsc-buoycam-meta">
         <div v-if="card.cameraImageChangedTime || card.cameraTimestamp" class="dsc-buoycam-time">
           <i class="pi pi-clock"></i>
-          Image changed {{ card.cameraImageChangedRelative || formatTimestamp(card.cameraImageChangedTime || card.cameraTimestamp) }}
+          Poster changed {{ card.cameraImageChangedRelative || formatTimestamp(card.cameraImageChangedTime || card.cameraTimestamp) }}
         </div>
         <span
           v-if="cameraStatusLabel && !cameraFreshnessSummary"
@@ -328,18 +342,21 @@ const trustLine = computed(() => {
         class="dsc-camera-freshness"
       >
         <div v-if="card.cameraLastCheckedTime" class="dsc-camera-fresh-row">
-          <span>Last checked</span>
+          <span>Poster checked</span>
           <strong :title="card.cameraLastCheckedTime">{{ card.cameraLastCheckedRelative || formatTimestamp(card.cameraLastCheckedTime) }}</strong>
         </div>
         <div v-if="card.cameraUnchangedDuration" class="dsc-camera-fresh-row">
-          <span>Unchanged for</span>
+          <span>Poster unchanged</span>
           <strong>{{ card.cameraUnchangedDuration }}</strong>
         </div>
         <div v-if="card.cameraImageChanged !== null" class="dsc-camera-fresh-row">
-          <span>This check</span>
-          <strong>{{ card.cameraImageChanged ? 'New image' : 'Same image' }}</strong>
+          <span>Poster check</span>
+          <strong>{{ card.cameraImageChanged ? 'New poster' : 'Same poster' }}</strong>
         </div>
       </div>
+      <p v-if="cameraPosterNote" class="dsc-camera-source-note">
+        {{ cameraPosterNote }}
+      </p>
       <div v-if="card.cameraPlayerUrl || card.cameraPageUrl" class="dsc-camera-links">
         <a
           v-if="card.cameraPlayerUrl"
@@ -348,7 +365,7 @@ const trustLine = computed(() => {
           rel="noopener"
           class="dsc-camera-link"
         >
-          <i class="pi pi-play-circle"></i> Player
+          <i class="pi pi-play-circle"></i> Open Live Video
         </a>
         <a
           v-if="card.cameraPageUrl"
@@ -357,7 +374,7 @@ const trustLine = computed(() => {
           rel="noopener"
           class="dsc-camera-link"
         >
-          <i class="pi pi-external-link"></i> Source
+          <i class="pi pi-external-link"></i> Source Page
         </a>
       </div>
       <a
@@ -1271,6 +1288,16 @@ const trustLine = computed(() => {
   min-width: 0;
   color: #e2e8f0;
   overflow-wrap: anywhere;
+}
+.dsc-camera-source-note {
+  margin: 0.4rem 0 0;
+  padding: 0.32rem 0.45rem;
+  border-left: 3px solid #facc15;
+  border-radius: 0 5px 5px 0;
+  background: rgba(250, 204, 21, 0.12);
+  color: #fde68a;
+  font-size: 0.72rem;
+  line-height: 1.3;
 }
 .dsc-camera-links {
   display: flex;
