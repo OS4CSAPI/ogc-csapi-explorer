@@ -80,6 +80,15 @@ export interface DeployedSystemCardModel {
   cameraThumbUrl: string    // NIMS thumbnail URL (empty for BuoyCAM)
   cameraTimeLapseUrl: string // NIMS timelapse URL (empty for BuoyCAM)
   cameraCamId: string       // NIMS camId (empty for BuoyCAM)
+  cameraLastCheckedTime: string
+  cameraLastCheckedRelative: string
+  cameraImageChangedTime: string
+  cameraImageChangedRelative: string
+  cameraUnchangedDuration: string
+  cameraStalenessStatus: string
+  cameraImageChanged: boolean | null
+  cameraPlayerUrl: string
+  cameraPageUrl: string
 
   /** @deprecated Use cameraImageUrl instead */
   buoycamImageUrl: string
@@ -494,6 +503,20 @@ function relativeTime(isoString: string): string {
   }
 }
 
+function formatDurationSeconds(value: unknown): string {
+  const seconds = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(seconds) || seconds < 0) return ''
+  if (seconds < 60) return `${Math.floor(seconds)}s`
+  const mins = Math.floor(seconds / 60)
+  if (mins < 60) return `${mins}m`
+  const hrs = Math.floor(mins / 60)
+  const remMins = mins % 60
+  if (hrs < 24) return remMins ? `${hrs}h ${remMins}m` : `${hrs}h`
+  const days = Math.floor(hrs / 24)
+  const remHours = hrs % 24
+  return remHours ? `${days}d ${remHours}h` : `${days}d`
+}
+
 function metadataValue(map: Record<string, string>, labels: string[]): string {
   const wanted = labels.map(label => label.toLowerCase().replace(/[^a-z0-9]/g, ''))
   for (const [label, value] of Object.entries(map)) {
@@ -622,6 +645,10 @@ const RESULT_METADATA_KEYS = new Set([
   'locationId', 'geohash',
   'forecastType', 'issuedTime', 'validTime', 'leadTimeHours',
   'imageUrl', 'latestImageUrl', 'thumbUrl', 'mediaType', 'contentLength', 'camId',
+  'cameraId', 'cameraTitle', 'locationName', 'posterUrl', 'playerUrl', 'pageUrl',
+  'sourceType', 'live', 'httpStatus', 'etag', 'lastModified', 'sourceLastModifiedTime',
+  'imageSha256', 'imageChanged', 'firstSeenTime', 'lastSeenTime', 'lastChangedTime',
+  'unchangedPollCount', 'stalenessStatus', 'sourceAgeSeconds',
   'thingId', 'sourceThingId', 'sourceDatastreamId', 'observedProperty', 'sourceObservationId', 'publishFlag',
 ])
 
@@ -1274,6 +1301,15 @@ export function useDeployedSystemCard() {
       let cameraThumbUrl = ''
       let cameraTimeLapseUrl = ''
       let cameraCamId = ''
+      let cameraLastCheckedTime = ''
+      let cameraLastCheckedRelative = ''
+      let cameraImageChangedTime = ''
+      let cameraImageChangedRelative = ''
+      let cameraUnchangedDuration = ''
+      let cameraStalenessStatus = ''
+      let cameraImageChanged: boolean | null = null
+      let cameraPlayerUrl = ''
+      let cameraPageUrl = ''
       const cameraDs = datastreams.find(ds => isCameraDatastreamName(ds.name))
       if (cameraDs) {
         const isBuoyCAM = /buoycam|buoy[\s_-]?cam/i.test(cameraDs.name)
@@ -1291,6 +1327,16 @@ export function useDeployedSystemCard() {
             cameraThumbUrl = result.thumbUrl || ''
             cameraTimeLapseUrl = result.timeLapseUrl || ''
             cameraCamId = result.camId || ''
+            cameraLastCheckedTime = result.lastSeenTime || obs?.resultTime || obs?.phenomenonTime || ''
+            cameraLastCheckedRelative = cameraLastCheckedTime ? relativeTime(cameraLastCheckedTime) : ''
+            cameraImageChangedTime = result.lastChangedTime || obs?.phenomenonTime || obs?.resultTime || ''
+            cameraImageChangedRelative = cameraImageChangedTime ? relativeTime(cameraImageChangedTime) : ''
+            cameraTimestamp = cameraImageChangedTime || cameraTimestamp
+            cameraUnchangedDuration = formatDurationSeconds(result.sourceAgeSeconds)
+            cameraStalenessStatus = result.stalenessStatus || ''
+            cameraImageChanged = typeof result.imageChanged === 'boolean' ? result.imageChanged : null
+            cameraPlayerUrl = result.playerUrl || ''
+            cameraPageUrl = result.pageUrl || ''
           }
         } catch { /* camera fetch optional */ }
       }
@@ -1469,6 +1515,15 @@ export function useDeployedSystemCard() {
         cameraThumbUrl,
         cameraTimeLapseUrl,
         cameraCamId,
+        cameraLastCheckedTime,
+        cameraLastCheckedRelative,
+        cameraImageChangedTime,
+        cameraImageChangedRelative,
+        cameraUnchangedDuration,
+        cameraStalenessStatus,
+        cameraImageChanged,
+        cameraPlayerUrl,
+        cameraPageUrl,
         buoycamImageUrl,
         buoycamTimestamp,
 

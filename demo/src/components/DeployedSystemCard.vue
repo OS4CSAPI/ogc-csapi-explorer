@@ -107,6 +107,20 @@ function trendIcon(state: TrendSummary['trendState']): string {
   return 'pi-minus'
 }
 
+function cameraStatusClass(status: string): string {
+  if (/fresh/i.test(status)) return 'cam-status-fresh'
+  if (/stale/i.test(status)) return 'cam-status-stale'
+  if (/unavailable|error/i.test(status)) return 'cam-status-error'
+  if (/unchanged/i.test(status)) return 'cam-status-unchanged'
+  return 'cam-status-unknown'
+}
+
+const cameraStatusLabel = computed(() => {
+  const status = props.card.cameraStalenessStatus
+  if (!status) return ''
+  return status.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+})
+
 function formatTimestamp(value: string): string {
   if (!value) return ''
   const time = new Date(value)
@@ -265,13 +279,57 @@ const trustLine = computed(() => {
         <img :src="displayCameraImage || card.cameraImageUrl" alt="Camera" class="dsc-buoycam-img" @error="onCameraImageError" />
       </div>
       <div class="dsc-buoycam-meta">
-        <div v-if="card.cameraTimestamp" class="dsc-buoycam-time">
+        <div v-if="card.cameraImageChangedTime || card.cameraTimestamp" class="dsc-buoycam-time">
           <i class="pi pi-clock"></i>
-          {{ new Date(card.cameraTimestamp).toLocaleString() }}
+          Image changed {{ card.cameraImageChangedRelative || formatTimestamp(card.cameraImageChangedTime || card.cameraTimestamp) }}
         </div>
+        <span
+          v-if="cameraStatusLabel"
+          class="dsc-camera-status"
+          :class="cameraStatusClass(card.cameraStalenessStatus)"
+        >
+          {{ cameraStatusLabel }}
+        </span>
         <div v-if="card.cameraCamId" class="dsc-buoycam-camid">
           📹 {{ card.cameraCamId }}
         </div>
+      </div>
+      <div
+        v-if="card.cameraLastCheckedTime || card.cameraUnchangedDuration || card.cameraImageChanged !== null"
+        class="dsc-camera-freshness"
+      >
+        <div v-if="card.cameraLastCheckedTime" class="dsc-camera-fresh-row">
+          <span>Last checked</span>
+          <strong :title="card.cameraLastCheckedTime">{{ card.cameraLastCheckedRelative || formatTimestamp(card.cameraLastCheckedTime) }}</strong>
+        </div>
+        <div v-if="card.cameraUnchangedDuration" class="dsc-camera-fresh-row">
+          <span>Unchanged for</span>
+          <strong>{{ card.cameraUnchangedDuration }}</strong>
+        </div>
+        <div v-if="card.cameraImageChanged !== null" class="dsc-camera-fresh-row">
+          <span>This check</span>
+          <strong>{{ card.cameraImageChanged ? 'New image' : 'Same image' }}</strong>
+        </div>
+      </div>
+      <div v-if="card.cameraPlayerUrl || card.cameraPageUrl" class="dsc-camera-links">
+        <a
+          v-if="card.cameraPlayerUrl"
+          :href="card.cameraPlayerUrl"
+          target="_blank"
+          rel="noopener"
+          class="dsc-camera-link"
+        >
+          <i class="pi pi-play-circle"></i> Player
+        </a>
+        <a
+          v-if="card.cameraPageUrl"
+          :href="card.cameraPageUrl"
+          target="_blank"
+          rel="noopener"
+          class="dsc-camera-link"
+        >
+          <i class="pi pi-external-link"></i> Source
+        </a>
       </div>
       <a
         v-if="card.cameraTimeLapseUrl"
@@ -1113,6 +1171,70 @@ const trustLine = computed(() => {
 .dsc-buoycam-camid {
   color: #94a3b8;
   font-size: 0.72rem;
+}
+.dsc-camera-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.08rem 0.42rem;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 0.64rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+.cam-status-fresh { background: rgba(34, 197, 94, 0.16); color: #86efac; border-color: rgba(134, 239, 172, 0.4); }
+.cam-status-unchanged { background: rgba(59, 130, 246, 0.16); color: #93c5fd; border-color: rgba(147, 197, 253, 0.4); }
+.cam-status-stale { background: rgba(245, 158, 11, 0.18); color: #fcd34d; border-color: rgba(252, 211, 77, 0.45); }
+.cam-status-error { background: rgba(239, 68, 68, 0.18); color: #fca5a5; border-color: rgba(252, 165, 165, 0.45); }
+.cam-status-unknown { background: rgba(148, 163, 184, 0.16); color: #cbd5e1; border-color: rgba(203, 213, 225, 0.35); }
+.dsc-camera-freshness {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.45rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.7);
+}
+.dsc-camera-fresh-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 0.4rem;
+  align-items: baseline;
+  font-size: 0.72rem;
+}
+.dsc-camera-fresh-row span {
+  color: #94a3b8;
+  font-weight: 700;
+}
+.dsc-camera-fresh-row strong {
+  min-width: 0;
+  color: #e2e8f0;
+  overflow-wrap: anywhere;
+}
+.dsc-camera-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+.dsc-camera-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.26rem 0.52rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: #7dd3fc;
+  background: rgba(56, 189, 248, 0.11);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.dsc-camera-link:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(125, 211, 252, 0.55);
 }
 .dsc-timelapse-link {
   display: inline-flex;
