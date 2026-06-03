@@ -50,7 +50,6 @@ const ENT_SENSOR = '220100'           // Generic sensor
 const ENT_SENSOR_EMPLACED = '220200'  // Sensor, emplaced
 const ENT_RADAR = '220300'            // Radar
 const ENT_GENERATOR = '200700'        // Generator set
-const ENT_LASER = '201000'            // Laser
 const ENT_VEHICLE = '140100'          // Armored vehicle
 
 // Entity codes — Air (SS 01)
@@ -188,9 +187,11 @@ const SYSTEM_RULES: KeywordRule[] = [
   // Radar / lidar → keep as land equipment
   { keywords: ['radar', 'lidar'],
     identity: SI_NEUTRAL, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_RADAR },
-  // Camera / EO / video
-  { keywords: ['camera', 'video', 'electro-optical', 'eo ', 'imagery', 'photo', 'optical'],
-    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_LASER },
+  // Camera / EO / video imagery → supported emplaced sensor symbol.
+  // The previous laser entity renders as an empty equipment frame in milsymbol 3.x.
+  { keywords: ['webcam', 'weathercam', 'traffic camera', 'camera', 'cctv', 'video', 'electro-optical', 'eo ', 'imagery', 'image reference', 'poster image', 'photo', 'optical'],
+    identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_SENSOR_EMPLACED,
+    letterSidc: 'SFGPEWRH-------' },
   // Vehicle-based sensor
   { keywords: ['vehicle', 'car', 'truck', 'mobile platform'],
     identity: SI_FRIEND, symbolSet: SS_LAND_EQUIPMENT, entity: ENT_VEHICLE },
