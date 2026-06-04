@@ -112,6 +112,7 @@ export interface DatastreamSummary {
   name: string
   productLabel: string
   observedProperties: string[]
+  documentation: DocLink[]
 }
 
 export interface LatestReadingSummary {
@@ -378,6 +379,22 @@ function extractSmlMedia(sml: any): MediaLink[] {
     }
   }
   return media
+}
+
+function isLicenseLikeDoc(doc: DocLink): boolean {
+  const hay = `${doc.title} ${doc.role} ${doc.href}`.toLowerCase()
+  return /license|licence|terms/.test(hay)
+}
+
+function attributionFromUrl(url: string): { text: string; licenseUrl: string } {
+  const lower = url.toLowerCase()
+  if (/digitraffic\.fi|fintraffic/.test(lower)) {
+    return {
+      text: 'Source: Fintraffic / digitraffic.fi, license CC BY 4.0',
+      licenseUrl: 'https://www.digitraffic.fi/en/terms-of-service/',
+    }
+  }
+  return { text: '', licenseUrl: '' }
 }
 
 function representativeThumbnailForCard(
@@ -1258,6 +1275,15 @@ export function useDeployedSystemCard() {
                 observedProperties: obsProps.map((p: any) =>
                   typeof p === 'string' ? p : (p.label || p.name || p.definition || '')
                 ),
+                documentation: Array.isArray(ds.documentation)
+                  ? ds.documentation
+                    .map((doc: any) => ({
+                      title: doc?.title || doc?.name || '',
+                      href: doc?.href || doc?.url || doc?.link?.href || '',
+                      role: doc?.rel || doc?.role || '',
+                    }))
+                    .filter((doc: DocLink) => !!doc.href)
+                  : [],
               })
             }
           }
@@ -1345,10 +1371,23 @@ export function useDeployedSystemCard() {
             cameraPageUrl = result.pageUrl || ''
             cameraSourceUrl = result.sourceUrl || ''
 
-            const sourceHint = `${cameraSourceUrl} ${cameraPageUrl}`.toLowerCase()
-            if (/digitraffic\.fi|fintraffic/.test(sourceHint)) {
-              cameraAttributionText = 'Source: Fintraffic / digitraffic.fi, license CC BY 4.0'
-              cameraLicenseUrl = 'https://www.digitraffic.fi/en/terms-of-service/'
+            // SensorML/metadata-first: resolve license docs from datastream or system docs.
+            const dsLicenseDoc = cameraDs.documentation.find(isLicenseLikeDoc)
+            const smlLicenseDoc = smlDocs.find(isLicenseLikeDoc)
+            cameraLicenseUrl = dsLicenseDoc?.href || smlLicenseDoc?.href || ''
+
+            const operatorContact = contacts.find(c => /operator|owner|provider/i.test(c.role || ''))
+            if (cameraLicenseUrl) {
+              const operatorName = operatorContact?.org || operatorContact?.name || ''
+              if (operatorName) {
+                cameraAttributionText = `Source: ${operatorName}`
+              }
+            }
+
+            if (!cameraAttributionText || !cameraLicenseUrl) {
+              const inferred = attributionFromUrl(`${cameraSourceUrl} ${cameraPageUrl}`)
+              if (!cameraAttributionText) cameraAttributionText = inferred.text
+              if (!cameraLicenseUrl) cameraLicenseUrl = inferred.licenseUrl
             }
           }
         } catch { /* camera fetch optional */ }
