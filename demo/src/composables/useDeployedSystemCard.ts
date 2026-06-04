@@ -92,6 +92,7 @@ export interface DeployedSystemCardModel {
   cameraSourceUrl: string
   cameraAttributionText: string
   cameraLicenseUrl: string
+  cameraLicenseLabel: string
 
   /** @deprecated Use cameraImageUrl instead */
   buoycamImageUrl: string
@@ -383,18 +384,22 @@ function extractSmlMedia(sml: any): MediaLink[] {
 
 function isLicenseLikeDoc(doc: DocLink): boolean {
   const hay = `${doc.title} ${doc.role} ${doc.href}`.toLowerCase()
-  return /license|licence|terms/.test(hay)
+  return /license|licence|terms|rights|copyright/.test(hay)
 }
 
-function attributionFromUrl(url: string): { text: string; licenseUrl: string } {
-  const lower = url.toLowerCase()
-  if (/digitraffic\.fi|fintraffic/.test(lower)) {
-    return {
-      text: 'Source: Fintraffic / digitraffic.fi, license CC BY 4.0',
-      licenseUrl: 'https://www.digitraffic.fi/en/terms-of-service/',
+function normalizeLicenseUrl(url: string): string {
+  if (!url) return ''
+  try {
+    const parsed = new URL(url)
+    // Normalize known legacy Digitraffic path that now returns 404.
+    if (parsed.hostname.endsWith('digitraffic.fi') && parsed.pathname === '/en/terms-of-use/') {
+      parsed.pathname = '/en/terms-of-service/'
+      return parsed.toString()
     }
+  } catch {
+    return url
   }
-  return { text: '', licenseUrl: '' }
+  return url
 }
 
 function representativeThumbnailForCard(
@@ -1342,6 +1347,7 @@ export function useDeployedSystemCard() {
       let cameraSourceUrl = ''
       let cameraAttributionText = ''
       let cameraLicenseUrl = ''
+      let cameraLicenseLabel = ''
       const cameraDs = datastreams.find(ds => isCameraDatastreamName(ds.name))
       if (cameraDs) {
         const isBuoyCAM = /buoycam|buoy[\s_-]?cam/i.test(cameraDs.name)
@@ -1374,20 +1380,16 @@ export function useDeployedSystemCard() {
             // SensorML/metadata-first: resolve license docs from datastream or system docs.
             const dsLicenseDoc = cameraDs.documentation.find(isLicenseLikeDoc)
             const smlLicenseDoc = smlDocs.find(isLicenseLikeDoc)
-            cameraLicenseUrl = dsLicenseDoc?.href || smlLicenseDoc?.href || ''
+            const licenseDoc = dsLicenseDoc || smlLicenseDoc
+            cameraLicenseUrl = normalizeLicenseUrl(licenseDoc?.href || '')
+            cameraLicenseLabel = licenseDoc?.title || 'License terms'
 
             const operatorContact = contacts.find(c => /operator|owner|provider/i.test(c.role || ''))
-            if (cameraLicenseUrl) {
-              const operatorName = operatorContact?.org || operatorContact?.name || ''
-              if (operatorName) {
-                cameraAttributionText = `Source: ${operatorName}`
-              }
-            }
-
-            if (!cameraAttributionText || !cameraLicenseUrl) {
-              const inferred = attributionFromUrl(`${cameraSourceUrl} ${cameraPageUrl}`)
-              if (!cameraAttributionText) cameraAttributionText = inferred.text
-              if (!cameraLicenseUrl) cameraLicenseUrl = inferred.licenseUrl
+            const operatorName = operatorContact?.org || operatorContact?.name || ''
+            if (operatorName) {
+              cameraAttributionText = `Source: ${operatorName}`
+            } else if (cameraLicenseUrl) {
+              cameraAttributionText = 'Source/license metadata from SensorML/CSAPI'
             }
           }
         } catch { /* camera fetch optional */ }
@@ -1579,6 +1581,7 @@ export function useDeployedSystemCard() {
         cameraSourceUrl,
         cameraAttributionText,
         cameraLicenseUrl,
+        cameraLicenseLabel,
         buoycamImageUrl,
         buoycamTimestamp,
 

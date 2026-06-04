@@ -393,7 +393,7 @@ const trustLine = computed(() => {
           rel="noopener"
           class="dsc-camera-link-inline"
         >
-          Terms
+          {{ card.cameraLicenseLabel || 'License terms' }}
         </a>
       </p>
       <div v-if="card.cameraPlayerUrl || card.cameraPageUrl" class="dsc-camera-links">
