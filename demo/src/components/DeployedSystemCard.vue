@@ -384,6 +384,18 @@ const trustLine = computed(() => {
       <p v-if="cameraPosterNote" class="dsc-camera-source-note">
         {{ cameraPosterNote }}
       </p>
+      <p v-if="card.cameraAttributionText" class="dsc-camera-source-note">
+        {{ card.cameraAttributionText }}
+        <a
+          v-if="card.cameraLicenseUrl"
+          :href="card.cameraLicenseUrl"
+          target="_blank"
+          rel="noopener"
+          class="dsc-camera-link-inline"
+        >
+          Terms
+        </a>
+      </p>
       <div v-if="card.cameraPlayerUrl || card.cameraPageUrl" class="dsc-camera-links">
         <button
           v-if="card.cameraPlayerUrl"
@@ -1403,6 +1415,12 @@ const trustLine = computed(() => {
   color: #fde68a;
   font-size: 0.72rem;
   line-height: 1.3;
+}
+.dsc-camera-link-inline {
+  margin-left: 0.4rem;
+  color: #bfdbfe;
+  text-decoration: underline;
+  font-weight: 700;
 }
 .dsc-camera-links {
   display: flex;

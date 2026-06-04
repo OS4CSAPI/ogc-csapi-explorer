@@ -89,6 +89,9 @@ export interface DeployedSystemCardModel {
   cameraImageChanged: boolean | null
   cameraPlayerUrl: string
   cameraPageUrl: string
+  cameraSourceUrl: string
+  cameraAttributionText: string
+  cameraLicenseUrl: string
 
   /** @deprecated Use cameraImageUrl instead */
   buoycamImageUrl: string
@@ -1310,6 +1313,9 @@ export function useDeployedSystemCard() {
       let cameraImageChanged: boolean | null = null
       let cameraPlayerUrl = ''
       let cameraPageUrl = ''
+      let cameraSourceUrl = ''
+      let cameraAttributionText = ''
+      let cameraLicenseUrl = ''
       const cameraDs = datastreams.find(ds => isCameraDatastreamName(ds.name))
       if (cameraDs) {
         const isBuoyCAM = /buoycam|buoy[\s_-]?cam/i.test(cameraDs.name)
@@ -1337,6 +1343,13 @@ export function useDeployedSystemCard() {
             cameraImageChanged = typeof result.imageChanged === 'boolean' ? result.imageChanged : null
             cameraPlayerUrl = result.playerUrl || ''
             cameraPageUrl = result.pageUrl || ''
+            cameraSourceUrl = result.sourceUrl || ''
+
+            const sourceHint = `${cameraSourceUrl} ${cameraPageUrl}`.toLowerCase()
+            if (/digitraffic\.fi|fintraffic/.test(sourceHint)) {
+              cameraAttributionText = 'Source: Fintraffic / digitraffic.fi, license CC BY 4.0'
+              cameraLicenseUrl = 'https://www.digitraffic.fi/en/terms-of-service/'
+            }
           }
         } catch { /* camera fetch optional */ }
       }
@@ -1524,6 +1537,9 @@ export function useDeployedSystemCard() {
         cameraImageChanged,
         cameraPlayerUrl,
         cameraPageUrl,
+        cameraSourceUrl,
+        cameraAttributionText,
+        cameraLicenseUrl,
         buoycamImageUrl,
         buoycamTimestamp,
 
