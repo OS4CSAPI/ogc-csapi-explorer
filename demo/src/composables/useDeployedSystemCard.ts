@@ -663,6 +663,59 @@ function isForecastDatastream(ds: DatastreamSummary): boolean {
   return /forecast|global spot|site[-\s]?specific/i.test(text)
 }
 
+async function fetchCameraProcedureLicense(
+  cameraDs: DatastreamSummary,
+  sourceHintText: string,
+): Promise<{ licenseDoc: DocLink | null; sourceName: string }> {
+  const listRes = await apiFetch('/procedures?limit=200', {
+    headers: { 'Accept': 'application/json' },
+  })
+  if (!listRes.ok || !listRes.data) return { licenseDoc: null, sourceName: '' }
+
+  const sourceHint = sourceHintText.toLowerCase()
+  const nameTokens = cameraDs.name
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(token => token.length >= 4 && !['live', 'image', 'camera'].includes(token))
+  const outputHint = cameraDs.productLabel.toLowerCase()
+
+  const procedureItems = Array.isArray(listRes.data.items) ? listRes.data.items : []
+  const scored = procedureItems
+    .map((item: any) => {
+      const props = item?.properties || item || {}
+      const hay = `${props.uid || ''} ${props.name || ''} ${props.description || ''}`.toLowerCase()
+      let score = 0
+      if (/weathercam|weather\s+camera|camera/.test(hay)) score += 2
+      if (outputHint && hay.includes(outputHint)) score += 2
+      for (const token of nameTokens) {
+        if (hay.includes(token)) score += 1
+      }
+      if (sourceHint.includes('digitraffic') && hay.includes('digitraffic')) score += 4
+      if (sourceHint.includes('fintraffic') && hay.includes('fintraffic')) score += 4
+      return { id: item?.id || '', score }
+    })
+    .filter(item => item.id && item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8)
+
+  for (const candidate of scored) {
+    const smlRes = await apiFetch(`/procedures/${candidate.id}?f=application/sml%2Bjson`, {
+      headers: { 'Accept': 'application/sml+json' },
+    })
+    if (!smlRes.ok || !smlRes.data) continue
+    const src = smlRes.data?.type === 'Feature' ? (smlRes.data?.properties || {}) : (smlRes.data || {})
+    const docs = extractSmlDocuments(src)
+    const licenseDoc = docs.find(isLicenseLikeDoc) || null
+    if (!licenseDoc) continue
+    const procContacts = extractSmlContacts(src)
+    const operatorContact = procContacts.find(c => /operator|owner|provider/i.test(c.role || ''))
+    const sourceName = operatorContact?.org || operatorContact?.name || ''
+    return { licenseDoc, sourceName }
+  }
+
+  return { licenseDoc: null, sourceName: '' }
+}
+
 const RESULT_METADATA_KEYS = new Set([
   'stationId', 'stationName', 'measureId', 'parameter', 'unit', 'valueType',
   'quality', 'completeness', 'sourceUrl', 'lat', 'lon', 'alt', 'latitude', 'longitude',
@@ -1390,6 +1443,23 @@ export function useDeployedSystemCard() {
               cameraAttributionText = `Source: ${operatorName}`
             } else if (cameraLicenseUrl) {
               cameraAttributionText = 'Source/license metadata from SensorML/CSAPI'
+            }
+
+            if (!cameraLicenseUrl) {
+              const procedureMeta = await fetchCameraProcedureLicense(
+                cameraDs,
+                `${cameraSourceUrl} ${cameraPageUrl}`,
+              )
+              if (procedureMeta.licenseDoc) {
+                cameraLicenseUrl = normalizeLicenseUrl(procedureMeta.licenseDoc.href)
+                cameraLicenseLabel = procedureMeta.licenseDoc.title || 'License terms'
+                if (!cameraAttributionText && procedureMeta.sourceName) {
+                  cameraAttributionText = `Source: ${procedureMeta.sourceName}`
+                }
+                if (!cameraAttributionText) {
+                  cameraAttributionText = 'Source/license metadata from SensorML/CSAPI'
+                }
+              }
             }
           }
         } catch { /* camera fetch optional */ }
