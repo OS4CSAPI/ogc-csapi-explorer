@@ -13,6 +13,7 @@
 import { ref, type Ref } from 'vue'
 import { apiFetch } from '../api'
 import { getSymbolForResource } from '../symbol-mapper'
+import { rankCameraProcedureCandidates } from './camera-license-resolver.js'
 
 // ─── Card model ────────────────────────────────────────────────────────────
 
@@ -672,31 +673,13 @@ async function fetchCameraProcedureLicense(
   })
   if (!listRes.ok || !listRes.data) return { licenseDoc: null, sourceName: '' }
 
-  const sourceHint = sourceHintText.toLowerCase()
-  const nameTokens = cameraDs.name
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter(token => token.length >= 4 && !['live', 'image', 'camera'].includes(token))
-  const outputHint = cameraDs.productLabel.toLowerCase()
-
   const procedureItems = Array.isArray(listRes.data.items) ? listRes.data.items : []
-  const scored = procedureItems
-    .map((item: any) => {
-      const props = item?.properties || item || {}
-      const hay = `${props.uid || ''} ${props.name || ''} ${props.description || ''}`.toLowerCase()
-      let score = 0
-      if (/weathercam|weather\s+camera|camera/.test(hay)) score += 2
-      if (outputHint && hay.includes(outputHint)) score += 2
-      for (const token of nameTokens) {
-        if (hay.includes(token)) score += 1
-      }
-      if (sourceHint.includes('digitraffic') && hay.includes('digitraffic')) score += 4
-      if (sourceHint.includes('fintraffic') && hay.includes('fintraffic')) score += 4
-      return { id: item?.id || '', score }
-    })
-    .filter(item => item.id && item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 8)
+  const scored = rankCameraProcedureCandidates(
+    cameraDs.name,
+    cameraDs.productLabel,
+    sourceHintText,
+    procedureItems,
+  )
 
   for (const candidate of scored) {
     const smlRes = await apiFetch(`/procedures/${candidate.id}?f=application/sml%2Bjson`, {
